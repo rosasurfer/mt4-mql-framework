@@ -905,22 +905,12 @@ int onDeinitAccountChange()
 
 
 /**
- * Never encountered.
- *
- * @return int - error status
- *
-int onDeinitClose()
-   return(NO_ERROR);
-}
-
-
-/**
  * Online:    - Called when another chart template is applied.
  *            - Called when the chart profile is changed.
  *            - Called when the chart is closed.
- *            - Called when the terminal shuts down.
+ *            - Called in terminal versions up to build 509 when the terminal shuts down.
  * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
- *            - Called on VisualMode=On when the chart is closed.
+ *            - Called when the chart is closed (with VisualMode=On).
  *
  * @return int - error status
  *
@@ -957,6 +947,16 @@ int onDeinitUndefined()
  * @return int - error status
  *
 int onDeinitRecompile()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Called in terminal versions > build 509 when the terminal shuts down.
+ *
+ * @return int - error status
+ *
+int onDeinitClose()
    return(NO_ERROR);
 }
 

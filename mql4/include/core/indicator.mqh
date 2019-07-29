@@ -787,7 +787,7 @@ int onDeinitAccountChange()
 
 
 /**
- * Standalone:   Called in newer terminals (build > 509) when the terminal shuts down.
+ * Standalone:   Called in terminals newer than build 509 when the terminal shuts down.
  * In iCustom(): Never called.
  *
  * @return int - error status
