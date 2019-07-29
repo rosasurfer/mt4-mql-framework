@@ -633,7 +633,7 @@ bool EventListener_ChartCommand(string &commands[]) {
 #import
 
 
-// -- init() event handler templates ----------------------------------------------------------------------------------------
+// -- init() event handler templates (opening curly braces are intentionally missing) ---------------------------------------
 
 
 /**
@@ -741,7 +741,7 @@ int afterInit()
 }
 
 
-// -- deinit() event handler templates --------------------------------------------------------------------------------------
+// -- deinit() event handler templates (opening curly braces are intentionally missing) -------------------------------------
 
 
 /**
@@ -787,7 +787,7 @@ int onDeinitAccountChange()
 
 
 /**
- * Standalone:   Called in newer terminals (build > 509) when the terminal shuts down.
+ * Standalone:   Called in terminals newer than build 509 when the terminal shuts down.
  * In iCustom(): Never called.
  *
  * @return int - error status
