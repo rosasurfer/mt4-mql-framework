@@ -5206,7 +5206,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * @param  _In_  datetime expires     - a pending order's expiration date (if supported by the broker)
  * @param  _In_  color    markerColor - color of the chart marker which is set
  * @param  _In_  int      oeFlags     - additional flags controlling order execution
- * @param  _Out_ int      oe[]        - struct ORDER_EXECUTION holding the execution details after function return
+ * @param  _Out_ int      oe[]        - order execution details (struct ORDER_EXECUTION)
  *
  * @return int - resulting ticket or NULL in case of errors
  */
@@ -5276,7 +5276,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
 
-   int ticket, firstTime1=GetTickCount(), time1, requotes, tempErrors;
+   int  ticket, firstTime1=GetTickCount(), time1, requotes, tempErrors;
+   bool isPendingType = IsPendingTradeOperation(type);
 
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
@@ -5362,18 +5363,20 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
             return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(39)")));
 
-         oe.setTicket    (oe, ticket           );
-         oe.setOpenTime  (oe, OrderOpenTime()  );
-         oe.setOpenPrice (oe, OrderOpenPrice() );
-         oe.setStopLoss  (oe, OrderStopLoss()  );
-         oe.setTakeProfit(oe, OrderTakeProfit());
-         oe.setSwap      (oe, OrderSwap()      );
-         oe.setCommission(oe, OrderCommission());
-         oe.setProfit    (oe, 0                );                                // 0, egal was der Server meldet
-         oe.setRequotes  (oe, requotes         );
-            if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - ask;
-            else if (OrderType() == OP_SELL) slippage = bid - OrderOpenPrice();
-            else                             slippage = 0;
+         // On slow OrderSend() or in a fast market limits may have already been executed or the order may have already been
+         // modified after return. The returned values must describe the original order, not the current order status.
+         oe.setTicket    (oe, ticket         );
+         oe.setOpenTime  (oe, OrderOpenTime());
+         oe.setOpenPrice (oe, ifDouble(isPendingType, price, OrderOpenPrice()));
+         oe.setStopLoss  (oe, stopLoss       );
+         oe.setTakeProfit(oe, takeProfit     );
+         oe.setSwap      (oe, ifDouble(isPendingType, 0, OrderSwap()));
+         oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
+         oe.setProfit    (oe, 0              );
+         oe.setRequotes  (oe, requotes       );
+            if      (type == OP_BUY ) slippage = OrderOpenPrice() - ask;
+            else if (type == OP_SELL) slippage = bid - OrderOpenPrice();
+            else                      slippage = 0;
          oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));         // Gesamtslippage nach Requotes in Pip
 
          if (__LOG()) log("OrderSendEx(40)  "+ OrderSendEx.SuccessMsg(oe));
