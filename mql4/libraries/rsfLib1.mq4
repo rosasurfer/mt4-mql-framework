@@ -5219,8 +5219,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    ArrayInitialize(oe, 0);
 
    // symbol
-   if (symbol == "0")      // (string) NULL
-      symbol = Symbol();
+   if (symbol == "0") symbol = Symbol();                       // (string) NULL
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
    double maxLot         = MarketInfo(symbol, MODE_MAXLOT);
@@ -5256,9 +5255,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (LT(takeProfit, 0))                                      return(!oe.setError(oe, catch("OrderSendEx(11)  illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER)));
    takeProfit = NormalizeDouble(takeProfit, digits);           // StopDistance-Validierung erfolgt später
    // comment
-   if (comment == "0")     // (string) NULL
-      comment = "";
+   if (comment == "0") comment = "";                           // (string) NULL
    else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!oe.setError(oe, catch("OrderSendEx(12)  illegal parameter comment = \""+ comment +"\" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   if (!StringLen(comment)) string msgComment = "";
+   else                            msgComment = " (\""+ comment +"\")";
    // expires
    if (expires != 0) /*&&*/ if (expires <= TimeCurrentEx("OrderSendEx(13)")) return(!oe.setError(oe, catch("OrderSendEx(13)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER)));
    // markerColor
@@ -5303,23 +5303,23 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       oe.setOpenPrice(oe, price);
 
       if (type == OP_BUYSTOP) {
-         if (LE(price, ask))                                    return(!Order.HandleError("OrderSendEx(18)  illegal price "+ NumberToStr(price, priceFormat) +" for "+ OperationTypeDescription(type) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe));
-         if (LT(price - stopDistance*pips, ask))                return(!Order.HandleError("OrderSendEx(19)  "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+         if (LE(price, ask))                                    return(!Order.HandleError("OrderSendEx(18)  illegal price "+ NumberToStr(price, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+         if (LT(price - stopDistance*pips, ask))                return(!Order.HandleError("OrderSendEx(19)  "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) + msgComment +" too close to market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +" (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
       }
       else if (type == OP_SELLSTOP) {
-         if (GE(price, bid))                                    return(!Order.HandleError(StringConcatenate("OrderSendEx(20)  illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe));
-         if (GT(price + stopDistance*pips, bid))                return(!Order.HandleError(StringConcatenate("OrderSendEx(21)  ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), " too close to market (", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
+         if (GE(price, bid))                                    return(!Order.HandleError("OrderSendEx(20)  illegal price "+ NumberToStr(price, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+         if (GT(price + stopDistance*pips, bid))                return(!Order.HandleError("OrderSendEx(21)  "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) + msgComment +" too close to market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +" (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
       }
 
       // validate StopLoss <> StopDistance
       if (!EQ(stopLoss, 0)) {
          if (IsLongTradeOperation(type)) {
-            if (GE(stopLoss, price))                            return(!Order.HandleError(StringConcatenate("OrderSendEx(22)  illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe));
+            if (GE(stopLoss, price))                            return(!Order.HandleError("OrderSendEx(22)  illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_BUY) {
-               if (GE(stopLoss, bid))                           return(!Order.HandleError(StringConcatenate("OrderSendEx(23)  illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe));
-               if (GT(stopLoss, bid - stopDistance*pips))       return(!Order.HandleError(StringConcatenate("OrderSendEx(24)  ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GE(stopLoss, bid))                           return(!Order.HandleError("OrderSendEx(23)  illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GT(stopLoss, bid - stopDistance*pips))       return(!Order.HandleError("OrderSendEx(24)  "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
             }
-            else if (GT(stopLoss, price - stopDistance*pips))   return(!Order.HandleError(StringConcatenate("OrderSendEx(25)  ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
+            else if (GT(stopLoss, price - stopDistance*pips))   return(!Order.HandleError("OrderSendEx(25)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
          }
          else /*short*/ {
             if (LE(stopLoss, price))                            return(!Order.HandleError(StringConcatenate("OrderSendEx(26)  illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe));
@@ -5546,87 +5546,6 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
 
 
 /**
- * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket muß während der Ausführung selektierbar sein.
- *
- * @param  int   ticket      - Ticket
- * @param  int   digits      - Nachkommastellen des Ordersymbols
- * @param  color markerColor - Farbe des Chartmarkers
- *
- * @return bool - Erfolgsstatus
- *
- * @see ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
- */
-bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
-   if (!__CHART()) return(true);
-
-   if (!SelectTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
-      return(false);
-
-   bool result = ChartMarker.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
-
-   return(ifBool(OrderPop("ChartMarker.OrderSent_A(2)"), result, false));
-}
-
-
-/**
- * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
- *
- * @param  int      ticket      - Ticket
- * @param  int      digits      - Nachkommastellen des Ordersymbols
- * @param  color    markerColor - Farbe des Chartmarkers
- * @param  int      type        - Ordertyp
- * @param  double   lots        - Lotsize
- * @param  string   symbol      - OrderSymbol
- * @param  datetime openTime    - OrderOpenTime
- * @param  double   openPrice   - OrderOpenPrice
- * @param  double   stopLoss    - StopLoss
- * @param  double   takeProfit  - TakeProfit
- * @param  string   comment     - OrderComment
- *
- * @return bool - Erfolgsstatus
- *
- * @see ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
- */
-bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
-   if (!__CHART()) return(true);
-
-   static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
-
-   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
-   string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label1) == 0) {
-      if (markerColor == CLR_NONE) ObjectDelete(label1);                               // löschen
-      else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);      // korrigieren
-   }
-   else if (markerColor != CLR_NONE) {
-      if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
-         ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet(label1, OBJPROP_COLOR    , markerColor     );
-         ObjectSetText(label1, comment);
-      }
-   }
-
-   // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
-   if (!EQ(stopLoss, 0)) {
-      string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
-      if (ObjectFind(label2) == 0)
-         ObjectDelete(label2);
-   }
-
-   // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
-   if (!EQ(takeProfit, 0)) {
-      string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
-      if (ObjectFind(label3) == 0)
-         ObjectDelete(label3);
-   }
-
-   return(!catch("ChartMarker.OrderSent_B()"));
-}
-
-
-/**
  * Extended version of the built-in function OrderModify().
  *
  * @param  int      ticket      - ticket to modify
@@ -5652,6 +5571,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
    if (!IsTradeOperation(OrderType()))                         return(_false(oe.setError(oe, catch("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP))));
    if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderModifyEx(4)  #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   bool   isPendingType  = IsPendingTradeOperation(OrderType());
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
    int    pipPoints      = MathRound(MathPow(10, digits & 1));
@@ -5664,7 +5584,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    openPrice = NormalizeDouble(openPrice, digits);
    if (LE(openPrice, 0, digits))                               return(_false(oe.setError(oe, catch("OrderModifyEx(6)  illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, O_POP))));
    if (!EQ(openPrice, OrderOpenPrice(), digits)) {
-      if (!IsPendingTradeOperation(OrderType()))               return(_false(oe.setError(oe, catch("OrderModifyEx(7)  cannot modify open price of already open position #"+ ticket, ERR_INVALID_PARAMETER, O_POP))));
+      if (!isPendingType)                                      return(_false(oe.setError(oe, catch("OrderModifyEx(7)  cannot modify open price of already open position #"+ ticket, ERR_INVALID_PARAMETER, O_POP))));
       // TODO: Bid/Ask <=> openPrice prüfen
       // TODO: StopDistance(openPrice) prüfen
    }
@@ -5686,7 +5606,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (expires != 0)
       if (expires <= TimeCurrentEx("OrderModifyEx(10)"))       return(_false(oe.setError(oe, catch("OrderModifyEx(11)  illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, O_POP))));
    if (expires != OrderExpiration())
-      if (!IsPendingTradeOperation(OrderType()))               return(_false(oe.setError(oe, catch("OrderModifyEx(12)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_PARAMETER, O_POP))));
+      if (!isPendingType)                                      return(_false(oe.setError(oe, catch("OrderModifyEx(12)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_PARAMETER, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderModifyEx(13)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
    // -- Ende Parametervalidierung --
@@ -5737,17 +5657,19 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
       if (success) {
          WaitForTicket(ticket, false);                                                 // FALSE waits and selects
-         // TODO: implement WaitForChanges()
+
          if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(19)"), prevOpenPrice, prevStopLoss, prevTakeProfit))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(20)")));
 
-         oe.setOpenTime  (oe, OrderOpenTime()  );
-         oe.setOpenPrice (oe, OrderOpenPrice() );
-         oe.setStopLoss  (oe, OrderStopLoss()  );
-         oe.setTakeProfit(oe, OrderTakeProfit());
-         oe.setSwap      (oe, OrderSwap()      );
-         oe.setCommission(oe, OrderCommission());
-         oe.setProfit    (oe, OrderProfit()    );
+         // On slow OrderModify() or in a fast market limits may have already been executed or the order may have already been
+         // modified after return. The returned values must describe the original order, not the current order status.
+         oe.setOpenTime  (oe, OrderOpenTime());
+         oe.setOpenPrice (oe, openPrice      );
+         oe.setStopLoss  (oe, stopLoss       );
+         oe.setTakeProfit(oe, takeProfit     );
+         oe.setSwap      (oe, ifDouble(isPendingType, 0, OrderSwap()));
+         oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
+         oe.setProfit    (oe, ifDouble(isPendingType, 0, OrderProfit()));
 
          if (__LOG()) log("OrderModifyEx(21)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!IsTesting()) PlaySoundEx("OrderModified.wav");
@@ -5960,7 +5882,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
    // Schleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError("OrderCloseEx(12)  "+ __OrderCloseEx.PermErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(13)")));
+      if (IsStopped()) return(_false(Order.HandleError("OrderCloseEx(12)  "+ OrderCloseEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(13)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG()) log("OrderCloseEx(14)  trade context busy, retrying...");
@@ -6039,7 +5961,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             oe.setRemainingLots  (oe, openLots-lots);
          }
 
-         if (__LOG()) log("OrderCloseEx(25)  "+ __OrderCloseEx.SuccessMsg(oe));
+         if (__LOG()) log("OrderCloseEx(25)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (IsTesting()) {
             if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
@@ -6077,7 +5999,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          break;
       warn("OrderCloseEx(28)  "+ Order.TempErrorMsg(oe, tempErrors), error);
    }
-   return(_false(oe.setError(oe, catch("OrderCloseEx(29)  "+ __OrderCloseEx.PermErrorMsg(oe), error, O_POP))));
+   return(_false(oe.setError(oe, catch("OrderCloseEx(29)  "+ OrderCloseEx.ErrorMsg(oe), error, O_POP))));
 }
 
 
@@ -6087,10 +6009,8 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return string
- *
- * @access private - Aufruf nur aus OrderCloseEx()
  */
-string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+string OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4, remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
@@ -6134,11 +6054,9 @@ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return string
- *
- * @access private - Aufruf nur aus OrderCloseEx()
  */
-string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask)[, sl=1.5500'0[, tp=1.5600'0[, stop distance=0.1 pip]]] after 0.345 s
+string OrderCloseEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+   // error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask)[, sl=1.5500'0[, tp=1.5600'0[, stop distance=0.1 pip]]] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6299,7 +6217,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
    // Schleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)  ", __OrderCloseByEx.PermErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(10)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)  ", OrderCloseByEx.ErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(10)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG()) log("OrderCloseByEx(11)  trade context busy, retrying...");
@@ -6382,7 +6300,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
             oe.setRemainingLots  (oe, remainderLots);
          }
 
-         if (__LOG()) log(StringConcatenate("OrderCloseByEx(16)  ", __OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
+         if (__LOG()) log(StringConcatenate("OrderCloseByEx(16)  ", OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
@@ -6404,7 +6322,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
          break;
       warn(StringConcatenate("OrderCloseByEx(19)  ", Order.TempErrorMsg(oe, tempErrors)), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseByEx(20)  ", __OrderCloseByEx.PermErrorMsg(first, second, oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseByEx(20)  ", OrderCloseByEx.ErrorMsg(first, second, oe)), error, O_POP))));
 }
 
 
@@ -6417,10 +6335,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
  * @param  int oe[]       - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return string
- *
- * @access private - Aufruf nur aus OrderCloseByEx()
  */
-string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
+string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
    // closed #30 by #38, remainder: #39 Buy 0.6 GBPUSD after 0.000 s
    // closed #31 by #39, no remainder after 0.000 s
 
@@ -6446,8 +6362,8 @@ string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDE
  *
  * @access private - Aufruf nur aus OrderCloseEx()
  */
-string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to close #1 by #2 after 0.345 s
+string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
+   // error while trying to close #1 by #2 after 0.345 s
 
    string message = StringConcatenate("permanent error while trying to close #", first, " by #", second);
    if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
@@ -6534,7 +6450,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
-      if (!__OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
+      if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(13)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2,               0);
@@ -6582,7 +6498,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      int newTicket = __OrderMultiClose.Flatten(group, slippage, oeFlags, oes2); // -1: kein neues Ticket
+      int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
       if (IsLastError())                                                         //  0: Fehler oder Gesamtposition war bereits flat
          return(_false(oes.setError(oes, -1, last_error)));                      // >0: neues Ticket
 
@@ -6635,7 +6551,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      if (!__OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
+      if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error)));
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -6656,129 +6572,6 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    ArrayResize(tickets.copy,       0);
    ArrayResize(flatSymbols,        0);
    return(!oes.setError(oes, -1, catch("OrderMultiClose(18)")));
-}
-
-
-/**
- * Schließt mehrere offene Positionen eines Symbols auf möglichst schnelle Art und Weise.
- *
- * @param  int    tickets[]   - Tickets der zu schließenden Positionen
- * @param  double slippage    - akzeptable Slippage in Pip
- * @param  color  markerColor - Farbe des Chart-Markers
- * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
- *
- * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
- *
- *
- * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets
- *          gleich).
- *
- *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
- *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
- *
- * @access private - Aufruf nur aus OrderMultiClose()
- */
-bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
-   // keine nochmalige, ausführliche Parametervalidierung (da private)
-   int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)
-      return(!oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER)));
-   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
-
-
-   // (1) simple close if a single ticket is given or the flag OE_MULTICLOSE_NOHEDGE is set
-   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOHEDGE) {
-      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
-
-      for (int i=0; i < sizeOfTickets; i++) {
-         if (!OrderCloseEx(tickets[i], NULL, NULL, slippage, markerColor, oeFlags, oe))
-            return(_false(oes.setError(oes, -1, last_error)));
-         int src  = GetIntsAddress(oe);
-         int dest = GetIntsAddress(oes) + i*ORDER_EXECUTION.intSize*4;
-         CopyMemory(dest, src, ArraySize(oe)*4);
-      }
-      ArrayResize(oe, 0);
-      return(true);
-   }
-   if (__LOG()) log(StringConcatenate("__OrderMultiClose.OneSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
-
-
-   // (2) oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "__OrderMultiClose.OneSymbol(3)", O_PUSH))
-      return(_false(oes.setError(oes, -1, last_error)));
-   int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-
-   for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "__OrderMultiClose.OneSymbol(4)", NULL, O_POP))
-         return(_false(oes.setError(oes, -1, last_error)));
-      oes.setSymbol    (oes, i, OrderSymbol()    );
-      oes.setDigits    (oes, i, digits           );
-      oes.setTicket    (oes, i, tickets[i]       );
-      oes.setType      (oes, i, OrderType()      );
-      oes.setLots      (oes, i, OrderLots()      );
-      oes.setOpenTime  (oes, i, OrderOpenTime()  );
-      oes.setOpenPrice (oes, i, OrderOpenPrice() );
-      oes.setStopLoss  (oes, i, OrderStopLoss()  );
-      oes.setTakeProfit(oes, i, OrderTakeProfit());
-      oes.setComment   (oes, i, OrderComment()   );
-   }
-
-
-   // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
-   int tickets.copy[]; ArrayResize(tickets.copy, 0);
-   int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
-
-
-   // (4) Gesamtposition glatt stellen
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
-
-   int newTicket = __OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                  // -1: kein neues Ticket
-   if (IsLastError())                                                                                 //  0: Fehler oder Gesamtposition war bereits flat
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.OneSymbol(5)")));  // >0: neues Ticket
-
-   for (i=0; i < sizeOfTickets; i++) {
-      oes.setBid       (oes, i, oes.Bid       (oes2, i));
-      oes.setAsk       (oes, i, oes.Ask       (oes2, i));
-      oes.setCloseTime (oes, i, oes.CloseTime (oes2, i));               // Werte sind bei allen oes2-Tickets gleich
-      oes.setClosePrice(oes, i, oes.ClosePrice(oes2, i));
-      oes.setDuration  (oes, i, oes.Duration  (oes2, i));
-      oes.setRequotes  (oes, i, oes.Requotes  (oes2, i));
-      oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
-   }
-   if (newTicket != 0) {                                                // -1 = kein neues Ticket: ein Ticket wurde komplett geschlossen
-      for (i=0; i < sizeOfTickets; i++) {                               // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
-         if (oes.RemainingTicket(oes2, i) == newTicket) {               // partiell oder komplett geschlossenes Ticket gefunden
-            oes.setSwap      (oes, i, oes.Swap      (oes2, i));
-            oes.setCommission(oes, i, oes.Commission(oes2, i));
-            oes.setProfit    (oes, i, oes.Profit    (oes2, i));
-            sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);          // geschlossenes Ticket löschen
-            break;
-         }
-      }
-      if (newTicket > 0)
-         sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);            // neues Ticket hinzufügen
-   }
-
-
-   // (5) Teilpositionen auflösen
-   ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
-
-   if (!__OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.OneSymbol(6)")));
-
-   for (i=0; i < sizeOfCopy; i++) {
-      int pos = SearchIntArray(tickets, tickets.copy[i]);
-      if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
-         pos = sizeOfTickets-1;
-      oes.addSwap      (oes, pos, oes.Swap      (oes2, i));
-      oes.addCommission(oes, pos, oes.Commission(oes2, i));             // Beträge jeweils addieren
-      oes.addProfit    (oes, pos, oes.Profit    (oes2, i));
-   }
-
-   ArrayResize(oes2,         0);
-   ArrayResize(tickets.copy, 0);
-   return(!oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(7)", NULL, O_POP)));
 }
 
 
@@ -6810,26 +6603,24 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
  *          Nur bei einem einzigen der übergebenen Tickets sind bei Rückkehr oe.RemainingTicket und oe.RemainingLots gesetzt.
  *
  *       4) Der Rückgabewert der Funktion entspricht dem in einem der Tickets gesetzten Wert von oe.RemainingTicket (siehe Note 3).
- *
- * @access private - Aufruf nur aus OrderMultiClose()
  */
-int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (da private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_NULL(oes.setError(oes, -1, catch("__OrderMultiClose.Flatten(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
+      return(_NULL(oes.setError(oes, -1, catch("OrderMultiClose.Flatten(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
 
 
    // (1) oes[] vorbelegen, dabei Lotsizes und Gesamtposition ermitteln
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
-   if (!SelectTicket(tickets[0], "__OrderMultiClose.Flatten(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrderMultiClose.Flatten(2)", O_PUSH))
       return(_NULL(oes.setError(oes, -1, last_error)));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double totalLots, lots[]; ArrayResize(lots, 0);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "__OrderMultiClose.Flatten(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose.Flatten(3)", NULL, O_POP))
          return(_NULL(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -6850,12 +6641,12 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
 
    // (2) wenn Gesamtposition bereits ausgeglichen ist
    if (EQ(totalLots, 0)) {
-      if (__LOG()) log(StringConcatenate("__OrderMultiClose.Flatten(4)  ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
+      if (__LOG()) log(StringConcatenate("OrderMultiClose.Flatten(4)  ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
 
       int tickets.copy[]; ArrayResize(tickets.copy, 0);                                // zuletzt geöffnetes Ticket ermitteln
       ArrayCopy(tickets.copy, tickets);
       SortTicketsChronological(tickets.copy);
-      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "__OrderMultiClose.Flatten(5)", NULL, O_POP))
+      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "OrderMultiClose.Flatten(5)", NULL, O_POP))
          return(_NULL(oes.setError(oes, -1, last_error)));
 
       for (i=0; i < sizeOfTickets; i++) {
@@ -6864,14 +6655,14 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
          oes.setCloseTime (oes, i, OrderOpenTime()             );
          oes.setClosePrice(oes, i, OrderOpenPrice()            );
       }
-      if (!OrderPop("__OrderMultiClose.Flatten(6)"))
+      if (!OrderPop("OrderMultiClose.Flatten(6)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
       ArrayResize(tickets.copy, 0);
    }
    else {
-      if (!OrderPop("__OrderMultiClose.Flatten(7)"))
+      if (!OrderPop("OrderMultiClose.Flatten(7)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
-      if (__LOG()) log(StringConcatenate("__OrderMultiClose.Flatten(8)  flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
+      if (__LOG()) log(StringConcatenate("OrderMultiClose.Flatten(8)  flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
 
 
       // (3) Gesamtposition ist unausgeglichen
@@ -6948,7 +6739,7 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
 
    ArrayResize(lots, 0);
 
-   if (!catch("__OrderMultiClose.Flatten(9)"))
+   if (!catch("OrderMultiClose.Flatten(9)"))
       return(newTicket);
    return(_NULL(oes.setError(oes, -1, last_error)));
 }
@@ -6970,24 +6761,22 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
  *
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
- *
- * @access private - Aufruf nur aus OrderMultiClose()
  */
-bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+bool OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (da private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets < 2)
-      return(_false(oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
+      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
    // (1) oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "__OrderMultiClose.Flattened(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrderMultiClose.Flattened(2)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "__OrderMultiClose.Flattened(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose.Flattened(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -7005,7 +6794,7 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
 
 
    // (2) Logging
-   if (__LOG()) log(StringConcatenate("__OrderMultiClose.Flattened(4)  closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("OrderMultiClose.Flattened(4)  closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
 
    // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
@@ -7013,7 +6802,7 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
    int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
 
    SortTicketsChronological(tickets.copy);
-   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "__OrderMultiClose.Flattened(5)", NULL, O_POP))  // das zuletzt geöffnete Ticket
+   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "OrderMultiClose.Flattened(5)", NULL, O_POP))  // das zuletzt geöffnete Ticket
       return(_false(oes.setError(oes, -1, last_error)));
    for (i=0; i < sizeOfTickets; i++) {
       oes.setCloseTime (oes, i, OrderOpenTime() );
@@ -7024,12 +6813,12 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
    // (4) Teilpositionen nacheinander auflösen
    while (sizeOfCopy > 0) {
       int opposite, first=tickets.copy[0];
-      if (!SelectTicket(first, "__OrderMultiClose.Flattened(6)", NULL, O_POP))
+      if (!SelectTicket(first, "OrderMultiClose.Flattened(6)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       int firstType = OrderType();
 
       for (i=1; i < sizeOfCopy; i++) {
-         if (!SelectTicket(tickets.copy[i], "__OrderMultiClose.Flattened(7)", NULL, O_POP))
+         if (!SelectTicket(tickets.copy[i], "OrderMultiClose.Flattened(7)", NULL, O_POP))
             return(_false(oes.setError(oes, -1, last_error)));
          if (OrderType() == firstType^1) {
             opposite = tickets.copy[i];                                                   // erste Opposite-Position ermitteln
@@ -7037,12 +6826,12 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
          }
       }
       if (!opposite)
-         return(_false(oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(8)  cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
+         return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(8)  cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
 
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))                     // erste und Opposite-Position schließen
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.Flattened(9)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.Flattened(9)")));
 
       sizeOfCopy -= ArraySpliceInts(tickets.copy, 0, 1);                                  // erstes und opposite Ticket löschen
       sizeOfCopy -= ArrayDropInt(tickets.copy, opposite);
@@ -7066,7 +6855,128 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
 
    ArrayResize(oe,           0);
    ArrayResize(tickets.copy, 0);
-   return(!oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(10)", NULL, O_POP)));
+   return(!oes.setError(oes, -1, catch("OrderMultiClose.Flattened(10)", NULL, O_POP)));
+}
+
+
+/**
+ * Schließt mehrere offene Positionen eines Symbols auf möglichst schnelle Art und Weise.
+ *
+ * @param  int    tickets[]   - Tickets der zu schließenden Positionen
+ * @param  double slippage    - akzeptable Slippage in Pip
+ * @param  color  markerColor - Farbe des Chart-Markers
+ * @param  int    oeFlags     - die Ausführung steuernde Flags
+ * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
+ *
+ * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
+ *
+ *
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets
+ *          gleich).
+ *
+ *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
+ *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
+ */
+bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+   // keine nochmalige, ausführliche Parametervalidierung (da private)
+   int sizeOfTickets = ArraySize(tickets);
+   if (sizeOfTickets == 0)
+      return(!oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER)));
+   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
+
+
+   // (1) simple close if a single ticket is given or the flag OE_MULTICLOSE_NOHEDGE is set
+   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOHEDGE) {
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+
+      for (int i=0; i < sizeOfTickets; i++) {
+         if (!OrderCloseEx(tickets[i], NULL, NULL, slippage, markerColor, oeFlags, oe))
+            return(_false(oes.setError(oes, -1, last_error)));
+         int src  = GetIntsAddress(oe);
+         int dest = GetIntsAddress(oes) + i*ORDER_EXECUTION.intSize*4;
+         CopyMemory(dest, src, ArraySize(oe)*4);
+      }
+      ArrayResize(oe, 0);
+      return(true);
+   }
+   if (__LOG()) log(StringConcatenate("OrderMultiClose.OneSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+
+
+   // (2) oes[] vorbelegen
+   if (!SelectTicket(tickets[0], "OrderMultiClose.OneSymbol(3)", O_PUSH))
+      return(_false(oes.setError(oes, -1, last_error)));
+   int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+
+   for (i=0; i < sizeOfTickets; i++) {
+      if (!SelectTicket(tickets[i], "OrderMultiClose.OneSymbol(4)", NULL, O_POP))
+         return(_false(oes.setError(oes, -1, last_error)));
+      oes.setSymbol    (oes, i, OrderSymbol()    );
+      oes.setDigits    (oes, i, digits           );
+      oes.setTicket    (oes, i, tickets[i]       );
+      oes.setType      (oes, i, OrderType()      );
+      oes.setLots      (oes, i, OrderLots()      );
+      oes.setOpenTime  (oes, i, OrderOpenTime()  );
+      oes.setOpenPrice (oes, i, OrderOpenPrice() );
+      oes.setStopLoss  (oes, i, OrderStopLoss()  );
+      oes.setTakeProfit(oes, i, OrderTakeProfit());
+      oes.setComment   (oes, i, OrderComment()   );
+   }
+
+
+   // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
+   int tickets.copy[]; ArrayResize(tickets.copy, 0);
+   int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
+
+
+   // (4) Gesamtposition glatt stellen
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
+
+   int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                 // -1: kein neues Ticket
+   if (IsLastError())                                                                              //  0: Fehler oder Gesamtposition war bereits flat
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(5)"))); // >0: neues Ticket
+
+   for (i=0; i < sizeOfTickets; i++) {
+      oes.setBid       (oes, i, oes.Bid       (oes2, i));
+      oes.setAsk       (oes, i, oes.Ask       (oes2, i));
+      oes.setCloseTime (oes, i, oes.CloseTime (oes2, i));               // Werte sind bei allen oes2-Tickets gleich
+      oes.setClosePrice(oes, i, oes.ClosePrice(oes2, i));
+      oes.setDuration  (oes, i, oes.Duration  (oes2, i));
+      oes.setRequotes  (oes, i, oes.Requotes  (oes2, i));
+      oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
+   }
+   if (newTicket != 0) {                                                // -1 = kein neues Ticket: ein Ticket wurde komplett geschlossen
+      for (i=0; i < sizeOfTickets; i++) {                               // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+         if (oes.RemainingTicket(oes2, i) == newTicket) {               // partiell oder komplett geschlossenes Ticket gefunden
+            oes.setSwap      (oes, i, oes.Swap      (oes2, i));
+            oes.setCommission(oes, i, oes.Commission(oes2, i));
+            oes.setProfit    (oes, i, oes.Profit    (oes2, i));
+            sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);          // geschlossenes Ticket löschen
+            break;
+         }
+      }
+      if (newTicket > 0)
+         sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);            // neues Ticket hinzufügen
+   }
+
+
+   // (5) Teilpositionen auflösen
+   ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
+
+   if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(6)")));
+
+   for (i=0; i < sizeOfCopy; i++) {
+      int pos = SearchIntArray(tickets, tickets.copy[i]);
+      if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
+         pos = sizeOfTickets-1;
+      oes.addSwap      (oes, pos, oes.Swap      (oes2, i));
+      oes.addCommission(oes, pos, oes.Commission(oes2, i));             // Beträge jeweils addieren
+      oes.addProfit    (oes, pos, oes.Profit    (oes2, i));
+   }
+
+   ArrayResize(oes2,         0);
+   ArrayResize(tickets.copy, 0);
+   return(!oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(7)", NULL, O_POP)));
 }
 
 
@@ -7121,7 +7031,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
    // Schleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(6)  ", __OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(7)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(6)  ", OrderDeleteEx.ErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(7)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG()) log("OrderDeleteEx(8)  trade context busy, retrying...");
@@ -7143,7 +7053,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(9)")));
 
-         if (__LOG()) log(StringConcatenate("OrderDeleteEx(10)  ", __OrderDeleteEx.SuccessMsg(oe)));
+         if (__LOG()) log(StringConcatenate("OrderDeleteEx(10)  ", OrderDeleteEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
@@ -7165,7 +7075,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          break;
       warn(StringConcatenate("OrderDeleteEx(13)  ", Order.TempErrorMsg(oe, tempErrors)), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(14)  ", __OrderDeleteEx.PermErrorMsg(oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(14)  ", OrderDeleteEx.ErrorMsg(oe)), error, O_POP))));
 }
 
 
@@ -7175,10 +7085,8 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
  * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return string
- *
- * @access private - Aufruf nur aus OrderDeleteEx()
  */
-string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+string OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // deleted #1 Stop Buy 0.5 GBPUSD at 1.5520'3 ("SR.12345.+3") after 0.2 s
 
    int    digits      = oe.Digits(oe);
@@ -7206,8 +7114,8 @@ string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @access private - Aufruf nur aus OrderDeleteEx()
  */
-string __OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
+string OrderDeleteEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+   // error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -7260,6 +7168,87 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
    }
    ArrayResize(oe, 0);
    return(true);
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muß während der Ausführung selektierbar sein.
+ *
+ * @param  int   ticket      - Ticket
+ * @param  int   digits      - Nachkommastellen des Ordersymbols
+ * @param  color markerColor - Farbe des Chartmarkers
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ */
+bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
+   if (!__CHART()) return(true);
+
+   if (!SelectTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
+      return(false);
+
+   bool result = ChartMarker.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
+
+   return(ifBool(OrderPop("ChartMarker.OrderSent_A(2)"), result, false));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ *
+ * @param  int      ticket      - Ticket
+ * @param  int      digits      - Nachkommastellen des Ordersymbols
+ * @param  color    markerColor - Farbe des Chartmarkers
+ * @param  int      type        - Ordertyp
+ * @param  double   lots        - Lotsize
+ * @param  string   symbol      - OrderSymbol
+ * @param  datetime openTime    - OrderOpenTime
+ * @param  double   openPrice   - OrderOpenPrice
+ * @param  double   stopLoss    - StopLoss
+ * @param  double   takeProfit  - TakeProfit
+ * @param  string   comment     - OrderComment
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
+ */
+bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
+   if (!__CHART()) return(true);
+
+   static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
+
+   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
+   string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
+   if (ObjectFind(label1) == 0) {
+      if (markerColor == CLR_NONE) ObjectDelete(label1);                               // löschen
+      else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);      // korrigieren
+   }
+   else if (markerColor != CLR_NONE) {
+      if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
+         ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label1, OBJPROP_COLOR    , markerColor     );
+         ObjectSetText(label1, comment);
+      }
+   }
+
+   // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
+   if (!EQ(stopLoss, 0)) {
+      string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
+      if (ObjectFind(label2) == 0)
+         ObjectDelete(label2);
+   }
+
+   // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
+   if (!EQ(takeProfit, 0)) {
+      string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
+      if (ObjectFind(label3) == 0)
+         ObjectDelete(label3);
+   }
+
+   return(!catch("ChartMarker.OrderSent_B()"));
 }
 
 
