@@ -5237,6 +5237,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (IsError(error))                                         return(!oe.setError(oe, catch("OrderSendEx(2)  symbol=\""+ symbol +"\"", error)));
    // type
    if (!IsTradeOperation(type))                                return(!oe.setError(oe, catch("OrderSendEx(3)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   bool isPendingType = IsPendingTradeOperation(type);
    // lots
    if (LT(lots, minLot))                                       return(!oe.setError(oe, catch("OrderSendEx(4)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
    if (GT(lots, maxLot))                                       return(!oe.setError(oe, catch("OrderSendEx(5)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
@@ -5244,7 +5245,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
    if (LT(price, 0))                                           return(!oe.setError(oe, catch("OrderSendEx(7)  illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER)));
-   if (IsPendingTradeOperation(type)) /*&&*/ if (EQ(price, 0)) return(!oe.setError(oe, catch("OrderSendEx(8)  illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER)));
+   if (isPendingType) /*&&*/ if (EQ(price, 0))                 return(!oe.setError(oe, catch("OrderSendEx(8)  illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER)));
    price = NormalizeDouble(price, digits);
    // slippage
    if (LT(slippage, 0))                                        return(!oe.setError(oe, catch("OrderSendEx(9)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER)));
@@ -5276,8 +5277,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
 
-   int  ticket, firstTime1=GetTickCount(), time1, requotes, tempErrors;
-   bool isPendingType = IsPendingTradeOperation(type);
+   int ticket, firstTime1=GetTickCount(), time1, requotes, tempErrors;
 
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
