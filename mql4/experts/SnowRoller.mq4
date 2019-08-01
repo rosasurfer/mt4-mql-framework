@@ -743,9 +743,9 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                Chart.MarkOrderFilled(i);
                if (__LOG()) log(UpdateStatus.OrderFillMsg(i));
 
-               if (NE(orders.gridBase[i], grid.base, Digits)) {
-                  return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level "+ orders.level[i] +": "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
-               }
+               //if (NE(orders.gridBase[i], grid.base, Digits)) {
+               //   return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level "+ orders.level[i] +": "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
+               //}
 
                if (IsStopOrder(i)) {
                   sequence.level   += Sign(orders.level[i]);
