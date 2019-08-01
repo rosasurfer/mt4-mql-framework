@@ -3193,21 +3193,25 @@ bool SaveStatus() {
    // Dateiinhalt zusammenstellen: Konfiguration und Input-Parameter
    string lines[]; ArrayResize(lines, 0);
    ArrayPushString(lines, /*string*/ "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
-   ArrayPushString(lines, /*string*/ "Symbol="            +             Symbol()               );
-   ArrayPushString(lines, /*string*/ "Sequence.ID="       +             Sequence.ID            );
-   ArrayPushString(lines, /*string*/ "GridDirection="     +             GridDirection          );
-   ArrayPushString(lines, /*int   */ "GridSize="          +             GridSize               );
-   ArrayPushString(lines, /*double*/ "LotSize="           + NumberToStr(LotSize, ".+")         );
-   ArrayPushString(lines, /*int   */ "StartLevel="        +             StartLevel             );
-   ArrayPushString(lines, /*string*/ "StartConditions="   +             StartConditions        );
-   ArrayPushString(lines, /*string*/ "StopConditions="    +             StopConditions         );
+      int sizeOfStarts = ArraySize(sequence.start.event);
+      if (!sizeOfStarts) datetime created = TimeCurrentEx("SaveStatus(2)");
+      else                        created = sequence.start.time[0];
+   ArrayPushString(lines, /*string*/ "Created="        + GmtTimeFormat(created, "%a, %Y.%m.%d %H:%M:%S"));
+   ArrayPushString(lines, /*string*/ "Symbol="         +               Symbol()       );
+   ArrayPushString(lines, /*string*/ "Sequence.ID="    +               Sequence.ID    );
+   ArrayPushString(lines, /*string*/ "GridDirection="  +               GridDirection  );
+   ArrayPushString(lines, /*int   */ "GridSize="       +               GridSize       );
+   ArrayPushString(lines, /*double*/ "LotSize="        +   NumberToStr(LotSize, ".+") );
+   ArrayPushString(lines, /*int   */ "StartLevel="     +               StartLevel     );
+   ArrayPushString(lines, /*string*/ "StartConditions="+               StartConditions);
+   ArrayPushString(lines, /*string*/ "StopConditions=" +               StopConditions );
 
    // Laufzeit-Variablen
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
       string values[]; ArrayResize(values, 0);
    ArrayPushString(lines, /*double*/ "rt.sequence.maxProfit="   + NumberToStr(sequence.maxProfit, ".+"));
    ArrayPushString(lines, /*double*/ "rt.sequence.maxDrawdown=" + NumberToStr(sequence.maxDrawdown, ".+"));
-      int size = ArraySize(sequence.start.event);
+      int size = sizeOfStarts;
       for (int i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       if (size == 0)
@@ -3266,12 +3270,12 @@ bool SaveStatus() {
    // alles speichern
    string filename = MQL.GetStatusFileName();
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
-   if (hFile < 0) return(_false(catch("SaveStatus(2)->FileOpen(\""+ filename +"\")")));
+   if (hFile < 0) return(_false(catch("SaveStatus(3)->FileOpen(\""+ filename +"\")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
          int error = GetLastError();
-         catch("SaveStatus(3)->FileWrite(line #"+ (i+1) +") failed to \""+ filename +"\"", ifInt(error, error, ERR_RUNTIME_ERROR));
+         catch("SaveStatus(4)->FileWrite(line #"+ (i+1) +") failed to \""+ filename +"\"", ifInt(error, error, ERR_RUNTIME_ERROR));
          FileClose(hFile);
          return(false);
       }
@@ -3282,7 +3286,7 @@ bool SaveStatus() {
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
-   return(!last_error|catch("SaveStatus(4)"));
+   return(!last_error|catch("SaveStatus(5)"));
 }
 
 
@@ -3312,8 +3316,9 @@ bool RestoreStatus() {
 
    // notwendige Schlüssel definieren
    string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
-   /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander,
-                     "Symbol"                  ,                        // wenn der Initializer nicht komplett in einer Zeile steht.
+   /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer
+                   //"Created"                 ,                        //  nicht in einer einzigen Zeile steht.
+                     "Symbol"                  ,
                      "Sequence.ID"             ,
                    //"Sequence.Status.Location",                        // optional
                      "GridDirection"           ,
