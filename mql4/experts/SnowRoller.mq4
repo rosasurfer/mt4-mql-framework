@@ -743,6 +743,10 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                Chart.MarkOrderFilled(i);
                if (__LOG()) log(UpdateStatus.OrderFillMsg(i));
 
+               if (NE(orders.gridBase[i], grid.base, Digits)) {
+                  return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level "+ orders.level[i] +": "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
+               }
+
                if (IsStopOrder(i)) {
                   sequence.level   += Sign(orders.level[i]);
                   sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
@@ -811,7 +815,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
       ArraySort(closed);
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
-         if (n == -1) return(_false(catch("UpdateStatus(3)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+         if (n == -1) return(_false(catch("UpdateStatus(4)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -835,7 +839,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             return(false);
 
          sequence.status = STATUS_STOPPED;
-         if (__LOG()) log("UpdateStatus(4)  STATUS_STOPPED");
+         if (__LOG()) log("UpdateStatus(5)  STATUS_STOPPED");
          RedrawStartStop();
       }
    }
@@ -847,7 +851,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
          else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
-         if (NE(grid.base, last)) {
+         if (NE(grid.base, last, Digits)) {
             GridBase.Change(TimeCurrentEx("UpdateStatus(5)"), grid.base);
             gridChanged = true;
          }
@@ -1464,7 +1468,8 @@ bool UpdatePendingOrders() {
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
             if (!sequence.level) /*&&*/ if (NE(grid.base, orders.gridBase[i], Digits)) {
-               static int lastTrailed = 0;
+               static int lastTrailed = INT_MIN;
+
                if (IsTesting() || GetTickCount()-lastTrailed > 3000) {     // Prevent ERR_TOO_MANY_REQUESTS caused by contacting the trade server
                   if (!Grid.TrailPendingOrder(i)) return(false);           // at each tick. Wait 3 seconds between consecutive order trailings.
                   lastTrailed = GetTickCount();
@@ -3199,6 +3204,7 @@ bool SaveStatus() {
    ArrayPushString(lines, /*string*/ "Created="        + GmtTimeFormat(created, "%a, %Y.%m.%d %H:%M:%S"));
    ArrayPushString(lines, /*string*/ "Symbol="         +               Symbol()       );
    ArrayPushString(lines, /*string*/ "Sequence.ID="    +               Sequence.ID    );
+      if (!StringLen(Sequence.ID)) warn("SaveStatus(3)  sequence (int)"+ sequence.id +", writing illegal input parameter Sequence.ID to status file: \"\"");
    ArrayPushString(lines, /*string*/ "GridDirection="  +               GridDirection  );
    ArrayPushString(lines, /*int   */ "GridSize="       +               GridSize       );
    ArrayPushString(lines, /*double*/ "LotSize="        +   NumberToStr(LotSize, ".+") );
@@ -3270,12 +3276,12 @@ bool SaveStatus() {
    // alles speichern
    string filename = MQL.GetStatusFileName();
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
-   if (hFile < 0) return(_false(catch("SaveStatus(3)->FileOpen(\""+ filename +"\")")));
+   if (hFile < 0) return(_false(catch("SaveStatus(4)->FileOpen(\""+ filename +"\")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
          int error = GetLastError();
-         catch("SaveStatus(4)->FileWrite(line #"+ (i+1) +") failed to \""+ filename +"\"", ifInt(error, error, ERR_RUNTIME_ERROR));
+         catch("SaveStatus(5)->FileWrite(line #"+ (i+1) +") failed to \""+ filename +"\"", ifInt(error, error, ERR_RUNTIME_ERROR));
          FileClose(hFile);
          return(false);
       }
@@ -3286,7 +3292,7 @@ bool SaveStatus() {
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
-   return(!last_error|catch("SaveStatus(5)"));
+   return(!last_error|catch("SaveStatus(6)"));
 }
 
 

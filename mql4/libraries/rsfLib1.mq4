@@ -337,8 +337,8 @@ bool AquireLock(string mutexName, bool wait) {
       return(true);
    }
 
-   datetime now, startTime=GetTickCount();
-   int      error, duration, seconds=1;
+   datetime startTime = GetTickCount();
+   int      error, duration, seconds = 1;
    string   globalVarName = mutexName;
 
    if (This.IsTesting())
@@ -5277,7 +5277,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
 
-   int ticket, firstTime1=GetTickCount(), time1, requotes, tempErrors;
+   int ticket, time1, firstTime1 = GetTickCount(), requotes, tempErrors;
 
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
@@ -5635,7 +5635,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       warn("OrderModifyEx(14)  nothing to modify for #"+ ticket);
       return(!oe.setError(oe, catch("OrderModifyEx(15)", NULL, O_POP)));
    }
-   int  tempErrors, startTime=GetTickCount();
+   int  tempErrors, startTime = GetTickCount();
    bool success;
 
    // loop until the order was modified or a permanent error occurred
@@ -5875,7 +5875,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
    int    slippagePoints = MathRound(slippage * pipPoints);
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
-   int    time1, firstTime1=GetTickCount(), requotes, tempErrors, remainder;
+   int    time1, firstTime1 = GetTickCount(), requotes, tempErrors, remainder;
    double firstPrice, bid, ask;                                                        // erster OrderPrice (falls ERR_REQUOTE auftritt)
    bool   success;
 
@@ -7026,7 +7026,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
    | deleted |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 | 2012.03.20 12:00:06 |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | cancelled     |
    +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+---------------+
    */
-   int  error, firstTime1=GetTickCount(), time1, tempErrors;
+   int  error, firstTime1 = GetTickCount(), tempErrors;
    bool success;
 
    // Schleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
@@ -7042,7 +7042,6 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
       oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
       oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
-      time1   = GetTickCount();
       success = OrderDelete(ticket, markerColor);
 
       oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
