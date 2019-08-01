@@ -744,7 +744,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                if (__LOG()) log(UpdateStatus.OrderFillMsg(i));
 
                if (NE(orders.gridBase[i], grid.base, Digits)) {
-                  return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level["+ orders.level[i] +"]: "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
+                  return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level "+ orders.level[i] +": "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
                }
 
                if (IsStopOrder(i)) {
@@ -1468,13 +1468,9 @@ bool UpdatePendingOrders() {
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
             if (!sequence.level) /*&&*/ if (NE(grid.base, orders.gridBase[i], Digits)) {
-               debug("UpdatePendingOrders(0.1)  gridbase changed");
-
                static int lastTrailed = INT_MIN;
-               int now = GetTickCount();
-               if (now < lastTrailed) return(!catch("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" GetTickCount(current:"+ now +") < GetTickCount(last:"+ lastTrailed +")", ERR_RUNTIME_ERROR));
 
-               if (IsTesting() || now-lastTrailed > 3000) {                // Prevent ERR_TOO_MANY_REQUESTS caused by contacting the trade server
+               if (IsTesting() || GetTickCount()-lastTrailed > 3000) {     // Prevent ERR_TOO_MANY_REQUESTS caused by contacting the trade server
                   if (!Grid.TrailPendingOrder(i)) return(false);           // at each tick. Wait 3 seconds between consecutive order trailings.
                   lastTrailed = GetTickCount();
                   ordersChanged = true;
@@ -1482,9 +1478,6 @@ bool UpdatePendingOrders() {
                      nextLevel = sequence.level + ifInt(sequence.direction==D_LONG, 1, -1);
                      nextOrderExists = false;
                   }
-               }
-               else {
-                  debug("UpdatePendingOrders(0.2)  skip trailing (last: "+ (now-lastTrailed) +" msec ago)");
                }
             }
             continue;
@@ -1515,14 +1508,14 @@ bool UpdatePendingOrders() {
       if (limitOrders > 0) {
          SS.MissedLevels();
          sMissedLevels = StrRight(sMissedLevels, -2);
-         warn("UpdatePendingOrders(4)  sequence "+ Sequence.ID +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
+         warn("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
       }
       ordersChanged = true;
    }
 
    if (ordersChanged)
       if (!SaveStatus()) return(false);
-   return(!last_error|catch("UpdatePendingOrders(5)"));
+   return(!last_error|catch("UpdatePendingOrders(4)"));
 }
 
 
