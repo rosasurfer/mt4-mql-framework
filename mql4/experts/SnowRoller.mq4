@@ -1470,7 +1470,7 @@ bool UpdatePendingOrders() {
             if (!sequence.level) /*&&*/ if (NE(grid.base, orders.gridBase[i], Digits)) {
                debug("UpdatePendingOrders(0.1)  gridbase changed");
 
-               static int lastTrailed = 0;
+               static int lastTrailed = INT_MIN;
                int now = GetTickCount();
                if (now < lastTrailed) return(!catch("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" GetTickCount(current:"+ now +") < GetTickCount(last:"+ lastTrailed +")", ERR_RUNTIME_ERROR));
 
