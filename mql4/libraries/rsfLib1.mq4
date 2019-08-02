@@ -895,7 +895,7 @@ bool IsTemporaryTradeError(int error) {
 
       // permanent errors
       case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: ist temporär
-      case ERR_COMMON_ERROR:                 //        2   trade request failed                                      // TODO: kann temporär sein (z.B. bei Serverwechsel)
+      case ERR_TRADE_REQUEST_FAILED:         //        2   trade request failed                                      // TODO: kann temporär sein (z.B. bei Serverwechsel)
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
       case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: ist temporär
@@ -5152,10 +5152,10 @@ int Order.HandleError(string message, int error, bool terminalError, int oeFlags
    }
 
    // accept the specified acceptable errors
-   if (error==ERR_INVALID_STOP  && oeFlags & F_ERR_INVALID_STOP ) return(log(message, error));
-   if (error==ERR_ORDER_CHANGED && oeFlags & F_ERR_ORDER_CHANGED) return(log(message, error));
-   if (error==ERR_MARKET_CLOSED && oeFlags & F_ERR_MARKET_CLOSED) return(log(message, error));
-   if (error==ERR_COMMON_ERROR  && oeFlags & F_ERR_COMMON_ERROR ) return(log(message, error));
+   if (error==ERR_INVALID_STOP         && oeFlags & F_ERR_INVALID_STOP        ) return(log(message, error));
+   if (error==ERR_ORDER_CHANGED        && oeFlags & F_ERR_ORDER_CHANGED       ) return(log(message, error));
+   if (error==ERR_MARKET_CLOSED        && oeFlags & F_ERR_MARKET_CLOSED       ) return(log(message, error));
+   if (error==ERR_TRADE_REQUEST_FAILED && oeFlags & F_ERR_TRADE_REQUEST_FAILED) return(log(message, error));
 
    // always accept ERS_EXECUTION_STOPPING in Strategy Tester
    if (error==ERS_EXECUTION_STOPPING && This.IsTesting() && IsStopped()) {

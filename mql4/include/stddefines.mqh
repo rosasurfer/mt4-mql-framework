@@ -732,7 +732,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_ERR_INVALID_STOP              0x0001  //     1
 #define F_ERR_ORDER_CHANGED             0x0002  //     2
 #define F_ERR_MARKET_CLOSED             0x0004  //     4
-#define F_ERR_COMMON_ERROR              0x0008  //     8
+#define F_ERR_TRADE_REQUEST_FAILED      0x0008  //     8
 #define F_ERR_CONCURRENT_MODIFICATION   0x0010  //    16
 #define F_ERR_SERIES_NOT_AVAILABLE      0x0020  //    32
 #define F_ERS_HISTORY_UPDATE            0x0040  //    64 (temporary status)
