@@ -705,7 +705,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          // client-seitige PendingOrders prüfen
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
-               if (__LOG()) log(UpdateStatus.StopTriggerMsg(i));
+               if (__LOG()) log("UpdateStatus(1)  "+ UpdateStatus.StopTriggerMsg(i));
                ArrayPushInt(activatedLimits, i);
             }
             continue;
@@ -714,11 +714,11 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          // Magic-Ticket #-2 prüfen (wird sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
             orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(1)");
+            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(2)");
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
             Chart.MarkPositionClosed(i);
-            if (__LOG()) log(UpdateStatus.StopLossMsg(i));
+            if (__LOG()) log("UpdateStatus(3)  "+ UpdateStatus.StopLossMsg(i));
 
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++; SS.Stops();
@@ -728,7 +728,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          }
 
          // reguläre server-seitige Tickets
-         if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)")) return(false);
+         if (!SelectTicket(orders.ticket[i], "UpdateStatus(4)")) return(false);
 
          if (wasPending) {
             // beim letzten Aufruf Pending-Order
@@ -741,11 +741,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
                orders.profit    [i] = OrderProfit();
                Chart.MarkOrderFilled(i);
-               if (__LOG()) log(UpdateStatus.OrderFillMsg(i));
-
-               //if (NE(orders.gridBase[i], grid.base, Digits)) {
-               //   return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level "+ orders.level[i] +": "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
-               //}
+               if (__LOG()) log("UpdateStatus(5)  "+ UpdateStatus.OrderFillMsg(i));
 
                if (IsStopOrder(i)) {
                   sequence.level   += Sign(orders.level[i]);
@@ -771,7 +767,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             if (orders.type[i] != OP_UNDEFINED) {
                openPositions = true;
                if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG()) log(UpdateStatus.StopTriggerMsg(i));
+                  if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.StopTriggerMsg(i));
                   ArrayPushInt(activatedLimits, i);
                }
             }
@@ -789,7 +785,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
             if (orders.closedBySL[i]) {                                          // ausgestoppt
                orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
-               if (__LOG()) log(UpdateStatus.StopLossMsg(i));
+               if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
                sequence.level  -= Sign(orders.level[i]);
                sequence.stops++;
                sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
@@ -802,7 +798,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
                if (sequence.status != STATUS_STOPPED)
                   sequence.status = STATUS_STOPPING;
-               if (__LOG()) log(UpdateStatus.PositionCloseMsg(i));
+               if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.PositionCloseMsg(i));
                sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
             }
          }
@@ -815,7 +811,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
       ArraySort(closed);
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
-         if (n == -1) return(_false(catch("UpdateStatus(4)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+         if (n == -1) return(_false(catch("UpdateStatus(9)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -839,7 +835,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             return(false);
 
          sequence.status = STATUS_STOPPED;
-         if (__LOG()) log("UpdateStatus(5)  STATUS_STOPPED");
+         if (__LOG()) log("UpdateStatus(10)  STATUS_STOPPED");
          RedrawStartStop();
       }
    }
@@ -852,7 +848,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(grid.base, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(5)"), grid.base);
+            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
             gridChanged = true;
          }
          // Gridbasis des letzten Tickets inspizieren
@@ -865,7 +861,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
    // ggf. Ort der Statusdatei aktualisieren
    if (updateStatusLocation)
       UpdateStatusLocation();
-   return(!last_error|catch("UpdateStatus(6)"));
+   return(!last_error|catch("UpdateStatus(12)"));
 }
 
 
@@ -881,7 +877,7 @@ string UpdateStatus.OrderFillMsg(int i) {
    string sType         = OperationTypeDescription(orders.pendingType[i]);
    string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message       = "UpdateStatus()  #"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
+   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
    if (NE(orders.pendingPrice[i], orders.openPrice[i])) {
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
@@ -891,57 +887,6 @@ string UpdateStatus.OrderFillMsg(int i) {
       if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
-   }
-   return(message);
-}
-
-
-/**
- * Compose a log message for a triggered client-side stop.
- *
- * @param  int i - order index
- *
- * @return string
- */
-string UpdateStatus.StopTriggerMsg(int i) {
-   string comment = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-
-   if (orders.type[i] == OP_UNDEFINED) {
-      // client-side Stop Buy at 1.5457'2 ("SR.8692.+17") was triggered
-      return("UpdateStatus()  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" (\""+ comment +"\") was triggered");
-   }
-   else {
-      // #1 client-side stoploss at 1.5457'2 ("SR.8692.+17") was triggered
-      return("UpdateStatus()  #"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" (\""+ comment +"\") was triggered");
-   }
-}
-
-
-/**
- * Compose a log message for an executed stoploss.
- *
- * @param  int i - order index
- *
- * @return string
- */
-string UpdateStatus.StopLossMsg(int i) {
-   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), [client-side ]stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
-   string sMagic     = ifString(orders.ticket[i]==-2, "magic ticket ", "");
-   string sType      = OperationTypeDescription(orders.type[i]);
-   string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
-   string sStopSide  = ifString(orders.clientsideLimit[i], "client-side ", "");
-   string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
-   string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message    = "UpdateStatus()  "+ sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), "+ sStopSide +"stoploss "+ sStopLoss +" was executed";
-
-   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
-      double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
-         if (orders.type[i] == OP_SELL)
-            slippage = -slippage;
-      string sSlippage;
-      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
-      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
-      message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
    return(message);
 }
@@ -960,9 +905,60 @@ string UpdateStatus.PositionCloseMsg(int i) {
    string sOpenPrice  = NumberToStr(orders.openPrice[i], PriceFormat);
    string sClosePrice = NumberToStr(orders.closePrice[i], PriceFormat);
    string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message     = "UpdateStatus()  #"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
+   string message     = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
 
    return(message);
+}
+
+
+/**
+ * Compose a log message for an executed stoploss.
+ *
+ * @param  int i - order index
+ *
+ * @return string
+ */
+string UpdateStatus.StopLossMsg(int i) {
+   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), [client-side ]stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   string sMagic     = ifString(orders.ticket[i]==-2, "magic ticket ", "");
+   string sType      = OperationTypeDescription(orders.type[i]);
+   string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
+   string sStopSide  = ifString(orders.clientsideLimit[i], "client-side ", "");
+   string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
+   string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), "+ sStopSide +"stoploss "+ sStopLoss +" was executed";
+
+   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
+      double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
+         if (orders.type[i] == OP_SELL)
+            slippage = -slippage;
+      string sSlippage;
+      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
+      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
+      message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
+   }
+   return(message);
+}
+
+
+/**
+ * Compose a log message for a triggered client-side stop.
+ *
+ * @param  int i - order index
+ *
+ * @return string
+ */
+string UpdateStatus.StopTriggerMsg(int i) {
+   string comment = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+
+   if (orders.type[i] == OP_UNDEFINED) {
+      // client-side Stop Buy at 1.5457'2 ("SR.8692.+17") was triggered
+      return("client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" (\""+ comment +"\") was triggered");
+   }
+   else {
+      // #1 client-side stoploss at 1.5457'2 ("SR.8692.+17") was triggered
+      return("#"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" (\""+ comment +"\") was triggered");
+   }
 }
 
 
