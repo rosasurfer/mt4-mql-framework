@@ -33,6 +33,7 @@ int onInitUser() {
             sequence.isTest = false;
             sequence.id     = ids[i];
             Sequence.ID     = sequence.id; SS.SequenceId();
+            sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
             if (RestoreStatus())                                     // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
@@ -54,6 +55,7 @@ int onInitUser() {
       sequence.isTest = IsTesting();
       sequence.id     = CreateSequenceId();
       Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
       sequence.status = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
@@ -105,6 +107,7 @@ int onInitParameters() {
       sequence.isTest = IsTesting();
       sequence.id     = CreateSequenceId();
       Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
       sequence.status = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
