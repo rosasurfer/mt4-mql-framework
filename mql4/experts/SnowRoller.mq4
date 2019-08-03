@@ -1596,86 +1596,66 @@ int Grid.AddPendingOrder(int level) {
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                               return(!catch("Grid.AddPendingOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(2)  cannot add order to "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
-   int orderType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
+   int pendingType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(orderType) +" order now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   double price = grid.base + level*GridSize*Pips;
-   int loop.orderType;
-   bool success = false;
+   double price=grid.base + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
+   int counter, ticket, oe[];
+   if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
+   else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
 
-   while (!success) {
-      // determine order type
-      if (sequence.direction == D_LONG) {
-         if (price > Ask) loop.orderType = OP_BUYSTOP;
-         else             loop.orderType = OP_BUYLIMIT;
+   // loop until a pending order was opened or an error occurred
+   // TODO: add break condition to prevent infinite loop
+   while (true) {
+      counter++;
+      if (IsStopOrderType(pendingType)) ticket = SubmitStopOrder(pendingType, level, oe);
+      else                              ticket = SubmitLimitOrder(pendingType, level, oe);
+      if (ticket > 0) break;
+      if (oe.Error(oe) != ERR_INVALID_STOP) return(NULL);
+      if (counter > 4) return(!catch("Grid.AddPendingOrder(3)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries", ERR_RUNTIME_ERROR));
+                                                               // market violated: switch order type and ignore price, thus preventing
+      if (ticket == -1) {                                      // the same pending order type over and over caused by a stalling price feed
+         if (__LOG()) log("Grid.AddPendingOrder(4)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", oe.Error(oe));
+         pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
       }
-      else {
-         if (price < Bid) loop.orderType = OP_SELLSTOP;
-         else             loop.orderType = OP_SELLLIMIT;
+      else if (ticket == -2) {                                 // stop distance violated: use client-side stop management
+         ticket = -1;
+         warn("Grid.AddPendingOrder(5)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" client-side "+ ifString(IsStopOrderType(pendingType), "stop", "limit") +" for "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
+         break;
       }
-
-      // open the order
-      if (IsStopOrderType(loop.orderType)) {
-      }
-      else {
-      }
-      break;
-   }
-
-
-
-   // first try to open a stop order
-   int oe[];
-   int ticket = SubmitStopOrder(orderType, level, oe);
-
-   if (ticket <= 0) {
-      if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
-      // if market violated
-      if (ticket == -1) {
-         if (__LOG()) log("Grid.AddPendingOrder(3)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" illegal price "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a limit order instead", oe.Error(oe));
-         orderType -= 2;
-         ticket = SubmitLimitOrder(orderType, level, oe);                           // open a limit order instead
-         if (ticket <= 0) return(!catch("Grid.AddPendingOrder(4)", oe.Error(oe)));
-      }
-      // if stop distance violated
-      else if (ticket == -2) {
-         ticket = -1;                                                               // use client-side stop management
-         warn("Grid.AddPendingOrder(5)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" client-side limit for "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
-      }
-      // on all other errors
-      else return(!catch("Grid.AddPendingOrder(6)  unknown ticket value "+ ticket, oe.Error(oe)));
+      else return(!catch("Grid.AddPendingOrder(6)  unknown ticket return value "+ ticket, oe.Error(oe)));
    }
 
    // prepare order dataset
-   //int    ticket       = ...                     // use as is
-   //int    level        = ...                     // ...
-   //double grid.base    = ...                     // ...
+   //int    ticket          = ...                  // use as is
+   //int    level           = ...                  // ...
+   //double grid.base       = ...                  // ...
 
-   int      pendingType  = orderType;
-   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(7)");
-   double   pendingPrice = oe.OpenPrice(oe);
+   //int    pendingType     = ...                  // ...
+   datetime pendingTime     = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(7)");
+   double   pendingPrice    = oe.OpenPrice(oe);
 
-   int      type         = OP_UNDEFINED;
-   int      openEvent    = NULL;
-   datetime openTime     = NULL;
-   double   openPrice    = NULL;
-   int      closeEvent   = NULL;
-   datetime closeTime    = NULL;
-   double   closePrice   = NULL;
-   double   stopLoss     = oe.StopLoss(oe);
-   bool     clientLimit  = (ticket <= 0);
-   bool     closedBySL   = false;
+   int      openType        = OP_UNDEFINED;
+   int      openEvent       = NULL;
+   datetime openTime        = NULL;
+   double   openPrice       = NULL;
+   int      closeEvent      = NULL;
+   datetime closeTime       = NULL;
+   double   closePrice      = NULL;
+   double   stopLoss        = oe.StopLoss(oe);
+   bool     clientsideLimit = (ticket <= 0);
+   bool     closedBySL      = false;
 
-   double   swap         = NULL;
-   double   commission   = NULL;
-   double   profit       = NULL;
+   double   swap            = NULL;
+   double   commission      = NULL;
+   double   profit          = NULL;
 
    ArrayResize(oe, 0);
 
    // store dataset
-   if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideLimit, closedBySL, swap, commission, profit))
       return(NULL);
 
    if (last_error || catch("Grid.AddPendingOrder(8)"))
