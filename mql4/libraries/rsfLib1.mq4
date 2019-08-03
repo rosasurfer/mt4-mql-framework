@@ -5258,7 +5258,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (comment == "0") comment = "";                           // (string) NULL
    else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!oe.setError(oe, catch("OrderSendEx(12)  illegal parameter comment = \""+ comment +"\" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (!StringLen(comment)) string msgComment = "";
-   else                            msgComment = " (\""+ comment +"\")";
+   else                            msgComment = " \""+ comment +"\"";
    // expires
    if (expires != 0) /*&&*/ if (expires <= TimeCurrentEx("OrderSendEx(13)")) return(!oe.setError(oe, catch("OrderSendEx(13)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER)));
    // markerColor
@@ -5303,51 +5303,51 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       oe.setOpenPrice(oe, price);
 
       if (type == OP_BUYSTOP) {
-         if (LE(price, ask))                                    return(!Order.HandleError("OrderSendEx(18) "+ msgComment +" illegal price "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe));
-         if (LT(price - stopDistance*pips, ask))                return(!Order.HandleError("OrderSendEx(19) "+ msgComment +" "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +" (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+         if (LE(price, ask))                                    return(!Order.HandleError("OrderSendEx(18)  illegal price "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe));
+         if (LT(price - stopDistance*pips, ask))                return(!Order.HandleError("OrderSendEx(19)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +" too close to market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +" (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
       }
       else if (type == OP_SELLSTOP) {
-         if (GE(price, bid))                                    return(!Order.HandleError("OrderSendEx(20) "+ msgComment +" illegal price "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe));
-         if (GT(price + stopDistance*pips, bid))                return(!Order.HandleError("OrderSendEx(21) "+ msgComment +" "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +" (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+         if (GE(price, bid))                                    return(!Order.HandleError("OrderSendEx(20)  illegal price "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe));
+         if (GT(price + stopDistance*pips, bid))                return(!Order.HandleError("OrderSendEx(21)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +" too close to market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +" (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
       }
 
       // validate StopLoss <> StopDistance
       if (!EQ(stopLoss, 0)) {
          if (IsLongOrderType(type)) {
-            if (GE(stopLoss, price))                            return(!Order.HandleError("OrderSendEx(22) "+ msgComment +" illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+            if (GE(stopLoss, price))                            return(!Order.HandleError("OrderSendEx(22)  illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_BUY) {
-               if (GE(stopLoss, bid))                           return(!Order.HandleError("OrderSendEx(23) "+ msgComment +" illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
-               if (GT(stopLoss, bid - stopDistance*pips))       return(!Order.HandleError("OrderSendEx(24) "+ msgComment +" "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GE(stopLoss, bid))                           return(!Order.HandleError("OrderSendEx(23)  illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GT(stopLoss, bid - stopDistance*pips))       return(!Order.HandleError("OrderSendEx(24)  "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
             }
-            else if (GT(stopLoss, price - stopDistance*pips))   return(!Order.HandleError("OrderSendEx(25) "+ msgComment +" "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+            else if (GT(stopLoss, price - stopDistance*pips))   return(!Order.HandleError("OrderSendEx(25)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
          }
          else /*short*/ {
-            if (LE(stopLoss, price))                            return(!Order.HandleError("OrderSendEx(26) "+ msgComment +" illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+            if (LE(stopLoss, price))                            return(!Order.HandleError("OrderSendEx(26)  illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_SELL) {
-               if (LE(stopLoss, ask))                           return(!Order.HandleError("OrderSendEx(27) "+ msgComment +" illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
-               if (LT(stopLoss, ask + stopDistance*pips))       return(!Order.HandleError("OrderSendEx(28) "+ msgComment +" "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+               if (LE(stopLoss, ask))                           return(!Order.HandleError("OrderSendEx(27)  illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (LT(stopLoss, ask + stopDistance*pips))       return(!Order.HandleError("OrderSendEx(28)  "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
             }
-            else if (LT(stopLoss, price + stopDistance*pips))   return(!Order.HandleError("OrderSendEx(29) "+ msgComment +" "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+            else if (LT(stopLoss, price + stopDistance*pips))   return(!Order.HandleError("OrderSendEx(29)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
          }
       }
 
       // validate TakeProfit <> StopDistance
       if (!EQ(takeProfit, 0)) {
          if (IsLongOrderType(type)) {
-            if (LE(takeProfit, price))                          return(!Order.HandleError("OrderSendEx(30) "+ msgComment +" illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+            if (LE(takeProfit, price))                          return(!Order.HandleError("OrderSendEx(30)  illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_BUY) {
-               if (LE(takeProfit, bid))                         return(!Order.HandleError("OrderSendEx(31) "+ msgComment +" illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
-               if (LT(takeProfit, bid + stopDistance*pips))     return(!Order.HandleError("OrderSendEx(32) "+ msgComment +" "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+               if (LE(takeProfit, bid))                         return(!Order.HandleError("OrderSendEx(31)  illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (LT(takeProfit, bid + stopDistance*pips))     return(!Order.HandleError("OrderSendEx(32)  "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
             }
-            else if (LT(takeProfit, price + stopDistance*pips)) return(!Order.HandleError("OrderSendEx(33) "+ msgComment +" "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+            else if (LT(takeProfit, price + stopDistance*pips)) return(!Order.HandleError("OrderSendEx(33)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
          }
          else /*short*/ {
-            if (GE(takeProfit, price))                          return(!Order.HandleError("OrderSendEx(34) "+ msgComment +" illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+            if (GE(takeProfit, price))                          return(!Order.HandleError("OrderSendEx(34)  illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_SELL) {
-               if (GE(takeProfit, ask))                         return(!Order.HandleError("OrderSendEx(35) "+ msgComment +" illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
-               if (GT(takeProfit, ask - stopDistance*pips))     return(!Order.HandleError("OrderSendEx(36) "+ msgComment +" "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GE(takeProfit, ask))                         return(!Order.HandleError("OrderSendEx(35)  illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GT(takeProfit, ask - stopDistance*pips))     return(!Order.HandleError("OrderSendEx(36)  "+ OperationTypeDescription(type) + msgComment +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
             }
-            else if (GT(takeProfit, price - stopDistance*pips)) return(!Order.HandleError("OrderSendEx(37) "+ msgComment +" "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
+            else if (GT(takeProfit, price - stopDistance*pips)) return(!Order.HandleError("OrderSendEx(37)  "+ OperationTypeDescription(type) + msgComment +" at "+ NumberToStr(price, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
          }
       }
 
