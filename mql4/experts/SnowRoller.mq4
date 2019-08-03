@@ -703,12 +703,12 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
    // Tickets aktualisieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!orders.closeTime[i]) {                                                // Ticket prüfen, wenn es beim letzten Aufruf offen war
+      if (!orders.closeTime[i]) {                                                   // Ticket prüfen, wenn es beim letzten Aufruf offen war
          wasPending = (orders.type[i] == OP_UNDEFINED);
 
          // client-seitige PendingOrders prüfen
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
-            if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
+            if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {   // handles stop and limit orders
                if (__LOG()) log("UpdateStatus(1)  "+ UpdateStatus.StopTriggerMsg(i));
                ArrayPushInt(activatedLimits, i);
             }
@@ -717,7 +717,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
          // Magic-Ticket #-2 prüfen (wird sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
-            orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
+            orders.closeEvent[i] = CreateEventId();                                 // Event-ID kann sofort vergeben werden.
             orders.closeTime [i] = TimeCurrentEx("UpdateStatus(2)");
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
@@ -726,7 +726,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++; SS.Stops();
-          //sequence.stopsPL = ...                                               // unverändert, da P/L des Magic-Tickets #-2 immer 0.00 ist
+          //sequence.stopsPL = ...                                                  // unverändert, da P/L des Magic-Tickets #-2 immer 0.00 ist
             gridChanged      = true;
             continue;
          }
@@ -736,7 +736,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
          if (wasPending) {
             // beim letzten Aufruf Pending-Order
-            if (OrderType() != orders.pendingType[i]) {                          // order limit was executed
+            if (OrderType() != orders.pendingType[i]) {                             // order limit was executed
                orders.type      [i] = OrderType();
                orders.openEvent [i] = CreateEventId();
                orders.openTime  [i] = OrderOpenTime();
@@ -753,10 +753,10 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                   gridChanged       = true;
                }
                else {
-                  ArrayDropInt(sequence.missedLevels, orders.level[i]);          // update missed grid levels
+                  ArrayDropInt(sequence.missedLevels, orders.level[i]);             // update missed grid levels
                   SS.MissedLevels();
                }
-               updateStatusLocation = updateStatusLocation || !sequence.maxLevel;// what's this needed for???
+               updateStatusLocation = updateStatusLocation || !sequence.maxLevel;   // what's this needed for???
             }
          }
          else {
@@ -766,8 +766,8 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             orders.profit    [i] = OrderProfit();
          }
 
-         isClosed = OrderCloseTime() != 0;                                       // Bei Spikes kann eine Pending-Order ausgeführt *und* bereits geschlossen sein.
-         if (!isClosed) {                                                        // weiterhin offenes Ticket
+         isClosed = OrderCloseTime() != 0;                                          // Bei Spikes kann eine Pending-Order ausgeführt *und* bereits geschlossen sein.
+         if (!isClosed) {                                                           // weiterhin offenes Ticket
             if (orders.type[i] != OP_UNDEFINED) {
                openPositions = true;
                if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
@@ -777,28 +777,28 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             }
             sequence.floatingPL = NormalizeDouble(sequence.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
-         else if (orders.type[i] == OP_UNDEFINED) {                              // jetzt geschlossenes Ticket: gestrichene Pending-Order
+         else if (orders.type[i] == OP_UNDEFINED) {                                 // jetzt geschlossenes Ticket: gestrichene Pending-Order
             Grid.DropData(i);
             sizeOfTickets--; i--;
          }
          else {
-            orders.closeTime [i] = OrderCloseTime();                             // jetzt geschlossenes Ticket: geschlossene Position
+            orders.closeTime [i] = OrderCloseTime();                                // jetzt geschlossenes Ticket: geschlossene Position
             orders.closePrice[i] = OrderClosePrice();
             orders.closedBySL[i] = IsOrderClosedBySL();
             Chart.MarkPositionClosed(i);
 
-            if (orders.closedBySL[i]) {                                          // ausgestoppt
-               orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
+            if (orders.closedBySL[i]) {                                             // ausgestoppt
+               orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
                if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
                sequence.level  -= Sign(orders.level[i]);
                sequence.stops++;
                sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
                gridChanged      = true;
             }
-            else {                                                               // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
+            else {                                                                  // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
                close[0] = OrderCloseTime();
-               close[1] = OrderTicket();                                         // Geschlossene Positionen werden zwischengespeichert, um ihnen Event-IDs
-               ArrayPushInts(closed, close);                                     // zeitlich *nach* den ausgestoppten Positionen zuweisen zu können.
+               close[1] = OrderTicket();                                            // Geschlossene Positionen werden zwischengespeichert, um ihnen Event-IDs
+               ArrayPushInts(closed, close);                                        // zeitlich *nach* den ausgestoppten Positionen zuweisen zu können.
 
                if (sequence.status != STATUS_STOPPED)
                   sequence.status = STATUS_STOPPING;
@@ -828,14 +828,14 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
    // ggf. Status aktualisieren
    if (sequence.status == STATUS_STOPPING) {
-      if (!openPositions) {                                                      // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
+      if (!openPositions) {                                                         // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
          n = ArraySize(sequence.stop.event) - 1;
          sequence.stop.event [n] = CreateEventId();
          sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
          sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequence.stop.price[n]) return(false);
          sequence.stop.profit[n] = sequence.totalPL;
 
-         if (!StopSequence.LimitStopPrice())                                     //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
+         if (!StopSequence.LimitStopPrice())                                        //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
             return(false);
 
          sequence.status = STATUS_STOPPED;
@@ -946,22 +946,22 @@ string UpdateStatus.StopLossMsg(int i) {
 
 
 /**
- * Compose a log message for a triggered client-side stop.
+ * Compose a log message for a triggered client-side stop or limit.
  *
  * @param  int i - order index
  *
  * @return string
  */
 string UpdateStatus.StopTriggerMsg(int i) {
-   string comment = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   string sSequence = sequence.name +"."+ NumberToStr(orders.level[i], "+.");
 
    if (orders.type[i] == OP_UNDEFINED) {
-      // client-side Stop Buy at 1.5457'2 ("SR.8692.+17") was triggered
-      return("client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" (\""+ comment +"\") was triggered");
+      // sequence L.8692.+17 client-side Stop Buy at 1.5457'2 was triggered
+      return("sequence "+ sSequence +" client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" was triggered");
    }
    else {
-      // #1 client-side stoploss at 1.5457'2 ("SR.8692.+17") was triggered
-      return("#"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" (\""+ comment +"\") was triggered");
+      // sequence L.8692.+17 #1 client-side stoploss at 1.5457'2 was triggered
+      return("sequence "+ sSequence +" #"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" was triggered");
    }
 }
 
@@ -1615,7 +1615,7 @@ int Grid.AddPendingOrder(int level) {
       counter++;
       if (counter > 9) return(!catch("Grid.AddPendingOrder(3)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", oe.Error(oe)));
                                                                // market violated: switch order type and ignore price, thus preventing
-      if (ticket == -1) {                                      // the same pending order type over and over caused by a stalling price feed
+      if (ticket == -1) {                                      // the same pending order type again and again caused by a stalled price feed
          if (__LOG()) log("Grid.AddPendingOrder(4)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", oe.Error(oe));
          pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
       }
@@ -4818,17 +4818,20 @@ string StatusToStr(int status) {
 /**
  * Ob der angegebene StopPrice erreicht wurde.
  *
- * @param  int    type  - Stop-Typ: OP_BUYSTOP|OP_SELLSTOP|OP_BUY|OP_SELL
- * @param  double price - StopPrice
+ * @param  int    type  - stop or limit type: OP_BUY | OP_SELL | OP_BUYSTOP | OP_SELLSTOP | OP_BUYLIMIT | OP_SELLLIMIT
+ * @param  double price - price
  *
  * @return bool
  */
 bool IsStopTriggered(int type, double price) {
-   if (type == OP_BUYSTOP ) return(Ask >= price);        // pending Buy-Stop
-   if (type == OP_SELLSTOP) return(Bid <= price);        // pending Sell-Stop
+   if (type == OP_BUYSTOP )  return(Ask >= price);       // pending Buy Stop
+   if (type == OP_SELLSTOP)  return(Bid <= price);       // pending Sell Stop
 
-   if (type == OP_BUY     ) return(Bid <= price);        // Long-StopLoss
-   if (type == OP_SELL    ) return(Ask >= price);        // Short-StopLoss
+   if (type == OP_BUYLIMIT)  return(Ask <= price);       // pending Buy Limit
+   if (type == OP_SELLLIMIT) return(Bid >= price);       // pending Sell Limit
 
-   return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
+   if (type == OP_BUY )      return(Bid <= price);        // stoploss Long
+   if (type == OP_SELL)      return(Ask >= price);        // stoploss Short
+
+   return(!catch("IsStopTriggered(1)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }
