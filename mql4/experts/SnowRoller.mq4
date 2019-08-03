@@ -96,7 +96,7 @@ bool     sequence.isTest;                          // whether the sequence was c
 int      sequence.direction;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
-int      sequence.missedLevels[];                  // grid levels missed due to a fast moving market
+int      sequence.missedLevels[];                  // grid levels missed, e.g. in a fast moving market
 double   sequence.startEquity;
 int      sequence.stops;                           // number of stopped-out positions: 0...+n
 double   sequence.stopsPL;                         // accumulated P/L of all stopped-out positions
@@ -1474,7 +1474,7 @@ bool UpdatePendingOrders() {
                   if (!Grid.TrailPendingOrder(i)) return(false);           // at each tick. Wait 3 seconds between consecutive order trailings.
                   lastTrailed = GetTickCount();
                   ordersChanged = true;
-                  if (sequence.level == nextLevel) {                       // Grid.TrailPendingOrder() missed a level due a fast moving market
+                  if (sequence.level == nextLevel) {                       // Grid.TrailPendingOrder() missed a level
                      nextLevel = sequence.level + ifInt(sequence.direction==D_LONG, 1, -1);
                      nextOrderExists = false;
                   }
@@ -1507,7 +1507,7 @@ bool UpdatePendingOrders() {
       }
       if (limitOrders > 0) {
          sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
-         warn("UpdatePendingOrders(3)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
+         warn("UpdatePendingOrders(3)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
       }
       ordersChanged = true;
    }
@@ -1953,7 +1953,7 @@ bool Grid.TrailPendingOrder(int i) {
             ArrayPushInt(sequence.missedLevels, level); SS.MissedLevels();
             sequence.level   += Sign(level);
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(level);
-            warn("Grid.TrailPendingOrder(6)  sequence "+ sequence.name +" opened 1 limit order for level "+ level +" in a fast moving market");
+            warn("Grid.TrailPendingOrder(6)  sequence "+ sequence.name +" opened 1 limit order for missed level "+ level);
          }
          // if stop distance violated: use client-side stop management
          else if (error == -2) {
