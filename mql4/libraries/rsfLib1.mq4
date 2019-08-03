@@ -5235,8 +5235,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    int error = GetLastError();
    if (IsError(error))                                         return(!oe.setError(oe, catch("OrderSendEx(2)  symbol=\""+ symbol +"\"", error)));
    // type
-   if (!IsTradeOperation(type))                                return(!oe.setError(oe, catch("OrderSendEx(3)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
-   bool isPendingType = IsPendingTradeOperation(type);
+   if (!IsOrderType(type))                                     return(!oe.setError(oe, catch("OrderSendEx(3)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   bool isPendingType = IsPendingOrderType(type);
    // lots
    if (LT(lots, minLot))                                       return(!oe.setError(oe, catch("OrderSendEx(4)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
    if (GT(lots, maxLot))                                       return(!oe.setError(oe, catch("OrderSendEx(5)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
@@ -5313,7 +5313,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       // validate StopLoss <> StopDistance
       if (!EQ(stopLoss, 0)) {
-         if (IsLongTradeOperation(type)) {
+         if (IsLongOrderType(type)) {
             if (GE(stopLoss, price))                            return(!Order.HandleError("OrderSendEx(22) "+ msgComment +" illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_BUY) {
                if (GE(stopLoss, bid))                           return(!Order.HandleError("OrderSendEx(23) "+ msgComment +" illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
@@ -5333,7 +5333,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       // validate TakeProfit <> StopDistance
       if (!EQ(takeProfit, 0)) {
-         if (IsLongTradeOperation(type)) {
+         if (IsLongOrderType(type)) {
             if (LE(takeProfit, price))                          return(!Order.HandleError("OrderSendEx(30) "+ msgComment +" illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_BUY) {
                if (LE(takeProfit, bid))                         return(!Order.HandleError("OrderSendEx(31) "+ msgComment +" illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
@@ -5569,9 +5569,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    // ticket
    if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
-   if (!IsTradeOperation(OrderType()))                         return(_false(oe.setError(oe, catch("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP))));
+   if (!IsOrderType(OrderType()))                              return(_false(oe.setError(oe, catch("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP))));
    if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderModifyEx(4)  #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
-   bool   isPendingType  = IsPendingTradeOperation(OrderType());
+   bool   isPendingType  = IsPendingOrderType(OrderType());
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
    int    pipPoints      = MathRound(MathPow(10, digits & 1));
@@ -7000,7 +7000,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
    // ticket
    if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
-   if (!IsPendingTradeOperation(OrderType()))                  return(_false(oe.setError(oe, catch("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
+   if (!IsPendingOrderType(OrderType()))                       return(_false(oe.setError(oe, catch("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
    if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderDeleteEx(4)  #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderDeleteEx(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
@@ -7158,7 +7158,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
       for (int i=size-1; i >= 0; i--) {                                 // offene Tickets
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
             continue;
-         if (IsPendingTradeOperation(OrderType())) {
+         if (IsPendingOrderType(OrderType())) {
             if (!OrderDeleteEx(OrderTicket(), CLR_NONE, oeFlags, oe))
                return(_false(OrderPop("DeletePendingOrders(2)")));
          }
@@ -7437,12 +7437,12 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
       ObjectDelete(label2);
 
    // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
-   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
+   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label3) == 0)
          ObjectDelete(label3);                                                         // löschen
 
    // neuen OrderFill-Marker: setzen, korrigieren oder löschen                         // "#1 buy 0.10 GBPUSD at 1.52904"
-   string label4 = StringConcatenate("#", ticket, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
+   string label4 = StringConcatenate("#", ticket, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label4) == 0) {
       if (markerColor == CLR_NONE) ObjectDelete(label4);                               // löschen
       else                         ObjectSet(label4, OBJPROP_COLOR, markerColor);      // korrigieren
@@ -7607,7 +7607,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
       if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
          ObjectSet(label2, OBJPROP_RAY  , false    );
          ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongTradeOperation(type), Blue, Red));
+         ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongOrderType(type), Blue, Red));
          ObjectSet(label2, OBJPROP_BACK , true);
       }
    }

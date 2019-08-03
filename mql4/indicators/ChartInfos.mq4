@@ -4291,7 +4291,7 @@ int ReadExternalPositions(string provider, string signal) {
          // Type
          sValue = StrTrim(values[0]);
          int _type = StrToOperationType(sValue);
-         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(7)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!IsOrderType(_type))                     return(_EMPTY(catch("ReadExternalPositions(7)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
          sValue = StrTrim(values[1]);
@@ -4420,7 +4420,7 @@ int ReadExternalPositions(string provider, string signal) {
          // Type
          sValue = StrTrim(values[0]);
          _type  = StrToOperationType(sValue);
-         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(25)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!IsOrderType(_type))                     return(_EMPTY(catch("ReadExternalPositions(25)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
          sValue = StrTrim(values[1]);
