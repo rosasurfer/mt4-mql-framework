@@ -1357,7 +1357,7 @@ void UpdateWeekendStop() {
 
 
 /**
- * Management getriggerter client-seitiger Limits. Kann eine getriggerte Stop-Entry-Order oder ein getriggerter StopLoss
+ * Management getriggerter client-seitiger Stops und Limits. Kann eine getriggerte Entry-Order oder ein getriggerter StopLoss
  * einer offenen Position sein. Aufruf nur aus onTick().
  *
  * @param  int stops[] - Array-Indizes der Orders mit getriggerten Limits
@@ -1375,20 +1375,20 @@ bool ProcessLocalLimits(int stops[]) {
    int button, ticket;
    int oe[];
 
-   // Der Stop kann eine getriggerte Entry-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter StopLoss sein.
+   // Der Stop kann eine getriggerte Entry-Order oder ein getriggerter StopLoss sein.
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
       if (i >= ArraySize(orders.ticket))     return(_false(catch("ProcessLocalLimits(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER)));
 
-      // getriggerte Entry-Order (OP_BUYSTOP, OP_SELLSTOP)
+      // if getriggerte Entry-Order
       if (orders.ticket[i] == -1) {
          if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" is already marked as open", ERR_ILLEGAL_STATE)));
 
          if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-         int type  = orders.pendingType[i] - 4;
-         int level = orders.level      [i];
+         int type  = orders.pendingType[i] % 2;
+         int level = orders.level[i];
          bool clientSL = false;                                               // zuerst versuchen, server-seitigen StopLoss zu setzen...
 
          ticket = SubmitMarketOrder(type, level, clientSL, oe);
