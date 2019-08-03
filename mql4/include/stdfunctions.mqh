@@ -319,7 +319,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                );  //      1
-      case ERR_COMMON_ERROR               : return("trade request failed"                                     );  //      2
+      case ERR_TRADE_REQUEST_FAILED       : return("trade request failed"                                     );  //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                 );  //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                        );  //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                     );  //      5
@@ -4803,32 +4803,13 @@ bool IsCurrency(string value) {
 
 
 /**
- * Ob der übergebene Parameter eine "pending" Tradeoperation bezeichnet.
+ * Whether the specified value is an order type.
  *
- * @param  int value - zu prüfender Wert
- *
- * @return bool
- */
-bool IsPendingTradeOperation(int value) {
-   switch (value) {
-      case OP_BUYLIMIT :
-      case OP_SELLLIMIT:
-      case OP_BUYSTOP  :
-      case OP_SELLSTOP :
-         return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Ob der übergebene Parameter eine Tradeoperation bezeichnet.
- *
- * @param  int value - zu prüfender Wert
+ * @param  int value
  *
  * @return bool
  */
-bool IsTradeOperation(int value) {
+bool IsOrderType(int value) {
    switch (value) {
       case OP_BUY      :
       case OP_SELL     :
@@ -4843,13 +4824,32 @@ bool IsTradeOperation(int value) {
 
 
 /**
- * Ob der übergebene Parameter eine Long-Tradeoperation bezeichnet.
+ * Whether the specified value is a pendingg order type.
  *
- * @param  int value - zu prüfender Wert
+ * @param  int value
  *
  * @return bool
  */
-bool IsLongTradeOperation(int value) {
+bool IsPendingOrderType(int value) {
+   switch (value) {
+      case OP_BUYLIMIT :
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :
+      case OP_SELLSTOP :
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Whether the specified value is a long order type.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsLongOrderType(int value) {
    switch (value) {
       case OP_BUY     :
       case OP_BUYLIMIT:
@@ -4861,13 +4861,13 @@ bool IsLongTradeOperation(int value) {
 
 
 /**
- * Ob der übergebene Parameter eine Short-Tradeoperation bezeichnet.
+ * Whether the specified value is a short order type.
  *
- * @param  int value - zu prüfender Wert
+ * @param  int value
  *
  * @return bool
  */
-bool IsShortTradeOperation(int value) {
+bool IsShortOrderType(int value) {
    switch (value) {
       case OP_SELL     :
       case OP_SELLLIMIT:
@@ -4875,6 +4875,30 @@ bool IsShortTradeOperation(int value) {
          return(true);
    }
    return(false);
+}
+
+
+/**
+ * Whether the specified value is a stop order type.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsStopOrderType(int value) {
+   return(value==OP_BUYSTOP || value==OP_SELLSTOP);
+}
+
+
+/**
+ * Whether the specified value is a limit order type.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsLimitOrderType(int value) {
+   return(value==OP_BUYLIMIT || value==OP_SELLLIMIT);
 }
 
 
@@ -6035,17 +6059,19 @@ void __DummyCalls() {
    IsLastError();
    IsLeapYear(NULL);
    IsLibrary();
+   IsLimitOrderType(NULL);
    IsLogging();
-   IsLongTradeOperation(NULL);
+   IsLongOrderType(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
-   IsPendingTradeOperation(NULL);
+   IsOrderType(NULL);
+   IsPendingOrderType(NULL);
    IsScript();
    IsShortAccountCompany(NULL);
-   IsShortTradeOperation(NULL);
+   IsShortOrderType(NULL);
+   IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);
-   IsTradeOperation(NULL);
    LE(NULL, NULL);
    log(NULL);
    LogOrder(NULL);

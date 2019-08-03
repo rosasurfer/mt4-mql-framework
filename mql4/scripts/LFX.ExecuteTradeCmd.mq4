@@ -257,7 +257,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (1) Trade-Parameter einlesen
    string lfxCurrency = lo.Currency(lo);
-   int    direction   = IsShortTradeOperation(lo.Type(lo));
+   int    direction   = IsShortOrderType(lo.Type(lo));
    double units       = lo.Units(lo);
 
 
