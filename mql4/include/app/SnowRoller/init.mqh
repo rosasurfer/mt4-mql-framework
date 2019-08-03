@@ -33,7 +33,7 @@ int onInitUser() {
             sequence.isTest = false;
             sequence.id     = ids[i];
             Sequence.ID     = sequence.id; SS.SequenceId();
-            sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+            sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
             if (RestoreStatus())                                     // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
@@ -55,7 +55,7 @@ int onInitUser() {
       sequence.isTest = IsTesting();
       sequence.id     = CreateSequenceId();
       Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
-      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
       sequence.status = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
@@ -82,7 +82,7 @@ int onInitTemplate() {
          if (ValidateConfig(interactive))
             SynchronizeStatus();
    }
-   ResetRuntimeStatus();
+   DeleteChartStatus();
    return(last_error);
 }
 
@@ -93,11 +93,10 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
+   BackupConfiguration();
+
    bool interactive = true;
-
-   StoreConfiguration();
-
-   if (!ValidateConfig(interactive)) {                               // interactive = true
+   if (!ValidateConfig(interactive)) {
       RestoreConfiguration();
       return(last_error);
    }
@@ -107,7 +106,7 @@ int onInitParameters() {
       sequence.isTest = IsTesting();
       sequence.id     = CreateSequenceId();
       Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
-      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
       sequence.status = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
@@ -131,13 +130,14 @@ int onInitParameters() {
  */
 int onInitTimeframeChange() {
    // nicht-statische Input-Parameter restaurieren
-   Sequence.ID     = last.Sequence.ID;
-   GridDirection   = last.GridDirection;
-   GridSize        = last.GridSize;
-   LotSize         = last.LotSize;
-   StartLevel      = last.StartLevel;
-   StartConditions = last.StartConditions;
-   StopConditions  = last.StopConditions;
+   Sequence.ID            = last.Sequence.ID;
+   GridDirection          = last.GridDirection;
+   GridSize               = last.GridSize;
+   LotSize                = last.LotSize;
+   StartLevel             = last.StartLevel;
+   StartConditions        = last.StartConditions;
+   StopConditions         = last.StopConditions;
+   ProfitDisplayInPercent = last.ProfitDisplayInPercent;
    return(NO_ERROR);
 }
 

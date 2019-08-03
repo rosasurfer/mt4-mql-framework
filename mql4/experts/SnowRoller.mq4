@@ -86,6 +86,7 @@ double   last.LotSize;                             // of new with previous value
 int      last.StartLevel;                          //
 string   last.StartConditions;                     // see onInit()/onDeinit()
 string   last.StopConditions;
+bool     last.ProfitDisplayInPercent;
 
 // ------------------------------------
 int      sequence.id;
@@ -2441,7 +2442,7 @@ bool RestoreRuntimeStatus() {
       else {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
-         sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+         sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
          sequence.status = STATUS_WAITING;
          SetCustomLog(sequence.id, NULL);
       }
@@ -2462,7 +2463,7 @@ bool RestoreRuntimeStatus() {
  *
  * @return int - Fehlerstatus
  */
-int ResetRuntimeStatus() {
+int DeleteChartStatus() {
    string label, prefix=__NAME() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
@@ -2470,7 +2471,7 @@ int ResetRuntimeStatus() {
       if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
-   return(catch("ResetRuntimeStatus(1)"));
+   return(catch("DeleteChartStatus(1)"));
 }
 
 
@@ -2554,7 +2555,7 @@ bool ValidateConfig.ID(bool interactive) {
 
    sequence.id   = iValue; SS.SequenceId();
    Sequence.ID   = ifString(IsTestSequence(), "T", "") + sequence.id;
-   sequence.name = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+   sequence.name = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
    SetCustomLog(sequence.id, NULL);
 
    return(true);
@@ -2609,7 +2610,7 @@ bool ValidateConfig(bool interactive) {
    else if (StrStartsWith("short", sValue)) sequence.direction = D_SHORT;
    else                                            return(_false(ValidateConfig.HandleError("ValidateConfig(6)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
    GridDirection = directionDescr[sequence.direction]; SS.GridDirection();
-   sequence.name = StrLeft(GridDirection, 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+   sequence.name = StrLeft(GridDirection, 1) +"."+ sequence.id;
 
    // GridSize
    if (reasonParameters) {
@@ -2796,7 +2797,8 @@ bool ValidateConfig(bool interactive) {
 
 
 /**
- * Exception-Handler für ungültige Input-Parameter. Je nach Situation wird der Fehler weitergereicht oder zur Korrektur aufgefordert.
+ * Exception-Handler für ungültige Input-Parameter. Je nach Situation wird der Fehler an den Default-Errorhandler übergeben
+ * oder zur Korrektur aufgefordert.
  *
  * @param  string location    - Ort, an dem der Fehler auftrat
  * @param  string message     - Fehlermeldung
@@ -2806,29 +2808,42 @@ bool ValidateConfig(bool interactive) {
  */
 int ValidateConfig.HandleError(string location, string message, bool interactive) {
    interactive = interactive!=0;
-
-   if (IsTesting())
-      interactive = false;
-   if (!interactive)
+   if (IsTesting() || !interactive)
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
 
-   if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
-   PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-
+   int error = ERR_INVALID_INPUT_PARAMETER;
    __STATUS_INVALID_INPUT = true;
 
+   if (__LOG()) log(location +"   "+ message, error);
+   PlaySoundEx("Windows Chord.wav");
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
    if (button == IDRETRY)
       __STATUS_RELAUNCH_INPUT = true;
-
-   return(NO_ERROR);
+   return(error);
 }
 
 
 /**
  * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
+ * Called only from onInitParameters().
  */
-void StoreConfiguration(bool save=true) {
+void BackupConfiguration() {
+   StoreConfiguration(true);
+}
+
+
+/**
+ * Restauriert eine zuvor gespeicherte Konfiguration. Called only from onInitParameters().
+ */
+void RestoreConfiguration() {
+   StoreConfiguration(false);
+}
+
+
+/**
+ *
+ */
+void StoreConfiguration(bool save) {
    save = save!=0;
 
    static string   _Sequence.ID;
@@ -2838,6 +2853,7 @@ void StoreConfiguration(bool save=true) {
    static int      _StartLevel;
    static string   _StartConditions;
    static string   _StopConditions;
+   static bool     _ProfitDisplayInPercent;
 
    static int      _sequence.direction;
 
@@ -2872,6 +2888,7 @@ void StoreConfiguration(bool save=true) {
       _StartLevel               = StartLevel;
       _StartConditions          = StringConcatenate(StartConditions, "");
       _StopConditions           = StringConcatenate(StopConditions,  "");
+      _ProfitDisplayInPercent   = ProfitDisplayInPercent;
 
       _sequence.direction       = sequence.direction;
 
@@ -2906,9 +2923,10 @@ void StoreConfiguration(bool save=true) {
       StartLevel                = _StartLevel;
       StartConditions           = _StartConditions;
       StopConditions            = _StopConditions;
+      ProfitDisplayInPercent    = _ProfitDisplayInPercent;
 
       sequence.direction        = _sequence.direction;
-      sequence.name             = StrLeft(directionDescr[sequence.direction], 1) +"."+ ifString(IsTestSequence(), "T", "") + sequence.id;
+      sequence.name             = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
 
       start.conditions          = _start.conditions;
 
@@ -2933,14 +2951,6 @@ void StoreConfiguration(bool save=true) {
       stop.profitPct.value      = _stop.profitPct.value;
       stop.profitPct.absValue   = _stop.profitPct.absValue;
    }
-}
-
-
-/**
- * Restauriert eine zuvor gespeicherte Konfiguration.
- */
-void RestoreConfiguration() {
-   StoreConfiguration(false);
 }
 
 
