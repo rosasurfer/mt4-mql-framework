@@ -337,8 +337,8 @@ bool StartSequence() {
 
    // ggf. Startpositionen in den Markt legen und Sequence-StartPrice aktualisieren
    if (sequence.level != 0) {
-      int iNull;
-      if (!RestoreActiveGridLevels(iNull, startPrice)) return(false);
+      datetime dNull;
+      if (!RestorePositions(dNull, startPrice)) return(false);
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
@@ -566,7 +566,7 @@ bool ResumeSequence() {
    }
 
    // vorherige Positionen wieder in den Markt legen und last(OrderOpenTime) und avg(OrderOpenPrice) erhalten
-   if (!RestoreActiveGridLevels(startTime, startPrice)) return(false);
+   if (!RestorePositions(startTime, startPrice)) return(false);
 
    // neuen Sequenzstart speichern
    ArrayPushInt   (sequence.start.event,  CreateEventId() );
@@ -592,7 +592,7 @@ bool ResumeSequence() {
 
    // Status aktualisieren und speichern
    bool changes;
-   int  iNull[];                                               // Wurde in RestoreActiveGridLevels()->Grid.AddPosition() ein Magic-Ticket #-2 for "Spread violation"
+   int  iNull[];                                               // Wurde in RestorePositions()->Grid.AddPosition() ein Magic-Ticket #-2 for "Spread violation"
    if (!UpdateStatus(changes, iNull)) return(false);           // erzeugt, wird es in UpdateStatus() mit PL=0.00 "geschlossen" und der Sequence-Level verringert.
    if (changes) UpdatePendingOrders();                         // In diesem Fall müssen die Pending-Orders nochmal aktualisiert werden.
    if (!SaveStatus()) return(false);
@@ -606,26 +606,24 @@ bool ResumeSequence() {
 
 
 /**
- * Restore orders of activated sequence levels. Called from StartSequence() and ResumeSequence().
- *
- * TODO: Check and adjust existing stoplosses using the global gridbase.
+ * Restore open positions and limit orders for missed sequence levels. Called from StartSequence() and ResumeSequence().
  *
  * @param  datetime &lpOpenTime  - variable receiving the OpenTime of the last opened position
  * @param  double   &lpOpenPrice - variable receiving the average OpenPrice of all open positions
  *
  * @return bool - success status
  *
- * NOTE: If the sequence is in level 0 the referenced variables are not modified.
+ * NOTE: If the sequence is at level 0 the passed variables are not modified.
  */
-bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
+bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                             return( false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(_false(catch("RestoreActiveGridLevels(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status != STATUS_STARTING)        return(_false(catch("RestoreActiveGridLevels(2)  cannot restore active levels of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(_false(catch("RestorePositions(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status != STATUS_STARTING)        return(_false(catch("RestorePositions(2)  cannot restore positions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
 
    int i, level, missedLevels=ArraySize(sequence.missedLevels);
-   bool isMissedLevel;
+   bool isMissedLevel, success;
    datetime openTime;
-   double   openPrice;
+   double openPrice;
 
    // Long
    if (sequence.level > 0) {
@@ -633,10 +631,10 @@ bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
          isMissedLevel = IntInArray(sequence.missedLevels, level);
          i = Grid.FindOpenPosition(level);
          if (i == -1) {
-            if (isMissedLevel) { if (!Grid.AddPendingOrder(level)) return(false); }
-            else               { if (!Grid.AddPosition(level))     return(false); }
-            if (!SaveStatus()) return(false);                           // Status nach jeder Trade-Operation speichern, um das Ticket nicht zu verlieren,
-            i = ArraySize(orders.ticket) - 1;                           // falls in einer der folgenden Operationen ein Fehler auftritt.
+            if (isMissedLevel) success = Grid.AddPendingOrder(level);
+            else               success = Grid.AddPosition(level);
+            if (!success) return(false);
+            i = ArraySize(orders.ticket) - 1;
          }
          else {
             // TODO: check/update the stoploss
@@ -655,10 +653,10 @@ bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
          isMissedLevel = IntInArray(sequence.missedLevels, level);
          i = Grid.FindOpenPosition(level);
          if (i == -1) {
-            if (isMissedLevel) { if (!Grid.AddPendingOrder(level, OA_LIMIT)) return(false); }
-            else               { if (!Grid.AddPosition(level))               return(false); }
-            if (!SaveStatus()) return(false);                           // Status nach jeder Trade-Operation speichern, um das Ticket nicht zu verlieren,
-            i = ArraySize(orders.ticket) - 1;                           // falls in einer der folgenden Operationen ein Fehler auftritt.
+            if (isMissedLevel) success = Grid.AddPendingOrder(level);
+            else               success = Grid.AddPosition(level);
+            if (!success) return(false);
+            i = ArraySize(orders.ticket) - 1;
          }
          else {
             // TODO: check/update the stoploss
@@ -671,12 +669,16 @@ bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
       openPrice /= (Abs(sequence.level)-missedLevels);                  // avg(OpenPrice)
    }
 
+   if (sequence.level != 0) {
+      if (!SaveStatus()) return(false);
+   }
+
    // write-back results to the passed variables
    if (openTime != 0) {                                                 // sequence.level != 0
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
-   return(!last_error|catch("RestoreActiveGridLevels(3)"));
+   return(!last_error|catch("RestorePositions(3)"));
 }
 
 
@@ -1504,8 +1506,7 @@ bool UpdatePendingOrders() {
          nextOrderExists = true;
       }
       if (limitOrders > 0) {
-         SS.MissedLevels();
-         sMissedLevels = StrRight(sMissedLevels, -2);
+         sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
          warn("UpdatePendingOrders(3)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
       }
       ordersChanged = true;
@@ -1583,24 +1584,19 @@ double GridBase.Change(datetime time, double value) {
 
 
 /**
- * Open a pending entry order at the price of the specified grid level and add it to the order arrays. If an activation type
- * is specified the function tries to open an order of the respective type. If no activation type is specified the function
- * chooses the activation type according to the current market.
+ * Open a pending entry order at the price of the specified grid level and add it to the order arrays. Depending on the market
+ * the function opens a stop or a limit order.
  *
- * @param  int level                     - grid level of the order to open: -n...1 | 1...+n
- * @param  int activationType [optional] - order activation type: OA_LIMIT | OA_STOP (default: OA_STOP)
+ * @param  int level - grid level of the order to open: -n...1 | 1...+n
  *
  * @return int - operation type of the openend order or NULL in case of errors
  */
-int Grid.AddPendingOrder(int level, int activationType = NULL) {
+int Grid.AddPendingOrder(int level) {
    if (IsLastError())                                                           return(NULL);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                               return(!catch("Grid.AddPendingOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(2)  cannot add order to "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR));
 
-   int orderType;
-   if (!activationType || activationType==OA_STOP) orderType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
-   else if (activationType == OA_LIMIT)            orderType = ifInt(sequence.direction==D_LONG, OP_BUYLIMIT, OP_SELLLIMIT);
-   else return(!catch("Grid.AddPendingOrder(3)  illegal parameter activationType = "+ activationType, ERR_INVALID_PARAMETER));
+   int orderType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(orderType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1613,18 +1609,18 @@ int Grid.AddPendingOrder(int level, int activationType = NULL) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       // if market violated
       if (ticket == -1) {
-         if (__LOG()) log("Grid.AddPendingOrder(4)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" illegal price "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a limit order instead", oe.Error(oe));
+         if (__LOG()) log("Grid.AddPendingOrder(3)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" illegal price "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a limit order instead", oe.Error(oe));
          orderType -= 2;
          ticket = SubmitLimitOrder(orderType, level, oe);                           // open a limit order instead
-         if (ticket <= 0) return(!catch("Grid.AddPendingOrder(5)", oe.Error(oe)));
+         if (ticket <= 0) return(!catch("Grid.AddPendingOrder(4)", oe.Error(oe)));
       }
       // if stop distance violated
       else if (ticket == -2) {
          ticket = -1;                                                               // use client-side stop management
-         warn("Grid.AddPendingOrder(6)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" client-side limit for "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
+         warn("Grid.AddPendingOrder(5)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" client-side limit for "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
       }
       // on all other errors
-      else return(!catch("Grid.AddPendingOrder(7)  unknown ticket value "+ ticket, oe.Error(oe)));
+      else return(!catch("Grid.AddPendingOrder(6)  unknown ticket value "+ ticket, oe.Error(oe)));
    }
 
    // prepare order dataset
@@ -1633,7 +1629,7 @@ int Grid.AddPendingOrder(int level, int activationType = NULL) {
    //double grid.base    = ...                     // ...
 
    int      pendingType  = orderType;
-   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(8)");
+   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(7)");
    double   pendingPrice = oe.OpenPrice(oe);
 
    int      type         = OP_UNDEFINED;
@@ -1657,7 +1653,7 @@ int Grid.AddPendingOrder(int level, int activationType = NULL) {
    if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit))
       return(NULL);
 
-   if (last_error || catch("Grid.AddPendingOrder(9)"))
+   if (last_error || catch("Grid.AddPendingOrder(8)"))
       return(NULL);
    return(pendingType);
 }
