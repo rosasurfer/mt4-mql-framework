@@ -1401,14 +1401,14 @@ bool ProcessLocalLimits(int stops[]) {
             if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
             // if market violated
             if (ticket == -1) {
-               return(_false(catch("ProcessLocalLimits(6)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat), oe.Error(oe))));
+               return(_false(catch("ProcessLocalLimits(6)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat), oe.Error(oe))));
             }
             // if stop distance violated
             else if (ticket == -2) {
                clientSL = true;
                ticket = SubmitMarketOrder(type, level, clientSL, oe);         // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0) return(false);
-               warn("ProcessLocalLimits(7)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed");
+               warn("ProcessLocalLimits(7)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed");
             }
             // on all other errors
             else return(_false(catch("ProcessLocalLimits(5)  únknown ticket value "+ ticket, oe.Error(oe))));
@@ -1606,23 +1606,22 @@ int Grid.AddPendingOrder(int level) {
    if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
    else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
 
-   // loop until a pending order was opened or an error occurred
-   // TODO: add break condition to prevent infinite loop
+   // loop until a pending order was opened or a non-fixable error occurred
    while (true) {
-      counter++;
       if (IsStopOrderType(pendingType)) ticket = SubmitStopOrder(pendingType, level, oe);
       else                              ticket = SubmitLimitOrder(pendingType, level, oe);
       if (ticket > 0) break;
       if (oe.Error(oe) != ERR_INVALID_STOP) return(NULL);
-      if (counter > 4) return(!catch("Grid.AddPendingOrder(3)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries", ERR_RUNTIME_ERROR));
+      counter++;
+      if (counter > 9) return(!catch("Grid.AddPendingOrder(3)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", oe.Error(oe)));
                                                                // market violated: switch order type and ignore price, thus preventing
       if (ticket == -1) {                                      // the same pending order type over and over caused by a stalling price feed
-         if (__LOG()) log("Grid.AddPendingOrder(4)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", oe.Error(oe));
+         if (__LOG()) log("Grid.AddPendingOrder(4)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", oe.Error(oe));
          pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
       }
       else if (ticket == -2) {                                 // stop distance violated: use client-side stop management
          ticket = -1;
-         warn("Grid.AddPendingOrder(5)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" client-side "+ ifString(IsStopOrderType(pendingType), "stop", "limit") +" for "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
+         warn("Grid.AddPendingOrder(5)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" client-side "+ ifString(IsStopOrderType(pendingType), "stop", "limit") +" for "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
          break;
       }
       else return(!catch("Grid.AddPendingOrder(6)  unknown ticket return value "+ ticket, oe.Error(oe)));
