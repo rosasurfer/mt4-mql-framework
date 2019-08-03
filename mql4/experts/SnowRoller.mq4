@@ -86,15 +86,17 @@ double   last.LotSize;                             // of new with previous value
 int      last.StartLevel;                          //
 string   last.StartConditions;                     // see onInit()/onDeinit()
 string   last.StopConditions;
+bool     last.ProfitDisplayInPercent;
 
 // ------------------------------------
 int      sequence.id;
+string   sequence.name;                            // "L.1234" | "S.2345"
 int      sequence.status;
 bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test can be loaded in a live chart)
 int      sequence.direction;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
-int      sequence.missedLevels[];                  // grid levels missed due to a fast moving market
+int      sequence.missedLevels[];                  // grid levels missed, e.g. in a fast moving market
 double   sequence.startEquity;
 int      sequence.stops;                           // number of stopped-out positions: 0...+n
 double   sequence.stopsPL;                         // accumulated P/L of all stopped-out positions
@@ -309,7 +311,7 @@ bool StartSequence() {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    sequence.status = STATUS_STARTING;
-   if (__LOG()) log("StartSequence(2)  starting sequence "+ Sequence.ID);
+   if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name);
 
    // Startvariablen setzen
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
@@ -335,8 +337,8 @@ bool StartSequence() {
 
    // ggf. Startpositionen in den Markt legen und Sequence-StartPrice aktualisieren
    if (sequence.level != 0) {
-      int iNull;
-      if (!RestoreActiveGridLevels(iNull, startPrice)) return(false);
+      datetime dNull;
+      if (!RestorePositions(dNull, startPrice)) return(false);
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
@@ -350,7 +352,7 @@ bool StartSequence() {
    UpdateWeekendStop();
    RedrawStartStop();
 
-   if (__LOG()) log("StartSequence(4)  sequence "+ Sequence.ID +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+   if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
    return(!last_error|catch("StartSequence(5)"));
 }
 
@@ -366,9 +368,9 @@ bool StopSequence() {
 
    if (sequence.status!=STATUS_WAITING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
-         return(_false(catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ Sequence.ID, ERR_RUNTIME_ERROR)));
+         return(_false(catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ Sequence.ID +" now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    // eine wartende Sequenz ist noch nicht gestartet und wird gecanceled
@@ -380,7 +382,7 @@ bool StopSequence() {
 
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPING;
-      if (__LOG()) log("StopSequence(4)  stopping sequence "+ Sequence.ID +" at level "+ sequence.level);
+      if (__LOG()) log("StopSequence(4)  stopping sequence "+ sequence.name +" at level "+ sequence.level);
    }
 
    // PendingOrders und OpenPositions einlesen
@@ -397,8 +399,8 @@ bool StopSequence() {
          }
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
          if (!OrderCloseTime()) {                                                                  // offene Tickets je nach Typ zwischenspeichern
-            if (IsPendingTradeOperation(OrderType())) ArrayPushInt(pendings,                i);    // Grid.DeleteOrder() erwartet den Array-Index
-            else                                      ArrayPushInt(positions, orders.ticket[i]);   // OrderMultiClose() erwartet das Orderticket
+            if (IsPendingOrderType(OrderType())) ArrayPushInt(pendings,                i);         // Grid.DeleteOrder() erwartet den Array-Index
+            else                                 ArrayPushInt(positions, orders.ticket[i]);        // OrderMultiClose() erwartet das Orderticket
          }
       }
    }
@@ -460,7 +462,7 @@ bool StopSequence() {
 
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(7)  sequence "+ Sequence.ID +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
+      if (__LOG()) log("StopSequence(7)  sequence "+ sequence.name +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
    }
 
    // ResumeConditions aktualisieren
@@ -524,14 +526,14 @@ bool ResumeSequence() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                    return(_false(catch("ResumeSequence(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ Sequence.ID +" now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
    double   gridBase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
    sequence.status = STATUS_STARTING;
-   if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ Sequence.ID +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
    // Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
    if (sequence.level > 0) {
@@ -564,7 +566,7 @@ bool ResumeSequence() {
    }
 
    // vorherige Positionen wieder in den Markt legen und last(OrderOpenTime) und avg(OrderOpenPrice) erhalten
-   if (!RestoreActiveGridLevels(startTime, startPrice)) return(false);
+   if (!RestorePositions(startTime, startPrice)) return(false);
 
    // neuen Sequenzstart speichern
    ArrayPushInt   (sequence.start.event,  CreateEventId() );
@@ -590,7 +592,7 @@ bool ResumeSequence() {
 
    // Status aktualisieren und speichern
    bool changes;
-   int  iNull[];                                               // Wurde in RestoreActiveGridLevels()->Grid.AddPosition() ein Magic-Ticket #-2 for "Spread violation"
+   int  iNull[];                                               // Wurde in RestorePositions()->Grid.AddPosition() ein Magic-Ticket #-2 for "Spread violation"
    if (!UpdateStatus(changes, iNull)) return(false);           // erzeugt, wird es in UpdateStatus() mit PL=0.00 "geschlossen" und der Sequence-Level verringert.
    if (changes) UpdatePendingOrders();                         // In diesem Fall müssen die Pending-Orders nochmal aktualisiert werden.
    if (!SaveStatus()) return(false);
@@ -598,32 +600,30 @@ bool ResumeSequence() {
    // Anzeige aktualisieren
    RedrawStartStop();
 
-   if (__LOG()) log("ResumeSequence(7)  sequence "+ Sequence.ID +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(7)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
    return(!last_error|catch("ResumeSequence(8)"));
 }
 
 
 /**
- * Restore orders of activated sequence levels. Called from StartSequence() and ResumeSequence().
- *
- * TODO: Check and adjust existing stoplosses using the global gridbase.
+ * Restore open positions and limit orders for missed sequence levels. Called from StartSequence() and ResumeSequence().
  *
  * @param  datetime &lpOpenTime  - variable receiving the OpenTime of the last opened position
  * @param  double   &lpOpenPrice - variable receiving the average OpenPrice of all open positions
  *
  * @return bool - success status
  *
- * NOTE: If the sequence is in level 0 the referenced variables are not modified.
+ * NOTE: If the sequence is at level 0 the passed variables are not modified.
  */
-bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
+bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                             return( false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(_false(catch("RestoreActiveGridLevels(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status != STATUS_STARTING)        return(_false(catch("RestoreActiveGridLevels(2)  cannot restore active levels of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(_false(catch("RestorePositions(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status != STATUS_STARTING)        return(_false(catch("RestorePositions(2)  cannot restore positions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
 
    int i, level, missedLevels=ArraySize(sequence.missedLevels);
-   bool isMissedLevel;
+   bool isMissedLevel, success;
    datetime openTime;
-   double   openPrice;
+   double openPrice;
 
    // Long
    if (sequence.level > 0) {
@@ -631,10 +631,10 @@ bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
          isMissedLevel = IntInArray(sequence.missedLevels, level);
          i = Grid.FindOpenPosition(level);
          if (i == -1) {
-            if (isMissedLevel) { if (!Grid.AddPendingOrder(level)) return(false); }
-            else               { if (!Grid.AddPosition(level))     return(false); }
-            if (!SaveStatus()) return(false);                           // Status nach jeder Trade-Operation speichern, um das Ticket nicht zu verlieren,
-            i = ArraySize(orders.ticket) - 1;                           // falls in einer der folgenden Operationen ein Fehler auftritt.
+            if (isMissedLevel) success = Grid.AddPendingOrder(level);
+            else               success = Grid.AddPosition(level);
+            if (!success) return(false);
+            i = ArraySize(orders.ticket) - 1;
          }
          else {
             // TODO: check/update the stoploss
@@ -653,10 +653,10 @@ bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
          isMissedLevel = IntInArray(sequence.missedLevels, level);
          i = Grid.FindOpenPosition(level);
          if (i == -1) {
-            if (isMissedLevel) { if (!Grid.AddPendingOrder(level, OA_LIMIT)) return(false); }
-            else               { if (!Grid.AddPosition(level))               return(false); }
-            if (!SaveStatus()) return(false);                           // Status nach jeder Trade-Operation speichern, um das Ticket nicht zu verlieren,
-            i = ArraySize(orders.ticket) - 1;                           // falls in einer der folgenden Operationen ein Fehler auftritt.
+            if (isMissedLevel) success = Grid.AddPendingOrder(level);
+            else               success = Grid.AddPosition(level);
+            if (!success) return(false);
+            i = ArraySize(orders.ticket) - 1;
          }
          else {
             // TODO: check/update the stoploss
@@ -669,12 +669,16 @@ bool RestoreActiveGridLevels(datetime &lpOpenTime, double &lpOpenPrice) {
       openPrice /= (Abs(sequence.level)-missedLevels);                  // avg(OpenPrice)
    }
 
+   if (sequence.level != 0) {
+      if (!SaveStatus()) return(false);
+   }
+
    // write-back results to the passed variables
    if (openTime != 0) {                                                 // sequence.level != 0
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
-   return(!last_error|catch("RestoreActiveGridLevels(3)"));
+   return(!last_error|catch("RestorePositions(3)"));
 }
 
 
@@ -705,7 +709,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          // client-seitige PendingOrders prüfen
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
-               if (__LOG()) log(UpdateStatus.StopTriggerMsg(i));
+               if (__LOG()) log("UpdateStatus(1)  "+ UpdateStatus.StopTriggerMsg(i));
                ArrayPushInt(activatedLimits, i);
             }
             continue;
@@ -714,11 +718,11 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          // Magic-Ticket #-2 prüfen (wird sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
             orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(1)");
+            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(2)");
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
             Chart.MarkPositionClosed(i);
-            if (__LOG()) log(UpdateStatus.StopLossMsg(i));
+            if (__LOG()) log("UpdateStatus(3)  "+ UpdateStatus.StopLossMsg(i));
 
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++; SS.Stops();
@@ -728,7 +732,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          }
 
          // reguläre server-seitige Tickets
-         if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)")) return(false);
+         if (!SelectTicket(orders.ticket[i], "UpdateStatus(4)")) return(false);
 
          if (wasPending) {
             // beim letzten Aufruf Pending-Order
@@ -741,13 +745,9 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
                orders.profit    [i] = OrderProfit();
                Chart.MarkOrderFilled(i);
-               if (__LOG()) log(UpdateStatus.OrderFillMsg(i));
+               if (__LOG()) log("UpdateStatus(5)  "+ UpdateStatus.OrderFillMsg(i));
 
-               //if (NE(orders.gridBase[i], grid.base, Digits)) {
-               //   return(!catch("UpdateStatus(3)  sequence "+ Sequence.ID +" gridbase mis-match: "+ NumberToStr(grid.base, PriceFormat) +" / order level "+ orders.level[i] +": "+ NumberToStr(orders.gridBase[i], PriceFormat), ERR_RUNTIME_ERROR));
-               //}
-
-               if (IsStopOrder(i)) {
+               if (IsStopOrderType(orders.pendingType[i])) {
                   sequence.level   += Sign(orders.level[i]);
                   sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
                   gridChanged       = true;
@@ -771,7 +771,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             if (orders.type[i] != OP_UNDEFINED) {
                openPositions = true;
                if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG()) log(UpdateStatus.StopTriggerMsg(i));
+                  if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.StopTriggerMsg(i));
                   ArrayPushInt(activatedLimits, i);
                }
             }
@@ -789,7 +789,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
             if (orders.closedBySL[i]) {                                          // ausgestoppt
                orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
-               if (__LOG()) log(UpdateStatus.StopLossMsg(i));
+               if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
                sequence.level  -= Sign(orders.level[i]);
                sequence.stops++;
                sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
@@ -802,7 +802,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
 
                if (sequence.status != STATUS_STOPPED)
                   sequence.status = STATUS_STOPPING;
-               if (__LOG()) log(UpdateStatus.PositionCloseMsg(i));
+               if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.PositionCloseMsg(i));
                sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
             }
          }
@@ -815,7 +815,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
       ArraySort(closed);
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
-         if (n == -1) return(_false(catch("UpdateStatus(4)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+         if (n == -1) return(_false(catch("UpdateStatus(9)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -839,7 +839,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
             return(false);
 
          sequence.status = STATUS_STOPPED;
-         if (__LOG()) log("UpdateStatus(5)  STATUS_STOPPED");
+         if (__LOG()) log("UpdateStatus(10)  STATUS_STOPPED");
          RedrawStartStop();
       }
    }
@@ -852,7 +852,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(grid.base, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(5)"), grid.base);
+            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
             gridChanged = true;
          }
          // Gridbasis des letzten Tickets inspizieren
@@ -865,7 +865,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
    // ggf. Ort der Statusdatei aktualisieren
    if (updateStatusLocation)
       UpdateStatusLocation();
-   return(!last_error|catch("UpdateStatus(6)"));
+   return(!last_error|catch("UpdateStatus(12)"));
 }
 
 
@@ -881,7 +881,7 @@ string UpdateStatus.OrderFillMsg(int i) {
    string sType         = OperationTypeDescription(orders.pendingType[i]);
    string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message       = "UpdateStatus()  #"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
+   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
    if (NE(orders.pendingPrice[i], orders.openPrice[i])) {
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
@@ -891,57 +891,6 @@ string UpdateStatus.OrderFillMsg(int i) {
       if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
-   }
-   return(message);
-}
-
-
-/**
- * Compose a log message for a triggered client-side stop.
- *
- * @param  int i - order index
- *
- * @return string
- */
-string UpdateStatus.StopTriggerMsg(int i) {
-   string comment = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-
-   if (orders.type[i] == OP_UNDEFINED) {
-      // client-side Stop Buy at 1.5457'2 ("SR.8692.+17") was triggered
-      return("UpdateStatus()  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" (\""+ comment +"\") was triggered");
-   }
-   else {
-      // #1 client-side stoploss at 1.5457'2 ("SR.8692.+17") was triggered
-      return("UpdateStatus()  #"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" (\""+ comment +"\") was triggered");
-   }
-}
-
-
-/**
- * Compose a log message for an executed stoploss.
- *
- * @param  int i - order index
- *
- * @return string
- */
-string UpdateStatus.StopLossMsg(int i) {
-   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), [client-side ]stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
-   string sMagic     = ifString(orders.ticket[i]==-2, "magic ticket ", "");
-   string sType      = OperationTypeDescription(orders.type[i]);
-   string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
-   string sStopSide  = ifString(orders.clientsideLimit[i], "client-side ", "");
-   string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
-   string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message    = "UpdateStatus()  "+ sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), "+ sStopSide +"stoploss "+ sStopLoss +" was executed";
-
-   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
-      double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
-         if (orders.type[i] == OP_SELL)
-            slippage = -slippage;
-      string sSlippage;
-      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
-      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
-      message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
    return(message);
 }
@@ -960,9 +909,60 @@ string UpdateStatus.PositionCloseMsg(int i) {
    string sOpenPrice  = NumberToStr(orders.openPrice[i], PriceFormat);
    string sClosePrice = NumberToStr(orders.closePrice[i], PriceFormat);
    string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message     = "UpdateStatus()  #"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
+   string message     = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
 
    return(message);
+}
+
+
+/**
+ * Compose a log message for an executed stoploss.
+ *
+ * @param  int i - order index
+ *
+ * @return string
+ */
+string UpdateStatus.StopLossMsg(int i) {
+   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), [client-side ]stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   string sMagic     = ifString(orders.ticket[i]==-2, "magic ticket ", "");
+   string sType      = OperationTypeDescription(orders.type[i]);
+   string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
+   string sStopSide  = ifString(orders.clientsideLimit[i], "client-side ", "");
+   string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
+   string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), "+ sStopSide +"stoploss "+ sStopLoss +" was executed";
+
+   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
+      double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
+         if (orders.type[i] == OP_SELL)
+            slippage = -slippage;
+      string sSlippage;
+      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
+      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
+      message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
+   }
+   return(message);
+}
+
+
+/**
+ * Compose a log message for a triggered client-side stop.
+ *
+ * @param  int i - order index
+ *
+ * @return string
+ */
+string UpdateStatus.StopTriggerMsg(int i) {
+   string comment = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+
+   if (orders.type[i] == OP_UNDEFINED) {
+      // client-side Stop Buy at 1.5457'2 ("SR.8692.+17") was triggered
+      return("client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" (\""+ comment +"\") was triggered");
+   }
+   else {
+      // #1 client-side stoploss at 1.5457'2 ("SR.8692.+17") was triggered
+      return("#"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" (\""+ comment +"\") was triggered");
+   }
 }
 
 
@@ -1120,7 +1120,7 @@ bool IsStartSignal() {
          if (!triggered) return(false);
 
          string sPrice = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-         message = "IsStartSignal(1)  sequence "+ Sequence.ID +" start condition \""+ sPrice +"\" fulfilled";
+         message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ sPrice +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1130,7 +1130,7 @@ bool IsStartSignal() {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ Sequence.ID +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled";
+         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1140,7 +1140,7 @@ bool IsStartSignal() {
    else {
       // no start conditions are a valid start signal, too
       if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
-         if (__LOG()) log("IsStartSignal(4)  sequence "+ Sequence.ID +" no start conditions defined");
+         if (__LOG()) log("IsStartSignal(4)  sequence "+ sequence.name +" no start conditions defined");
       }
    }
    return(true);
@@ -1193,14 +1193,14 @@ bool IsWeekendResumeSignal() {
    else                              result = (Bid >= stopPrice);
    if (result) {
       weekend.resume.triggered = true;
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  sequence "+ Sequence.ID +" weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" fulfilled"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  sequence "+ sequence.name +" weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" fulfilled"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  sequence "+ Sequence.ID +" resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' fulfilled"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  sequence "+ sequence.name +" resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' fulfilled"));
       return(true);
    }
    return(false);
@@ -1259,7 +1259,7 @@ bool IsStopSignal() {
 
       if (triggered) {
          string sPrice = "@"+ StrToLower(PriceTypeDescription(stop.price.type)) +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
-         message = "IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition \""+ sPrice +"\" fulfilled";
+         message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \""+ sPrice +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1269,7 +1269,7 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         message = "IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled";
+         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1279,7 +1279,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1292,7 +1292,7 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled";
+         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1324,7 +1324,7 @@ bool IsWeekendStopSignal() {
    if (now >= weekend.stop.time) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ Sequence.ID +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' fulfilled"));
+         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ sequence.name +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' fulfilled"));
          return(true);
       }
    }
@@ -1401,14 +1401,14 @@ bool ProcessLocalLimits(int stops[]) {
             if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
             // if market violated
             if (ticket == -1) {
-               return(_false(catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")", oe.Error(oe))));
+               return(_false(catch("ProcessLocalLimits(6)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat), oe.Error(oe))));
             }
             // if stop distance violated
             else if (ticket == -2) {
                clientSL = true;
                ticket = SubmitMarketOrder(type, level, clientSL, oe);         // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0) return(false);
-               warn("ProcessLocalLimits(7)  #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")");
+               warn("ProcessLocalLimits(7)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed");
             }
             // on all other errors
             else return(_false(catch("ProcessLocalLimits(5)  únknown ticket value "+ ticket, oe.Error(oe))));
@@ -1474,7 +1474,7 @@ bool UpdatePendingOrders() {
                   if (!Grid.TrailPendingOrder(i)) return(false);           // at each tick. Wait 3 seconds between consecutive order trailings.
                   lastTrailed = GetTickCount();
                   ordersChanged = true;
-                  if (sequence.level == nextLevel) {                       // Grid.TrailPendingOrder() missed a level due a fast moving market
+                  if (sequence.level == nextLevel) {                       // Grid.TrailPendingOrder() missed a level
                      nextLevel = sequence.level + ifInt(sequence.direction==D_LONG, 1, -1);
                      nextOrderExists = false;
                   }
@@ -1506,9 +1506,8 @@ bool UpdatePendingOrders() {
          nextOrderExists = true;
       }
       if (limitOrders > 0) {
-         SS.MissedLevels();
-         sMissedLevels = StrRight(sMissedLevels, -2);
-         warn("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
+         sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
+         warn("UpdatePendingOrders(3)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
       }
       ordersChanged = true;
    }
@@ -1585,81 +1584,80 @@ double GridBase.Change(datetime time, double value) {
 
 
 /**
- * Open a pending entry order at the price of the specified grid level and add it to the order arrays. If an activation type
- * is specified the function tries to open an order of the respective type. If no activation type is specified the function
- * chooses the activation type according to the current market.
+ * Open a pending entry order at the price of the specified grid level and add it to the order arrays. Depending on the market
+ * the function opens a stop or a limit order.
  *
- * @param  int level                     - grid level of the order to open: -n...1 | 1...+n
- * @param  int activationType [optional] - order activation type: OA_LIMIT | OA_STOP (default: OA_STOP)
+ * @param  int level - grid level of the order to open: -n...1 | 1...+n
  *
- * @return int - operation type of the openend order or NULL in case of errors
+ * @return int - type of the openend order or NULL in case of errors
  */
-int Grid.AddPendingOrder(int level, int activationType = NULL) {
+int Grid.AddPendingOrder(int level) {
    if (IsLastError())                                                           return(NULL);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                               return(!catch("Grid.AddPendingOrder(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(2)  cannot add order to "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR));
+   if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(2)  cannot add order to "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
-   int orderType;
-   if (!activationType || activationType==OA_STOP) orderType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
-   else if (activationType == OA_LIMIT)            orderType = ifInt(sequence.direction==D_LONG, OP_BUYLIMIT, OP_SELLLIMIT);
-   else return(!catch("Grid.AddPendingOrder(3)  illegal parameter activationType = "+ activationType, ERR_INVALID_PARAMETER));
+   int pendingType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(orderType) +" order now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   // first try to open a stop order
-   int oe[];
-   int ticket = SubmitStopOrder(orderType, level, oe);
+   double price=grid.base + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
+   int counter, ticket, oe[];
+   if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
+   else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
 
-   if (ticket <= 0) {
-      if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
-      // if market violated
-      if (ticket == -1) {
-         if (__LOG()) log("Grid.AddPendingOrder(4)  "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\") illegal stop at current market ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a limit order instead", oe.Error(oe));
-         orderType -= 2;
-         ticket = SubmitLimitOrder(orderType, level, oe);                           // open a limit order instead
-         if (ticket <= 0) return(!catch("Grid.AddPendingOrder(5)", oe.Error(oe)));
+   // loop until a pending order was opened or a non-fixable error occurred
+   while (true) {
+      if (IsStopOrderType(pendingType)) ticket = SubmitStopOrder(pendingType, level, oe);
+      else                              ticket = SubmitLimitOrder(pendingType, level, oe);
+      if (ticket > 0) break;
+      if (oe.Error(oe) != ERR_INVALID_STOP) return(NULL);
+      counter++;
+      if (counter > 9) return(!catch("Grid.AddPendingOrder(3)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", oe.Error(oe)));
+                                                               // market violated: switch order type and ignore price, thus preventing
+      if (ticket == -1) {                                      // the same pending order type over and over caused by a stalling price feed
+         if (__LOG()) log("Grid.AddPendingOrder(4)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", oe.Error(oe));
+         pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
       }
-      // if stop distance violated
-      else if (ticket == -2) {
-         ticket = -1;                                                               // use client-side stop management
-         warn("Grid.AddPendingOrder(6)  client-side limit for "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")");
+      else if (ticket == -2) {                                 // stop distance violated: use client-side stop management
+         ticket = -1;
+         warn("Grid.AddPendingOrder(5)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" client-side "+ ifString(IsStopOrderType(pendingType), "stop", "limit") +" for "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
+         break;
       }
-      // on all other errors
-      else return(!catch("Grid.AddPendingOrder(7)  unknown ticket value "+ ticket, oe.Error(oe)));
+      else return(!catch("Grid.AddPendingOrder(6)  unknown ticket return value "+ ticket, oe.Error(oe)));
    }
 
    // prepare order dataset
-   //int    ticket       = ...                     // use as is
-   //int    level        = ...                     // ...
-   //double grid.base    = ...                     // ...
+   //int    ticket          = ...                  // use as is
+   //int    level           = ...                  // ...
+   //double grid.base       = ...                  // ...
 
-   int      pendingType  = orderType;
-   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(8)");
-   double   pendingPrice = oe.OpenPrice(oe);
+   //int    pendingType     = ...                  // ...
+   datetime pendingTime     = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(7)");
+   double   pendingPrice    = oe.OpenPrice(oe);
 
-   int      type         = OP_UNDEFINED;
-   int      openEvent    = NULL;
-   datetime openTime     = NULL;
-   double   openPrice    = NULL;
-   int      closeEvent   = NULL;
-   datetime closeTime    = NULL;
-   double   closePrice   = NULL;
-   double   stopLoss     = oe.StopLoss(oe);
-   bool     clientLimit  = (ticket <= 0);
-   bool     closedBySL   = false;
+   int      openType        = OP_UNDEFINED;
+   int      openEvent       = NULL;
+   datetime openTime        = NULL;
+   double   openPrice       = NULL;
+   int      closeEvent      = NULL;
+   datetime closeTime       = NULL;
+   double   closePrice      = NULL;
+   double   stopLoss        = oe.StopLoss(oe);
+   bool     clientsideLimit = (ticket <= 0);
+   bool     closedBySL      = false;
 
-   double   swap         = NULL;
-   double   commission   = NULL;
-   double   profit       = NULL;
+   double   swap            = NULL;
+   double   commission      = NULL;
+   double   profit          = NULL;
 
    ArrayResize(oe, 0);
 
    // store dataset
-   if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideLimit, closedBySL, swap, commission, profit))
       return(NULL);
 
-   if (last_error || catch("Grid.AddPendingOrder(9)"))
+   if (last_error || catch("Grid.AddPendingOrder(8)"))
       return(NULL);
    return(pendingType);
 }
@@ -1730,15 +1728,15 @@ int SubmitMarketOrder(int type, int level, bool clientsideSL, int oe[]) {
  *
  * @return int - order ticket (positive value) on success or another value in case of errors, especially:
  *               -1 if the limit violates the current market or
- *               -2 if the limit violates the broker's stop distance (MODE_STOPLEVEL)
+ *               -2 if the limit violates the broker's stop distance
  */
 int SubmitStopOrder(int type, int level, int oe[]) {
    if (IsLastError())                                                                    return(0);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                        return(_NULL(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitStopOrder(2)  cannot submit stop order for "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (type!=OP_BUYSTOP && type!=OP_SELLSTOP)                                            return(_NULL(catch("SubmitStopOrder(3)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-   if (type==OP_BUYSTOP && level<=0)                                                     return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
-   if (type==OP_SELLSTOP && level>=0)                                                    return(_NULL(catch("SubmitStopOrder(5)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitStopOrder(2)  cannot submit stop order for "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE)));
+   if (type!=OP_BUYSTOP  && type!=OP_SELLSTOP)                                           return(_NULL(catch("SubmitStopOrder(3)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   if (type==OP_BUYSTOP  && level <= 0)                                                  return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type==OP_SELLSTOP && level >= 0)                                                  return(_NULL(catch("SubmitStopOrder(5)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   stopPrice   = grid.base + level*GridSize*Pips;
    double   slippage    = NULL;
@@ -1754,12 +1752,12 @@ int SubmitStopOrder(int type, int level, int oe[]) {
    if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
-   if (error == ERR_INVALID_STOP) {                // Der StopPrice liegt entweder innerhalb des Marktes (-1) oder innerhalb der StopDistance (-2).
-      bool insideMarket;
-      if (!oe.StopDistance(oe))    insideMarket = true;
-      else if (type == OP_BUYSTOP) insideMarket = LE(oe.OpenPrice(oe), oe.Ask(oe));
-      else                         insideMarket = GE(oe.OpenPrice(oe), oe.Bid(oe));
-      return(ifInt(insideMarket, -1, -2));
+   if (error == ERR_INVALID_STOP) {                // either the entry limit violates the market (-1) or the broker's stop distance (-2)
+      bool violatedMarket;
+      if (!oe.StopDistance(oe))    violatedMarket = true;
+      else if (type == OP_BUYSTOP) violatedMarket = LE(oe.OpenPrice(oe), oe.Ask(oe));
+      else                         violatedMarket = GE(oe.OpenPrice(oe), oe.Bid(oe));
+      return(ifInt(violatedMarket, -1, -2));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -1770,19 +1768,19 @@ int SubmitStopOrder(int type, int level, int oe[]) {
  *
  * @param  _In_  int type  - order type: OP_BUYLIMIT | OP_SELLLIMIT
  * @param  _In_  int level - order grid level
- * @param  _Out_ int oe[]  - order execution details (struct ORDER_EXECUTION)
+ * @param  _Out_ int oe[]  - execution details (struct ORDER_EXECUTION)
  *
  * @return int - order ticket (positive value) on success or another value in case of errors, especially:
  *               -1 if the limit violates the current market or
- *               -2 if the limit violates the broker's MODE_STOPLEVEL
+ *               -2 the limit violates the broker's stop distance
  */
 int SubmitLimitOrder(int type, int level, int oe[]) {
    if (IsLastError())                                                                    return(0);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                        return(_NULL(catch("SubmitLimitOrder(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitLimitOrder(2)  cannot submit limit order for "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (type!=OP_BUYLIMIT && type!=OP_SELLLIMIT)                                          return(_NULL(catch("SubmitLimitOrder(3)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-   if (type==OP_BUYLIMIT && level<=0)                                                    return(_NULL(catch("SubmitLimitOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
-   if (type==OP_SELLLIMIT && level>=0)                                                   return(_NULL(catch("SubmitLimitOrder(5)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitLimitOrder(2)  cannot submit limit order for "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE)));
+   if (type!=OP_BUYLIMIT  && type!=OP_SELLLIMIT)                                         return(_NULL(catch("SubmitLimitOrder(3)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   if (type==OP_BUYLIMIT  && level <= 0)                                                 return(_NULL(catch("SubmitLimitOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type==OP_SELLLIMIT && level >= 0)                                                 return(_NULL(catch("SubmitLimitOrder(5)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   limitPrice  = grid.base + level*GridSize*Pips;
    double   slippage    = NULL;
@@ -1798,7 +1796,7 @@ int SubmitLimitOrder(int type, int level, int oe[]) {
    if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
-   if (error == ERR_INVALID_STOP) {                // either the entry limit violates the market (-1) or the broker's stop distance (-2).
+   if (error == ERR_INVALID_STOP) {                // either the entry limit violates the market (-1) or the broker's stop distance (-2)
       bool violatedMarket;
       if (!oe.StopDistance(oe))     violatedMarket = true;
       else if (type == OP_BUYLIMIT) violatedMarket = GE(oe.OpenPrice(oe), oe.Ask(oe));
@@ -1851,7 +1849,7 @@ int ModifyStopOrder(int ticket, double stopPrice, double stopLoss, int oe[]) {
 bool Grid.AddPosition(int level) {
    if (IsLastError())                             return( false);
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(_false(catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status != STATUS_STARTING)        return(_false(catch("Grid.AddPosition(2)  cannot add market position to "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status != STATUS_STARTING)        return(_false(catch("Grid.AddPosition(2)  cannot add position to "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE)));
    if (!level)                                    return(_false(catch("Grid.AddPosition(3)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
 
    int orderType = ifInt(sequence.direction==D_LONG, OP_BUY, OP_SELL);
@@ -1871,14 +1869,14 @@ bool Grid.AddPosition(int level) {
          ticket = -2;                                                      // assign ticket #-2 for decreased grid level, UpdateStatus() will "close" it with PL=0.00
          clientsideSL = true;
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4)"));
-         warn("Grid.AddPosition(5)  sequence "+ Sequence.ID +" position at level "+ level +" would be closed immediately by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
+         warn("Grid.AddPosition(5)  sequence "+ sequence.name +" position at level "+ level +" would be closed immediately by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
       }
       // if stop distance violated
       else if (ticket == -2) {
          clientsideSL = true;
          ticket = SubmitMarketOrder(orderType, level, clientsideSL, oe);   // use client-side stop management
          if (ticket <= 0) return(false);
-         warn("Grid.AddPosition(6)  sequence "+ Sequence.ID +" level "+ level +" #"+ ticket +" client-side stoploss installed at "+ NumberToStr(oe.StopLoss(oe), PriceFormat));
+         warn("Grid.AddPosition(6)  sequence "+ sequence.name +" level "+ level +" #"+ ticket +" client-side stoploss installed at "+ NumberToStr(oe.StopLoss(oe), PriceFormat));
       }
       // on all other errors
       else return(_false(catch("Grid.AddPosition(7)  unknown ticket value "+ ticket, oe.Error(oe))));
@@ -1959,7 +1957,7 @@ bool Grid.TrailPendingOrder(int i) {
             ArrayPushInt(sequence.missedLevels, level); SS.MissedLevels();
             sequence.level   += Sign(level);
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(level);
-            warn("Grid.TrailPendingOrder(6)  sequence "+ Sequence.ID +" opened 1 limit order for level "+ level +" in a fast moving market");
+            warn("Grid.TrailPendingOrder(6)  sequence "+ sequence.name +" opened 1 limit order for missed level "+ level);
          }
          // if stop distance violated: use client-side stop management
          else if (error == -2) {
@@ -2444,6 +2442,7 @@ bool RestoreRuntimeStatus() {
       else {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
+         sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
          sequence.status = STATUS_WAITING;
          SetCustomLog(sequence.id, NULL);
       }
@@ -2464,7 +2463,7 @@ bool RestoreRuntimeStatus() {
  *
  * @return int - Fehlerstatus
  */
-int ResetRuntimeStatus() {
+int DeleteChartStatus() {
    string label, prefix=__NAME() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
@@ -2472,7 +2471,7 @@ int ResetRuntimeStatus() {
       if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
-   return(catch("ResetRuntimeStatus(1)"));
+   return(catch("DeleteChartStatus(1)"));
 }
 
 
@@ -2554,8 +2553,9 @@ bool ValidateConfig.ID(bool interactive) {
    if (iValue < SID_MIN || iValue > SID_MAX)
       return(_false(ValidateConfig.HandleError("ValidateConfig.ID(2)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
 
-   sequence.id = iValue; SS.SequenceId();
-   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
+   sequence.id   = iValue; SS.SequenceId();
+   Sequence.ID   = ifString(IsTestSequence(), "T", "") + sequence.id;
+   sequence.name = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
    SetCustomLog(sequence.id, NULL);
 
    return(true);
@@ -2605,45 +2605,43 @@ bool ValidateConfig(bool interactive) {
       if (GridDirection != last.GridDirection)
          if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Cannot change GridDirection of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
    }
-   string strValue = StrToLower(StrTrim(GridDirection));
-   if (strValue == "long | short")                 return(_false(ValidateConfig.HandleError("ValidateConfig(6)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
-   switch (StringGetChar(strValue, 0)) {
-      case 'l': sequence.direction = D_LONG;  break;
-      case 's': sequence.direction = D_SHORT; break;
-      default:                                     return(_false(ValidateConfig.HandleError("ValidateConfig(7)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
-   }
+   string sValue = StrToLower(StrTrim(GridDirection));
+   if      (StrStartsWith("long",  sValue)) sequence.direction = D_LONG;
+   else if (StrStartsWith("short", sValue)) sequence.direction = D_SHORT;
+   else                                            return(_false(ValidateConfig.HandleError("ValidateConfig(6)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
    GridDirection = directionDescr[sequence.direction]; SS.GridDirection();
+   sequence.name = StrLeft(GridDirection, 1) +"."+ sequence.id;
 
    // GridSize
    if (reasonParameters) {
       if (GridSize != last.GridSize)
-         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(8)", "Cannot change GridSize of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(7)", "Cannot change GridSize of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
    }
-   if (GridSize < 1)                               return(_false(ValidateConfig.HandleError("ValidateConfig(9)", "Invalid GridSize = "+ GridSize, interactive)));
+   if (GridSize < 1)                               return(_false(ValidateConfig.HandleError("ValidateConfig(8)", "Invalid GridSize = "+ GridSize, interactive)));
 
    // LotSize
    if (reasonParameters) {
       if (NE(LotSize, last.LotSize))
-         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Cannot change LotSize of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(9)", "Cannot change LotSize of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
    }
-   if (LE(LotSize, 0))                             return(_false(ValidateConfig.HandleError("ValidateConfig(11)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+"), interactive)));
+   if (LE(LotSize, 0))                             return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+"), interactive)));
    double minLot  = MarketInfo(Symbol(), MODE_MINLOT );
    double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT );
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error))                             return(_false(catch("ValidateConfig(12)  symbol=\""+ Symbol() +"\"", error)));
-   if (LT(LotSize, minLot))                        return(_false(ValidateConfig.HandleError("ValidateConfig(13)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
-   if (GT(LotSize, maxLot))                        return(_false(ValidateConfig.HandleError("ValidateConfig(14)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
-   if (MathModFix(LotSize, lotStep) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfig(15)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
+   if (IsError(error))                             return(_false(catch("ValidateConfig(11)  symbol=\""+ Symbol() +"\"", error)));
+   if (LT(LotSize, minLot))                        return(_false(ValidateConfig.HandleError("ValidateConfig(12)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
+   if (GT(LotSize, maxLot))                        return(_false(ValidateConfig.HandleError("ValidateConfig(13)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
+   if (MathModFix(LotSize, lotStep) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfig(14)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
    SS.LotSize();
 
    // StartLevel
    if (reasonParameters) {
       if (StartLevel != last.StartLevel)
-         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(16)", "Cannot change StartLevel of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(15)", "Cannot change StartLevel of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
    }
    if (sequence.direction == D_LONG) {
-      if (StartLevel < 0)                          return(_false(ValidateConfig.HandleError("ValidateConfig(17)", "Invalid StartLevel = "+ StartLevel, interactive)));
+      if (StartLevel < 0)                          return(_false(ValidateConfig.HandleError("ValidateConfig(16)", "Invalid StartLevel = "+ StartLevel, interactive)));
    }
    StartLevel = Abs(StartLevel);
 
@@ -2665,22 +2663,22 @@ bool ValidateConfig(bool interactive) {
          start.conditions = false;                 // im Fehlerfall ist start.conditions deaktiviert
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                   return(_false(ValidateConfig.HandleError("ValidateConfig(18)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (sizeOfExprs > 1)                   return(_false(ValidateConfig.HandleError("ValidateConfig(17)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateConfig.HandleError("ValidateConfig(21)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateConfig.HandleError("ValidateConfig(18)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
          key   = StrTrim(elems[0]);
          value = StrTrim(StrLeft(elems[1], -1));
-         if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(21)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
 
          if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (start.price.condition)             return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
+            if (start.price.condition)             return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
             value = StrReplace(value, "'", "");
-            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             dValue = StrToDouble(value);
-            if (dValue <= 0)                       return(_false(ValidateConfig.HandleError("ValidateConfig(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (dValue <= 0)                       return(_false(ValidateConfig.HandleError("ValidateConfig(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
@@ -2695,15 +2693,15 @@ bool ValidateConfig(bool interactive) {
          }
 
          else if (key == "@time") {
-            if (start.time.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
+            if (start.time.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(value);
-            if (IsError(GetLastError()))           return(_false(ValidateConfig.HandleError("ValidateConfig(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (IsError(GetLastError()))           return(_false(ValidateConfig.HandleError("ValidateConfig(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             start.time.condition = true;
             start.time.value     = time;
             exprs[i]             = key +"("+ TimeToStr(time) +")";
          }
-         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(28)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
          start.conditions = true;
       }
       if (start.conditions) StartConditions = JoinStrings(exprs, " && ");
@@ -2726,22 +2724,22 @@ bool ValidateConfig(bool interactive) {
       for (i=0; i < sizeOfExprs; i++) {
          expr = StrToLower(StrTrim(exprs[i]));
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                   return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfExprs > 1)                   return(_false(ValidateConfig.HandleError("ValidateConfig(28)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateConfig.HandleError("ValidateConfig(32)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
          key   = StrTrim(elems[0]);
          value = StrTrim(StrLeft(elems[1], -1));
-         if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(33)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(32)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
 
          if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (stop.price.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
+            if (stop.price.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(33)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
             value = StrReplace(value, "'", "");
-            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(35)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(value);
-            if (dValue <= 0)                       return(_false(ValidateConfig.HandleError("ValidateConfig(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (dValue <= 0)                       return(_false(ValidateConfig.HandleError("ValidateConfig(35)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
@@ -2756,9 +2754,9 @@ bool ValidateConfig(bool interactive) {
          }
 
          else if (key == "@time") {
-            if (stop.time.condition)               return(_false(ValidateConfig.HandleError("ValidateConfig(37)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
+            if (stop.time.condition)               return(_false(ValidateConfig.HandleError("ValidateConfig(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(value);
-            if (IsError(GetLastError()))           return(_false(ValidateConfig.HandleError("ValidateConfig(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (IsError(GetLastError()))           return(_false(ValidateConfig.HandleError("ValidateConfig(37)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             stop.time.condition = true;
             stop.time.value     = time;
@@ -2767,12 +2765,12 @@ bool ValidateConfig(bool interactive) {
 
          else if (key == "@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                   return(_false(ValidateConfig.HandleError("ValidateConfig(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
+                                                   return(_false(ValidateConfig.HandleError("ValidateConfig(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
             sizeOfElems = Explode(value, "%", elems, NULL);
-            if (sizeOfElems > 2)                   return(_false(ValidateConfig.HandleError("ValidateConfig(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                   return(_false(ValidateConfig.HandleError("ValidateConfig(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             value = StrTrim(elems[0]);
-            if (!StringLen(value))                 return(_false(ValidateConfig.HandleError("ValidateConfig(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StringLen(value))                 return(_false(ValidateConfig.HandleError("ValidateConfig(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(value);
             if (sizeOfElems == 1) {
                stop.profitAbs.condition = true;
@@ -2786,7 +2784,7 @@ bool ValidateConfig(bool interactive) {
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
-         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
@@ -2794,12 +2792,13 @@ bool ValidateConfig(bool interactive) {
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateConfig(44)"));
+   return(!last_error|catch("ValidateConfig(43)"));
 }
 
 
 /**
- * Exception-Handler für ungültige Input-Parameter. Je nach Situation wird der Fehler weitergereicht oder zur Korrektur aufgefordert.
+ * Exception-Handler für ungültige Input-Parameter. Je nach Situation wird der Fehler an den Default-Errorhandler übergeben
+ * oder zur Korrektur aufgefordert.
  *
  * @param  string location    - Ort, an dem der Fehler auftrat
  * @param  string message     - Fehlermeldung
@@ -2809,29 +2808,42 @@ bool ValidateConfig(bool interactive) {
  */
 int ValidateConfig.HandleError(string location, string message, bool interactive) {
    interactive = interactive!=0;
-
-   if (IsTesting())
-      interactive = false;
-   if (!interactive)
+   if (IsTesting() || !interactive)
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
 
-   if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
-   PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-
+   int error = ERR_INVALID_INPUT_PARAMETER;
    __STATUS_INVALID_INPUT = true;
 
+   if (__LOG()) log(location +"   "+ message, error);
+   PlaySoundEx("Windows Chord.wav");
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
    if (button == IDRETRY)
       __STATUS_RELAUNCH_INPUT = true;
-
-   return(NO_ERROR);
+   return(error);
 }
 
 
 /**
  * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
+ * Called only from onInitParameters().
  */
-void StoreConfiguration(bool save=true) {
+void BackupConfiguration() {
+   StoreConfiguration(true);
+}
+
+
+/**
+ * Restauriert eine zuvor gespeicherte Konfiguration. Called only from onInitParameters().
+ */
+void RestoreConfiguration() {
+   StoreConfiguration(false);
+}
+
+
+/**
+ *
+ */
+void StoreConfiguration(bool save) {
    save = save!=0;
 
    static string   _Sequence.ID;
@@ -2841,6 +2853,7 @@ void StoreConfiguration(bool save=true) {
    static int      _StartLevel;
    static string   _StartConditions;
    static string   _StopConditions;
+   static bool     _ProfitDisplayInPercent;
 
    static int      _sequence.direction;
 
@@ -2875,6 +2888,7 @@ void StoreConfiguration(bool save=true) {
       _StartLevel               = StartLevel;
       _StartConditions          = StringConcatenate(StartConditions, "");
       _StopConditions           = StringConcatenate(StopConditions,  "");
+      _ProfitDisplayInPercent   = ProfitDisplayInPercent;
 
       _sequence.direction       = sequence.direction;
 
@@ -2909,8 +2923,10 @@ void StoreConfiguration(bool save=true) {
       StartLevel                = _StartLevel;
       StartConditions           = _StartConditions;
       StopConditions            = _StopConditions;
+      ProfitDisplayInPercent    = _ProfitDisplayInPercent;
 
       sequence.direction        = _sequence.direction;
+      sequence.name             = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
 
       start.conditions          = _start.conditions;
 
@@ -2935,14 +2951,6 @@ void StoreConfiguration(bool save=true) {
       stop.profitPct.value      = _stop.profitPct.value;
       stop.profitPct.absValue   = _stop.profitPct.absValue;
    }
-}
-
-
-/**
- * Restauriert eine zuvor gespeicherte Konfiguration.
- */
-void RestoreConfiguration() {
-   StoreConfiguration(false);
 }
 
 
@@ -3051,11 +3059,9 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
       directory = StringConcatenate(directory, "\\");
 
    string sequencePattern = StringConcatenate("SR*", sequence.id);               // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
-   string sequenceNames[4];
+   string sequenceNames[2];
           sequenceNames[0]= StringConcatenate("SR.", sequence.id, ".");
           sequenceNames[1]= StringConcatenate("SR.", sequence.id, "_");
-          sequenceNames[2]= StringConcatenate("SR-", sequence.id, ".");
-          sequenceNames[3]= StringConcatenate("SR-", sequence.id, "_");
 
    string filePattern = StringConcatenate(directory, "*", sequencePattern, "*set");
    string files[];
@@ -3064,9 +3070,11 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    if (size == -1) return(false);
 
    for (int i=0; i < size; i++) {
-      if (!StrStartsWithI(files[i], sequenceNames[0])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[1])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[2])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[3]))
-         if (!StrContainsI(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[3]))
-            continue;
+      if (!StrStartsWithI(files[i], sequenceNames[0]))
+         if (!StrStartsWithI(files[i], sequenceNames[1]))
+            if (!StrContainsI(files[i], "."+ sequenceNames[0]))
+               if (!StrContainsI(files[i], "."+ sequenceNames[1]))
+         continue;
       if (StrEndsWithI(files[i], ".set")) {
          lpFile = files[i];                                                      // Abbruch nach Fund der ersten .set-Datei
          return(true);
@@ -3509,18 +3517,18 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
 
    if (key == "rt.sequence.startEquity") {
-      if (!StrIsNumeric(value))                                               return(_false(catch("RestoreStatus.Runtime(1)  illegal sequence.startEquity \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(value))                                             return(_false(catch("RestoreStatus.Runtime(1)  illegal sequence.startEquity \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequence.startEquity = StrToDouble(value);
-      if (LT(sequence.startEquity, 0))                                        return(_false(catch("RestoreStatus.Runtime(2)  illegal sequence.startEquity "+ DoubleToStr(sequence.startEquity, 2) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (LT(sequence.startEquity, 0))                                      return(_false(catch("RestoreStatus.Runtime(2)  illegal sequence.startEquity "+ DoubleToStr(sequence.startEquity, 2) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       ArrayDropString(keys, key);
    }
    else if (key == "rt.sequence.maxProfit") {
-      if (!StrIsNumeric(value))                                               return(_false(catch("RestoreStatus.Runtime(3)  illegal sequence.maxProfit \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(value))                                             return(_false(catch("RestoreStatus.Runtime(3)  illegal sequence.maxProfit \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequence.maxProfit = StrToDouble(value); SS.MaxProfit();
       ArrayDropString(keys, key);
    }
    else if (key == "rt.sequence.maxDrawdown") {
-      if (!StrIsNumeric(value))                                               return(_false(catch("RestoreStatus.Runtime(4)  illegal sequence.maxDrawdown \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(value))                                             return(_false(catch("RestoreStatus.Runtime(4)  illegal sequence.maxDrawdown \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequence.maxDrawdown = StrToDouble(value); SS.MaxDrawdown();
       ArrayDropString(keys, key);
    }
@@ -3529,32 +3537,32 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       int sizeOfValues = Explode(value, ",", values, NULL);
       for (int i=0; i < sizeOfValues; i++) {
          values[i] = StrTrim(values[i]);
-         if (Explode(values[i], "|", data, NULL) != 4)                        return(_false(catch("RestoreStatus.Runtime(5)  illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(5)  illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[0]);                 // sequence.start.event
-         if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(6)  illegal sequence.start.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(6)  illegal sequence.start.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          int startEvent = StrToInteger(value);
          if (startEvent == 0) {
             if (sizeOfValues==1 && values[i]=="0|0|0|0") {
-               if (NE(sequence.startEquity, 0))                               return(_false(catch("RestoreStatus.Runtime(7)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+               if (NE(sequence.startEquity, 0))                             return(_false(catch("RestoreStatus.Runtime(7)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
                break;
             }
             return(_false(catch("RestoreStatus.Runtime(8)  illegal sequence.start.event["+ i +"] "+ startEvent +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          }
-         if (EQ(sequence.startEquity, 0))                                     return(_false(catch("RestoreStatus.Runtime(9)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (EQ(sequence.startEquity, 0))                                   return(_false(catch("RestoreStatus.Runtime(9)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[1]);                 // sequence.start.time
-         if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(10)  illegal sequence.start.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(10)  illegal sequence.start.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          datetime startTime = StrToInteger(value);
-         if (!startTime)                                                      return(_false(catch("RestoreStatus.Runtime(11)  illegal sequence.start.time["+ i +"] "+ startTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!startTime)                                                    return(_false(catch("RestoreStatus.Runtime(11)  illegal sequence.start.time["+ i +"] "+ startTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[2]);                 // sequence.start.price
-         if (!StrIsNumeric(value))                                            return(_false(catch("RestoreStatus.Runtime(12)  illegal sequence.start.price["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(12)  illegal sequence.start.price["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double startPrice = StrToDouble(value);
-         if (LE(startPrice, 0))                                               return(_false(catch("RestoreStatus.Runtime(13)  illegal sequence.start.price["+ i +"] "+ NumberToStr(startPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (LE(startPrice, 0))                                             return(_false(catch("RestoreStatus.Runtime(13)  illegal sequence.start.price["+ i +"] "+ NumberToStr(startPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[3]);                 // sequence.start.profit
-         if (!StrIsNumeric(value))                                            return(_false(catch("RestoreStatus.Runtime(14)  illegal sequence.start.profit["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(14)  illegal sequence.start.profit["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double startProfit = StrToDouble(value);
 
          ArrayPushInt   (sequence.start.event,  startEvent );
@@ -3570,33 +3578,33 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       sizeOfValues = Explode(value, ",", values, NULL);
       for (i=0; i < sizeOfValues; i++) {
          values[i] = StrTrim(values[i]);
-         if (Explode(values[i], "|", data, NULL) != 4)                        return(_false(catch("RestoreStatus.Runtime(15)  illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(15)  illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[0]);                 // sequence.stop.event
-         if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(16)  illegal sequence.stop.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(16)  illegal sequence.stop.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          int stopEvent = StrToInteger(value);
          if (stopEvent == 0) {
-            if (i < sizeOfValues-1)                                           return(_false(catch("RestoreStatus.Runtime(17)  illegal sequence.stop["+ i +"] \""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            if (values[i] != "0|0|0|0")                                       return(_false(catch("RestoreStatus.Runtime(18)  illegal sequence.stop["+ i +"] \""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (i < sizeOfValues-1)                                         return(_false(catch("RestoreStatus.Runtime(17)  illegal sequence.stop["+ i +"] \""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (values[i] != "0|0|0|0")                                     return(_false(catch("RestoreStatus.Runtime(18)  illegal sequence.stop["+ i +"] \""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             if (i==0 && ArraySize(sequence.start.event)==0)
                break;
          }
 
          value = StrTrim(data[1]);                 // sequence.stop.time
-         if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(19)  illegal sequence.stop.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(19)  illegal sequence.stop.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          datetime stopTime = StrToInteger(value);
-         if (!stopTime && stopEvent!=0)                                       return(_false(catch("RestoreStatus.Runtime(20)  illegal sequence.stop.time["+ i +"] "+ stopTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (i >= ArraySize(sequence.start.event))                            return(_false(catch("RestoreStatus.Runtime(21)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ sizeOfValues +") mis-match in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (stopTime!=0 && stopTime < sequence.start.time[i])                return(_false(catch("RestoreStatus.Runtime(22)  sequence.start.time["+ i +"]/sequence.stop.time["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[i], TIME_FULL) +"'/'"+ TimeToStr(stopTime, TIME_FULL) +"' in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!stopTime && stopEvent!=0)                                     return(_false(catch("RestoreStatus.Runtime(20)  illegal sequence.stop.time["+ i +"] "+ stopTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (i >= ArraySize(sequence.start.event))                          return(_false(catch("RestoreStatus.Runtime(21)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ sizeOfValues +") mis-match in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (stopTime!=0 && stopTime < sequence.start.time[i])              return(_false(catch("RestoreStatus.Runtime(22)  sequence.start.time["+ i +"]/sequence.stop.time["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[i], TIME_FULL) +"'/'"+ TimeToStr(stopTime, TIME_FULL) +"' in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[2]);                 // sequence.stop.price
-         if (!StrIsNumeric(value))                                            return(_false(catch("RestoreStatus.Runtime(23)  illegal sequence.stop.price["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(23)  illegal sequence.stop.price["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double stopPrice = StrToDouble(value);
-         if (LT(stopPrice, 0))                                                return(_false(catch("RestoreStatus.Runtime(24)  illegal sequence.stop.price["+ i +"] "+ NumberToStr(stopPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (EQ(stopPrice, 0) && stopEvent!=0)                                return(_false(catch("RestoreStatus.Runtime(25)  sequence.stop.time["+ i +"]/sequence.stop.price["+ i +"] mis-match '"+ TimeToStr(stopTime, TIME_FULL) +"'/"+ NumberToStr(stopPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (LT(stopPrice, 0))                                              return(_false(catch("RestoreStatus.Runtime(24)  illegal sequence.stop.price["+ i +"] "+ NumberToStr(stopPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (EQ(stopPrice, 0) && stopEvent!=0)                              return(_false(catch("RestoreStatus.Runtime(25)  sequence.stop.time["+ i +"]/sequence.stop.price["+ i +"] mis-match '"+ TimeToStr(stopTime, TIME_FULL) +"'/"+ NumberToStr(stopPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[3]);                 // sequence.stop.profit
-         if (!StrIsNumeric(value))                                            return(_false(catch("RestoreStatus.Runtime(26)  illegal sequence.stop.profit["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(26)  illegal sequence.stop.profit["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double stopProfit = StrToDouble(value);
 
          ArrayPushInt   (sequence.stop.event,  stopEvent );
@@ -3613,15 +3621,15 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          sizeOfValues = Explode(value, ",", values, NULL);
          for (i=0; i < sizeOfValues; i++) {
             string sLevel = StrTrim(values[i]);
-            if (!StrIsInteger(sLevel))                                        return(_false(catch("RestoreStatus.Runtime(27)  illegal missed grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!StrIsInteger(sLevel))                                      return(_false(catch("RestoreStatus.Runtime(27)  illegal missed grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             int level = StrToInteger(sLevel);
-            if (!level)                                                       return(_false(catch("RestoreStatus.Runtime(28)  illegal missed grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!level)                                                     return(_false(catch("RestoreStatus.Runtime(28)  illegal missed grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(sequence.missedLevels, level);
          }
       }
    }
    else if (key == "rt.weekendStop") {
-      if (!StrIsDigit(value))                                                 return(_false(catch("RestoreStatus.Runtime(29)  illegal weekendStop \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(value))                                               return(_false(catch("RestoreStatus.Runtime(29)  illegal weekendStop \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       weekend.stop.active = (StrToInteger(value));
    }
    else if (key == "rt.ignorePendingOrders") {
@@ -3630,9 +3638,9 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          sizeOfValues = Explode(value, ",", values, NULL);
          for (i=0; i < sizeOfValues; i++) {
             string sTicket = StrTrim(values[i]);
-            if (!StrIsDigit(sTicket))                                         return(_false(catch("RestoreStatus.Runtime(30)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!StrIsDigit(sTicket))                                       return(_false(catch("RestoreStatus.Runtime(30)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             int ticket = StrToInteger(sTicket);
-            if (!ticket)                                                      return(_false(catch("RestoreStatus.Runtime(31)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!ticket)                                                    return(_false(catch("RestoreStatus.Runtime(31)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(ignorePendingOrders, ticket);
          }
       }
@@ -3643,9 +3651,9 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          sizeOfValues = Explode(value, ",", values, NULL);
          for (i=0; i < sizeOfValues; i++) {
             sTicket = StrTrim(values[i]);
-            if (!StrIsDigit(sTicket))                                         return(_false(catch("RestoreStatus.Runtime(32)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!StrIsDigit(sTicket))                                       return(_false(catch("RestoreStatus.Runtime(32)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ticket = StrToInteger(sTicket);
-            if (!ticket)                                                      return(_false(catch("RestoreStatus.Runtime(33)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!ticket)                                                    return(_false(catch("RestoreStatus.Runtime(33)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(ignoreOpenPositions, ticket);
          }
       }
@@ -3656,9 +3664,9 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          sizeOfValues = Explode(value, ",", values, NULL);
          for (i=0; i < sizeOfValues; i++) {
             sTicket = StrTrim(values[i]);
-            if (!StrIsDigit(sTicket))                                         return(_false(catch("RestoreStatus.Runtime(34)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!StrIsDigit(sTicket))                                       return(_false(catch("RestoreStatus.Runtime(34)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ticket = StrToInteger(sTicket);
-            if (!ticket)                                                      return(_false(catch("RestoreStatus.Runtime(35)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!ticket)                                                    return(_false(catch("RestoreStatus.Runtime(35)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(ignoreClosedPositions, ticket);
          }
       }
@@ -3667,29 +3675,29 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       // rt.grid.base=1|1331710960|1.56743, 2|1331711010|1.56714
       sizeOfValues = Explode(value, ",", values, NULL);
       for (i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 3)                        return(_false(catch("RestoreStatus.Runtime(36)  illegal number of grid.base["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(values[i], "|", data, NULL) != 3)                      return(_false(catch("RestoreStatus.Runtime(36)  illegal number of grid.base["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[0]);                 // GridBase-Event
-         if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(37)  illegal grid.base.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(37)  illegal grid.base.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          int gridBaseEvent = StrToInteger(value);
          int starts = ArraySize(sequence.start.event);
          if (gridBaseEvent == 0) {
             if (sizeOfValues==1 && values[0]=="0|0|0") {
-               if (starts > 0)                                                return(_false(catch("RestoreStatus.Runtime(38)  sequence.start/grid.base["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+               if (starts > 0)                                              return(_false(catch("RestoreStatus.Runtime(38)  sequence.start/grid.base["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
                break;
-            }                                                                 return(_false(catch("RestoreStatus.Runtime(39)  illegal grid.base.event["+ i +"] "+ gridBaseEvent +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            }                                                               return(_false(catch("RestoreStatus.Runtime(39)  illegal grid.base.event["+ i +"] "+ gridBaseEvent +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          }
-         else if (!starts)                                                    return(_false(catch("RestoreStatus.Runtime(40)  sequence.start/grid.base["+ i +"] mis-match "+ starts +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         else if (!starts)                                                  return(_false(catch("RestoreStatus.Runtime(40)  sequence.start/grid.base["+ i +"] mis-match "+ starts +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[1]);                 // GridBase-Zeitpunkt
-         if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(41)  illegal grid.base.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(41)  illegal grid.base.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          datetime gridBaseTime = StrToInteger(value);
-         if (!gridBaseTime)                                                   return(_false(catch("RestoreStatus.Runtime(42)  illegal grid.base.time["+ i +"] "+ gridBaseTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!gridBaseTime)                                                 return(_false(catch("RestoreStatus.Runtime(42)  illegal grid.base.time["+ i +"] "+ gridBaseTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[2]);                 // GridBase-Wert
-         if (!StrIsNumeric(value))                                            return(_false(catch("RestoreStatus.Runtime(43)  illegal grid.base.value["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(43)  illegal grid.base.value["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double gridBaseValue = StrToDouble(value);
-         if (LE(gridBaseValue, 0))                                            return(_false(catch("RestoreStatus.Runtime(44)  illegal grid.base.value["+ i +"] "+ NumberToStr(gridBaseValue, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (LE(gridBaseValue, 0))                                          return(_false(catch("RestoreStatus.Runtime(44)  illegal grid.base.value["+ i +"] "+ NumberToStr(gridBaseValue, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          ArrayPushInt   (grid.base.event, gridBaseEvent);
          ArrayPushInt   (grid.base.time,  gridBaseTime );
@@ -3702,146 +3710,146 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
       // Orderindex
       string strIndex = StrRight(key, -9);
-      if (!StrIsDigit(strIndex))                                              return(_false(catch("RestoreStatus.Runtime(45)  illegal order index \""+ key +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(strIndex))                                            return(_false(catch("RestoreStatus.Runtime(45)  illegal order index \""+ key +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       i = StrToInteger(strIndex);
-      if (ArraySize(orders.ticket) > i) /*&&*/ if (orders.ticket[i]!=0)       return(_false(catch("RestoreStatus.Runtime(46)  duplicate order index "+ key +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (ArraySize(orders.ticket) > i) /*&&*/ if (orders.ticket[i]!=0)     return(_false(catch("RestoreStatus.Runtime(46)  duplicate order index "+ key +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // Orderdaten
-      if (Explode(value, ",", values, NULL) != 19)                            return(_false(catch("RestoreStatus.Runtime(47)  illegal number of order details ("+ ArraySize(values) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(value, ",", values, NULL) != 19)                          return(_false(catch("RestoreStatus.Runtime(47)  illegal number of order details ("+ ArraySize(values) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // ticket
       sTicket = StrTrim(values[0]);
-      if (!StrIsInteger(sTicket))                                             return(_false(catch("RestoreStatus.Runtime(48)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(sTicket))                                           return(_false(catch("RestoreStatus.Runtime(48)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       ticket = StrToInteger(sTicket);
       if (ticket > 0) {
-         if (IntInArray(orders.ticket, ticket))                               return(_false(catch("RestoreStatus.Runtime(49)  duplicate ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (IntInArray(orders.ticket, ticket))                             return(_false(catch("RestoreStatus.Runtime(49)  duplicate ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       }
-      else if (ticket!=-1 && ticket!=-2)                                      return(_false(catch("RestoreStatus.Runtime(50)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      else if (ticket!=-1 && ticket!=-2)                                    return(_false(catch("RestoreStatus.Runtime(50)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // level
       sLevel = StrTrim(values[1]);
-      if (!StrIsInteger(sLevel))                                              return(_false(catch("RestoreStatus.Runtime(51)  illegal grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(sLevel))                                            return(_false(catch("RestoreStatus.Runtime(51)  illegal grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       level = StrToInteger(sLevel);
-      if (!level)                                                             return(_false(catch("RestoreStatus.Runtime(52)  illegal grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!level)                                                           return(_false(catch("RestoreStatus.Runtime(52)  illegal grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // gridBase
       string sGridBase = StrTrim(values[2]);
-      if (!StrIsNumeric(sGridBase))                                           return(_false(catch("RestoreStatus.Runtime(53)  illegal order gridbase \""+ sGridBase +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sGridBase))                                         return(_false(catch("RestoreStatus.Runtime(53)  illegal order gridbase \""+ sGridBase +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double gridBase = StrToDouble(sGridBase);
-      if (LE(gridBase, 0))                                                    return(_false(catch("RestoreStatus.Runtime(54)  illegal order gridbase "+ NumberToStr(gridBase, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (LE(gridBase, 0))                                                  return(_false(catch("RestoreStatus.Runtime(54)  illegal order gridbase "+ NumberToStr(gridBase, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // pendingType
       string sPendingType = StrTrim(values[3]);
-      if (!StrIsInteger(sPendingType))                                        return(_false(catch("RestoreStatus.Runtime(55)  illegal pending order type \""+ sPendingType +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(sPendingType))                                      return(_false(catch("RestoreStatus.Runtime(55)  illegal pending order type \""+ sPendingType +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int pendingType = StrToInteger(sPendingType);
-      if (pendingType!=OP_UNDEFINED && !IsPendingTradeOperation(pendingType)) return(_false(catch("RestoreStatus.Runtime(56)  illegal pending order type \""+ sPendingType +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (pendingType!=OP_UNDEFINED && !IsPendingOrderType(pendingType))    return(_false(catch("RestoreStatus.Runtime(56)  illegal pending order type \""+ sPendingType +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // pendingTime
       string sPendingTime = StrTrim(values[4]);
-      if (!StrIsDigit(sPendingTime))                                          return(_false(catch("RestoreStatus.Runtime(57)  illegal pending order time \""+ sPendingTime +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sPendingTime))                                        return(_false(catch("RestoreStatus.Runtime(57)  illegal pending order time \""+ sPendingTime +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       datetime pendingTime = StrToInteger(sPendingTime);
-      if (pendingType==OP_UNDEFINED && pendingTime!=0)                        return(_false(catch("RestoreStatus.Runtime(58)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/'"+ TimeToStr(pendingTime, TIME_FULL) +"' in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (pendingType!=OP_UNDEFINED && !pendingTime)                          return(_false(catch("RestoreStatus.Runtime(59)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/"+ pendingTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (pendingType==OP_UNDEFINED && pendingTime!=0)                      return(_false(catch("RestoreStatus.Runtime(58)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/'"+ TimeToStr(pendingTime, TIME_FULL) +"' in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (pendingType!=OP_UNDEFINED && !pendingTime)                        return(_false(catch("RestoreStatus.Runtime(59)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/"+ pendingTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // pendingPrice
       string sPendingPrice = StrTrim(values[5]);
-      if (!StrIsNumeric(sPendingPrice))                                       return(_false(catch("RestoreStatus.Runtime(60)  illegal pending order price \""+ sPendingPrice +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sPendingPrice))                                     return(_false(catch("RestoreStatus.Runtime(60)  illegal pending order price \""+ sPendingPrice +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double pendingPrice = StrToDouble(sPendingPrice);
-      if (LT(pendingPrice, 0))                                                return(_false(catch("RestoreStatus.Runtime(61)  illegal pending order price "+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                   return(_false(catch("RestoreStatus.Runtime(62)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (LT(pendingPrice, 0))                                              return(_false(catch("RestoreStatus.Runtime(61)  illegal pending order price "+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                 return(_false(catch("RestoreStatus.Runtime(62)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       if (pendingType!=OP_UNDEFINED) {
-         if (EQ(pendingPrice, 0))                                             return(_false(catch("RestoreStatus.Runtime(63)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (NE(pendingPrice, gridBase+level*GridSize*Pips, Digits))          return(_false(catch("RestoreStatus.Runtime(64)  gridbase/pending order price mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (EQ(pendingPrice, 0))                                           return(_false(catch("RestoreStatus.Runtime(63)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (NE(pendingPrice, gridBase+level*GridSize*Pips, Digits))        return(_false(catch("RestoreStatus.Runtime(64)  gridbase/pending order price mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       }
 
       // type
       string sType = StrTrim(values[6]);
-      if (!StrIsInteger(sType))                                               return(_false(catch("RestoreStatus.Runtime(65)  illegal order type \""+ sType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(sType))                                             return(_false(catch("RestoreStatus.Runtime(65)  illegal order type \""+ sType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int type = StrToInteger(sType);
-      if (type!=OP_UNDEFINED && !IsTradeOperation(type))                      return(_false(catch("RestoreStatus.Runtime(66)  illegal order type \""+ sType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type!=OP_UNDEFINED && !IsOrderType(type))                         return(_false(catch("RestoreStatus.Runtime(66)  illegal order type \""+ sType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       if (pendingType == OP_UNDEFINED) {
-         if (type == OP_UNDEFINED)                                            return(_false(catch("RestoreStatus.Runtime(67)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (type == OP_UNDEFINED)                                          return(_false(catch("RestoreStatus.Runtime(67)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       }
       else if (type != OP_UNDEFINED) {
-         if (IsLongTradeOperation(pendingType)!=IsLongTradeOperation(type))   return(_false(catch("RestoreStatus.Runtime(68)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (IsLongOrderType(pendingType)!=IsLongOrderType(type))           return(_false(catch("RestoreStatus.Runtime(68)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       }
 
       // openEvent
       string sOpenEvent = StrTrim(values[7]);
-      if (!StrIsDigit(sOpenEvent))                                            return(_false(catch("RestoreStatus.Runtime(69)  illegal order open event \""+ sOpenEvent +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sOpenEvent))                                          return(_false(catch("RestoreStatus.Runtime(69)  illegal order open event \""+ sOpenEvent +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int openEvent = StrToInteger(sOpenEvent);
-      if (type!=OP_UNDEFINED && !openEvent)                                   return(_false(catch("RestoreStatus.Runtime(70)  illegal order open event "+ openEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type!=OP_UNDEFINED && !openEvent)                                 return(_false(catch("RestoreStatus.Runtime(70)  illegal order open event "+ openEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // openTime
       string sOpenTime = StrTrim(values[8]);
-      if (!StrIsDigit(sOpenTime))                                             return(_false(catch("RestoreStatus.Runtime(71)  illegal order open time \""+ sOpenTime +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sOpenTime))                                           return(_false(catch("RestoreStatus.Runtime(71)  illegal order open time \""+ sOpenTime +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       datetime openTime = StrToInteger(sOpenTime);
-      if (type==OP_UNDEFINED && openTime!=0)                                  return(_false(catch("RestoreStatus.Runtime(72)  order type/time mis-match "+ OperationTypeToStr(type) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (type!=OP_UNDEFINED && !openTime)                                    return(_false(catch("RestoreStatus.Runtime(73)  order type/time mis-match "+ OperationTypeToStr(type) +"/"+ openTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type==OP_UNDEFINED && openTime!=0)                                return(_false(catch("RestoreStatus.Runtime(72)  order type/time mis-match "+ OperationTypeToStr(type) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type!=OP_UNDEFINED && !openTime)                                  return(_false(catch("RestoreStatus.Runtime(73)  order type/time mis-match "+ OperationTypeToStr(type) +"/"+ openTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // openPrice
       string sOpenPrice = StrTrim(values[9]);
-      if (!StrIsNumeric(sOpenPrice))                                          return(_false(catch("RestoreStatus.Runtime(74)  illegal order open price \""+ sOpenPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sOpenPrice))                                        return(_false(catch("RestoreStatus.Runtime(74)  illegal order open price \""+ sOpenPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double openPrice = StrToDouble(sOpenPrice);
-      if (LT(openPrice, 0))                                                   return(_false(catch("RestoreStatus.Runtime(75)  illegal order open price "+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (type==OP_UNDEFINED && NE(openPrice, 0))                             return(_false(catch("RestoreStatus.Runtime(76)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (type!=OP_UNDEFINED && EQ(openPrice, 0))                             return(_false(catch("RestoreStatus.Runtime(77)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (LT(openPrice, 0))                                                 return(_false(catch("RestoreStatus.Runtime(75)  illegal order open price "+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type==OP_UNDEFINED && NE(openPrice, 0))                           return(_false(catch("RestoreStatus.Runtime(76)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type!=OP_UNDEFINED && EQ(openPrice, 0))                           return(_false(catch("RestoreStatus.Runtime(77)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // closeEvent
       string sCloseEvent = StrTrim(values[10]);
-      if (!StrIsDigit(sCloseEvent))                                           return(_false(catch("RestoreStatus.Runtime(78)  illegal order close event \""+ sCloseEvent +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sCloseEvent))                                         return(_false(catch("RestoreStatus.Runtime(78)  illegal order close event \""+ sCloseEvent +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int closeEvent = StrToInteger(sCloseEvent);
 
       // closeTime
       string sCloseTime = StrTrim(values[11]);
-      if (!StrIsDigit(sCloseTime))                                            return(_false(catch("RestoreStatus.Runtime(79)  illegal order close time \""+ sCloseTime +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sCloseTime))                                          return(_false(catch("RestoreStatus.Runtime(79)  illegal order close time \""+ sCloseTime +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       datetime closeTime = StrToInteger(sCloseTime);
       if (closeTime != 0) {
-         if (closeTime < pendingTime)                                         return(_false(catch("RestoreStatus.Runtime(80)  pending order time/delete time mis-match '"+ TimeToStr(pendingTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (closeTime < openTime)                                            return(_false(catch("RestoreStatus.Runtime(81)  order open/close time mis-match '"+ TimeToStr(openTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (closeTime < pendingTime)                                       return(_false(catch("RestoreStatus.Runtime(80)  pending order time/delete time mis-match '"+ TimeToStr(pendingTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (closeTime < openTime)                                          return(_false(catch("RestoreStatus.Runtime(81)  order open/close time mis-match '"+ TimeToStr(openTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       }
-      if (closeTime!=0 && !closeEvent)                                        return(_false(catch("RestoreStatus.Runtime(82)  illegal order close event "+ closeEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (closeTime!=0 && !closeEvent)                                      return(_false(catch("RestoreStatus.Runtime(82)  illegal order close event "+ closeEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // closePrice
       string sClosePrice = StrTrim(values[12]);
-      if (!StrIsNumeric(sClosePrice))                                         return(_false(catch("RestoreStatus.Runtime(83)  illegal order close price \""+ sClosePrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sClosePrice))                                       return(_false(catch("RestoreStatus.Runtime(83)  illegal order close price \""+ sClosePrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double closePrice = StrToDouble(sClosePrice);
-      if (LT(closePrice, 0))                                                  return(_false(catch("RestoreStatus.Runtime(84)  illegal order close price "+ NumberToStr(closePrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (LT(closePrice, 0))                                                return(_false(catch("RestoreStatus.Runtime(84)  illegal order close price "+ NumberToStr(closePrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // stopLoss
       string sStopLoss = StrTrim(values[13]);
-      if (!StrIsNumeric(sStopLoss))                                           return(_false(catch("RestoreStatus.Runtime(85)  illegal order stoploss \""+ sStopLoss +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sStopLoss))                                         return(_false(catch("RestoreStatus.Runtime(85)  illegal order stoploss \""+ sStopLoss +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double stopLoss = StrToDouble(sStopLoss);
-      if (LE(stopLoss, 0))                                                    return(_false(catch("RestoreStatus.Runtime(86)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (NE(stopLoss, gridBase+(level-Sign(level))*GridSize*Pips, Digits))   return(_false(catch("RestoreStatus.Runtime(87)  gridbase/stoploss mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (LE(stopLoss, 0))                                                  return(_false(catch("RestoreStatus.Runtime(86)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (NE(stopLoss, gridBase+(level-Sign(level))*GridSize*Pips, Digits)) return(_false(catch("RestoreStatus.Runtime(87)  gridbase/stoploss mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // clientLimit
       string sClientLimit = StrTrim(values[14]);
-      if (!StrIsDigit(sClientLimit))                                          return(_false(catch("RestoreStatus.Runtime(88)  illegal clientLimit value \""+ sClientLimit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sClientLimit))                                        return(_false(catch("RestoreStatus.Runtime(88)  illegal clientLimit value \""+ sClientLimit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       bool clientLimit = _bool(StrToInteger(sClientLimit));
 
       // closedBySL
       string sClosedBySL = StrTrim(values[15]);
-      if (!StrIsDigit(sClosedBySL))                                           return(_false(catch("RestoreStatus.Runtime(89)  illegal closedBySL value \""+ sClosedBySL +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(sClosedBySL))                                         return(_false(catch("RestoreStatus.Runtime(89)  illegal closedBySL value \""+ sClosedBySL +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       bool closedBySL = _bool(StrToInteger(sClosedBySL));
 
       // swap
       string sSwap = StrTrim(values[16]);
-      if (!StrIsNumeric(sSwap))                                               return(_false(catch("RestoreStatus.Runtime(90)  illegal order swap \""+ sSwap +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sSwap))                                             return(_false(catch("RestoreStatus.Runtime(90)  illegal order swap \""+ sSwap +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double swap = StrToDouble(sSwap);
-      if (type==OP_UNDEFINED && NE(swap, 0))                                  return(_false(catch("RestoreStatus.Runtime(91)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type==OP_UNDEFINED && NE(swap, 0))                                return(_false(catch("RestoreStatus.Runtime(91)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // commission
       string sCommission = StrTrim(values[17]);
-      if (!StrIsNumeric(sCommission))                                         return(_false(catch("RestoreStatus.Runtime(92)  illegal order commission \""+ sCommission +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sCommission))                                       return(_false(catch("RestoreStatus.Runtime(92)  illegal order commission \""+ sCommission +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double commission = StrToDouble(sCommission);
-      if (type==OP_UNDEFINED && NE(commission, 0))                            return(_false(catch("RestoreStatus.Runtime(93)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type==OP_UNDEFINED && NE(commission, 0))                          return(_false(catch("RestoreStatus.Runtime(93)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // profit
       string sProfit = StrTrim(values[18]);
-      if (!StrIsNumeric(sProfit))                                             return(_false(catch("RestoreStatus.Runtime(94)  illegal order profit \""+ sProfit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(sProfit))                                           return(_false(catch("RestoreStatus.Runtime(94)  illegal order profit \""+ sProfit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double profit = StrToDouble(sProfit);
-      if (type==OP_UNDEFINED && NE(profit, 0))                                return(_false(catch("RestoreStatus.Runtime(95)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (type==OP_UNDEFINED && NE(profit, 0))                              return(_false(catch("RestoreStatus.Runtime(95)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
 
       // Daten speichern
@@ -3931,7 +3939,7 @@ bool SynchronizeStatus() {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
             continue;
          if (IsMyOrder(sequence.id)) /*&&*/ if (!IntInArray(orders.ticket, OrderTicket())) {
-            pendingOrder = IsPendingTradeOperation(OrderType());           // kann PendingOrder oder offene Position sein
+            pendingOrder = IsPendingOrderType(OrderType());                // kann PendingOrder oder offene Position sein
             openPosition = !pendingOrder;
             if (pendingOrder) /*&&*/ if (!IntInArray(ignorePendingOrders, OrderTicket())) ArrayPushInt(orphanedPendingOrders, OrderTicket());
             if (openPosition) /*&&*/ if (!IntInArray(ignoreOpenPositions, OrderTicket())) ArrayPushInt(orphanedOpenPositions, OrderTicket());
@@ -3941,7 +3949,7 @@ bool SynchronizeStatus() {
       for (i=OrdersHistoryTotal()-1; i >= 0; i--) {                        // geschlossene Tickets
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))                 // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
             continue;
-         if (IsPendingTradeOperation(OrderType()))                         // gestrichene PendingOrders ignorieren
+         if (IsPendingOrderType(OrderType()))                              // gestrichene PendingOrders ignorieren
             continue;
          if (IsMyOrder(sequence.id)) /*&&*/ if (!IntInArray(orders.ticket, OrderTicket())) {
             if (!IntInArray(ignoreClosedPositions, OrderTicket()))         // kann nur geschlossene Position sein
@@ -4073,7 +4081,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
    // das Ticket ist selektiert
    bool   wasPending = orders.type[i] == OP_UNDEFINED;               // vormals PendingOrder
    bool   wasOpen    = !wasPending;                                  // vormals offene Position
-   bool   isPending  = IsPendingTradeOperation(OrderType());         // jetzt PendingOrder
+   bool   isPending  = IsPendingOrderType(OrderType());              // jetzt PendingOrder
    bool   isClosed   = OrderCloseTime() != 0;                        // jetzt geschlossen oder gestrichen
    bool   isOpen     = !isPending && !isClosed;                      // jetzt offene Position
    double lastSwap   = orders.swap[i];
@@ -4591,7 +4599,7 @@ bool Chart.MarkOrderSent(int i) {
 
    if (orderDisplayMode != ODM_NONE) {
       if      (pending)                         markerColor = CLR_PENDING;
-      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongTradeOperation(type), CLR_LONG, CLR_SHORT);
+      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_LONG, CLR_SHORT);
    }
    return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
 }
@@ -4823,35 +4831,4 @@ bool IsStopTriggered(int type, double price) {
    if (type == OP_SELL    ) return(Ask >= price);        // Short-StopLoss
 
    return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
-}
-
-
-/**
- * Whether the origin of the order at the specified order index was a pending stop order.
- *
- * @param  int index - order index
- *
- * @return bool
- */
-bool IsStopOrder(int index) {
-   int size = ArraySize(orders.ticket);
-   if (index < 0 || index >= size) return(!catch("IsStopOrder(1)  illegal parameter index = "+ index, ERR_INVALID_PARAMETER));
-
-   return(orders.pendingType[index]==OP_BUYSTOP || orders.pendingType[index]==OP_SELLSTOP);
-   IsLimitOrder(NULL); // dummy call
-}
-
-
-/**
- * Whether the origin of the order at the specified order index was a pending limit order.
- *
- * @param  int index - order index
- *
- * @return bool
- */
-bool IsLimitOrder(int index) {
-   int size = ArraySize(orders.ticket);
-   if (index < 0 || index >= size) return(!catch("IsLimitOrder(1)  illegal parameter index = "+ index, ERR_INVALID_PARAMETER));
-
-   return(orders.pendingType[index]==OP_BUYLIMIT || orders.pendingType[index]==OP_SELLLIMIT);
 }

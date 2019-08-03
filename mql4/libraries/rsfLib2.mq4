@@ -661,11 +661,11 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
    for (int i=0; i < size; i++) {
       if (tickets[i] > 0) {
          if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if      (IsLongTradeOperation (OrderType())) sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
-            else if (IsShortTradeOperation(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
-            else                                         sValue = StringConcatenate("#", tickets[i], ":none");
+            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
+            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
+            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
          }
-         else                                            sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
+         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
       }
       else if (!tickets[i]) sValue = "(NULL)";
       else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
@@ -705,11 +705,11 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
    for (int i=0; i < size; i++) {
       if (tickets[i] > 0) {
          if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if      (IsLongTradeOperation (OrderType())) sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
-            else if (IsShortTradeOperation(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
-            else                                         sValue = StringConcatenate("#", tickets[i], ":none");
+            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
          }
-         else                                            sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
+         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
       }
       else if (!tickets[i]) sValue = "(NULL)";
       else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
@@ -745,8 +745,8 @@ string TicketsToStr.Position(int tickets[]) {
    for (int i=0; i < ticketsSize; i++) {
       if (tickets[i] > 0) {
          if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if (IsLongTradeOperation(OrderType())) long  += OrderLots();
-            else                                   short += OrderLots();
+            if (IsLongOrderType(OrderType())) long  += OrderLots();
+            else                              short += OrderLots();
          }
          else GetLastError();
       }

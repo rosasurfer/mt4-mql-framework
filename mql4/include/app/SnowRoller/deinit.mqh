@@ -6,13 +6,14 @@
  */
 int onDeinitParameterChange() {
    // Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
-   last.Sequence.ID     = StringConcatenate(Sequence.ID,     "");    // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
-   last.GridDirection   = StringConcatenate(GridDirection,   "");
-   last.GridSize        = GridSize;
-   last.LotSize         = LotSize;
-   last.StartLevel      = StartLevel;
-   last.StartConditions = StringConcatenate(StartConditions, "");
-   last.StopConditions  = StringConcatenate(StopConditions,  "");
+   last.Sequence.ID            = StringConcatenate(Sequence.ID,     "");   // String-Inputs sind Referenzen auf interne C-Literale
+   last.GridDirection          = StringConcatenate(GridDirection,   "");   // und müssen explizit kopiert werden.
+   last.GridSize               = GridSize;
+   last.LotSize                = LotSize;
+   last.StartLevel             = StartLevel;
+   last.StartConditions        = StringConcatenate(StartConditions, "");
+   last.StopConditions         = StringConcatenate(StopConditions,  "");
+   last.ProfitDisplayInPercent = ProfitDisplayInPercent;
    return(-1);
 }
 

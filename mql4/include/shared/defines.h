@@ -122,7 +122,7 @@
 #define OP_CREDIT                         7              // margin credit facility (no transaction)
 
 
-// Order activation types
+// pending order activation types
 #define OA_LIMIT                          1
 #define OA_STOP                           2
 

@@ -12,9 +12,10 @@
 //      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
 //      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
 //      OrderModify().
-#define ERR_COMMON_ERROR                                              2
-//      General trading error, the trade request failed. All attempts to trade must stop until reasons are clarified. Restart
-//      of the client terminal may be needed. Can be caused by trade server issues.
+#define ERR_TRADE_REQUEST_FAILED                                      2
+#define ERR_COMMON_ERROR                       ERR_TRADE_REQUEST_FAILED    // MetaQuotes alias
+//      The trade request failed. All attempts to trade must stop until reasons are clarified. Restart of the client terminal
+//      may be needed. Can be caused by trade server issues.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 //      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
@@ -184,7 +185,7 @@
 #define ERR_FILE_INCOMPATIBLE                                      5018    // incompatible file (for string arrays-TXT, for others-BIN)
 #define ERR_FILE_IS_DIRECTORY                                      5019    // file is a directory
 #define ERR_FILE_NOT_FOUND                                         5020    // file not found
-#define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MeatQuotes-Alias
+#define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MetaQuotes alias
 #define ERR_FILE_CANNOT_REWRITE                                    5021    // file cannot be rewritten
 #define ERR_FILE_WRONG_DIRECTORYNAME                               5022    // wrong directory name
 #define ERR_FILE_DIRECTORY_NOT_EXIST                               5023    // directory does not exist
