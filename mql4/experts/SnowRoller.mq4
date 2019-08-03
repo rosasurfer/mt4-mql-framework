@@ -1399,14 +1399,14 @@ bool ProcessLocalLimits(int stops[]) {
             if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
             // if market violated
             if (ticket == -1) {
-               return(_false(catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")", oe.Error(oe))));
+               return(_false(catch("ProcessLocalLimits(6)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat), oe.Error(oe))));
             }
             // if stop distance violated
             else if (ticket == -2) {
                clientSL = true;
                ticket = SubmitMarketOrder(type, level, clientSL, oe);         // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0) return(false);
-               warn("ProcessLocalLimits(7)  #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")");
+               warn("ProcessLocalLimits(7)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed");
             }
             // on all other errors
             else return(_false(catch("ProcessLocalLimits(5)  únknown ticket value "+ ticket, oe.Error(oe))));
@@ -1613,7 +1613,7 @@ int Grid.AddPendingOrder(int level, int activationType = NULL) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       // if market violated
       if (ticket == -1) {
-         if (__LOG()) log("Grid.AddPendingOrder(4)  "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\") illegal stop at current market ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a limit order instead", oe.Error(oe));
+         if (__LOG()) log("Grid.AddPendingOrder(4)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" illegal price "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening a limit order instead", oe.Error(oe));
          orderType -= 2;
          ticket = SubmitLimitOrder(orderType, level, oe);                           // open a limit order instead
          if (ticket <= 0) return(!catch("Grid.AddPendingOrder(5)", oe.Error(oe)));
@@ -1621,7 +1621,7 @@ int Grid.AddPendingOrder(int level, int activationType = NULL) {
       // if stop distance violated
       else if (ticket == -2) {
          ticket = -1;                                                               // use client-side stop management
-         warn("Grid.AddPendingOrder(6)  client-side limit for "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")");
+         warn("Grid.AddPendingOrder(6)  SR."+ sequence.id +"."+ NumberToStr(level, "+.") +" "+ NumberToStr(level, "+.") +"\" client-side limit for "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed");
       }
       // on all other errors
       else return(!catch("Grid.AddPendingOrder(7)  unknown ticket value "+ ticket, oe.Error(oe)));
@@ -3059,11 +3059,9 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
       directory = StringConcatenate(directory, "\\");
 
    string sequencePattern = StringConcatenate("SR*", sequence.id);               // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
-   string sequenceNames[4];
+   string sequenceNames[2];
           sequenceNames[0]= StringConcatenate("SR.", sequence.id, ".");
           sequenceNames[1]= StringConcatenate("SR.", sequence.id, "_");
-          sequenceNames[2]= StringConcatenate("SR-", sequence.id, ".");
-          sequenceNames[3]= StringConcatenate("SR-", sequence.id, "_");
 
    string filePattern = StringConcatenate(directory, "*", sequencePattern, "*set");
    string files[];
@@ -3072,9 +3070,11 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    if (size == -1) return(false);
 
    for (int i=0; i < size; i++) {
-      if (!StrStartsWithI(files[i], sequenceNames[0])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[1])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[2])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[3]))
-         if (!StrContainsI(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[3]))
-            continue;
+      if (!StrStartsWithI(files[i], sequenceNames[0]))
+         if (!StrStartsWithI(files[i], sequenceNames[1]))
+            if (!StrContainsI(files[i], "."+ sequenceNames[0]))
+               if (!StrContainsI(files[i], "."+ sequenceNames[1]))
+         continue;
       if (StrEndsWithI(files[i], ".set")) {
          lpFile = files[i];                                                      // Abbruch nach Fund der ersten .set-Datei
          return(true);
