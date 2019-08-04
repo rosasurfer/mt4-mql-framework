@@ -1463,14 +1463,16 @@ bool UpdatePendingOrders() {
 
    // check if the stop order for the next level exists (always at the last index)
    int i = sizeOfTickets - 1;
-   if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) {    // a pending stop or limit order
-      if (orders.level[i] == nextLevel) {                         // the next stop order
-         nextStopExists = true;
-      }
-      else if (IsStopOrderType(orders.pendingType[i])) {
-         if (!Grid.DeleteOrder(i)) return(false);                 // delete an obsolete old stop order (always at the last index)
-         sizeOfTickets--;
-         ordersChanged = true;
+   if (sizeOfTickets > 0) {
+      if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) { // a pending stop or limit order
+         if (orders.level[i] == nextLevel) {                      // the next stop order
+            nextStopExists = true;
+         }
+         else if (IsStopOrderType(orders.pendingType[i])) {
+            if (!Grid.DeleteOrder(i)) return(false);              // delete an obsolete old stop order (always at the last index)
+            sizeOfTickets--;
+            ordersChanged = true;
+         }
       }
    }
 
