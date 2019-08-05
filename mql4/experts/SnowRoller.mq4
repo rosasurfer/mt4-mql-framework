@@ -1488,6 +1488,9 @@ bool UpdatePendingOrders() {
          }
          if (level == 1) break;
       }
+      if (lastLevel != sequence.level) {
+         warn("UpdatePendingOrders(0.1)  lastLevel("+ lastLevel +") != sequence.level("+ sequence.level +")");
+      }
    }
 
    // trail a first level stop order (always an existing next level order, thus at the last index)
