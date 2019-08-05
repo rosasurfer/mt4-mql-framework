@@ -1129,7 +1129,7 @@ bool IsStartSignal() {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled";
+         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1268,7 +1268,7 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled";
+         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1278,7 +1278,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1291,7 +1291,7 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled";
+         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
