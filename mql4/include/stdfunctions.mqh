@@ -1723,9 +1723,9 @@ int Sign(double number) {
 
 
 /**
- * Integer-Version von MathRound()
+ * Integer version of MathRound()
  *
- * @param  double value - Zahl
+ * @param  double value
  *
  * @return int
  */
@@ -1735,83 +1735,9 @@ int Round(double value) {
 
 
 /**
- * Erweiterte Version von MathRound(), rundet auf die angegebene Anzahl von positiven oder negativen Dezimalstellen.
+ * Integer version of MathFloor()
  *
- * @param  double number
- * @param  int    decimals (default: 0)
- *
- * @return double - rounded value
- */
-double RoundEx(double number, int decimals=0) {
-   if (decimals > 0) return(NormalizeDouble(number, decimals));
-   if (!decimals)    return(      MathRound(number));
-
-   // decimals < 0
-   double factor = MathPow(10, decimals);                            // -1:  1234.5678 => 1230
-          number = MathRound(number * factor) / factor;              // -2:  1234.5678 => 1200
-          number = MathRound(number);                                // -3:  1234.5678 => 1000
-   return(number);
-}
-
-
-/**
- * Erweiterte Version von MathFloor(), rundet mit der angegebenen Anzahl von positiven oder negativen Dezimalstellen ab.
- *
- * @param  double number
- * @param  int    decimals (default: 0)
- *
- * @return double - rounded value
- */
-double RoundFloor(double number, int decimals=0) {
-   if (decimals > 0) {
-      double factor = MathPow(10, decimals);                         // +1:  1234.5678 => 1234.5
-             number = MathFloor(number * factor) / factor;           // +2:  1234.5678 => 1234.56
-             number = NormalizeDouble(number, decimals);             // +3:  1234.5678 => 1234.567
-      return(number);
-   }
-
-   if (decimals == 0)
-      return(MathFloor(number));
-
-   // decimals < 0
-   factor = MathPow(10, decimals);                                   // -1:  1234.5678 => 1230
-   number = MathFloor(number * factor) / factor;                     // -2:  1234.5678 => 1200
-   number = MathRound(number);                                       // -3:  1234.5678 => 1000
-   return(number);
-}
-
-
-/**
- * Erweiterte Version von MathCeil(), rundet mit der angegebenen Anzahl von positiven oder negativen Dezimalstellen auf.
- *
- * @param  double number
- * @param  int    decimals (default: 0)
- *
- * @return double - rounded value
- */
-double RoundCeil(double number, int decimals=0) {
-   if (decimals > 0) {
-      double factor = MathPow(10, decimals);                         // +1:  1234.5678 => 1234.6
-             number = MathCeil(number * factor) / factor;            // +2:  1234.5678 => 1234.57
-             number = NormalizeDouble(number, decimals);             // +3:  1234.5678 => 1234.568
-      return(number);
-   }
-
-   if (decimals == 0)
-      return(MathCeil(number));
-
-   // decimals < 0
-   factor = MathPow(10, decimals);                                   // -1:  1234.5678 => 1240
-   number = MathCeil(number * factor) / factor;                      // -2:  1234.5678 => 1300
-   number = MathRound(number);                                       // -3:  1234.5678 => 2000
-   return(number);
-}
-
-
-/**
- * Integer-Version von MathFloor()
- *
- * @param  double value - Zahl
+ * @param  double value
  *
  * @return int
  */
@@ -1821,14 +1747,117 @@ int Floor(double value) {
 
 
 /**
- * Integer-Version von MathCeil()
+ * Integer version of MathCeil()
  *
- * @param  double value - Zahl
+ * @param  double value
  *
  * @return int
  */
 int Ceil(double value) {
    return(MathCeil(value));
+}
+
+
+/**
+ * Extended version of MathRound(). Rounds to the specified amount of digits before or after the decimal separator.
+ *
+ * Examples:
+ *  RoundEx(1234.5678,  3) => 1234.568
+ *  RoundEx(1234.5678,  2) => 1234.57
+ *  RoundEx(1234.5678,  1) => 1234.6
+ *  RoundEx(1234.5678,  0) => 1234.0
+ *  RoundEx(1234.5678, -1) => 1230.0
+ *  RoundEx(1234.5678, -2) => 1200.0
+ *  RoundEx(1234.5678, -3) => 1000.0
+ *
+ * @param  double number
+ * @param  int    decimals [optional] - (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundEx(double number, int decimals = 0) {
+   if (decimals > 0) return(NormalizeDouble(number, decimals));
+   if (!decimals)    return(      MathRound(number));
+
+   // decimals < 0
+   double factor = MathPow(10, decimals);
+          number = MathRound(number * factor) / factor;
+          number = MathRound(number);
+   return(number);
+}
+
+
+/**
+ * Extended version of MathFloor(). Rounds to the specified amount of digits before or after the decimal separator down.
+ * That's the direction to zero.
+ *
+ * Examples:
+ *  RoundFloor(1234.5678,  3) => 1234.567
+ *  RoundFloor(1234.5678,  2) => 1234.56
+ *  RoundFloor(1234.5678,  1) => 1234.5
+ *  RoundFloor(1234.5678,  0) => 1234
+ *  RoundFloor(1234.5678, -1) => 1230
+ *  RoundFloor(1234.5678, -2) => 1200
+ *  RoundFloor(1234.5678, -3) => 1000
+ *
+ * @param  double number
+ * @param  int    decimals [optional] - (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundFloor(double number, int decimals = 0) {
+   if (decimals > 0) {
+      double factor = MathPow(10, decimals);
+             number = MathFloor(number * factor) / factor;
+             number = NormalizeDouble(number, decimals);
+      return(number);
+   }
+
+   if (decimals == 0)
+      return(MathFloor(number));
+
+   // decimals < 0
+   factor = MathPow(10, decimals);
+   number = MathFloor(number * factor) / factor;
+   number = MathRound(number);
+   return(number);
+}
+
+
+/**
+ * Extended version of MathCeil(). Rounds to the specified amount of digits before or after the decimal separator up.
+ * That's the direction from zero away.
+ *
+ * Examples:
+ *  RoundCeil(1234.5678,  3) => 1234.568
+ *  RoundCeil(1234.5678,  2) => 1234.57
+ *  RoundCeil(1234.5678,  1) => 1234.6
+ *  RoundCeil(1234.5678,  0) => 1235
+ *  RoundCeil(1234.5678, -1) => 1240
+ *  RoundCeil(1234.5678, -2) => 1300
+ *  RoundCeil(1234.5678, -3) => 2000
+ *
+ * @param  double number
+ * @param  int    decimals [optional] - (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundCeil(double number, int decimals = 0) {
+   if (decimals > 0) {
+      double factor = MathPow(10, decimals);
+             number = MathCeil(number * factor) / factor;
+             number = NormalizeDouble(number, decimals);
+      return(number);
+   }
+
+   if (decimals == 0)
+      return(MathCeil(number));
+
+   // decimals < 0
+   factor = MathPow(10, decimals);
+   number = MathCeil(number * factor) / factor;
+   number = MathRound(number);
+   return(number);
 }
 
 
