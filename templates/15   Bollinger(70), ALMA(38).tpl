@@ -8792,7 +8792,7 @@ Bands.LineWidth=1
 Max.Values=5000
 </inputs>
 </expert>
-period_flags=14
+period_flags=0
 show_data=1
 </indicator>
 
@@ -8810,7 +8810,7 @@ Draw.Type=Dot
 Draw.LineWidth=3
 </inputs>
 </expert>
-period_flags=14
+period_flags=0
 show_data=1
 </indicator>
 
