@@ -247,7 +247,7 @@ int onTick() {
       if (IsStopSignal()) StopSequence();
       else {
          if (ArraySize(activatedOrders) > 0) ExecuteOrders(activatedOrders);
-         if (gridChanged)                    UpdatePendingOrders();
+         if (Tick==1 || gridChanged)         UpdatePendingOrders();
       }
    }
 
@@ -686,14 +686,14 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
  * @param  _Out_ bool &gridChanged       - variable indicating whether the current grid base or level changed
- * @param  _Out_ int   activatedLimits[] - array receiving the order indexes of activated client-side limits
+ * @param  _Out_ int   activatedOrders[] - array receiving the order indexes of activated client-side stops/limits
  *
  * @return bool - success status
  */
-bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
+bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
    gridChanged = gridChanged!=0;
 
-   ArrayResize(activatedLimits, 0);
+   ArrayResize(activatedOrders, 0);
    if (IsLastError())                     return(false);
    if (sequence.status == STATUS_WAITING) return(true);
 
@@ -710,7 +710,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {   // handles stop and limit orders
                if (__LOG()) log("UpdateStatus(1)  "+ UpdateStatus.StopTriggerMsg(i));
-               ArrayPushInt(activatedLimits, i);
+               ArrayPushInt(activatedOrders, i);
             }
             continue;
          }
@@ -772,7 +772,7 @@ bool UpdateStatus(bool &gridChanged, int activatedLimits[]) {
                openPositions = true;
                if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
                   if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.StopTriggerMsg(i));
-                  ArrayPushInt(activatedLimits, i);
+                  ArrayPushInt(activatedOrders, i);
                }
             }
             sequence.floatingPL = NormalizeDouble(sequence.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
@@ -1457,7 +1457,7 @@ bool UpdatePendingOrders() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE));
    if (sequence.status != STATUS_PROGRESSING)     return(!catch("UpdatePendingOrders(2)  cannot update orders of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
-   int type, limitOrders, level, lastLevel, nextLevel=sequence.level + ifInt(sequence.direction==D_LONG, 1, -1), sizeOfTickets=ArraySize(orders.ticket);
+   int type, limitOrders, level, lastExistingLevel, nextLevel=sequence.level + ifInt(sequence.direction==D_LONG, 1, -1), sizeOfTickets=ArraySize(orders.ticket);
    bool nextStopExists, ordersChanged;
    string sMissedLevels = "";
 
@@ -1476,20 +1476,20 @@ bool UpdatePendingOrders() {
       }
    }
 
-   // find the last existing open order (a position or limit order)
+   // find the last open order of an active level (an open position or a pending limit order)
    if (sequence.level != 0) {
       for (i=sizeOfTickets-1; i >= 0; i--) {
          level = Abs(orders.level[i]);
          if (!orders.closeTime[i]) {
             if (level < Abs(nextLevel)) {
-               lastLevel = orders.level[i];
+               lastExistingLevel = orders.level[i];
                break;
             }
          }
          if (level == 1) break;
       }
-      if (lastLevel != sequence.level) {
-         warn("UpdatePendingOrders(0.1)  lastLevel("+ lastLevel +") != sequence.level("+ sequence.level +")");
+      if (lastExistingLevel != sequence.level) {
+         return(!catch("UpdatePendingOrders(3)  lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
       }
    }
 
@@ -1501,9 +1501,9 @@ bool UpdatePendingOrders() {
          if (IsTesting() || GetTickCount()-lastTrailed > 3000) {  // at each tick. Wait 3 seconds between consecutive trailings.
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
             if (IsLimitOrderType(type)) {                         // TrailPendingOrder() missed a level
-               lastLevel         = nextLevel;                     // -1 | +1
+               lastExistingLevel = nextLevel;                     // -1 | +1
                sequence.level    = nextLevel;
-               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastLevel;
+               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastExistingLevel;
                nextLevel        += nextLevel;                     // -2 | +2
                nextStopExists    = false;
             }
@@ -1513,15 +1513,15 @@ bool UpdatePendingOrders() {
       }
    }
 
-   // add all missing orders up to the next sequence level (stop or limit orders)
+   // add all missing levels (pending limit or stop orders) up to the next sequence level
    if (!nextStopExists) {
       while (true) {
          if (IsLimitOrderType(type)) {                            // TrailPendingOrder() or AddPendingOrder() missed a level
             limitOrders++;
-            ArrayPushInt(sequence.missedLevels, lastLevel);
-            sMissedLevels = sMissedLevels +", "+ lastLevel;
+            ArrayPushInt(sequence.missedLevels, lastExistingLevel);
+            sMissedLevels = sMissedLevels +", "+ lastExistingLevel;
          }
-         level = lastLevel + Sign(nextLevel);
+         level = lastExistingLevel + Sign(nextLevel);
          type = Grid.AddPendingOrder(level); if (!type) return(false);
          if (level == nextLevel) {
             if (IsLimitOrderType(type)) {                         // a limit order was opened
@@ -1535,18 +1535,18 @@ bool UpdatePendingOrders() {
                break;
             }
          }
-         lastLevel = level;
+         lastExistingLevel = level;
       }
    }
 
    if (limitOrders > 0) {
       sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(3)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
+      if (__LOG()) log("UpdatePendingOrders(4)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
 
    if (ordersChanged)
       if (!SaveStatus()) return(false);
-   return(!last_error|catch("UpdatePendingOrders(4)"));
+   return(!last_error|catch("UpdatePendingOrders(5)"));
 }
 
 
@@ -3933,14 +3933,14 @@ bool SynchronizeStatus() {
       }
    }
 
-   // (1.2) Event-IDs geschlossener Positionen setzen (erst nach evt. ausgestoppten Positionen)
+   // (1.2) Event-IDs geschlossener Positionen setzen (IDs für ausgestoppte Positionen wurden vorher in Sync.UpdateOrder() vergeben)
    int sizeOfClosed = ArrayRange(closed, 0);
    if (sizeOfClosed > 0) {
       ArraySort(closed);
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("SynchronizeStatus(2)  closed ticket #"+ closed[i][1] +" not found in grid arrays", ERR_RUNTIME_ERROR)));
+            return(_false(catch("SynchronizeStatus(2)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -4100,8 +4100,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
    bool   isOpen     = !isPending && !isClosed;                      // jetzt offene Position
    double lastSwap   = orders.swap[i];
 
-
-   // (1) Ticketdaten aktualisieren
+   // Ticketdaten aktualisieren
    //orders.ticket       [i]                                         // unverändert
    //orders.level        [i]                                         // unverändert
    //orders.gridBase     [i]                                         // unverändert
@@ -4147,7 +4146,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
       orders.profit      [i] = OrderProfit();
    }
 
-   // (2) lpPermanentChange aktualisieren
+   // lpPermanentChange aktualisieren
    if      (wasPending) lpPermanentChange = lpPermanentChange || isOpen || isClosed;
    else if (  isClosed) lpPermanentChange = true;
    else                 lpPermanentChange = lpPermanentChange || NE(lastSwap, OrderSwap());
