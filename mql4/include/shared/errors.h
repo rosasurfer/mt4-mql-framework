@@ -135,10 +135,10 @@
 #define ERR_SYMBOL_NOT_AVAILABLE                                   4106
 #define ERR_INVALID_PRICE_PARAM                                    4107
 #define ERR_INVALID_TICKET                                         4108
-#define ERR_TRADE_NOT_ALLOWED                                      4109
+#define ERR_TRADE_NOT_ALLOWED                                      4109    // automated trading disabled in the terminal
 #define ERR_LONGS_NOT_ALLOWED                                      4110
 #define ERR_SHORTS_NOT_ALLOWED                                     4111
-#define ERR_AUTOMATED_TRADING_DISABLED                             4112    // automated trading not supported
+#define ERR_AUTOMATED_TRADING_DISABLED                             4112    // automated trading disabled by the broker
 #define ERR_OBJECT_ALREADY_EXISTS                                  4200
 #define ERR_UNKNOWN_OBJECT_PROPERTY                                4201
 #define ERR_OBJECT_DOES_NOT_EXIST                                  4202
