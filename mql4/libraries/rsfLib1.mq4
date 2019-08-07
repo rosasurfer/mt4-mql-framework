@@ -6012,7 +6012,7 @@ string OrderCloseEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string strSD; if (oe.Error(oe) == ERR_INVALID_STOP)
       strSD = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
 
-   string message = StringConcatenate("permanent error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
+   string message = StringConcatenate("error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
    if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    return(message);
@@ -6304,7 +6304,7 @@ string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_
 string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
    // error while trying to close #1 by #2 after 0.345 s
 
-   string message = StringConcatenate("permanent error while trying to close #", first, " by #", second);
+   string message = StringConcatenate("error while trying to close #", first, " by #", second);
    if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    return(message);
@@ -7072,7 +7072,7 @@ string OrderDeleteEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
    }
 
-   string message = StringConcatenate("permanent error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
+   string message = StringConcatenate("error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
    if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    return(message);
