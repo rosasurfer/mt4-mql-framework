@@ -21,9 +21,7 @@
 #define ERR_SERVER_BUSY                                               4
 //      The trade server is busy. The attempt can be repeated after a rather long period of time (more than several minutes).
 #define ERR_OLD_VERSION                                               5    // too old version of the client terminal
-#define ERR_NO_CONNECTION                                             6
-//      No connection to the trade server. Make sure that a connection is established (e.g. by using IsConnected()) and repeat
-//      the attempt after a certain period of time (more than 5 seconds).
+#define ERR_NO_CONNECTION                                             6    // no connection to the trade server
 #define ERR_NOT_ENOUGH_RIGHTS                                         7
 #define ERR_TOO_FREQUENT_REQUESTS                                     8    // trade requests are too frequent
 #define ERR_MALFUNCTIONAL_TRADE                                       9    // malfunctional trade operation
