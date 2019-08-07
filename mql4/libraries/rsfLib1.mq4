@@ -6920,17 +6920,22 @@ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor
 
 
 /**
- * Erweiterte Version von OrderDelete().
+ * Extended version of OrderDelete().
  *
- * @param  _In_  int   ticket      - Ticket der zu schließenden Order
- * @param  _In_  color markerColor - Farbe des Chart-Markers
- * @param  _In_  int   oeFlags     - die Ausführung steuernde Flags
- * @param  _Out_ int   oe[]        - Ausführungsdetails (struct ORDER_EXECUTION)
+ * @param  _In_  int   ticket      - order ticket to close
+ * @param  _In_  color markerColor - color of the chart marker to set
+ * @param  _In_  int   oeFlags     - flags controlling trade request execution
+ * @param  _Out_ int   oe[]        - execution details (struct ORDER_EXECUTION)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
+ *
+ * Specific errors:
+ * ----------------
+ * ERR_INVALID_TICKET           - unknown ticket or not a pending order (client-side triggered error)
+ * ERR_INVALID_TRADE_PARAMETERS - not a pending order anymore (server-side triggered error)
  */
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
-   // -- Beginn Parametervalidierung --
+   // -- validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1) return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(oe) != ORDER_EXECUTION.intSize)
@@ -6938,14 +6943,13 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
    ArrayInitialize(oe, 0);
 
    // ticket
-   if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
-   if (!IsPendingOrderType(OrderType()))                       return(_false(oe.setError(oe, catch("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
-   if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderDeleteEx(4)  #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(!oe.setError(oe, last_error));
+   if (!IsPendingOrderType(OrderType()))                       return(!oe.setError(oe, catch("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP)));
+   if (OrderCloseTime() != 0)                                  return(!oe.setError(oe, catch("OrderDeleteEx(4)  #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderDeleteEx(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
-   // -- Ende Parametervalidierung --
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oe.setError(oe, catch("OrderDeleteEx(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP)));
 
-   // oe initialisieren
+   // initialize oe[]
    oe.setSymbol    (oe, OrderSymbol()    );
    oe.setDigits    (oe, MarketInfo(OrderSymbol(), MODE_DIGITS));
    oe.setTicket    (oe, ticket           );
@@ -6968,13 +6972,13 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
    int  error, firstTime1 = GetTickCount(), tempErrors;
    bool success;
 
-   // Schleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
+   // loop until the order was deleted or a non-fixable error occurred
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(6)  ", OrderDeleteEx.ErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(7)")));
+      if (IsStopped()) return(_false(Order.HandleError("OrderDeleteEx(6)  "+ OrderDeleteEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(7)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG()) log("OrderDeleteEx(8)  trade context busy, retrying...");
-         Sleep(300);                                                                   // 0.3 Sekunden warten
+         Sleep(300);                                                                // wait 0.3 seconds
          continue;
       }
 
@@ -6983,10 +6987,10 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
 
       success = OrderDelete(ticket, markerColor);
 
-      oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
+      oe.setDuration(oe, GetTickCount()-firstTime1);                                // total time in milliseconds
 
       if (success) {
-         WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
+         WaitForTicket(ticket, false);                                              // FALSE: select the ticket
 
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(9)")));
@@ -6995,85 +6999,89 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
-         return(!oe.setError(oe, catch("OrderDeleteEx(11)", NULL, O_POP)));             // regular exit
+         return(!oe.setError(oe, catch("OrderDeleteEx(11)", NULL, O_POP)));         // regular exit
       }
 
       error = GetLastError();
-      if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG()) log("OrderDeleteEx(12)  trade context busy, retrying...");
-         Sleep(300);                                                                   // 0.3 Sekunden warten
-         continue;
+      switch (error) {
+         case ERR_TRADE_CONTEXT_BUSY:
+            if (__LOG()) log("OrderDeleteEx(12)  trade context busy, retrying...");
+            Sleep(300);                                                             // wait 0.3 seconds
+            continue;
+
+         case ERR_SERVER_BUSY:
+         case ERR_TRADE_TIMEOUT:
+            tempErrors++;
+            if (tempErrors > 5)
+               break;
+            warn("OrderDeleteEx(13)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            continue;                                                               // continue for temporary errors
       }
-      if (!error)
-         error = ERR_RUNTIME_ERROR;
-      if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
-         break;
-      tempErrors++;
-      if (tempErrors > 5)
-         break;
-      warn(StringConcatenate("OrderDeleteEx(13)  ", Order.TempErrorMsg(oe, tempErrors)), error);
+
+      if (!error) error = ERR_RUNTIME_ERROR;
+      break;                                                                        // fail for all other errors
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(14)  ", OrderDeleteEx.ErrorMsg(oe)), error, O_POP))));
+   return(!oe.setError(oe, catch("OrderDeleteEx(14)  "+ OrderDeleteEx.ErrorMsg(oe), error, O_POP)));
 }
 
 
 /**
- * Logmessage für OrderDeleteEx().
+ * Compose a log message for successful execution of OrderDeleteEx().
  *
- * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  int oe[] - execution details (struct ORDER_EXECUTION)
  *
  * @return string
  */
-string OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+string OrderDeleteEx.SuccessMsg(int oe[]) {
    // deleted #1 Stop Buy 0.5 GBPUSD at 1.5520'3 ("SR.12345.+3") after 0.2 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   string strType     = OperationTypeDescription(oe.Type(oe));
-   string strLots     = NumberToStr(oe.Lots(oe), ".+");
-   string strComment  = oe.Comment(oe);
-      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
+   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string sType       = OperationTypeDescription(oe.Type(oe));
+   string sLots       = NumberToStr(oe.Lots(oe), ".+");
+   string sComment    = oe.Comment(oe);
+      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
 
-   string message = StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice);
-   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   string message = "deleted #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ strPrice;
+   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
 
 
 /**
- * Logmessage für OrderDeleteEx().
+ * Compose a log message for failed execution of OrderDeleteEx().
  *
- * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  int oe[] - execution details (struct ORDER_EXECUTION)
  *
  * @return string
- *
- * @access private - Aufruf nur aus OrderDeleteEx()
  */
-string OrderDeleteEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
+string OrderDeleteEx.ErrorMsg(int oe[]) {
+   // The ticket always exists. Typically it was but is not a pendig order anymore. In this case:
+   // ERR_INVALID_TICKET           - triggered by the terminal (client-side)
+   // ERR_INVALID_TRADE_PARAMETERS - triggered by the trade server (server-side)
 
+   // error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   string strType     = OperationTypeDescription(oe.Type(oe));
-   string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string sType       = OperationTypeDescription(oe.Type(oe));
+   string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
-   string strComment  = oe.Comment(oe);
-      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
+   string sComment    = oe.Comment(oe);
+      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
 
-   string strPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string strSL; if (!EQ(oe.StopLoss  (oe), 0)) strSL = StringConcatenate(", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
-   string strTP; if (!EQ(oe.TakeProfit(oe), 0)) strTP = StringConcatenate(", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
-   string strSD; if (oe.Error(oe) == ERR_INVALID_STOP) {
-      strPrice = StringConcatenate(strPrice, " (market ", NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat), "/", NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat), ")");
-      strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
+   string sPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string sSL = ""; if (!EQ(oe.StopLoss  (oe), 0, digits)) sSL = ", sl="+ NumberToStr(oe.StopLoss  (oe), priceFormat);
+   string sTP = ""; if (!EQ(oe.TakeProfit(oe), 0, digits)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
+   string sSD = ""; if (oe.Error(oe) == ERR_INVALID_STOP) {
+      sPrice = sPrice +" (market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
+      sSD    = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
    }
-
-   string message = StringConcatenate("error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
-   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP + sSD;
+   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
