@@ -1765,10 +1765,10 @@ int Ceil(double value) {
  *  RoundEx(1234.5678,  3) => 1234.568
  *  RoundEx(1234.5678,  2) => 1234.57
  *  RoundEx(1234.5678,  1) => 1234.6
- *  RoundEx(1234.5678,  0) => 1234.0
- *  RoundEx(1234.5678, -1) => 1230.0
- *  RoundEx(1234.5678, -2) => 1200.0
- *  RoundEx(1234.5678, -3) => 1000.0
+ *  RoundEx(1234.5678,  0) => 1235
+ *  RoundEx(1234.5678, -1) => 1230
+ *  RoundEx(1234.5678, -2) => 1200
+ *  RoundEx(1234.5678, -3) => 1000
  *
  * @param  double number
  * @param  int    decimals [optional] - (default: 0)
