@@ -812,32 +812,34 @@ bool IsTicket(int ticket) {
 
 
 /**
- * Selektiert ein Ticket.
+ * Select a ticket.
  *
- * @param  int    ticket                  - Ticket-Nr.
- * @param  string location                - Bezeichner für evt. Fehlermeldung
- * @param  bool   storeSelection          - ob die aktuelle Selektion gespeichert werden soll (default: nein)
- * @param  bool   onErrorRestoreSelection - ob im Fehlerfall die letzte Selektion wiederhergestellt werden soll
- *                                          (default: bei storeSelection=TRUE ja; bei storeSelection=FALSE nein)
- * @return bool - Erfolgsstatus
+ * @param  int    ticket                      - ticket id
+ * @param  string label                       - label for potential error message
+ * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
+ * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
+ *                                              (default: yes on pushTicket=TRUE, no on pushTicket=FALSE)
+ * @return bool - success status
  */
-bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false) {
-   storeSelection          = storeSelection!=0;
-   onErrorRestoreSelection = onErrorRestoreSelection!=0;
+bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorPopTicket=false) {
+   pushTicket       = pushTicket!=0;
+   onErrorPopTicket = onErrorPopTicket!=0;
 
-   if (storeSelection) {
-      OrderPush(location);
-      onErrorRestoreSelection = true;
+   if (pushTicket) {
+      OrderPush(label);
+      onErrorPopTicket = true;
    }
 
    if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);                             // Success
+      return(true);                             // success
 
-   if (onErrorRestoreSelection)                 // Fehler
-      OrderPop(location);
+   if (onErrorPopTicket)                        // error
+      OrderPop(label);
 
    int error = GetLastError();
-   return(!catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(!error, ERR_INVALID_TICKET, error)));
+   if (!error)
+      error = ERR_INVALID_TICKET;
+   return(!catch(label +"->SelectTicket()   ticket="+ ticket, error));
 }
 
 
@@ -887,21 +889,20 @@ bool OrderPop(string location) {
 
 
 /**
- * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
+ * Wait for a ticket to appear in the terminal's open order or history pool.
  *
- * @param  int  ticket               - Orderticket
- * @param  bool orderKeep [optional] - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                                     wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
+ * @param  int  ticket            - ticket id
+ * @param  bool select [optional] - whether the ticket is selected after function return (default: no)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool WaitForTicket(int ticket, bool orderKeep = true) {
-   orderKeep = orderKeep!=0;
+bool WaitForTicket(int ticket, bool select = false) {
+   select = select!=0;
 
    if (ticket <= 0)
       return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
-   if (orderKeep) {
+   if (!select) {
       if (!OrderPush("WaitForTicket(2)"))
          return(!last_error);
    }
@@ -915,7 +916,7 @@ bool WaitForTicket(int ticket, bool orderKeep = true) {
       i++;
    }
 
-   if (orderKeep) {
+   if (!select) {
       if (!OrderPop("WaitForTicket(5)"))
          return(false);
    }
