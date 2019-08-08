@@ -408,7 +408,7 @@ bool StopSequence() {
    // zuerst Pending-Orders streichen (ansonsten könnten sie während OrderClose() noch getriggert werden)
    int sizeOfPendings = ArraySize(pendings);
    for (i=0; i < sizeOfPendings; i++) {
-      if (!Grid.DeleteOrder(pendings[i])) return(false);
+      if (Grid.DeleteOrder(pendings[i]) != 0) return(false);
    }
 
    // dann offene Positionen schließen                // TODO: Wurde eine PendingOrder inzwischen getriggert, muß sie hier mit verarbeitet werden.
@@ -1469,7 +1469,7 @@ bool UpdatePendingOrders() {
             nextStopExists = true;
          }
          else if (IsStopOrderType(orders.pendingType[i])) {
-            if (!Grid.DeleteOrder(i)) return(false);              // delete an obsolete old stop order (always at the last index)
+            if (Grid.DeleteOrder(i) != 0) return(false);          // delete an obsolete old stop order (always at the last index)
             sizeOfTickets--;
             ordersChanged = true;
          }
@@ -1977,7 +1977,7 @@ int Grid.TrailPendingOrder(int i) {
       if (IsError(error)) {
          if (oe.Error(oe) != ERR_INVALID_STOP) return(!SetLastError(oe.Error(oe)));
          if (error == -1) {                                 // market violated: delete stop order and open a limit order instead
-            if (!Grid.DeleteOrder(i)) return(NULL);
+            if (Grid.DeleteOrder(i) != 0) return(NULL);
             return(Grid.AddPendingOrder(level));
          }
          if (error == -2) {                                 // stop distance violated: use client-side stop management
@@ -2004,28 +2004,33 @@ int Grid.TrailPendingOrder(int i) {
  *
  * @param  int i - order index
  *
- * @return bool - success status
+ * @return int - NULL on success or another value in case of errors, especially:
+ *               -1 if the order was already executed and is not a pending order anymore
  */
-bool Grid.DeleteOrder(int i) {
-   if (IsLastError())                                                                 return(false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                     return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
+int Grid.DeleteOrder(int i) {
+   if (IsLastError())                                                                 return(last_error);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                     return(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED) return(!catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (orders.type[i] != OP_UNDEFINED)                                                return(!catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_ILLEGAL_STATE));
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED) return(catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   if (orders.type[i] != OP_UNDEFINED)                                                return(catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
-      return(!SetLastError(ERR_CANCELLED_BY_USER));
+      return(SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {
-      int oeFlags = NULL;
+      int oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;         // the pending order was already executed
       int oe[];
-      if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) {
+         int error = oe.Error(oe);
+         if (error == ERR_INVALID_TRADE_PARAMETERS)
+            return(-1);
+         return(SetLastError(error));
+      }
    }
-   if (!Grid.DropData(i))
-      return(false);
+   if (!Grid.DropData(i)) return(last_error);
 
    ArrayResize(oe, 0);
-   return(!last_error|catch("Grid.DeleteOrder(4)"));
+   return(catch("Grid.DeleteOrder(4)"));
 }
 
 
