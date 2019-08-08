@@ -391,14 +391,14 @@ bool StopSequence() {
    ArrayResize(positions, 0);
 
    for (int i=sizeOfTickets-1; i >= 0; i--) {
-      if (!orders.closeTime[i]) {                                                                  // Ticket prüfen: wenn es beim letzten Aufruf noch offen war
+      if (!orders.closeTime[i]) {                                                                  // local: if (isOpen)
          if (orders.ticket[i] < 0) {
             if (!Grid.DropData(i)) return(false);                                                  // client-seitige Pending-Orders können intern gelöscht werden
             sizeOfTickets--;
             continue;
          }
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
-         if (!OrderCloseTime()) {                                                                  // offene Tickets je nach Typ zwischenspeichern
+         if (!OrderCloseTime()) {                                                                  // server: if (isOpen)
             if (IsPendingOrderType(OrderType())) ArrayPushInt(pendings,                i);         // Grid.DeleteOrder() erwartet den Array-Index
             else                                 ArrayPushInt(positions, orders.ticket[i]);        // OrderMultiClose() erwartet das Orderticket
          }
@@ -2020,11 +2020,11 @@ bool Grid.DeleteOrder(int i) {
       int oeFlags = NULL;
       int oe[];
       if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-      ArrayResize(oe, 0);
    }
    if (!Grid.DropData(i))
       return(false);
 
+   ArrayResize(oe, 0);
    return(!last_error|catch("Grid.DeleteOrder(4)"));
 }
 
