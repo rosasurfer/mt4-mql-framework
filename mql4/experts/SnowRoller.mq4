@@ -409,8 +409,8 @@ bool StopSequence() {
       int error = Grid.DeleteOrder(pendings[i]);
       if (!error) continue;
       if (error == -1) {
-         if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" adding #"+ orders.ticket[i] +" to open positions");
-         ArrayPushInt(positions, orders.ticket[i]);
+         if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" adding #"+ orders.ticket[pendings[i]] +" to open positions");
+         ArrayPushInt(positions, orders.ticket[pendings[i]]);
       }
       else return(false);
    }
