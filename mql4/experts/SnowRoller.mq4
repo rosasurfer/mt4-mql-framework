@@ -1463,8 +1463,10 @@ bool UpdatePendingOrders() {
                sizeOfTickets--;
                ordersChanged = true;
             }
-            else if (error != -1) return(false);                  // TODO: handle the already opened pending order
-            return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
+            else if (error == -1) {                               // TODO: handle the already opened pending order
+               return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
+            }
+            else return(false);
          }
       }
    }
