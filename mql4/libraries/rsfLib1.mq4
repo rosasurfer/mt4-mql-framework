@@ -337,9 +337,8 @@ bool AquireLock(string mutexName, bool wait) {
       return(true);
    }
 
-   datetime startTime = GetTickCount();
-   int      error, duration, seconds = 1;
-   string   globalVarName = mutexName;
+   int    error, duration, seconds=1, startTime=GetTickCount();
+   string globalVarName = mutexName;
 
    if (This.IsTesting())
       globalVarName = "tester."+ mutexName;
