@@ -2,8 +2,8 @@
  * Trix - Slope of Triple Smoothed Exponential Moving Average
  *
  *
- * The Trix displays the slope (aka the rate of change) in percent of a triple smoothed EMA (TriEMA).
- * The unit is "bps" (1 base point = 1/100th % change).
+ * The Trix calculates the 1-period percent change (aka slope, momentum or rate of change) of a triple smoothed EMA (TriEMA).
+ * The display unit is "base points" (1 bps = 1/100th %).
  *
  * Example:
  *  Trix[0] = TriEMA[0]/TriEMA[1] * 100 * 100
