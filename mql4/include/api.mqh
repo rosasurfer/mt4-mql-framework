@@ -192,7 +192,7 @@ int      Round(double value);;
 double   RoundCeil(double number, int decimals = 0);;
 double   RoundEx(double number, int decimals = 0);;
 double   RoundFloor(double number, int decimals = 0);;
-bool     SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
+bool     SelectTicket(int ticket, string location, bool pushTicket=false, bool onErrorPopTicket=false);;
 bool     SendChartCommand(string cmdObject, string cmd, string cmdMutex = "");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;
@@ -257,7 +257,7 @@ int      Toolbar.Experts(bool enable);;
 string   TradeCommandToStr(int cmd);;
 string   UninitializeReasonDescription(int reason);;
 string   UrlEncode(string value);;
-bool     WaitForTicket(int ticket, bool orderKeep = true);;
+bool     WaitForTicket(int ticket, bool select = false);;
 int      warn(string message, int error = NO_ERROR);;
 
 

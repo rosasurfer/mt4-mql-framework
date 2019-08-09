@@ -421,10 +421,10 @@ string ErrorDescription(int error) {
       case ERR_SYMBOL_NOT_AVAILABLE       : return("symbol not available"                                     );  //   4106
       case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"               );  //   4107
       case ERR_INVALID_TICKET             : return("invalid ticket"                                           );  //   4108
-      case ERR_TRADE_NOT_ALLOWED          : return("online trading not enabled"                               );  //   4109
+      case ERR_TRADE_NOT_ALLOWED          : return("automated trading disabled in terminal"                   );  //   4109
       case ERR_LONGS_NOT_ALLOWED          : return("long trades not enabled"                                  );  //   4110
       case ERR_SHORTS_NOT_ALLOWED         : return("short trades not enabled"                                 );  //   4111
-      case ERR_AUTOMATED_TRADING_DISABLED : return("automated trading disabled"                               );  //   4112
+      case ERR_AUTOMATED_TRADING_DISABLED : return("automated trading disabled by broker"                     );  //   4112
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                    );  //   4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                  );  //   4201
       case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                     );  //   4202
@@ -812,32 +812,34 @@ bool IsTicket(int ticket) {
 
 
 /**
- * Selektiert ein Ticket.
+ * Select a ticket.
  *
- * @param  int    ticket                  - Ticket-Nr.
- * @param  string location                - Bezeichner für evt. Fehlermeldung
- * @param  bool   storeSelection          - ob die aktuelle Selektion gespeichert werden soll (default: nein)
- * @param  bool   onErrorRestoreSelection - ob im Fehlerfall die letzte Selektion wiederhergestellt werden soll
- *                                          (default: bei storeSelection=TRUE ja; bei storeSelection=FALSE nein)
- * @return bool - Erfolgsstatus
+ * @param  int    ticket                      - ticket id
+ * @param  string label                       - label for potential error message
+ * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
+ * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
+ *                                              (default: yes on pushTicket=TRUE, no on pushTicket=FALSE)
+ * @return bool - success status
  */
-bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false) {
-   storeSelection          = storeSelection!=0;
-   onErrorRestoreSelection = onErrorRestoreSelection!=0;
+bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorPopTicket=false) {
+   pushTicket       = pushTicket!=0;
+   onErrorPopTicket = onErrorPopTicket!=0;
 
-   if (storeSelection) {
-      OrderPush(location);
-      onErrorRestoreSelection = true;
+   if (pushTicket) {
+      OrderPush(label);
+      onErrorPopTicket = true;
    }
 
    if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);                             // Success
+      return(true);                             // success
 
-   if (onErrorRestoreSelection)                 // Fehler
-      OrderPop(location);
+   if (onErrorPopTicket)                        // error
+      OrderPop(label);
 
    int error = GetLastError();
-   return(!catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(!error, ERR_INVALID_TICKET, error)));
+   if (!error)
+      error = ERR_INVALID_TICKET;
+   return(!catch(label +"->SelectTicket()   ticket="+ ticket, error));
 }
 
 
@@ -887,21 +889,20 @@ bool OrderPop(string location) {
 
 
 /**
- * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
+ * Wait for a ticket to appear in the terminal's open order or history pool.
  *
- * @param  int  ticket               - Orderticket
- * @param  bool orderKeep [optional] - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                                     wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
+ * @param  int  ticket            - ticket id
+ * @param  bool select [optional] - whether the ticket is selected after function return (default: no)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool WaitForTicket(int ticket, bool orderKeep = true) {
-   orderKeep = orderKeep!=0;
+bool WaitForTicket(int ticket, bool select = false) {
+   select = select!=0;
 
    if (ticket <= 0)
       return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
-   if (orderKeep) {
+   if (!select) {
       if (!OrderPush("WaitForTicket(2)"))
          return(!last_error);
    }
@@ -915,7 +916,7 @@ bool WaitForTicket(int ticket, bool orderKeep = true) {
       i++;
    }
 
-   if (orderKeep) {
+   if (!select) {
       if (!OrderPop("WaitForTicket(5)"))
          return(false);
    }
@@ -1765,10 +1766,10 @@ int Ceil(double value) {
  *  RoundEx(1234.5678,  3) => 1234.568
  *  RoundEx(1234.5678,  2) => 1234.57
  *  RoundEx(1234.5678,  1) => 1234.6
- *  RoundEx(1234.5678,  0) => 1234.0
- *  RoundEx(1234.5678, -1) => 1230.0
- *  RoundEx(1234.5678, -2) => 1200.0
- *  RoundEx(1234.5678, -3) => 1000.0
+ *  RoundEx(1234.5678,  0) => 1235
+ *  RoundEx(1234.5678, -1) => 1230
+ *  RoundEx(1234.5678, -2) => 1200
+ *  RoundEx(1234.5678, -3) => 1000
  *
  * @param  double number
  * @param  int    decimals [optional] - (default: 0)

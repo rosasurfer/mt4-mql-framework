@@ -1,19 +1,5 @@
 /**
- * SnowRoller - A pyramiding trade manager (aka an anti-martingale grid)
- *
- *
- * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
- * the resulting trades in a pyramiding (i.e. anti-martingale) way. Martingale is as close to garantied total ruin as one can
- * get and accurately implemented anti-martingale is the exact opposite. By using this EA the trader forces the market into
- * the position of a martingale gambler and thus over time the market is destined to lose - against the trader. Credits for
- * theoretical background and proof of concept go to Bernd Kreuss aka 7bit and his publication "Snowballs and the Anti-Grid".
- *
- *  @see  https://sites.google.com/site/prof7bit/snowball
- *  @see  https://www.forexfactory.com/showthread.php?t=226059
- *  @see  https://www.forexfactory.com/showthread.php?t=239717
- *
- * Important:    The EA is not FIFO conforming, and will never be. Chose a decent broker!
- * Risk warning: A market can range longer than a trading account is able to survive. There's no free lunch.
+ * SnowRoller - A pyramiding trade manager
  *
  *
  *  Actions, events and status changes:
@@ -391,14 +377,14 @@ bool StopSequence() {
    ArrayResize(positions, 0);
 
    for (int i=sizeOfTickets-1; i >= 0; i--) {
-      if (!orders.closeTime[i]) {                                                                  // Ticket prüfen: wenn es beim letzten Aufruf noch offen war
+      if (!orders.closeTime[i]) {                                                                  // local: if (isOpen)
          if (orders.ticket[i] < 0) {
             if (!Grid.DropData(i)) return(false);                                                  // client-seitige Pending-Orders können intern gelöscht werden
             sizeOfTickets--;
             continue;
          }
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
-         if (!OrderCloseTime()) {                                                                  // offene Tickets je nach Typ zwischenspeichern
+         if (!OrderCloseTime()) {                                                                  // server: if (isOpen)
             if (IsPendingOrderType(OrderType())) ArrayPushInt(pendings,                i);         // Grid.DeleteOrder() erwartet den Array-Index
             else                                 ArrayPushInt(positions, orders.ticket[i]);        // OrderMultiClose() erwartet das Orderticket
          }
@@ -408,10 +394,13 @@ bool StopSequence() {
    // zuerst Pending-Orders streichen (ansonsten könnten sie während OrderClose() noch getriggert werden)
    int sizeOfPendings = ArraySize(pendings);
    for (i=0; i < sizeOfPendings; i++) {
-      if (!Grid.DeleteOrder(pendings[i])) return(false);
+      int error = Grid.DeleteOrder(pendings[i]);
+      if (!error)      continue;
+      if (error == -1) ArrayPushInt(positions, orders.ticket[i]);                                  // copy order to open positions
+      else             return(false);
    }
 
-   // dann offene Positionen schließen                // TODO: Wurde eine PendingOrder inzwischen getriggert, muß sie hier mit verarbeitet werden.
+   // dann offene Positionen schließen
    int      sizeOfPositions=ArraySize(positions), n=ArraySize(sequence.stop.event)-1;
    datetime closeTime;
    double   closePrice;
@@ -1469,9 +1458,13 @@ bool UpdatePendingOrders() {
             nextStopExists = true;
          }
          else if (IsStopOrderType(orders.pendingType[i])) {
-            if (!Grid.DeleteOrder(i)) return(false);              // delete an obsolete old stop order (always at the last index)
-            sizeOfTickets--;
-            ordersChanged = true;
+            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order (always at the last index)
+            if (!error) {
+               sizeOfTickets--;
+               ordersChanged = true;
+            }
+            else if (error != -1) return(false);                  // TODO: handle the already opened pending order
+            return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
          }
       }
    }
@@ -1489,7 +1482,7 @@ bool UpdatePendingOrders() {
          if (level == 1) break;
       }
       if (lastExistingLevel != sequence.level) {
-         return(!catch("UpdatePendingOrders(3)  lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
+         return(!catch("UpdatePendingOrders(4)  lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
       }
    }
 
@@ -1541,12 +1534,12 @@ bool UpdatePendingOrders() {
 
    if (limitOrders > 0) {
       sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(4)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
+      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
 
    if (ordersChanged)
       if (!SaveStatus()) return(false);
-   return(!last_error|catch("UpdatePendingOrders(5)"));
+   return(!last_error|catch("UpdatePendingOrders(6)"));
 }
 
 
@@ -1963,39 +1956,55 @@ int Grid.TrailPendingOrder(int i) {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    // calculate changing data
-   int    ticket       = orders.ticket[i], oe[];
-   int    level        = orders.level[i];
-   double pendingPrice = NormalizeDouble(grid.base +          level * GridSize * Pips, Digits);
-   double stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
+   int      ticket       = orders.ticket[i], oe[];
+   int      level        = orders.level[i];
+   datetime pendingTime;
+   double   pendingPrice = NormalizeDouble(grid.base +          level * GridSize * Pips, Digits);
+   double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
+
+   if (!SelectTicket(ticket, "Grid.TrailPendingOrder(5)", true)) return(NULL);
+   datetime prevPendingTime  = OrderOpenTime();
+   double   prevPendingPrice = OrderOpenPrice();
+   double   prevStoploss     = OrderStopLoss();
+   OrderPop("Grid.TrailPendingOrder(6)");
 
    if (ticket < 0) {                                        // client-side managed limit
       // TODO: update chart markers
    }
    else {                                                   // server-side managed limit
       int error = ModifyStopOrder(ticket, pendingPrice, stopLoss, oe);
+      pendingTime = oe.OpenTime(oe);
 
       if (IsError(error)) {
          if (oe.Error(oe) != ERR_INVALID_STOP) return(!SetLastError(oe.Error(oe)));
          if (error == -1) {                                 // market violated: delete stop order and open a limit order instead
-            if (!Grid.DeleteOrder(i)) return(NULL);
-            return(Grid.AddPendingOrder(level));
+            error = Grid.DeleteOrder(i);
+            if (!error) {
+               return(Grid.AddPendingOrder(level));
+            }
+            if (error == -1) {                              // the order was already executed
+               pendingTime  = prevPendingTime;              // restore the original values
+               pendingPrice = prevPendingPrice;
+               stopLoss     = prevStoploss;                 // TODO: modify StopLoss of the now open position
+            }
+            else return(NULL);
          }
          if (error == -2) {                                 // stop distance violated: use client-side stop management
-            return(!catch("Grid.TrailPendingOrder(5)  stop distance violated (TODO: implement client-side stop management)", oe.Error(oe)));
+            return(!catch("Grid.TrailPendingOrder(7)  stop distance violated (TODO: implement client-side stop management)", oe.Error(oe)));
          }
-         return(!catch("Grid.TrailPendingOrder(6)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
+         return(!catch("Grid.TrailPendingOrder(8)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
       }
    }
 
    // update changed data (ignore current ticket state which may be different)
    orders.gridBase    [i] = grid.base;
-   orders.pendingTime [i] = TimeCurrentEx("Grid.TrailPendingOrder(7)");
+   orders.pendingTime [i] = pendingTime;
    orders.pendingPrice[i] = pendingPrice;
    orders.stopLoss    [i] = stopLoss;
 
-   if (last_error || catch("Grid.TrailPendingOrder(8)"))
-      return(NULL);
-   return(orders.pendingType[i]);
+   if (!catch("Grid.TrailPendingOrder(9)"))
+      return(orders.pendingType[i]);
+   return(NULL);
 }
 
 
@@ -2004,28 +2013,33 @@ int Grid.TrailPendingOrder(int i) {
  *
  * @param  int i - order index
  *
- * @return bool - success status
+ * @return int - NULL on success or another value in case of errors, especially:
+ *               -1 if the order was already executed and is not a pending order anymore
  */
-bool Grid.DeleteOrder(int i) {
-   if (IsLastError())                                                                 return(false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                     return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
+int Grid.DeleteOrder(int i) {
+   if (IsLastError())                                                                 return(last_error);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                     return(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED) return(!catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (orders.type[i] != OP_UNDEFINED)                                                return(!catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_ILLEGAL_STATE));
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED) return(catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   if (orders.type[i] != OP_UNDEFINED)                                                return(catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
-      return(!SetLastError(ERR_CANCELLED_BY_USER));
+      return(SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {
-      int oeFlags = NULL;
+      int oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;         // the pending order was already executed
       int oe[];
-      if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-      ArrayResize(oe, 0);
+      if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) {
+         int error = oe.Error(oe);
+         if (error == ERR_INVALID_TRADE_PARAMETERS)
+            return(-1);
+         return(SetLastError(error));
+      }
    }
-   if (!Grid.DropData(i))
-      return(false);
+   if (!Grid.DropData(i)) return(last_error);
 
-   return(!last_error|catch("Grid.DeleteOrder(4)"));
+   ArrayResize(oe, 0);
+   return(catch("Grid.DeleteOrder(4)"));
 }
 
 
