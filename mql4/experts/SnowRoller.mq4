@@ -409,7 +409,7 @@ bool StopSequence() {
       int error = Grid.DeleteOrder(pendings[i]);
       if (!error) continue;
       if (error == -1) {
-         if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" adding #"+ orders.ticket[pendings[i]] +" to open positions");
+         if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +" adding #"+ orders.ticket[pendings[i]] +" to open positions");
          ArrayPushInt(positions, orders.ticket[pendings[i]]);
       }
       else return(false);
@@ -1479,7 +1479,7 @@ bool UpdatePendingOrders() {
                ordersChanged = true;
             }
             else if (error == -1) {                               // TODO: handle the already opened pending order
-               if (__LOG()) log("UpdatePendingOrders(3)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" pending #"+ orders.ticket[i] +" was already executed");
+               if (__LOG()) log("UpdatePendingOrders(3)  sequence "+ sequence.name +"."+ NumberToStr(orders.level[i], "+.") +" pending #"+ orders.ticket[i] +" was already executed");
                return(!catch("UpdatePendingOrders(4)", ERR_INVALID_TRADE_PARAMETERS));
             }
             else return(false);
