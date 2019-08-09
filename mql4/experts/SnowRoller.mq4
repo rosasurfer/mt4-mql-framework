@@ -2,6 +2,18 @@
  * SnowRoller - A pyramiding trade manager
  *
  *
+ * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
+ * the resulting trades in a pyramiding way. Credits for theoretical background and proof of concept go to Bernd Kreuss aka
+ * 7bit and his publication "Snowballs and the Anti-Grid".
+ *
+ *  @see  https://sites.google.com/site/prof7bit/snowball
+ *  @see  https://www.forexfactory.com/showthread.php?t=226059
+ *  @see  https://www.forexfactory.com/showthread.php?t=239717
+ *
+ * Important:    The EA is not FIFO conforming, and will never be.
+ * Risk warning: A market can range longer than a trading account is able to survive.
+ *
+ *
  *  Actions, events and status changes:
  *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
  *  | Action           |       Events        |        Status      | Position |    BE calc.   |     Detection      |
@@ -82,7 +94,7 @@ bool     sequence.isTest;                          // whether the sequence was c
 int      sequence.direction;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
-int      sequence.missedLevels[];                  // grid levels missed, e.g. in a fast moving market
+int      sequence.missedLevels[];                  // missed grid levels, e.g. in a fast moving market
 double   sequence.startEquity;
 int      sequence.stops;                           // number of stopped-out positions: 0...+n
 double   sequence.stopsPL;                         // accumulated P/L of all stopped-out positions
@@ -1463,8 +1475,10 @@ bool UpdatePendingOrders() {
                sizeOfTickets--;
                ordersChanged = true;
             }
-            else if (error != -1) return(false);                  // TODO: handle the already opened pending order
-            return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
+            else if (error == -1) {                               // TODO: handle the already opened pending order
+               return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
+            }
+            else return(false);
          }
       }
    }
@@ -2629,16 +2643,16 @@ bool ValidateConfig(bool interactive) {
    else {}                                         // wenn gesetzt, ist die ID schon validiert und die Sequenz geladen (sonst landen wir hier nicht)
 
    // GridDirection
-   if (reasonParameters) {
-      if (GridDirection != last.GridDirection)
-         if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Cannot change GridDirection of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
-   }
    string sValue = StrToLower(StrTrim(GridDirection));
-   if      (StrStartsWith("long",  sValue)) sequence.direction = D_LONG;
-   else if (StrStartsWith("short", sValue)) sequence.direction = D_SHORT;
-   else                                            return(_false(ValidateConfig.HandleError("ValidateConfig(6)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
-   GridDirection = directionDescr[sequence.direction]; SS.GridDirection();
-   sequence.name = StrLeft(GridDirection, 1) +"."+ sequence.id;
+   if      (StrStartsWith("long",  sValue)) int _direction = D_LONG;
+   else if (StrStartsWith("short", sValue))     _direction = D_SHORT;
+   else                                            return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
+   if (reasonParameters && directionDescr[_direction]!=last.GridDirection) {
+      if (ArraySize(sequence.start.event) > 0)     return(_false(ValidateConfig.HandleError("ValidateConfig(6)", "Cannot change GridDirection of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
+   }
+   sequence.direction = _direction;
+   GridDirection      = directionDescr[sequence.direction]; SS.GridDirection();
+   sequence.name      = StrLeft(GridDirection, 1) +"."+ sequence.id;
 
    // GridSize
    if (reasonParameters) {
