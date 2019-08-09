@@ -2,6 +2,18 @@
  * SnowRoller - A pyramiding trade manager
  *
  *
+ * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
+ * the resulting trades in a pyramiding way. Credits for theoretical background and proof of concept go to Bernd Kreuss aka
+ * 7bit and his publication "Snowballs and the Anti-Grid".
+ *
+ *  @see  https://sites.google.com/site/prof7bit/snowball
+ *  @see  https://www.forexfactory.com/showthread.php?t=226059
+ *  @see  https://www.forexfactory.com/showthread.php?t=239717
+ *
+ * Important:    The EA is not FIFO conforming, and will never be.
+ * Risk warning: A market can range longer than a trading account is able to survive.
+ *
+ *
  *  Actions, events and status changes:
  *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
  *  | Action           |       Events        |        Status      | Position |    BE calc.   |     Detection      |
