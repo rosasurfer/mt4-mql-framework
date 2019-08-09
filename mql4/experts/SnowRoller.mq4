@@ -407,9 +407,12 @@ bool StopSequence() {
    int sizeOfPendings = ArraySize(pendings);
    for (i=0; i < sizeOfPendings; i++) {
       int error = Grid.DeleteOrder(pendings[i]);
-      if (!error)      continue;
-      if (error == -1) ArrayPushInt(positions, orders.ticket[i]);                                  // copy order to open positions
-      else             return(false);
+      if (!error) continue;
+      if (error == -1) {
+         if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" adding #"+ orders.ticket[i] +" to open positions");
+         ArrayPushInt(positions, orders.ticket[i]);
+      }
+      else return(false);
    }
 
    // dann offene Positionen schließen
@@ -453,7 +456,7 @@ bool StopSequence() {
    // keine offenen Positionen
    else if (sequence.status != STATUS_STOPPED) {
       sequence.stop.event[n] = CreateEventId();
-      sequence.stop.time [n] = TimeCurrentEx("StopSequence(6)");
+      sequence.stop.time [n] = TimeCurrentEx("StopSequence(7)");
       sequence.stop.price[n] = ifDouble(sequence.direction==D_LONG, Bid, Ask);
    }
 
@@ -463,7 +466,7 @@ bool StopSequence() {
 
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(7)  sequence "+ sequence.name +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
+      if (__LOG()) log("StopSequence(8)  sequence "+ sequence.name +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
    }
 
    // ResumeConditions aktualisieren
@@ -485,7 +488,7 @@ bool StopSequence() {
       if (IsVisualMode())              Tester.Pause();
       else if (!IsWeekendStopSignal()) Tester.Stop();
    }
-   return(!last_error|catch("StopSequence(8)"));
+   return(!last_error|catch("StopSequence(9)"));
 }
 
 
@@ -1476,7 +1479,8 @@ bool UpdatePendingOrders() {
                ordersChanged = true;
             }
             else if (error == -1) {                               // TODO: handle the already opened pending order
-               return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
+               if (__LOG()) log("UpdatePendingOrders(3)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" pending #"+ orders.ticket[i] +" was already executed");
+               return(!catch("UpdatePendingOrders(4)", ERR_INVALID_TRADE_PARAMETERS));
             }
             else return(false);
          }
@@ -1496,15 +1500,15 @@ bool UpdatePendingOrders() {
          if (level == 1) break;
       }
       if (lastExistingLevel != sequence.level) {
-         return(!catch("UpdatePendingOrders(4)  lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
+         return(!catch("UpdatePendingOrders(5)  lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
       }
    }
 
    // trail a first level stop order (always an existing next level order, thus at the last index)
-   if (nextStopExists && !sequence.level) {
+   if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
       if (NE(grid.base, orders.gridBase[i], Digits)) {
-         static int lastTrailed = INT_MIN;                        // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
+         static double lastTrailed = INT_MIN;                     // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
          if (IsTesting() || GetTickCount()-lastTrailed > 3000) {  // at each tick. Wait 3 seconds between consecutive trailings.
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
             if (IsLimitOrderType(type)) {                         // TrailPendingOrder() missed a level
@@ -1548,12 +1552,12 @@ bool UpdatePendingOrders() {
 
    if (limitOrders > 0) {
       sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
+      if (__LOG()) log("UpdatePendingOrders(6)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
 
    if (ordersChanged)
       if (!SaveStatus()) return(false);
-   return(!last_error|catch("UpdatePendingOrders(6)"));
+   return(!last_error|catch("UpdatePendingOrders(7)"));
 }
 
 
@@ -1993,20 +1997,19 @@ int Grid.TrailPendingOrder(int i) {
          if (oe.Error(oe) != ERR_INVALID_STOP) return(!SetLastError(oe.Error(oe)));
          if (error == -1) {                                 // market violated: delete stop order and open a limit order instead
             error = Grid.DeleteOrder(i);
-            if (!error) {
-               return(Grid.AddPendingOrder(level));
-            }
+            if (!error) return(Grid.AddPendingOrder(level));
             if (error == -1) {                              // the order was already executed
                pendingTime  = prevPendingTime;              // restore the original values
                pendingPrice = prevPendingPrice;
                stopLoss     = prevStoploss;                 // TODO: modify StopLoss of the now open position
+               if (__LOG()) log("Grid.TrailPendingOrder(7)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" pending #"+ orders.ticket[i] +" was already executed");
             }
             else return(NULL);
          }
          if (error == -2) {                                 // stop distance violated: use client-side stop management
-            return(!catch("Grid.TrailPendingOrder(7)  stop distance violated (TODO: implement client-side stop management)", oe.Error(oe)));
+            return(!catch("Grid.TrailPendingOrder(8)  stop distance violated (TODO: implement client-side stop management)", oe.Error(oe)));
          }
-         return(!catch("Grid.TrailPendingOrder(8)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
+         return(!catch("Grid.TrailPendingOrder(9)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
       }
    }
 
@@ -2016,7 +2019,7 @@ int Grid.TrailPendingOrder(int i) {
    orders.pendingPrice[i] = pendingPrice;
    orders.stopLoss    [i] = stopLoss;
 
-   if (!catch("Grid.TrailPendingOrder(9)"))
+   if (!catch("Grid.TrailPendingOrder(10)"))
       return(orders.pendingType[i]);
    return(NULL);
 }
