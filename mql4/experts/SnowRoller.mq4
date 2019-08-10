@@ -56,14 +56,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID             = "";
-extern string GridDirection           = "Long | Short";  // there's no bi-directional mode (not profitable)
-extern int    GridSize                = 20;
-extern double LotSize                 = 0.1;
-extern int    StartLevel              = 0;
-extern string StartConditions         = "";              // @[bid|ask|price](double) && @time(datetime)
-extern string StopConditions          = "";              // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern bool   ProfitDisplayInPercent  = true;            // whether PL values are displayed absolute or in percent
+extern string Sequence.ID            = "";
+extern string GridDirection          = "Long | Short";   // there's no bi-directional mode
+extern int    GridSize               = 20;
+extern double LotSize                = 0.1;
+extern int    StartLevel             = 0;
+extern string StartConditions        = "";               // @[bid|ask|price](double) && @time(datetime)
+extern string StopConditions         = "";               // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern bool   ProfitDisplayInPercent = true;             // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2613,7 +2613,6 @@ void BackupConfiguration() {
  * Restauriert eine zuvor gespeicherte Konfiguration. Called only from onInitParameters().
  */
 void RestoreConfiguration() {
-   RestoreInputs();
    StoreConfiguration(false);
 }
 
@@ -4882,8 +4881,8 @@ bool IsStopTriggered(int type, double price) {
    if (type == OP_BUYLIMIT)  return(Ask <= price);       // pending Buy Limit
    if (type == OP_SELLLIMIT) return(Bid >= price);       // pending Sell Limit
 
-   if (type == OP_BUY )      return(Bid <= price);        // stoploss Long
-   if (type == OP_SELL)      return(Ask >= price);        // stoploss Short
+   if (type == OP_BUY )      return(Bid <= price);       // stoploss Long
+   if (type == OP_SELL)      return(Ask >= price);       // stoploss Short
 
    return(!catch("IsStopTriggered(1)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }

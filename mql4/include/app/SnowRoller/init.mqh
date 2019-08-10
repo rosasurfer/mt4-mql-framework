@@ -93,10 +93,11 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupConfiguration();
+   BackupConfiguration();                    // inputs have already been backed-up in onDeinitParameterChange()
 
    bool interactive = true;
    if (!ValidateConfig(interactive)) {
+      RestoreInputs();
       RestoreConfiguration();
       return(last_error);
    }
