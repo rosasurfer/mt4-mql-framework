@@ -1,6 +1,6 @@
 
 /**
- * Called after the expert was manually loaded by the user. Also in Tester with both VisualMode=On|Off.
+ * Called after the expert was manually loaded by the user. Also in Strategy Tester with both "VisualMode=On|Off".
  * There was an input dialog.
  *
  * @return int - error status
@@ -9,15 +9,15 @@ int onInitUser() {
    bool interactive = true;
 
    // Zuerst eine angegebene Sequenz restaurieren...
-   if (ValidateConfig.ID(interactive)) {
+   if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
       if (RestoreStatus())
-         if (ValidateConfig(interactive))
+         if (ValidateInputs(interactive))
             SynchronizeStatus();
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                         // Falscheingabe
+      return(last_error);                                   // Falscheingabe
    }
 
    // ...dann laufende Sequenzen suchen und ggf. eine davon restaurieren...
@@ -35,8 +35,8 @@ int onInitUser() {
             sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (RestoreStatus())                                  // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
-               if (ValidateConfig(false))                         //       sofort nach neuer Sequenz fragen.
+            if (RestoreStatus())                            // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
+               if (ValidateInputs(false))                   //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
             return(last_error);
          }
@@ -49,16 +49,17 @@ int onInitUser() {
    }
 
    // ...zum Schluﬂ neue Sequenz anlegen
-   if (ValidateConfig(true)) {
-      sequence.isTest = IsTesting();
-      sequence.id     = CreateSequenceId();
-      Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
-      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
-      sequence.status = STATUS_WAITING;
+   if (ValidateInputs(interactive)) {
+      sequence.isTest  = IsTesting();
+      sequence.id      = CreateSequenceId();
+      Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
+      sequence.name    = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
+      sequence.status  = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
 
-      if (start.conditions) {                                     // without start conditions StartSequence() is called immediately
+      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
          SaveStatus();
       }
@@ -78,7 +79,7 @@ int onInitTemplate() {
    // im Chart gespeicherte Sequenz restaurieren
    if (RestoreRuntimeStatus()) {
       if (RestoreStatus())
-         if (ValidateConfig(interactive))
+         if (ValidateInputs(interactive))
             SynchronizeStatus();
    }
    DeleteChartStatus();
@@ -87,38 +88,21 @@ int onInitTemplate() {
 
 
 /**
- * Called after the input parameters were changed via the input dialog.
+ * Called after the input parameters were changed through the input dialog.
  *
  * @return int - error status
  */
 int onInitParameters() {
-   BackupConfiguration();                    // inputs have already been backed-up in onDeinitParameterChange()
+   BackupConfiguration();                                   // previous inputs have been backed-up in onDeinitParameterChange()
 
    bool interactive = true;
-   if (!ValidateConfig(interactive)) {
+   if (!ValidateInputs(interactive)) {
       RestoreInputs();
       RestoreConfiguration();
       return(last_error);
    }
-
-   if (sequence.status == STATUS_UNDEFINED) {
-      // neue Sequenz anlegen
-      sequence.isTest = IsTesting();
-      sequence.id     = CreateSequenceId();
-      Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
-      sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
-      sequence.status = STATUS_WAITING;
-      InitStatusLocation();
-      SetCustomLog(sequence.id, statusDirectory + statusFile);
-
-      if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
-         SaveStatus();
-      RedrawStartStop();
-   }
-   else {
-      // Parameter‰nderung einer existierenden Sequenz
+   if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
       SaveStatus();
-   }
    return(last_error);
 }
 
@@ -150,7 +134,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitRecompile() {
-   return(onInitTemplate());                                         // Funktionalit‰t entspricht onInitTemplate()
+   return(onInitTemplate());                                // Funktionalit‰t entspricht onInitTemplate()
 }
 
 
@@ -176,7 +160,7 @@ int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
    int x[]={2, 101, 110}, y=25, fontSize=76, rectangles=ArraySize(x);
-   color  bgColor = C'248,248,248';                                  // that's chart background color
+   color  bgColor = C'248,248,248';                         // that's chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
