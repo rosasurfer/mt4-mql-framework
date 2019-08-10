@@ -8,7 +8,7 @@
 int onInitUser() {
    bool interactive = true;
 
-   // (1) Zuerst eine angegebene Sequenz restaurieren...
+   // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateConfig.ID(interactive)) {
       sequence.status = STATUS_WAITING;
       if (RestoreStatus())
@@ -17,11 +17,10 @@ int onInitUser() {
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                            // Falscheingabe
+      return(last_error);                                         // Falscheingabe
    }
 
-
-   // (2) ...dann laufende Sequenzen suchen und ggf. eine davon restaurieren...
+   // ...dann laufende Sequenzen suchen und ggf. eine davon restaurieren...
    int ids[], button;
 
    if (GetRunningSequences(ids)) {
@@ -36,8 +35,8 @@ int onInitUser() {
             sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (RestoreStatus())                                     // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
-               if (ValidateConfig(false))                            //       sofort nach neuer Sequenz fragen.
+            if (RestoreStatus())                                  // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
+               if (ValidateConfig(false))                         //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
             return(last_error);
          }
@@ -49,8 +48,7 @@ int onInitUser() {
          return(SetLastError(ERR_CANCELLED_BY_USER));
    }
 
-
-   // (3) ...zum Schluﬂ neue Sequenz anlegen.
+   // ...zum Schluﬂ neue Sequenz anlegen
    if (ValidateConfig(true)) {
       sequence.isTest = IsTesting();
       sequence.id     = CreateSequenceId();
@@ -60,9 +58,10 @@ int onInitUser() {
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
 
-      if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
+      if (start.conditions) {                                     // without start conditions StartSequence() is called immediately
+         if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
          SaveStatus();
-      RedrawStartStop();
+      }
    }
    return(last_error);
 }

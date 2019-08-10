@@ -2236,19 +2236,19 @@ int CreateMagicNumber(int level) {
 
 
 /**
- * Zeigt den aktuellen Laufzeitstatus an.
+ * Display the current runtime status.
  *
- * @param  int error - anzuzeigender Fehler
+ * @param  int error [optional] - error to display (default: none)
  *
- * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
+ * @return int - the same error or the current error status if no error was passed
  */
-int ShowStatus(int error=NO_ERROR) {
+int ShowStatus(int error = NO_ERROR) {
    if (!__CHART()) return(error);
 
-   string msg, str.error;
+   string msg, sError;
 
-   if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason         ), "]");
+   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",               ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
+   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off: ", ErrorDescription(__STATUS_OFF.reason        ), "]");
 
    switch (sequence.status) {
       case STATUS_UNDEFINED:   msg =                                      " not initialized"; break;
@@ -2261,20 +2261,19 @@ int ShowStatus(int error=NO_ERROR) {
          return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME(), msg, str.error,                                                      NL,
+   msg = StringConcatenate(__NAME(), msg, sError,                                                         NL,
                                                                                                           NL,
                            "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
                            "LotSize:         ",  str.LotSize,                                             NL,
                            "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
                            "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
-                           str.startConditions,                                        // enthält bereits NL, wenn gesetzt
-                           str.stopConditions);                                        // enthält bereits NL, wenn gesetzt
+                           str.startConditions,                                              // ends with NL if set
+                           str.stopConditions);                                              // ends with NL if set
 
-   // 1 Zeile Abstand nach oben für Instrumentanzeige
+   // 1 line top-margin for instrument display
    Comment(StringConcatenate(NL, msg));
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
-
 
    // für Fernbedienung: versteckten Status im Chart speichern
    string label = "SnowRoller.status";
@@ -3257,7 +3256,7 @@ bool SaveStatus() {
    string lines[]; ArrayResize(lines, 0);
    ArrayPushString(lines, /*string*/ "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
       int sizeOfStarts = ArraySize(sequence.start.event);
-      if (!sizeOfStarts) datetime created = TimeCurrentEx("SaveStatus(2)");
+      if (!sizeOfStarts) datetime created = TimeServer();
       else                        created = sequence.start.time[0];
    ArrayPushString(lines, /*string*/ "Created="        + GmtTimeFormat(created, "%a, %Y.%m.%d %H:%M:%S"));
    ArrayPushString(lines, /*string*/ "Symbol="         +               Symbol()       );
