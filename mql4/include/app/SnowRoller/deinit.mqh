@@ -5,16 +5,8 @@
  * @return int - error status
  */
 int onDeinitParameterChange() {
-   // Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
-   last.Sequence.ID            = StringConcatenate(Sequence.ID,     "");   // String-Inputs sind Referenzen auf interne C-Literale
-   last.GridDirection          = StringConcatenate(GridDirection,   "");   // und müssen explizit kopiert werden.
-   last.GridSize               = GridSize;
-   last.LotSize                = LotSize;
-   last.StartLevel             = StartLevel;
-   last.StartConditions        = StringConcatenate(StartConditions, "");
-   last.StopConditions         = StringConcatenate(StopConditions,  "");
-   last.ProfitDisplayInPercent = ProfitDisplayInPercent;
-   return(-1);
+   BackupInputs();
+   return(-1);                      // -1: skip any other deinit tasks
 }
 
 
@@ -24,7 +16,8 @@ int onDeinitParameterChange() {
  * @return int - error status
  */
 int onDeinitChartChange() {
-   return(onDeinitParameterChange());
+   BackupInputs();
+   return(-1);                      // -1: skip any other deinit tasks
 }
 
 
@@ -109,7 +102,7 @@ int onDeinitRemove() {
  */
 int onDeinitRecompile() {
    StoreRuntimeStatus();
-   return(-1);
+   return(-1);                      // -1: skip any other deinit tasks
 }
 
 
