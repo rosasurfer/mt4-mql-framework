@@ -129,15 +129,7 @@ int onInitParameters() {
  * @return int - error status
  */
 int onInitTimeframeChange() {
-   // nicht-statische Input-Parameter restaurieren
-   Sequence.ID            = last.Sequence.ID;
-   GridDirection          = last.GridDirection;
-   GridSize               = last.GridSize;
-   LotSize                = last.LotSize;
-   StartLevel             = last.StartLevel;
-   StartConditions        = last.StartConditions;
-   StopConditions         = last.StopConditions;
-   ProfitDisplayInPercent = last.ProfitDisplayInPercent;
+   RestoreInputs();
    return(NO_ERROR);
 }
 

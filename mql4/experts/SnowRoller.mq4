@@ -77,16 +77,6 @@ extern bool   ProfitDisplayInPercent  = true;            // whether PL values ar
 #include <win32api.mqh>
 
 // ------------------------------------
-string   last.Sequence.ID;                         // Variables for storing input parameters during INITREASON_PARAMETERS and
-string   last.GridDirection;                       // INITREASON_TIMEFRAMECHANGE. On REASON_CHARTCHANGE programmatically loaded
-int      last.GridSize;                            // input parameters (from presets file) get lost. Storing them allows comparison
-double   last.LotSize;                             // of new with previous values and to fall-back in case of errors.
-int      last.StartLevel;                          //
-string   last.StartConditions;                     // see onInit()/onDeinit()
-string   last.StopConditions;
-bool     last.ProfitDisplayInPercent;
-
-// ------------------------------------
 int      sequence.id;
 string   sequence.name;                            // "L.1234" | "S.2345"
 int      sequence.status;
@@ -2568,6 +2558,153 @@ bool IsMyOrder(int sequenceId = NULL) {
 }
 
 
+string last.Sequence.ID;
+string last.GridDirection;
+int    last.GridSize;
+double last.LotSize;
+int    last.StartLevel;
+string last.StartConditions;
+string last.StopConditions;
+bool   last.ProfitDisplayInPercent;
+
+
+/**
+ * Input parameters changed from code don't survive an init cycle. Therefore inputs are backed-up in deinit() by using this
+ * function and may be restored in init(). Called only from onDeinitChartChange() and onDeinitParameterChange().
+ */
+void BackupInputs() {
+   // backed-up variables are also accessed from ValidateConfig()
+   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
+   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
+   last.GridSize               = GridSize;
+   last.LotSize                = LotSize;
+   last.StartLevel             = StartLevel;
+   last.StartConditions        = StringConcatenate(StartConditions, "");
+   last.StopConditions         = StringConcatenate(StopConditions,  "");
+   last.ProfitDisplayInPercent = ProfitDisplayInPercent;
+}
+
+
+/**
+ * Restore backed-up input parameters. Called only from onInitTimeframeChange() and onInitParameters().
+ */
+void RestoreInputs() {
+   Sequence.ID            = last.Sequence.ID;
+   GridDirection          = last.GridDirection;
+   GridSize               = last.GridSize;
+   LotSize                = last.LotSize;
+   StartLevel             = last.StartLevel;
+   StartConditions        = last.StartConditions;
+   StopConditions         = last.StopConditions;
+   ProfitDisplayInPercent = last.ProfitDisplayInPercent;
+}
+
+
+/**
+ * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
+ * Called only from onInitParameters().
+ */
+void BackupConfiguration() {
+   StoreConfiguration(true);
+}
+
+
+/**
+ * Restauriert eine zuvor gespeicherte Konfiguration. Called only from onInitParameters().
+ */
+void RestoreConfiguration() {
+   RestoreInputs();
+   StoreConfiguration(false);
+}
+
+
+/**
+ *
+ */
+void StoreConfiguration(bool save) {
+   save = save!=0;
+
+   static int      _sequence.direction;
+
+   static bool     _start.conditions;
+
+   static bool     _start.price.condition;
+   static int      _start.price.type;
+   static double   _start.price.value;
+
+   static bool     _start.time.condition;
+   static datetime _start.time.value;
+
+   static bool     _stop.price.condition;
+   static int      _stop.price.type;
+   static double   _stop.price.value;
+
+   static bool     _stop.time.condition;
+   static datetime _stop.time.value;
+
+   static bool     _stop.profitAbs.condition;
+   static double   _stop.profitAbs.value;
+
+   static bool     _stop.profitPct.condition;
+   static double   _stop.profitPct.value;
+   static double   _stop.profitPct.absValue;
+
+   if (save) {
+      _sequence.direction       = sequence.direction;
+
+      _start.conditions         = start.conditions;
+
+      _start.price.condition    = start.price.condition;
+      _start.price.type         = start.price.type;
+      _start.price.value        = start.price.value;
+
+      _start.time.condition     = start.time.condition;
+      _start.time.value         = start.time.value;
+
+      _stop.price.condition     = stop.price.condition;
+      _stop.price.type          = stop.price.type;
+      _stop.price.value         = stop.price.value;
+
+      _stop.time.condition      = stop.time.condition;
+      _stop.time.value          = stop.time.value;
+
+      _stop.profitAbs.condition = stop.profitAbs.condition;
+      _stop.profitAbs.value     = stop.profitAbs.value;
+
+      _stop.profitPct.condition = stop.profitPct.condition;
+      _stop.profitPct.value     = stop.profitPct.value;
+      _stop.profitPct.absValue  = stop.profitPct.absValue;
+   }
+   else {
+      sequence.direction        = _sequence.direction;
+      sequence.name             = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
+
+      start.conditions          = _start.conditions;
+
+      start.price.condition     = _start.price.condition;
+      start.price.type          = _start.price.type;
+      start.price.value         = _start.price.value;
+
+      start.time.condition      = _start.time.condition;
+      start.time.value          = _start.time.value;
+
+      stop.price.condition      = _stop.price.condition;
+      stop.price.type           = _stop.price.type;
+      stop.price.value          = _stop.price.value;
+
+      stop.time.condition       = _stop.time.condition;
+      stop.time.value           = _stop.time.value;
+
+      stop.profitAbs.condition  = _stop.profitAbs.condition;
+      stop.profitAbs.value      = _stop.profitAbs.value;
+
+      stop.profitPct.condition  = _stop.profitPct.condition;
+      stop.profitPct.value      = _stop.profitPct.value;
+      stop.profitPct.absValue   = _stop.profitPct.absValue;
+   }
+}
+
+
 /**
  * Validiert und setzt nur die in der Konfiguration angegebene Sequenz-ID.
  *
@@ -2869,137 +3006,6 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
 
 /**
- * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
- * Called only from onInitParameters().
- */
-void BackupConfiguration() {
-   StoreConfiguration(true);
-}
-
-
-/**
- * Restauriert eine zuvor gespeicherte Konfiguration. Called only from onInitParameters().
- */
-void RestoreConfiguration() {
-   StoreConfiguration(false);
-}
-
-
-/**
- *
- */
-void StoreConfiguration(bool save) {
-   save = save!=0;
-
-   static string   _Sequence.ID;
-   static string   _GridDirection;
-   static int      _GridSize;
-   static double   _LotSize;
-   static int      _StartLevel;
-   static string   _StartConditions;
-   static string   _StopConditions;
-   static bool     _ProfitDisplayInPercent;
-
-   static int      _sequence.direction;
-
-   static bool     _start.conditions;
-
-   static bool     _start.price.condition;
-   static int      _start.price.type;
-   static double   _start.price.value;
-
-   static bool     _start.time.condition;
-   static datetime _start.time.value;
-
-   static bool     _stop.price.condition;
-   static int      _stop.price.type;
-   static double   _stop.price.value;
-
-   static bool     _stop.time.condition;
-   static datetime _stop.time.value;
-
-   static bool     _stop.profitAbs.condition;
-   static double   _stop.profitAbs.value;
-
-   static bool     _stop.profitPct.condition;
-   static double   _stop.profitPct.value;
-   static double   _stop.profitPct.absValue;
-
-   if (save) {
-      _Sequence.ID              = StringConcatenate(Sequence.ID,     "");  // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
-      _GridDirection            = StringConcatenate(GridDirection,   "");
-      _GridSize                 = GridSize;
-      _LotSize                  = LotSize;
-      _StartLevel               = StartLevel;
-      _StartConditions          = StringConcatenate(StartConditions, "");
-      _StopConditions           = StringConcatenate(StopConditions,  "");
-      _ProfitDisplayInPercent   = ProfitDisplayInPercent;
-
-      _sequence.direction       = sequence.direction;
-
-      _start.conditions         = start.conditions;
-
-      _start.price.condition    = start.price.condition;
-      _start.price.type         = start.price.type;
-      _start.price.value        = start.price.value;
-
-      _start.time.condition     = start.time.condition;
-      _start.time.value         = start.time.value;
-
-      _stop.price.condition     = stop.price.condition;
-      _stop.price.type          = stop.price.type;
-      _stop.price.value         = stop.price.value;
-
-      _stop.time.condition      = stop.time.condition;
-      _stop.time.value          = stop.time.value;
-
-      _stop.profitAbs.condition = stop.profitAbs.condition;
-      _stop.profitAbs.value     = stop.profitAbs.value;
-
-      _stop.profitPct.condition = stop.profitPct.condition;
-      _stop.profitPct.value     = stop.profitPct.value;
-      _stop.profitPct.absValue  = stop.profitPct.absValue;
-   }
-   else {
-      Sequence.ID               = _Sequence.ID;
-      GridDirection             = _GridDirection;
-      GridSize                  = _GridSize;
-      LotSize                   = _LotSize;
-      StartLevel                = _StartLevel;
-      StartConditions           = _StartConditions;
-      StopConditions            = _StopConditions;
-      ProfitDisplayInPercent    = _ProfitDisplayInPercent;
-
-      sequence.direction        = _sequence.direction;
-      sequence.name             = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
-
-      start.conditions          = _start.conditions;
-
-      start.price.condition     = _start.price.condition;
-      start.price.type          = _start.price.type;
-      start.price.value         = _start.price.value;
-
-      start.time.condition      = _start.time.condition;
-      start.time.value          = _start.time.value;
-
-      stop.price.condition      = _stop.price.condition;
-      stop.price.type           = _stop.price.type;
-      stop.price.value          = _stop.price.value;
-
-      stop.time.condition       = _stop.time.condition;
-      stop.time.value           = _stop.time.value;
-
-      stop.profitAbs.condition  = _stop.profitAbs.condition;
-      stop.profitAbs.value      = _stop.profitAbs.value;
-
-      stop.profitPct.condition  = _stop.profitPct.condition;
-      stop.profitPct.value      = _stop.profitPct.value;
-      stop.profitPct.absValue   = _stop.profitPct.absValue;
-   }
-}
-
-
-/**
  * Initialisiert die Dateinamensvariablen der Statusdatei mit den Ausgangswerten einer neuen Sequenz.
  *
  * @return bool - success status
@@ -3257,7 +3263,6 @@ bool SaveStatus() {
    ArrayPushString(lines, /*string*/ "Created="        + GmtTimeFormat(created, "%a, %Y.%m.%d %H:%M:%S"));
    ArrayPushString(lines, /*string*/ "Symbol="         +               Symbol()       );
    ArrayPushString(lines, /*string*/ "Sequence.ID="    +               Sequence.ID    );
-      if (!StringLen(Sequence.ID)) warn("SaveStatus(3)  sequence (int)"+ sequence.id +", writing illegal input parameter Sequence.ID to status file: \"\"");
    ArrayPushString(lines, /*string*/ "GridDirection="  +               GridDirection  );
    ArrayPushString(lines, /*int   */ "GridSize="       +               GridSize       );
    ArrayPushString(lines, /*double*/ "LotSize="        +   NumberToStr(LotSize, ".+") );
@@ -3341,7 +3346,10 @@ bool SaveStatus() {
    }
    FileClose(hFile);
    statusSaved = true;
-   //debug("SaveStatus(0.1)  ok");
+
+   if (GetConfigString("general", "stage") == "development") {
+      debug("SaveStatus(0.1)  ok");
+   }
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
