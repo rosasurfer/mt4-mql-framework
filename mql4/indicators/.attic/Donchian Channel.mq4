@@ -17,7 +17,7 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 
 #property indicator_chart_window
 
-#property indicator_buffers   2                 // configurable buffers (input dialog)
+#property indicator_buffers   2                 // configurable buffers (via input dialog)
 int       allocated_buffers = 2;                // used buffers
 
 #property indicator_color1    Blue
