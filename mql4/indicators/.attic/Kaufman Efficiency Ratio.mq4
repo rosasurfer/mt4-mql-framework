@@ -18,7 +18,7 @@ extern int Periods = 32;
 #include <rsfLibs.mqh>
 
 #property indicator_separate_window
-#property indicator_buffers   1                             // configurable buffers (input dialog)
+#property indicator_buffers   1                             // configurable buffers (via input dialog)
 int       allocated_buffers = 1;                            // used buffers
 
 #property indicator_color1    Blue

@@ -54,7 +54,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #define MODE_CVI_SIGNAL       2
 
 #property indicator_separate_window
-#property indicator_buffers   4                                // configurable buffers (input dialog)
+#property indicator_buffers   4                                // configurable buffers (via input dialog)
 int       allocated_buffers = 4;                               // used buffers
 
 #property indicator_width1    0
@@ -96,7 +96,7 @@ int onInit() {
    }
 
    // (1) input validation
-   // colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 

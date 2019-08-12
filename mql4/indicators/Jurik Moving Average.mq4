@@ -37,7 +37,7 @@ extern int    Max.Values      = 5000;                                // max. num
 #define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
-#property indicator_buffers   5                                      // configurable buffers (input dialog)
+#property indicator_buffers   5                                      // configurable buffers (via input dialog)
 int       allocated_buffers = 5;                                     // used buffers
 
 #property indicator_width1    0

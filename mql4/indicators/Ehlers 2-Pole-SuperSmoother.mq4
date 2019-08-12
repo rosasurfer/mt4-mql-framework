@@ -49,7 +49,7 @@ extern int    Draw.LineWidth  = 3;
 #define MODE_UPTREND2         4                       //
 
 #property indicator_chart_window
-#property indicator_buffers   5                       // configurable buffers (input dialog)
+#property indicator_buffers   5                       // configurable buffers (via input dialog)
 int       allocated_buffers = 5;                      // used buffers
 
 double bufferMain     [];                             // all filter values:   invisible, displayed in "Data" window
@@ -84,7 +84,7 @@ int onInit() {
    // Filter.Periods
    if (Filter.Periods < 1) return(catch("onInit(1)  Invalid input parameter Filter.Periods = "+ Filter.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
