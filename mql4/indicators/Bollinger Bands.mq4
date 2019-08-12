@@ -28,6 +28,13 @@ extern int    Bands.LineWidth   = 1;
 
 extern int    Max.Values        = 5000;               // max. number of values to calculate: -1 = all
 
+extern string __________________________;
+
+extern string Signal.onTouchBand   = "on | off | auto*";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -35,13 +42,17 @@ extern int    Max.Values        = 5000;               // max. number of values t
 #include <rsfLibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
+#include <functions/Configure.Signal.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
 #define MODE_LOWER            Bands.MODE_LOWER
 
 #property indicator_chart_window
-#property indicator_buffers   3                       // configurable buffers (input dialog)
+#property indicator_buffers   3                       // configurable buffers (via input dialog)
 int       allocated_buffers = 3;                      // used buffers
 
 #property indicator_style1    STYLE_DOT
@@ -60,6 +71,19 @@ string ind.longName;                                  // name for chart legend
 string ind.shortName;                                 // name for "Data" window and context menues
 string ind.legendLabel;
 
+bool   signals;
+string signal.info = "";                              // info text in chart legend
+
+bool   signal.sound;
+string signal.sound.touchBand = "Signal-Up.wav";
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
+
 
 /**
  * Initialization
@@ -71,7 +95,7 @@ int onInit() {
       if (!RestoreInputParameters()) return(last_error);
    }
 
-   // (1) validate inputs
+   // validate inputs
    // MA.Periods
    if (MA.Periods < 1)      return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
@@ -107,7 +131,7 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
 
    // MA.LineWidth
@@ -117,7 +141,7 @@ int onInit() {
    // Bands.StdDevs
    if (Bands.StdDevs < 0)   return(catch("onInit(6)  Invalid input parameter Bands.StdDevs = "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
-   // Bands.Color: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // Bands.LineWidth
@@ -127,14 +151,26 @@ int onInit() {
    // Max.Values
    if (Max.Values < -1)     return(catch("onInit(9)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
+   // Signals
+   if (!Configure.Signal("BollingerBand", Signal.onTouchBand, signals))                                         return(last_error);
+   if (signals) {
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (signal.sound || signal.mail || signal.sms) {
+         signal.info = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+      }
+      else signals = false;
+   }
 
-   // (2) setup buffer management
+
+   // setup buffer management
    SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
 
-   // (3) data display configuration, names and labels
+   // data display configuration, names and labels
    string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
    ind.shortName = __NAME() +"("+ MA.Periods +")";
    ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") * "+ NumberToStr(Bands.StdDevs, ".1+") +")";
@@ -150,7 +186,7 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
 
-   // (4) drawing options and styles
+   // drawing options and styles
    int startDraw = MA.Periods;
    if (Max.Values >= 0)
       startDraw = Max(startDraw, Bars-Max.Values);
@@ -160,11 +196,10 @@ int onInit() {
    SetIndicatorOptions();
 
 
-   // (5) init indicator calculation
+   // initialize indicator calculation
    if (ma.method==MODE_ALMA && MA.Periods > 1) {
       @ALMA.CalculateWeights(alma.weights, MA.Periods);
    }
-
    return(catch("onInit(10)"));
 }
 
@@ -218,7 +253,7 @@ int onTick() {
    }
 
 
-   // (1) calculate start bar
+   // calculate start bar
    int changedBars = ChangedBars;
    if (Max.Values >= 0) /*&&*/ if (changedBars > Max.Values)
       changedBars = Max.Values;
@@ -226,7 +261,7 @@ int onTick() {
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
-   // (2) recalculate changed bars
+   // recalculate changed bars
    double deviation, price, sum;
 
    for (int bar=startBar; bar >= 0; bar--) {
@@ -253,9 +288,9 @@ int onTick() {
    }
 
 
-   // (3) update chart legend
+   // update chart legend
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(ind.legendLabel, ind.longName, "", Bands.Color, bufferUpper[0], bufferLower[0], Time[0]);
+      @Bands.UpdateLegend(ind.legendLabel, ind.longName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Time[0]);
    }
    return(last_error);
 }
