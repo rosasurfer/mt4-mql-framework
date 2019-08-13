@@ -43,7 +43,7 @@ int onInit() {
          mm.vola = dValue;
       }
       else {
-         key    = "Volatility.Default";
+         key = "Volatility.Default";
          sValue = GetConfigString(section, key);
          if (StringLen(sValue) > 0) {
             if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_VALUE));
@@ -179,20 +179,23 @@ int afterInit() {
  * @return bool - Erfolgsstatus
  */
 bool OrderTracker.Configure() {
-   // Track.Orders: "on | off | account*"
    track.orders = false;
-   string sValue = StrToLower(StrTrim(Track.Orders));
-   if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
+
+   string sValue = StrToLower(Track.Orders), values[];            // default: "on | off | auto*"
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
+   }
+   sValue = StrTrim(sValue);
+
+   if (sValue == "on") {
       track.orders = true;
    }
-   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+   else if (sValue == "off") {
       track.orders = false;
    }
-   else if (sValue=="account" || sValue=="on | off | account*") {
-      string accountConfig = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
-      string section       = "EventTracker";
-      string key           = "Track.Orders";
-      track.orders = GetIniBool(accountConfig, section, key);
+   else if (sValue == "auto") {
+      track.orders = GetConfigBool("EventTracker", "Track.Orders");
    }
    else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 

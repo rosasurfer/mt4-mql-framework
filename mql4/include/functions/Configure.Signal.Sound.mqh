@@ -9,20 +9,21 @@
 bool Configure.Signal.Sound(string configValue, bool &enabled) {
    enabled = false;
 
-   string sValue = StrToLower(configValue), values[];                // preset: "auto* | off | on"
+   string sValue = StrToLower(configValue), values[];                // default: "on | off | auto*"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    sValue = StrTrim(sValue);
 
-   // off
-   if (sValue == "off")
-      return(true);
-
    // on
    if (sValue == "on") {
       enabled = true;
+      return(true);
+   }
+
+   // off
+   if (sValue == "off") {
       return(true);
    }
 

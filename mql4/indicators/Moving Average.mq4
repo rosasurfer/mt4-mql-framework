@@ -33,10 +33,10 @@ extern int    Draw.LineWidth       = 2;
 extern int    Max.Values           = 5000;                 // max. number of values to calculate: -1 = all
 extern string __________________________;
 
-extern string Signal.onTrendChange = "auto* | off | on";
-extern string Signal.Sound         = "auto* | off | on";
-extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
-extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+extern string Signal.onTrendChange = "on | off | auto*";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
