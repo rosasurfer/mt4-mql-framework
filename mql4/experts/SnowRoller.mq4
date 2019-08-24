@@ -136,11 +136,11 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 
 // -------------------------------
-datetime sessionbreak.stop.condition = D'1970.01.01 23:53';
+datetime sessionbreak.stop.config = D'1970.01.01 23:53';    // server time
 datetime sessionbreak.stop.time;
 bool     sessionbreak.stop.active;
 
-datetime sessionbreak.resume.condition = D'1970.01.01 01:03';
+datetime sessionbreak.resume.config = D'1970.01.01 01:03';  // server time
 datetime sessionbreak.resume.time;
 bool     sessionbreak.resume.triggered;
 
@@ -342,7 +342,7 @@ bool StartSequence() {
 
    // StartConditions deaktivieren, Weekend-Stop aktualisieren
    start.conditions = false; SS.StartStopConditions();
-   UpdateWeekendStop();
+   UpdateNextSessionBreakTime();
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
@@ -587,7 +587,7 @@ bool ResumeSequence() {
    start.conditions              = false; SS.StartStopConditions();
    sessionbreak.resume.triggered = false;
    sessionbreak.resume.time      = 0;
-   UpdateWeekendStop();
+   UpdateNextSessionBreakTime();
 
    // Status aktualisieren und speichern
    bool changes;
@@ -1202,23 +1202,24 @@ bool IsSessionResumeSignal() {
  */
 void UpdateWeekendResumeTime() {
    if (IsLastError())                     return;
-   if (sequence.status != STATUS_STOPPED) return(!catch("UpdateWeekendResumeTime(1)  cannot update weekend resume conditions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (!IsSessionBreakSignal())           return(!catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_ILLEGAL_STATE));
+   if (sequence.status != STATUS_STOPPED) return(!catch("UpdateWeekendResumeTime(1)  cannot update next session-resume time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   if (!IsSessionBreakSignal())           return(!catch("UpdateWeekendResumeTime(2)  cannot update session-resume time if not in a session-break", ERR_ILLEGAL_STATE));
 
-   sessionbreak.resume.triggered = false;
+   // calculate the last stop day's session resume time
+   datetime lastStop    = sequence.stop.time[ArraySize(sequence.stop.time)-1];
+   datetime lastStopDay = lastStop - lastStop%DAYS;            // the last stop day's midnight
+   int      offset      = sessionbreak.stop.config%DAYS;       // session resume in seconds since midnight
+   datetime time        = lastStopDay + offset;
 
-   datetime monday, stop=ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
-
-   switch (TimeDayOfWeekFix(stop)) {
-      case SUNDAY   : monday = stop + 1*DAYS; break;
-      case MONDAY   : monday = stop + 0*DAYS; break;
-      case TUESDAY  : monday = stop + 6*DAYS; break;
-      case WEDNESDAY: monday = stop + 5*DAYS; break;
-      case THURSDAY : monday = stop + 4*DAY ; break;
-      case FRIDAY   : monday = stop + 3*DAYS; break;
-      case SATURDAY : monday = stop + 2*DAYS; break;
+   // derive the next regular session resume time
+   int dow = TimeDayOfWeekFix(time);
+   while (time < lastStop || dow==SATURDAY || dow==SUNDAY) {   // TODO: as we use server time comparison with weekend days is wrong
+      time += 1*DAY;
+      dow = TimeDayOfWeekFix(time);
    }
-   sessionbreak.resume.time = FxtToServerTime((monday/DAYS)*DAYS + sessionbreak.resume.condition%DAYS);
+
+   sessionbreak.resume.time      = time;
+   sessionbreak.resume.triggered = false;
 }
 
 
@@ -1323,26 +1324,27 @@ bool IsSessionBreakSignal() {
 
 
 /**
- * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
+ * Update the stop time of the next session break.
  */
-void UpdateWeekendStop() {
-   sessionbreak.stop.active = false;
+void UpdateNextSessionBreakTime() {
+   if (IsLastError())                         return;
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateNextSessionBreakTime(1)  cannot update next session-break time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
-   datetime friday, now=ServerToFxtTime(TimeCurrentEx("UpdateWeekendStop(1)"));
+   // calculate todays sessionbreak time
+   datetime now    = TimeCurrentEx("UpdateNextSessionBreakTime(2)");
+   datetime today  = now - now%DAYS;                           // midnight today
+   int      offset = sessionbreak.stop.config%DAYS;            // sessionbreak in seconds since midnight
+   datetime time   = today + offset;
 
-   switch (TimeDayOfWeekFix(now)) {
-      case SUNDAY   : friday = now + 5*DAYS; break;
-      case MONDAY   : friday = now + 4*DAYS; break;
-      case TUESDAY  : friday = now + 3*DAYS; break;
-      case WEDNESDAY: friday = now + 2*DAYS; break;
-      case THURSDAY : friday = now + 1*DAY ; break;
-      case FRIDAY   : friday = now + 0*DAYS; break;
-      case SATURDAY : friday = now + 6*DAYS; break;
+   // derive the next regular sessionbreak time
+   int dow = TimeDayOfWeekFix(time);
+   while (time < now || dow==SATURDAY || dow==SUNDAY) {        // TODO: as we use server time comparison with weekend days is wrong
+      time += 1*DAY;
+      dow = TimeDayOfWeekFix(time);
    }
-   sessionbreak.stop.time = (friday/DAYS)*DAYS + sessionbreak.stop.condition%DAYS;
-   if (sessionbreak.stop.time < now)
-      sessionbreak.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAYS; // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
-   sessionbreak.stop.time = FxtToServerTime(sessionbreak.stop.time);
+
+   sessionbreak.stop.time   = time;
+   sessionbreak.stop.active = false;
 }
 
 
@@ -4074,9 +4076,9 @@ bool SynchronizeStatus() {
    if (sessionbreak.stop.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
       return(_false(catch("SynchronizeStatus(10)  sessionbreak.stop.active="+ sessionbreak.stop.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
 
-   if (sequence.status == STATUS_PROGRESSING) UpdateWeekendStop();
+   if      (sequence.status == STATUS_PROGRESSING) UpdateNextSessionBreakTime();
    else if (sequence.status == STATUS_STOPPED) {
-      if (sessionbreak.stop.active)           UpdateWeekendResumeTime();
+      if (sessionbreak.stop.active)                UpdateWeekendResumeTime();
    }
 
 
@@ -4873,10 +4875,10 @@ bool IsStopTriggered(int type, double price) {
 
 
 /**
- * Read the trade session configuration for the specified time and copy it to the passed array.
+ * Read the trade session configuration for the specified server time and copy it to the passed array.
  *
  * @param  _In_  datetime  time       - server time
- * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
+ * @param  _Out_ datetime &config[][] - array receiving the trade session configuration
  *
  * @return bool - success status
  */
@@ -4916,12 +4918,12 @@ bool ReadTradeSessions(datetime time, datetime &config[][2]) {
 
 
 /**
- * Read the SnowRoller session break configuration for the specified time and copy it to the passed array. SnowRoller session
- * breaks are symbol-specific. The configured times are applied session times, i.e. a session break will be enforced if the
- * current time is not in the configured time window.
+ * Read the SnowRoller session break configuration for the specified server time and copy it to the passed array. SnowRoller
+ * session breaks are symbol-specific. The configured times are applied session times, i.e. a session break will be enforced
+ * if the current time is not in the configured time window.
  *
  * @param  _In_  datetime  time       - server time
- * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
+ * @param  _Out_ datetime &config[][] - array receiving the session break configuration
  *
  * @return bool - success status
  */
