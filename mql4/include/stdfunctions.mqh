@@ -35,12 +35,11 @@ int start.RelaunchInputDialog() {
  * @param  string message          - message
  * @param  int    error [optional] - error code
  *
- * @return int - derselbe Fehlercode
- *
+ * @return int - the same error
  *
  * Notes:
  *  - No part of this function must load additional EX4 libaries.
- *  - OutputDebugString() does nothing if the user has no Administrator rights.
+ *  - The terminal must run with Administrator rights for OutputDebugString() to transport debug messages.
  */
 int debug(string message, int error = NO_ERROR) {
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
@@ -320,7 +319,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                );  //      1
-      case ERR_COMMON_ERROR               : return("trade request failed, trade server error"                 );  //      2
+      case ERR_TRADE_REQUEST_FAILED       : return("trade request failed"                                     );  //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                 );  //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                        );  //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                     );  //      5
@@ -422,10 +421,10 @@ string ErrorDescription(int error) {
       case ERR_SYMBOL_NOT_AVAILABLE       : return("symbol not available"                                     );  //   4106
       case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"               );  //   4107
       case ERR_INVALID_TICKET             : return("invalid ticket"                                           );  //   4108
-      case ERR_TRADE_NOT_ALLOWED          : return("online trading not enabled"                               );  //   4109
+      case ERR_TRADE_NOT_ALLOWED          : return("automated trading disabled in terminal"                   );  //   4109
       case ERR_LONGS_NOT_ALLOWED          : return("long trades not enabled"                                  );  //   4110
       case ERR_SHORTS_NOT_ALLOWED         : return("short trades not enabled"                                 );  //   4111
-      case ERR_AUTOMATED_TRADING_DISABLED : return("automated trading disabled"                               );  //   4112
+      case ERR_AUTOMATED_TRADING_DISABLED : return("automated trading disabled by broker"                     );  //   4112
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                    );  //   4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                  );  //   4201
       case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                     );  //   4202
@@ -813,32 +812,34 @@ bool IsTicket(int ticket) {
 
 
 /**
- * Selektiert ein Ticket.
+ * Select a ticket.
  *
- * @param  int    ticket                  - Ticket-Nr.
- * @param  string location                - Bezeichner für evt. Fehlermeldung
- * @param  bool   storeSelection          - ob die aktuelle Selektion gespeichert werden soll (default: nein)
- * @param  bool   onErrorRestoreSelection - ob im Fehlerfall die letzte Selektion wiederhergestellt werden soll
- *                                          (default: bei storeSelection=TRUE ja; bei storeSelection=FALSE nein)
- * @return bool - Erfolgsstatus
+ * @param  int    ticket                      - ticket id
+ * @param  string label                       - label for potential error message
+ * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
+ * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
+ *                                              (default: yes on pushTicket=TRUE, no on pushTicket=FALSE)
+ * @return bool - success status
  */
-bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false) {
-   storeSelection          = storeSelection!=0;
-   onErrorRestoreSelection = onErrorRestoreSelection!=0;
+bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorPopTicket=false) {
+   pushTicket       = pushTicket!=0;
+   onErrorPopTicket = onErrorPopTicket!=0;
 
-   if (storeSelection) {
-      OrderPush(location);
-      onErrorRestoreSelection = true;
+   if (pushTicket) {
+      OrderPush(label);
+      onErrorPopTicket = true;
    }
 
    if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);                             // Success
+      return(true);                             // success
 
-   if (onErrorRestoreSelection)                 // Fehler
-      OrderPop(location);
+   if (onErrorPopTicket)                        // error
+      OrderPop(label);
 
    int error = GetLastError();
-   return(!catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(!error, ERR_INVALID_TICKET, error)));
+   if (!error)
+      error = ERR_INVALID_TICKET;
+   return(!catch(label +"->SelectTicket()   ticket="+ ticket, error));
 }
 
 
@@ -888,21 +889,20 @@ bool OrderPop(string location) {
 
 
 /**
- * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
+ * Wait for a ticket to appear in the terminal's open order or history pool.
  *
- * @param  int  ticket               - Orderticket
- * @param  bool orderKeep [optional] - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                                     wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
+ * @param  int  ticket            - ticket id
+ * @param  bool select [optional] - whether the ticket is selected after function return (default: no)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool WaitForTicket(int ticket, bool orderKeep = true) {
-   orderKeep = orderKeep!=0;
+bool WaitForTicket(int ticket, bool select = false) {
+   select = select!=0;
 
    if (ticket <= 0)
       return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
-   if (orderKeep) {
+   if (!select) {
       if (!OrderPush("WaitForTicket(2)"))
          return(!last_error);
    }
@@ -916,7 +916,7 @@ bool WaitForTicket(int ticket, bool orderKeep = true) {
       i++;
    }
 
-   if (orderKeep) {
+   if (!select) {
       if (!OrderPop("WaitForTicket(5)"))
          return(false);
    }
@@ -1372,7 +1372,7 @@ bool IsInfinity(double value) {
  *
  * @return bool - TRUE
  */
-bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(true);
 }
 
@@ -1385,7 +1385,7 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return bool - FALSE
  */
-bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(false);
 }
 
@@ -1398,7 +1398,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) 
  *
  * @return int - NULL
  */
-int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(NULL);
 }
 
@@ -1411,7 +1411,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return int - NO_ERROR
  */
-int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(NO_ERROR);
 }
 
@@ -1424,7 +1424,7 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
  *
  * @return int - last_error
  */
-int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(last_error);
 }
 
@@ -1437,7 +1437,7 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
  *
  * @return int - EMPTY
  */
-int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(EMPTY);
 }
 
@@ -1462,7 +1462,7 @@ bool IsEmpty(double value) {
  *
  * @return int - EMPTY_VALUE
  */
-int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(EMPTY_VALUE);
 }
 
@@ -1487,7 +1487,7 @@ bool IsEmptyValue(double value) {
  *
  * @return string - Leerstring
  */
-string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return("");
 }
 
@@ -1514,7 +1514,7 @@ bool IsEmptyString(string value) {
  *
  * @return datetime - NaT (Not-A-Time)
  */
-datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(NaT);
 }
 
@@ -1540,7 +1540,7 @@ bool IsNaT(datetime value) {
  *
  * @return bool - der erste Parameter
  */
-bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1 != 0);
 }
 
@@ -1554,7 +1554,7 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return int - der erste Parameter
  */
-int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
 }
 
@@ -1568,7 +1568,7 @@ int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return double - der erste Parameter
  */
-double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
 }
 
@@ -1582,7 +1582,7 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL)
  *
  * @return string - der erste Parameter
  */
-string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
 }
 
@@ -1724,9 +1724,9 @@ int Sign(double number) {
 
 
 /**
- * Integer-Version von MathRound()
+ * Integer version of MathRound()
  *
- * @param  double value - Zahl
+ * @param  double value
  *
  * @return int
  */
@@ -1736,83 +1736,9 @@ int Round(double value) {
 
 
 /**
- * Erweiterte Version von MathRound(), rundet auf die angegebene Anzahl von positiven oder negativen Dezimalstellen.
+ * Integer version of MathFloor()
  *
- * @param  double number
- * @param  int    decimals (default: 0)
- *
- * @return double - rounded value
- */
-double RoundEx(double number, int decimals=0) {
-   if (decimals > 0) return(NormalizeDouble(number, decimals));
-   if (!decimals)    return(      MathRound(number));
-
-   // decimals < 0
-   double factor = MathPow(10, decimals);                            // -1:  1234.5678 => 1230
-          number = MathRound(number * factor) / factor;              // -2:  1234.5678 => 1200
-          number = MathRound(number);                                // -3:  1234.5678 => 1000
-   return(number);
-}
-
-
-/**
- * Erweiterte Version von MathFloor(), rundet mit der angegebenen Anzahl von positiven oder negativen Dezimalstellen ab.
- *
- * @param  double number
- * @param  int    decimals (default: 0)
- *
- * @return double - rounded value
- */
-double RoundFloor(double number, int decimals=0) {
-   if (decimals > 0) {
-      double factor = MathPow(10, decimals);                         // +1:  1234.5678 => 1234.5
-             number = MathFloor(number * factor) / factor;           // +2:  1234.5678 => 1234.56
-             number = NormalizeDouble(number, decimals);             // +3:  1234.5678 => 1234.567
-      return(number);
-   }
-
-   if (decimals == 0)
-      return(MathFloor(number));
-
-   // decimals < 0
-   factor = MathPow(10, decimals);                                   // -1:  1234.5678 => 1230
-   number = MathFloor(number * factor) / factor;                     // -2:  1234.5678 => 1200
-   number = MathRound(number);                                       // -3:  1234.5678 => 1000
-   return(number);
-}
-
-
-/**
- * Erweiterte Version von MathCeil(), rundet mit der angegebenen Anzahl von positiven oder negativen Dezimalstellen auf.
- *
- * @param  double number
- * @param  int    decimals (default: 0)
- *
- * @return double - rounded value
- */
-double RoundCeil(double number, int decimals=0) {
-   if (decimals > 0) {
-      double factor = MathPow(10, decimals);                         // +1:  1234.5678 => 1234.6
-             number = MathCeil(number * factor) / factor;            // +2:  1234.5678 => 1234.57
-             number = NormalizeDouble(number, decimals);             // +3:  1234.5678 => 1234.568
-      return(number);
-   }
-
-   if (decimals == 0)
-      return(MathCeil(number));
-
-   // decimals < 0
-   factor = MathPow(10, decimals);                                   // -1:  1234.5678 => 1240
-   number = MathCeil(number * factor) / factor;                      // -2:  1234.5678 => 1300
-   number = MathRound(number);                                       // -3:  1234.5678 => 2000
-   return(number);
-}
-
-
-/**
- * Integer-Version von MathFloor()
- *
- * @param  double value - Zahl
+ * @param  double value
  *
  * @return int
  */
@@ -1822,14 +1748,117 @@ int Floor(double value) {
 
 
 /**
- * Integer-Version von MathCeil()
+ * Integer version of MathCeil()
  *
- * @param  double value - Zahl
+ * @param  double value
  *
  * @return int
  */
 int Ceil(double value) {
    return(MathCeil(value));
+}
+
+
+/**
+ * Extended version of MathRound(). Rounds to the specified amount of digits before or after the decimal separator.
+ *
+ * Examples:
+ *  RoundEx(1234.5678,  3) => 1234.568
+ *  RoundEx(1234.5678,  2) => 1234.57
+ *  RoundEx(1234.5678,  1) => 1234.6
+ *  RoundEx(1234.5678,  0) => 1235
+ *  RoundEx(1234.5678, -1) => 1230
+ *  RoundEx(1234.5678, -2) => 1200
+ *  RoundEx(1234.5678, -3) => 1000
+ *
+ * @param  double number
+ * @param  int    decimals [optional] - (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundEx(double number, int decimals = 0) {
+   if (decimals > 0) return(NormalizeDouble(number, decimals));
+   if (!decimals)    return(      MathRound(number));
+
+   // decimals < 0
+   double factor = MathPow(10, decimals);
+          number = MathRound(number * factor) / factor;
+          number = MathRound(number);
+   return(number);
+}
+
+
+/**
+ * Extended version of MathFloor(). Rounds to the specified amount of digits before or after the decimal separator down.
+ * That's the direction to zero.
+ *
+ * Examples:
+ *  RoundFloor(1234.5678,  3) => 1234.567
+ *  RoundFloor(1234.5678,  2) => 1234.56
+ *  RoundFloor(1234.5678,  1) => 1234.5
+ *  RoundFloor(1234.5678,  0) => 1234
+ *  RoundFloor(1234.5678, -1) => 1230
+ *  RoundFloor(1234.5678, -2) => 1200
+ *  RoundFloor(1234.5678, -3) => 1000
+ *
+ * @param  double number
+ * @param  int    decimals [optional] - (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundFloor(double number, int decimals = 0) {
+   if (decimals > 0) {
+      double factor = MathPow(10, decimals);
+             number = MathFloor(number * factor) / factor;
+             number = NormalizeDouble(number, decimals);
+      return(number);
+   }
+
+   if (decimals == 0)
+      return(MathFloor(number));
+
+   // decimals < 0
+   factor = MathPow(10, decimals);
+   number = MathFloor(number * factor) / factor;
+   number = MathRound(number);
+   return(number);
+}
+
+
+/**
+ * Extended version of MathCeil(). Rounds to the specified amount of digits before or after the decimal separator up.
+ * That's the direction from zero away.
+ *
+ * Examples:
+ *  RoundCeil(1234.5678,  3) => 1234.568
+ *  RoundCeil(1234.5678,  2) => 1234.57
+ *  RoundCeil(1234.5678,  1) => 1234.6
+ *  RoundCeil(1234.5678,  0) => 1235
+ *  RoundCeil(1234.5678, -1) => 1240
+ *  RoundCeil(1234.5678, -2) => 1300
+ *  RoundCeil(1234.5678, -3) => 2000
+ *
+ * @param  double number
+ * @param  int    decimals [optional] - (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundCeil(double number, int decimals = 0) {
+   if (decimals > 0) {
+      double factor = MathPow(10, decimals);
+             number = MathCeil(number * factor) / factor;
+             number = NormalizeDouble(number, decimals);
+      return(number);
+   }
+
+   if (decimals == 0)
+      return(MathCeil(number));
+
+   // decimals < 0
+   factor = MathPow(10, decimals);
+   number = MathCeil(number * factor) / factor;
+   number = MathRound(number);
+   return(number);
 }
 
 
@@ -3278,8 +3307,9 @@ bool Chart.StoreString(string key, string value) {
    int valueLen = StringLen(value);
    if (valueLen > 63) return(!catch("Chart.StoreString(4)  invalid parameter value: "+ DoubleQuoteStr(value) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (!valueLen)                                                 // convert NULL pointer to empty string
-      value = "";
+   if (!valueLen) {                                               // mark empty strings as the terminal fails to restore them
+      value = "…(empty)…";                                        // that's 0x85
+   }
 
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
@@ -3315,31 +3345,6 @@ bool Chart.RestoreBool(string key, bool &var) {
       var = (iValue!=0);                                          // (bool)(int)string
    }
    return(!catch("Chart.RestoreBool(6)"));
-}
-
-
-/**
- * Restore the value of a double variable from the chart. If no stored value is found the function does nothing.
- *
- * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
- * @param  _Out_ double &var - variable to restore
- *
- * @return bool - success status
- */
-bool Chart.RestoreDouble(string key, double &var) {
-   if (!__CHART())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-
-   int keyLen = StringLen(key);
-   if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63)              return(!catch("Chart.RestoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
-
-   if (ObjectFind(key) == 0) {
-      string sValue = StrTrim(ObjectDescription(key));
-      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
-      ObjectDelete(key);
-      var = StrToDouble(sValue);                                  // (double)string
-   }
-   return(!catch("Chart.RestoreDouble(5)"));
 }
 
 
@@ -3397,6 +3402,31 @@ bool Chart.RestoreColor(string key, color &var) {
 
 
 /**
+ * Restore the value of a double variable from the chart. If no stored value is found the function does nothing.
+ *
+ * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ double &var - variable to restore
+ *
+ * @return bool - success status
+ */
+bool Chart.RestoreDouble(string key, double &var) {
+   if (!__CHART())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+
+   int keyLen = StringLen(key);
+   if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)              return(!catch("Chart.RestoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) == 0) {
+      string sValue = StrTrim(ObjectDescription(key));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
+      ObjectDelete(key);
+      var = StrToDouble(sValue);                                  // (double)string
+   }
+   return(!catch("Chart.RestoreDouble(5)"));
+}
+
+
+/**
  * Restore the value of a string variable from the chart. If no stored value is found the function does nothing.
  *
  * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
@@ -3414,7 +3444,9 @@ bool Chart.RestoreString(string key, string &var) {
    if (ObjectFind(key) == 0) {
       string sValue = ObjectDescription(key);
       ObjectDelete(key);
-      var = sValue;                                               // string
+
+      if (sValue == "…(empty)…") var = "";         // restore marked empty strings as the terminal deserializes "" to the value "Text"
+      else                       var = sValue;     // string
    }
    return(!catch("Chart.RestoreString(4)"));
 }
@@ -4801,32 +4833,13 @@ bool IsCurrency(string value) {
 
 
 /**
- * Ob der übergebene Parameter eine "pending" Tradeoperation bezeichnet.
+ * Whether the specified value is an order type.
  *
- * @param  int value - zu prüfender Wert
- *
- * @return bool
- */
-bool IsPendingTradeOperation(int value) {
-   switch (value) {
-      case OP_BUYLIMIT :
-      case OP_SELLLIMIT:
-      case OP_BUYSTOP  :
-      case OP_SELLSTOP :
-         return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Ob der übergebene Parameter eine Tradeoperation bezeichnet.
- *
- * @param  int value - zu prüfender Wert
+ * @param  int value
  *
  * @return bool
  */
-bool IsTradeOperation(int value) {
+bool IsOrderType(int value) {
    switch (value) {
       case OP_BUY      :
       case OP_SELL     :
@@ -4841,13 +4854,32 @@ bool IsTradeOperation(int value) {
 
 
 /**
- * Ob der übergebene Parameter eine Long-Tradeoperation bezeichnet.
+ * Whether the specified value is a pendingg order type.
  *
- * @param  int value - zu prüfender Wert
+ * @param  int value
  *
  * @return bool
  */
-bool IsLongTradeOperation(int value) {
+bool IsPendingOrderType(int value) {
+   switch (value) {
+      case OP_BUYLIMIT :
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :
+      case OP_SELLSTOP :
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Whether the specified value is a long order type.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsLongOrderType(int value) {
    switch (value) {
       case OP_BUY     :
       case OP_BUYLIMIT:
@@ -4859,13 +4891,13 @@ bool IsLongTradeOperation(int value) {
 
 
 /**
- * Ob der übergebene Parameter eine Short-Tradeoperation bezeichnet.
+ * Whether the specified value is a short order type.
  *
- * @param  int value - zu prüfender Wert
+ * @param  int value
  *
  * @return bool
  */
-bool IsShortTradeOperation(int value) {
+bool IsShortOrderType(int value) {
    switch (value) {
       case OP_SELL     :
       case OP_SELLLIMIT:
@@ -4873,6 +4905,30 @@ bool IsShortTradeOperation(int value) {
          return(true);
    }
    return(false);
+}
+
+
+/**
+ * Whether the specified value is a stop order type.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsStopOrderType(int value) {
+   return(value==OP_BUYSTOP || value==OP_SELLSTOP);
+}
+
+
+/**
+ * Whether the specified value is a limit order type.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsLimitOrderType(int value) {
+   return(value==OP_BUYLIMIT || value==OP_SELLLIMIT);
 }
 
 
@@ -6033,17 +6089,19 @@ void __DummyCalls() {
    IsLastError();
    IsLeapYear(NULL);
    IsLibrary();
+   IsLimitOrderType(NULL);
    IsLogging();
-   IsLongTradeOperation(NULL);
+   IsLongOrderType(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
-   IsPendingTradeOperation(NULL);
+   IsOrderType(NULL);
+   IsPendingOrderType(NULL);
    IsScript();
    IsShortAccountCompany(NULL);
-   IsShortTradeOperation(NULL);
+   IsShortOrderType(NULL);
+   IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);
-   IsTradeOperation(NULL);
    LE(NULL, NULL);
    log(NULL);
    LogOrder(NULL);

@@ -37,13 +37,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders         = "on | off | account*";
+extern string Track.Orders         = "on | off | auto*";
 extern bool   Offline.Ticker       = true;                        // whether to enable automatic ticking of offline charts
 extern string __________________________;
 
-extern string Signal.Sound         = "auto* | off | on";
-extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
-extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4291,7 +4291,7 @@ int ReadExternalPositions(string provider, string signal) {
          // Type
          sValue = StrTrim(values[0]);
          int _type = StrToOperationType(sValue);
-         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(7)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!IsOrderType(_type))                     return(_EMPTY(catch("ReadExternalPositions(7)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
          sValue = StrTrim(values[1]);
@@ -4420,7 +4420,7 @@ int ReadExternalPositions(string provider, string signal) {
          // Type
          sValue = StrTrim(values[0]);
          _type  = StrToOperationType(sValue);
-         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(25)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!IsOrderType(_type))                     return(_EMPTY(catch("ReadExternalPositions(25)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
          sValue = StrTrim(values[1]);

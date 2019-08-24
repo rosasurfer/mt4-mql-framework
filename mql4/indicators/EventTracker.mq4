@@ -54,14 +54,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders         = "on | off | account*";
-extern string Track.Signals        = "on | off | account*";
+extern string Track.Orders         = "on | off | auto*";
+extern string Track.Signals        = "on | off | auto*";
 
 extern string __________________________;
 
-extern string Signal.Sound         = "auto* | off | on";
-extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
-extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -145,50 +145,56 @@ int onInit() {
  * @return bool - Erfolgsstatus
  */
 bool Configure() {
-   int    iValue, subKeysSize, sLen, signal, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3, account = GetAccountNumber();
+   int iValue, subKeysSize, sLen, signal, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3, account = GetAccountNumber();
    if (!account) return(false);
-   bool   signal.enabled;
+   bool signal.enabled;
    double dValue, dValue1, dValue2, dValue3;
-   string keys[], subKeys[], section, key, subKey, sValue, sDigits, sParam, iniValue, accountConfig = GetAccountConfigPath();
+   string keys[], subKeys[], section, key, subKey, sDigits, sParam, iniValue, accountConfig = GetAccountConfigPath();
 
-
-   // (1) Track.Orders: "on | off | account*"
+   // Track.Orders
    track.orders = false;
-   sValue = StrToLower(StrTrim(Track.Orders));
-   if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-      track.orders = true;
+   string sValue = StrToLower(Track.Orders), values[];         // default: "on | off | auto*"
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
-      track.orders = false;
-   }
-   else if (sValue=="account" || sValue=="on | off | account*") {
-      section = "EventTracker";
-      key     = "Track.Orders";
-      track.orders = GetIniBool(accountConfig, section, key);
-   }
-   else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+   sValue = StrTrim(sValue);
 
-   if (track.orders) {
-      section             = "Accounts";
-      key                 = account +".alias";                       // AccountAlias
-      orders.accountAlias = GetGlobalConfigString(section, key);
-      if (!StringLen(orders.accountAlias)) return(!catch("Configure(2)  Missing global account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   }
-
-
-   // (2) Track.Signals: "on | off | account*"
-   track.signals = false;
-   sValue = StrToLower(StrTrim(Track.Signals));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.signals = true;
    }
    else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
       track.signals = false;
    }
-   else if (sValue=="account" || sValue=="on | off | account*") {
-      section       = "EventTracker";
-      key           = "Track.Signals";
-      track.signals = GetIniBool(accountConfig, section, key);
+   else if (sValue == "auto") {
+      track.orders = GetConfigBool("EventTracker", "Track.Orders");
+   }
+   else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+
+   if (track.orders) {
+      section = "Accounts";
+      key     = account +".alias";
+      orders.accountAlias = GetConfigString(section, key);
+      if (!StringLen(orders.accountAlias)) return(!catch("Configure(2)  Missing account configuration ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   }
+
+   // Track.Signals
+   track.signals = false;
+   sValue = StrToLower(Track.Signals);                         // default: "on | off | auto*"
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
+   }
+   sValue = StrTrim(sValue);
+
+   if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
+      track.signals = true;
+   }
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
+      track.signals = false;
+   }
+   else if (sValue == "auto") {
+      track.signals = GetConfigBool("EventTracker", "Track.Signals");
    }
    else return(!catch("Configure(3)  Invalid input parameter Track.Signals = \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
 
@@ -335,7 +341,7 @@ bool Configure() {
          }
 
          // (2.4) Signal zur Konfiguration hinzufügen
-         int size = ArrayRange(signal.config, 0);
+         size = ArrayRange(signal.config, 0);
          ArrayResize(signal.config, size+1);
          ArrayResize(signal.data,   size+1);
          ArrayResize(signal.status, size+1);
