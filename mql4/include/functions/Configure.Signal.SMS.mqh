@@ -16,16 +16,12 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
    string smsSection    = "SMS";
    string receiverKey   = "Receiver";
 
-   string sValue = StrToLower(configValue), values[], errorMsg;         // preset: "auto* | off | on | {phone-number}"
+   string sValue = StrToLower(configValue), values[], errorMsg;         // default: "on | off | auto* | {phone-number}"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    sValue = StrTrim(sValue);
-
-   // off
-   if (sValue == "off")
-      return(true);
 
    // on
    if (sValue == "on") {
@@ -35,6 +31,11 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
          return(false);
       }
       enabled = true;
+      return(true);
+   }
+
+   // off
+   if (sValue == "off") {
       return(true);
    }
 

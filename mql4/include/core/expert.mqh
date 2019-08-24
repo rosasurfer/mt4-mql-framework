@@ -408,7 +408,7 @@ int deinit() {
    }
 
 
-   // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (1) User-spezifische deinit()-Routinen können, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -776,7 +776,7 @@ bool Test.RecordEquity() {
 #import
 
 
-// -- init() event handler templates ----------------------------------------------------------------------------------------
+// -- init() event handler templates (opening curly braces are intentionally missing) ---------------------------------------
 
 
 /**
@@ -861,7 +861,7 @@ int afterInit()
 }
 
 
-// -- deinit() event handler templates --------------------------------------------------------------------------------------
+// -- deinit() event handler templates (opening curly braces are intentionally missing) -------------------------------------
 
 
 /**
@@ -905,22 +905,12 @@ int onDeinitAccountChange()
 
 
 /**
- * Never encountered.
- *
- * @return int - error status
- *
-int onDeinitClose()
-   return(NO_ERROR);
-}
-
-
-/**
  * Online:    - Called when another chart template is applied.
  *            - Called when the chart profile is changed.
  *            - Called when the chart is closed.
- *            - Called when the terminal shuts down.
+ *            - Called in terminal versions up to build 509 when the terminal shuts down.
  * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
- *            - Called on VisualMode=On when the chart is closed.
+ *            - Called when the chart is closed (with VisualMode=On).
  *
  * @return int - error status
  *
@@ -962,7 +952,18 @@ int onDeinitRecompile()
 
 
 /**
- * Deinitialization post-processing hook.
+ * Called in terminal versions > build 509 when the terminal shuts down.
+ *
+ * @return int - error status
+ *
+int onDeinitClose()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Deinitialization post-processing hook. Executed if neither the pre-processing hook (if implemented) nor the uninitialize
+ * reason specific handlers (if implemented) returned -1.
  *
  * @return int - error status
  *

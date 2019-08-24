@@ -2,8 +2,8 @@
  * Trix - Slope of Triple Smoothed Exponential Moving Average
  *
  *
- * The Trix displays the slope (aka the rate of change) in percent of a triple smoothed EMA (TriEMA).
- * The unit is "bps" (1 base point = 1/100th % change).
+ * The Trix calculates the 1-period percent change (aka slope, momentum or rate of change) of a triple smoothed EMA (TriEMA).
+ * The display unit is "base points" (1 bps = 1/100th %).
  *
  * Example:
  *  Trix[0] = TriEMA[0]/TriEMA[1] * 100 * 100
@@ -42,7 +42,7 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #include <functions/@Trend.mqh>
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (input dialog)
+#property indicator_buffers   4                             // configurable buffers (via input dialog)
 int       allocated_buffers = 7;                            // used buffers
 
 #property indicator_width1    1
@@ -106,7 +106,7 @@ int onInit() {
    }
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;

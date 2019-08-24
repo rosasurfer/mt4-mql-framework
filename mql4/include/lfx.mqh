@@ -618,7 +618,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // OrderType
    sValue = StrTrim(values[2]);
    int _orderType = StrToOperationType(sValue);
-   if (!IsTradeOperation(_orderType))                 return(!catch("LFX.GetOrder(4)  invalid order type \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!IsOrderType(_orderType))                      return(!catch("LFX.GetOrder(4)  invalid order type \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OrderUnits
    sValue = StrTrim(values[3]);
@@ -631,7 +631,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    sValue = StrTrim(values[4]);
    if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openEquity = StrToDouble(sValue);
-   if (!IsPendingTradeOperation(_orderType))
+   if (!IsPendingOrderType(_orderType))
       if (_openEquity <= 0)                           return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openEquity = NormalizeDouble(_openEquity, 2);
 
@@ -698,7 +698,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
       if (_stopLossPrice < 0)                         return(!catch("LFX.GetOrder(22)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       _stopLossPrice = NormalizeDouble(_stopLossPrice, digits);
       if (_stopLossPrice && _takeProfitPrice) {
-         if (IsLongTradeOperation(_orderType)) {
+         if (IsLongOrderType(_orderType)) {
             if (_stopLossPrice >= _takeProfitPrice)   return(!catch("LFX.GetOrder(23)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
          }
          else if (_stopLossPrice <= _takeProfitPrice) return(!catch("LFX.GetOrder(24)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -1036,7 +1036,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
    SetLastError(error);
 
    // (1) die angegebenen Fehler "leise" abfangen
-   if (fCatch & F_ERR_CONCUR_MODIFICATION && 1) {
+   if (fCatch & F_ERR_CONCURRENT_MODIFICATION && 1) {
       if (error == ERR_CONCURRENT_MODIFICATION) {
          if (__LOG()) log(message, error);
          return(error);

@@ -12,17 +12,16 @@
 //      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
 //      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
 //      OrderModify().
-#define ERR_COMMON_ERROR                                              2
-//      General trading error, the trade request failed. All attempts to trade must stop until reasons are clarified. Restart
-//      of the client terminal may be needed. Can be caused by trade server issues.
+#define ERR_TRADE_REQUEST_FAILED                                      2
+#define ERR_COMMON_ERROR                       ERR_TRADE_REQUEST_FAILED    // MetaQuotes alias
+//      The trade request failed. All attempts to trade must stop until reasons are clarified. Restart of the client terminal
+//      may be needed. Can be caused by trade server issues.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 //      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
 //      The trade server is busy. The attempt can be repeated after a rather long period of time (more than several minutes).
 #define ERR_OLD_VERSION                                               5    // too old version of the client terminal
-#define ERR_NO_CONNECTION                                             6
-//      No connection to the trade server. Make sure that a connection is established (e.g. by using IsConnected()) and repeat
-//      the attempt after a certain period of time (more than 5 seconds).
+#define ERR_NO_CONNECTION                                             6    // no connection to the trade server
 #define ERR_NOT_ENOUGH_RIGHTS                                         7
 #define ERR_TOO_FREQUENT_REQUESTS                                     8    // trade requests are too frequent
 #define ERR_MALFUNCTIONAL_TRADE                                       9    // malfunctional trade operation
@@ -136,10 +135,10 @@
 #define ERR_SYMBOL_NOT_AVAILABLE                                   4106
 #define ERR_INVALID_PRICE_PARAM                                    4107
 #define ERR_INVALID_TICKET                                         4108
-#define ERR_TRADE_NOT_ALLOWED                                      4109
+#define ERR_TRADE_NOT_ALLOWED                                      4109    // automated trading disabled in the terminal
 #define ERR_LONGS_NOT_ALLOWED                                      4110
 #define ERR_SHORTS_NOT_ALLOWED                                     4111
-#define ERR_AUTOMATED_TRADING_DISABLED                             4112    // automated trading not supported
+#define ERR_AUTOMATED_TRADING_DISABLED                             4112    // automated trading disabled by the broker
 #define ERR_OBJECT_ALREADY_EXISTS                                  4200
 #define ERR_UNKNOWN_OBJECT_PROPERTY                                4201
 #define ERR_OBJECT_DOES_NOT_EXIST                                  4202
@@ -184,7 +183,7 @@
 #define ERR_FILE_INCOMPATIBLE                                      5018    // incompatible file (for string arrays-TXT, for others-BIN)
 #define ERR_FILE_IS_DIRECTORY                                      5019    // file is a directory
 #define ERR_FILE_NOT_FOUND                                         5020    // file not found
-#define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MeatQuotes-Alias
+#define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MetaQuotes alias
 #define ERR_FILE_CANNOT_REWRITE                                    5021    // file cannot be rewritten
 #define ERR_FILE_WRONG_DIRECTORYNAME                               5022    // wrong directory name
 #define ERR_FILE_DIRECTORY_NOT_EXIST                               5023    // directory does not exist

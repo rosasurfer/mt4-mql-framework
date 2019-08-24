@@ -19,21 +19,16 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
    string senderKey     = "Sender";
    string receiverKey   = "Receiver";
 
-   string sValue = StrToLower(configValue), values[], errorMsg;         // preset: "auto* | off | on | {email-address}"
+   string defaultSender = "mt4@"+ GetHostName() +".localdomain";
+   sender = GetConfigString(mailSection, senderKey, defaultSender);
+   if (!StrIsEmailAddress(sender)) return(!catch("Configure.Signal.Mail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_VALUE));
+
+   string sValue = StrToLower(configValue), values[], errorMsg;         // default: "on | off | auto* | {email-address}"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    sValue = StrTrim(sValue);
-
-   // off
-   if (sValue == "off")
-      return(true);
-
-   string defaultSender = "mt4@"+ GetHostName() +".localdomain";
-   sender = GetConfigString(mailSection, senderKey, defaultSender);
-   if (!StrIsEmailAddress(sender))
-      return(!catch("Configure.Signal.Mail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_VALUE));
 
    // on
    if (sValue == "on") {
@@ -44,6 +39,11 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
          return(false);
       }
       enabled = true;
+      return(true);
+   }
+
+   // off
+   if (sValue == "off") {
       return(true);
    }
 

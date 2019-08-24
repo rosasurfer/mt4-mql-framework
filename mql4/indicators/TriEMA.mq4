@@ -45,7 +45,7 @@ extern int    Max.Values      = 5000;                 // max. number of values t
 
 #property indicator_chart_window
 
-#property indicator_buffers   5                          // configurable buffers (input dialog)
+#property indicator_buffers   5                          // configurable buffers (via input dialog)
 int       allocated_buffers = 7;                         // used buffers
 
 #property indicator_width1    0
@@ -105,7 +105,7 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 

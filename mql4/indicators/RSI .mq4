@@ -43,7 +43,7 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #define MODE_LOWER_SECTION    3
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (input dialog)
+#property indicator_buffers   4                             // configurable buffers (via input dialog)
 int       allocated_buffers = 4;                            // used buffers
 #property indicator_level1    0
 
@@ -94,7 +94,7 @@ int onInit() {
    }
    RSI.AppliedPrice = PriceTypeDescription(rsi.appliedPrice);
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
