@@ -136,11 +136,11 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 
 // -------------------------------
-datetime sessionbreak.stop.config = D'1970.01.01 23:53';    // server time
+datetime sessionbreak.stop.config = D'1970.01.01 23:53';    // FXT
 datetime sessionbreak.stop.time;
 bool     sessionbreak.stop.active;
 
-datetime sessionbreak.resume.config = D'1970.01.01 01:03';  // server time
+datetime sessionbreak.resume.config = D'1970.01.01 01:03';  // FXT
 datetime sessionbreak.resume.time;
 bool     sessionbreak.resume.triggered;
 
@@ -342,7 +342,7 @@ bool StartSequence() {
 
    // StartConditions deaktivieren, Weekend-Stop aktualisieren
    start.conditions = false; SS.StartStopConditions();
-   UpdateNextSessionBreakTime();
+   UpdateSessionBreakTime();
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
@@ -466,7 +466,7 @@ bool StopSequence() {
 
    // ResumeConditions aktualisieren
    if (IsSessionBreakSignal())
-      UpdateWeekendResumeTime();
+      UpdateSessionResumeTime();
 
    // Status aktualisieren
    bool bNull;
@@ -587,7 +587,7 @@ bool ResumeSequence() {
    start.conditions              = false; SS.StartStopConditions();
    sessionbreak.resume.triggered = false;
    sessionbreak.resume.time      = 0;
-   UpdateNextSessionBreakTime();
+   UpdateSessionBreakTime();
 
    // Status aktualisieren und speichern
    bool changes;
@@ -1155,71 +1155,7 @@ bool IsResumeSignal() {
 
    if (start.conditions)
       return(IsStartSignal());
-
    return(IsSessionResumeSignal());
-}
-
-
-/**
- * Signalgeber für ResumeSequence(). Prüft, ob die Session-Resume-Bedingung erfüllt ist.
- *
- * @return bool
- */
-bool IsSessionResumeSignal() {
-   if (IsLastError())                                                                                                                return(false);
-   if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(false);
-
-   if (sessionbreak.resume.triggered) return( true);
-   if (sessionbreak.resume.time == 0) return(false);
-
-   int now=TimeCurrentEx("IsSessionResumeSignal(1)"), dayNow=now/DAYS, dayResume=sessionbreak.resume.time/DAYS;
-
-   // Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
-   if (dayNow < dayResume-1)
-      return(false);
-
-   // Bedingung ist erfüllt, wenn der Marktpreis gleich dem oder günstiger als der Stop-Preis ist
-   double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
-   if (sequence.direction == D_LONG) bool isBetterPrice = (Ask <= stopPrice);
-   else                                   isBetterPrice = (Bid >= stopPrice);
-   if (isBetterPrice) {
-      sessionbreak.resume.triggered = true;
-      if (__LOG()) log("IsSessionResumeSignal(2)  sequence "+ sequence.name +" weekend stop price \""+ NumberToStr(stopPrice, PriceFormat) +"\" fulfilled");
-      return(true);
-   }
-
-   // Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
-   if (sessionbreak.resume.time <= now) {
-      if (__LOG()) log("IsSessionResumeSignal(3)  sequence "+ sequence.name +" resume condition '"+ GmtTimeFormat(sessionbreak.resume.time, "%a, %Y.%m.%d %H:%M:%S") +"' fulfilled");
-      return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Aktualisiert die Bedingungen für ResumeSequence() nach der Wochenend-Pause.
- */
-void UpdateWeekendResumeTime() {
-   if (IsLastError())                     return;
-   if (sequence.status != STATUS_STOPPED) return(!catch("UpdateWeekendResumeTime(1)  cannot update next session-resume time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (!IsSessionBreakSignal())           return(!catch("UpdateWeekendResumeTime(2)  cannot update session-resume time if not in a session-break", ERR_ILLEGAL_STATE));
-
-   // calculate the last stop day's session resume time
-   datetime lastStop    = sequence.stop.time[ArraySize(sequence.stop.time)-1];
-   datetime lastStopDay = lastStop - lastStop%DAYS;            // the last stop day's midnight
-   int      offset      = sessionbreak.stop.config%DAYS;       // session resume in seconds since midnight
-   datetime time        = lastStopDay + offset;
-
-   // derive the next regular session resume time
-   int dow = TimeDayOfWeekFix(time);
-   while (time < lastStop || dow==SATURDAY || dow==SUNDAY) {   // TODO: as we use server time comparison with weekend days is wrong
-      time += 1*DAY;
-      dow = TimeDayOfWeekFix(time);
-   }
-
-   sessionbreak.resume.time      = time;
-   sessionbreak.resume.triggered = false;
 }
 
 
@@ -1324,27 +1260,90 @@ bool IsSessionBreakSignal() {
 
 
 /**
+ * Signalgeber für ResumeSequence(). Prüft, ob die Session-Resume-Bedingung erfüllt ist.
+ *
+ * @return bool
+ */
+bool IsSessionResumeSignal() {
+   if (IsLastError())                                                                                                                return(false);
+   if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(false);
+
+   if (sessionbreak.resume.triggered) return( true);
+   if (sessionbreak.resume.time == 0) return(false);
+
+   int now=TimeCurrentEx("IsSessionResumeSignal(1)"), dayNow=now/DAYS, dayResume=sessionbreak.resume.time/DAYS;
+
+   // Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
+   if (dayNow < dayResume-1)
+      return(false);
+
+   // Bedingung ist erfüllt, wenn der Marktpreis gleich dem oder günstiger als der Stop-Preis ist
+   double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
+   if (sequence.direction == D_LONG) bool isBetterPrice = (Ask <= stopPrice);
+   else                                   isBetterPrice = (Bid >= stopPrice);
+   if (isBetterPrice) {
+      sessionbreak.resume.triggered = true;
+      if (__LOG()) log("IsSessionResumeSignal(2)  sequence "+ sequence.name +" weekend stop price \""+ NumberToStr(stopPrice, PriceFormat) +"\" fulfilled");
+      return(true);
+   }
+
+   // Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
+   if (sessionbreak.resume.time <= now) {
+      if (__LOG()) log("IsSessionResumeSignal(3)  sequence "+ sequence.name +" resume condition '"+ GmtTimeFormat(sessionbreak.resume.time, "%a, %Y.%m.%d %H:%M:%S") +"' fulfilled");
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
  * Update the stop time of the next session break.
  */
-void UpdateNextSessionBreakTime() {
+void UpdateSessionBreakTime() {
    if (IsLastError())                         return;
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateNextSessionBreakTime(1)  cannot update next session-break time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateSessionBreakTime(1)  cannot update next session-break time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
    // calculate todays sessionbreak time
-   datetime now    = TimeCurrentEx("UpdateNextSessionBreakTime(2)");
+   datetime now    = ServerToFxtTime(TimeCurrentEx("UpdateSessionBreakTime(2)"));
    datetime today  = now - now%DAYS;                           // midnight today
-   int      offset = sessionbreak.stop.config%DAYS;            // sessionbreak in seconds since midnight
+   int      offset = sessionbreak.stop.config%DAYS;            // sessionbreak time in seconds since midnight
    datetime time   = today + offset;
 
    // derive the next regular sessionbreak time
    int dow = TimeDayOfWeekFix(time);
-   while (time < now || dow==SATURDAY || dow==SUNDAY) {        // TODO: as we use server time comparison with weekend days is wrong
+   while (time < now || dow==SATURDAY || dow==SUNDAY) {
       time += 1*DAY;
       dow = TimeDayOfWeekFix(time);
    }
 
-   sessionbreak.stop.time   = time;
+   sessionbreak.stop.time   = FxtToServerTime(time);
    sessionbreak.stop.active = false;
+}
+
+
+/**
+ * Update the next resume time after a session break.
+ */
+void UpdateSessionResumeTime() {
+   if (IsLastError())                     return;
+   if (sequence.status != STATUS_STOPPED) return(!catch("UpdateSessionResumeTime(1)  cannot update next session-resume time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   if (!IsSessionBreakSignal())           return(!catch("UpdateSessionResumeTime(2)  cannot update session-resume time if not in a session-break", ERR_ILLEGAL_STATE));
+
+   // calculate the last stop day's session resume time
+   datetime lastStop    = ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
+   datetime lastStopDay = lastStop - lastStop%DAYS;            // the last stop day's midnight
+   int      offset      = sessionbreak.stop.config%DAYS;       // session resume time in seconds since midnight
+   datetime time        = lastStopDay + offset;
+
+   // determine the next regular session resume time
+   int dow = TimeDayOfWeekFix(time);
+   while (time < lastStop || dow==SATURDAY || dow==SUNDAY) {
+      time += 1*DAY;
+      dow = TimeDayOfWeekFix(time);
+   }
+
+   sessionbreak.resume.time      = FxtToServerTime(time);
+   sessionbreak.resume.triggered = false;
 }
 
 
@@ -4076,9 +4075,9 @@ bool SynchronizeStatus() {
    if (sessionbreak.stop.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
       return(_false(catch("SynchronizeStatus(10)  sessionbreak.stop.active="+ sessionbreak.stop.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
 
-   if      (sequence.status == STATUS_PROGRESSING) UpdateNextSessionBreakTime();
+   if      (sequence.status == STATUS_PROGRESSING) UpdateSessionBreakTime();
    else if (sequence.status == STATUS_STOPPED) {
-      if (sessionbreak.stop.active)                UpdateWeekendResumeTime();
+      if (sessionbreak.stop.active)                UpdateSessionResumeTime();
    }
 
 
