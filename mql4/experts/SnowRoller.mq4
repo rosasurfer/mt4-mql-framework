@@ -583,6 +583,7 @@ bool ResumeSequence() {
 
    // StartConditions deaktivieren und Weekend-Stop aktualisieren
    start.conditions         = false; SS.StartStopConditions();
+   sessionbreak.active      = false;
    sessionbreak.resume.time = 0;
    UpdateSessionBreakTime();
 
@@ -1133,7 +1134,7 @@ bool IsStartSignal() {
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
    }
    else {
-      // no start conditions are a valid start signal, too
+      // no start condition is a valid start signal, too
       if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
          if (__LOG()) log("IsStartSignal(4)  sequence "+ sequence.name +" no start conditions defined");
       }
@@ -1150,9 +1151,9 @@ bool IsStartSignal() {
 bool IsResumeSignal() {
    if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
-   if (start.conditions)
-      return(IsStartSignal());
-   return(IsSessionResumeSignal());
+   if (sessionbreak.active) return(IsSessionResumeSignal());
+   if (start.conditions)    return(IsStartSignal());
+   return(false);
 }
 
 
@@ -1240,14 +1241,14 @@ bool IsStopSignal() {
  * @return bool
  */
 bool IsSessionBreakSignal() {
-   if (IsLastError())                              /* TODO: replace additional status checks by IsSessionBreak() */                  return(false);
+   if (IsLastError())                                 /* TODO: replace additional status checks by IsSessionBreak() */               return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
    if (!sessionbreak.stop.time)                                                                                                      return(false);
 
    datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
-   if (now >= sessionbreak.stop.time)
-      return(sessionbreak.stop.time/DAYS == now/DAYS);      // stellt sicher, daß Signal nicht von altem Datum getriggert wird
-   return(false);
+   if (sessionbreak.stop.time/DAYS != now/DAYS)
+      return(false);                                  // prevent an old date in sessionbreak.stop.time to trigger the signal
+   return(now >= sessionbreak.stop.time);
 }
 
 
@@ -1259,17 +1260,10 @@ bool IsSessionBreakSignal() {
 bool IsSessionResumeSignal() {
    if (IsLastError())                                                                                                                return(false);
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(false);
+   if (!sessionbreak.resume.time)                                                                                                    return(false);
 
-   if (!sessionbreak.resume.time) return(false);
-
-   int now=TimeCurrentEx("IsSessionResumeSignal(1)"), dayNow=now/DAYS, dayResume=sessionbreak.resume.time/DAYS;
-
-   // Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
-   if (dayNow < dayResume-1)
-      return(false);
-
-   // Bedingung ist ab der konfigurierten Resume-Zeit erfüllt
-   if (sessionbreak.resume.time <= now) {
+   datetime now = TimeCurrentEx("IsSessionResumeSignal(1)");
+   if (now >= sessionbreak.resume.time) {
       if (__LOG()) log("IsSessionResumeSignal(2)  sequence "+ sequence.name +" resume condition '"+ GmtTimeFormat(sessionbreak.resume.time, "%a, %Y.%m.%d %H:%M:%S") +"' fulfilled");
       return(true);
    }
@@ -1296,9 +1290,7 @@ void UpdateSessionBreakTime() {
       time += 1*DAY;
       dow = TimeDayOfWeekFix(time);
    }
-
    sessionbreak.stop.time = FxtToServerTime(time);
-   sessionbreak.active    = false;
 }
 
 
@@ -1308,7 +1300,6 @@ void UpdateSessionBreakTime() {
 void UpdateSessionResumeTime() {
    if (IsLastError())                     return;
    if (sequence.status != STATUS_STOPPED) return(!catch("UpdateSessionResumeTime(1)  cannot update next session-resume time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (!sessionbreak.active)              return(!catch("UpdateSessionResumeTime(2)  cannot update session-resume time if not in a session-break", ERR_ILLEGAL_STATE));
 
    // calculate the last stop day's session resume time
    datetime lastStop    = ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
@@ -1322,7 +1313,6 @@ void UpdateSessionResumeTime() {
       time += 1*DAY;
       dow = TimeDayOfWeekFix(time);
    }
-
    sessionbreak.resume.time = FxtToServerTime(time);
 }
 
