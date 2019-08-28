@@ -463,7 +463,7 @@ bool StopSequence() {
    }
 
    // ResumeConditions aktualisieren
-   if (IsSessionBreakSignal())
+   if (sessionbreak.active)
       UpdateSessionResumeTime();
 
    // Status aktualisieren
@@ -478,8 +478,8 @@ bool StopSequence() {
 
    // ggf. Tester stoppen
    if (IsTesting()) {
-      if (IsVisualMode())               Tester.Pause();
-      else if (!IsSessionBreakSignal()) Tester.Stop();
+      if (IsVisualMode())            Tester.Pause();
+      else if (!sessionbreak.active) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(9)"));
 }
@@ -1224,8 +1224,11 @@ bool IsStopSignal() {
    }
 
    // -- session break ------------------------------------------------------------------------------------------------------
-   if (IsSessionBreakSignal())
+   if (IsSessionBreakSignal()) {
+      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.stop.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
+      sessionbreak.active = true;
       return(true);
+   }
 
    return(false);
 }
@@ -1239,19 +1242,11 @@ bool IsStopSignal() {
 bool IsSessionBreakSignal() {
    if (IsLastError())                              /* TODO: replace additional status checks by IsSessionBreak() */                  return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
+   if (!sessionbreak.stop.time)                                                                                                      return(false);
 
    datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
-
-   if (sessionbreak.active)     return(true);
-   if (!sessionbreak.stop.time) return(false);
-
-   if (now >= sessionbreak.stop.time) {
-      if (sessionbreak.stop.time/DAYS == now/DAYS) {        // stellt sicher, daß Signal nicht von altem Datum getriggert wird
-         sessionbreak.active = true;
-         if (__LOG()) log("IsSessionBreakSignal(2)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.stop.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
-         return(true);
-      }
-   }
+   if (now >= sessionbreak.stop.time)
+      return(sessionbreak.stop.time/DAYS == now/DAYS);      // stellt sicher, daß Signal nicht von altem Datum getriggert wird
    return(false);
 }
 
@@ -1313,7 +1308,7 @@ void UpdateSessionBreakTime() {
 void UpdateSessionResumeTime() {
    if (IsLastError())                     return;
    if (sequence.status != STATUS_STOPPED) return(!catch("UpdateSessionResumeTime(1)  cannot update next session-resume time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (!IsSessionBreakSignal())           return(!catch("UpdateSessionResumeTime(2)  cannot update session-resume time if not in a session-break", ERR_ILLEGAL_STATE));
+   if (!sessionbreak.active)              return(!catch("UpdateSessionResumeTime(2)  cannot update session-resume time if not in a session-break", ERR_ILLEGAL_STATE));
 
    // calculate the last stop day's session resume time
    datetime lastStop    = ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
@@ -3248,7 +3243,7 @@ bool SaveStatus() {
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsSessionBreakSignal())
+      if (sequence.status==STATUS_STOPPED) /*&&*/ if (sessionbreak.active)
    ArrayPushString(lines, /*int*/    "rt.sessionbreak=1");
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
