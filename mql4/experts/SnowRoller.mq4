@@ -136,13 +136,13 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 
 // -------------------------------
-datetime sessionbreak.stop.config = D'1970.01.01 23:53';    // FXT
+datetime sessionbreak.stop.config   = D'1970.01.01 23:53';  // FXT
 datetime sessionbreak.stop.time;
-bool     sessionbreak.stop.active;
-
 datetime sessionbreak.resume.config = D'1970.01.01 01:03';  // FXT
 datetime sessionbreak.resume.time;
-bool     sessionbreak.resume.triggered;
+bool     sessionbreak.active;
+
+bool     sessionbreak.resume.triggered;            // TODO: obsolete => remove
 
 // -------------------------------
 double   grid.base;                                // current grid base
@@ -1235,7 +1235,7 @@ bool IsStopSignal() {
 
 
 /**
- * Whether a stop condition caused by a trade session break is satisfied for a progressing sequence.
+ * Whether a sessionbreak stop condition is satisfied.
  *
  * @return bool
  */
@@ -1245,12 +1245,12 @@ bool IsSessionBreakSignal() {
 
    datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
 
-   if (sessionbreak.stop.active) return(true);
-   if (!sessionbreak.stop.time)  return(false);
+   if (sessionbreak.active)     return(true);
+   if (!sessionbreak.stop.time) return(false);
 
    if (now >= sessionbreak.stop.time) {
       if (sessionbreak.stop.time/DAYS == now/DAYS) {        // stellt sicher, daß Signal nicht von altem Datum getriggert wird
-         sessionbreak.stop.active = true;
+         sessionbreak.active = true;
          if (__LOG()) log("IsSessionBreakSignal(2)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.stop.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
          return(true);
       }
@@ -1316,13 +1316,13 @@ void UpdateSessionBreakTime() {
       dow = TimeDayOfWeekFix(time);
    }
 
-   sessionbreak.stop.time   = FxtToServerTime(time);
-   sessionbreak.stop.active = false;
+   sessionbreak.stop.time = FxtToServerTime(time);
+   sessionbreak.active    = false;
 }
 
 
 /**
- * Update the next resume time after a session break.
+ * Update the next resume time after the last session break.
  */
 void UpdateSessionResumeTime() {
    if (IsLastError())                     return;
@@ -3662,7 +3662,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    }
    else if (key == "rt.weekendStop") {
       if (!StrIsDigit(value))                                               return(_false(catch("RestoreStatus.Runtime(29)  illegal weekendStop \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      sessionbreak.stop.active = (StrToInteger(value));
+      sessionbreak.active = (StrToInteger(value));
    }
    else if (key == "rt.ignorePendingOrders") {
       // rt.ignorePendingOrders=66064890,66064891,66064892
@@ -4072,12 +4072,12 @@ bool SynchronizeStatus() {
 
 
    // (3) Daten für Wochenend-Pause aktualisieren
-   if (sessionbreak.stop.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
-      return(_false(catch("SynchronizeStatus(10)  sessionbreak.stop.active="+ sessionbreak.stop.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
+   if (sessionbreak.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
+      return(_false(catch("SynchronizeStatus(10)  sessionbreak.active="+ sessionbreak.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
 
    if      (sequence.status == STATUS_PROGRESSING) UpdateSessionBreakTime();
    else if (sequence.status == STATUS_STOPPED) {
-      if (sessionbreak.stop.active)                UpdateSessionResumeTime();
+      if (sessionbreak.active)                     UpdateSessionResumeTime();
    }
 
 
