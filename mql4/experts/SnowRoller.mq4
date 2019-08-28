@@ -142,8 +142,6 @@ datetime sessionbreak.resume.config = D'1970.01.01 01:03';  // FXT
 datetime sessionbreak.resume.time;
 bool     sessionbreak.active;
 
-bool     sessionbreak.resume.triggered;            // TODO: obsolete => remove
-
 // -------------------------------
 double   grid.base;                                // current grid base
 int      grid.base.event  [];                      // grid base history
@@ -584,9 +582,8 @@ bool ResumeSequence() {
    if (!UpdatePendingOrders()) return(false);
 
    // StartConditions deaktivieren und Weekend-Stop aktualisieren
-   start.conditions              = false; SS.StartStopConditions();
-   sessionbreak.resume.triggered = false;
-   sessionbreak.resume.time      = 0;
+   start.conditions         = false; SS.StartStopConditions();
+   sessionbreak.resume.time = 0;
    UpdateSessionBreakTime();
 
    // Status aktualisieren und speichern
@@ -1268,8 +1265,7 @@ bool IsSessionResumeSignal() {
    if (IsLastError())                                                                                                                return(false);
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(false);
 
-   if (sessionbreak.resume.triggered) return( true);
-   if (sessionbreak.resume.time == 0) return(false);
+   if (!sessionbreak.resume.time) return(false);
 
    int now=TimeCurrentEx("IsSessionResumeSignal(1)"), dayNow=now/DAYS, dayResume=sessionbreak.resume.time/DAYS;
 
@@ -1277,19 +1273,9 @@ bool IsSessionResumeSignal() {
    if (dayNow < dayResume-1)
       return(false);
 
-   // Bedingung ist erfüllt, wenn der Marktpreis gleich dem oder günstiger als der Stop-Preis ist
-   double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
-   if (sequence.direction == D_LONG) bool isBetterPrice = (Ask <= stopPrice);
-   else                                   isBetterPrice = (Bid >= stopPrice);
-   if (isBetterPrice) {
-      sessionbreak.resume.triggered = true;
-      if (__LOG()) log("IsSessionResumeSignal(2)  sequence "+ sequence.name +" weekend stop price \""+ NumberToStr(stopPrice, PriceFormat) +"\" fulfilled");
-      return(true);
-   }
-
-   // Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
+   // Bedingung ist ab der konfigurierten Resume-Zeit erfüllt
    if (sessionbreak.resume.time <= now) {
-      if (__LOG()) log("IsSessionResumeSignal(3)  sequence "+ sequence.name +" resume condition '"+ GmtTimeFormat(sessionbreak.resume.time, "%a, %Y.%m.%d %H:%M:%S") +"' fulfilled");
+      if (__LOG()) log("IsSessionResumeSignal(2)  sequence "+ sequence.name +" resume condition '"+ GmtTimeFormat(sessionbreak.resume.time, "%a, %Y.%m.%d %H:%M:%S") +"' fulfilled");
       return(true);
    }
    return(false);
@@ -1342,8 +1328,7 @@ void UpdateSessionResumeTime() {
       dow = TimeDayOfWeekFix(time);
    }
 
-   sessionbreak.resume.time      = FxtToServerTime(time);
-   sessionbreak.resume.triggered = false;
+   sessionbreak.resume.time = FxtToServerTime(time);
 }
 
 
