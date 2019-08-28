@@ -3248,10 +3248,10 @@ bool SaveStatus() {
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
+      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsSessionBreakSignal())
+   ArrayPushString(lines, /*int*/    "rt.sessionbreak=1");
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsSessionBreakSignal())
-   ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
    ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
       if (ArraySize(ignoreOpenPositions) > 0)
@@ -3360,8 +3360,8 @@ bool RestoreStatus() {
                      "rt.sequence.maxDrawdown" ,
                      "rt.sequence.starts"      ,
                      "rt.sequence.stops"       ,
+                   //"rt.sessionbreak"         ,                        // optional
                    //"rt.sequence.missedLevels",                        // optional
-                   //"rt.weekendStop"          ,                        // optional
                    //"rt.ignorePendingOrders"  ,                        // optional
                    //"rt.ignoreOpenPositions"  ,                        // optional
                    //"rt.ignoreClosedPositions",                        // optional
@@ -3500,8 +3500,8 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    double   rt.sequence.maxDrawdown=-127.80
    string   rt.sequence.starts=1|1328701713|1.32677|1000, 2|1329999999|1.33215|1200
    string   rt.sequence.stops=3|1328701999|1.32734|1200, 0|0|0|0
+   int      rt.sessionbreak=1
    string   rt.sequence.missedLevels=-6,-7,-8,-14
-   int      rt.weekendStop=1
    string   rt.ignorePendingOrders=66064890,66064891,66064892
    string   rt.ignoreOpenPositions=66064890,66064891,66064892
    string   rt.ignoreClosedPositions=66064890,66064891,66064892
@@ -3632,22 +3632,22 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       }
       ArrayDropString(keys, key);
    }
+   else if (key == "rt.sessionbreak") {
+      if (!StrIsDigit(value))                                               return(_false(catch("RestoreStatus.Runtime(27)  illegal sessionbreak \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      sessionbreak.active = (StrToInteger(value));
+   }
    else if (key == "rt.sequence.missedLevels") {
       // rt.sequence.missedLevels=-6,-7,-8,-14
       if (StringLen(value) > 0) {
          sizeOfValues = Explode(value, ",", values, NULL);
          for (i=0; i < sizeOfValues; i++) {
             string sLevel = StrTrim(values[i]);
-            if (!StrIsInteger(sLevel))                                      return(_false(catch("RestoreStatus.Runtime(27)  illegal missed grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!StrIsInteger(sLevel))                                      return(_false(catch("RestoreStatus.Runtime(28)  illegal missed grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             int level = StrToInteger(sLevel);
-            if (!level)                                                     return(_false(catch("RestoreStatus.Runtime(28)  illegal missed grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!level)                                                     return(_false(catch("RestoreStatus.Runtime(29)  illegal missed grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(sequence.missedLevels, level);
          }
       }
-   }
-   else if (key == "rt.weekendStop") {
-      if (!StrIsDigit(value))                                               return(_false(catch("RestoreStatus.Runtime(29)  illegal weekendStop \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      sessionbreak.active = (StrToInteger(value));
    }
    else if (key == "rt.ignorePendingOrders") {
       // rt.ignorePendingOrders=66064890,66064891,66064892
