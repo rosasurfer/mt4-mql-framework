@@ -48,7 +48,7 @@ extern int   Histogram.Style.Width = 2;
 #define MODE_NORMALIZED       5
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (input dialog)
+#property indicator_buffers   4                             // configurable buffers (via input dialog)
 int       allocated_buffers = 6;                            // used buffers
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
@@ -75,7 +75,7 @@ int onInit() {
    // Fisher.Periods
    if (Fisher.Periods < 1)        return(catch("onInit(1)  Invalid input parameter Fisher.Periods = "+ Fisher.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 

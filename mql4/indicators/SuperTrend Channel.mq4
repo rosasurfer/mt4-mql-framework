@@ -29,7 +29,7 @@ extern int    Max.Values    = 5000;                                  // max. num
 #include <rsfLibs.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   2                                      // configurable buffers (input dialog)
+#property indicator_buffers   2                                      // configurable buffers (via input dialog)
 int       allocated_buffers = 2;                                     // used buffers
 
 #property indicator_style1    STYLE_SOLID                            // STYLE_DOT

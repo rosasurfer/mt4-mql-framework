@@ -33,10 +33,10 @@ extern int    Draw.LineWidth       = 2;
 extern int    Max.Values           = 5000;                 // max. number of values to calculate: -1 = all
 extern string __________________________;
 
-extern string Signal.onTrendChange = "auto* | off | on";
-extern string Signal.Sound         = "auto* | off | on";
-extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
-extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+extern string Signal.onTrendChange = "on | off | auto*";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,7 +59,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #define MODE_UPTREND2         4                             //
 
 #property indicator_chart_window
-#property indicator_buffers   5                             // configurable buffers (input dialog)
+#property indicator_buffers   5                             // configurable buffers (via input dialog)
 int       allocated_buffers = 5;                            // used buffers
 
 #property indicator_width1    0
@@ -151,7 +151,7 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 

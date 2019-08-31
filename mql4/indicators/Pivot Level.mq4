@@ -33,7 +33,7 @@ extern color  Color.Support    = Red;
 #define MODE_S2               5
 #define MODE_S3               6
 
-#property indicator_buffers   7                          // configurable buffers (input dialog)
+#property indicator_buffers   7                          // configurable buffers (via input dialog)
 int       allocated_buffers = 7;                         // used buffers
 
 #property indicator_width1    1
@@ -70,7 +70,7 @@ int onInit() {
    if (SR.Levels > 3) return(catch("onInit(3)  Invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
    srLevels = SR.Levels;
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Resistance == 0xFF000000) Color.Resistance = CLR_NONE;
    if (Color.Main       == 0xFF000000) Color.Main       = CLR_NONE;
    if (Color.Support    == 0xFF000000) Color.Support    = CLR_NONE;

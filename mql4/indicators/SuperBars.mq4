@@ -52,7 +52,7 @@ string label.description = "PeriodDescription";
  */
 int onInit() {
    // (1) validate inputs
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.BarUp        == 0xFF000000) Color.BarUp        = CLR_NONE;
    if (Color.BarDown      == 0xFF000000) Color.BarDown      = CLR_NONE;
    if (Color.BarUnchanged == 0xFF000000) Color.BarUnchanged = CLR_NONE;

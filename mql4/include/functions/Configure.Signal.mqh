@@ -10,7 +10,7 @@
 bool Configure.Signal(string name, string &configValue, bool &enabled) {
    enabled = false;
 
-   string sValue = StrToLower(configValue), values[];                // preset: "auto* | off | on"
+   string sValue = StrToLower(configValue), values[];                // default: "on | off | auto*"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
