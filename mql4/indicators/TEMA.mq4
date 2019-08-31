@@ -37,7 +37,7 @@ extern int    Max.Values      = 5000;                    // max. number of value
 #define MODE_EMA_2            2
 
 #property indicator_chart_window
-#property indicator_buffers   1                          // configurable buffers (input dialog)
+#property indicator_buffers   1                          // configurable buffers (via input dialog)
 int       allocated_buffers = 3;                         // used buffers
 #property indicator_width1    2
 
@@ -88,7 +88,7 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
 
    // Draw.Type

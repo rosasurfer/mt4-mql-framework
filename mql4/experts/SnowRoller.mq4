@@ -1,5 +1,5 @@
 /**
- * SnowRoller - A pyramiding trade manager
+ * SnowRoller - A Pyramiding Trade Manager
  *
  *
  * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
@@ -56,14 +56,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID            = "";
-extern string GridDirection          = "Long | Short";   // there's no bi-directional mode
-extern int    GridSize               = 20;
-extern double LotSize                = 0.1;
-extern int    StartLevel             = 0;
-extern string StartConditions        = "";               // @[bid|ask|price](double) && @time(datetime)
-extern string StopConditions         = "";               // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern bool   ProfitDisplayInPercent = true;             // whether PL values are displayed absolute or in percent
+extern string   Sequence.ID            = "";
+extern string   GridDirection          = "Long | Short";       // there's no bi-directional mode
+extern int      GridSize               = 20;
+extern double   LotSize                = 0.1;
+extern int      StartLevel             = 0;
+extern string   StartConditions        = "";                   // @[bid|ask|price](double) && @time(datetime)
+extern string   StopConditions         = "";                   // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:53';  // in FXT, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT, the date part is ignored
+extern bool     ProfitDisplayInPercent = true;                 // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +78,6 @@ extern bool   ProfitDisplayInPercent = true;             // whether PL values ar
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
-// ------------------------------------
 int      sequence.id;
 string   sequence.created;                         // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
 string   sequence.name;                            // "L.1234" | "S.2345"
@@ -96,68 +97,65 @@ double   sequence.maxProfit;                       // max. experienced total seq
 double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
 double   sequence.commission;                      // commission value per grid level:          -n...0
 
-// ------------------------------------
-int      sequence.start.event [];                  // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+int      sequence.start.event [];                  // sequence starts (moment status changes to STATUS_PROGRESSING)
 datetime sequence.start.time  [];
 double   sequence.start.price [];
 double   sequence.start.profit[];
 
-int      sequence.stop.event  [];                  // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+int      sequence.stop.event  [];                  // sequence stops (moment status changes to STATUS_STOPPED)
 datetime sequence.stop.time   [];
 double   sequence.stop.price  [];                  // average realized close price of all closed positions
 double   sequence.stop.profit [];
 
-// ------------------------------------
-bool     start.conditions;                         // whether defined start conditions are active (all AND combined)
+string   statusFile      = "";                     // filename of the status file
+string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
+
+// --- start conditions are AND combined ---
+bool     start.conditions;                         // whether any start conditions are active
 
 bool     start.price.condition;
-int      start.price.type;                         // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
+int      start.price.type;                         // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   start.price.value;
 double   start.price.lastValue;
 
 bool     start.time.condition;
 datetime start.time.value;
 
-// ------------------------------------
-bool     stop.price.condition;                     // whether a defined stop price condition is active
-int      stop.price.type;                          // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
+// --- stop conditions are OR combined -----
+bool     stop.price.condition;                     // whether a stop price condition is active
+int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   stop.price.value;
 double   stop.price.lastValue;
 
-bool     stop.time.condition;                      // whether a defined stop time condition is active
+bool     stop.time.condition;                      // whether a stop time condition is active
 datetime stop.time.value;
 
-bool     stop.profitAbs.condition;                 // whether a defined absolute stop profit condition is active
+bool     stop.profitAbs.condition;                 // whether an absolute stop profit condition is active
 double   stop.profitAbs.value;
 
-bool     stop.profitPct.condition;                 // whether a defined percentage stop profit condition is active
+bool     stop.profitPct.condition;                 // whether a percentage stop profit condition is active
 double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 
-// ------------------------------------
-datetime weekend.stop.condition = D'1970.01.01 23:05';   // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
-datetime weekend.stop.time;
-bool     weekend.stop.active;                            // Sequenz-Eigenschaft (unterscheidet zwischen vorübergehend und dauerhaft gestoppter Sequenz)
+// --- session break management ------------
+datetime sessionbreak.starttime;
+datetime sessionbreak.endtime;
+bool     sessionbreak.active;
+bool     sessionbreak.disabled;                    // a single sessionbreak may be disabled by manual control
 
-datetime weekend.resume.condition = D'1970.01.01 01:10'; // spätester ResumeSequence()-Zeitpunkt nach Wochenend-Pause (Montags morgen)
-datetime weekend.resume.time;
-bool     weekend.resume.triggered;                       // ???
-
-// ------------------------------------
-double   grid.base;                                      // current grid base
-int      grid.base.event  [];                            // grid base history
+// --- grid base management ----------------
+double   grid.base;                                // current grid base
+int      grid.base.event  [];                      // grid base history
 datetime grid.base.time   [];
 double   grid.base.value  [];
 
-// ------------------------------------
+// --- order data --------------------------
 int      orders.ticket         [];
-int      orders.level          [];                       // order grid level: -n...-1 | 1...+n
-double   orders.gridBase       [];                       // grid base when the order was active
-
-int      orders.pendingType    [];                       // pending order type (if applicable)        or -1
-datetime orders.pendingTime    [];                       // time of OrderOpen() or last OrderModify() or  0
-double   orders.pendingPrice   [];                       // pending entry limit                       or  0
-
+int      orders.level          [];                 // order grid level: -n...-1 | 1...+n
+double   orders.gridBase       [];                 // grid base when the order was active
+int      orders.pendingType    [];                 // pending order type (if applicable)        or -1
+datetime orders.pendingTime    [];                 // time of OrderOpen() or last OrderModify() or  0
+double   orders.pendingPrice   [];                 // pending entry limit                       or  0
 int      orders.type           [];
 int      orders.openEvent      [];
 datetime orders.openTime       [];
@@ -166,28 +164,21 @@ int      orders.closeEvent     [];
 datetime orders.closeTime      [];
 double   orders.closePrice     [];
 double   orders.stopLoss       [];
-bool     orders.clientsideLimit[];                       // whether a limit is managed client-side
+bool     orders.clientsideLimit[];                 // whether a limit is managed client-side
 bool     orders.closedBySL     [];
-
 double   orders.swap           [];
 double   orders.commission     [];
 double   orders.profit         [];
 
-// ------------------------------------
-int      ignorePendingOrders  [];                        // orphaned tickets to ignore
-int      ignoreOpenPositions  [];                        // ...
-int      ignoreClosedPositions[];                        // ...
+// --- other -------------------------------
+int      ignorePendingOrders  [];                  // orphaned tickets to ignore
+int      ignoreOpenPositions  [];                  // ...
+int      ignoreClosedPositions[];                  // ...
 
-// ------------------------------------
-string   statusFile      = "";                           // Dateiname der Statusdatei
-string   statusDirectory = "";                           // Verzeichnisname der Statusdatei relativ zu "files/"
+int      startStopDisplayMode = SDM_PRICE;         // whether start/stop markers are displayed
+int      orderDisplayMode     = ODM_PYRAMID;       // current order display mode
 
-// ------------------------------------
-int      startStopDisplayMode = SDM_PRICE;               // whether start/stop markers are displayed
-int      orderDisplayMode     = ODM_PYRAMID;             // current order display mode
-
-// ------------------------------------
-string   str.LotSize               = "";                 // Zwischenspeicher zur schnelleren Abarbeitung von ShowStatus()
+string   str.LotSize               = "";           // caching vars to speed-up execution of ShowStatus()
 string   str.grid.base             = "";
 string   str.sequence.direction    = "";
 string   str.sequence.missedLevels = "";
@@ -248,9 +239,9 @@ int onTick() {
 
 
 /**
- * Handler für ChartCommand-Events.
+ * Handler for incoming ChartCommand events.
  *
- * @param  string commands[] - die übermittelten Kommandos
+ * @param  string commands[] - received chart commands
  *
  * @return bool - success status
  */
@@ -282,13 +273,13 @@ bool onChartCommand(string commands[]) {
    else if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode()    );
    else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
 
-   // unbekannte Commands anzeigen, aber keinen Fehler setzen (EA soll weiterlaufen)
+   // log unknown commands and let the EA continue
    return(_true(warn("onChartCommand(2)  unknown command \""+ cmd +"\"")));
 }
 
 
 /**
- * Startet eine neue Trade-Sequenz.
+ * Start a new trade sequence.
  *
  * @return bool - success status
  */
@@ -302,7 +293,6 @@ bool StartSequence() {
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name);
 
-   // Startvariablen setzen
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
    sequence.maxLevel    = sequence.level;
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
@@ -315,16 +305,16 @@ bool StartSequence() {
    ArrayPushDouble(sequence.start.price,  startPrice     );
    ArrayPushDouble(sequence.start.profit, 0              );
 
-   ArrayPushInt   (sequence.stop.event,   0              );          // Größe von sequence.starts/stops synchron halten
-   ArrayPushInt   (sequence.stop.time,    0              );
-   ArrayPushDouble(sequence.stop.price,   0              );
-   ArrayPushDouble(sequence.stop.profit,  0              );
+   ArrayPushInt   (sequence.stop.event,   0);      // keep sizes of sequence.start/stop.* synchron
+   ArrayPushInt   (sequence.stop.time,    0);
+   ArrayPushDouble(sequence.stop.price,   0);
+   ArrayPushDouble(sequence.stop.profit,  0);
 
-   // Gridbasis setzen (Event zeitlich nach sequence.start.time)
+   // set the grid base (event after sequence.start.time in time)
    double gridBase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
    GridBase.Reset(startTime, gridBase);
 
-   // ggf. Startpositionen in den Markt legen und Sequence-StartPrice aktualisieren
+   // open start positions if configured (and update sequence start price)
    if (sequence.level != 0) {
       datetime dNull;
       if (!RestorePositions(dNull, startPrice)) return(false);
@@ -333,12 +323,11 @@ bool StartSequence() {
 
    sequence.status = STATUS_PROGRESSING;
 
-   // Stop-Orders in den Markt legen
+   // open the next stop orders
    if (!UpdatePendingOrders()) return(false);
 
-   // StartConditions deaktivieren, Weekend-Stop aktualisieren
+   // disable all start conditions
    start.conditions = false; SS.StartStopConditions();
-   UpdateWeekendStop();
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
@@ -347,9 +336,9 @@ bool StartSequence() {
 
 
 /**
- * Schließt alle PendingOrders und offenen Positionen der Sequenz.
+ * Schließt alle offenen Positionen und PendingOrders and stoppt die Sequenz.
  *
- * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
+ * @return bool - success status
  */
 bool StopSequence() {
    if (IsLastError())                             return(false);
@@ -460,10 +449,6 @@ bool StopSequence() {
       if (__LOG()) log("StopSequence(8)  sequence "+ sequence.name +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
    }
 
-   // ResumeConditions aktualisieren
-   if (IsWeekendStopSignal())
-      UpdateWeekendResumeTime();
-
    // Status aktualisieren
    bool bNull;
    int  iNull[];
@@ -476,8 +461,8 @@ bool StopSequence() {
 
    // ggf. Tester stoppen
    if (IsTesting()) {
-      if (IsVisualMode())              Tester.Pause();
-      else if (!IsWeekendStopSignal()) Tester.Stop();
+      if (IsVisualMode())            Tester.Pause();
+      else if (!sessionbreak.active) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(9)"));
 }
@@ -520,6 +505,7 @@ bool ResumeSequence() {
    if (IsLastError())                                                                return(false);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                    return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) return(!catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   sessionbreak.active = false;
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -527,7 +513,7 @@ bool ResumeSequence() {
    datetime startTime;
    double   gridBase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
-   sequence.status = STATUS_STARTING;
+   sequence.status     = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
    // Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
@@ -579,11 +565,8 @@ bool ResumeSequence() {
    // Stop-Orders vervollständigen
    if (!UpdatePendingOrders()) return(false);
 
-   // StartConditions deaktivieren und Weekend-Stop aktualisieren
-   start.conditions         = false; SS.StartStopConditions();
-   weekend.resume.triggered = false;
-   weekend.resume.time      = 0;
-   UpdateWeekendStop();
+   // deactivate all start conditions
+   start.conditions = false; SS.StartStopConditions();
 
    // Status aktualisieren und speichern
    bool changes;
@@ -1132,7 +1115,7 @@ bool IsStartSignal() {
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
    }
    else {
-      // no start conditions are a valid start signal, too
+      // no start condition is a valid start signal, too
       if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
          if (__LOG()) log("IsStartSignal(4)  sequence "+ sequence.name +" no start conditions defined");
       }
@@ -1149,80 +1132,18 @@ bool IsStartSignal() {
 bool IsResumeSignal() {
    if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
+   if (sessionbreak.active) {
+      if (!IsSessionBreak()) {
+         if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \"sessionbreak to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+         return(true);
+      }
+      return(false);
+   }
+
    if (start.conditions)
       return(IsStartSignal());
 
-   // TODO: if (IsSessionResumeSignal())
-
-   return(IsWeekendResumeSignal());
-}
-
-
-/**
- * Signalgeber für ResumeSequence(). Prüft, ob die Weekend-Resume-Bedingung erfüllt ist.
- *
- * @return bool
- */
-bool IsWeekendResumeSignal() {
-   if (IsLastError())                                                                                                                return(false);
-   if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(false);
-
-   if (weekend.resume.triggered) return( true);
-   if (weekend.resume.time == 0) return(false);
-
-
-   int now=TimeCurrentEx("IsWeekendResumeSignal(1)"), dayNow=now/DAYS, dayResume=weekend.resume.time/DAYS;
-
-
-   // (1) Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
-   if (dayNow < dayResume-1)
-      return(false);
-
-
-   // (2) Bedingung ist erfüllt, wenn der Marktpreis gleich dem oder günstiger als der Stop-Preis ist
-   double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
-   bool   result;
-
-   if (sequence.direction == D_LONG) result = (Ask <= stopPrice);
-   else                              result = (Bid >= stopPrice);
-   if (result) {
-      weekend.resume.triggered = true;
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  sequence "+ sequence.name +" weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" fulfilled"));
-      return(true);
-   }
-
-
-   // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
-   if (weekend.resume.time <= now) {
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  sequence "+ sequence.name +" resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' fulfilled"));
-      return(true);
-   }
    return(false);
-}
-
-
-/**
- * Aktualisiert die Bedingungen für ResumeSequence() nach der Wochenend-Pause.
- */
-void UpdateWeekendResumeTime() {
-   if (IsLastError())                     return;
-   if (sequence.status != STATUS_STOPPED) return(!catch("UpdateWeekendResumeTime(1)  cannot update weekend resume conditions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   if (!IsWeekendStopSignal())            return(!catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_ILLEGAL_STATE));
-
-   weekend.resume.triggered = false;
-
-   datetime monday, stop=ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
-
-   switch (TimeDayOfWeekFix(stop)) {
-      case SUNDAY   : monday = stop + 1*DAYS; break;
-      case MONDAY   : monday = stop + 0*DAYS; break;
-      case TUESDAY  : monday = stop + 6*DAYS; break;
-      case WEDNESDAY: monday = stop + 5*DAYS; break;
-      case THURSDAY : monday = stop + 4*DAY ; break;
-      case FRIDAY   : monday = stop + 3*DAYS; break;
-      case SATURDAY : monday = stop + 2*DAYS; break;
-   }
-   weekend.resume.time = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAYS);
 }
 
 
@@ -1294,59 +1215,59 @@ bool IsStopSignal() {
    }
 
    // -- session break ------------------------------------------------------------------------------------------------------
-   if (IsWeekendStopSignal())
-      return(true);
-
-   return(false);
+   sessionbreak.active = IsSessionBreak();
+   if (sessionbreak.active) {
+      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+   }
+   return(sessionbreak.active);
 }
 
 
 /**
- * Whether a stop condition caused by a trade session break is satisfied for a progressing sequence.
+ * Whether the current server time falls into a seesionbreak.
  *
  * @return bool
  */
-bool IsWeekendStopSignal() {
-   if (IsLastError())                                                                                                                return(false);
-   if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
+bool IsSessionBreak() {
+   if (IsLastError()) return(false);
 
-   if (weekend.stop.active) return(true);
-   if (!weekend.stop.time)  return(false);
+   datetime serverTime = TimeServer();
+   if (!serverTime) return(false);
 
-   datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
+   if (serverTime >= sessionbreak.endtime) {                      // update the next sessionbreak start and end times
+      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
+      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
+      if (!startOffset && !endOffset)                             // skip session breaks if both values are set to Midnight
+         return(false);
 
-   if (now >= weekend.stop.time) {
-      if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
-         weekend.stop.active = true;
-         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ sequence.name +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' fulfilled"));
-         return(true);
+      // calculate today's sessionbreak end time
+      datetime fxtNow  = ServerToFxtTime(serverTime);
+      datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
+      datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
+
+      // determine the next regular sessionbreak end time
+      int dow = TimeDayOfWeekFix(fxtTime);
+      while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime += 1*DAY;
+         dow = TimeDayOfWeekFix(fxtTime);
       }
+      datetime fxtResumeTime = fxtTime;
+      sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
+
+      // determine the corresponding sessionbreak start time
+      datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
+      fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
+
+      dow = TimeDayOfWeekFix(fxtTime);
+      while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime -= 1*DAY;
+         dow = TimeDayOfWeekFix(fxtTime);
+      }
+      sessionbreak.starttime = FxtToServerTime(fxtTime);
    }
-   return(false);
-}
 
-
-/**
- * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
- */
-void UpdateWeekendStop() {
-   weekend.stop.active = false;
-
-   datetime friday, now=ServerToFxtTime(TimeCurrentEx("UpdateWeekendStop(1)"));
-
-   switch (TimeDayOfWeekFix(now)) {
-      case SUNDAY   : friday = now + 5*DAYS; break;
-      case MONDAY   : friday = now + 4*DAYS; break;
-      case TUESDAY  : friday = now + 3*DAYS; break;
-      case WEDNESDAY: friday = now + 2*DAYS; break;
-      case THURSDAY : friday = now + 1*DAY ; break;
-      case FRIDAY   : friday = now + 0*DAYS; break;
-      case SATURDAY : friday = now + 6*DAYS; break;
-   }
-   weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAYS;
-   if (weekend.stop.time < now)
-      weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAYS;   // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
-   weekend.stop.time = FxtToServerTime(weekend.stop.time);
+   // perform check
+   return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
 }
 
 
@@ -1776,7 +1697,7 @@ int SubmitStopOrder(int type, int level, int oe[]) {
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
-   string   comment     = StringConcatenate("SR.", sequence.id, ".", NumberToStr(level, "+."));
+   string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = F_ERR_INVALID_STOP;      // accept ERR_INVALID_STOP
 
@@ -1820,7 +1741,7 @@ int SubmitLimitOrder(int type, int level, int oe[]) {
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
-   string   comment     = StringConcatenate("SR.", sequence.id, ".", NumberToStr(level, "+."));
+   string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = F_ERR_INVALID_STOP;      // accept ERR_INVALID_STOP
 
@@ -2316,7 +2237,7 @@ void SS.All() {
  */
 void SS.SequenceId() {
    if (IsTesting()) {
-      if (!SetWindowTextA(FindTesterWindow(), StringConcatenate("Tester - SR.", sequence.id)))
+      if (!SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id))
          catch("SS.SequenceId(1)->user32::SetWindowTextA()", ERR_WIN32_ERROR);
    }
 }
@@ -2328,7 +2249,7 @@ void SS.SequenceId() {
 void SS.GridBase() {
    if (!__CHART()) return;
    if (ArraySize(grid.base.event) > 0) {
-      str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
+      str.grid.base = " @ "+ NumberToStr(grid.base, PriceFormat);
    }
 }
 
@@ -2338,7 +2259,7 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-   str.sequence.direction = StringConcatenate("  (", StrToLower(directionDescr[sequence.direction]), ")");
+   str.sequence.direction = "  ("+ StrToLower(directionDescr[sequence.direction]) +")";
 }
 
 
@@ -2350,7 +2271,7 @@ void SS.MissedLevels() {
 
    int size = ArraySize(sequence.missedLevels);
    if (!size) str.sequence.missedLevels = "";
-   else       str.sequence.missedLevels = StringConcatenate(", missed: ", size);
+   else       str.sequence.missedLevels = ", missed: "+ size;
 }
 
 
@@ -2361,8 +2282,8 @@ void SS.LotSize() {
    if (!__CHART()) return;
    double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
 
-   if (ProfitDisplayInPercent) str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2), "%/stop");
-   else                        str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(stopSize, 2), "/stop");
+   if (ProfitDisplayInPercent) str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
+   else                        str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
 
@@ -2374,8 +2295,8 @@ void SS.StartStopConditions() {
    str.startConditions = "";
    str.stopConditions  = "";
 
-   if (StartConditions != "") str.startConditions = StringConcatenate("Start:            ", StartConditions, NL);
-   if (StopConditions  != "") str.stopConditions  = StringConcatenate("Stop:            ", StopConditions,  NL);
+   if (StartConditions != "") str.startConditions = "Start:            "+ StartConditions + NL;
+   if (StopConditions  != "") str.stopConditions  = "Stop:            "+  StopConditions  + NL;
 }
 
 
@@ -2384,12 +2305,12 @@ void SS.StartStopConditions() {
  */
 void SS.Stops() {
    if (!__CHART()) return;
-   str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
+   str.sequence.stops = sequence.stops +" stop"+ ifString(sequence.stops==1, "", "s");
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
    if (sequence.stops > 0) {
-      if (ProfitDisplayInPercent) str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2), "%");
-      else                        str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(sequence.stopsPL, 2));
+      if (ProfitDisplayInPercent) str.sequence.stopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
+      else                        str.sequence.stopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
    }
 }
 
@@ -2400,8 +2321,8 @@ void SS.Stops() {
 void SS.TotalPL() {
    if (!__CHART()) return;
    if (sequence.maxLevel == 0)      str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   else if (ProfitDisplayInPercent) str.sequence.totalPL = StringConcatenate(NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2"), "%");
-   else                             str.sequence.totalPL =                   NumberToStr(sequence.totalPL, "+.2");
+   else if (ProfitDisplayInPercent) str.sequence.totalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+   else                             str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
 }
 
 
@@ -2410,8 +2331,8 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-   if (ProfitDisplayInPercent) str.sequence.maxProfit = StringConcatenate(NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2"), "%");
-   else                        str.sequence.maxProfit =                   NumberToStr(sequence.maxProfit, "+.2");
+   if (ProfitDisplayInPercent) str.sequence.maxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+   else                        str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
 
@@ -2421,8 +2342,8 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-   if (ProfitDisplayInPercent) str.sequence.maxDrawdown = StringConcatenate(NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2"), "%");
-   else                        str.sequence.maxDrawdown =                   NumberToStr(sequence.maxDrawdown, "+.2");
+   if (ProfitDisplayInPercent) str.sequence.maxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   else                        str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
 
@@ -2434,7 +2355,7 @@ void SS.PLStats() {
    if (!__CHART()) return;
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel != 0)
-      str.sequence.plStats = StringConcatenate("  (", str.sequence.maxProfit, "/", str.sequence.maxDrawdown, ")");
+      str.sequence.plStats = "  ("+ str.sequence.maxProfit +"/"+ str.sequence.maxDrawdown +")";
 }
 
 
@@ -2558,19 +2479,21 @@ bool IsMyOrder(int sequenceId = NULL) {
 }
 
 
-string last.Sequence.ID;
-string last.GridDirection;
-int    last.GridSize;
-double last.LotSize;
-int    last.StartLevel;
-string last.StartConditions;
-string last.StopConditions;
-bool   last.ProfitDisplayInPercent;
+string   last.Sequence.ID;
+string   last.GridDirection;
+int      last.GridSize;
+double   last.LotSize;
+int      last.StartLevel;
+string   last.StartConditions;
+string   last.StopConditions;
+datetime last.Sessionbreak.StartTime;
+datetime last.Sessionbreak.EndTime;
+bool     last.ProfitDisplayInPercent;
 
 
 /**
- * Input parameters changed from code don't survive an init cycle. Therefore inputs are backed-up in deinit() by using this
- * function and may be restored in init(). Called only from onDeinitChartChange() and onDeinitParameterChange().
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
+ * function and can be restored in init(). Called only from onDeinitChartChange() and onDeinitParameterChange().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
@@ -2581,6 +2504,8 @@ void BackupInputs() {
    last.StartLevel             = StartLevel;
    last.StartConditions        = StringConcatenate(StartConditions, "");
    last.StopConditions         = StringConcatenate(StopConditions,  "");
+   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
+   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
    last.ProfitDisplayInPercent = ProfitDisplayInPercent;
 }
 
@@ -2596,6 +2521,8 @@ void RestoreInputs() {
    StartLevel             = last.StartLevel;
    StartConditions        = last.StartConditions;
    StopConditions         = last.StopConditions;
+   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
+   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
    ProfitDisplayInPercent = last.ProfitDisplayInPercent;
 }
 
@@ -2952,6 +2879,8 @@ bool ValidateInputs(bool interactive) {
       StopConditions = JoinStrings(exprs, " || ");
    }
 
+   // Sessionbreak.StartTime, Sessionbreak.EndTime, ProfitDisplayInPercent: nothing to validate
+
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
@@ -3088,14 +3017,14 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    if (!sequence.id)  return(_false(catch("ResolveStatusLocation.FindFile(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
 
    if (!StrEndsWith(directory, "\\"))
-      directory = StringConcatenate(directory, "\\");
+      directory = directory +"\\";
 
-   string sequencePattern = StringConcatenate("SR*", sequence.id);               // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
+   string sequencePattern = "SR*"+ sequence.id;                                  // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
    string sequenceNames[2];
-          sequenceNames[0]= StringConcatenate("SR.", sequence.id, ".");
-          sequenceNames[1]= StringConcatenate("SR.", sequence.id, "_");
+          sequenceNames[0]= "SR."+ sequence.id +".";
+          sequenceNames[1]= "SR."+ sequence.id +"_";
 
-   string filePattern = StringConcatenate(directory, "*", sequencePattern, "*set");
+   string filePattern = directory +"*"+ sequencePattern +"*set";
    string files[];
 
    int size = FindFileNames(filePattern, files, FF_FILESONLY);                   // Dateien suchen, die den Sequenznamen enthalten und mit "set" enden
@@ -3134,7 +3063,7 @@ string MQL.GetStatusDirName() {
  * @return string
  */
 string MQL.GetStatusFileName() {
-   return(StringConcatenate(statusDirectory, statusFile));
+   return(statusDirectory + statusFile);
 }
 
 
@@ -3266,10 +3195,10 @@ bool SaveStatus() {
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
+      if (sequence.status==STATUS_STOPPED) /*&&*/ if (sessionbreak.active)
+   ArrayPushString(lines, /*int*/    "rt.sessionbreak=1");
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
-   ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
    ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
       if (ArraySize(ignoreOpenPositions) > 0)
@@ -3326,7 +3255,7 @@ bool SaveStatus() {
    statusSaved = true;
 
    if (GetConfigString("general", "stage") == "development") {
-      debug("SaveStatus(0.1)  ok");
+      debug("SaveStatus(0.1)  ok  rt.sessionbreak="+ sessionbreak.active);
    }
 
    ArrayResize(lines,  0);
@@ -3378,8 +3307,8 @@ bool RestoreStatus() {
                      "rt.sequence.maxDrawdown" ,
                      "rt.sequence.starts"      ,
                      "rt.sequence.stops"       ,
+                   //"rt.sessionbreak"         ,                        // optional
                    //"rt.sequence.missedLevels",                        // optional
-                   //"rt.weekendStop"          ,                        // optional
                    //"rt.ignorePendingOrders"  ,                        // optional
                    //"rt.ignoreOpenPositions"  ,                        // optional
                    //"rt.ignoreClosedPositions",                        // optional
@@ -3392,20 +3321,20 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StrStartsWith(StrTrim(lines[i]), "#"))          // Kommentare überspringen
+      if (StrStartsWith(StrTrim(lines[i]), "#")) // Kommentare überspringen
          continue;
 
-      if (Explode(lines[i], "=", parts, 2) < 2)           return(_false(catch("RestoreStatus(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)  return(_false(catch("RestoreStatus(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                      // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
+         ArrayDropString(keys, key);             // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
       }
       else if (key == "Symbol") {
-         if (value != Symbol())                           return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != Symbol())                  return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
       else if (key == "Sequence.ID") {
@@ -3414,7 +3343,7 @@ bool RestoreStatus() {
             sequence.isTest = true;
             value = StrRight(value, -1);
          }
-         if (value != StringConcatenate("", sequence.id)) return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != ""+ sequence.id)           return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
          ArrayDropString(keys, key);
       }
@@ -3423,22 +3352,22 @@ bool RestoreStatus() {
          ArrayDropString(keys, key);
       }
       else if (key == "GridDirection") {
-         if (value == "")                                 return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value == "")                        return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridDirection = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridSize") {
-         if (!StrIsDigit(value))                          return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridSize = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StrIsNumeric(value))                        return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))               return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          LotSize = StrToDouble(value);
          ArrayDropString(keys, key);
       }
       else if (key == "StartLevel") {
-         if (!StrIsDigit(value))                          return(_false(catch("RestoreStatus(9)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("RestoreStatus(9)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          StartLevel = StrToInteger(value);
          ArrayDropString(keys, key);
       }
@@ -3518,8 +3447,8 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    double   rt.sequence.maxDrawdown=-127.80
    string   rt.sequence.starts=1|1328701713|1.32677|1000, 2|1329999999|1.33215|1200
    string   rt.sequence.stops=3|1328701999|1.32734|1200, 0|0|0|0
+   int      rt.sessionbreak=1
    string   rt.sequence.missedLevels=-6,-7,-8,-14
-   int      rt.weekendStop=1
    string   rt.ignorePendingOrders=66064890,66064891,66064892
    string   rt.ignoreOpenPositions=66064890,66064891,66064892
    string   rt.ignoreClosedPositions=66064890,66064891,66064892
@@ -3650,22 +3579,22 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       }
       ArrayDropString(keys, key);
    }
+   else if (key == "rt.sessionbreak") {
+      if (!StrIsDigit(value))                                               return(_false(catch("RestoreStatus.Runtime(27)  illegal sessionbreak \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      sessionbreak.active = (StrToInteger(value));
+   }
    else if (key == "rt.sequence.missedLevels") {
       // rt.sequence.missedLevels=-6,-7,-8,-14
       if (StringLen(value) > 0) {
          sizeOfValues = Explode(value, ",", values, NULL);
          for (i=0; i < sizeOfValues; i++) {
             string sLevel = StrTrim(values[i]);
-            if (!StrIsInteger(sLevel))                                      return(_false(catch("RestoreStatus.Runtime(27)  illegal missed grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!StrIsInteger(sLevel))                                      return(_false(catch("RestoreStatus.Runtime(28)  illegal missed grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             int level = StrToInteger(sLevel);
-            if (!level)                                                     return(_false(catch("RestoreStatus.Runtime(28)  illegal missed grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (!level)                                                     return(_false(catch("RestoreStatus.Runtime(29)  illegal missed grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(sequence.missedLevels, level);
          }
       }
-   }
-   else if (key == "rt.weekendStop") {
-      if (!StrIsDigit(value))                                               return(_false(catch("RestoreStatus.Runtime(29)  illegal weekendStop \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      weekend.stop.active = (StrToInteger(value));
    }
    else if (key == "rt.ignorePendingOrders") {
       // rt.ignorePendingOrders=66064890,66064891,66064892
@@ -4037,7 +3966,7 @@ bool SynchronizeStatus() {
       return(_false(catch("SynchronizeStatus(8)  illegal number of grid.base events = "+ 0, ERR_RUNTIME_ERROR)));
 
 
-   // (2) Status und Variablen synchronisieren
+   // Status und Variablen synchronisieren
    /*int   */ lastEventId         = 0;
    /*int   */ sequence.status     = STATUS_WAITING;
    /*int   */ sequence.level      = 0;
@@ -4051,11 +3980,10 @@ bool SynchronizeStatus() {
    datetime   stopTime;
    double     stopPrice;
 
-   // (2.1)
    if (!Sync.ProcessEvents(stopTime, stopPrice))
       return(false);
 
-   // (2.2) Wurde die Sequenz außerhalb gestoppt, EV_SEQUENCE_STOP erzeugen
+   // Wurde die Sequenz außerhalb gestoppt, EV_SEQUENCE_STOP erzeugen
    if (sequence.status == STATUS_STOPPING) {
       i = ArraySize(sequence.stop.event) - 1;
       if (sequence.stop.time[i] != 0)
@@ -4073,24 +4001,15 @@ bool SynchronizeStatus() {
       permanentStatusChange = true;
    }
 
+   // validate sessionbreak status
+   if (sessionbreak.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
+      return(_false(catch("SynchronizeStatus(10)  sessionbreak.active="+ sessionbreak.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
 
-   // (3) Daten für Wochenend-Pause aktualisieren
-   if (weekend.stop.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
-      return(_false(catch("SynchronizeStatus(10)  weekend.stop.active="+ weekend.stop.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
-
-   if (sequence.status == STATUS_PROGRESSING) UpdateWeekendStop();
-   else if (sequence.status == STATUS_STOPPED) {
-      if (weekend.stop.active)                UpdateWeekendResumeTime();
-   }
-
-
-   // (4) permanente Statusänderungen speichern
+   // permanente Statusänderungen speichern
    if (permanentStatusChange)
-      if (!SaveStatus())
-         return(false);
+      if (!SaveStatus()) return(false);
 
-
-   // (5) Anzeigen aktualisieren, ShowStatus() folgt nach Funktionsende
+   // Anzeigen aktualisieren, ShowStatus() folgt nach Funktionsende
    SS.All();
    RedrawStartStop();
    RedrawOrders();
@@ -4410,7 +4329,7 @@ void RedrawStartStop() {
       price  = sequence.start.price [i];
       profit = sequence.start.profit[i];
 
-      label = StringConcatenate("SR.", sequence.id, ".start.", i+1);
+      label = "SR."+ sequence.id +".start."+ (i+1);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
 
@@ -4419,7 +4338,7 @@ void RedrawStartStop() {
          ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
          ObjectSet    (label, OBJPROP_BACK,      false               );
          ObjectSet    (label, OBJPROP_COLOR,     Blue                );
-         ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
+         ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
       }
    }
 
@@ -4430,7 +4349,7 @@ void RedrawStartStop() {
          price  = sequence.stop.price[i];
          profit = sequence.stop.profit[i];
 
-         label = StringConcatenate("SR.", sequence.id, ".stop.", i+1);
+         label = "SR."+ sequence.id +".stop."+ (i+1);
          if (ObjectFind(label) == 0)
             ObjectDelete(label);
 
@@ -4439,7 +4358,7 @@ void RedrawStartStop() {
             ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
             ObjectSet    (label, OBJPROP_BACK,      false               );
             ObjectSet    (label, OBJPROP_COLOR,     Blue                );
-            ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
+            ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
          }
       }
    }
@@ -4628,7 +4547,7 @@ bool Chart.MarkOrderSent(int i) {
    int      type        =    ifInt(pending, orders.pendingType [i], orders.type     [i]);
    datetime openTime    =    ifInt(pending, orders.pendingTime [i], orders.openTime [i]);
    double   openPrice   = ifDouble(pending, orders.pendingPrice[i], orders.openPrice[i]);
-   string   comment     = StringConcatenate("SR.", sequence.id, ".", NumberToStr(orders.level[i], "+."));
+   string   comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    color    markerColor = CLR_NONE;
 
    if (orderDisplayMode != ODM_NONE) {
@@ -4654,7 +4573,7 @@ bool Chart.MarkOrderFilled(int i) {
    #define ODM_PYRAMID  2     // Pending, Open,             Closed
    #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
    */
-   string comment     = StringConcatenate("SR.", sequence.id, ".", NumberToStr(orders.level[i], "+."));
+   string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    color  markerColor = CLR_NONE;
 
    if (orderDisplayMode >= ODM_PYRAMID)
@@ -4690,8 +4609,8 @@ bool Chart.MarkPositionClosed(int i) {
 
 
 /**
- * Whether the current sequence was created in tester and thus is a test. Considers the fact that a test sequence may be
- * loaded in an online chart after the test (for visualization).
+ * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
+ * sequence may be loaded in an online chart after the test (for visualization).
  *
  * @return bool
  */
@@ -4868,4 +4787,123 @@ bool IsStopTriggered(int type, double price) {
    if (type == OP_SELL)      return(Ask >= price);       // stoploss Short
 
    return(!catch("IsStopTriggered(1)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
+
+   // prevent compiler warnings
+   datetime dNulls[];
+   ReadTradeSessions(NULL, dNulls);
+   ReadSessionBreaks(NULL, dNulls);
+}
+
+
+/**
+ * Read the trade session configuration for the specified server time and copy it to the passed array.
+ *
+ * @param  _In_  datetime  time       - server time
+ * @param  _Out_ datetime &config[][] - array receiving the trade session configuration
+ *
+ * @return bool - success status
+ */
+bool ReadTradeSessions(datetime time, datetime &config[][2]) {
+   string section  = "TradeSessions";
+   string symbol   = Symbol();
+   string sDate    = TimeToStr(time, TIME_DATE);
+   string sWeekday = GmtTimeFormat(time, "%A");
+   string value;
+
+   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
+   else if (IsConfigKey(section, sDate))                 value = GetConfigString(section, sDate);
+   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
+   else if (IsConfigKey(section, sWeekday))              value = GetConfigString(section, sWeekday);
+   else                                                  return(_false(debug("ReadTradeSessions(1)  no trade session configuration found")));
+
+   // Monday    =                                  // no trade session
+   // Tuesday   = 00:00-24:00                      // a full trade session
+   // Wednesday = 01:02-20:00                      // a limited trade session
+   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions
+
+   ArrayResize(config, 0);
+   if (value == "")
+      return(true);
+
+   string values[], sTimes[], sSession, sSessionStart, sSessionEnd;
+   int sizeOfValues = Explode(value, ",", values, NULL);
+   for (int i=0; i < sizeOfValues; i++) {
+      sSession = StrTrim(values[i]);
+      if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("ReadTradeSessions(2)  illegal trade session configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sSessionStart = StrTrim(sTimes[0]);
+      sSessionEnd   = StrTrim(sTimes[1]);
+      debug("ReadTradeSessions(3)  start="+ sSessionStart +"  end="+ sSessionEnd);
+   }
+   return(true);
+}
+
+
+/**
+ * Read the SnowRoller session break configuration for the specified server time and copy it to the passed array. SnowRoller
+ * session breaks are symbol-specific. The configured times are applied session times, i.e. a session break will be enforced
+ * if the current time is not in the configured time window.
+ *
+ * @param  _In_  datetime  time       - server time
+ * @param  _Out_ datetime &config[][] - array receiving the session break configuration
+ *
+ * @return bool - success status
+ */
+bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
+   string section  = "SnowRoller.SessionBreaks";
+   string symbol   = Symbol();
+   string sDate    = TimeToStr(time, TIME_DATE);
+   string sWeekday = GmtTimeFormat(time, "%A");
+   string value;
+
+   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
+   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
+   else                                                  return(_false(debug("ReadSessionBreaks(1)  no session break configuration found"))); // TODO: fall-back to auto-adjusted trade sessions
+
+   // Tuesday   = 00:00-24:00                      // a full trade session:    no session breaks
+   // Wednesday = 01:02-19:57                      // a limited trade session: session breaks before and after
+   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions: session breaks before, after and in between
+   // Saturday  =                                  // no trade session:        a 24 h session break
+   // Sunday    =                                  //
+
+   ArrayResize(config, 0);
+   if (value == "")
+      return(true);                                // TODO: fall-back to auto-adjusted trade sessions
+
+   string   values[], sTimes[], sTime, sHours, sMinutes, sSession, sStartTime, sEndTime;
+   datetime dStartTime, dEndTime, dSessionStart, dSessionEnd;
+   int      sizeOfValues = Explode(value, ",", values, NULL), iHours, iMinutes;
+
+   for (int i=0; i < sizeOfValues; i++) {
+      sSession = StrTrim(values[i]);
+      if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("ReadSessionBreaks(2)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+
+      sTime = StrTrim(sTimes[0]);
+      if (StringLen(sTime) != 5)                     return(_false(catch("ReadSessionBreaks(3)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      if (StringGetChar(sTime, 2) != ':')            return(_false(catch("ReadSessionBreaks(4)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sHours = StringSubstr(sTime, 0, 2);
+      if (!StrIsDigit(sHours))                       return(_false(catch("ReadSessionBreaks(5)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iHours = StrToInteger(sHours);
+      if (iHours > 24)                               return(_false(catch("ReadSessionBreaks(6)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sMinutes = StringSubstr(sTime, 3, 2);
+      if (!StrIsDigit(sMinutes))                     return(_false(catch("ReadSessionBreaks(7)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iMinutes = StrToInteger(sMinutes);
+      if (iMinutes > 59)                             return(_false(catch("ReadSessionBreaks(8)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      dStartTime = DateTime(1970, 1, 1, iHours, iMinutes);
+
+      sTime = StrTrim(sTimes[1]);
+      if (StringLen(sTime) != 5)                     return(_false(catch("ReadSessionBreaks(9)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      if (StringGetChar(sTime, 2) != ':')            return(_false(catch("ReadSessionBreaks(10)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sHours = StringSubstr(sTime, 0, 2);
+      if (!StrIsDigit(sHours))                       return(_false(catch("ReadSessionBreaks(11)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iHours = StrToInteger(sHours);
+      if (iHours > 24)                               return(_false(catch("ReadSessionBreaks(12)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sMinutes = StringSubstr(sTime, 3, 2);
+      if (!StrIsDigit(sMinutes))                     return(_false(catch("ReadSessionBreaks(13)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iMinutes = StrToInteger(sMinutes);
+      if (iMinutes > 59)                             return(_false(catch("ReadSessionBreaks(14)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      dEndTime = DateTime(1970, 1, 1, iHours, iMinutes);
+
+      debug("ReadSessionBreaks(15)  start="+ TimeToStr(dStartTime, TIME_FULL) +"  end="+ TimeToStr(dEndTime, TIME_FULL));
+   }
+   return(true);
 }

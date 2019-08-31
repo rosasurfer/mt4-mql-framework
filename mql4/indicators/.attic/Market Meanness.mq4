@@ -28,7 +28,7 @@ extern int   Max.Values  = 5000;                            // max. number of va
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 
 #property indicator_separate_window
-#property indicator_buffers   1                             // configurable buffers (input dialog)
+#property indicator_buffers   1                             // configurable buffers (via input dialog)
 int       allocated_buffers = 1;                            // used buffers
 #property indicator_color1    Blue
 

@@ -3445,7 +3445,7 @@ bool Chart.RestoreString(string key, string &var) {
       string sValue = ObjectDescription(key);
       ObjectDelete(key);
 
-      if (sValue == "…(empty)…") var = "";         // restore marked empty strings as the terminal unserializes the value "Text" instead
+      if (sValue == "…(empty)…") var = "";         // restore marked empty strings as the terminal deserializes "" to the value "Text"
       else                       var = sValue;     // string
    }
    return(!catch("Chart.RestoreString(4)"));

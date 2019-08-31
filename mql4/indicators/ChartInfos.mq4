@@ -37,13 +37,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders         = "on | off | account*";
+extern string Track.Orders         = "on | off | auto*";
 extern bool   Offline.Ticker       = true;                        // whether to enable automatic ticking of offline charts
 extern string __________________________;
 
-extern string Signal.Sound         = "auto* | off | on";
-extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
-extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
