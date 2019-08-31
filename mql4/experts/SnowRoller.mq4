@@ -95,33 +95,33 @@ double   sequence.maxProfit;                       // max. experienced total seq
 double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
 double   sequence.commission;                      // commission value per grid level:          -n...0
 
-int      sequence.start.event [];                  // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+int      sequence.start.event [];                  // sequence starts (moment status changes to STATUS_PROGRESSING)
 datetime sequence.start.time  [];
 double   sequence.start.price [];
 double   sequence.start.profit[];
 
-int      sequence.stop.event  [];                  // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+int      sequence.stop.event  [];                  // sequence stops (moment status changes to STATUS_STOPPED)
 datetime sequence.stop.time   [];
 double   sequence.stop.price  [];                  // average realized close price of all closed positions
 double   sequence.stop.profit [];
 
-string   statusFile      = "";                     // Dateiname der Statusdatei
-string   statusDirectory = "";                     // Verzeichnisname der Statusdatei relativ zu "files/"
+string   statusFile      = "";                     // filename of the status file
+string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
 
-// -------------------------------
-bool     start.conditions;                         // whether any start conditions are active (all AND combined)
+// --- start conditions are AND combined ---
+bool     start.conditions;                         // whether any start conditions are active
 
 bool     start.price.condition;
-int      start.price.type;                         // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
+int      start.price.type;                         // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   start.price.value;
 double   start.price.lastValue;
 
 bool     start.time.condition;
 datetime start.time.value;
 
-// -------------------------------
+// --- stop conditions are OR combined -----
 bool     stop.price.condition;                     // whether a stop price condition is active
-int      stop.price.type;                          // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
+int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   stop.price.value;
 double   stop.price.lastValue;
 
@@ -176,7 +176,7 @@ int      startStopDisplayMode = SDM_PRICE;         // whether start/stop markers
 int      orderDisplayMode     = ODM_PYRAMID;       // current order display mode
 
 // -------------------------------------
-string   str.LotSize               = "";           // Zwischenspeicher zur schnelleren Abarbeitung von ShowStatus()
+string   str.LotSize               = "";           // caching vars to speed-up execution of ShowStatus()
 string   str.grid.base             = "";
 string   str.sequence.direction    = "";
 string   str.sequence.missedLevels = "";
@@ -202,19 +202,6 @@ string   str.stopConditions        = "";
 int onTick() {
    if (sequence.status == STATUS_UNDEFINED)
       return(NO_ERROR);
-
-
-   // wip: read the session break configuration
-   static bool done = false; if (!done) /*&&*/ if (StrCompareI(GetHostName(), "satellite")) {
-      done = true;
-
-      datetime now = TimeCurrentEx("onTick(0.1)");
-      datetime config[][2];
-
-      if (!ReadSessionBreaks(now, config)) return(false);
-      debug("onTick(0.2)  config="+ IntsToStr(config, NULL));
-   }
-
 
    // process chart commands
    HandleEvent(EVENT_CHART_CMD);
@@ -250,9 +237,9 @@ int onTick() {
 
 
 /**
- * Handler für ChartCommand-Events.
+ * Handler for incoming ChartCommand events.
  *
- * @param  string commands[] - die übermittelten Kommandos
+ * @param  string commands[] - received chart commands
  *
  * @return bool - success status
  */
@@ -284,13 +271,13 @@ bool onChartCommand(string commands[]) {
    else if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode()    );
    else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
 
-   // unbekannte Commands anzeigen, aber keinen Fehler setzen (EA soll weiterlaufen)
+   // log unknown commands and let the EA continue
    return(_true(warn("onChartCommand(2)  unknown command \""+ cmd +"\"")));
 }
 
 
 /**
- * Startet eine neue Trade-Sequenz.
+ * Start a new trade sequence.
  *
  * @return bool - success status
  */
@@ -304,7 +291,6 @@ bool StartSequence() {
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name);
 
-   // Startvariablen setzen
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
    sequence.maxLevel    = sequence.level;
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
@@ -317,16 +303,16 @@ bool StartSequence() {
    ArrayPushDouble(sequence.start.price,  startPrice     );
    ArrayPushDouble(sequence.start.profit, 0              );
 
-   ArrayPushInt   (sequence.stop.event,   0              );          // Größe von sequence.starts/stops synchron halten
-   ArrayPushInt   (sequence.stop.time,    0              );
-   ArrayPushDouble(sequence.stop.price,   0              );
-   ArrayPushDouble(sequence.stop.profit,  0              );
+   ArrayPushInt   (sequence.stop.event,   0);      // keep sizes of sequence.start/stop.* synchron
+   ArrayPushInt   (sequence.stop.time,    0);
+   ArrayPushDouble(sequence.stop.price,   0);
+   ArrayPushDouble(sequence.stop.profit,  0);
 
-   // Gridbasis setzen (Event zeitlich nach sequence.start.time)
+   // set the grid base (event after sequence.start.time in time)
    double gridBase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
    GridBase.Reset(startTime, gridBase);
 
-   // ggf. Startpositionen in den Markt legen und Sequence-StartPrice aktualisieren
+   // open start positions if configured (and update sequence start price)
    if (sequence.level != 0) {
       datetime dNull;
       if (!RestorePositions(dNull, startPrice)) return(false);
@@ -335,12 +321,11 @@ bool StartSequence() {
 
    sequence.status = STATUS_PROGRESSING;
 
-   // Stop-Orders in den Markt legen
+   // open the next stop orders
    if (!UpdatePendingOrders()) return(false);
 
-   // StartConditions deaktivieren, Weekend-Stop aktualisieren
+   // disable all start conditions
    start.conditions = false; SS.StartStopConditions();
-   UpdateSessionBreakTime();
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
@@ -349,9 +334,9 @@ bool StartSequence() {
 
 
 /**
- * Schließt alle PendingOrders und offenen Positionen der Sequenz.
+ * Schließt alle offenen Positionen und PendingOrders and stoppt die Sequenz.
  *
- * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
+ * @return bool - success status
  */
 bool StopSequence() {
    if (IsLastError())                             return(false);
@@ -462,10 +447,6 @@ bool StopSequence() {
       if (__LOG()) log("StopSequence(8)  sequence "+ sequence.name +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
    }
 
-   // ResumeConditions aktualisieren
-   if (sessionbreak.active)
-      UpdateSessionResumeTime();
-
    // Status aktualisieren
    bool bNull;
    int  iNull[];
@@ -522,6 +503,7 @@ bool ResumeSequence() {
    if (IsLastError())                                                                return(false);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                    return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) return(!catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
+   sessionbreak.active = false;
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -529,7 +511,7 @@ bool ResumeSequence() {
    datetime startTime;
    double   gridBase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
-   sequence.status = STATUS_STARTING;
+   sequence.status     = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
    // Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
@@ -581,11 +563,8 @@ bool ResumeSequence() {
    // Stop-Orders vervollständigen
    if (!UpdatePendingOrders()) return(false);
 
-   // StartConditions deaktivieren und Weekend-Stop aktualisieren
-   start.conditions         = false; SS.StartStopConditions();
-   sessionbreak.active      = false;
-   sessionbreak.resume.time = 0;
-   UpdateSessionBreakTime();
+   // deactivate all start conditions
+   start.conditions = false; SS.StartStopConditions();
 
    // Status aktualisieren und speichern
    bool changes;
@@ -1151,7 +1130,7 @@ bool IsStartSignal() {
 bool IsResumeSignal() {
    if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
-   if (sessionbreak.active) return(IsSessionResumeSignal());
+   if (sessionbreak.active) return(!IsSessionBreak());
    if (start.conditions)    return(IsStartSignal());
    return(false);
 }
@@ -1225,95 +1204,56 @@ bool IsStopSignal() {
    }
 
    // -- session break ------------------------------------------------------------------------------------------------------
-   if (IsSessionBreakSignal()) {
+   sessionbreak.active = IsSessionBreak();
+   if (sessionbreak.active) {
       if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.stop.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
-      sessionbreak.active = true;
-      return(true);
    }
-
-   return(false);
+   return(sessionbreak.active);
 }
 
 
 /**
- * Whether a sessionbreak stop condition is satisfied.
+ * Whether the current server time falls into a seesionbreak.
  *
  * @return bool
  */
-bool IsSessionBreakSignal() {
-   if (IsLastError())                                 /* TODO: replace additional status checks by IsSessionBreak() */               return(false);
-   if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
-   if (!sessionbreak.stop.time)                                                                                                      return(false);
+bool IsSessionBreak() {
+   if (IsLastError()) return(false);
 
-   datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
-   if (sessionbreak.stop.time/DAYS != now/DAYS)
-      return(false);                                  // prevent an old date in sessionbreak.stop.time to trigger the signal
-   return(now >= sessionbreak.stop.time);
-}
+   datetime serverTime = TimeServer();
+   if (!serverTime) return(false);
 
+   if (serverTime >= sessionbreak.resume.time) {                  // update the next sessionbreak start and end times
+      // calculate today's sessionbreak end time
+      datetime fxtNow  = ServerToFxtTime(serverTime);
+      datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
+      int      offset  = sessionbreak.resume.config%DAYS;         // sessionbreak end time in seconds since Midnight
+      datetime fxtTime = today + offset;                          // today's sessionbreak end time in FXT
 
-/**
- * Signalgeber für ResumeSequence(). Prüft, ob die Session-Resume-Bedingung erfüllt ist.
- *
- * @return bool
- */
-bool IsSessionResumeSignal() {
-   if (IsLastError())                                                                                                                return(false);
-   if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) return(false);
-   if (!sessionbreak.resume.time)                                                                                                    return(false);
+      // determine the next regular sessionbreak end time
+      int dow = TimeDayOfWeekFix(fxtTime);
+      while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime += 1*DAY;
+         dow = TimeDayOfWeekFix(fxtTime);
+      }
+      datetime fxtResumeTime = fxtTime;
+      sessionbreak.resume.time = FxtToServerTime(fxtResumeTime);
 
-   datetime now = TimeCurrentEx("IsSessionResumeSignal(1)");
-   if (now >= sessionbreak.resume.time) {
-      if (__LOG()) log("IsSessionResumeSignal(2)  sequence "+ sequence.name +" resume condition '"+ GmtTimeFormat(sessionbreak.resume.time, "%a, %Y.%m.%d %H:%M:%S") +"' fulfilled");
-      return(true);
+      // determine the corresponding sessionbreak start time
+      datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
+      offset  = sessionbreak.stop.config%DAYS;                    // sessionbreak start time in seconds since Midnight
+      fxtTime = resumeDay + offset;                               // resume day's sessionbreak start time in FXT
+
+      dow = TimeDayOfWeekFix(fxtTime);
+      while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime -= 1*DAY;
+         dow = TimeDayOfWeekFix(fxtTime);
+      }
+      sessionbreak.stop.time = FxtToServerTime(fxtTime);
    }
-   return(false);
-}
 
-
-/**
- * Update the stop time of the next session break.
- */
-void UpdateSessionBreakTime() {
-   if (IsLastError())                         return;
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateSessionBreakTime(1)  cannot update next session-break time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-
-   // calculate todays sessionbreak time
-   datetime now    = ServerToFxtTime(TimeCurrentEx("UpdateSessionBreakTime(2)"));
-   datetime today  = now - now%DAYS;                           // midnight today
-   int      offset = sessionbreak.stop.config%DAYS;            // sessionbreak time in seconds since midnight
-   datetime time   = today + offset;
-
-   // derive the next regular sessionbreak time
-   int dow = TimeDayOfWeekFix(time);
-   while (time < now || dow==SATURDAY || dow==SUNDAY) {
-      time += 1*DAY;
-      dow = TimeDayOfWeekFix(time);
-   }
-   sessionbreak.stop.time = FxtToServerTime(time);
-}
-
-
-/**
- * Update the next resume time after the last session break.
- */
-void UpdateSessionResumeTime() {
-   if (IsLastError())                     return;
-   if (sequence.status != STATUS_STOPPED) return(!catch("UpdateSessionResumeTime(1)  cannot update next session-resume time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-
-   // calculate the last stop day's session resume time
-   datetime lastStop    = ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
-   datetime lastStopDay = lastStop - lastStop%DAYS;            // the last stop day's midnight
-   int      offset      = sessionbreak.stop.config%DAYS;       // session resume time in seconds since midnight
-   datetime time        = lastStopDay + offset;
-
-   // determine the next regular session resume time
-   int dow = TimeDayOfWeekFix(time);
-   while (time < lastStop || dow==SATURDAY || dow==SUNDAY) {
-      time += 1*DAY;
-      dow = TimeDayOfWeekFix(time);
-   }
-   sessionbreak.resume.time = FxtToServerTime(time);
+   // perform check
+   return(serverTime >= sessionbreak.stop.time);                  // here sessionbreak.resume.time is always in the future
 }
 
 
@@ -3293,7 +3233,7 @@ bool SaveStatus() {
    statusSaved = true;
 
    if (GetConfigString("general", "stage") == "development") {
-      debug("SaveStatus(0.1)  ok");
+      debug("SaveStatus(0.1)  ok  rt.sessionbreak="+ sessionbreak.active);
    }
 
    ArrayResize(lines,  0);
@@ -4004,7 +3944,7 @@ bool SynchronizeStatus() {
       return(_false(catch("SynchronizeStatus(8)  illegal number of grid.base events = "+ 0, ERR_RUNTIME_ERROR)));
 
 
-   // (2) Status und Variablen synchronisieren
+   // Status und Variablen synchronisieren
    /*int   */ lastEventId         = 0;
    /*int   */ sequence.status     = STATUS_WAITING;
    /*int   */ sequence.level      = 0;
@@ -4018,11 +3958,10 @@ bool SynchronizeStatus() {
    datetime   stopTime;
    double     stopPrice;
 
-   // (2.1)
    if (!Sync.ProcessEvents(stopTime, stopPrice))
       return(false);
 
-   // (2.2) Wurde die Sequenz außerhalb gestoppt, EV_SEQUENCE_STOP erzeugen
+   // Wurde die Sequenz außerhalb gestoppt, EV_SEQUENCE_STOP erzeugen
    if (sequence.status == STATUS_STOPPING) {
       i = ArraySize(sequence.stop.event) - 1;
       if (sequence.stop.time[i] != 0)
@@ -4040,24 +3979,15 @@ bool SynchronizeStatus() {
       permanentStatusChange = true;
    }
 
-
-   // (3) Daten für Wochenend-Pause aktualisieren
+   // validate sessionbreak status
    if (sessionbreak.active) /*&&*/ if (sequence.status!=STATUS_STOPPED)
       return(_false(catch("SynchronizeStatus(10)  sessionbreak.active="+ sessionbreak.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
 
-   if      (sequence.status == STATUS_PROGRESSING) UpdateSessionBreakTime();
-   else if (sequence.status == STATUS_STOPPED) {
-      if (sessionbreak.active)                     UpdateSessionResumeTime();
-   }
-
-
-   // (4) permanente Statusänderungen speichern
+   // permanente Statusänderungen speichern
    if (permanentStatusChange)
-      if (!SaveStatus())
-         return(false);
+      if (!SaveStatus()) return(false);
 
-
-   // (5) Anzeigen aktualisieren, ShowStatus() folgt nach Funktionsende
+   // Anzeigen aktualisieren, ShowStatus() folgt nach Funktionsende
    SS.All();
    RedrawStartStop();
    RedrawOrders();
