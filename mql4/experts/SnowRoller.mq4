@@ -56,14 +56,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID            = "";
-extern string GridDirection          = "Long | Short";   // there's no bi-directional mode
-extern int    GridSize               = 20;
-extern double LotSize                = 0.1;
-extern int    StartLevel             = 0;
-extern string StartConditions        = "";               // @[bid|ask|price](double) && @time(datetime)
-extern string StopConditions         = "";               // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern bool   ProfitDisplayInPercent = true;             // whether PL values are displayed absolute or in percent
+extern string   Sequence.ID            = "";
+extern string   GridDirection          = "Long | Short";       // there's no bi-directional mode
+extern int      GridSize               = 20;
+extern double   LotSize                = 0.1;
+extern int      StartLevel             = 0;
+extern string   StartConditions        = "";                   // @[bid|ask|price](double) && @time(datetime)
+extern string   StopConditions         = "";                   // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:53';  // in FXT, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT, the date part is ignored
+extern bool     ProfitDisplayInPercent = true;                 // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -136,11 +138,10 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 
 // --- session break management ------------
-datetime sessionbreak.start.config = D'1970.01.01 23:53';   // FXT
-datetime sessionbreak.start.time;
-datetime sessionbreak.end.config   = D'1970.01.01 01:03';   // FXT
-datetime sessionbreak.end.time;
+datetime sessionbreak.starttime;
+datetime sessionbreak.endtime;
 bool     sessionbreak.active;
+bool     sessionbreak.disabled;                    // a single sessionbreak may be disabled by manual control
 
 // --- grid base management ----------------
 double   grid.base;                                // current grid base
@@ -1131,8 +1132,17 @@ bool IsStartSignal() {
 bool IsResumeSignal() {
    if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
-   if (sessionbreak.active) return(!IsSessionBreak());
-   if (start.conditions)    return(IsStartSignal());
+   if (sessionbreak.active) {
+      if (!IsSessionBreak()) {
+         if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \"sessionbreak to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+         return(true);
+      }
+      return(false);
+   }
+
+   if (start.conditions)
+      return(IsStartSignal());
+
    return(false);
 }
 
@@ -1207,7 +1217,7 @@ bool IsStopSignal() {
    // -- session break ------------------------------------------------------------------------------------------------------
    sessionbreak.active = IsSessionBreak();
    if (sessionbreak.active) {
-      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.start.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
+      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
    }
    return(sessionbreak.active);
 }
@@ -1224,12 +1234,16 @@ bool IsSessionBreak() {
    datetime serverTime = TimeServer();
    if (!serverTime) return(false);
 
-   if (serverTime >= sessionbreak.end.time) {                     // update the next sessionbreak start and end times
+   if (serverTime >= sessionbreak.endtime) {                      // update the next sessionbreak start and end times
+      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
+      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
+      if (!startOffset && !endOffset)                             // skip session breaks if both values are set to Midnight
+         return(false);
+
       // calculate today's sessionbreak end time
       datetime fxtNow  = ServerToFxtTime(serverTime);
       datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
-      int      offset  = sessionbreak.end.config%DAYS;            // sessionbreak end time in seconds since Midnight
-      datetime fxtTime = today + offset;                          // today's sessionbreak end time in FXT
+      datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
 
       // determine the next regular sessionbreak end time
       int dow = TimeDayOfWeekFix(fxtTime);
@@ -1238,23 +1252,22 @@ bool IsSessionBreak() {
          dow = TimeDayOfWeekFix(fxtTime);
       }
       datetime fxtResumeTime = fxtTime;
-      sessionbreak.end.time = FxtToServerTime(fxtResumeTime);
+      sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
 
       // determine the corresponding sessionbreak start time
       datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
-      offset  = sessionbreak.start.config%DAYS;                   // sessionbreak start time in seconds since Midnight
-      fxtTime = resumeDay + offset;                               // resume day's sessionbreak start time in FXT
+      fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
 
       dow = TimeDayOfWeekFix(fxtTime);
       while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
          fxtTime -= 1*DAY;
          dow = TimeDayOfWeekFix(fxtTime);
       }
-      sessionbreak.start.time = FxtToServerTime(fxtTime);
+      sessionbreak.starttime = FxtToServerTime(fxtTime);
    }
 
    // perform check
-   return(serverTime >= sessionbreak.start.time);                 // here sessionbreak.end.time is always in the future
+   return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
 }
 
 
@@ -2466,19 +2479,21 @@ bool IsMyOrder(int sequenceId = NULL) {
 }
 
 
-string last.Sequence.ID;
-string last.GridDirection;
-int    last.GridSize;
-double last.LotSize;
-int    last.StartLevel;
-string last.StartConditions;
-string last.StopConditions;
-bool   last.ProfitDisplayInPercent;
+string   last.Sequence.ID;
+string   last.GridDirection;
+int      last.GridSize;
+double   last.LotSize;
+int      last.StartLevel;
+string   last.StartConditions;
+string   last.StopConditions;
+datetime last.Sessionbreak.StartTime;
+datetime last.Sessionbreak.EndTime;
+bool     last.ProfitDisplayInPercent;
 
 
 /**
- * Input parameters changed from code don't survive an init cycle. Therefore inputs are backed-up in deinit() by using this
- * function and may be restored in init(). Called only from onDeinitChartChange() and onDeinitParameterChange().
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
+ * function and can be restored in init(). Called only from onDeinitChartChange() and onDeinitParameterChange().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
@@ -2489,6 +2504,8 @@ void BackupInputs() {
    last.StartLevel             = StartLevel;
    last.StartConditions        = StringConcatenate(StartConditions, "");
    last.StopConditions         = StringConcatenate(StopConditions,  "");
+   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
+   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
    last.ProfitDisplayInPercent = ProfitDisplayInPercent;
 }
 
@@ -2504,6 +2521,8 @@ void RestoreInputs() {
    StartLevel             = last.StartLevel;
    StartConditions        = last.StartConditions;
    StopConditions         = last.StopConditions;
+   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
+   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
    ProfitDisplayInPercent = last.ProfitDisplayInPercent;
 }
 
@@ -2859,6 +2878,8 @@ bool ValidateInputs(bool interactive) {
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
+
+   // Sessionbreak.StartTime, Sessionbreak.EndTime, ProfitDisplayInPercent: nothing to validate
 
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
