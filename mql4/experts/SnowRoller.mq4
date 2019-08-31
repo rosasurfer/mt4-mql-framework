@@ -3254,10 +3254,6 @@ bool SaveStatus() {
    FileClose(hFile);
    statusSaved = true;
 
-   if (GetConfigString("general", "stage") == "development") {
-      debug("SaveStatus(0.1)  ok  rt.sessionbreak="+ sessionbreak.active);
-   }
-
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
    return(!last_error|catch("SaveStatus(6)"));
