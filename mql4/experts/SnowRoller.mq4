@@ -135,19 +135,20 @@ bool     stop.profitPct.condition;                 // whether a percentage stop 
 double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 
-// -------------------------------
-datetime sessionbreak.stop.config   = D'1970.01.01 23:53';  // FXT
-datetime sessionbreak.stop.time;
-datetime sessionbreak.resume.config = D'1970.01.01 01:03';  // FXT
-datetime sessionbreak.resume.time;
+// --- session break management ------------
+datetime sessionbreak.start.config = D'1970.01.01 23:53';   // FXT
+datetime sessionbreak.start.time;
+datetime sessionbreak.end.config   = D'1970.01.01 01:03';   // FXT
+datetime sessionbreak.end.time;
 bool     sessionbreak.active;
 
-// -------------------------------
+// --- grid base management ----------------
 double   grid.base;                                // current grid base
 int      grid.base.event  [];                      // grid base history
 datetime grid.base.time   [];
 double   grid.base.value  [];
 
+// --- order data --------------------------
 int      orders.ticket         [];
 int      orders.level          [];                 // order grid level: -n...-1 | 1...+n
 double   orders.gridBase       [];                 // grid base when the order was active
@@ -168,6 +169,7 @@ double   orders.swap           [];
 double   orders.commission     [];
 double   orders.profit         [];
 
+// --- other -------------------------------
 int      ignorePendingOrders  [];                  // orphaned tickets to ignore
 int      ignoreOpenPositions  [];                  // ...
 int      ignoreClosedPositions[];                  // ...
@@ -175,7 +177,6 @@ int      ignoreClosedPositions[];                  // ...
 int      startStopDisplayMode = SDM_PRICE;         // whether start/stop markers are displayed
 int      orderDisplayMode     = ODM_PYRAMID;       // current order display mode
 
-// -------------------------------------
 string   str.LotSize               = "";           // caching vars to speed-up execution of ShowStatus()
 string   str.grid.base             = "";
 string   str.sequence.direction    = "";
@@ -1206,7 +1207,7 @@ bool IsStopSignal() {
    // -- session break ------------------------------------------------------------------------------------------------------
    sessionbreak.active = IsSessionBreak();
    if (sessionbreak.active) {
-      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.stop.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
+      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"session break at "+ GmtTimeFormat(sessionbreak.start.time, "%a, %Y.%m.%d %H:%M:%S") +"\" fulfilled");
    }
    return(sessionbreak.active);
 }
@@ -1223,11 +1224,11 @@ bool IsSessionBreak() {
    datetime serverTime = TimeServer();
    if (!serverTime) return(false);
 
-   if (serverTime >= sessionbreak.resume.time) {                  // update the next sessionbreak start and end times
+   if (serverTime >= sessionbreak.end.time) {                     // update the next sessionbreak start and end times
       // calculate today's sessionbreak end time
       datetime fxtNow  = ServerToFxtTime(serverTime);
       datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
-      int      offset  = sessionbreak.resume.config%DAYS;         // sessionbreak end time in seconds since Midnight
+      int      offset  = sessionbreak.end.config%DAYS;            // sessionbreak end time in seconds since Midnight
       datetime fxtTime = today + offset;                          // today's sessionbreak end time in FXT
 
       // determine the next regular sessionbreak end time
@@ -1237,11 +1238,11 @@ bool IsSessionBreak() {
          dow = TimeDayOfWeekFix(fxtTime);
       }
       datetime fxtResumeTime = fxtTime;
-      sessionbreak.resume.time = FxtToServerTime(fxtResumeTime);
+      sessionbreak.end.time = FxtToServerTime(fxtResumeTime);
 
       // determine the corresponding sessionbreak start time
       datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
-      offset  = sessionbreak.stop.config%DAYS;                    // sessionbreak start time in seconds since Midnight
+      offset  = sessionbreak.start.config%DAYS;                   // sessionbreak start time in seconds since Midnight
       fxtTime = resumeDay + offset;                               // resume day's sessionbreak start time in FXT
 
       dow = TimeDayOfWeekFix(fxtTime);
@@ -1249,11 +1250,11 @@ bool IsSessionBreak() {
          fxtTime -= 1*DAY;
          dow = TimeDayOfWeekFix(fxtTime);
       }
-      sessionbreak.stop.time = FxtToServerTime(fxtTime);
+      sessionbreak.start.time = FxtToServerTime(fxtTime);
    }
 
    // perform check
-   return(serverTime >= sessionbreak.stop.time);                  // here sessionbreak.resume.time is always in the future
+   return(serverTime >= sessionbreak.start.time);                 // here sessionbreak.end.time is always in the future
 }
 
 
