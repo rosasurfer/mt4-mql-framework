@@ -1134,8 +1134,15 @@ bool IsResumeSignal() {
 
    if (sessionbreak.active) {
       if (!IsSessionBreak()) {
-         if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \"sessionbreak to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
-         return(true);
+         double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
+
+         // wait for the stop price to be reached
+         if (sequence.direction == D_LONG) bool priceReached = (Ask <= stopPrice);
+         else                                   priceReached = (Bid >= stopPrice);
+         if (priceReached) {
+            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \"stop price "+ NumberToStr(stopPrice, PriceFormat) +" after sessionbreak until "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+            return(true);
+         }
       }
       return(false);
    }
