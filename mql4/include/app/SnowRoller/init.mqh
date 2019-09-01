@@ -11,7 +11,7 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (RestoreStatus())
+      if (LoadSequence())
          if (ValidateInputs(interactive))
             SynchronizeStatus();
       return(last_error);
@@ -35,7 +35,7 @@ int onInitUser() {
             sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (RestoreStatus())                            // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
+            if (LoadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
                if (ValidateInputs(false))                   //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
             return(last_error);
@@ -61,7 +61,7 @@ int onInitUser() {
 
       if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
-         SaveStatus();
+         SaveSequence();
       }
    }
    return(last_error);
@@ -77,8 +77,8 @@ int onInitTemplate() {
    bool interactive = false;
 
    // im Chart gespeicherte Sequenz restaurieren
-   if (RestoreRuntimeStatus()) {
-      if (RestoreStatus())
+   if (RestoreChartStatus()) {
+      if (LoadSequence())
          if (ValidateInputs(interactive))
             SynchronizeStatus();
    }
@@ -93,7 +93,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                     // inputs itself have been backed-up in onDeinitParameterChange()
+   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameterChange()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
@@ -102,7 +102,7 @@ int onInitParameters() {
       return(last_error);
    }
    if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
-      SaveStatus();
+      SaveSequence();
    return(last_error);
 }
 
