@@ -2280,14 +2280,8 @@ void SS.MissedLevels() {
    if (!__CHART()) return;
 
    int size = ArraySize(sequence.missedLevels);
-   if (!size) {
-      str.sequence.missedLevels = "";
-   }
-   else {
-      string sLevels = JoinInts(sequence.missedLevels);
-      debug("SS.MissedLevels(0.1)  "+ sLevels);
-      str.sequence.missedLevels = ", missed: "+ sLevels;
-   }
+   if (!size) str.sequence.missedLevels = "";
+   else       str.sequence.missedLevels = ", missed: "+ JoinInts(sequence.missedLevels);
 }
 
 
