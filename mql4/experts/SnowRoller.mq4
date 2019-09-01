@@ -63,8 +63,8 @@ extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                   // @[bid|ask|price](double) && @time(datetime)
 extern string   StopConditions         = "";                   // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:53';  // in FXT, the date part is ignored
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT, the date part is ignored
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:53';  // in FXT (the date part is ignored)
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT (the date part is ignored)
 extern bool     ProfitDisplayInPercent = true;                 // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3071,9 +3071,9 @@ int lastEventId;
 
 
 /**
- * Generiert eine neue Event-ID.
+ * Generate and return a new event id.
  *
- * @return int - ID (ein fortlaufender Zähler)
+ * @return int - new event id
  */
 int CreateEventId() {
    lastEventId++;
@@ -3082,8 +3082,7 @@ int CreateEventId() {
 
 
 /**
- * Speichert den aktuellen Sequenzstatus, um später die nahtlose Re-Initialisierung im selben oder einem anderen Terminal
- * zu ermöglichen.
+ * Store the current sequence status in a file. A sequence can be reloaded from such a file (e.g. on terminal restart).
  *
  * @return bool - success status
  */
@@ -3166,22 +3165,25 @@ bool SaveStatus() {
 
    // Dateiinhalt zusammenstellen: Konfiguration und Input-Parameter
    string lines[]; ArrayResize(lines, 0);
-   ArrayPushString(lines, /*string*/ "Account="        + ShortAccountCompany() +":"+ GetAccountNumber());
-   ArrayPushString(lines, /*string*/ "Symbol="         +               Symbol()        );
-   ArrayPushString(lines, /*string*/ "Sequence.ID="    +               Sequence.ID     );
-   ArrayPushString(lines, /*string*/ "Created="        +               sequence.created);
-   ArrayPushString(lines, /*string*/ "GridDirection="  +               GridDirection   );
-   ArrayPushString(lines, /*int   */ "GridSize="       +               GridSize        );
-   ArrayPushString(lines, /*double*/ "LotSize="        +   NumberToStr(LotSize, ".+")  );
-   ArrayPushString(lines, /*int   */ "StartLevel="     +               StartLevel      );
-   ArrayPushString(lines, /*string*/ "StartConditions="+               StartConditions );
-   ArrayPushString(lines, /*string*/ "StopConditions=" +               StopConditions  );
+   ArrayPushString(lines, /*string*/   "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
+   ArrayPushString(lines, /*string*/   "Symbol="                + Symbol()              );
+   ArrayPushString(lines, /*string*/   "Created="               + sequence.created      );
+   ArrayPushString(lines, /*string*/   "Sequence.ID="           + Sequence.ID           );
+   ArrayPushString(lines, /*string*/   "GridDirection="         + GridDirection         );
+   ArrayPushString(lines, /*int   */   "GridSize="              + GridSize              );
+   ArrayPushString(lines, /*double*/   "LotSize="+    NumberToStr(LotSize, ".+")        );
+   ArrayPushString(lines, /*int   */   "StartLevel="            + StartLevel            );
+   ArrayPushString(lines, /*string*/   "StartConditions="       + StartConditions       );
+   ArrayPushString(lines, /*string*/   "StopConditions="        + StopConditions        );
+   ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
+   ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
+   ArrayPushString(lines, /*bool*/     "ProfitDisplayInPercent="+ ProfitDisplayInPercent);
 
    // Laufzeit-Variablen
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
       string values[]; ArrayResize(values, 0);
-   ArrayPushString(lines, /*double*/ "rt.sequence.maxProfit="   + NumberToStr(sequence.maxProfit, ".+"));
-   ArrayPushString(lines, /*double*/ "rt.sequence.maxDrawdown=" + NumberToStr(sequence.maxDrawdown, ".+"));
+   ArrayPushString(lines, /*double*/ "rt.sequence.maxProfit="  + NumberToStr(sequence.maxProfit, ".+"));
+   ArrayPushString(lines, /*double*/ "rt.sequence.maxDrawdown="+ NumberToStr(sequence.maxDrawdown, ".+"));
       int size = ArraySize(sequence.start.event);
       for (int i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
@@ -3285,18 +3287,20 @@ bool RestoreStatus() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Sequence.ID", "Created", "GridDirection", "GridSize", "LotSize", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Created", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer
                      "Symbol"                  ,                        //  nicht in einer einzigen Zeile steht.
-                     "Sequence.ID"             ,
                      "Created"                 ,
-                   //"Sequence.Status.Location",                        // optional
+                     "Sequence.ID"             ,
                      "GridDirection"           ,
                      "GridSize"                ,
                      "LotSize"                 ,
                    //"StartLevel"              ,                        // optional
                    //"StartConditions"         ,                        // optional
                    //"StopConditions"          ,                        // optional
+                     "Sessionbreak.StartTime"  ,
+                     "Sessionbreak.EndTime"    ,
+                   //"ProfitDisplayInPercent"  ,                        // optional
                      ---------------------------
                      "rt.sequence.startEquity" ,
                      "rt.sequence.maxProfit"   ,
@@ -3333,6 +3337,10 @@ bool RestoreStatus() {
          if (value != Symbol())                  return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
+      else if (key == "Created") {
+         sequence.created = value;
+         ArrayDropString(keys, key);
+      }
       else if (key == "Sequence.ID") {
          value = StrToUpper(value);
          if (StrLeft(value, 1) == "T") {
@@ -3341,10 +3349,6 @@ bool RestoreStatus() {
          }
          if (value != ""+ sequence.id)           return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-         ArrayDropString(keys, key);
-      }
-      else if (key == "Created") {
-         sequence.created = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridDirection") {
@@ -3375,13 +3379,28 @@ bool RestoreStatus() {
          StopConditions = value;
          ArrayDropString(keys, key);
       }
+      else if (key == "Sessionbreak.StartTime") {
+         if (!StrIsDigit(value))                 return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         Sessionbreak.StartTime = StrToInteger(value);
+         ArrayDropString(keys, key);
+      }
+      else if (key == "Sessionbreak.EndTime") {
+         if (!StrIsDigit(value))                 return(_false(catch("RestoreStatus(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         Sessionbreak.EndTime = StrToInteger(value);
+         ArrayDropString(keys, key);
+      }
+      else if (key == "ProfitDisplayInPercent") {
+         if (!StrIsDigit(value))                 return(_false(catch("RestoreStatus(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         ProfitDisplayInPercent = _bool(StrToInteger(value));
+         ArrayDropString(keys, key);
+      }
    }
 
    // Abhängigkeiten validieren
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTestSequence() || !StrStartsWithI(accountValue, ShortAccountCompany() +":"))
-         return(_false(catch("RestoreStatus(10)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
+         return(_false(catch("RestoreStatus(13)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
    }
 
    // Runtime-Settings auslesen, validieren und übernehmen
@@ -3403,7 +3422,7 @@ bool RestoreStatus() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("RestoreStatus(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("RestoreStatus(14)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
@@ -3411,16 +3430,16 @@ bool RestoreStatus() {
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys)) return(false);
       }
    }
-   if (ArraySize(keys) > 0)                                                return(_false(catch("RestoreStatus(12)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                                return(_false(catch("RestoreStatus(15)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("RestoreStatus(13)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("RestoreStatus(14)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("RestoreStatus(16)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("RestoreStatus(17)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!last_error|catch("RestoreStatus(15)"));
+   return(!last_error|catch("RestoreStatus(18)"));
 }
 
 
