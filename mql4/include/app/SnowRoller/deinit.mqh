@@ -54,7 +54,7 @@ int onDeinitChartClose() {
    }
 
    // Nicht im Tester
-   StoreRuntimeStatus();                                             // für Terminal-Restart oder Profilwechsel
+   StoreChartStatus();                                               // für Terminal-Restart oder Profilwechsel
    return(last_error);
 }
 
@@ -74,7 +74,7 @@ int onDeinitUndefined() {
          bool bNull;
          int  iNull[];
          if (UpdateStatus(bNull, iNull))
-            StopSequence();                                       // ruft intern SaveStatus() auf
+            StopSequence();                                       // ruft intern SaveSequence() auf
          ShowStatus();
       }
       return(last_error);
@@ -101,7 +101,7 @@ int onDeinitRemove() {
  * @return int - error status
  */
 int onDeinitRecompile() {
-   StoreRuntimeStatus();
+   StoreChartStatus();
    return(-1);                      // -1: skip any other deinit tasks
 }
 
@@ -112,6 +112,6 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onDeinitClose() {
-   StoreRuntimeStatus();
+   StoreChartStatus();
    return(last_error);
 }
