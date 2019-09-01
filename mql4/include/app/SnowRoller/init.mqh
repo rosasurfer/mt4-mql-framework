@@ -11,7 +11,7 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (RestoreStatus())
+      if (LoadSequence())
          if (ValidateInputs(interactive))
             SynchronizeStatus();
       return(last_error);
@@ -35,7 +35,7 @@ int onInitUser() {
             sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (RestoreStatus())                            // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
+            if (LoadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
                if (ValidateInputs(false))                   //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
             return(last_error);
@@ -61,7 +61,7 @@ int onInitUser() {
 
       if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
-         SaveStatus();
+         SaveSequence();
       }
    }
    return(last_error);
@@ -77,8 +77,8 @@ int onInitTemplate() {
    bool interactive = false;
 
    // im Chart gespeicherte Sequenz restaurieren
-   if (RestoreRuntimeStatus()) {
-      if (RestoreStatus())
+   if (RestoreChartStatus()) {
+      if (LoadSequence())
          if (ValidateInputs(interactive))
             SynchronizeStatus();
    }
@@ -93,16 +93,16 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupConfiguration();                                   // previous inputs have been backed-up in onDeinitParameterChange()
+   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameterChange()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
       RestoreInputs();
-      RestoreConfiguration();
+      RestoreInputStatus();
       return(last_error);
    }
    if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
-      SaveStatus();
+      SaveSequence();
    return(last_error);
 }
 
@@ -175,4 +175,117 @@ int CreateStatusBox() {
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
    return(catch("CreateStatusBox(1)"));
+}
+
+
+/**
+ * Backup input parameter related status variables before parameter changes. In case of input errors the variables can be
+ * restored afterwards. Called only from onInitParameters().
+ */
+void BackupInputStatus() {
+   CopyInputStatus(true);
+}
+
+
+/**
+ * Restore input parameter related status variables. Called only from onInitParameters().
+ */
+void RestoreInputStatus() {
+   CopyInputStatus(false);
+}
+
+
+/**
+ * Backup or restore input parameter related status variables. These are all variables which change if one or more input
+ * parameters change. Or in other words all variables modified by ValidateInputs().
+ *
+ * @param  bool store - TRUE:  copy global values to internal storage (backup)
+ *                      FALSE: copy internal values to global storage (restore)
+ */
+void CopyInputStatus(bool store) {
+   store = store!=0;
+
+   static int      _sequence.id;
+   static string   _sequence.created;
+   static string   _sequence.name;
+   static bool     _sequence.isTest;
+   static int      _sequence.direction;
+
+   static bool     _start.conditions;
+   static bool     _start.price.condition;
+   static int      _start.price.type;
+   static double   _start.price.value;
+   static bool     _start.time.condition;
+   static datetime _start.time.value;
+
+   static bool     _stop.price.condition;
+   static int      _stop.price.type;
+   static double   _stop.price.value;
+   static bool     _stop.time.condition;
+   static datetime _stop.time.value;
+   static bool     _stop.profitAbs.condition;
+   static double   _stop.profitAbs.value;
+   static bool     _stop.profitPct.condition;
+   static double   _stop.profitPct.value;
+   static double   _stop.profitPct.absValue;
+
+   static datetime _sessionbreak.starttime;
+   static datetime _sessionbreak.endtime;
+
+   if (store) {
+      _sequence.id              = sequence.id;
+      _sequence.created         = sequence.created;
+      _sequence.name            = sequence.name;
+      _sequence.isTest          = sequence.isTest;
+      _sequence.direction       = sequence.direction;
+
+      _start.conditions         = start.conditions;
+      _start.price.condition    = start.price.condition;
+      _start.price.type         = start.price.type;
+      _start.price.value        = start.price.value;
+      _start.time.condition     = start.time.condition;
+      _start.time.value         = start.time.value;
+
+      _stop.price.condition     = stop.price.condition;
+      _stop.price.type          = stop.price.type;
+      _stop.price.value         = stop.price.value;
+      _stop.time.condition      = stop.time.condition;
+      _stop.time.value          = stop.time.value;
+      _stop.profitAbs.condition = stop.profitAbs.condition;
+      _stop.profitAbs.value     = stop.profitAbs.value;
+      _stop.profitPct.condition = stop.profitPct.condition;
+      _stop.profitPct.value     = stop.profitPct.value;
+      _stop.profitPct.absValue  = stop.profitPct.absValue;
+
+      _sessionbreak.starttime   = sessionbreak.starttime;
+      _sessionbreak.endtime     = sessionbreak.endtime;
+   }
+   else {
+      sequence.id               = _sequence.id;
+      sequence.created          = _sequence.created;
+      sequence.name             = _sequence.name;
+      sequence.isTest           = _sequence.isTest;
+      sequence.direction        = _sequence.direction;
+
+      start.conditions          = _start.conditions;
+      start.price.condition     = _start.price.condition;
+      start.price.type          = _start.price.type;
+      start.price.value         = _start.price.value;
+      start.time.condition      = _start.time.condition;
+      start.time.value          = _start.time.value;
+
+      stop.price.condition      = _stop.price.condition;
+      stop.price.type           = _stop.price.type;
+      stop.price.value          = _stop.price.value;
+      stop.time.condition       = _stop.time.condition;
+      stop.time.value           = _stop.time.value;
+      stop.profitAbs.condition  = _stop.profitAbs.condition;
+      stop.profitAbs.value      = _stop.profitAbs.value;
+      stop.profitPct.condition  = _stop.profitPct.condition;
+      stop.profitPct.value      = _stop.profitPct.value;
+      stop.profitPct.absValue   = _stop.profitPct.absValue;
+
+      sessionbreak.starttime    = _sessionbreak.starttime;
+      sessionbreak.endtime      = _sessionbreak.endtime;
+   }
 }
