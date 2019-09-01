@@ -2280,8 +2280,14 @@ void SS.MissedLevels() {
    if (!__CHART()) return;
 
    int size = ArraySize(sequence.missedLevels);
-   if (!size) str.sequence.missedLevels = "";
-   else       str.sequence.missedLevels = ", missed: "+ size;
+   if (!size) {
+      str.sequence.missedLevels = "";
+   }
+   else {
+      string sLevels = JoinInts(sequence.missedLevels);
+      debug("SS.MissedLevels(0.1)  "+ sLevels);
+      str.sequence.missedLevels = ", missed: "+ sLevels;
+   }
 }
 
 
@@ -3117,31 +3123,31 @@ bool SaveSequence() {
          ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values, ", "));
+   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values));
       ArrayResize(values, 0);
       size = ArraySize(sequence.stop.event);
       for (i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
+   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values));
       if (sequence.status==STATUS_STOPPED) /*&&*/ if (sessionbreak.active)
    ArrayPushString(lines, /*int*/    "rt.sessionbreak=1");
       if (ArraySize(sequence.missedLevels) > 0)
-   ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
+   ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels));
       if (ArraySize(ignorePendingOrders) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders));
       if (ArraySize(ignoreOpenPositions) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignoreOpenPositions="  + JoinInts(ignoreOpenPositions, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignoreOpenPositions="  + JoinInts(ignoreOpenPositions));
       if (ArraySize(ignoreClosedPositions) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignoreClosedPositions="+ JoinInts(ignoreClosedPositions, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignoreClosedPositions="+ JoinInts(ignoreClosedPositions));
       ArrayResize(values, 0);
       size = ArraySize(grid.base.event);
       for (i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", NumberToStr(grid.base.value[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.grid.base="            + JoinStrings(values, ", "));
+   ArrayPushString(lines, /*string*/ "rt.grid.base="            + JoinStrings(values));
 
    size = ArraySize(orders.ticket);
    for (i=0; i < size; i++) {

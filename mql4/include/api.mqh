@@ -279,11 +279,11 @@ int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, i
 int      iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
 int      InitializeByteBuffer(int buffer[], int bytes);;
 bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
-string   JoinBools(bool values[], string separator);;
-string   JoinDoubles(double values[], string separator);;
-string   JoinDoublesEx(double values[], string separator, int digits);;
-string   JoinInts(int values[], string separator);;
-string   JoinStrings(string values[], string separator);;
+string   JoinBools(bool values[], string separator = ", ");;
+string   JoinDoubles(double values[], string separator = ", ");;
+string   JoinDoublesEx(double values[], int digits, string separator = ", ");;
+string   JoinInts(int values[], string separator = ", ");;
+string   JoinStrings(string values[], string separator = ", ");;
 
 
 // include/iCustom/

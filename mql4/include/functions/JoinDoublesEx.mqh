@@ -1,13 +1,13 @@
 /**
  * Verbindet die Werte eines Double-Arrays mit bis zu 16 Nachkommastellen unter Verwendung des angegebenen Separators.
  *
- * @param  double values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- * @param  int    digits    - Anzahl der Nachkommastellen (0-16)
+ * @param  double values[]             - Array mit Ausgangswerten
+ * @param  int    digits               - Anzahl der Nachkommastellen (0-16)
+ * @param  string separator [optional] - zu verwendender Separator (default: ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string JoinDoublesEx(double values[], string separator, int digits) {
+string JoinDoublesEx(double values[], int digits, string separator = ", ") {
    if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoublesEx(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
    if (digits < 0 || digits > 16)  return(_EMPTY_STR(catch("JoinDoublesEx(2)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
 

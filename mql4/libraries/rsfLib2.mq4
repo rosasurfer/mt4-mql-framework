@@ -367,7 +367,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
    if (dimensions == 1) {
       if (dim1 == 0)
          return("{}");
-      return(StringConcatenate("{", JoinDoublesEx(values2, separator, digits), "}"));
+      return(StringConcatenate("{", JoinDoublesEx(values2, digits, separator), "}"));
    }
    else dim2 = ArrayRange(values2, 1);
 

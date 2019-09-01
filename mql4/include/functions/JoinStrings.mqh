@@ -1,12 +1,12 @@
 /**
  * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
  *
- * @param  string values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
+ * @param  string values[]             - Array mit Ausgangswerten
+ * @param  string separator [optional] - zu verwendender Separator (default: ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string JoinStrings(string values[], string separator) {
+string JoinStrings(string values[], string separator = ", ") {
    if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string result = "";
