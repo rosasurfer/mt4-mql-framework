@@ -63,7 +63,7 @@ extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                   // @[bid|ask|price](double) && @time(datetime)
 extern string   StopConditions         = "";                   // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:53';  // in FXT (the date part is ignored)
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:50';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT (the date part is ignored)
 extern bool     ProfitDisplayInPercent = true;                 // whether PL values are displayed absolute or in percent
 
@@ -355,7 +355,7 @@ bool StopSequence() {
    if (sequence.status == STATUS_WAITING) {
       if (IsTesting()) Tester.Pause();
       SetLastError(ERR_CANCELLED_BY_USER);
-      return(_false(catch("StopSequence(3)")));
+      return(_true(catch("StopSequence(3)")));
    }
 
    if (sequence.status != STATUS_STOPPED) {
@@ -2528,98 +2528,6 @@ void RestoreInputs() {
 
 
 /**
- * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
- * Called only from onInitParameters().
- */
-void BackupConfiguration() {
-   StoreConfiguration(true);
-}
-
-
-/**
- * Restauriert eine zuvor gespeicherte Konfiguration. Called only from onInitParameters().
- */
-void RestoreConfiguration() {
-   StoreConfiguration(false);
-}
-
-
-/**
- *
- */
-void StoreConfiguration(bool save) {
-   save = save!=0;
-
-   static string   _sequence.created;
-   static int      _sequence.direction;
-
-   static bool     _start.conditions;
-   static bool     _start.price.condition;
-   static int      _start.price.type;
-   static double   _start.price.value;
-   static bool     _start.time.condition;
-   static datetime _start.time.value;
-
-   static bool     _stop.price.condition;
-   static int      _stop.price.type;
-   static double   _stop.price.value;
-   static bool     _stop.time.condition;
-   static datetime _stop.time.value;
-   static bool     _stop.profitAbs.condition;
-   static double   _stop.profitAbs.value;
-   static bool     _stop.profitPct.condition;
-   static double   _stop.profitPct.value;
-   static double   _stop.profitPct.absValue;
-
-   if (save) {
-      _sequence.created         = sequence.created;
-      _sequence.direction       = sequence.direction;
-
-      _start.conditions         = start.conditions;
-      _start.price.condition    = start.price.condition;
-      _start.price.type         = start.price.type;
-      _start.price.value        = start.price.value;
-      _start.time.condition     = start.time.condition;
-      _start.time.value         = start.time.value;
-
-      _stop.price.condition     = stop.price.condition;
-      _stop.price.type          = stop.price.type;
-      _stop.price.value         = stop.price.value;
-      _stop.time.condition      = stop.time.condition;
-      _stop.time.value          = stop.time.value;
-      _stop.profitAbs.condition = stop.profitAbs.condition;
-      _stop.profitAbs.value     = stop.profitAbs.value;
-      _stop.profitPct.condition = stop.profitPct.condition;
-      _stop.profitPct.value     = stop.profitPct.value;
-      _stop.profitPct.absValue  = stop.profitPct.absValue;
-   }
-   else {
-      sequence.created          = _sequence.created;
-      sequence.direction        = _sequence.direction;
-      sequence.name             = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
-
-      start.conditions          = _start.conditions;
-      start.price.condition     = _start.price.condition;
-      start.price.type          = _start.price.type;
-      start.price.value         = _start.price.value;
-      start.time.condition      = _start.time.condition;
-      start.time.value          = _start.time.value;
-
-      stop.price.condition      = _stop.price.condition;
-      stop.price.type           = _stop.price.type;
-      stop.price.value          = _stop.price.value;
-      stop.time.condition       = _stop.time.condition;
-      stop.time.value           = _stop.time.value;
-      stop.profitAbs.condition  = _stop.profitAbs.condition;
-      stop.profitAbs.value      = _stop.profitAbs.value;
-      stop.profitPct.condition  = _stop.profitPct.condition;
-      stop.profitPct.value      = _stop.profitPct.value;
-      stop.profitPct.absValue   = _stop.profitPct.absValue;
-   }
-}
-
-
-/**
  * Validiert und setzt nur die in der Konfiguration angegebene Sequenz-ID. Called only from onInitUser().
  *
  * @param  bool interactive - whether parameters have been entered through the input dialog
@@ -2879,7 +2787,17 @@ bool ValidateInputs(bool interactive) {
       StopConditions = JoinStrings(exprs, " || ");
    }
 
-   // Sessionbreak.StartTime, Sessionbreak.EndTime, ProfitDisplayInPercent: nothing to validate
+   // Sessionbreak.StartTime: status vars are updated automatically on first use
+   if (Sessionbreak.StartTime != last.Sessionbreak.StartTime) {
+      sessionbreak.starttime = NULL;
+   }
+
+   // Sessionbreak.EndTime: status vars are updated automatically on first use
+   if (Sessionbreak.EndTime != last.Sessionbreak.EndTime) {
+      sessionbreak.endtime = NULL;
+   }
+
+   // ProfitDisplayInPercent: nothing to validate
 
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
