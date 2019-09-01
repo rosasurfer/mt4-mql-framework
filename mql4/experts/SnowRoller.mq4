@@ -1133,14 +1133,17 @@ bool IsResumeSignal() {
    if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
    if (sessionbreak.active) {
+      datetime prevEndtime = sessionbreak.endtime;
+
       if (!IsSessionBreak()) {
+         static datetime endtime; if (!endtime) endtime = prevEndtime;
          double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
          // wait for the stop price to be reached
          if (sequence.direction == D_LONG) bool priceReached = (Ask <= stopPrice);
          else                                   priceReached = (Bid >= stopPrice);
          if (priceReached) {
-            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \"stop price "+ NumberToStr(stopPrice, PriceFormat) +" after sessionbreak until "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \""+ ifString(sequence.direction==D_LONG, "@ask(<=", "@bid(>=") + NumberToStr(stopPrice, PriceFormat) +") after sessionbreak until "+ GmtTimeFormat(endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
             return(true);
          }
       }
