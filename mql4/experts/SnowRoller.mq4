@@ -377,8 +377,8 @@ bool StopSequence() {
          }
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
          if (!OrderCloseTime()) {                                                                  // server: if (isOpen)
-            if (IsPendingOrderType(OrderType())) ArrayPushInt(pendings,                i);         // Grid.DeleteOrder() erwartet den Array-Index
-            else                                 ArrayPushInt(positions, orders.ticket[i]);        // OrderMultiClose() erwartet das Orderticket
+            if (OrderType() > OP_SELL) ArrayPushInt(pendings,                i);                   // Grid.DeleteOrder() erwartet den Array-Index
+            else                       ArrayPushInt(positions, orders.ticket[i]);                  // OrderMultiClose() erwartet das Orderticket
          }
       }
    }
@@ -418,10 +418,10 @@ bool StopSequence() {
 
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
 
-         closeTime   = Max(closeTime, orders.closeTime[pos]);        // die Close-Werte können unterschiedlich sein
-         closePrice += orders.closePrice[pos];                       // (i.d.R. sind sie überall gleich)
+         closeTime   = Max(closeTime, orders.closeTime[pos]);        // Close-Werte können unterschiedlich sein, falls OrderMultiClose() nicht hedged
+         closePrice += orders.closePrice[pos];                       // (Hedging ist jedoch default)
       }
-      closePrice /= Abs(sequence.level);                             // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
+      closePrice /= sizeOfPositions;                                 // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
       /*
       sequence.floatingPL  = ...                                     // unten in UpdateStatus() werden diese Werte automatisch aktualisiert
       sequence.totalPL     = ...
@@ -480,6 +480,7 @@ bool StopSequence.LimitStopPrice() {
 
    double nextTrigger;
    int i = ArraySize(sequence.stop.price) - 1;
+   //debug("StopSequence.LimitStopPrice(0.1)  sequence.stop.price="+ NumberToStr(sequence.stop.price[i], PriceFormat));
 
    if (sequence.direction == D_LONG) {
       nextTrigger = grid.base + (sequence.level+1)*GridSize*Pip;
@@ -1107,7 +1108,7 @@ bool IsStartSignal() {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1143,7 +1144,7 @@ bool IsResumeSignal() {
          if (sequence.direction == D_LONG) bool priceReached = (Ask <= stopPrice);
          else                                   priceReached = (Bid >= stopPrice);
          if (priceReached) {
-            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \""+ ifString(sequence.direction==D_LONG, "@ask(<=", "@bid(>=") + NumberToStr(stopPrice, PriceFormat) +") after sessionbreak until "+ GmtTimeFormat(endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \""+ ifString(sequence.direction==D_LONG, "@ask(<=", "@bid(>=") + NumberToStr(stopPrice, PriceFormat) +") after sessionbreak until "+ GmtTimeFormat(endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
             return(true);
          }
       }
@@ -1194,7 +1195,7 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1204,7 +1205,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1217,7 +1218,7 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1227,7 +1228,7 @@ bool IsStopSignal() {
    // -- session break ------------------------------------------------------------------------------------------------------
    sessionbreak.active = IsSessionBreak();
    if (sessionbreak.active) {
-      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")");
    }
    return(sessionbreak.active);
 }
