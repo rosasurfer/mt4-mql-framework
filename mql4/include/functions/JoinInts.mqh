@@ -1,12 +1,12 @@
 /**
  * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
  *
- * @param  int    values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
+ * @param  int    values[]             - Array mit Ausgangswerten
+ * @param  string separator [optional] - zu verwendender Separator (default: ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string JoinInts(int values[], string separator) {
+string JoinInts(int values[], string separator = ", ") {
    if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinInts(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];

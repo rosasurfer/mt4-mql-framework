@@ -377,8 +377,8 @@ bool StopSequence() {
          }
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
          if (!OrderCloseTime()) {                                                                  // server: if (isOpen)
-            if (IsPendingOrderType(OrderType())) ArrayPushInt(pendings,                i);         // Grid.DeleteOrder() erwartet den Array-Index
-            else                                 ArrayPushInt(positions, orders.ticket[i]);        // OrderMultiClose() erwartet das Orderticket
+            if (OrderType() > OP_SELL) ArrayPushInt(pendings,                i);                   // Grid.DeleteOrder() erwartet den Array-Index
+            else                       ArrayPushInt(positions, orders.ticket[i]);                  // OrderMultiClose() erwartet das Orderticket
          }
       }
    }
@@ -418,10 +418,10 @@ bool StopSequence() {
 
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
 
-         closeTime   = Max(closeTime, orders.closeTime[pos]);        // die Close-Werte können unterschiedlich sein
-         closePrice += orders.closePrice[pos];                       // (i.d.R. sind sie überall gleich)
+         closeTime   = Max(closeTime, orders.closeTime[pos]);        // Close-Werte können unterschiedlich sein, falls OrderMultiClose() nicht hedged
+         closePrice += orders.closePrice[pos];                       // (Hedging ist jedoch default)
       }
-      closePrice /= Abs(sequence.level);                             // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
+      closePrice /= sizeOfPositions;                                 // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
       /*
       sequence.floatingPL  = ...                                     // unten in UpdateStatus() werden diese Werte automatisch aktualisiert
       sequence.totalPL     = ...
@@ -480,6 +480,7 @@ bool StopSequence.LimitStopPrice() {
 
    double nextTrigger;
    int i = ArraySize(sequence.stop.price) - 1;
+   //debug("StopSequence.LimitStopPrice(0.1)  sequence.stop.price="+ NumberToStr(sequence.stop.price[i], PriceFormat));
 
    if (sequence.direction == D_LONG) {
       nextTrigger = grid.base + (sequence.level+1)*GridSize*Pip;
@@ -1107,7 +1108,7 @@ bool IsStartSignal() {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1133,14 +1134,17 @@ bool IsResumeSignal() {
    if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
    if (sessionbreak.active) {
+      datetime prevEndtime = sessionbreak.endtime;
+
       if (!IsSessionBreak()) {
+         static datetime endtime; if (!endtime) endtime = prevEndtime;
          double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
          // wait for the stop price to be reached
          if (sequence.direction == D_LONG) bool priceReached = (Ask <= stopPrice);
          else                                   priceReached = (Bid >= stopPrice);
          if (priceReached) {
-            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \"stop price "+ NumberToStr(stopPrice, PriceFormat) +" after sessionbreak until "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \""+ ifString(sequence.direction==D_LONG, "@ask(<=", "@bid(>=") + NumberToStr(stopPrice, PriceFormat) +") after sessionbreak until "+ GmtTimeFormat(endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
             return(true);
          }
       }
@@ -1191,7 +1195,7 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1201,7 +1205,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1214,7 +1218,7 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1224,7 +1228,7 @@ bool IsStopSignal() {
    // -- session break ------------------------------------------------------------------------------------------------------
    sessionbreak.active = IsSessionBreak();
    if (sessionbreak.active) {
-      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled");
+      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")");
    }
    return(sessionbreak.active);
 }
@@ -2278,7 +2282,7 @@ void SS.MissedLevels() {
 
    int size = ArraySize(sequence.missedLevels);
    if (!size) str.sequence.missedLevels = "";
-   else       str.sequence.missedLevels = ", missed: "+ size;
+   else       str.sequence.missedLevels = ", missed: "+ JoinInts(sequence.missedLevels);
 }
 
 
@@ -3114,31 +3118,31 @@ bool SaveSequence() {
          ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values, ", "));
+   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values));
       ArrayResize(values, 0);
       size = ArraySize(sequence.stop.event);
       for (i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
+   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values));
       if (sequence.status==STATUS_STOPPED) /*&&*/ if (sessionbreak.active)
    ArrayPushString(lines, /*int*/    "rt.sessionbreak=1");
       if (ArraySize(sequence.missedLevels) > 0)
-   ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
+   ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels));
       if (ArraySize(ignorePendingOrders) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders));
       if (ArraySize(ignoreOpenPositions) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignoreOpenPositions="  + JoinInts(ignoreOpenPositions, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignoreOpenPositions="  + JoinInts(ignoreOpenPositions));
       if (ArraySize(ignoreClosedPositions) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignoreClosedPositions="+ JoinInts(ignoreClosedPositions, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignoreClosedPositions="+ JoinInts(ignoreClosedPositions));
       ArrayResize(values, 0);
       size = ArraySize(grid.base.event);
       for (i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", NumberToStr(grid.base.value[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.grid.base="            + JoinStrings(values, ", "));
+   ArrayPushString(lines, /*string*/ "rt.grid.base="            + JoinStrings(values));
 
    size = ArraySize(orders.ticket);
    for (i=0; i < size; i++) {
