@@ -1245,8 +1245,7 @@ bool IsSessionBreak() {
    datetime serverTime = TimeServer();
    if (!serverTime) return(false);
 
-   // check whether to update/re-calculate sessionbreak times
-   if (!sessionbreak.starttime || !sessionbreak.endtime || serverTime >= sessionbreak.endtime) {
+   if (serverTime >= sessionbreak.endtime) {                      // check whether to recalculate sessionbreak times
       int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
       int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
       if (!startOffset && !endOffset)
@@ -2801,14 +2800,10 @@ bool ValidateInputs(bool interactive) {
       StopConditions = JoinStrings(exprs, " || ");
    }
 
-   // Sessionbreak.StartTime: status vars are updated automatically on first use
-   if (Sessionbreak.StartTime != last.Sessionbreak.StartTime) {
+   // Sessionbreak.StartTime/EndTime
+   if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
-   }
-
-   // Sessionbreak.EndTime: status vars are updated automatically on first use
-   if (Sessionbreak.EndTime != last.Sessionbreak.EndTime) {
-      sessionbreak.endtime = NULL;
+      sessionbreak.endtime   = NULL;               // real times are updated automatically on next use
    }
 
    // ProfitDisplayInPercent: nothing to validate
