@@ -1245,11 +1245,12 @@ bool IsSessionBreak() {
    datetime serverTime = TimeServer();
    if (!serverTime) return(false);
 
-   if (serverTime >= sessionbreak.endtime) {                      // update the next sessionbreak start and end times
+   // check whether to update/re-calculate sessionbreak times
+   if (!sessionbreak.starttime || !sessionbreak.endtime || serverTime >= sessionbreak.endtime) {
       int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
       int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
-      if (!startOffset && !endOffset)                             // skip session breaks if both values are set to Midnight
-         return(false);
+      if (!startOffset && !endOffset)
+         return(false);                                           // skip session breaks if both values are set to Midnight
 
       // calculate today's sessionbreak end time
       datetime fxtNow  = ServerToFxtTime(serverTime);
@@ -1275,6 +1276,8 @@ bool IsSessionBreak() {
          dow = TimeDayOfWeekFix(fxtTime);
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
+
+      if (__LOG()) log("IsSessionBreak(1)  re-calculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform check

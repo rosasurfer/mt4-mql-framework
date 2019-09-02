@@ -6,7 +6,7 @@
  */
 int onDeinitParameterChange() {
    BackupInputs();
-   return(-1);                      // -1: skip any other deinit tasks
+   return(-1);                                  // -1: skip all other deinit tasks
 }
 
 
@@ -17,7 +17,7 @@ int onDeinitParameterChange() {
  */
 int onDeinitChartChange() {
    BackupInputs();
-   return(-1);                      // -1: skip any other deinit tasks
+   return(-1);                                  // -1: skip all other deinit tasks
 }
 
 
@@ -102,7 +102,7 @@ int onDeinitRemove() {
  */
 int onDeinitRecompile() {
    StoreChartStatus();
-   return(-1);                      // -1: skip any other deinit tasks
+   return(-1);                                  // -1: skip all other deinit tasks
 }
 
 
