@@ -63,7 +63,7 @@ extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                   // @[bid|ask|price](double) && @time(datetime)
 extern string   StopConditions         = "";                   // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:50';  // in FXT (the date part is ignored)
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:54';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT (the date part is ignored)
 extern bool     ProfitDisplayInPercent = true;                 // whether PL values are displayed absolute or in percent
 
@@ -440,10 +440,6 @@ bool StopSequence() {
       sequence.stop.price[n] = ifDouble(sequence.direction==D_LONG, Bid, Ask);
    }
 
-   // StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
-   if (!StopSequence.LimitStopPrice())
-      return(false);
-
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;
       if (__LOG()) log("StopSequence(8)  sequence "+ sequence.name +" stopped at "+ NumberToStr(sequence.stop.price[n], PriceFormat) +", level "+ sequence.level);
@@ -465,35 +461,6 @@ bool StopSequence() {
       else if (!sessionbreak.active) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(9)"));
-}
-
-
-/**
- * Der StopPrice darf nicht schon den nächsten Level triggern, da sonst bei ResumeSequence() Fehler auftreten.
- *
- * @return bool - success status
- */
-bool StopSequence.LimitStopPrice() {
-   if (IsLastError())                                                                return(false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                    return(!catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(!catch("StopSequence.LimitStopPrice(2)  cannot limit stop price of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-
-   double nextTrigger;
-   int i = ArraySize(sequence.stop.price) - 1;
-   //debug("StopSequence.LimitStopPrice(0.1)  sequence.stop.price="+ NumberToStr(sequence.stop.price[i], PriceFormat));
-
-   if (sequence.direction == D_LONG) {
-      nextTrigger = grid.base + (sequence.level+1)*GridSize*Pip;
-      sequence.stop.price[i] = MathMin(nextTrigger-1*Pip, sequence.stop.price[i]);  // max. 1 Pip unterm Trigger des nächsten Levels
-   }
-
-   if (sequence.direction == D_SHORT) {
-      nextTrigger = grid.base + (sequence.level-1)*GridSize*Pip;
-      sequence.stop.price[i] = MathMax(nextTrigger+1*Pip, sequence.stop.price[i]);  // min. 1 Pip überm Trigger des nächsten Levels
-   }
-   sequence.stop.price[i] = NormalizeDouble(sequence.stop.price[i], Digits);
-
-   return(!last_error|catch("StopSequence.LimitStopPrice(3)"));
 }
 
 
@@ -813,9 +780,6 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
          sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
          sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequence.stop.price[n]) return(false);
          sequence.stop.profit[n] = sequence.totalPL;
-
-         if (!StopSequence.LimitStopPrice())                                        //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
-            return(false);
 
          sequence.status = STATUS_STOPPED;
          if (__LOG()) log("UpdateStatus(10)  STATUS_STOPPED");
@@ -1188,6 +1152,7 @@ bool IsStopSignal() {
          message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \""+ sPrice +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
+         stop.price.condition = false;
          return(true);
       }
    }
@@ -1198,6 +1163,7 @@ bool IsStopSignal() {
          message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
+         stop.time.condition = false;
          return(true);
       }
    }
@@ -1208,6 +1174,7 @@ bool IsStopSignal() {
          message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
+         stop.profitAbs.condition = false;
          return(true);
       }
    }
@@ -1221,6 +1188,7 @@ bool IsStopSignal() {
          message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
+         stop.profitPct.condition = false;
          return(true);
       }
    }
@@ -1229,8 +1197,10 @@ bool IsStopSignal() {
    sessionbreak.active = IsSessionBreak();
    if (sessionbreak.active) {
       if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")");
+      return(true);
    }
-   return(sessionbreak.active);
+
+   return(false);
 }
 
 
@@ -3935,9 +3905,6 @@ bool SynchronizeStatus() {
       sequence.stop.time  [i] = stopTime;
       sequence.stop.price [i] = NormalizeDouble(stopPrice, Digits);
       sequence.stop.profit[i] = sequence.totalPL;
-
-      if (!StopSequence.LimitStopPrice())                                  // StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
-         return(false);
 
       sequence.status       = STATUS_STOPPED;
       permanentStatusChange = true;
