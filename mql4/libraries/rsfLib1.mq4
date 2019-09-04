@@ -5155,17 +5155,17 @@ int Order.HandleError(string message, int error, bool terminalError, int filter,
       filter |= F_ERS_EXECUTION_STOPPING;
 
    // filter the specified errors
+   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(log(message, error));
+   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return(log(message, error));
    if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return(log(message, error));
    if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return(log(message, error));
    if (error==ERR_INVALID_STOP             && filter & F_ERR_INVALID_STOP            ) return(log(message, error));
-   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(log(message, error));
    if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(log(message, error));
-   if (error==ERR_TRADE_REQUEST_FAILED     && filter & F_ERR_TRADE_REQUEST_FAILED    ) return(log(message, error));
-   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return(log(message, error));
-   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(log(message, error));
+   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(log(message, error));
    if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error));
-   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(log(message, error));
+   if (error==ERR_TRADE_REQUEST_FAILED     && filter & F_ERR_TRADE_REQUEST_FAILED    ) return(log(message, error));
    if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return(log(message, error));
+   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(log(message, error));
    if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error));
 
    // trigger a runtime error for everything else
@@ -6987,8 +6987,9 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
       oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
       oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
-      success = OrderDelete(ticket, markerColor);           // ERR_INVALID_TICKET           - unknown ticket or not an open pending order (client-side)
-                                                            // ERR_INVALID_TRADE_PARAMETERS - not an open pending order anymore (server-side)
+      success = OrderDelete(ticket, markerColor);           // ERR_INVALID_TICKET           - unknown ticket or not an open pending order     (client-side)
+                                                            // ERR_OFF_QUOTES               - order is locked and in processing queue         (server-side)
+                                                            // ERR_INVALID_TRADE_PARAMETERS - order is processed and not open pending anymore (server-side)
       oe.setDuration(oe, GetTickCount()-startTime);
 
       if (success) {
@@ -7019,6 +7020,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             warn("OrderDeleteEx(16)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;                                                                  // continue for temporary errors
 
+         case ERR_OFF_QUOTES:
          case ERR_INVALID_TICKET: error = ERR_INVALID_TRADE_PARAMETERS; break;
          case NO_ERROR:           error = ERR_RUNTIME_ERROR;            break;
       }
