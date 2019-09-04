@@ -206,7 +206,8 @@ int onTick() {
       return(NO_ERROR);
 
    // process chart commands
-   HandleEvent(EVENT_CHART_CMD);
+   if (!HandleEvent(EVENT_CHART_CMD))
+      return(last_error);
 
    bool gridChanged;                                        // whether the current grid base or level changed
    int  activatedOrders[];                                  // indexes of activated client-side orders
@@ -218,8 +219,8 @@ int onTick() {
 
    // ...or sequence waits for resume signal...
    else if (sequence.status == STATUS_STOPPED) {
-      if  (IsResumeSignal()) ResumeSequence();
-      else return(last_error);
+      if (IsResumeSignal()) ResumeSequence();
+      else                  return(last_error);
    }
 
    // ...or sequence is running...
@@ -253,8 +254,8 @@ bool onChartCommand(string commands[]) {
 
    if (cmd == "start") {
       switch (sequence.status) {
-         case STATUS_WAITING: StartSequence();  break;
-         case STATUS_STOPPED: ResumeSequence(); break;
+         case STATUS_WAITING: return(StartSequence());
+         case STATUS_STOPPED: return(ResumeSequence());
       }
       return(true);
    }
@@ -265,7 +266,9 @@ bool onChartCommand(string commands[]) {
          case STATUS_PROGRESSING:
             bool bNull;
             int  iNull[];
-            if (UpdateStatus(bNull, iNull)) StopSequence();
+            if (!UpdateStatus(bNull, iNull))
+               return(false);
+            return(StopSequence());
       }
       return(true);
    }
@@ -403,7 +406,7 @@ bool StopSequence() {
    if (sizeOfPositions > 0) {
       int oeFlags = NULL;
       int oes[][ORDER_EXECUTION.intSize];
-      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(false);
+      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);

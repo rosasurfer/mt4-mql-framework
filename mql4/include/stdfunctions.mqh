@@ -777,18 +777,17 @@ int ResetLastError() {
  *
  * @param  int event - einzelnes Event-Flag
  *
- * @return int - 1, wenn ein Event aufgetreten ist und erfolgreich verarbeitet wurde;
- *               0  andererseits
+ * @return bool - success status
  */
-int HandleEvent(int event) {
+bool HandleEvent(int event) {
    if (event != EVENT_CHART_CMD)
       return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
 
    string sResults[]; ArrayResize(sResults, 0);
 
    if (EventListener_ChartCommand(sResults))
-      return(onChartCommand(sResults));                  // (int) bool
-   return(0);
+      return(onChartCommand(sResults));
+   return(false);
 }
 
 
