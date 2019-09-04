@@ -118,7 +118,7 @@ string   GetFullMqlFilesPath();;
 datetime GetFxtTime();;
 datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
-int      HandleEvent(int event);;
+bool     HandleEvent(int event);;
 string   HistoryFlagsToStr(int flags);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
