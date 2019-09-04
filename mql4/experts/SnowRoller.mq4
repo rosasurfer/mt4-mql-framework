@@ -57,15 +57,15 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   Sequence.ID            = "";
-extern string   GridDirection          = "Long | Short";       // there's no bi-directional mode
+extern string   GridDirection          = "Long | Short";          // there's no bi-directional mode
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
-extern string   StartConditions        = "";                   // @[bid|ask|price](double) && @time(datetime)
-extern string   StopConditions         = "";                   // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:54';  // in FXT (the date part is ignored)
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:03';  // in FXT (the date part is ignored)
-extern bool     ProfitDisplayInPercent = true;                 // whether PL values are displayed absolute or in percent
+extern string   StartConditions        = "";                      // @[bid|ask|price](double) && @time(datetime)
+extern string   StopConditions         = "";                      // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
+extern bool     ProfitDisplayInPercent = true;                    // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1926,7 +1926,7 @@ int Grid.TrailPendingOrder(int i) {
  * @param  int i - order index
  *
  * @return int - NULL on success or another value in case of errors, especially:
- *               -1 if the order was already executed and is not a pending order anymore
+ *               -1 if the order was already executed and is not pending anymore
  */
 int Grid.DeleteOrder(int i) {
    if (IsLastError())                                                                 return(last_error);
@@ -1939,7 +1939,7 @@ int Grid.DeleteOrder(int i) {
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {
-      int oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;         // the pending order was already executed
+      int oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;               // the order was already executed
       int oe[];
       if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) {
          int error = oe.Error(oe);
@@ -3094,8 +3094,8 @@ bool SaveSequence() {
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (sessionbreak.active)
-   ArrayPushString(lines, /*int*/    "rt.sessionbreak=1");
+      if (sequence.status==STATUS_STOPPED)
+   ArrayPushString(lines, /*int*/    "rt.sessionbreak="         + sessionbreak.active);
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels));
       if (ArraySize(ignorePendingOrders) > 0)
