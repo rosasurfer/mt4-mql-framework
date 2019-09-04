@@ -728,19 +728,20 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // check sign symbol
 
 
-// Flags marking specific errors handled by a custom error handler. If used these errors don't trigger an ERROR alert.
-#define F_ERR_INVALID_TICKET            0x0001  //     1
-#define F_ERR_INVALID_TRADE_PARAMETERS  0x0002  //     2
+// Flags marking specific errors to be handled by custom error handlers (if used the correspondig errors don't trigger a terminating ERROR alert)
+#define F_ERR_CONCURRENT_MODIFICATION   0x0001  //     1
+#define F_ERR_INVALID_PARAMETER         0x0002  //     2
 #define F_ERR_INVALID_STOP              0x0004  //     4
-#define F_ERR_ORDER_CHANGED             0x0008  //     8
-#define F_ERR_MARKET_CLOSED             0x0010  //    16
-#define F_ERR_TRADE_REQUEST_FAILED      0x0020  //    32 i.e. ERR_COMMON_ERROR
-#define F_ERR_INVALID_PARAMETER         0x0040  //    64
-#define F_ERR_CONCURRENT_MODIFICATION   0x0080  //   128
+#define F_ERR_INVALID_TICKET            0x0008  //     8
+#define F_ERR_INVALID_TRADE_PARAMETERS  0x0010  //    16
+#define F_ERR_MARKET_CLOSED             0x0020  //    32
+#define F_ERR_OFF_QUOTES                0x0040  //    64
+#define F_ERR_ORDER_CHANGED             0x0080  //   128
 #define F_ERR_SERIES_NOT_AVAILABLE      0x0100  //   256
-#define F_ERS_HISTORY_UPDATE            0x0200  //   512 (temporary status)
-#define F_ERS_EXECUTION_STOPPING        0x0400  //  1024 (temporary status)
-#define F_ERS_TERMINAL_NOT_YET_READY    0x0800  //  2048 (temporary status)
+#define F_ERR_TRADE_REQUEST_FAILED      0x0200  //   512 i.e. ERR_COMMON_ERROR
+#define F_ERS_HISTORY_UPDATE            0x0400  //  1024 (temporary status)
+#define F_ERS_EXECUTION_STOPPING        0x0800  //  2048 (temporary status)
+#define F_ERS_TERMINAL_NOT_YET_READY    0x1000  //  4096 (temporary status)
 
 
 // flags controlling order execution
