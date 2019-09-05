@@ -793,16 +793,21 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
    // ggf. Gridbasis trailen
    else if (sequence.status == STATUS_PROGRESSING) {
       if (!sequence.level) {
-         double last = grid.base;
-         if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-         else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-
-         if (NE(grid.base, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
-            gridChanged = true;
+         if (!sizeOfTickets) {                                                      // the pending order was manually cancelled
+            SetLastError(ERR_CANCELLED_BY_USER);
          }
-         else if (NE(orders.gridBase[sizeOfTickets-1], grid.base, Digits)) {        // Gridbasis des letzten Tickets inspizieren, da Trailing online
-            gridChanged = true;                                                     // u.U. verzögert wird
+         else {
+            double last = grid.base;
+            if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+            else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+
+            if (NE(grid.base, last, Digits)) {
+               GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
+               gridChanged = true;
+            }
+            else if (NE(orders.gridBase[sizeOfTickets-1], grid.base, Digits)) {     // Gridbasis des letzten Tickets inspizieren, da Trailing online
+               gridChanged = true;                                                  // u.U. verzögert wird
+            }
          }
       }
    }
