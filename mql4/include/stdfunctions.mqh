@@ -787,7 +787,7 @@ bool HandleEvent(int event) {
 
    if (EventListener_ChartCommand(sResults))
       return(onChartCommand(sResults));
-   return(false);
+   return(true);
 }
 
 
