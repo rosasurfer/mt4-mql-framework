@@ -5367,16 +5367,19 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if (requotes > 5) break;
          continue;                                                               // nach ERR_REQUOTE Order sofort wiederholen
       }
-      if (!error) error = oe.setError(oe, ERR_RUNTIME_ERROR);
+      if (!error) {
+         if (__LOG()) log("OrderSendEx(23)  no error returned => ERR_RUNTIME_ERROR");
+         error = oe.setError(oe, ERR_RUNTIME_ERROR);
+      }
 
       if (!IsTemporaryTradeError(error))
          break;
       tempErrors++;
       if (tempErrors > 5)
          break;
-      warn("OrderSendEx(23)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
+      warn("OrderSendEx(24)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
    }
-   return(!Order.HandleError("OrderSendEx(24)  "+ OrderSendEx.ErrorMsg(oe), error, true, oeFlags, oe));
+   return(!Order.HandleError("OrderSendEx(25)  "+ OrderSendEx.ErrorMsg(oe), error, true, oeFlags, oe));
 }
 
 
@@ -7021,12 +7024,21 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             continue;                                                                  // continue for temporary errors
 
          case ERR_OFF_QUOTES:
-         case ERR_INVALID_TICKET: error = ERR_INVALID_TRADE_PARAMETERS; break;
-         case NO_ERROR:           error = ERR_RUNTIME_ERROR;            break;
+            if (__LOG()) log("OrderDeleteEx(17)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
+            error = ERR_INVALID_TRADE_PARAMETERS;
+            break;
+         case ERR_INVALID_TICKET:
+            if (__LOG()) log("OrderDeleteEx(18)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+            error = ERR_INVALID_TRADE_PARAMETERS;
+            break;
+         case NO_ERROR:
+            if (__LOG()) log("OrderDeleteEx(19)  no error returned => ERR_RUNTIME_ERROR");
+            error = ERR_RUNTIME_ERROR;
+            break;
       }
       break;                                                                           // fail for all other errors
    }
-   return(_false(oe.setError(oe, Order.HandleError("OrderDeleteEx(17)  "+ OrderDeleteEx.ErrorMsg(oe), error, true, oeFlags, oe)), OrderPop("OrderDeleteEx(18)")));
+   return(_false(oe.setError(oe, Order.HandleError("OrderDeleteEx(20)  "+ OrderDeleteEx.ErrorMsg(oe), error, true, oeFlags, oe)), OrderPop("OrderDeleteEx(21)")));
 }
 
 

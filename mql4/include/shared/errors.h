@@ -40,9 +40,9 @@
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133
 #define ERR_NOT_ENOUGH_MONEY                                        134
-#define ERR_PRICE_CHANGED                                           135    // Price has changed and a retry can be made immdediately.
+#define ERR_PRICE_CHANGED                                           135    // Price has changed and a retry can be made immediately.
 #define ERR_OFF_QUOTES                                              136    // The broker cannot provide prices (backend or liquidity issue).
-#define ERR_BROKER_BUSY                                             137    // automated trading disabled (manual trading still enabled)
+#define ERR_BROKER_BUSY                                             137    // Automated trading is disabled (manual trading is not affected).
 #define ERR_REQUOTE                                                 138    // The offered price has become stale and expired.
 #define ERR_ORDER_LOCKED                                            139    // The order has been locked and is under processing.
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
