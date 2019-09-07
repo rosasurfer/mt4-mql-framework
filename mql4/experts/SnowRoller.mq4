@@ -348,7 +348,7 @@ bool StopSequence() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
    if (sequence.status!=STATUS_WAITING) /*&&*/ if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED)  // ggf. wird nach Testende nur aufgeräumt
          return(!catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
@@ -372,16 +372,16 @@ bool StopSequence() {
    ArrayResize(positions, 0);
 
    for (int i=sizeOfTickets-1; i >= 0; i--) {
-      if (!orders.closeTime[i]) {                                                                  // local: if (isOpen)
+      if (!orders.closeTime[i]) {                                                   // local: if (isOpen)
          if (orders.ticket[i] < 0) {
-            if (!Grid.DropData(i)) return(false);                                                  // client-seitige Pending-Orders können intern gelöscht werden
+            if (!Grid.DropData(i)) return(false);                                   // client-seitige Pending-Orders können intern gelöscht werden
             sizeOfTickets--;
             continue;
          }
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
-         if (!OrderCloseTime()) {                                                                  // server: if (isOpen)
-            if (OrderType() > OP_SELL) ArrayPushInt(pendings,                i);                   // Grid.DeleteOrder() erwartet den Array-Index
-            else                       ArrayPushInt(positions, orders.ticket[i]);                  // OrderMultiClose() erwartet das Orderticket
+         if (!OrderCloseTime()) {                                                   // server: if (isOpen)
+            if (OrderType() > OP_SELL) ArrayPushInt(pendings,                i);    // Grid.DeleteOrder() erwartet den Array-Index
+            else                       ArrayPushInt(positions, orders.ticket[i]);   // OrderCloseMulti() erwartet das Orderticket
          }
       }
    }
@@ -406,7 +406,7 @@ bool StopSequence() {
    if (sizeOfPositions > 0) {
       int oeFlags = NULL;
       int oes[][ORDER_EXECUTION.intSize];
-      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
+      if (!OrderCloseMulti(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -421,12 +421,12 @@ bool StopSequence() {
 
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
 
-         closeTime   = Max(closeTime, orders.closeTime[pos]);        // Close-Werte können unterschiedlich sein, falls OrderMultiClose() nicht hedged
-         closePrice += orders.closePrice[pos];                       // (Hedging ist jedoch default)
+         closeTime   = Max(closeTime, orders.closeTime[pos]);  // Close-Werte können unterschiedlich sein, falls OrderCloseMulti() nicht hedged
+         closePrice += orders.closePrice[pos];                 // (Hedging ist jedoch default)
       }
-      closePrice /= sizeOfPositions;                                 // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
+      closePrice /= sizeOfPositions;                           // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
       /*
-      sequence.floatingPL  = ...                                     // unten in UpdateStatus() werden diese Werte automatisch aktualisiert
+      sequence.floatingPL  = ...                               // unten in UpdateStatus() werden diese Werte automatisch aktualisiert
       sequence.totalPL     = ...
       sequence.maxProfit   = ...
       sequence.maxDrawdown = ...
