@@ -189,7 +189,7 @@
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int /*ORDER_EXECUTION*/oe[]);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
-   bool     OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);
+   bool     OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);
    bool     DeletePendingOrders(color markerColor);
 
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);

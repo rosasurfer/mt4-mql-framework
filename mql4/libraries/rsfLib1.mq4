@@ -6365,36 +6365,36 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
  *
  * TODO: add support for flag OE_MULTICLOSE_NOHEDGE when closing positions of multiple symbols
  */
-bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // validate parameters
    // oes[]
-   if (ArrayDimension(oes) != 2)                               return(!catch("OrderCloseMulti(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)          return(!catch("OrderCloseMulti(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(oes) != 2)                               return(!catch("OrdersClose(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)          return(!catch("OrdersClose(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
    // tickets
-   if (sizeOfTickets == 0)                                     return(!oes.setError(oes, -1, catch("OrderCloseMulti(3)  invalid size "+ sizeOfTickets +" of parameter tickets = {}", ERR_INVALID_PARAMETER)));
-   OrderPush("OrderCloseMulti(4)");
+   if (sizeOfTickets == 0)                                     return(!oes.setError(oes, -1, catch("OrdersClose(3)  invalid size "+ sizeOfTickets +" of parameter tickets = {}", ERR_INVALID_PARAMETER)));
+   OrderPush("OrdersClose(4)");
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseMulti(5)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrdersClose(5)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
-      if (OrderCloseTime() != 0)                               return(!oes.setError(oes, -1, catch("OrderCloseMulti(6)  #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP)));
-      if (OrderType() > OP_SELL)                               return(!oes.setError(oes, -1, catch("OrderCloseMulti(7)  #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
+      if (OrderCloseTime() != 0)                               return(!oes.setError(oes, -1, catch("OrdersClose(6)  #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP)));
+      if (OrderType() > OP_SELL)                               return(!oes.setError(oes, -1, catch("OrdersClose(7)  #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
    }
    // slippage
-   if (LT(slippage, 0))                                        return(!oes.setError(oes, -1, catch("OrderCloseMulti(8)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, O_POP)));
+   if (LT(slippage, 0))                                        return(!oes.setError(oes, -1, catch("OrdersClose(8)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oes.setError(oes, -1, catch("OrderCloseMulti(9)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oes.setError(oes, -1, catch("OrdersClose(9)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP)));
 
    // (2) schnelles Close, wenn nur ein Ticket angegeben wurde
    if (sizeOfTickets == 1) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseMulti(10)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrdersClose(10)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
-      return(OrderPop("OrderCloseMulti(11)") && !oes.setError(oes, -1, last_error));
+      return(OrderPop("OrdersClose(11)") && !oes.setError(oes, -1, last_error));
    }
 
    // (3) Zuordnung der Tickets zu Symbolen ermitteln
@@ -6403,7 +6403,7 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
    int si, tickets.symbol[]; ArrayResize(tickets.symbol, sizeOfTickets);
 
    for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseMulti(12)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrdersClose(12)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       si = SearchStringArray(symbols, OrderSymbol());
       if (si == -1)
@@ -6417,22 +6417,22 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
    int sizeOfSymbols = ArraySize(symbols);
 
    if (sizeOfSymbols == 1) {
-      if (!OrderCloseMulti.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseMulti(13)")));
+      if (!OrdersClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrdersClose(13)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2,               0);
       ArrayResize(symbols,            0);
       ArrayResize(tickets.symbol,     0);
       ArrayResize(symbols.lastTicket, 0);
-      return(OrderPop("OrderCloseMulti(14)") && !oes.setError(oes, -1, last_error));
+      return(OrderPop("OrdersClose(14)") && !oes.setError(oes, -1, last_error));
    }
 
    // (5) Tickets gehören zu mehreren Symbolen
-   if (__LOG()) log(StringConcatenate("OrderCloseMulti(15)  closing ", sizeOfTickets, " mixed positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("OrdersClose(15)  closing ", sizeOfTickets, " mixed positions ", TicketsToStr.Lots(tickets, NULL)));
 
    // (5.1) oes[] vorbelegen
    for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseMulti(16)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrdersClose(16)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()                         );
       oes.setDigits    (oes, i, MarketInfo(OrderSymbol(), MODE_DIGITS));
@@ -6445,7 +6445,7 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
       oes.setTakeProfit(oes, i, OrderTakeProfit()                     );
       oes.setComment   (oes, i, OrderComment()                        );
    }
-   if (!OrderPop("OrderCloseMulti(17)"))
+   if (!OrderPop("OrdersClose(17)"))
       return(_false(oes.setError(oes, -1, last_error)));
 
    // (6) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
@@ -6462,7 +6462,7 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      int newTicket = OrderCloseMulti.Hedge(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
+      int newTicket = OrdersHedge(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
       if (IsLastError())                                                         //  0: Fehler oder Gesamtposition war bereits flat
          return(_false(oes.setError(oes, -1, last_error)));                      // >0: neues Ticket
 
@@ -6514,7 +6514,7 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      if (!OrderCloseHedged(group, markerColor, oeFlags, oes2))
+      if (!OrdersCloseHedged(group, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error)));
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -6534,7 +6534,7 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
    ArrayResize(symbols.lastTicket, 0);
    ArrayResize(tickets.copy,       0);
    ArrayResize(flatSymbols,        0);
-   return(!oes.setError(oes, -1, catch("OrderCloseMulti(18)")));
+   return(!oes.setError(oes, -1, catch("OrdersClose(18)")));
 }
 
 
@@ -6567,23 +6567,23 @@ bool OrderCloseMulti(int tickets[], double slippage, color markerColor, int oeFl
  *
  *       4) Der Rückgabewert der Funktion entspricht dem in einem der Tickets gesetzten Wert von oe.RemainingTicket (siehe Note 3).
  */
-int OrderCloseMulti.Hedge(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+int OrdersHedge(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (da private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_NULL(oes.setError(oes, -1, catch("OrderCloseMulti.Hedge(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
+      return(_NULL(oes.setError(oes, -1, catch("OrdersHedge(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
 
 
    // (1) oes[] vorbelegen, dabei Lotsizes und Gesamtposition ermitteln
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
-   if (!SelectTicket(tickets[0], "OrderCloseMulti.Hedge(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrdersHedge(2)", O_PUSH))
       return(_NULL(oes.setError(oes, -1, last_error)));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double totalLots, lots[]; ArrayResize(lots, 0);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseMulti.Hedge(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrdersHedge(3)", NULL, O_POP))
          return(_NULL(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -6604,12 +6604,12 @@ int OrderCloseMulti.Hedge(int tickets[], double slippage, int oeFlags, /*ORDER_E
 
    // (2) wenn Gesamtposition bereits ausgeglichen ist
    if (EQ(totalLots, 0)) {
-      if (__LOG()) log(StringConcatenate("OrderCloseMulti.Hedge(4)  ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
+      if (__LOG()) log(StringConcatenate("OrdersHedge(4)  ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
 
       int tickets.copy[]; ArrayResize(tickets.copy, 0);                                // zuletzt geöffnetes Ticket ermitteln
       ArrayCopy(tickets.copy, tickets);
       SortTicketsChronological(tickets.copy);
-      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "OrderCloseMulti.Hedge(5)", NULL, O_POP))
+      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "OrdersHedge(5)", NULL, O_POP))
          return(_NULL(oes.setError(oes, -1, last_error)));
 
       for (i=0; i < sizeOfTickets; i++) {
@@ -6618,14 +6618,14 @@ int OrderCloseMulti.Hedge(int tickets[], double slippage, int oeFlags, /*ORDER_E
          oes.setCloseTime (oes, i, OrderOpenTime()             );
          oes.setClosePrice(oes, i, OrderOpenPrice()            );
       }
-      if (!OrderPop("OrderCloseMulti.Hedge(6)"))
+      if (!OrderPop("OrdersHedge(6)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
       ArrayResize(tickets.copy, 0);
    }
    else {
-      if (!OrderPop("OrderCloseMulti.Hedge(7)"))
+      if (!OrderPop("OrdersHedge(7)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
-      if (__LOG()) log(StringConcatenate("OrderCloseMulti.Hedge(8)  flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
+      if (__LOG()) log(StringConcatenate("OrdersHedge(8)  flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
 
 
       // (3) Gesamtposition ist unausgeglichen
@@ -6702,7 +6702,7 @@ int OrderCloseMulti.Hedge(int tickets[], double slippage, int oeFlags, /*ORDER_E
 
    ArrayResize(lots, 0);
 
-   if (!catch("OrderCloseMulti.Hedge(9)"))
+   if (!catch("OrdersHedge(9)"))
       return(newTicket);
    return(_NULL(oes.setError(oes, -1, last_error)));
 }
@@ -6725,20 +6725,20 @@ int OrderCloseMulti.Hedge(int tickets[], double slippage, int oeFlags, /*ORDER_E
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  */
-bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige ausführliche Parametervalidierung, da private
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets < 2)
-      return(_false(oes.setError(oes, -1, catch("OrderCloseHedged(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
+      return(_false(oes.setError(oes, -1, catch("OrdersCloseHedged(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
    // oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "OrderCloseHedged(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrdersCloseHedged(2)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseHedged(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrdersCloseHedged(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -6753,14 +6753,14 @@ bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXE
       oes.setTakeProfit(oes, i, OrderTakeProfit());
       oes.setComment   (oes, i, OrderComment()   );
    }
-   if (__LOG()) log(StringConcatenate("OrderCloseHedged(4)  closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("OrdersCloseHedged(4)  closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
    // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
    int tickets.copy[]; ArrayResize(tickets.copy, 0);
    int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
 
    SortTicketsChronological(tickets.copy);
-   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "OrderCloseHedged(5)", NULL, O_POP))  // das zuletzt geöffnete Ticket
+   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "OrdersCloseHedged(5)", NULL, O_POP))  // das zuletzt geöffnete Ticket
       return(_false(oes.setError(oes, -1, last_error)));
    for (i=0; i < sizeOfTickets; i++) {
       oes.setCloseTime (oes, i, OrderOpenTime() );
@@ -6770,12 +6770,12 @@ bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXE
    // Teilpositionen nacheinander auflösen
    while (sizeOfCopy > 0) {
       int opposite, first=tickets.copy[0];
-      if (!SelectTicket(first, "OrderCloseHedged(6)", NULL, O_POP))
+      if (!SelectTicket(first, "OrdersCloseHedged(6)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       int firstType = OrderType();
 
       for (i=1; i < sizeOfCopy; i++) {
-         if (!SelectTicket(tickets.copy[i], "OrderCloseHedged(7)", NULL, O_POP))
+         if (!SelectTicket(tickets.copy[i], "OrdersCloseHedged(7)", NULL, O_POP))
             return(_false(oes.setError(oes, -1, last_error)));
          if (OrderType() == firstType^1) {
             opposite = tickets.copy[i];                                                // erste Opposite-Position ermitteln
@@ -6783,11 +6783,11 @@ bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXE
          }
       }
       if (!opposite)
-         return(_false(oes.setError(oes, -1, catch("OrderCloseHedged(8)  cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
+         return(_false(oes.setError(oes, -1, catch("OrdersCloseHedged(8)  cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
 
       int oe[];
       if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))                  // erste und Opposite-Position schließen
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseHedged(9)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrdersCloseHedged(9)")));
 
       sizeOfCopy -= ArraySpliceInts(tickets.copy, 0, 1);                               // erstes und opposite Ticket löschen
       sizeOfCopy -= ArrayDropInt(tickets.copy, opposite);
@@ -6811,7 +6811,7 @@ bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXE
 
    ArrayResize(oe,           0);
    ArrayResize(tickets.copy, 0);
-   return(!oes.setError(oes, -1, catch("OrderCloseHedged(10)", NULL, O_POP)));
+   return(!oes.setError(oes, -1, catch("OrdersCloseHedged(10)", NULL, O_POP)));
 }
 
 
@@ -6833,11 +6833,11 @@ bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, /*ORDER_EXE
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  */
-bool OrderCloseMulti.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+bool OrdersClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (da private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(!oes.setError(oes, -1, catch("OrderCloseMulti.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER)));
+      return(!oes.setError(oes, -1, catch("OrdersClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER)));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
@@ -6855,16 +6855,16 @@ bool OrderCloseMulti.OneSymbol(int tickets[], double slippage, color markerColor
       ArrayResize(oe, 0);
       return(true);
    }
-   if (__LOG()) log(StringConcatenate("OrderCloseMulti.OneSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("OrdersClose.OneSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
 
    // (2) oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "OrderCloseMulti.OneSymbol(3)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrdersClose.OneSymbol(3)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseMulti.OneSymbol(4)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrdersClose.OneSymbol(4)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -6887,9 +6887,9 @@ bool OrderCloseMulti.OneSymbol(int tickets[], double slippage, color markerColor
    // (4) Gesamtposition glatt stellen
    /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-   int newTicket = OrderCloseMulti.Hedge(tickets.copy, slippage, oeFlags, oes2);                 // -1: kein neues Ticket
+   int newTicket = OrdersHedge(tickets.copy, slippage, oeFlags, oes2);                 // -1: kein neues Ticket
    if (IsLastError())                                                                              //  0: Fehler oder Gesamtposition war bereits flat
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseMulti.OneSymbol(5)"))); // >0: neues Ticket
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrdersClose.OneSymbol(5)"))); // >0: neues Ticket
 
    for (i=0; i < sizeOfTickets; i++) {
       oes.setBid       (oes, i, oes.Bid       (oes2, i));
@@ -6918,8 +6918,8 @@ bool OrderCloseMulti.OneSymbol(int tickets[], double slippage, color markerColor
    // (5) Teilpositionen auflösen
    ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-   if (!OrderCloseHedged(tickets.copy, markerColor, oeFlags, oes2))
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseMulti.OneSymbol(6)")));
+   if (!OrdersCloseHedged(tickets.copy, markerColor, oeFlags, oes2))
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrdersClose.OneSymbol(6)")));
 
    for (i=0; i < sizeOfCopy; i++) {
       int pos = SearchIntArray(tickets, tickets.copy[i]);
@@ -6932,7 +6932,7 @@ bool OrderCloseMulti.OneSymbol(int tickets[], double slippage, color markerColor
 
    ArrayResize(oes2,         0);
    ArrayResize(tickets.copy, 0);
-   return(!oes.setError(oes, -1, catch("OrderCloseMulti.OneSymbol(7)", NULL, O_POP)));
+   return(!oes.setError(oes, -1, catch("OrdersClose.OneSymbol(7)", NULL, O_POP)));
 }
 
 

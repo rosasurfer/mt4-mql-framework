@@ -144,7 +144,7 @@ int onStart() {
       color  markerColor = CLR_NONE;
       int    oeFlags     = NULL;
       int    oes[][ORDER_EXECUTION.intSize];
-      if (!OrderCloseMulti(position, slippage, markerColor, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
+      if (!OrdersClose(position, slippage, markerColor, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
 
 
       // (6) Gesamt-ClosePrice und -Profit berechnen

@@ -381,7 +381,7 @@ bool StopSequence() {
          if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
          if (!OrderCloseTime()) {                                                   // server: if (isOpen)
             if (OrderType() > OP_SELL) ArrayPushInt(pendings,                i);    // Grid.DeleteOrder() erwartet den Array-Index
-            else                       ArrayPushInt(positions, orders.ticket[i]);   // OrderCloseMulti() erwartet das Orderticket
+            else                       ArrayPushInt(positions, orders.ticket[i]);   // OrdersClose() erwartet das Orderticket
          }
       }
    }
@@ -406,7 +406,7 @@ bool StopSequence() {
    if (sizeOfPositions > 0) {
       int oeFlags = NULL;
       int oes[][ORDER_EXECUTION.intSize];
-      if (!OrderCloseMulti(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
+      if (!OrdersClose(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -421,7 +421,7 @@ bool StopSequence() {
 
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
 
-         closeTime   = Max(closeTime, orders.closeTime[pos]);  // Close-Werte können unterschiedlich sein, falls OrderCloseMulti() nicht hedged
+         closeTime   = Max(closeTime, orders.closeTime[pos]);  // Close-Werte können unterschiedlich sein, falls OrdersClose() nicht hedged
          closePrice += orders.closePrice[pos];                 // (Hedging ist jedoch default)
       }
       closePrice /= sizeOfPositions;                           // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
