@@ -52,6 +52,12 @@ double   GetIniDouble(string fileName, string section, string key, double defaul
 bool     DeleteIniKey(string fileName, string section, string key);;
 
 
+// include/scriptrunner.mqh
+bool     RunScript(string name, string parameters = "");;
+bool     ScriptRunner.GetParameters(string parameters[]);;
+bool     ScriptRunner.SetParameters(string parameters);;
+
+
 // include/stdfunctions.mqh
 bool     __CHART();;
 bool     __LOG();;
@@ -293,10 +299,42 @@ double   icNonLagMA     (int timeframe, int cycleLength, int maxValues, int iBuf
 double   icTrix         (int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 
-// include/scriptrunner.mqh
-bool     RunScript(string name, string parameters = "");;
-bool     ScriptRunner.GetParameters(string parameters[]);;
-bool     ScriptRunner.SetParameters(string parameters);;
+// include/structs/mt4/
+
+
+// include/structs/rsf/Bar.mqh
+datetime bar.Time      (/*BAR*/double bar[]);;
+double   bar.Open      (/*BAR*/double bar[]);;
+double   bar.Low       (/*BAR*/double bar[]);;
+double   bar.High      (/*BAR*/double bar[]);;
+double   bar.Close     (/*BAR*/double bar[]);;
+int      bar.Volume    (/*BAR*/double bar[]);;
+
+datetime bar.setTime   (/*BAR*/double &bar[], datetime time  );;
+double   bar.setOpen   (/*BAR*/double &bar[], double   open  );;
+double   bar.setLow    (/*BAR*/double &bar[], double   low   );;
+double   bar.setHigh   (/*BAR*/double &bar[], double   high  );;
+double   bar.setClose  (/*BAR*/double &bar[], double   close );;
+int      bar.setVolume (/*BAR*/double &bar[], int      volume);;
+
+datetime bars.Time     (/*BAR*/double bar[][], int i);;
+double   bars.Open     (/*BAR*/double bar[][], int i);;
+double   bars.Low      (/*BAR*/double bar[][], int i);;
+double   bars.High     (/*BAR*/double bar[][], int i);;
+double   bars.Close    (/*BAR*/double bar[][], int i);;
+int      bars.Volume   (/*BAR*/double bar[][], int i);;
+
+datetime bars.setTime  (/*BAR*/double &bar[][], int i, datetime time  );;
+double   bars.setOpen  (/*BAR*/double &bar[][], int i, double   open  );;
+double   bars.setLow   (/*BAR*/double &bar[][], int i, double   low   );;
+double   bars.setHigh  (/*BAR*/double &bar[][], int i, double   high  );;
+double   bars.setClose (/*BAR*/double &bar[][], int i, double   close );;
+int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume);;
+
+string   BAR.toStr     (/*BAR*/double bar[], bool outputDebug = false);;
+
+
+// include/structs/win32/
 
 
 // libraries/rsfLib1.ex4
@@ -438,7 +476,7 @@ bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags
 bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
 bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
 bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
-bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
+bool     OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
 bool     ReleaseLock(string mutexName);;
 int      RepositionLegend();;

@@ -300,7 +300,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
    catch("ORDER_EXECUTION.toStr(3)");
    return(output);
 
-
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    oe.Error             (oe);       oes.Error             (oe, NULL);
    oe.Symbol            (oe);       oes.Symbol            (oe, NULL);

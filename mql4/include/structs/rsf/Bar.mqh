@@ -108,7 +108,6 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
    catch("BAR.toStr(3)");
    return(output);
 
-
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    bar.Time     (bar);       bars.Time     (bar, NULL);
    bar.Open     (bar);       bars.Open     (bar, NULL);
@@ -124,22 +123,3 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
    bar.setClose (bar, NULL); bars.setClose (bar, NULL, NULL);
    bar.setVolume(bar, NULL); bars.setVolume(bar, NULL, NULL);
 }
-
-
-//#import "rsfExpander.dll"
-//   // Getter
-//   datetime bar.Time      (/*BAR*/double bar[]);                   datetime bars.Time     (/*BAR*/double bars[], int i);
-//   double   bar.Open      (/*BAR*/double bar[]);                   double   bars.Open     (/*BAR*/double bars[], int i);
-//   double   bar.Low       (/*BAR*/double bar[]);                   double   bars.Low      (/*BAR*/double bars[], int i);
-//   double   bar.High      (/*BAR*/double bar[]);                   double   bars.High     (/*BAR*/double bars[], int i);
-//   double   bar.Close     (/*BAR*/double bar[]);                   double   bars.Close    (/*BAR*/double bars[], int i);
-//   int      bar.Volume    (/*BAR*/double bar[]);                   int      bars.Volume   (/*BAR*/double bars[], int i);
-//
-//   // Setter
-//   datetime bar.setTime   (/*BAR*/double bar[], datetime time  );  datetime bars.setTime  (/*BAR*/double bars[], int i, datetime time  );
-//   double   bar.setOpen   (/*BAR*/double bar[], double   open  );  double   bars.setOpen  (/*BAR*/double bars[], int i, double   open  );
-//   double   bar.setLow    (/*BAR*/double bar[], double   low   );  double   bars.setLow   (/*BAR*/double bars[], int i, double   low   );
-//   double   bar.setHigh   (/*BAR*/double bar[], double   high  );  double   bars.setHigh  (/*BAR*/double bars[], int i, double   high  );
-//   double   bar.setClose  (/*BAR*/double bar[], double   close );  double   bars.setClose (/*BAR*/double bars[], int i, double   close );
-//   int      bar.setVolume (/*BAR*/double bar[], int      volume);  int      bars.setVolume(/*BAR*/double bars[], int i, int      volume);
-//#import
