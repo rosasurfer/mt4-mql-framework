@@ -5123,7 +5123,7 @@ string DoubleToStrEx(double value, int digits) {
  * errors must be handled by a custom error handler.
  *
  * @param  string message       - error message
- * @param  int    error         - occurred error
+ * @param  int    error         - the occurred error
  * @param  bool   terminalError - whether the error was triggered by the terminal (TRUE) or by user-land code (FALSE)
  * @param  int    filter        - filter flags determining the errors to filter/pass-through
  * @param  int    oe[]          - order execution details (struct ORDER_EXECUTION)
@@ -5313,7 +5313,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       if (ticket > 0) {
          OrderPush("OrderSendEx(18)");
-         WaitForTicket(ticket, true);                                            // select=TRUE
+         WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
             return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(19)")));
@@ -5524,7 +5524,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    ArrayInitialize(oe, 0);
 
    // ticket
-   if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(!oe.setError(oe, last_error));
+   if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
    if (!IsOrderType(OrderType()))                              return(_false(oe.setError(oe, Order.HandleError("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, false, oeFlags, oe)), OrderPop("OrderModifyEx(4)")));
    if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, Order.HandleError("OrderModifyEx(5)  #"+ ticket +" is already closed", ERR_INVALID_TICKET, false, oeFlags, oe)), OrderPop("OrderModifyEx(6)")));
    bool   isPendingType  = IsPendingOrderType(OrderType());
@@ -5601,7 +5601,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       oe.setDuration(oe, GetTickCount()-startTime);                                    // total time of all tries
 
       if (success) {
-         WaitForTicket(ticket, true);                                                  // select=TRUE
+         WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(21)"), prevOpenPrice, prevStopLoss, prevTakeProfit))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(22)")));
@@ -5850,7 +5850,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
 
       if (success) {
-         WaitForTicket(ticket, true);                                                  // select=TRUE
+         WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderCloseEx(15)")));
@@ -6026,52 +6026,59 @@ string OrderCloseEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
 
 
 /**
- * Erweiterte Version von OrderCloseBy().
+ * Extended version of OrderCloseBy().
  *
- * @param  int   ticket      - Ticket der zu schließenden Position
- * @param  int   opposite    - Ticket der zum Schließen zu verwendenden Gegenposition
- * @param  color markerColor - Farbe des Chart-Markers
- * @param  int   oeFlags     - die Ausführung steuernde Flags
- * @param  int   oe[]        - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  _In_  int   ticket      - order ticket of the position to close
+ * @param  _In_  int   opposite    - order ticket of the opposite position to close
+ * @param  _In_  color markerColor - color of the chart marker to set
+ * @param  _In_  int   oeFlags     - flags controlling trade request execution
+ * @param  _Out_ int   oe[]        - execution details (struct ORDER_EXECUTION)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
+ * Notes: (1) Typical trade operation errors returned in oe.Error are:
+ *            - ERR_INVALID_TICKET:           one of the ids is not a known ticket id
+ *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position or the tickets can't be closed by
+ *                                            each other (anymore)
  *
- * NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close aufgeteilt sein
- *       und vom theoretischen Wert abweichen.
+ *        (2) On partial close the resulting values for swap, commission and profit may be divided over both tickets by the
+ *            trade server. The returned values are summed-up values of both tickets.
  */
-bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
-   // -- Beginn Parametervalidierung --
+bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]) {
+   // validate parameters
+   // oe[]
+   if (ArrayDimension(oe) > 1) return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
+      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   ArrayInitialize(oe, 0);
+
    // ticket
    if (!SelectTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(_false(oe.setError(oe, last_error)));
-   if (OrderCloseTime() != 0)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(2)  #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
-   if (OrderType() > OP_SELL)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(3)  #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP))));
+   if (OrderCloseTime() != 0)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(2)  #"+ ticket +" is already closed", ERR_INVALID_TRADE_PARAMETERS, O_POP))));
+   if (OrderType() > OP_SELL)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(3)  #"+ ticket +" is not an open position", ERR_INVALID_TRADE_PARAMETERS, O_POP))));
    int      ticketType     = OrderType();
    double   ticketLots     = OrderLots();
    datetime ticketOpenTime = OrderOpenTime();
    string   symbol         = OrderSymbol();
    // opposite
    if (!SelectTicket(opposite, "OrderCloseByEx(4)", NULL, O_POP)) return(_false(oe.setError(oe, last_error)));
-   if (OrderCloseTime() != 0)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(5)  opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   if (OrderCloseTime() != 0)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(5)  opposite #"+ opposite +" is already closed", ERR_INVALID_TRADE_PARAMETERS, O_POP))));
    int      oppositeType     = OrderType();
    double   oppositeLots     = OrderLots();
    datetime oppositeOpenTime = OrderOpenTime();
-   if (ticketType != oppositeType^1)                              return(_false(oe.setError(oe, catch("OrderCloseByEx(6)  #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
-   if (symbol != OrderSymbol())                                   return(_false(oe.setError(oe, catch("OrderCloseByEx(7)  #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
+   if (ticketType != oppositeType^1)                              return(_false(oe.setError(oe, catch("OrderCloseByEx(6)  #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, O_POP))));
+   if (symbol != OrderSymbol())                                   return(_false(oe.setError(oe, catch("OrderCloseByEx(7)  #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')    return(_false(oe.setError(oe, catch("OrderCloseByEx(8)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
-   // -- Ende Parametervalidierung --
 
-   // oe initialisieren
-   ArrayInitialize(oe, 0);
-   oe.setSymbol   (oe, OrderSymbol());
-   oe.setDigits   (oe, MarketInfo(OrderSymbol(), MODE_DIGITS));
-   oe.setTicket   (oe, ticket);
-   oe.setBid      (oe, MarketInfo(OrderSymbol(), MODE_BID));
-   oe.setAsk      (oe, MarketInfo(OrderSymbol(), MODE_ASK));
-   oe.setType     (oe, ticketType);
-   oe.setLots     (oe, ticketLots);
-
+   // initialize oe[]
+   oe.setSymbol(oe, OrderSymbol());
+   oe.setDigits(oe, MarketInfo(OrderSymbol(), MODE_DIGITS));
+   oe.setTicket(oe, ticket);
+   oe.setBid   (oe, MarketInfo(OrderSymbol(), MODE_BID));
+   oe.setAsk   (oe, MarketInfo(OrderSymbol(), MODE_ASK));
+   oe.setType  (oe, ticketType);
+   oe.setLots  (oe, ticketLots);
 
    /*
    Complete close
@@ -6138,8 +6145,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
        As it's more important to always have a remaining position with correct data the framework chooses the right approach depending on context.
    */
 
-
-   // Tradereihenfolge analysieren
+   // analyse ticket order
    int    first, second, smaller, larger, largerType;
    double firstLots, secondLots;
 
@@ -6159,8 +6165,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
    int  error, time1, tempErrors, remainder;
    bool success, smallerByLarger=!IsTesting(), largerBySmaller=!smallerByLarger;
 
-
-   // Schleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
+   // loop until the positions have been closed or a non-fixable error occurred
    while (true) {
       if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)  ", OrderCloseByEx.ErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(10)")));
 
@@ -6174,47 +6179,45 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
       oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
       time1 = GetTickCount();
-      if (smallerByLarger) success = OrderCloseBy(smaller, larger, markerColor);       // siehe (3)
+      if (smallerByLarger) success = OrderCloseBy(smaller, larger, markerColor); // see "Partial Close" note (3)
       else                 success = OrderCloseBy(larger, smaller, markerColor);
 
-      oe.setDuration(oe, GetTickCount()-time1);                                        // Zeit in Millisekunden
+      oe.setDuration(oe, GetTickCount()-time1);
 
       if (success) {
-         // oe[] füllen
-         WaitForTicket(first, true);                                                   // select=TRUE
+         // populate oe[]
+         WaitForTicket(first, /*select=*/true);                                  // data of first ticket
          oe.setSwap      (oe, OrderSwap()      );
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit()    );
 
-         WaitForTicket(second, true);                                                  // select=TRUE
-         oe.setCloseTime (oe, OrderOpenTime()  );                                      // Daten des zweiten Tickets
+         WaitForTicket(second, /*select=*/true);                                 // data of second ticket
+         oe.setCloseTime (oe, OrderOpenTime()  );
          oe.setClosePrice(oe, OrderOpenPrice() );
          oe.addSwap      (oe, OrderSwap()      );
          oe.addCommission(oe, OrderCommission());
          oe.addProfit    (oe, OrderProfit()    );
 
-         // Restposition finden
+         // find remaining position
          if (!EQ(firstLots, secondLots)) {
             double remainderLots = MathAbs(firstLots - secondLots);
 
-            if (smallerByLarger) {                                                     // online
-               // Referenz: remainder.comment = "from #smaller"
-               string strValue = StringConcatenate("from #", smaller);
+            if (smallerByLarger) {                                               // online
+               // reference in remainder.comment = "from #smaller"
+               string sValue = StringConcatenate("from #", smaller);
 
                for (int i=OrdersTotal()-1; i >= 0; i--) {
-                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;           // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
-                  if (OrderComment() != strValue)                  continue;
+                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: during iteration a ticket was closed in another thread
+                  if (OrderComment() != sValue)                    continue;
                   remainder = OrderTicket();
                   break;
                }
-               if (!remainder)
-                  return(_false(oe.setError(oe, catch("OrderCloseByEx(12)  cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP))));
+               if (!remainder) return(_false(oe.setError(oe, catch("OrderCloseByEx(12)  cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP))));
             }
 
-            else /*(largerBySmaller)*/ {                                               // im Tester
-               // keine Referenz vorhanden
-               if (!SelectTicket(larger, "OrderCloseByEx(13)", NULL, O_POP))
-                  return(_false(oe.setError(oe, last_error)));
+            else /*(largerBySmaller)*/ {                                         // in Strategy Tester
+               // no reference available
+               if (!SelectTicket(larger, "OrderCloseByEx(13)", NULL, O_POP)) return(_false(oe.setError(oe, last_error)));
                int      remainderType        = OrderType();
                //       remainderLots        = ...
                string   remainderSymbol      = OrderSymbol();
@@ -6238,50 +6241,67 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                                           break;
                                        }
                }
-               if (!remainder)
-                  return(_false(oe.setError(oe, catch("OrderCloseByEx(15)  cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP))));
+               if (!remainder) return(_false(oe.setError(oe, catch("OrderCloseByEx(15)  cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP))));
             }
             oe.setRemainingTicket(oe, remainder    );
             oe.setRemainingLots  (oe, remainderLots);
          }
 
-         if (__LOG()) log(StringConcatenate("OrderCloseByEx(16)  ", OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
+         if (__LOG()) log("OrderCloseByEx(16)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
-
-         return(!oe.setError(oe, catch("OrderCloseByEx(17)", NULL, O_POP)));           // regular exit
+         return(!oe.setError(oe, catch("OrderCloseByEx(17)", NULL, O_POP)));     // regular exit (NO_ERROR)
       }
 
       error = GetLastError();
-      if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG()) log("OrderCloseByEx(18)  trade context busy, retrying...");
-         Sleep(300);
-         continue;
+
+      switch (error) {
+         case ERR_TRADE_CONTEXT_BUSY:
+            if (__LOG()) log("OrderCloseByEx(18)  trade context busy, retrying...");
+            Sleep(300);
+            continue;
+
+         case ERR_SERVER_BUSY:
+         case ERR_TRADE_TIMEOUT:
+            tempErrors++;
+            if (tempErrors > 5)
+               break;
+            warn("OrderCloseByEx(19)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            continue;
+
+         // map terminal generated errors
+         case ERR_INVALID_TICKET:                 // unknown tickets or not open positions anymore (client-side)                          ! not yet encountered
+            if (__LOG()) log("OrderCloseByEx(20)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+            error = ERR_INVALID_TRADE_PARAMETERS;
+            break;
+         case ERR_OFF_QUOTES:                     // positions are locked and in processing queue (server-side) => SL/TP are executed     ! not yet encountered
+            if (__LOG()) log("OrderCloseByEx(21)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
+            error = ERR_INVALID_TRADE_PARAMETERS;
+            break;
+         case ERR_INVALID_TRADE_PARAMETERS:       // positions are processed and not open anymore (server-side)
+            break;
+         case NO_ERROR:
+            if (__LOG()) log("OrderCloseByEx(22)  no error returned => ERR_RUNTIME_ERROR");
+            error = ERR_RUNTIME_ERROR;
+            break;
       }
-      if (!error)
-         error = ERR_RUNTIME_ERROR;
-      if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
-         break;
-      tempErrors++;
-      if (tempErrors > 5)
-         break;
-      warn(StringConcatenate("OrderCloseByEx(19)  ", Order.TempErrorMsg(oe, tempErrors)), error);
+      break;                                      // fail for all other errors
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseByEx(20)  ", OrderCloseByEx.ErrorMsg(first, second, oe)), error, O_POP))));
+   return(_false(oe.setError(oe, Order.HandleError("OrderCloseByEx(23)  "+ OrderCloseByEx.ErrorMsg(first, second, oe), error, true, oeFlags, oe)), OrderPop("OrderCloseByEx(24)")));
 }
 
 
 /**
- * Logmessage für OrderCloseByEx().
+ * Compose a log message for successful execution of OrderCloseByEx().
  *
- * @param  int first      - erstes zu schließende Ticket
- * @param  int second     - zweites zu schließende Ticket
- * @param  int largerType - OrderType des Tickets mit der größeren Lotsize
- * @param  int oe[]       - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  int first      - first ticket to close
+ * @param  int second     - second ticket to close
+ * @param  int largerType - order type of the ticket with the larger lots
+ * @param  int oe[]       - execution details (struct ORDER_EXECUTION)
  *
  * @return string
  */
-string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
+string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, int oe[]) {
    // closed #30 by #38, remainder: #39 Buy 0.6 GBPUSD after 0.000 s
    // closed #31 by #39, no remainder after 0.000 s
 
@@ -6928,19 +6948,19 @@ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor
 /**
  * Extended version of OrderDelete().
  *
- * @param  _In_  int   ticket      - order ticket to close
+ * @param  _In_  int   ticket      - order ticket to cancel
  * @param  _In_  color markerColor - color of the chart marker to set
  * @param  _In_  int   oeFlags     - flags controlling trade request execution
  * @param  _Out_ int   oe[]        - execution details (struct ORDER_EXECUTION)
  *
  * @return bool - success status
  *
- * The function maps the mixed errors returned by the terminal to standard errors with the following meaning:
- * - ERR_INVALID_TICKET:           unknown ticket id
- * - ERR_INVALID_TRADE_PARAMETERS: ticket is not an open pending order (anymore)
+ * Notes: Typical trade operation errors returned in oe.Error are:
+ *        - ERR_INVALID_TICKET:           unknown ticket id
+ *        - ERR_INVALID_TRADE_PARAMETERS: ticket is not an open pending order (anymore)
  */
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
-   // -- validate parameters
+   // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1) return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(oe) != ORDER_EXECUTION.intSize)
@@ -6948,7 +6968,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
    ArrayInitialize(oe, 0);
 
    // ticket
-   if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(!oe.setError(oe, ERR_INVALID_TICKET));   // already signaled
+   if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
    if (!IsPendingOrderType(OrderType()))                       return(_false(oe.setError(oe, Order.HandleError("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TRADE_PARAMETERS, false, oeFlags, oe)), OrderPop("OrderDeleteEx(4)")));
    if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, Order.HandleError("OrderDeleteEx(5)  #"+ ticket +" is already deleted", ERR_INVALID_TRADE_PARAMETERS, false, oeFlags, oe)), OrderPop("OrderDeleteEx(6)")));
    // markerColor
@@ -6990,25 +7010,25 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
       oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
       oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
-      success = OrderDelete(ticket, markerColor);           // ERR_INVALID_TICKET           - unknown ticket or not an open pending order     (client-side)
-                                                            // ERR_OFF_QUOTES               - order is locked and in processing queue         (server-side)
-                                                            // ERR_INVALID_TRADE_PARAMETERS - order is processed and not open pending anymore (server-side)
+      success = OrderDelete(ticket, markerColor);
+
       oe.setDuration(oe, GetTickCount()-startTime);
 
       if (success) {
-         WaitForTicket(ticket, true);                                                  // select=TRUE
+         WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
-            return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)"))); // already signaled
+            return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
 
          if (__LOG()) log(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
-         return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));            // regular exit (NO_ERROR)
+         return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));   // regular exit (NO_ERROR)
       }
 
       error = GetLastError();
+
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
             if (__LOG()) log("OrderDeleteEx(15)  trade context busy, retrying...");
@@ -7021,22 +7041,25 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             if (tempErrors > 5)
                break;
             warn("OrderDeleteEx(16)  "+ Order.TempErrorMsg(oe, tempErrors), error);
-            continue;                                                                  // continue for temporary errors
+            continue;
 
-         case ERR_OFF_QUOTES:
-            if (__LOG()) log("OrderDeleteEx(17)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
+         // map terminal generated errors
+         case ERR_INVALID_TICKET:                // unknown ticket or not open pending order anymore (client-side)
+            if (__LOG()) log("OrderDeleteEx(17)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
-         case ERR_INVALID_TICKET:
-            if (__LOG()) log("OrderDeleteEx(18)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+         case ERR_OFF_QUOTES:                    // order is locked and in processing queue (server-side)
+            if (__LOG()) log("OrderDeleteEx(18)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
+            break;
+         case ERR_INVALID_TRADE_PARAMETERS:      // order is processed and not open pending anymore (server-side)
             break;
          case NO_ERROR:
             if (__LOG()) log("OrderDeleteEx(19)  no error returned => ERR_RUNTIME_ERROR");
             error = ERR_RUNTIME_ERROR;
             break;
       }
-      break;                                                                           // fail for all other errors
+      break;                                     // fail for all other errors
    }
    return(_false(oe.setError(oe, Order.HandleError("OrderDeleteEx(20)  "+ OrderDeleteEx.ErrorMsg(oe), error, true, oeFlags, oe)), OrderPop("OrderDeleteEx(21)")));
 }
