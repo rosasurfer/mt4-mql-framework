@@ -916,8 +916,8 @@ int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[
 int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
    if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
    if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
-   int array.dim1   = ArrayRange(array, 0);
-   int array.dim2   = ArrayRange(array, 1);
+   int array.dim1 = ArrayRange(array, 0);
+   int array.dim2 = ArrayRange(array, 1);
    if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
    if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
