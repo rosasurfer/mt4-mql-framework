@@ -479,6 +479,7 @@ bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);;
 bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);;
 bool     OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);;
+int      OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]);;
 bool     ReleaseLock(string mutexName);;
 int      RepositionLegend();;
 bool     ReverseBoolArray(bool array[]);;
