@@ -191,6 +191,7 @@
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][]);
    bool     OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]);
+   int      OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]);
    bool     DeletePendingOrders(color markerColor);
 
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
