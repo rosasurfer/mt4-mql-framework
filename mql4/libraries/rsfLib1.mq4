@@ -6341,24 +6341,23 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
 
 
 /**
- * Close multiple positions of multiple symbols in the most speed and cost efficient way.
+ * Close multiple positions of multiple symbols int the most efficient way.
  *
  * @param  _In_  int    tickets[]   - ticket ids of the positions to close
  * @param  _In_  double slippage    - acceptable slippage in pip (*not* in point)
  * @param  _In_  color  markerColor - color of the chart marker set
  * @param  _In_  int    oeFlags     - additional flags controling execution
- * @param  _Out_ int    oes[]       - array of structs ORDER_EXECUTION holding the execution details of each closed ticket after return
+ * @param  _Out_ int    oes[]       - array of execution details (struct ORDER_EXECUTION)
  *
- * @return bool - success status: FALSE if at least one of the positions could not be closed or in case of errors
+ * @return bool - success status
  *
- *
- * Notes: 1) If the positions are hedged before closing (default) all fields oe.CloseTime and oe.ClosePrice contain the values
- *           of the symbol's hedging transaction.
+ * Notes: 1) If the total persition per symbol is hedged by an opposite position before closing (default) all fields
+ *           oe.CloseTime and oe.ClosePrice contain the values of the symbol's hedging transaction.
  *
  *        2) The values oe.Swap, oe.Commission and oe.Profit returned by the trade server may differ from the real values
- *           as partial amounts may be accounted to a hedging or a closing position. All such partial amounts are returned
- *           with the last closed ticket per symbol. However, the sum of all partial returned amounts per symbol correctly
- *           matches the total value of that symbol.
+ *           as partial amounts may be accounted to an opposite closing position. All remaining partial amounts are returned
+ *           with the last closed ticket per symbol. The sum of all partial returned amounts per symbol matches the total value
+ *           of that symbol.
  *
  * TODO: add support for flag OE_MULTICLOSE_NOHEDGE when closing positions of multiple symbols
  */
@@ -6411,7 +6410,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
    int sizeOfSymbols = ArraySize(symbols);
 
    if (sizeOfSymbols == 1) {
-      if (!OrderCloseSymbol(tickets, slippage, markerColor, oeFlags, oes2))
+      if (!OrdersCloseSameSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrdersClose(13)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2,               0);
@@ -6527,6 +6526,134 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
    ArrayResize(ticketsCopy,        0);
    ArrayResize(flatSymbols,        0);
    return(!oes.setError(oes, -1, catch("OrdersClose(18)")));
+}
+
+
+/**
+ * Close multiple positions of a single symbol in the most efficient way.
+ *
+ * @param  _In_  int    tickets[]   - order tickets to close
+ * @param  _In_  double slippage    - acceptable slippage in pip
+ * @param  _In_  color  markerColor - color of the chart marker to set
+ * @param  _In_  int    oeFlags     - flags controlling trade request execution
+ * @param  _Out_ int    oes[][]     - array of execution details (struct ORDER_EXECUTION)
+ *
+ * @return bool - success status
+ *
+ * Notes: 1) If the total position is hedged by an opposite position before closing (default) all fields oe.CloseTime and
+ *           oe.ClosePrice contain the values of the hedging transaction.
+ *
+ *        2) The values oe.Swap, oe.Commission and oe.Profit returned by the trade server may differ from the real values
+ *           as partial amounts may be accounted to an opposite closing position. All remaining partial amounts are returned
+ *           with the last passed ticket. The sum of all partial returned amounts matches the correct total value of all
+ *           tickets.
+ *
+ *        (3) If an error occurred it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
+ *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
+ *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to multiple symbols
+ *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
+ */
+bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
+   // validate parameters
+   // oes[][]
+   if (ArrayDimension(oes) != 2)                                      return(!catch("OrdersCloseSameSymbol(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)                 return(!catch("OrdersCloseSameSymbol(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   int sizeOfTickets = ArraySize(tickets);
+   ArrayResize(oes, Min(sizeOfTickets, 1));  ArrayInitialize(oes, 0);
+   if (!sizeOfTickets)                                                return(!Order.HandleError("OrdersCloseSameSymbol(3)  invalid parameter tickets (size = 0)", ERR_INVALID_PARAMETER, oeFlags, oes));
+   // slippage
+   if (LT(slippage, 0))                                               return(!Order.HandleError("OrdersCloseSameSymbol(4)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oes));
+   // markerColor
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')        return(!Order.HandleError("OrdersCloseSameSymbol(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oes));
+
+   // initialize oes[]
+   if (!SelectTicket(tickets[0], "OrdersCloseSameSymbol(6)", O_PUSH)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
+   string symbol = OrderSymbol();
+   int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+
+   for (int i=0; i < sizeOfTickets; i++) {
+      if (!SelectTicket(tickets[i], "OrdersCloseSameSymbol(7)")) return(_false(oes.setError(oes, -1, ERR_INVALID_TICKET), OrderPop("OrdersCloseSameSymbol(8)")));
+      if (OrderSymbol() != symbol)                               return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
+      oes.setTicket    (oes, i, tickets[i]       );
+      oes.setSymbol    (oes, i, symbol           );
+      oes.setDigits    (oes, i, digits           );
+      if (OrderCloseTime() != 0)                                 return(_false(Order.HandleError("OrdersCloseSameSymbol(11)  ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(12)")));
+      if (OrderType() > OP_SELL)                                 return(_false(Order.HandleError("OrdersCloseSameSymbol(13)  ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(14)")));
+      oes.setType      (oes, i, OrderType()      );
+      oes.setLots      (oes, i, OrderLots()      );
+      oes.setOpenTime  (oes, i, OrderOpenTime()  );
+      oes.setOpenPrice (oes, i, OrderOpenPrice() );
+      oes.setStopLoss  (oes, i, OrderStopLoss()  );
+      oes.setTakeProfit(oes, i, OrderTakeProfit());
+      oes.setComment   (oes, i, OrderComment()   );
+   }
+   OrderPop("OrdersCloseSameSymbol(15)");
+
+   // simple close if a single ticket was passed or the flag OE_MULTICLOSE_NOHEDGE is set
+   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOHEDGE) {
+      int oe[], src, dest;
+      for (i=0; i < sizeOfTickets; i++) {
+         if (!OrderCloseEx(tickets[i], NULL, NULL, slippage, markerColor, oeFlags, oe)) return(!oes.setError(oes, -1, oe.Error(oe)));
+         src  = GetIntsAddress(oe);
+         dest = GetIntsAddress(oes) + i*ORDER_EXECUTION.intSize*4;
+         CopyMemory(dest, src, ArraySize(oe)*4);
+      }
+      ArrayResize(oe, 0);
+      return(true);
+   }
+
+   // multiple close
+   if (__LOG()) log("OrdersCloseSameSymbol(16)  closing "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets, NULL));
+
+   // continue with a modifyable copy of tickets[]
+   int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
+   int sizeOfCopy = ArrayCopy(ticketsCopy, tickets);
+
+   // hedge the total position
+   int oes2[][ORDER_EXECUTION.intSize];                                 // newTicket = >0: new ticket or remaining position of a partial close
+   int newTicket = OrdersHedge(ticketsCopy, slippage, oeFlags, oes2);   // newTicket =  0: error or total position was already flat
+   if (IsError(oes.Error(oes2, 0)))                                     // newTicket = -1: no new ticket (one was completely closed)
+      return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
+
+   for (i=0; i < sizeOfTickets; i++) {
+      oes.setBid       (oes, i, oes.Bid       (oes2, i));
+      oes.setAsk       (oes, i, oes.Ask       (oes2, i));
+      oes.setCloseTime (oes, i, oes.CloseTime (oes2, i));
+      oes.setClosePrice(oes, i, oes.ClosePrice(oes2, i));
+      oes.setDuration  (oes, i, oes.Duration  (oes2, i));
+      oes.setRequotes  (oes, i, oes.Requotes  (oes2, i));
+      oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
+   }
+   if (newTicket != 0) {
+      for (i=0; i < sizeOfTickets; i++) {
+         if (oes.RemainingTicket(oes2, i) == newTicket) {
+            oes.setSwap      (oes, i, oes.Swap      (oes2, i));
+            oes.setCommission(oes, i, oes.Commission(oes2, i));
+            oes.setProfit    (oes, i, oes.Profit    (oes2, i));
+            sizeOfCopy -= ArraySpliceInts(ticketsCopy, i, 1);           // drop the closed ticket
+            break;
+         }
+      }
+      if (newTicket > 0)
+         sizeOfCopy = ArrayPushInt(ticketsCopy, newTicket);             // add the new open ticket
+   }
+
+   // close the hedged position
+   if (!OrderCloseHedged(ticketsCopy, markerColor, oeFlags, oes2))
+      return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
+
+   for (i=0; i < sizeOfCopy; i++) {
+      int pos = SearchIntArray(tickets, ticketsCopy[i]);
+      if (pos == -1)
+         pos = sizeOfTickets-1;
+      oes.addSwap      (oes, pos, oes.Swap      (oes2, i));             // add transaction results of new tickets to the last passed ticket
+      oes.addCommission(oes, pos, oes.Commission(oes2, i));
+      oes.addProfit    (oes, pos, oes.Profit    (oes2, i));
+   }
+
+   ArrayResize(oes2,        0);
+   ArrayResize(ticketsCopy, 0);
+   return(!Order.HandleError("OrdersCloseSameSymbol(17)", GetLastError(), oeFlags, oes));
 }
 
 
@@ -6698,127 +6825,6 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
 
 
 /**
- * Schließt mehrere offene Positionen eines Symbols auf möglichst schnelle Art und Weise.
- *
- * @param  int    tickets[]   - Tickets der zu schließenden Positionen
- * @param  double slippage    - akzeptable Slippage in Pip
- * @param  color  markerColor - Farbe des Chart-Markers
- * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
- *
- * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
- *
- *
- * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets
- *          gleich).
- *
- *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
- *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
- */
-bool OrderCloseSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
-   // keine nochmalige, ausführliche Parametervalidierung (da private)
-   int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)
-      return(!oes.setError(oes, -1, catch("OrderCloseSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER)));
-   ArrayResize(oes, Min(sizeOfTickets, 1)); ArrayInitialize(oes, 0);
-
-
-   // (1) simple close if a single ticket is given or the flag OE_MULTICLOSE_NOHEDGE is set
-   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOHEDGE) {
-      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
-
-      for (int i=0; i < sizeOfTickets; i++) {
-         if (!OrderCloseEx(tickets[i], NULL, NULL, slippage, markerColor, oeFlags, oe))
-            return(_false(oes.setError(oes, -1, last_error)));
-         int src  = GetIntsAddress(oe);
-         int dest = GetIntsAddress(oes) + i*ORDER_EXECUTION.intSize*4;
-         CopyMemory(dest, src, ArraySize(oe)*4);
-      }
-      ArrayResize(oe, 0);
-      return(true);
-   }
-   if (__LOG()) log(StringConcatenate("OrderCloseSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
-
-
-   // (2) oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "OrderCloseSymbol(3)", O_PUSH))
-      return(_false(oes.setError(oes, -1, last_error)));
-   int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-
-   for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderCloseSymbol(4)", NULL, O_POP))
-         return(_false(oes.setError(oes, -1, last_error)));
-      oes.setSymbol    (oes, i, OrderSymbol()    );
-      oes.setDigits    (oes, i, digits           );
-      oes.setTicket    (oes, i, tickets[i]       );
-      oes.setType      (oes, i, OrderType()      );
-      oes.setLots      (oes, i, OrderLots()      );
-      oes.setOpenTime  (oes, i, OrderOpenTime()  );
-      oes.setOpenPrice (oes, i, OrderOpenPrice() );
-      oes.setStopLoss  (oes, i, OrderStopLoss()  );
-      oes.setTakeProfit(oes, i, OrderTakeProfit());
-      oes.setComment   (oes, i, OrderComment()   );
-   }
-
-
-   // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
-   int tickets.copy[]; ArrayResize(tickets.copy, 0);
-   int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
-
-
-   // (4) Gesamtposition glatt stellen
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
-
-   int newTicket = OrdersHedge(tickets.copy, slippage, oeFlags, oes2);                 // -1: kein neues Ticket
-   if (IsLastError())                                                                              //  0: Fehler oder Gesamtposition war bereits flat
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseSymbol(5)"))); // >0: neues Ticket
-
-   for (i=0; i < sizeOfTickets; i++) {
-      oes.setBid       (oes, i, oes.Bid       (oes2, i));
-      oes.setAsk       (oes, i, oes.Ask       (oes2, i));
-      oes.setCloseTime (oes, i, oes.CloseTime (oes2, i));               // Werte sind bei allen oes2-Tickets gleich
-      oes.setClosePrice(oes, i, oes.ClosePrice(oes2, i));
-      oes.setDuration  (oes, i, oes.Duration  (oes2, i));
-      oes.setRequotes  (oes, i, oes.Requotes  (oes2, i));
-      oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
-   }
-   if (newTicket != 0) {                                                // -1 = kein neues Ticket: ein Ticket wurde komplett geschlossen
-      for (i=0; i < sizeOfTickets; i++) {                               // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
-         if (oes.RemainingTicket(oes2, i) == newTicket) {               // partiell oder komplett geschlossenes Ticket gefunden
-            oes.setSwap      (oes, i, oes.Swap      (oes2, i));
-            oes.setCommission(oes, i, oes.Commission(oes2, i));
-            oes.setProfit    (oes, i, oes.Profit    (oes2, i));
-            sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);          // geschlossenes Ticket löschen
-            break;
-         }
-      }
-      if (newTicket > 0)
-         sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);            // neues Ticket hinzufügen
-   }
-
-
-   // (5) Teilpositionen auflösen
-   ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
-
-   if (!OrderCloseHedged(tickets.copy, markerColor, oeFlags, oes2))
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderCloseSymbol(6)")));
-
-   for (i=0; i < sizeOfCopy; i++) {
-      int pos = SearchIntArray(tickets, tickets.copy[i]);
-      if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
-         pos = sizeOfTickets-1;
-      oes.addSwap      (oes, pos, oes.Swap      (oes2, i));
-      oes.addCommission(oes, pos, oes.Commission(oes2, i));             // Beträge jeweils addieren
-      oes.addProfit    (oes, pos, oes.Profit    (oes2, i));
-   }
-
-   ArrayResize(oes2,         0);
-   ArrayResize(tickets.copy, 0);
-   return(!oes.setError(oes, -1, catch("OrderCloseSymbol(7)", NULL, O_POP)));
-}
-
-
-/**
  * Close multiple orders forming a hedged (flat) position. All passed tickets must belong to the same symbol.
  *
  * @param  _In_  int   tickets[]   - order tickets forming the flat position
@@ -6882,7 +6888,7 @@ bool OrderCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][]
 
    if (__LOG()) log("OrderCloseHedged(15)  closing "+ sizeOfTickets +" hedged "+ OrderSymbol() +" positions "+ TicketsToStr.Lots(tickets, NULL));
 
-   // create and continue with a modifyable copy of tickets[]
+   // continue with a modifyable copy of tickets[]
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
    int sizeOfCopy = ArrayCopy(ticketsCopy, tickets);
 
