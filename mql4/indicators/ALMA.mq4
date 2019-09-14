@@ -1,7 +1,6 @@
 /**
  * Multi-color Arnaud Legoux Moving Average
  *
- *
  * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <stddefines.mqh>
