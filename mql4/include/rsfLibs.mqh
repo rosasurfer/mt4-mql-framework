@@ -181,13 +181,12 @@
 
    // Tradefunktionen, Orderhandling
    bool     IsTemporaryTradeError(int error);
-   bool     IsPermanentTradeError(int error);
 
    // s: StopDistance/FreezeDistance integriert
    int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
-   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
+   bool     OrderCloseEx(int ticket, double lots, double slippage, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
    bool     OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]);
    bool     OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]);

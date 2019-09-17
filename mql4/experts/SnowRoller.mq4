@@ -1332,11 +1332,10 @@ bool ExecuteOrders(int orders[]) {
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          double lots        = NULL;
-         double price       = NULL;
          double slippage    = 0.1;
          color  markerColor = CLR_NONE;
          int    oeFlags     = NULL;
-         if (!OrderCloseEx(orders.ticket[i], lots, price, slippage, markerColor, oeFlags, oe))
+         if (!OrderCloseEx(orders.ticket[i], lots, slippage, markerColor, oeFlags, oe))
             return(!SetLastError(oe.Error(oe)));
 
          orders.closedBySL[i] = true;
@@ -1887,7 +1886,7 @@ int Grid.TrailPendingOrder(int i) {
    datetime prevPendingTime  = OrderOpenTime();
    double   prevPendingPrice = OrderOpenPrice();
    double   prevStoploss     = OrderStopLoss();
-   OrderPop("Grid.TrailPendingOrder(6)");
+   if (!OrderPop("Grid.TrailPendingOrder(6)")) return(NULL);
 
    if (ticket < 0) {                                        // client-side managed limit
       // TODO: update chart markers

@@ -92,7 +92,7 @@ void CheckForCloseSignal() {
 
       if (OrderType() == OP_BUY) {                                               // Blödsinn analog zum Entry-Signal
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
-            OrderCloseEx(ticket, OrderLots(), Bid, slippage, Gold, oeFlags, oe); // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
+            OrderCloseEx(ticket, OrderLots(), slippage, Gold, oeFlags, oe);      // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
             isOpenPosition = false;
          }
          break;
@@ -100,7 +100,7 @@ void CheckForCloseSignal() {
 
       if (OrderType() == OP_SELL) {
          if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                           // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
-            OrderCloseEx(ticket, OrderLots(), Ask, slippage, Gold, oeFlags, oe);
+            OrderCloseEx(ticket, OrderLots(), slippage, Gold, oeFlags, oe);
             isOpenPosition = false;
          }
          break;
