@@ -5719,12 +5719,12 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
  *
  * @return bool - success status
  *
- * Notes: (1) Typical trade operation errors returned in oe.Error are:
+ * Notes: (1) On partial close the final values for swap, commission and profit may be divided by the trade server over both
+ *            the partially closed and the remaining ticket.
+ *
+ *        (2) Typical trade operation errors returned in oe.Error are:
  *            - ERR_INVALID_TICKET:           the id is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: the ticket is not an open position (anymore)
- *
- *        (2) On partial close the final values for swap, commission and profit may be divided by the trade server over both
- *            the partially closed and the remaining ticket.
  */
 bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
@@ -6326,7 +6326,7 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
 
 
 /**
- * Close multiple positions of multiple symbols in the most efficient way.
+ * Close multiple positions of mixed symbols in the most efficient way.
  *
  * @param  _In_  int    tickets[]   - ticket ids of the positions to close
  * @param  _In_  double slippage    - acceptable slippage in pip (*not* in point)
@@ -6336,15 +6336,17 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
  *
  * @return bool - success status
  *
- * Notes: (1) If the total persition per symbol is hedged by an opposite position before closing (default) all fields
- *            oe.CloseTime and oe.ClosePrice contain the values of the symbol's hedging transaction.
+ * Notes: (1) If total positions are hedged before closing (default) all fields oe.CloseTime and oe.ClosePrice contain the
+ *            values of the symbol's hedging transaction.
  *
  *        (2) The values oe.Swap, oe.Commission and oe.Profit returned by the trade server may differ from the real values
  *            as partial amounts may be accounted to an opposite closing position. All remaining partial amounts are returned
  *            with the last closed ticket per symbol. The sum of all partial returned amounts per symbol matches the total
  *            value of that symbol.
  *
- * TODO: add support for flag OE_MULTICLOSE_NOHEDGE when closing positions of multiple symbols
+ *        (3) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
+ *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
+ *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  */
 bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
@@ -6515,7 +6517,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
 
 
 /**
- * Close multiple positions of a single symbol in the most efficient way.
+ * Close multiple positions of the same symbol in the most efficient way.
  *
  * @param  _In_  int    tickets[]   - order tickets to close
  * @param  _In_  double slippage    - acceptable slippage in pip
@@ -6525,18 +6527,17 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
  *
  * @return bool - success status
  *
- * Notes: (1) If the total position is hedged by an opposite position before closing (default) all fields oe.CloseTime and
- *            oe.ClosePrice contain the values of the hedging transaction.
+ * Notes: (1) If the total position is hedged before closing (default) all fields oe.CloseTime and oe.ClosePrice contain the
+ *            values of the hedging transaction.
  *
  *        (2) The values oe.Swap, oe.Commission and oe.Profit returned by the trade server may differ from the real values
  *            as partial amounts may be accounted to an opposite closing position. All remaining partial amounts are returned
- *            with the last passed ticket. The sum of all partial returned amounts matches the correct total value of all
- *            tickets.
+ *            with the last passed ticket. The sum of all partial returned amounts matches the total value of all tickets.
  *
- *        (3) If an error occurred it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
+ *        (3) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to multiple symbols
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
+ *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to mixed symbols
  */
 bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
@@ -6667,10 +6668,10 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
  *
  *        (3) Time and price of the last (the offsetting) transaction is stored as oe.CloseTime/oe.ClosePrice of all tickets.
  *
- *        (4) If an error occurred it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
+ *        (4) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to multiple symbols
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
+ *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to mixed symbols
  */
 int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
    // validate parameters
