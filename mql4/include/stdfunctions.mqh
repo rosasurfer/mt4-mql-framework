@@ -852,15 +852,11 @@ bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorP
  * @return bool - success status
  */
 bool OrderPush(string location) {
-   int error = GetLastError();
-   if (IsError(error))
-      return(!catch(location +"->OrderPush(1)", error));
-
    int ticket = OrderTicket();
 
-   error = GetLastError();
+   int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
-      return(!catch(location +"->OrderPush(2)", error));
+      return(!catch(location +"->OrderPush(1)", error));
 
    ArrayPushInt(stack.OrderSelect, ticket);
    return(true);
