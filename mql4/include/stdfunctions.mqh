@@ -1033,7 +1033,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    // emit a single warning at test start
    if (doWarn) {
       string message = "Exact tickvalue not available."+ NL
-                      +"The test will use the current online tickvalue ("+ tickValue +") which is only an approximation. "
+                      +"The test will use the current online tickvalue ("+ tickValue +") which is an approximation. "
                       +"Test with another account currency if you need exact values.";
       warn("PipValue(10)  "+ message);
       doWarn = false;
