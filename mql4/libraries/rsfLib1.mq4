@@ -6408,6 +6408,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
    }
 
    // tickets belong to multiple symbols
+   // we are not in the Tester
    if (__LOG()) log("OrdersClose(15)  closing "+ sizeOfTickets +" mixed positions "+ TicketsToStr.Lots(tickets, NULL));
 
    // continue with a modifyable copy of tickets[]
@@ -6550,6 +6551,8 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
       oes.setComment   (oes, i, OrderComment()   );
    }
    if (!OrderPop("OrdersCloseSameSymbol(15)"))                   return(!oes.setError(oes, -1, last_error));
+
+   if (IsTesting()) oeFlags |= F_OE_DONT_HEDGE;
 
    // simple close if a single ticket was passed or the flag F_OE_DONT_HEDGE is set
    if (sizeOfTickets==1 || oeFlags & F_OE_DONT_HEDGE) {
@@ -6924,11 +6927,10 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
    // oe[]
-   if (ArrayDimension(oe) > 1) return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(oe) > 1)                                 return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(oe) != ORDER_EXECUTION.intSize)
       ArrayResize(oe, ORDER_EXECUTION.intSize);
    ArrayInitialize(oe, 0);
-
    // ticket
    if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(!oe.setError(oe, ERR_INVALID_TICKET));
    if (!IsPendingOrderType(OrderType()))                       return(_false(Order.HandleError("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderDeleteEx(4)")));
