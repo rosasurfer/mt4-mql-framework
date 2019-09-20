@@ -728,7 +728,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // check sign symbol
 
 
-// Flags marking specific errors to be handled by custom error handlers (if used the correspondig errors don't trigger a terminating ERROR alert)
+// Flags marking specific errors to be handled by custom error handlers (if used the errors don't trigger a terminating ERROR alert)
 #define F_ERR_CONCURRENT_MODIFICATION   0x0001  //     1
 #define F_ERR_INVALID_PARAMETER         0x0002  //     2
 #define F_ERR_INVALID_STOP              0x0004  //     4
@@ -745,7 +745,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // flags controlling order execution
-#define OE_MULTICLOSE_NOHEDGE       0x00010000  // 65536 (don't flatten multiple positions before close)
+#define F_OE_DONT_HEDGE             0x00010000  // 65536 (don't hedge multiple positions on close)
 
 
 // String padding types, siehe StringPad()
