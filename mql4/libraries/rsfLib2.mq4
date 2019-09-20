@@ -656,7 +656,7 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
 
    string result, sValue;
 
-   OrderPush("TicketsToStr.Lots(2)");
+   if (!OrderPush("TicketsToStr.Lots(2)")) return("");
 
    for (int i=0; i < size; i++) {
       if (tickets[i] > 0) {
@@ -673,7 +673,7 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
       result = StringConcatenate(result, separator, sValue);
    }
 
-   OrderPop("TicketsToStr.Lots(3)");
+   if (!OrderPop("TicketsToStr.Lots(3)")) return("");
 
    return(StringConcatenate("{", StrRight(result, -StringLen(separator)), "}"));
 }
@@ -700,7 +700,7 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
 
    string result, sValue;
 
-   OrderPush("TicketsToStr.LotsSymbols(2)");
+   if (!OrderPush("TicketsToStr.LotsSymbols(2)")) return("");
 
    for (int i=0; i < size; i++) {
       if (tickets[i] > 0) {
@@ -717,7 +717,7 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
       result = StringConcatenate(result, separator, sValue);
    }
 
-   OrderPop("TicketsToStr.LotsSymbols(3)");
+   if (!OrderPop("TicketsToStr.LotsSymbols(3)")) return("");
 
    return(StringConcatenate("{", StrRight(result, -StringLen(separator)), "}"));
 }
@@ -740,7 +740,7 @@ string TicketsToStr.Position(int tickets[]) {
 
    double long, short, total, hedged;
 
-   OrderPush("TicketsToStr.Position(2)");
+   if (!OrderPush("TicketsToStr.Position(2)")) return("");
 
    for (int i=0; i < ticketsSize; i++) {
       if (tickets[i] > 0) {
@@ -752,7 +752,7 @@ string TicketsToStr.Position(int tickets[]) {
       }
    }
 
-   OrderPop("TicketsToStr.Position(3)");
+   if (!OrderPop("TicketsToStr.Position(3)")) return("");
 
    long   = NormalizeDouble(long,  2);
    short  = NormalizeDouble(short, 2);

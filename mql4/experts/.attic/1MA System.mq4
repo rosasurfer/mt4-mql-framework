@@ -128,7 +128,7 @@ bool Long.CheckClosePosition() {
    if (trend == -1) {
       // exit if MA turned down
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+      if (!OrderCloseEx(long.position, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
       long.position = 0;
    }
    return(!last_error);
@@ -165,7 +165,7 @@ bool Short.CheckClosePosition() {
    if (trend == 1) {
       // exit if MA turned up
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+      if (!OrderCloseEx(short.position, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
       short.position = 0;
    }
    return(!last_error);

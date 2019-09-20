@@ -801,12 +801,12 @@ bool HandleEvent(int event) {
  * @return bool
  */
 bool IsTicket(int ticket) {
-   OrderPush("IsTicket(1)");
+   if (!OrderPush("IsTicket(1)")) return(false);
 
    bool result = OrderSelect(ticket, SELECT_BY_TICKET);
 
    GetLastError();
-   OrderPop("IsTicket(2)");
+   if (!OrderPop("IsTicket(2)")) return(false);
 
    return(result);
 }
@@ -827,7 +827,7 @@ bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorP
    onErrorPopTicket = onErrorPopTicket!=0;
 
    if (pushTicket) {
-      OrderPush(label);
+      if (!OrderPush(label)) return(false);
       onErrorPopTicket = true;
    }
 
@@ -835,7 +835,7 @@ bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorP
       return(true);                             // success
 
    if (onErrorPopTicket)                        // error
-      OrderPop(label);
+      if (!OrderPop(label)) return(false);
 
    int error = GetLastError();
    if (!error)
@@ -849,21 +849,17 @@ bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorP
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
- * @return int - Ticket des aktuellen Kontexts oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
+ * @return bool - success status
  */
-int OrderPush(string location) {
-   int error = GetLastError();
-   if (IsError(error))
-      return(_NULL(catch(location +"->OrderPush(1)", error)));
-
+bool OrderPush(string location) {
    int ticket = OrderTicket();
 
-   error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error != ERR_NO_TICKET_SELECTED)
-      return(_NULL(catch(location +"->OrderPush(2)", error)));
+   int error = GetLastError();
+   if (error && error!=ERR_NO_TICKET_SELECTED)
+      return(!catch(location +"->OrderPush(1)", error));
 
    ArrayPushInt(stack.OrderSelect, ticket);
-   return(ticket);
+   return(true);
 }
 
 
@@ -872,18 +868,19 @@ int OrderPush(string location) {
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OrderPop(string location) {
    int ticket = ArrayPopInt(stack.OrderSelect);
 
    if (ticket > 0)
-      return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop(1)")));
+      return(SelectTicket(ticket, location +"->OrderPop(1)"));
 
    OrderSelect(0, SELECT_BY_TICKET);
 
    int error = GetLastError();
-   if (error && error!=ERR_NO_TICKET_SELECTED) return(!catch(StringConcatenate(location, "->OrderPop(2)"), error));
+   if (error && error!=ERR_NO_TICKET_SELECTED)
+      return(!catch(location +"->OrderPop(2)", error));
 
    return(true);
 }
@@ -904,8 +901,7 @@ bool WaitForTicket(int ticket, bool select = false) {
       return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
    if (!select) {
-      if (!OrderPush("WaitForTicket(2)"))
-         return(!last_error);
+      if (!OrderPush("WaitForTicket(2)")) return(false);
    }
 
    int i, delay=100;                                                 // je 0.1 Sekunden warten
@@ -918,8 +914,7 @@ bool WaitForTicket(int ticket, bool select = false) {
    }
 
    if (!select) {
-      if (!OrderPop("WaitForTicket(5)"))
-         return(false);
+      if (!OrderPop("WaitForTicket(5)")) return(false);
    }
 
    return(true);
@@ -1038,7 +1033,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    // emit a single warning at test start
    if (doWarn) {
       string message = "Exact tickvalue not available."+ NL
-                      +"The test will use the current online tickvalue ("+ tickValue +") which is only an approximation. "
+                      +"The test will use the current online tickvalue ("+ tickValue +") which is an approximation. "
                       +"Test with another account currency if you need exact values.";
       warn("PipValue(10)  "+ message);
       doWarn = false;
