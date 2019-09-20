@@ -173,7 +173,7 @@ bool Long.CheckOpenPosition() {
             // close an existing short position
             int oe[], oeFlags = NULL;
             if (short.position != 0) {
-               if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               if (!OrderCloseEx(short.position, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
                short.position = 0;
             }
 
@@ -214,7 +214,7 @@ bool Short.CheckOpenPosition() {
             // close an existing long position
             int oe[], oeFlags = NULL;
             if (long.position != 0) {
-               if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               if (!OrderCloseEx(long.position, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
                long.position = 0;
             }
 
