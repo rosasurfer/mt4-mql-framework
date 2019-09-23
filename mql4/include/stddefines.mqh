@@ -288,7 +288,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_PERIOD_Q1                    9
 
 
-// OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop() etc.
+// OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
 #define O_PUSH                         1
 #define O_POP                          2
 
