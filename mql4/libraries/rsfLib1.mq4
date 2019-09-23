@@ -739,7 +739,7 @@ int SortTicketsChronological(int &tickets[]) {
 
    int data[][2]; ArrayResize(data, sizeOfTickets);
 
-   if (!OrderPush("SortTicketsChronological(1)")) return(last_error);
+   OrderPush("SortTicketsChronological(1)");
 
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
@@ -5298,7 +5298,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       oe.setDuration(oe, GetTickCount()-firstTime);                              // total time in milliseconds
 
       if (ticket > 0) {
-         if (!OrderPush("OrderSendEx(20)")) return(NULL);
+         OrderPush("OrderSendEx(20)");
          WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
@@ -5870,7 +5870,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
                sValue1 = "split from #"+ ticket;
                sValue2 = "from #"+ ticket;
 
-               if (!OrderPush("OrderCloseEx(25)")) return(_false(oe.setError(oe, last_error)));
+               OrderPush("OrderCloseEx(25)");
                for (int i=OrdersTotal()-1; i >= 0; i--) {
                   OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
                   if (OrderTicket() == ticket)         continue;
@@ -5881,7 +5881,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
                   remainder = OrderTicket();
                   break;
                }
-               if (!OrderPop("OrderCloseEx(26)"))           return(_false(oe.setError(oe, last_error)));
+               OrderPop("OrderCloseEx(26)");
                if (!remainder) {
                   if (IsLastError())                        return(_false(OrderPop("OrderCloseEx(27)")));
                                                             return(_false(Order.HandleError("OrderCloseEx(28)  cannot find remaining position of partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots)", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(29)")));
@@ -6376,7 +6376,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')      return(!Order.HandleError("OrdersClose(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oes));
 
    // initialize oes[]
-   if (!OrderPush("OrdersClose(6)"))                                return(!oes.setError(oes, -1, last_error));
+   OrderPush("OrdersClose(6)");
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersClose(7)"))              return(_false(oes.setError(oes, -1, ERR_INVALID_TICKET), OrderPop("OrdersClose(8)")));
       oes.setTicket    (oes, i, tickets[i]);
@@ -6392,7 +6392,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
       oes.setTakeProfit(oes, i, OrderTakeProfit());
       oes.setComment   (oes, i, OrderComment());
    }
-   if (!OrderPop("OrdersClose(13)"))                                return(!oes.setError(oes, -1, last_error));
+   OrderPop("OrdersClose(13)");
 
    // read the passed ticket symbols and map ticket and symbol indexes
    string symbol, symbols[];    ArrayResize(symbols, 0);                      // all symbols
@@ -6564,7 +6564,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
       oes.setTakeProfit(oes, i, OrderTakeProfit());
       oes.setComment   (oes, i, OrderComment()   );
    }
-   if (!OrderPop("OrdersCloseSameSymbol(15)"))                   return(!oes.setError(oes, -1, last_error));
+   OrderPop("OrdersCloseSameSymbol(15)");
 
    if (IsTesting()) oeFlags |= F_OE_DONT_HEDGE;
 
@@ -6722,12 +6722,12 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
          oes.setCloseTime (oes, i, OrderOpenTime()             );
          oes.setClosePrice(oes, i, OrderOpenPrice()            );
       }
-      if (!OrderPop("OrdersHedge(15)")) return(!oes.setError(oes, -1, last_error));
+      OrderPop("OrdersHedge(15)");
       ArrayResize(ticketsCopy, 0);
    }
    else {
       // total position is not flat
-      if (!OrderPop("OrdersHedge(16)")) return(!oes.setError(oes, -1, last_error));
+      OrderPop("OrdersHedge(16)");
       if (__LOG()) log("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets, NULL));
       int closeTicket, totalDir=ifInt(GT(totalLots, 0), OP_LONG, OP_SHORT), oe[];
 
@@ -7118,8 +7118,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
 
    int size = OrdersTotal();
    if (size > 0) {
-      if (!OrderPush("DeletePendingOrders(1)")) return(false);
-
+      OrderPush("DeletePendingOrders(1)");
       for (int i=size-1; i >= 0; i--) {                                 // offene Tickets
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
             continue;
@@ -7128,7 +7127,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
                return(_false(OrderPop("DeletePendingOrders(2)")));
          }
       }
-      if (!OrderPop("DeletePendingOrders(3)")) return(false);
+      OrderPop("DeletePendingOrders(3)");
    }
    ArrayResize(oe, 0);
    return(true);
