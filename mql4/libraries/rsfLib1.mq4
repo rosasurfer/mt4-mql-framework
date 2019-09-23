@@ -892,7 +892,7 @@ bool IsTemporaryTradeError(int error) {
 
       // permanent errors
       case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: ist temporär
-      case ERR_TRADE_REQUEST_FAILED:         //        2   trade request failed                                      // TODO: kann temporär sein (z.B. bei Serverwechsel)
+      case ERR_TRADESERVER_ERROR:            //        2   trade request failed                                      // TODO: kann temporär sein (z.B. bei Serverwechsel)
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
       case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: ist temporär
@@ -5151,7 +5151,7 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
    if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(log(message, error));
    if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error));
    if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error));
-   if (error==ERR_TRADE_REQUEST_FAILED     && filter & F_ERR_TRADE_REQUEST_FAILED    ) return(log(message, error));
+   if (error==ERR_TRADESERVER_ERROR        && filter & F_ERR_TRADESERVER_ERROR       ) return(log(message, error));
 
    // trigger a runtime error for everything else
    return(catch(message, error));

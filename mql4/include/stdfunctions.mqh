@@ -319,7 +319,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                 );    //      1
-      case ERR_TRADE_REQUEST_FAILED       : return("trade request failed"                                      );    //      2
+      case ERR_TRADESERVER_ERROR          : return("trade server error"                                        );    //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                  );    //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                         );    //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                      );    //      5
