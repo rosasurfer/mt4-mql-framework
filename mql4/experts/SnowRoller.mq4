@@ -841,7 +841,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
 
    // ggf. Status aktualisieren
    if (sequence.status == STATUS_STOPPING) {
-      if (!openPositions) {                                                         // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
+      if (!openPositions) {                                                         // Aufruf im Tester bei Auto-Close am Testende
          n = ArraySize(sequence.stop.event) - 1;
          sequence.stop.event [n] = CreateEventId();
          sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
