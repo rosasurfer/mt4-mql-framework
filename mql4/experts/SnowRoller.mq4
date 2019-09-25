@@ -363,7 +363,7 @@ bool StopSequence() {
 
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPING;
-      if (__LOG()) log("StopSequence(4)  Tick="+ Tick +"  stopping sequence "+ sequence.name +" at level "+ sequence.level);
+      if (__LOG()) log("StopSequence(4)  stopping sequence "+ sequence.name +" at level "+ sequence.level);
    }
 
    double stopPrice, slippage = 2;                                         // 2 pip
