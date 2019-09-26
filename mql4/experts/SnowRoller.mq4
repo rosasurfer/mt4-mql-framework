@@ -95,6 +95,7 @@ double   sequence.floatingPL;                      // accumulated P/L of all ope
 double   sequence.totalPL;                         // current total P/L of the sequence: totalPL = stopsPL + closedPL + floatingPL
 double   sequence.maxProfit;                       // max. experienced total sequence profit:   0...+n
 double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
+double   sequence.profitPerLevel;                  // current profit amount per grid level
 double   sequence.commission;                      // commission value per grid level:          -n...0
 
 int      sequence.start.event [];                  // sequence starts (moment status changes to STATUS_PROGRESSING)
@@ -178,18 +179,19 @@ int      ignoreClosedPositions[];                  // ...
 int      startStopDisplayMode = SDM_PRICE;         // whether start/stop markers are displayed
 int      orderDisplayMode     = ODM_PYRAMID;       // current order display mode
 
-string   str.LotSize               = "";           // caching vars to speed-up execution of ShowStatus()
-string   str.grid.base             = "";
-string   str.sequence.direction    = "";
-string   str.sequence.missedLevels = "";
-string   str.sequence.stops        = "";
-string   str.sequence.stopsPL      = "";
-string   str.sequence.totalPL      = "";
-string   str.sequence.maxProfit    = "";
-string   str.sequence.maxDrawdown  = "";
-string   str.sequence.plStats      = "";
-string   str.startConditions       = "";
-string   str.stopConditions        = "";
+string   str.LotSize                 = "";         // caching vars to speed-up execution of ShowStatus()
+string   str.grid.base               = "";
+string   str.sequence.direction      = "";
+string   str.sequence.missedLevels   = "";
+string   str.sequence.stops          = "";
+string   str.sequence.stopsPL        = "";
+string   str.sequence.totalPL        = "";
+string   str.sequence.maxProfit      = "";
+string   str.sequence.maxDrawdown    = "";
+string   str.sequence.profitPerLevel = "";
+string   str.sequence.plStats        = "";
+string   str.startConditions         = "";
+string   str.stopConditions          = "";
 
 
 #include <app/SnowRoller/init.mqh>
@@ -296,9 +298,9 @@ bool StartSequence() {
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name);
 
+   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
    sequence.maxLevel    = sequence.level;
-   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
    datetime startTime  = TimeCurrentEx("StartSequence(3)");
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
@@ -334,7 +336,7 @@ bool StartSequence() {
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
-   return(!last_error|catch("StartSequence(5)"));
+   return(!catch("StartSequence(5)"));
 }
 
 
@@ -482,7 +484,7 @@ bool StopSequence() {
       orders.profit    [pos] += remainingProfit;
    }
 
-   // update sequence status and record stop
+   // update sequence status and stop data
    sequence.floatingPL = 0;
    sequence.totalPL    = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.TotalPL();
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
@@ -500,6 +502,7 @@ bool StopSequence() {
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;
       if (__LOG()) log("StopSequence(11)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level);
+      SS.ProfitPerLevel();
    }
 
    // save sequence
@@ -691,7 +694,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
-   return(!last_error|catch("RestorePositions(3)"));
+   return(!catch("RestorePositions(3)"));
 }
 
 
@@ -879,7 +882,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
    // ggf. Ort der Statusdatei aktualisieren
    if (updateStatusLocation)
       UpdateStatusLocation();
-   return(!last_error|catch("UpdateStatus(12)"));
+   return(!catch("UpdateStatus(12)"));
 }
 
 
@@ -1318,7 +1321,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (__LOG()) log("IsSessionBreak(1)  re-calculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (__LOG()) log("IsSessionBreak(1)  recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform check
@@ -1519,10 +1522,11 @@ bool UpdatePendingOrders() {
       sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
       if (__LOG()) log("UpdatePendingOrders(6)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
+   SS.ProfitPerLevel();
 
    if (ordersChanged)
       if (!SaveSequence()) return(false);
-   return(!last_error|catch("UpdatePendingOrders(7)"));
+   return(!catch("UpdatePendingOrders(7)"));
 }
 
 
@@ -2261,14 +2265,14 @@ int ShowStatus(int error = NO_ERROR) {
          return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME(), msg, sError,                                                         NL,
-                                                                                                          NL,
-                           "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
-                           "LotSize:         ",  str.LotSize,                                             NL,
-                           "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
-                           "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
-                           str.startConditions,                                              // ends with NL if set
-                           str.stopConditions);                                              // ends with NL if set
+   msg = StringConcatenate(__NAME(), msg, sError,                                                                         NL,
+                                                                                                                          NL,
+                           "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction,                 NL,
+                           "LotSize:         ",  str.LotSize,                                                             NL,
+                           "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                                NL,
+                           "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats, str.sequence.profitPerLevel, NL,
+                           str.startConditions,                                                    // if set it ends with NL
+                           str.stopConditions);                                                    // if set it ends with NL
 
    // 1 line top-margin for instrument display
    Comment(StringConcatenate(NL, msg));
@@ -2307,6 +2311,7 @@ void SS.All() {
    SS.TotalPL();
    SS.MaxProfit();
    SS.MaxDrawdown();
+   SS.ProfitPerLevel();
 }
 
 
@@ -2427,13 +2432,31 @@ void SS.MaxDrawdown() {
 
 
 /**
+ * ShowStatus(): Update the string representation of sequence.profitPerLevel.
+ */
+void SS.ProfitPerLevel() {
+   if (!__CHART()) return;
+
+   // no display if no position is open
+   if (!sequence.level)           str.sequence.profitPerLevel = "";
+   else {
+      double stopSize = GridSize * PipValue(LotSize);
+      double profit   = Abs(sequence.level) * stopSize;
+
+      if (ProfitDisplayInPercent) str.sequence.profitPerLevel = "  "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
+      else                        str.sequence.profitPerLevel = "  "+ DoubleToStr(profit, 2) +"/level";
+   }
+}
+
+
+/**
  * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
  */
 void SS.PLStats() {
    if (!__CHART()) return;
-   // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   if (sequence.maxLevel != 0)
+   if (sequence.maxLevel != 0) {    // no display until a position was opened
       str.sequence.plStats = "  ("+ str.sequence.maxProfit +"/"+ str.sequence.maxDrawdown +")";
+   }
 }
 
 
@@ -3109,6 +3132,7 @@ bool SaveSequence() {
    double   sequence.totalPL;             // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
    double   sequence.maxProfit;           // ja
    double   sequence.maxDrawdown;         // ja
+   double   sequence.profitPerLevel;      // nein
    double   sequence.commission;          // nein: wird aus Config ermittelt
 
    int      sequence.start.event [];      // ja
@@ -4018,7 +4042,7 @@ bool SynchronizeStatus() {
    RedrawStartStop();
    RedrawOrders();
 
-   return(!last_error|catch("SynchronizeStatus(11)"));
+   return(!catch("SynchronizeStatus(11)"));
 }
 
 
@@ -4311,7 +4335,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
    ArrayResize(events,      0);
    ArrayResize(orderEvents, 0);
-   return(!last_error|catch("Sync.ProcessEvents(16)"));
+   return(!catch("Sync.ProcessEvents(16)"));
 }
 
 
