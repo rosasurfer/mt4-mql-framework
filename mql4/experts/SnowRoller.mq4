@@ -2265,14 +2265,14 @@ int ShowStatus(int error = NO_ERROR) {
          return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME(), msg, sError,                                                                         NL,
-                                                                                                                          NL,
-                           "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction,                 NL,
-                           "LotSize:         ",  str.LotSize,                                                             NL,
-                           "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                                NL,
-                           "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats, str.sequence.profitPerLevel, NL,
-                           str.startConditions,                                                    // if set it ends with NL
-                           str.stopConditions);                                                    // if set it ends with NL
+   msg = StringConcatenate(__NAME(), msg, sError,                                                         NL,
+                                                                                                          NL,
+                           "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
+                           "LotSize:         ",  str.LotSize, str.sequence.profitPerLevel,                NL,
+                           "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
+                           "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
+                           str.startConditions,                                    // if set it ends with NL
+                           str.stopConditions);                                    // if set it ends with NL
 
    // 1 line top-margin for instrument display
    Comment(StringConcatenate(NL, msg));
@@ -2441,10 +2441,11 @@ void SS.ProfitPerLevel() {
    if (!sequence.level)           str.sequence.profitPerLevel = "";
    else {
       double stopSize = GridSize * PipValue(LotSize);
-      double profit   = Abs(sequence.level) * stopSize;
+      int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
+      double profit   = levels * stopSize;
 
-      if (ProfitDisplayInPercent) str.sequence.profitPerLevel = "  "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
-      else                        str.sequence.profitPerLevel = "  "+ DoubleToStr(profit, 2) +"/level";
+      if (ProfitDisplayInPercent) str.sequence.profitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
+      else                        str.sequence.profitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
    }
 }
 
