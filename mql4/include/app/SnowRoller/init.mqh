@@ -159,7 +159,7 @@ int afterInit() {
 int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
-   int x[]={2, 101, 130}, y=25, fontSize=76, rectangles=ArraySize(x);
+   int x[]={2, 101, 120}, y=25, fontSize=76, rectangles=ArraySize(x);
    color  bgColor = C'248,248,248';                         // that's chart background color
    string label;
 
