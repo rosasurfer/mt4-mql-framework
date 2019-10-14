@@ -1,7 +1,5 @@
 /**
- * HalfTrend-v1.02.mq4
- * Copyright 2014, FxProSystems.com
- * Based on Ozymandias.mq4
+ * HalfTrend indicator
  */
 #property indicator_chart_window
 #property indicator_buffers 4
@@ -15,8 +13,8 @@
 #property indicator_color4 Red            // atrhi[]
 #property indicator_width4 1
 
-extern int  Amplitude = 2;
-extern bool ShowBars  = true;
+extern int  Periods  = 2;
+extern bool ShowBars = true;
 
 bool   nextTrend;
 double minHigh, maxLow;
@@ -61,10 +59,10 @@ int init() {
 int start() {
 
    for (int i=Bars-1; i>=0; i--) {
-      double high   = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, Amplitude, i));
-      double low    = iLow (NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  Amplitude, i));
-      double maHigh = iMA(NULL, NULL, Amplitude, 0, MODE_SMA, PRICE_HIGH, i);
-      double maLow  = iMA(NULL, NULL, Amplitude, 0, MODE_SMA, PRICE_LOW,  i);
+      double high   = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, Periods, i));
+      double low    = iLow (NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  Periods, i));
+      double maHigh = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
+      double maLow  = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
       double atr    = iATR(NULL, NULL, 100, i)/2;
 
       trend[i] = trend[i+1];
