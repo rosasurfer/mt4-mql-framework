@@ -502,7 +502,7 @@ bool StopSequence() {
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;
       if (__LOG()) log("StopSequence(11)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level);
-      SS.ProfitPerLevel();
+      UpdateProfitTargets();
    }
 
    // save sequence
@@ -1246,7 +1246,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ DoubleToStr(stop.profitAbs.value, 2) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitAbs.condition = false;
@@ -1522,7 +1522,7 @@ bool UpdatePendingOrders() {
       sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
       if (__LOG()) log("UpdatePendingOrders(6)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
-   SS.ProfitPerLevel();
+   UpdateProfitTargets();
 
    if (ordersChanged)
       if (!SaveSequence()) return(false);
@@ -2437,8 +2437,9 @@ void SS.MaxDrawdown() {
 void SS.ProfitPerLevel() {
    if (!__CHART()) return;
 
-   // no display if no position is open
-   if (!sequence.level)           str.sequence.profitPerLevel = "";
+   if (!sequence.level) {
+      str.sequence.profitPerLevel = "";               // no display if no position is open
+   }
    else {
       double stopSize = GridSize * PipValue(LotSize);
       int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
@@ -2875,7 +2876,7 @@ bool ValidateInputs(bool interactive) {
             if (sizeOfElems == 1) {
                stop.profitAbs.condition = true;
                stop.profitAbs.value     = NormalizeDouble(dValue, 2);
-               exprs[i]                 = key +"("+ NumberToStr(dValue, ".2") +")";
+               exprs[i]                 = key +"("+ DoubleToStr(dValue, 2) +")";
             }
             else {
                stop.profitPct.condition = true;
@@ -3540,12 +3541,12 @@ bool LoadSequence.RuntimeStatus(string file, string line, string key, string val
          int startEvent = StrToInteger(value);
          if (startEvent == 0) {
             if (sizeOfValues==1 && values[i]=="0|0|0|0") {
-               if (NE(sequence.startEquity, 0))                             return(_false(catch("LoadSequence.RuntimeStatus(7)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+               if (NE(sequence.startEquity, 0))                             return(_false(catch("LoadSequence.RuntimeStatus(7)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ DoubleToStr(sequence.startEquity, 2) +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
                break;
             }
             return(_false(catch("LoadSequence.RuntimeStatus(8)  illegal sequence.start.event["+ i +"] "+ startEvent +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          }
-         if (EQ(sequence.startEquity, 0))                                   return(_false(catch("LoadSequence.RuntimeStatus(9)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (EQ(sequence.startEquity, 0))                                   return(_false(catch("LoadSequence.RuntimeStatus(9)  sequence.startEquity/sequence.start["+ i +"] mis-match "+ DoubleToStr(sequence.startEquity, 2) +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = StrTrim(data[1]);                 // sequence.start.time
          if (!StrIsDigit(value))                                            return(_false(catch("LoadSequence.RuntimeStatus(10)  illegal sequence.start.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4935,4 +4936,72 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
       debug("ReadSessionBreaks(15)  start="+ TimeToStr(dStartTime, TIME_FULL) +"  end="+ TimeToStr(dEndTime, TIME_FULL));
    }
    return(true);
+}
+
+
+/**
+ * Update breakeven and profit target numbers.
+ *
+ * @return bool - success status
+ */
+bool UpdateProfitTargets() {
+   if (IsLastError()) return( false);
+   // 7bit:
+   // double loss = currentPL - PotentialProfit(currentDistance);
+   // double be   = gridbase + RequiredDistance(MathAbs(loss));
+
+   // calculate breakeven price (profit = losses)
+   double price           = ifDouble(sequence.direction==D_LONG, Bid, Ask);
+   double currentDistance = MathAbs(price - grid.base)/Pip;
+   double potentialProfit = PotentialProfit(currentDistance);
+   double losses          = sequence.totalPL - potentialProfit;
+   double beDistance      = RequiredDistance(MathAbs(losses));
+   double bePrice         = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance);
+   debug("UpdateProfitTargets(1)  currDist="+ DoubleToStr(currentDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +"  bePrice="+ NumberToStr(bePrice, PriceFormat));
+
+   // calculate TP price
+
+   SS.ProfitPerLevel();
+   return(true);
+}
+
+
+/**
+ * Calculate the theoretically-possible maximum profit the specified distance away from the gridbase. The calculation
+ * assumes a perfect grid, it considers commission but assumes no missed grid levels and no slippage.
+ *
+ * @param  double distance - distance from gridbase in pip
+ *
+ * @return double - profit value
+ */
+double PotentialProfit(double distance) {
+   distance = NormalizeDouble(distance, 1);
+
+   int    level = distance/GridSize;
+   double partialLevel = MathModFix(distance/GridSize, 1);
+
+   int n = level - 1;
+   double units = n*(n+1)/2 + partialLevel*level;
+   double unitSize = GridSize * PipValue(LotSize) + sequence.commission;
+
+   double maxProfit = units * unitSize;
+   if (partialLevel > 0) {
+      maxProfit += (1-partialLevel)*level*sequence.commission;       // a partial level pays full commission
+   }
+   return(NormalizeDouble(maxProfit, 2));
+}
+
+
+/**
+ * Calculate the theoretically minimum distance price has to move away from the gridbase to generate the specified floating
+ * profit. The calculation assumes a perfect grid, it doesn't consider missed grid levels, commission or slippage.
+ *
+ * @param  double profit
+ *
+ * @return double - distance in pip
+ */
+double RequiredDistance(double profit) {
+   profit = MathAbs(profit);
+
+   return(0);
 }
