@@ -8,28 +8,24 @@
 #property indicator_width1 2
 #property indicator_color2 Red            // down[]
 #property indicator_width2 2
-#property indicator_color3 DodgerBlue     // atrlo[]
+#property indicator_color3 DodgerBlue     // atrLow[]
 #property indicator_width3 1
-#property indicator_color4 Red            // atrhi[]
+#property indicator_color4 Red            // atrHigh[]
 #property indicator_width4 1
 
 extern int  Periods  = 2;
 extern bool ShowBars = true;
 
-bool   nextTrend;
 double minHigh, maxLow;
-double up[],
-       down[],
-       atrHigh[],
-       atrLow[],
-       trend[];
+double up[], down[], atrHigh[], atrLow[], trend[];
+int    nextTrend;
 
 
 /**
  *
  */
 int init() {
-   IndicatorBuffers(5);             // +1 buffer for trend[]
+   IndicatorBuffers(5);
 
    SetIndexBuffer(0, up  );  SetIndexEmptyValue(0, 0); SetIndexStyle(0, DRAW_LINE);
    SetIndexBuffer(1, down);  SetIndexEmptyValue(1, 0); SetIndexStyle(1, DRAW_LINE);
