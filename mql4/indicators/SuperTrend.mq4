@@ -1,26 +1,23 @@
 /**
- * SuperTrend Indicator
+ * SuperTrend - a combination of a price/SMA cross-over and a Keltner Channel
  *
- * Combination of a Price-SMA cross-over and a Keltner Channel.
+ * Depending on a price/SMA cross-over the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate
+ * a support line (the indicator main line). The Keltner Channel is calculated around High and Low of the current bar (rather
+ * than around an EMA). The indicator line is restricted to only rising or falling values until:
  *
- * Depending on a Price-SMA cross-over signal the upper or the lower band of a Keltner Channel (ATR channel) is used to
- * calculate a supportive signal line.  The Keltner Channel is calculated around High and Low of the current bar rather than
- * around the usual Moving Average.  The value of the signal line is restricted to only rising or falling values until (1) an
- * opposite SMA cross-over signal occures and (2) the opposite channel band crosses the former supportive signal line.
- * It means with the standard settings price has to move 2 * ATR + BarSize against the current trend to trigger a change in
- * indicator direction. This significant counter-move helps to avoid trading in choppy markets.
+ *  - an opposite SMA cross-over signal occures and
+ *  - the opposite channel band crosses the support line
  *
- *   SMA:          SMA(50, TypicalPrice)
- *   TypicalPrice: (H+L+C)/3
+ * With standard settings price has to move 2*ATR + BarSize against the current trend to trigger a change in trend direction.
+ * This significant counter-move is supposed to prevent constant trend changes in choppy markets.
  *
- * The original implementations use the SMA part of a CCI.
+ * @see  http://www.forexfactory.com/showthread.php?t=214635   (Andrew Forex Trading System)
+ * @see  http://www.forexfactory.com/showthread.php?t=268038   (Plateman's CCI aka SuperTrend)
+ * @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
  *
- * @source http://www.forexfactory.com/showthread.php?t=214635 (Andrew Forex Trading System)
- * @see    http://www.forexfactory.com/showthread.php?t=268038 (Plateman's CCI aka SuperTrend)
- * @see    http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
- *
- * TODO: - SuperTrend Channel per iCustom() hinzuladen
- *       - LineType konfigurierbar machen
+ * TODO:
+ *  - dynamically load "SuperTrend Channel" via iCustom()
+ *  - make LineType configurable
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -29,18 +26,15 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    SMA.Periods          = 50;
-extern string SMA.PriceType        = "Close | Median | Typical* | Weighted";
+extern string SMA.PriceType        = "Close | Median | Typical* | Weighted";  // TypicalPrice = (H+L+C)/3
 extern int    ATR.Periods          = 1;
 
-extern color  Color.Uptrend        = Blue;                           // color management here to allow access by the code
+extern color  Color.Uptrend        = Blue;
 extern color  Color.Downtrend      = Red;
 extern color  Color.Changing       = Yellow;
 extern color  Color.MovingAverage  = Magenta;
-
-extern int    Line.Width           = 2;                              // signal line width
-
-extern int    Max.Values           = 5000;                           // max. number of values to calculate: -1 = all
-
+extern int    Line.Width           = 2;                                       // signal line width
+extern int    Max.Values           = 5000;                                    // amount of values to calculate: -1 = all
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
