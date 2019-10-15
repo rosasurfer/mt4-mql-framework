@@ -2,23 +2,21 @@
  * HalfTrend indicator
  */
 #property indicator_chart_window
-#property indicator_buffers 4
+#property indicator_buffers 2
 
-#property indicator_color1 DodgerBlue     // up[]
-#property indicator_width1 2
-#property indicator_color2 Red            // down[]
-#property indicator_width2 2
-#property indicator_color3 DodgerBlue     // atrLow[]
-#property indicator_width3 1
-#property indicator_color4 Red            // atrHigh[]
-#property indicator_width4 1
+#property indicator_color1  DodgerBlue    // up[]
+#property indicator_width1  2
+#property indicator_color2  Red           // down[]
+#property indicator_width2  2
 
 extern int  Periods  = 2;
 extern bool ShowBars = true;
 
 double minHigh, maxLow;
-double up[], down[], atrHigh[], atrLow[], trend[];
-int    nextTrend;
+double up[], down[], trend[];
+
+#define TREND_UP    1
+#define TREND_DOWN  0
 
 
 /**
@@ -29,22 +27,10 @@ int init() {
 
    SetIndexBuffer(0, up  );  SetIndexEmptyValue(0, 0); SetIndexStyle(0, DRAW_LINE);
    SetIndexBuffer(1, down);  SetIndexEmptyValue(1, 0); SetIndexStyle(1, DRAW_LINE);
-   SetIndexBuffer(2, atrLow);
-   SetIndexBuffer(3, atrHigh);
-   SetIndexBuffer(4, trend); SetIndexEmptyValue(4, 0);
+   SetIndexBuffer(2, trend); SetIndexEmptyValue(2, 0);
 
-   if (ShowBars) {
-      SetIndexStyle(2, DRAW_HISTOGRAM, STYLE_SOLID);
-      SetIndexStyle(3, DRAW_HISTOGRAM, STYLE_SOLID);
-   }
-   else {
-      SetIndexStyle(2, DRAW_NONE);
-      SetIndexStyle(3, DRAW_NONE);
-   }
-
-   nextTrend = 0;
-   minHigh   = High[Bars-1];
-   maxLow    = Low [Bars-1];
+   minHigh = High[Bars-1];
+   maxLow  = Low [Bars-1];
    return(0);
 }
 
@@ -59,53 +45,43 @@ int start() {
       double low    = iLow (NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  Periods, i));
       double maHigh = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
       double maLow  = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
-      double atr    = iATR(NULL, NULL, 100, i)/2;
 
       trend[i] = trend[i+1];
 
-      if (nextTrend == 1) {
-         maxLow = MathMax(low, maxLow);
-
-         if (maHigh < maxLow && Close[i] < Low[i+1]) {
-            trend[i]  = 1;
-            nextTrend = 0;
-            minHigh   = high;
-         }
-      }
-
-      if (nextTrend == 0) {
-         minHigh = MathMin(high, minHigh);
-
+      if (trend[i+1] == TREND_UP) {
+         minHigh = MathMin(minHigh, high);
          if (maLow > minHigh && Close[i] > High[i+1]) {
-            trend[i]  = 0;
-            nextTrend = 1;
-            maxLow    = low;
+            trend[i] = TREND_DOWN;
+            maxLow   = low;
+         }
+      }
+      else /* trend[i+1] == TREND_DOWN */ {
+         maxLow = MathMax(maxLow, low);
+         if (maHigh < maxLow && Close[i] < Low[i+1]) {
+            trend[i] = TREND_UP;
+            minHigh  = high;
          }
       }
 
-      if (trend[i] == 0) {
-         if (trend[i+1] != 0) {
-            up[i]   = down[i+1];
-            up[i+1] = up[i];
-         }
-         else {
-            up[i] = MathMax(maxLow, up[i+1]);
-         }
-         atrHigh[i] = up[i] - atr;
-         atrLow [i] = up[i];
-         down[i]    = 0;
-      }
-      else {
-         if (trend[i+1] != 1) {
+      if (trend[i] == TREND_UP) {
+         if (trend[i+1] == TREND_DOWN) {
             down[i]   = up[i+1];
             down[i+1] = down[i];
          }
          else {
             down[i] = MathMin(minHigh, down[i+1]);
          }
-         atrHigh[i] = down[i] + atr;
-         atrLow [i] = down[i];
-         up[i]      = 0;
+         up[i] = 0;
+      }
+      else /* trend[i] == TREND_DOWN */ {
+         if (trend[i+1] == TREND_UP) {
+            up[i]   = down[i+1];
+            up[i+1] = up[i];
+         }
+         else {
+            up[i] = MathMax(maxLow, up[i+1]);
+         }
+         down[i] = 0;
       }
    }
    return(0);
