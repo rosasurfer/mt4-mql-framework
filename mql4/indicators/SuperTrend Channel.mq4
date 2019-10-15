@@ -1,12 +1,11 @@
 /**
  * SuperTrend Channel
  *
- * Visualization of the otherwise invisible Keltner Channel part in the SuperTrend indicator. Implemented separately because
- * the SuperTrend indicator would have to manage more than the maximum of 8 indicator buffers to visualize this channel.
- * When SuperTrend is asked to draw the channel this indicator is loaded via iCustom(). For calculating the channel in
- * SuperTrend this indicator is not needed.
+ * Visualization of the otherwise invisible Keltner Channel part of the SuperTrend indicator. Implemented separately because
+ * the SuperTrend indicator cannot provide the additionally required 2 indicator buffers. When the SuperTrend indicator is
+ * configured to draw the channel this indicator is loaded via iCustom().
  *
- * @see  documentation in SuperTrend
+ * For calculating the channel in SuperTrend this indicator is not needed.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -19,7 +18,6 @@ extern string SMA.PriceType = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods   = 1;
 
 extern color  Color.Channel = Blue;                                  // color management here to allow access by the code
-
 extern int    Max.Values    = 5000;                                  // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

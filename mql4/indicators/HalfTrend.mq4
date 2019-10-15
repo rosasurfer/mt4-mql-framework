@@ -15,16 +15,15 @@ extern bool ShowBars = true;
 double minHigh, maxLow;
 double up[], down[], trend[];
 
-#define TREND_UP    1
-#define TREND_DOWN  0
+#define TREND_UP    0
+#define TREND_DOWN  1
 
 
 /**
  *
  */
 int init() {
-   IndicatorBuffers(5);
-
+   IndicatorBuffers(3);
    SetIndexBuffer(0, up  );  SetIndexEmptyValue(0, 0); SetIndexStyle(0, DRAW_LINE);
    SetIndexBuffer(1, down);  SetIndexEmptyValue(1, 0); SetIndexStyle(1, DRAW_LINE);
    SetIndexBuffer(2, trend); SetIndexEmptyValue(2, 0);
@@ -41,40 +40,32 @@ int init() {
 int start() {
 
    for (int i=Bars-1; i>=0; i--) {
-      double high   = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, Periods, i));
-      double low    = iLow (NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  Periods, i));
-      double maHigh = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
-      double maLow  = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
+      double maHighs     = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
+      double maLows      = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
+      double highestHigh = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, Periods, i));
+      double lowestLow   = iLow (NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  Periods, i));
 
       trend[i] = trend[i+1];
 
+      // trend calculation
       if (trend[i+1] == TREND_UP) {
-         minHigh = MathMin(minHigh, high);
-         if (maLow > minHigh && Close[i] > High[i+1]) {
+         maxLow = MathMax(maxLow, lowestLow);
+         if (maHighs < maxLow && Close[i] < Low[i+1]) {
             trend[i] = TREND_DOWN;
-            maxLow   = low;
+            minHigh  = highestHigh;
          }
       }
       else /* trend[i+1] == TREND_DOWN */ {
-         maxLow = MathMax(maxLow, low);
-         if (maHigh < maxLow && Close[i] < Low[i+1]) {
+         minHigh = MathMin(minHigh, highestHigh);
+         if (maLows > minHigh && Close[i] > High[i+1]) {
             trend[i] = TREND_UP;
-            minHigh  = high;
+            maxLow   = lowestLow;
          }
       }
 
+      // visualization + coloring
       if (trend[i] == TREND_UP) {
          if (trend[i+1] == TREND_DOWN) {
-            down[i]   = up[i+1];
-            down[i+1] = down[i];
-         }
-         else {
-            down[i] = MathMin(minHigh, down[i+1]);
-         }
-         up[i] = 0;
-      }
-      else /* trend[i] == TREND_DOWN */ {
-         if (trend[i+1] == TREND_UP) {
             up[i]   = down[i+1];
             up[i+1] = up[i];
          }
@@ -82,6 +73,16 @@ int start() {
             up[i] = MathMax(maxLow, up[i+1]);
          }
          down[i] = 0;
+      }
+      else /* trend[i] == TREND_DOWN */ {
+         if (trend[i+1] == TREND_UP) {
+            down[i]   = up[i+1];
+            down[i+1] = down[i];
+         }
+         else {
+            down[i] = MathMin(minHigh, down[i+1]);
+         }
+         up[i] = 0;
       }
    }
    return(0);
