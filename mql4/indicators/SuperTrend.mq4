@@ -1,5 +1,6 @@
 /**
- * SuperTrend - a combination of a price/SMA cross-over and a Keltner Channel
+ * SuperTrend: a combination of a price/SMA cross-over and a Keltner Channel
+ *
  *
  * Depending on a price/SMA cross-over the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate
  * a support line (the indicator main line). The Keltner Channel is calculated around High and Low of the current bar (rather

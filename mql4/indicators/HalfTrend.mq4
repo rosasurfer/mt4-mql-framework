@@ -24,7 +24,7 @@ double up[], down[], trend[];
  */
 int init() {
    IndicatorBuffers(3);
-   SetIndexBuffer(0, up  );  SetIndexEmptyValue(0, 0); SetIndexStyle(0, DRAW_LINE);
+   SetIndexBuffer(0, up);    SetIndexEmptyValue(0, 0); SetIndexStyle(0, DRAW_LINE);
    SetIndexBuffer(1, down);  SetIndexEmptyValue(1, 0); SetIndexStyle(1, DRAW_LINE);
    SetIndexBuffer(2, trend); SetIndexEmptyValue(2, 0);
 
@@ -43,7 +43,7 @@ int start() {
       double maHighs     = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
       double maLows      = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
       double highestHigh = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, Periods, i));
-      double lowestLow   = iLow (NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  Periods, i));
+      double lowestLow   = iLow (NULL, NULL, iLowest (NULL, NULL, MODE_LOW,  Periods, i));
 
       trend[i] = trend[i+1];
 
