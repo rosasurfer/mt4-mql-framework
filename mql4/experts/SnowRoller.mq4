@@ -4947,16 +4947,17 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
 bool UpdateProfitTargets() {
    if (IsLastError()) return( false);
    // 7bit:
-   // double loss = currentPL - PotentialProfit(currentDistance);
+   // double loss = currentPL - PotentialProfit(gridbaseDistance);
    // double be   = gridbase + RequiredDistance(MathAbs(loss));
 
    // calculate breakeven price (profit = losses)
-   double price           = ifDouble(sequence.direction==D_LONG, Bid, Ask);
-   double currentDistance = MathAbs(price - grid.base)/Pip;
-   double potentialProfit = PotentialProfit(currentDistance);
-   double losses          = sequence.totalPL - potentialProfit;
-   double beDistance      = RequiredDistance(MathAbs(losses));
-   double bePrice         = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance);
+   double price            = ifDouble(sequence.direction==D_LONG, Bid, Ask);
+   double gridbaseDistance = MathAbs(price - grid.base)/Pip;
+   double potentialProfit  = PotentialProfit(currentDistance);
+   double losses           = sequence.totalPL - potentialProfit;
+   double beDistance       = RequiredDistance(MathAbs(losses));
+   double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance);
+
    debug("UpdateProfitTargets(1)  currDist="+ DoubleToStr(currentDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +"  bePrice="+ NumberToStr(bePrice, PriceFormat));
 
    // calculate TP price
