@@ -71,6 +71,7 @@ extern bool     ProfitDisplayInPercent = true;                    // whether PL 
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
@@ -214,7 +215,7 @@ int onTick() {
    bool gridChanged;                                        // whether the current grid base or level changed
    int  activatedOrders[];                                  // indexes of activated client-side orders
 
-   // ...sequence either waits for start signal...
+   // ...sequence waits for start signal...
    if (sequence.status == STATUS_WAITING) {
       if (IsStartSignal()) StartSequence();
    }
@@ -222,7 +223,6 @@ int onTick() {
    // ...or sequence waits for resume signal...
    else if (sequence.status == STATUS_STOPPED) {
       if (IsResumeSignal()) ResumeSequence();
-      else                  return(last_error);
    }
 
    // ...or sequence is running...
@@ -237,6 +237,10 @@ int onTick() {
    // update equity value for equity recorder
    if (EA.RecordEquity)
       test.equity.value = sequence.startEquity + sequence.totalPL;
+
+   // update proft targets display
+   if (IsBarOpenEvent()) {
+   }
    return(last_error);
 }
 
@@ -4953,12 +4957,12 @@ bool UpdateProfitTargets() {
    // calculate breakeven price (profit = losses)
    double price            = ifDouble(sequence.direction==D_LONG, Bid, Ask);
    double gridbaseDistance = MathAbs(price - grid.base)/Pip;
-   double potentialProfit  = PotentialProfit(currentDistance);
+   double potentialProfit  = PotentialProfit(gridbaseDistance);
    double losses           = sequence.totalPL - potentialProfit;
    double beDistance       = RequiredDistance(MathAbs(losses));
-   double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance);
+   double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance)*Pip;
 
-   debug("UpdateProfitTargets(1)  currDist="+ DoubleToStr(currentDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +"  bePrice="+ NumberToStr(bePrice, PriceFormat));
+   debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
 
    // calculate TP price
 
@@ -4968,41 +4972,43 @@ bool UpdateProfitTargets() {
 
 
 /**
- * Calculate the theoretically-possible maximum profit the specified distance away from the gridbase. The calculation
- * assumes a perfect grid, it considers commission but assumes no missed grid levels and no slippage.
+ * Calculate the theoretically possible maximum profit at the specified distance away from the gridbase. The calculation
+ * assumes a perfect grid. It considers commissions but ignores missed grid levels and slippage.
  *
- * @param  double distance - distance from gridbase in pip
+ * @param  double distance - distance from the gridbase in pip
  *
  * @return double - profit value
  */
 double PotentialProfit(double distance) {
+   // P = L * (L-1)/2 + partialP
    distance = NormalizeDouble(distance, 1);
-
    int    level = distance/GridSize;
    double partialLevel = MathModFix(distance/GridSize, 1);
 
-   int n = level - 1;
-   double units = n*(n+1)/2 + partialLevel*level;
+   double units = (level-1)/2.*level + partialLevel*level;
    double unitSize = GridSize * PipValue(LotSize) + sequence.commission;
 
    double maxProfit = units * unitSize;
    if (partialLevel > 0) {
-      maxProfit += (1-partialLevel)*level*sequence.commission;       // a partial level pays full commission
+      maxProfit += (1-partialLevel)*level*sequence.commission;    // a partial level pays full commission
    }
    return(NormalizeDouble(maxProfit, 2));
 }
 
 
 /**
- * Calculate the theoretically minimum distance price has to move away from the gridbase to generate the specified floating
- * profit. The calculation assumes a perfect grid, it doesn't consider missed grid levels, commission or slippage.
+ * Calculate the minimum distance price has to move away from the gridbase to theoretically generate the specified floating
+ * profit. The calculation assumes a perfect grid. It considers commissions but ignores missed grid levels and slippage.
  *
  * @param  double profit
  *
  * @return double - distance in pip
  */
 double RequiredDistance(double profit) {
-   profit = MathAbs(profit);
-
-   return(0);
+   // L = -0.5 + (0.25 + 2*units) ^ 1/2                           // quadratic equation solved with pq-formula
+   double unitSize = GridSize * PipValue(LotSize) + sequence.commission;
+   double units = MathAbs(profit)/unitSize;
+   double level = MathPow(2*units + 0.25, 0.5) - 0.5;
+   double distance = level * GridSize;
+   return(RoundCeil(distance, 1));
 }

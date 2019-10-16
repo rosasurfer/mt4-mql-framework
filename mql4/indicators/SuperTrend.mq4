@@ -58,7 +58,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   7                                      // configurable buffers (via input dialog)
@@ -366,7 +366,7 @@ int onTick() {
 
 
        // (5) Signal mode: check for and signal trend changes
-       if (signals) /*&&*/ if (EventListener.BarOpen()) {      // BarOpen on current timeframe
+       if (signals) /*&&*/ if (IsBarOpenEvent()) {
           if      (bufferTrend[1] ==  1) onTrendChange(ST.MODE_UPTREND  );
           else if (bufferTrend[1] == -1) onTrendChange(ST.MODE_DOWNTREND);
        }

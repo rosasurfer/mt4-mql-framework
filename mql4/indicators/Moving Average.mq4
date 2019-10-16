@@ -49,7 +49,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA         // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND      //
@@ -317,7 +317,7 @@ int onTick() {
        @Trend.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
       // (4) signal trend change
-      if (signals) /*&&*/ if (EventListener.BarOpen()) {                // current timeframe
+      if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
          else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
       }

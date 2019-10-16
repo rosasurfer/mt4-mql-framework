@@ -42,7 +42,7 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 
 #define MODE_DELTA_MAIN       0                                // this indicator's buffer ids
 #define MODE_DELTA_SIGNAL     1
@@ -248,7 +248,7 @@ int onTick() {
 
 
    // 3) notify of new signals
-   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (EventListener.BarOpen()) { // current timeframe
+   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpenEvent()) {
       if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
       else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
    }
