@@ -58,7 +58,7 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
 #define MODE_SECTION          MACD.MODE_SECTION
@@ -366,7 +366,7 @@ int onTick() {
 
    // signal zero line crossing
    if (!IsSuperContext()) {
-      if (signals) /*&&*/ if (EventListener.BarOpen()) {                // current timeframe
+      if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
          else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
       }
