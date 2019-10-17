@@ -4957,7 +4957,7 @@ bool UpdateProfitTargets() {
    if (IsLastError()) return(false);
    // 7bit:
    // double loss = currentPL - PotentialProfit(gridbaseDistance);
-   // double be   = gridbase + RequiredDistance(MathAbs(loss));
+   // double be   = gridbase + RequiredDistance(loss);
 
    // calculate breakeven price (profit = losses)
    double price            = ifDouble(sequence.direction==D_LONG, Bid, Ask);
