@@ -97,6 +97,7 @@ double   sequence.totalPL;                         // current total P/L of the s
 double   sequence.maxProfit;                       // max. experienced total sequence profit:   0...+n
 double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
 double   sequence.profitPerLevel;                  // current profit amount per grid level
+double   sequence.breakeven;                       // current breakeven price
 double   sequence.commission;                      // commission value per grid level:          -n...0
 
 int      sequence.start.event [];                  // sequence starts (moment status changes to STATUS_PROGRESSING)
@@ -238,9 +239,9 @@ int onTick() {
    if (EA.RecordEquity)
       test.equity.value = sequence.startEquity + sequence.totalPL;
 
-   // update proft targets display
-   if (IsBarOpenEvent()) {
-   }
+   // update display of profit targets
+   if (IsBarOpenEvent(PERIOD_M1)) DisplayProfitTargets();
+
    return(last_error);
 }
 
@@ -507,6 +508,8 @@ bool StopSequence() {
       sequence.status = STATUS_STOPPED;
       if (__LOG()) log("StopSequence(11)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level);
       UpdateProfitTargets();
+      DisplayProfitTargets();
+      SS.ProfitPerLevel();
    }
 
    // save sequence
@@ -1527,6 +1530,8 @@ bool UpdatePendingOrders() {
       if (__LOG()) log("UpdatePendingOrders(6)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
    UpdateProfitTargets();
+   DisplayProfitTargets();
+   SS.ProfitPerLevel();
 
    if (ordersChanged)
       if (!SaveSequence()) return(false);
@@ -4944,12 +4949,12 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
 
 
 /**
- * Update breakeven and profit target numbers.
+ * Update breakeven and profit targets.
  *
  * @return bool - success status
  */
 bool UpdateProfitTargets() {
-   if (IsLastError()) return( false);
+   if (IsLastError()) return(false);
    // 7bit:
    // double loss = currentPL - PotentialProfit(gridbaseDistance);
    // double be   = gridbase + RequiredDistance(MathAbs(loss));
@@ -4961,13 +4966,41 @@ bool UpdateProfitTargets() {
    double losses           = sequence.totalPL - potentialProfit;
    double beDistance       = RequiredDistance(MathAbs(losses));
    double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance)*Pip;
-
-   debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
+   sequence.breakeven      = NormalizeDouble(bePrice, Digits);
+   //debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
 
    // calculate TP price
 
-   SS.ProfitPerLevel();
-   return(true);
+   return(!catch("UpdateProfitTargets(2)"));
+}
+
+
+/**
+ * Display the current profit targets.
+ *
+ * @return bool - success status
+ */
+bool DisplayProfitTargets() {
+   if (IsLastError())       return(false);
+   if (!sequence.breakeven) return(true);
+
+   datetime time = TimeCurrent(); time -= time % MINUTES;
+   string label = "arrow_"+ time;
+   double price = sequence.breakeven;
+
+   if (ObjectFind(label) < 0) {
+      ObjectCreate(label, OBJ_ARROW, 0, time, price);
+   }
+   else {
+      ObjectSet(label, OBJPROP_TIME1,  time);
+      ObjectSet(label, OBJPROP_PRICE1, price);
+   }
+   ObjectSet(label, OBJPROP_ARROWCODE, 4);
+   ObjectSet(label, OBJPROP_SCALE,     1);
+   ObjectSet(label, OBJPROP_COLOR,  Blue);
+   ObjectSet(label, OBJPROP_BACK,   true);
+
+   return(!catch("DisplayProfitTargets(1)"));
 }
 
 
