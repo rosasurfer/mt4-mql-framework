@@ -16,7 +16,7 @@ bool IsBarOpenEvent(int timeframe = NULL) {
    }
 
    static int      i, timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
-   static datetime bar.openTimes[], bar.closeTimes[];                            // Open/CloseTimes of each timeframe
+   static datetime bar.openTimes[], bar.closeTimes[];                      // Open/CloseTimes of each timeframe
    if (!ArraySize(bar.openTimes)) {
       ArrayResize(bar.openTimes,  ArraySize(timeframes));
       ArrayResize(bar.closeTimes, ArraySize(timeframes));
@@ -33,14 +33,14 @@ bool IsBarOpenEvent(int timeframe = NULL) {
       case PERIOD_H1 : i = 4; break;
       case PERIOD_H4 : i = 5; break;
       case PERIOD_D1 : i = 6; break;
-      case PERIOD_W1 :                                                           // intentionally not supported
-      case PERIOD_MN1: return(false);                                            // ...
+      case PERIOD_W1 :                                                     // intentionally not supported
+      case PERIOD_MN1: return(false);                                      // ...
       default:
          return(!catch("IsBarOpenEvent(3)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER));
    }
 
    // re-calculate bar open/close time of the timeframe in question
-   if (Tick.Time >= bar.closeTimes[i]) {                                         // TRUE at first call and at BarOpen
+   if (Tick.Time >= bar.closeTimes[i]) {                                   // TRUE at first call and at BarOpen
       bar.openTimes [i] = Tick.Time - Tick.Time % (timeframes[i]*MINUTES);
       bar.closeTimes[i] = bar.openTimes[i]      + (timeframes[i]*MINUTES);
    }
@@ -50,7 +50,7 @@ bool IsBarOpenEvent(int timeframe = NULL) {
    // resolve event status by checking the previous tick
    if (__ExecutionContext[I_EC.prevTickTime] < bar.openTimes[i]) {
       if (!__ExecutionContext[I_EC.prevTickTime]) {
-         if (IsExpert()) /*&&*/ if (IsTesting())                                 // in Tester the first tick is always a BarOpen event
+         if (IsExpert()) /*&&*/ if (IsTesting())                           // in Tester the first tick is always a BarOpen event
             result = true;
       }
       else {
