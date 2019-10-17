@@ -22,7 +22,7 @@ extern double Lotsize    = 0.1;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <rsfLibs.mqh>
 
@@ -87,7 +87,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (EventListener.BarOpen()) {
+   if (IsBarOpenEvent()) {
       if (!long.position) Long.CheckOpenPosition();
       else                Long.CheckClosePosition();
 
