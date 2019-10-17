@@ -15,7 +15,7 @@ extern int    iParameter = 12345;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 #include <functions/JoinStrings.mqh>
 #include <iCustom/icTrix.mqh>
 #include <structs/rsf/OrderExecution.mqh>
@@ -55,7 +55,7 @@ int onTick() {
    return(last_error);
 
 
-   if (EventListener.BarOpen()) {
+   if (IsBarOpenEvent()) {
       double trix = icTrix(NULL, 20, PRICE_CLOSE, Slope.MODE_MAIN,  1);
       int   trend = icTrix(NULL, 20, PRICE_CLOSE, Slope.MODE_TREND, 1);
       //if (trend ==  1) debug("onTick(1)  Trix turned up,   last bar value: "+ trix +"  last bar trend: "+ _int(trend));

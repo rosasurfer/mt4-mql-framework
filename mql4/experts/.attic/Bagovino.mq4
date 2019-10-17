@@ -35,7 +35,7 @@ extern string Notify.onOpenSignal = "on | off | auto*";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/IsBarOpenEvent.mqh>
 #include <iCustom/icMACD.mqh>
 #include <iCustom/icRSI.mqh>
 #include <rsfLibs.mqh>
@@ -145,7 +145,7 @@ int onInit() {
 int onTick() {
    bool result;
 
-   if (EventListener.BarOpen()) {                              // atm: we check only the current timeframe
+   if (IsBarOpenEvent()) {
       if (!long.position)  result = Long.CheckOpenPosition();
       else                 result = Long.CheckClosePosition();  if (!result) return(last_error);
 
