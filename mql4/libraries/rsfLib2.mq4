@@ -201,7 +201,7 @@ string MoneysToStr(double values[], string separator=", ") {
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      strings[i] = NumberToStr(values[i], ".2");
+      strings[i] = DoubleToStr(values[i], 2);
       if (!StringLen(strings[i]))
          return("");
    }

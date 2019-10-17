@@ -398,10 +398,10 @@ string CreateReport() {
    string strLowPrice    = StrPadLeft(NumberToStr(lowPrice,   PriceFormat), len, " ");
    string strClosePrice  = StrPadLeft(NumberToStr(closePrice, PriceFormat), len, " ");
 
-   string strMaxBarRange = NumberToStr(maxBarRange/Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxBarRange));
-   string strMaxTickGap  = NumberToStr(maxTickGap /Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxTickGap ));
-   string strMaxTotalGap = NumberToStr(maxTotalGap/Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxTotalGap));
-                                                                       len = Max(len, StringLen(strMaxHoleLen ));
+   string strMaxBarRange = DoubleToStr(maxBarRange/Pip, 1) +" pip"; len = Max(len, StringLen(strMaxBarRange));
+   string strMaxTickGap  = DoubleToStr(maxTickGap /Pip, 1) +" pip"; len = Max(len, StringLen(strMaxTickGap ));
+   string strMaxTotalGap = DoubleToStr(maxTotalGap/Pip, 1) +" pip"; len = Max(len, StringLen(strMaxTotalGap));
+                                                                    len = Max(len, StringLen(strMaxHoleLen ));
           strHighPrice   = StrPadRight(strHighPrice,   len, " ");
           strLowPrice    = StrPadRight(strLowPrice,    len, " ");
           strMaxBarRange = StrPadRight(strMaxBarRange, len, " ");
