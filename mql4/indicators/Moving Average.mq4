@@ -25,12 +25,12 @@ extern int    MA.Periods           = 38;
 extern string MA.Method            = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend        = Blue;                 // indicator style management in MQL
+extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 2;
 
-extern int    Max.Values           = 5000;                 // max. number of values to calculate: -1 = all
+extern int    Max.Values           = 5000;                 // max. amount of values to calculate (-1: all)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -54,13 +54,12 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #define MODE_MA               MovingAverage.MODE_MA         // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND      //
 #define MODE_UPTREND          2                             // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
-#define MODE_DOWNTREND        3                             // uptrend is covered by the continuing downtrend. To make single-bar uptrends
+#define MODE_DOWNTREND        3                             // uptrend is covered by the continuing downtrend. To make one-bar uptrends
 #define MODE_UPTREND1         MODE_UPTREND                  // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
 #define MODE_UPTREND2         4                             //
 
 #property indicator_chart_window
-#property indicator_buffers   5                             // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                            // used buffers
+#property indicator_buffers   5
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -368,7 +367,7 @@ bool onTrendChange(int trend) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
    int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);

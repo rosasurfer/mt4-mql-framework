@@ -17,7 +17,7 @@ extern int   MMI.Periods = 100;
 extern color Line.Color  = Blue;
 extern int   Line.Width  = 1;
 
-extern int   Max.Values  = 5000;                            // max. number of values to calculate: -1 = all
+extern int   Max.Values  = 5000;                            // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,8 +28,7 @@ extern int   Max.Values  = 5000;                            // max. number of va
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 
 #property indicator_separate_window
-#property indicator_buffers   1                             // configurable buffers (via input dialog)
-int       allocated_buffers = 1;                            // used buffers
+#property indicator_buffers   1
 #property indicator_color1    Blue
 
 double bufferMMI[];
@@ -135,7 +134,7 @@ int onTick() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int drawStyle = ifInt(!Line.Width, DRAW_NONE, DRAW_LINE);
    SetIndexStyle(MODE_MAIN, drawStyle, EMPTY, Line.Width, Line.Color);

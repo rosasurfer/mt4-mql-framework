@@ -29,7 +29,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    Filter.Periods  = 38;
 
-extern color  Color.UpTrend   = RoyalBlue;            // indicator style management in MQL
+extern color  Color.UpTrend   = RoyalBlue;
 extern color  Color.DownTrend = Gold;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 3;
@@ -49,8 +49,7 @@ extern int    Draw.LineWidth  = 3;
 #define MODE_UPTREND2         4                       //
 
 #property indicator_chart_window
-#property indicator_buffers   5                       // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                      // used buffers
+#property indicator_buffers   5
 
 double bufferMain     [];                             // all filter values:   invisible, displayed in "Data" window
 double bufferTrend    [];                             // trend direction:     invisible
@@ -235,7 +234,7 @@ double Price(int bar) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
    int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);

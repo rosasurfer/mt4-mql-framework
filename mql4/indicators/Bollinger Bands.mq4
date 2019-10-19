@@ -19,14 +19,14 @@ int __DEINIT_FLAGS__[];
 extern int    MA.Periods        = 200;
 extern string MA.Method         = "SMA | LWMA | EMA | ALMA*";
 extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern color  MA.Color          = LimeGreen;          // indicator style management in MQL
+extern color  MA.Color          = LimeGreen;
 extern int    MA.LineWidth      = 0;
 
 extern double Bands.StdDevs     = 2;
 extern color  Bands.Color       = RoyalBlue;
 extern int    Bands.LineWidth   = 1;
 
-extern int    Max.Values        = 5000;               // max. number of values to calculate: -1 = all
+extern int    Max.Values        = 5000;               // max. amount of values to calculate (-1: all)
 
 extern string __________________________;
 
@@ -52,8 +52,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #define MODE_LOWER            Bands.MODE_LOWER
 
 #property indicator_chart_window
-#property indicator_buffers   3                       // configurable buffers (via input dialog)
-int       allocated_buffers = 3;                      // used buffers
+#property indicator_buffers   3
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_SOLID
@@ -301,7 +300,7 @@ int onTick() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    if (!MA.LineWidth)    { int ma.drawType    = DRAW_NONE, ma.width    = EMPTY;           }
    else                  {     ma.drawType    = DRAW_LINE; ma.width    = MA.LineWidth;    }
