@@ -1,5 +1,5 @@
 /**
- * SuperTrend: a combination of a price/SMA cross-over and a Keltner Channel
+ * SuperTrend - a combination of an ATR channel and a support/resistance line.
  *
  *
  * Depending on a price/SMA cross-over the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate
@@ -27,15 +27,15 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    SMA.Periods          = 50;
-extern string SMA.PriceType        = "Close | Median | Typical* | Weighted";  // TypicalPrice = (H+L+C)/3
+extern string SMA.PriceType        = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods          = 1;
 
-extern color  Color.Uptrend        = Blue;
-extern color  Color.Downtrend      = Red;
+extern color  Color.UpTrend        = Blue;
+extern color  Color.DownTrend      = Red;
 extern color  Color.Changing       = Yellow;
 extern color  Color.MovingAverage  = Magenta;
-extern int    Line.Width           = 2;                                       // signal line width
-extern int    Max.Values           = 5000;                                    // amount of values to calculate: -1 = all
+extern int    Line.Width           = 2;                  // signal line width
+extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -56,8 +56,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/IsBarOpenEvent.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   7                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 7;                                     // used buffers
+#property indicator_buffers   7
 
 #define ST.MODE_SIGNAL        SuperTrend.MODE_SIGNAL                 // signal line index
 #define ST.MODE_TREND         SuperTrend.MODE_TREND                  // signal trend index
@@ -107,7 +106,7 @@ int    tickTimerId;                                                  // ticker i
  * @return int - error status
  */
 int onInit() {
-   // (1) Validation
+   // validate inputs
    // SMA.Periods
    if (SMA.Periods < 2)    return(catch("onInit(1)  Invalid input parameter SMA.Periods = "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    sma.periods = SMA.Periods;
@@ -129,9 +128,9 @@ int onInit() {
    // ATR
    if (ATR.Periods < 1)    return(catch("onInit(3)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // Colors
-   if (Color.Uptrend       == 0xFF000000) Color.Uptrend       = CLR_NONE;  // at times after re-compilation or re-start the terminal convertes
-   if (Color.Downtrend     == 0xFF000000) Color.Downtrend     = CLR_NONE;  // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
+   // colors
+   if (Color.UpTrend       == 0xFF000000) Color.UpTrend       = CLR_NONE;  // at times after re-compilation or re-start the terminal convertes
+   if (Color.DownTrend     == 0xFF000000) Color.DownTrend     = CLR_NONE;  // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
    if (Color.Changing      == 0xFF000000) Color.Changing      = CLR_NONE;
    if (Color.MovingAverage == 0xFF000000) Color.MovingAverage = CLR_NONE;
 
@@ -143,7 +142,7 @@ int onInit() {
    if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // Signale
+   // signals
    if (!Configure.Signal("SuperTrend", Signal.onTrendChange, signals))                                          return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
@@ -155,15 +154,7 @@ int onInit() {
    }
 
 
-   // (2) Chart legend
-   indicator.shortName = __NAME() +"("+ SMA.Periods +")";
-   if (!IsSuperContext()) {
-      chart.legendLabel   = CreateLegendLabel(indicator.shortName);
-      ObjectRegister(chart.legendLabel);
-   }
-
-
-   // (3) Buffer management
+   // buffer management
    SetIndexBuffer(ST.MODE_SIGNAL,    bufferSignal   );
    SetIndexBuffer(ST.MODE_TREND,     bufferTrend    );
    SetIndexBuffer(ST.MODE_UPTREND,   bufferUptrend  );
@@ -172,19 +163,24 @@ int onInit() {
    SetIndexBuffer(ST.MODE_MA,        bufferMa       );
    SetIndexBuffer(ST.MODE_MA_SIDE,   bufferMaSide   );
 
-   // Drawing options
-   int startDraw = 0;
-   if (Max.Values >= 0) startDraw = Bars - Max.Values;
-   if (startDraw  <  0) startDraw = 0;
-   SetIndexDrawBegin(ST.MODE_UPTREND,   startDraw);
-   SetIndexDrawBegin(ST.MODE_DOWNTREND, startDraw);
-   SetIndexDrawBegin(ST.MODE_CIP,       startDraw);
-   SetIndexDrawBegin(ST.MODE_MA,        startDraw);
 
+   // chart legend
+   indicator.shortName = __NAME() +"("+ SMA.Periods +")";
+   if (!IsSuperContext()) {
+      chart.legendLabel = CreateLegendLabel(indicator.shortName);
+      ObjectRegister(chart.legendLabel);
+   }
 
-   // (4) Indicator styles and display options
-   IndicatorDigits(SubPipDigits);
+   // names, labels, styles and display options
    IndicatorShortName(indicator.shortName);                          // chart context menu
+   SetIndexLabel(ST.MODE_SIGNAL,    indicator.shortName);            // chart tooltips and "Data" window
+   SetIndexLabel(ST.MODE_TREND,     NULL               );
+   SetIndexLabel(ST.MODE_UPTREND,   NULL               );
+   SetIndexLabel(ST.MODE_DOWNTREND, NULL               );
+   SetIndexLabel(ST.MODE_CIP,       NULL               );
+   SetIndexLabel(ST.MODE_MA,        NULL               );
+   SetIndexLabel(ST.MODE_MA_SIDE,   NULL               );
+   IndicatorDigits(SubPipDigits);
    SetIndicatorOptions();
 
    return(catch("onInit(7)"));
@@ -222,7 +218,7 @@ int afterInit() {
 
 
 /**
- * De-initialization
+ * Deinitialization
  *
  * @return int - error status
  */
@@ -245,8 +241,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // make sure indicator buffers are initialized
-   if (!ArraySize(bufferSignal))                                     // may happen at terminal start
+   // check for finished buffer initialization (needed on terminal start)
+   if (!ArraySize(bufferSignal))
       return(log("onTick(1)  size(bufferSignal) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -278,13 +274,13 @@ int onTick() {
    int startBar = Min(bars-1, Bars-sma.periods);
    if (startBar < 0) {
       if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but don't return to update the legend
+      SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but continue to update the legend
    }
 
    double dNull[];
 
 
-   // (2) re-calculate changed bars
+   // (2) recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       // price, MA, ATR, bands
       double price  = iMA(NULL, NULL,           1, 0, MODE_SMA, sma.priceType, bar);
@@ -297,7 +293,6 @@ int onTick() {
          if (tr0 < atr1)                                             // use the previous ATR as long as the progressing bar's range does not exceed it
             atr = atr1;
       }
-
       double upperBand = High[bar] + atr;
       double lowerBand = Low [bar] - atr;
 
@@ -357,7 +352,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
         // (4) update chart legend
-       @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, signal.info, Color.Uptrend, Color.Downtrend, bufferSignal[0], bufferTrend[0], Time[0]);
+       @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferSignal[0], bufferTrend[0], Time[0]);
 
 
        // (5) Signal mode: check for and signal trend changes
@@ -418,19 +413,11 @@ void SetIndicatorOptions() {
 
    SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(ST.MODE_UPTREND,   drawType,  EMPTY, Line.Width, Color.Uptrend      );
-   SetIndexStyle(ST.MODE_DOWNTREND, drawType,  EMPTY, Line.Width, Color.Downtrend    );
+   SetIndexStyle(ST.MODE_UPTREND,   drawType,  EMPTY, Line.Width, Color.UpTrend      );
+   SetIndexStyle(ST.MODE_DOWNTREND, drawType,  EMPTY, Line.Width, Color.DownTrend    );
    SetIndexStyle(ST.MODE_CIP,       drawType,  EMPTY, Line.Width, Color.Changing     );
    SetIndexStyle(ST.MODE_MA,        DRAW_LINE, EMPTY, EMPTY,      Color.MovingAverage);
    SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY, EMPTY);
-
-   SetIndexLabel(ST.MODE_SIGNAL,    indicator.shortName);            // chart tooltip and Data window
-   SetIndexLabel(ST.MODE_TREND,     NULL               );
-   SetIndexLabel(ST.MODE_UPTREND,   NULL               );
-   SetIndexLabel(ST.MODE_DOWNTREND, NULL               );
-   SetIndexLabel(ST.MODE_CIP,       NULL               );
-   SetIndexLabel(ST.MODE_MA,        NULL               );
-   SetIndexLabel(ST.MODE_MA_SIDE,   NULL               );
 }
 
 
@@ -444,8 +431,8 @@ string InputsToStr() {
                             "SMA.PriceType=",        DoubleQuoteStr(SMA.PriceType),        ";", NL,
                             "ATR.Periods=",          ATR.Periods,                          ";", NL,
 
-                            "Color.Uptrend=",        ColorToStr(Color.Uptrend),            ";", NL,
-                            "Color.Downtrend=",      ColorToStr(Color.Downtrend),          ";", NL,
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Color.Changing=",       ColorToStr(Color.Changing),           ";", NL,
                             "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      ";", NL,
 
