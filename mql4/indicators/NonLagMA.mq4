@@ -25,7 +25,7 @@ extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line | Dot*";
 extern int    Draw.LineWidth        = 2;
 
-extern int    Max.Values            = 5000;                          // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 5000;                          // max. amount of values to calculate (-1: all)
 
 extern string __________________________;
 
@@ -55,8 +55,7 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #define MODE_UPTREND2         4                                      // zusätzlich im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
-#property indicator_buffers   5                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                                     // used buffers
+#property indicator_buffers   5
 
 #property indicator_width1    0
 #property indicator_width2    0

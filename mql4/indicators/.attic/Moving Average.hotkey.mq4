@@ -32,7 +32,7 @@ extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotke
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend            = Orange;
 
-extern int    Max.Values                 = 5000;                     // max. number of values to calculate: -1 = all
+extern int    Max.Values                 = 5000;                     // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,8 +53,7 @@ extern int    Max.Values                 = 5000;                     // max. num
 
 #property indicator_chart_window
 
-#property indicator_buffers   5                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                                     // used buffers
+#property indicator_buffers   5
 
 #property indicator_width1    0
 #property indicator_width2    0

@@ -18,7 +18,7 @@ extern string SMA.PriceType = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods   = 1;
 
 extern color  Color.Channel = Blue;                                  // color management here to allow access by the code
-extern int    Max.Values    = 5000;                                  // max. number of values to calculate: -1 = all
+extern int    Max.Values    = 5000;                                  // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -27,8 +27,7 @@ extern int    Max.Values    = 5000;                                  // max. num
 #include <rsfLibs.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   2                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 2;                                     // used buffers
+#property indicator_buffers   2
 
 #property indicator_style1    STYLE_SOLID                            // STYLE_DOT
 #property indicator_style2    STYLE_SOLID                            // STYLE_DOT
@@ -114,7 +113,7 @@ int onInit() {
 
 
 /**
- * De-initialization
+ * Deinitialization
  *
  * @return int - error status
  */
@@ -132,8 +131,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // make sure indicator buffers are initialized
-   if (!ArraySize(bufferUpperBand))                                  // may happen at terminal start
+   // check for finished buffer initialization (needed on terminal start)
+   if (!ArraySize(bufferUpperBand))
       return(log("onTick(1)  size(bufferMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -159,7 +158,7 @@ int onTick() {
    }
 
 
-   // (2) re-calculate changed bars
+   // (2) recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       double atr = iATR(NULL, NULL, ATR.Periods, bar);
       if (bar == 0) {                                                // suppress ATR jitter at the progressing bar 0

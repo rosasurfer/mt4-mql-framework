@@ -39,7 +39,7 @@ bool IsBarOpenEvent(int timeframe = NULL) {
          return(!catch("IsBarOpenEvent(3)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER));
    }
 
-   // re-calculate bar open/close time of the timeframe in question
+   // recalculate bar open/close time of the timeframe in question
    if (Tick.Time >= bar.closeTimes[i]) {                                   // TRUE at first call and at BarOpen
       bar.openTimes [i] = Tick.Time - Tick.Time % (timeframes[i]*MINUTES);
       bar.closeTimes[i] = bar.openTimes[i]      + (timeframes[i]*MINUTES);

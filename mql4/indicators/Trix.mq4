@@ -25,14 +25,14 @@ int __DEINIT_FLAGS__[];
 extern int    EMA.Periods           = 38;
 extern string EMA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MainLine.Color        = DodgerBlue;           // indicator style management in MQL
+extern color  MainLine.Color        = DodgerBlue;
 extern int    MainLine.Width        = 1;
 
 extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                 // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +42,7 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #include <functions/@Trend.mqh>
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (via input dialog)
+#property indicator_buffers   4                             // buffers visible in input dialog
 int       allocated_buffers = 7;                            // used buffers
 
 #property indicator_width1    1

@@ -38,7 +38,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
    double curValue  = values[bar  ];
    double prevValue = values[bar+1];
 
-   // normalization has the affect of reversal smoothing and can prevent "jitter" of a seemingly flat line
+   // normalization has the affect of reversal smoothing and can prevent jitter of a seemingly flat line
    if (digits != EMPTY_VALUE) {
       curValue  = NormalizeDouble(curValue,  digits);
       prevValue = NormalizeDouble(prevValue, digits);

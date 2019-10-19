@@ -22,14 +22,14 @@ int __DEINIT_FLAGS__[];
 extern int    RSI.Periods           = 14;
 extern string RSI.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MainLine.Color        = Blue;                 // indicator style management in MQL
+extern color  MainLine.Color        = Blue;
 extern int    MainLine.Width        = 1;
 
 extern color  Histogram.Color.Upper = Blue;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                 // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43,8 +43,7 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #define MODE_LOWER_SECTION    3
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (via input dialog)
-int       allocated_buffers = 4;                            // used buffers
+#property indicator_buffers   4
 #property indicator_level1    0
 
 double bufferRSI    [];                                     // RSI main value:            visible, displayed in "Data" window
@@ -220,7 +219,7 @@ int onTick() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
