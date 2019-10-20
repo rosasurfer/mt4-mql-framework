@@ -11,6 +11,7 @@ extern int    Periods         = 3;
 
 extern color  Color.UpTrend   = DodgerBlue;              // indicator style management in MQL
 extern color  Color.DownTrend = Red;
+extern color  Color.Channel   = CLR_NONE;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 3;
 
@@ -26,14 +27,25 @@ extern int    Max.Values      = 5000;                    // max. amount of value
 #define MODE_TREND            HalfTrend.MODE_TREND
 #define MODE_UP               2
 #define MODE_DOWN             3
+#define MODE_UPPER_BAND       4
+#define MODE_LOWER_BAND       5
 
 #property indicator_chart_window
-#property indicator_buffers   4
+#property indicator_buffers   6
 
-double mainLine[];                                       // all SR values:   invisible, displayed in "Data" window
-double trend   [];                                       // trend direction: invisible
-double upLine  [];                                       // support line:    visible
-double downLine[];                                       // resistance line: visible
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+#property indicator_color4    CLR_NONE
+#property indicator_color5    CLR_NONE
+#property indicator_color6    CLR_NONE
+
+double mainLine [];                                      // all SR values:      invisible, displayed in "Data" window
+double trend    [];                                      // trend direction:    invisible
+double upLine   [];                                      // support line:       visible
+double downLine [];                                      // resistance line:    visible
+double upperBand[];                                      // upper channel band: visible
+double lowerBand[];                                      // lower channel band: visible
 
 int    maxValues;
 int    drawType      = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
@@ -57,9 +69,10 @@ int onInit() {
    // Periods
    if (Periods < 2) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   if (Color.Channel   == 0xFF000000) Color.Channel   = CLR_NONE;
 
    // Draw.Type
    string values[], sValue = StrToLower(Draw.Type);
@@ -82,10 +95,12 @@ int onInit() {
 
 
    // buffer management
-   SetIndexBuffer(MODE_MAIN,  mainLine);                 // all SR values:   invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_TREND, trend   );                 // trend direction: invisible
-   SetIndexBuffer(MODE_UP,    upLine  );                 // support line:    visible
-   SetIndexBuffer(MODE_DOWN,  downLine);                 // resistance line: visible
+   SetIndexBuffer(MODE_MAIN,       mainLine );           // all SR values:      invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_TREND,      trend    );           // trend direction:    invisible
+   SetIndexBuffer(MODE_UP,         upLine   );           // support line:       visible
+   SetIndexBuffer(MODE_DOWN,       downLine );           // resistance line:    visible
+   SetIndexBuffer(MODE_UPPER_BAND, upperBand);           // upper channel band: visible
+   SetIndexBuffer(MODE_LOWER_BAND, lowerBand);           // lower channel band: visible
 
    // chart legend
    indicator.shortName = __NAME() +"("+ Periods +")";
@@ -97,10 +112,10 @@ int onInit() {
    // names, labels, styles and display options
    IndicatorShortName(indicator.shortName);              // chart context menu
    SetIndexLabel(MODE_MAIN,  indicator.shortName);       // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND, NULL);
+   SetIndexLabel(MODE_TREND, __NAME() +" length");
    SetIndexLabel(MODE_UP,    NULL);
    SetIndexLabel(MODE_DOWN,  NULL);
-   IndicatorDigits(SubPipDigits);
+   IndicatorDigits(Digits);
    SetIndicatorOptions();
 
    return(catch("onInit(6)"));
@@ -142,19 +157,23 @@ int onTick() {
 
    // reset all buffers before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(mainLine, EMPTY_VALUE);
-      ArrayInitialize(trend,    0);
-      ArrayInitialize(upLine,   EMPTY_VALUE);
-      ArrayInitialize(downLine, EMPTY_VALUE);
+      ArrayInitialize(mainLine,  EMPTY_VALUE);
+      ArrayInitialize(trend,     0);
+      ArrayInitialize(upLine,    EMPTY_VALUE);
+      ArrayInitialize(downLine,  EMPTY_VALUE);
+      ArrayInitialize(upperBand, EMPTY_VALUE);
+      ArrayInitialize(lowerBand, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(mainLine, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(trend,    Bars, ShiftedBars, 0          );
-      ShiftIndicatorBuffer(upLine,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(downLine, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(mainLine,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trend,     Bars, ShiftedBars, 0          );
+      ShiftIndicatorBuffer(upLine,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(downLine,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -167,15 +186,16 @@ int onTick() {
 
    // recalculate changed bars
    for (int i=startBar; i>=0; i--) {
-      double upperBand   = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
-      double lowerBand   = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
+      upperBand[i] = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
+      lowerBand[i] = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
+
       double currentHigh = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, Periods, i));
       double currentLow  = iLow (NULL, NULL, iLowest (NULL, NULL, MODE_LOW,  Periods, i));
 
       // update trend direction and main SR values
       if (trend[i+1] > 0) {
          mainLine[i] = MathMax(mainLine[i+1], currentLow);
-         if (upperBand < mainLine[i] && Close[i] < Low[i+1]) {
+         if (upperBand[i] < mainLine[i] && Close[i] < Low[i+1]) {
             trend   [i] = -1;
             mainLine[i] = MathMin(mainLine[i+1], currentHigh);
          }
@@ -183,7 +203,7 @@ int onTick() {
       }
       else if (trend[i+1] < 0) {
          mainLine[i] = MathMin(mainLine[i+1], currentHigh);
-         if (lowerBand > mainLine[i] && Close[i] > High[i+1]) {
+         if (lowerBand[i] > mainLine[i] && Close[i] > High[i+1]) {
             trend   [i] = 1;
             mainLine[i] = MathMax(mainLine[i+1], currentLow);
          }
@@ -232,10 +252,21 @@ void SetIndicatorOptions() {
    int dType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
    int dWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
 
-   SetIndexStyle(MODE_MAIN,  DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_TREND, DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_UP,    dType,     EMPTY, dWidth, Color.UpTrend);   SetIndexArrow(MODE_UP,   159);
-   SetIndexStyle(MODE_DOWN,  dType,     EMPTY, dWidth, Color.DownTrend); SetIndexArrow(MODE_DOWN, 159);
+   SetIndexStyle(MODE_MAIN,       DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_TREND,      DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_UP,         dType,     EMPTY, dWidth, Color.UpTrend  ); SetIndexArrow(MODE_UP,   159);
+   SetIndexStyle(MODE_DOWN,       dType,     EMPTY, dWidth, Color.DownTrend); SetIndexArrow(MODE_DOWN, 159);
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,  Color.Channel  );
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,  Color.Channel  );
+
+   if (Color.Channel == CLR_NONE) {
+      SetIndexLabel(MODE_UPPER_BAND, NULL);
+      SetIndexLabel(MODE_LOWER_BAND, NULL);
+   }
+   else {
+      SetIndexLabel(MODE_UPPER_BAND, __NAME() +" upper band");
+      SetIndexLabel(MODE_LOWER_BAND, __NAME() +" lower band");
+   }
 }
 
 
@@ -249,6 +280,7 @@ bool StoreInputParameters() {
    Chart.StoreInt   (name +".input.Periods",         Periods        );
    Chart.StoreColor (name +".input.Color.UpTrend",   Color.UpTrend  );
    Chart.StoreColor (name +".input.Color.DownTrend", Color.DownTrend);
+   Chart.StoreColor (name +".input.Color.Channel",   Color.Channel  );
    Chart.StoreString(name +".input.Draw.Type",       Draw.Type      );
    Chart.StoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
    Chart.StoreInt   (name +".input.Max.Values",      Max.Values     );
@@ -266,6 +298,7 @@ bool RestoreInputParameters() {
    Chart.RestoreInt   (name +".input.Periods",         Periods        );
    Chart.RestoreColor (name +".input.Color.UpTrend",   Color.UpTrend  );
    Chart.RestoreColor (name +".input.Color.DownTrend", Color.DownTrend);
+   Chart.RestoreColor (name +".input.Color.Channel",   Color.Channel  );
    Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
    Chart.RestoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
    Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
@@ -282,6 +315,7 @@ string InputsToStr() {
    return(StringConcatenate("Periods=",         Periods,                     ";", NL,
                             "Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
                             "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,
+                            "Color.Channel=",   ColorToStr(Color.Channel),   ";", NL,
                             "Draw.Type=",       DoubleQuoteStr(Draw.Type),   ";", NL,
                             "Draw.LineWidth=",  Draw.LineWidth,              ";", NL,
                             "Max.Values=",      Max.Values,                  ";")
