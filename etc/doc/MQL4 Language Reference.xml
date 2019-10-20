@@ -7925,7 +7925,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <content>
       Calculates the Bollinger Bands indicator and returns its value.
       </content>
-      example=if(iBands(NULL,0,20,2,0,PRICE_LOW,MODE_LOWER,0)&gt;Low[0]) return(0);
+      example=if (iBands(NULL, 0, 20, 2, 0, PRICE_LOW, MODE_LOWER, 0) &gt; Low[0]) return(0);
       <parameter>
         type=string
         name=symbol
@@ -7942,7 +7942,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
         description=Averaging period to calculate the main line.
       </parameter>
       <parameter>
-        type=int
+        type=double
         name=deviation
         description=Deviation from the main line.
       </parameter>

@@ -20,8 +20,7 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 3;
 
-extern int    Max.Values           = 5000;                           // max. number of values to calculate: -1 = all
-
+extern int    Max.Values           = 5000;                           // max. amount of values to calculate (-1: all)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -50,8 +49,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
-#property indicator_buffers   5                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                                     // used buffers
+#property indicator_buffers   5
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -161,7 +159,7 @@ int onInit() {
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1);
       }
       else signals = false;
    }
@@ -309,10 +307,7 @@ int onTick() {
    // (2) Startbar der Berechnung ermitteln
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-ma.periods);
-   if (startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
-   }
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // Laufzeit auf Toshiba Satellite:
@@ -349,7 +344,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
       // (4) Legende aktualisieren
-      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
 
 
       // (5) Signale: Trendwechsel signalisieren
@@ -371,30 +366,30 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message = "";
-   int    success = 0;
+   int error = 0;
 
    if (trend == MODE_UPTREND) {
       message = ma.shortName +" turned up: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
+
    if (trend == MODE_DOWNTREND) {
       message = ma.shortName +" turned down: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
+
    return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
@@ -404,7 +399,7 @@ bool onTrendChange(int trend) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
    int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
@@ -473,17 +468,13 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("MA.Periods=",           DoubleQuoteStr(MA.Periods),              ";", NL,
                             "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         ";", NL,
-
                             "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), ";", NL,
                             "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  ";", NL,
-
                             "Color.UpTrend=",        ColorToStr(Color.UpTrend),               ";", NL,
                             "Color.DownTrend=",      ColorToStr(Color.DownTrend),             ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),               ";", NL,
                             "Draw.LineWidth=",       Draw.LineWidth,                          ";", NL,
-
                             "Max.Values=",           Max.Values,                              ";", NL,
-
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    ";", NL,

@@ -32,14 +32,14 @@ extern int    Slow.MA.Periods       = 38;
 extern string Slow.MA.Method        = "SMA | LWMA | EMA | ALMA*";
 extern string Slow.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MainLine.Color        = DodgerBlue;           // indicator style management in MQL
+extern color  MainLine.Color        = DodgerBlue;
 extern int    MainLine.Width        = 1;
 
 extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                 // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
 
 extern string __________________________;
 
@@ -66,8 +66,7 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #define MODE_LOWER_SECTION    3
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (via input dialog)
-int       allocated_buffers = 4;                            // used buffers
+#property indicator_buffers   4
 #property indicator_level1    0
 
 double bufferMACD   [];                                     // MACD main value:           visible, displayed in "Data" window
@@ -384,17 +383,17 @@ int onTick() {
  */
 bool onCross(int section) {
    string message = "";
-   int    success = 0;
+   int error = 0;
 
    if (section == MODE_UPPER_SECTION) {
       message = ind.shortName +" turned positive";
       log("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.crossUp));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    if (section == MODE_LOWER_SECTION) {
@@ -402,10 +401,10 @@ bool onCross(int section) {
       log("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.crossDown));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    return(!catch("onCross(3)  invalid parameter section = "+ section, ERR_INVALID_PARAMETER));
@@ -417,7 +416,7 @@ bool onCross(int section) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);

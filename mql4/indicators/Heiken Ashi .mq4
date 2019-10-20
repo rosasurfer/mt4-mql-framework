@@ -23,8 +23,7 @@ extern color color4 = Green;
 #include <rsfLibs.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   4                          // configurable buffers (via input dialog)
-int       allocated_buffers = 4;                         // used buffers
+#property indicator_buffers   4
 
 #property indicator_color1    Red
 #property indicator_color2    Green
