@@ -18,7 +18,7 @@ extern double ATR.Multiplier  = 1;
 extern color  Color.Bands     = Blue;                                // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA        = CLR_NONE;
 
-extern int    Max.Values      = 5000;                                // max. number of values to calculate: -1 = all
+extern int    Max.Values      = 5000;                                // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,8 +33,7 @@ extern int    Max.Values      = 5000;                                // max. num
 #define MODE_LOWER            Bands.MODE_LOWER                       // unteres Band
 
 #property indicator_chart_window
-#property indicator_buffers   3                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 3;                                     // used buffers
+#property indicator_buffers   3
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_SOLID
@@ -211,10 +210,7 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
-   if (startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                        // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
-   }
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (3) ungültige Bars neuberechnen
@@ -267,7 +263,7 @@ bool RecalcALMAChannel(int startBar) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int drawType = ifInt(Color.MA==CLR_NONE, DRAW_NONE, DRAW_LINE);
 

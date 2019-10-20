@@ -23,7 +23,7 @@ extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                    // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 5000;                    // max. amount of values to calculate (-1: all)
 
 extern string __________________________;
 
@@ -54,8 +54,7 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #define MODE_CVI_SIGNAL       2
 
 #property indicator_separate_window
-#property indicator_buffers   4                                // configurable buffers (via input dialog)
-int       allocated_buffers = 4;                               // used buffers
+#property indicator_buffers   4
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -265,17 +264,17 @@ int onTick() {
  */
 bool onLevelCross(int mode) {
    string message = "";
-   int    success = 0;
+   int error = 0;
 
    if (mode == MODE_UPPER) {
       message = indicatorName +" crossed level "+ Signal.Level;
       log("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.levelCross.long));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.long);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    if (mode == MODE_LOWER) {
@@ -283,10 +282,10 @@ bool onLevelCross(int mode) {
       log("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.levelCross.short));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.short);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    return(!catch("onLevelCross(3)  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER));
@@ -354,7 +353,7 @@ double GetBfxCoreVolume(int buffer, int bar) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 

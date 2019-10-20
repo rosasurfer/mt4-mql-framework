@@ -30,7 +30,7 @@ int __DEINIT_FLAGS__[];
 
 extern int   Fisher.Periods        = 10;
 
-extern color Histogram.Color.Upper = LimeGreen;             // indicator style management in MQL
+extern color Histogram.Color.Upper = LimeGreen;
 extern color Histogram.Color.Lower = Red;
 extern int   Histogram.Style.Width = 2;
 
@@ -48,7 +48,7 @@ extern int   Histogram.Style.Width = 2;
 #define MODE_NORMALIZED       5
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // configurable buffers (via input dialog)
+#property indicator_buffers   4                             // buffers visible in input dialog
 int       allocated_buffers = 6;                            // used buffers
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window

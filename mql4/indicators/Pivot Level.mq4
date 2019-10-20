@@ -33,8 +33,7 @@ extern color  Color.Support    = Red;
 #define MODE_S2               5
 #define MODE_S3               6
 
-#property indicator_buffers   7                          // configurable buffers (via input dialog)
-int       allocated_buffers = 7;                         // used buffers
+#property indicator_buffers   7
 
 #property indicator_width1    1
 #property indicator_width2    1
@@ -296,7 +295,7 @@ int iPivotLevel_new(datetime time, int period/*=NULL*/, double &results[]) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 
    SetIndexStyle(MODE_R3, ifInt(srLevels>=3, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Resistance);
    SetIndexStyle(MODE_R2, ifInt(srLevels>=2, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Resistance);

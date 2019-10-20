@@ -20,11 +20,11 @@ int __DEINIT_FLAGS__[];
 extern int    MA.Periods      = 38;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MA.Color        = DodgerBlue;              // indicator style management in MQL
+extern color  MA.Color        = DodgerBlue;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 2;
 
-extern int    Max.Values      = 5000;                    // max. number of values to calculate: -1 = all
+extern int    Max.Values      = 5000;                    // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ extern int    Max.Values      = 5000;                    // max. number of value
 #define MODE_EMA_1            1
 
 #property indicator_chart_window
-#property indicator_buffers   1                          // configurable buffers (via input dialog)
+#property indicator_buffers   1                          // buffers visible in input dialog
 int       allocated_buffers = 2;                         // used buffers
 #property indicator_width1    2
 
@@ -204,7 +204,7 @@ int onTick() {
 
    // (3) update chart legend
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(legendLabel, ma.name, "", MA.Color, MA.Color, dema[0], NULL, Time[0]);
+       @Trend.UpdateLegend(legendLabel, ma.name, "", MA.Color, MA.Color, dema[0], SubPipDigits, NULL, Time[0]);
    }
    return(last_error);
 }
