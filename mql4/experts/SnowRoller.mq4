@@ -2281,10 +2281,11 @@ int ShowStatus(int error = NO_ERROR) {
                            "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
                            "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
                            str.startConditions,                                    // if set it ends with NL
-                           str.stopConditions);                                    // if set it ends with NL
+                           str.stopConditions,                                     // if set it ends with NL
+                           "Breakeven: ",                                                                 NL);
 
-   // 1 line top-margin for instrument display
-   Comment(StringConcatenate(NL, msg));
+   // 1 line margin-top for instrument and indicator legend
+   Comment(StringConcatenate(NL, NL, msg));
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
