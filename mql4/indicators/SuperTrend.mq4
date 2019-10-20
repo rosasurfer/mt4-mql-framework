@@ -352,7 +352,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
         // (4) update chart legend
-       @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferSignal[0], bufferTrend[0], Time[0]);
+       @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferSignal[0], SubPipDigits, bufferTrend[0], Time[0]);
 
 
        // (5) Signal mode: check for and signal trend changes

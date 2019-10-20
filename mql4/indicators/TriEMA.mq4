@@ -246,7 +246,7 @@ int onTick() {
 
    // (3) update chart legend
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(ma.legendLabel, ma.name, "", Color.UpTrend, Color.DownTrend, thirdEma[0], bufferTrend[0], Time[0]);
+       @Trend.UpdateLegend(ma.legendLabel, ma.name, "", Color.UpTrend, Color.DownTrend, thirdEma[0], SubPipDigits, bufferTrend[0], Time[0]);
    }
    return(last_error);
 }
