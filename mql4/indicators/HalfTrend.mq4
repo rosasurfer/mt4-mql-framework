@@ -1,5 +1,5 @@
 /**
- * HalfTrend indicator
+ * HalfTrend indicator - a combination of a support/resistance line and a trading range channel.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
