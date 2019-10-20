@@ -348,7 +348,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
       // (4) Legende aktualisieren
-      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
 
 
       // (5) Signale: Trendwechsel signalisieren

@@ -313,7 +313,7 @@ int onTick() {
 
    // (3) update chart legend
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+       @Trend.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
 
       // (4) signal trend change
       if (signals) /*&&*/ if (IsBarOpenEvent()) {

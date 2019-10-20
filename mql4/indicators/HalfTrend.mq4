@@ -21,6 +21,7 @@ extern int    Max.Values      = 5000;                    // max. amount of value
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <functions/@Trend.mqh>
 #include <rsfLibs.mqh>
 
 #define MODE_MAIN             HalfTrend.MODE_MAIN        // indicator buffer ids
@@ -51,8 +52,8 @@ int    maxValues;
 int    drawType      = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
 int    drawArrowSize = 1;                                // default symbol size for Draw.Type="dot"
 
-string indicator.shortName;
-string chart.legendLabel;
+string indicatorName;
+string chartLegendLabel;
 
 
 /**
@@ -103,15 +104,15 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);           // lower channel band: visible
 
    // chart legend
-   indicator.shortName = __NAME() +"("+ Periods +")";
+   indicatorName = __NAME() +"("+ Periods +")";
    if (!IsSuperContext()) {
-      chart.legendLabel = CreateLegendLabel(indicator.shortName);
-      ObjectRegister(chart.legendLabel);
+      chartLegendLabel = CreateLegendLabel(indicatorName);
+      ObjectRegister(chartLegendLabel);
    }
 
    // names, labels, styles and display options
-   IndicatorShortName(indicator.shortName);              // chart context menu
-   SetIndexLabel(MODE_MAIN,  indicator.shortName);       // chart tooltips and "Data" window
+   IndicatorShortName(indicatorName);                    // chart context menu
+   SetIndexLabel(MODE_MAIN,  indicatorName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND, __NAME() +" length");
    SetIndexLabel(MODE_UP,    NULL);
    SetIndexLabel(MODE_DOWN,  NULL);
@@ -221,22 +222,26 @@ int onTick() {
          }
       }
 
-
-      // update trend visualization and coloring
+      // update SR sections
       if (trend[i] > 0) {
          upLine  [i] = mainLine[i];
          downLine[i] = EMPTY_VALUE;
-         if (trend[i+1] < 0 && drawType==DRAW_LINE) {       // make sure the reversal is visible
+         if (trend[i+1] < 0 && drawType==DRAW_LINE) {       // make sure the reversal becomes visible
             upLine[i+1] = downLine[i+1];
          }
       }
       else /* trend[i] < 0 */{
          upLine  [i] = EMPTY_VALUE;
          downLine[i] = mainLine[i];
-         if (trend[i+1] > 0 && drawType==DRAW_LINE) {       // make sure the reversal is visible
+         if (trend[i+1] > 0 && drawType==DRAW_LINE) {       // make sure the reversal becomes visible
             downLine[i+1] = upLine[i+1];
          }
       }
+   }
+
+   // update chart legend
+   if (!IsSuperContext()) {
+       @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, trend[0], 0, trend[0], Time[0]);
    }
    return(catch("onTick(3)"));
 }

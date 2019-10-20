@@ -124,7 +124,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
    */
 
    // dummy call
-   @Trend.UpdateLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   @Trend.UpdateLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
@@ -136,25 +136,31 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
  * @param  string   status         - additional status info (if any)
  * @param  color    uptrendColor   - the trend line's uptrend color
  * @param  color    downtrendColor - the trend line's downtrend color
- * @param  double   value          - current trend line value
- * @param  int      trend          - current trend line direction
- * @param  datetime barOpenTime    - current trend line bar opentime
+ * @param  double   value          - trend line value to display
+ * @param  int      digits         - digits of the value to display
+ * @param  int      trend          - trend direction of the value to display
+ * @param  datetime barOpenTime    - bar opentime of the value to display
  */
-void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime) {
+void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, int trend, datetime barOpenTime) {
    static double   lastValue;
    static int      lastTrend;
    static datetime lastBarOpenTime;
-   string sOnTrendChange;
+   string sValue="", sOnTrendChange="";
 
-   value = NormalizeDouble(value, SubPipDigits);
+   value = NormalizeDouble(value, digits);
 
    // update if value, trend direction or bar changed
    if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
+      if      (digits == PipDigits)    sValue = NumberToStr(value, PipPriceFormat);
+      else if (digits == SubPipDigits) sValue = NumberToStr(value, SubPipPriceFormat);
+      else                             sValue = DoubleToStr(value, digits);
+
       if (uptrendColor != downtrendColor) {
          if      (trend ==  1) sOnTrendChange = "turns up";             // intra-bar trend change
          else if (trend == -1) sOnTrendChange = "turns down";           // ...
       }
-      string text      = StringConcatenate(name, "    ", NumberToStr(value, SubPipPriceFormat), "    ", status, "    ", sOnTrendChange);
+
+      string text      = StringConcatenate(name, "    ", sValue, "    ", status, "    ", sOnTrendChange);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua  ) textColor = DeepSkyBlue;
       else if (textColor == Gold  ) textColor = Orange;
