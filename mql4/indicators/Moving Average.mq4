@@ -334,17 +334,17 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message = "";
-   int    success = 0;
+   int error = 0;
 
    if (trend == MODE_UPTREND) {
       message = ma.shortName +" turned up: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    if (trend == MODE_DOWNTREND) {
@@ -352,10 +352,10 @@ bool onTrendChange(int trend) {
       log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));

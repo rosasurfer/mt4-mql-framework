@@ -152,10 +152,7 @@ int onTick() {
    // (1) calculate the start bar
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-sma.periods);
-   if (startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but don't return to update the legend
-   }
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars

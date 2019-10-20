@@ -201,10 +201,7 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
-   if (startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
-   }
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (3) JMA-Initialisierung

@@ -231,10 +231,7 @@ int onTick() {
    if (ma.ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ma.ChangedBars = Max.Values;
    int ma.startBar = Min(ma.ChangedBars-1, Bars-ma.periods);
-   if (ma.startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
-   }
+   if (ma.startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (4) ungültige Bars neuberechnen

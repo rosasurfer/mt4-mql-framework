@@ -272,10 +272,7 @@ int onTick() {
    // (1) calculate the start bar
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-sma.periods);
-   if (startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but continue to update the legend
-   }
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    double dNull[];
 
@@ -374,18 +371,17 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message = "";
-   int    success = 0;
+   int    error = 0;
 
    if (trend == ST.MODE_UPTREND) {
       message = indicator.shortName +" turned up: "+ NumberToStr(bufferSignal[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    if (trend == ST.MODE_DOWNTREND) {
@@ -393,11 +389,10 @@ bool onTrendChange(int trend) {
       if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
