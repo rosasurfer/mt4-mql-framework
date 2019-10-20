@@ -32,7 +32,7 @@ extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotke
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend            = Orange;
 
-extern int    Max.Values                 = 5000;                     // max. number of values to calculate: -1 = all
+extern int    Max.Values                 = 5000;                     // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,8 +53,7 @@ extern int    Max.Values                 = 5000;                     // max. num
 
 #property indicator_chart_window
 
-#property indicator_buffers   5                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                                     // used buffers
+#property indicator_buffers   5
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -232,10 +231,7 @@ int onTick() {
    if (ma.ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ma.ChangedBars = Max.Values;
    int ma.startBar = Min(ma.ChangedBars-1, Bars-ma.periods);
-   if (ma.startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
-   }
+   if (ma.startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (4) ungültige Bars neuberechnen
@@ -258,7 +254,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
        // (5) Legende aktualisieren
-       @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+       @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
    }
    return(last_error);
 }

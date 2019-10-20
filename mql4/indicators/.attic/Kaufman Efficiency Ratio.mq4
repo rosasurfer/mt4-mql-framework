@@ -18,8 +18,7 @@ extern int Periods = 32;
 #include <rsfLibs.mqh>
 
 #property indicator_separate_window
-#property indicator_buffers   1                             // configurable buffers (via input dialog)
-int       allocated_buffers = 1;                            // used buffers
+#property indicator_buffers   1
 
 #property indicator_color1    Blue
 #property indicator_width1    1
@@ -160,7 +159,7 @@ double Volatility(int bar) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(indicator_buffers);
 }
 
 

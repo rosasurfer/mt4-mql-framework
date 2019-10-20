@@ -25,7 +25,7 @@ extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line | Dot*";
 extern int    Draw.LineWidth        = 2;
 
-extern int    Max.Values            = 5000;                          // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 5000;                          // max. amount of values to calculate (-1: all)
 
 extern string __________________________;
 
@@ -55,8 +55,7 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #define MODE_UPTREND2         4                                      // zusätzlich im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
-#property indicator_buffers   5                                      // configurable buffers (via input dialog)
-int       allocated_buffers = 5;                                     // used buffers
+#property indicator_buffers   5
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -269,10 +268,7 @@ int onTick() {
    // (2) Startbar ermitteln
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-cycleWindowSize);
-   if (startBar < 0) {
-      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Fehler setzen, jedoch keine Rückkehr, damit Legende aktualisiert werden kann
-   }
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (3) ungültige Bars neuberechnen
@@ -291,7 +287,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
       // (4) Legende aktualisieren
-      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
 
 
       // (5) Signale: Trendwechsel signalisieren
@@ -313,30 +309,30 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message = "";
-   int    success = 0;
+   int error = 0;
 
    if (trend == MODE_UPTREND) {
       message = ma.shortName +" turned up: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
+
    if (trend == MODE_DOWNTREND) {
       message = ma.shortName +" turned down: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
+
    return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
