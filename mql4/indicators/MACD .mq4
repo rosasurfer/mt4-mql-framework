@@ -383,17 +383,17 @@ int onTick() {
  */
 bool onCross(int section) {
    string message = "";
-   int    success = 0;
+   int error = 0;
 
    if (section == MODE_UPPER_SECTION) {
       message = ind.shortName +" turned positive";
       log("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.crossUp));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    if (section == MODE_LOWER_SECTION) {
@@ -401,10 +401,10 @@ bool onCross(int section) {
       log("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.crossDown));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
-      return(success != 0);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      return(!error);
    }
 
    return(!catch("onCross(3)  invalid parameter section = "+ section, ERR_INVALID_PARAMETER));

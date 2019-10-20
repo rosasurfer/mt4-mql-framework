@@ -671,7 +671,7 @@ bool onOrderFail(int tickets[]) {
    if (!track.orders)
       return(true);
 
-   int success   = 0;
+   int error = 0;
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -689,14 +689,14 @@ bool onOrderFail(int tickets[]) {
       if (__LOG()) log("onOrderFail(3)  "+ message);
 
       // Signale für jede Order einzeln verschicken
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Orders gemeinsam abspielen
-   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.orderFailed));
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
 
-   return(success != 0);
+   return(!error);
 }
 
 
@@ -711,7 +711,7 @@ bool onPositionOpen(int tickets[]) {
    if (!track.orders)
       return(true);
 
-   int success   = 0;
+   int error = 0;
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -729,14 +729,14 @@ bool onPositionOpen(int tickets[]) {
       if (__LOG()) log("onPositionOpen(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
-   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionOpened));
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
 
-   return(success != 0);
+   return(!error);
 }
 
 
@@ -753,7 +753,7 @@ bool onPositionClose(int tickets[][]) {
 
    string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
 
-   int success   = 0;
+   int error = 0;
    int positions = ArrayRange(tickets, 0);
 
    for (int i=0; i < positions; i++) {
@@ -774,14 +774,14 @@ bool onPositionClose(int tickets[][]) {
       if (__LOG()) log("onPositionClose(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
-   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionClosed));
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
 
-   return(success != 0);
+   return(!error);
 }
 
 
@@ -1179,19 +1179,19 @@ bool onBarRangeSignal(int index, int direction, double level, double price, date
    string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocalEx("onBarRangeSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
    if (__LOG()) log("onBarRangeSignal(3)  "+ message);
 
-   int success = 0;
+   int error = 0;
 
    // (1) Sound abspielen
    if (signal.sound) {
-      if (direction == SIGNAL_UP) success &= _int(PlaySoundEx(signal.sound.priceSignal_up  ));
-      else                        success &= _int(PlaySoundEx(signal.sound.priceSignal_down));
+      if (direction == SIGNAL_UP) error |= !PlaySoundEx(signal.sound.priceSignal_up  );
+      else                        error |= !PlaySoundEx(signal.sound.priceSignal_down);
    }
 
    // (2) Benachrichtigungen verschicken
-   if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
-   if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+   if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+   if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
 
-   return(success != 0);
+   return(!error);
 }
 
 

@@ -279,18 +279,18 @@ bool onSignal.OpenPosition(int direction) {
    string name, message;
    if (MACD.Fast.Method == MACD.Slow.Method) name = __NAME() +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +","+                          MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
    else                                      name = __NAME() +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +"), "+ MACD.Slow.Method +"("+ MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
-   int success = 0;
+   int error = 0;
 
    if (direction == OP_LONG) {
       message = name +" signal \"open long position\"";
       log("onSignal.OpenPosition(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_long));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.open_long);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       last.signal = direction;
-      return(success != 0);
+      return(!error);
    }
 
    if (direction == OP_SHORT) {
@@ -298,11 +298,11 @@ bool onSignal.OpenPosition(int direction) {
       log("onSignal.OpenPosition(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_short));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.open_short);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       last.signal = direction;
-      return(success != 0);
+      return(!error);
    }
 
    return(!catch("onSignal.OpenPosition(3)  invalid parameter direction: "+ direction +" (unknown)", ERR_INVALID_PARAMETER));

@@ -4689,7 +4689,7 @@ bool onOrderFail(int tickets[]) {
    if (!track.orders)
       return(true);
 
-   int success   = 0;
+   int error = 0;
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -4706,14 +4706,14 @@ bool onOrderFail(int tickets[]) {
       if (__LOG()) log("onOrderFail(3)  "+ message);
 
       // Signale für jede Order einzeln verschicken
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Orders gemeinsam abspielen
-   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.orderFailed));
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
 
-   return(success != 0);
+   return(!error);
 }
 
 
@@ -4728,7 +4728,7 @@ bool onPositionOpen(int tickets[]) {
    if (!track.orders)
       return(true);
 
-   int success   = 0;
+   int error = 0;
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -4745,14 +4745,14 @@ bool onPositionOpen(int tickets[]) {
       if (__LOG()) log("onPositionOpen(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
-   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionOpened));
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
 
-   return(success != 0);
+   return(!error);
 }
 
 
@@ -4769,7 +4769,7 @@ bool onPositionClose(int tickets[][]) {
 
    string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
 
-   int success   = 0;
+   int error = 0;
    int positions = ArrayRange(tickets, 0);
 
    for (int i=0; i < positions; i++) {
@@ -4789,14 +4789,14 @@ bool onPositionClose(int tickets[][]) {
       if (__LOG()) log("onPositionClose(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
-   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionClosed));
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
 
-   return(success != 0);
+   return(!error);
 }
 
 
