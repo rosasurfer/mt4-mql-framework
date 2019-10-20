@@ -2281,10 +2281,11 @@ int ShowStatus(int error = NO_ERROR) {
                            "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
                            "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
                            str.startConditions,                                    // if set it ends with NL
-                           str.stopConditions);                                    // if set it ends with NL
+                           str.stopConditions,                                     // if set it ends with NL
+                           "Breakeven: ",                                                                 NL);
 
-   // 1 line top-margin for instrument display
-   Comment(StringConcatenate(NL, msg));
+   // 1 line margin-top for instrument and indicator legend
+   Comment(StringConcatenate(NL, NL, msg));
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
@@ -4967,7 +4968,7 @@ bool UpdateProfitTargets() {
    double beDistance       = RequiredDistance(MathAbs(losses));
    double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance)*Pip;
    sequence.breakeven      = NormalizeDouble(bePrice, Digits);
-   //debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
+   debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
 
    // calculate TP price
 
