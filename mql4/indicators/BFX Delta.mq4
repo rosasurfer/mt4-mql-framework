@@ -38,11 +38,11 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/BarOpenEvent.mqh>
 #include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/IsBarOpenEvent.mqh>
 
 #define MODE_DELTA_MAIN       0                                // this indicator's buffer ids
 #define MODE_DELTA_SIGNAL     1

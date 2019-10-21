@@ -22,9 +22,9 @@ extern double Lotsize    = 0.1;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <functions/IsBarOpenEvent.mqh>
-#include <iCustom/icMovingAverage.mqh>
 #include <rsfLibs.mqh>
+#include <functions/BarOpenEvent.mqh>
+#include <iCustom/icMovingAverage.mqh>
 
 
 int ma.periods;

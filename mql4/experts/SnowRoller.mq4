@@ -71,11 +71,11 @@ extern bool     ProfitDisplayInPercent = true;                    // whether PL 
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <functions/IsBarOpenEvent.mqh>
+#include <rsfHistory.mqh>
+#include <rsfLibs.mqh>
+#include <functions/BarOpenEvent.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
-#include <rsfLibs.mqh>
-#include <rsfHistory.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 

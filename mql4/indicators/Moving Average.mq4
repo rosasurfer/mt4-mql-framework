@@ -45,11 +45,11 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/BarOpenEvent.mqh>
 #include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/IsBarOpenEvent.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA         // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND      //
