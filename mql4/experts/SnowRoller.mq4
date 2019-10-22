@@ -315,7 +315,7 @@ bool StartSequence() {
    ArrayPushDouble(sequence.start.price,  startPrice     );
    ArrayPushDouble(sequence.start.profit, 0              );
 
-   ArrayPushInt   (sequence.stop.event,   0);      // keep sizes of sequence.start/stop.* synchron
+   ArrayPushInt   (sequence.stop.event,   0);               // keep sizes of sequence.start/stop.* synchron
    ArrayPushInt   (sequence.stop.time,    0);
    ArrayPushDouble(sequence.stop.price,   0);
    ArrayPushDouble(sequence.stop.profit,  0);
