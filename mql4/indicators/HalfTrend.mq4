@@ -1,5 +1,10 @@
 /**
- * HalfTrend indicator - a combination of a support/resistance line and a trading range channel.
+ * HalfTrend indicator - a support/resistance line defined by a trading range channel.
+ *
+ *
+ * The indicator is similar to the SuperTrend indicator which uses a slightly different channel calculation and trend logic.
+ *
+ * @see  mql4/indicators/SuperTrend.mq4
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -9,7 +14,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    Periods              = 3;
 
-extern color  Color.UpTrend        = DodgerBlue;         // indicator style management in MQL
+extern color  Color.UpTrend        = DodgerBlue;
 extern color  Color.DownTrend      = Red;
 extern color  Color.Channel        = CLR_NONE;
 extern string Draw.Type            = "Line* | Dot";
@@ -35,15 +40,15 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 
-#define MODE_MAIN             HalfTrend.MODE_MAIN        // indicator buffer ids
+#property indicator_chart_window
+#property indicator_buffers   6
+
+#define MODE_MAIN             HalfTrend.MODE_SR          // indicator buffer ids
 #define MODE_TREND            HalfTrend.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPPER_BAND       4
 #define MODE_LOWER_BAND       5
-
-#property indicator_chart_window
-#property indicator_buffers   6
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -52,7 +57,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_color5    CLR_NONE
 #property indicator_color6    CLR_NONE
 
-double mainLine [];                                      // all SR values:      invisible, displayed in "Data" window
+double main     [];                                      // all SR values:      invisible, displayed in "Data" window
 double trend    [];                                      // trend direction:    invisible
 double upLine   [];                                      // support line:       visible
 double downLine [];                                      // resistance line:    visible
@@ -83,7 +88,7 @@ string signal.info = "";                                 // chart legend info
 
 
 /**
- * Initialization.
+ * Initialization
  *
  * @return int - error status
  */
@@ -94,7 +99,7 @@ int onInit() {
 
    // validate inputs
    // Periods
-   if (Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 1)        return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -132,9 +137,8 @@ int onInit() {
       else signals = false;
    }
 
-
    // buffer management
-   SetIndexBuffer(MODE_MAIN,       mainLine );           // all SR values:      invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_MAIN,       main     );           // all SR values:      invisible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,      trend    );           // trend direction:    invisible
    SetIndexBuffer(MODE_UPTREND,    upLine   );           // support line:       visible
    SetIndexBuffer(MODE_DOWNTREND,  downLine );           // resistance line:    visible
@@ -191,13 +195,13 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization (needed on terminal start)
-   if (!ArraySize(mainLine))
-      return(log("onTick(1)  size(mainLine) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main))
+      return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(mainLine,  EMPTY_VALUE);
-      ArrayInitialize(trend,     0);
+      ArrayInitialize(main,      EMPTY_VALUE);
+      ArrayInitialize(trend,               0);
       ArrayInitialize(upLine,    EMPTY_VALUE);
       ArrayInitialize(downLine,  EMPTY_VALUE);
       ArrayInitialize(upperBand, EMPTY_VALUE);
@@ -207,8 +211,8 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(mainLine,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(trend,     Bars, ShiftedBars, 0          );
+      ShiftIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
       ShiftIndicatorBuffer(upLine,    Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(downLine,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
@@ -221,7 +225,7 @@ int onTick() {
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   for (int i=startBar; i>=0; i--) {
+   for (int i=startBar; i >= 0; i--) {
       upperBand[i] = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_HIGH, i);
       lowerBand[i] = iMA(NULL, NULL, Periods, 0, MODE_SMA, PRICE_LOW,  i);
 
@@ -230,44 +234,44 @@ int onTick() {
 
       // update trend direction and main SR values
       if (trend[i+1] > 0) {
-         mainLine[i] = MathMax(mainLine[i+1], currentLow);
-         if (upperBand[i] < mainLine[i] && Close[i] < Low[i+1]) {
-            trend   [i] = -1;
-            mainLine[i] = MathMin(mainLine[i+1], currentHigh);
+         main[i] = MathMax(main[i+1], currentLow);
+         if (upperBand[i] < main[i] && Close[i] < Low[i+1]) {
+            trend[i] = -1;
+            main [i] = MathMin(main[i+1], currentHigh);
          }
          else trend[i] = trend[i+1] + 1;
       }
       else if (trend[i+1] < 0) {
-         mainLine[i] = MathMin(mainLine[i+1], currentHigh);
-         if (lowerBand[i] > mainLine[i] && Close[i] > High[i+1]) {
-            trend   [i] = 1;
-            mainLine[i] = MathMax(mainLine[i+1], currentLow);
+         main[i] = MathMin(main[i+1], currentHigh);
+         if (lowerBand[i] > main[i] && Close[i] > High[i+1]) {
+            trend[i] = 1;
+            main [i] = MathMax(main[i+1], currentLow);
          }
          else trend[i] = trend[i+1] - 1;
       }
       else {
          // initialize the first, left-most value
          if (Close[i] > Close[i+1]) {
-            trend   [i] = 1;
-            mainLine[i] = currentLow;
+            trend[i] = 1;
+            main [i] = currentLow;
          }
          else {
-            trend   [i] = -1;
-            mainLine[i] = currentHigh;
+            trend[i] = -1;
+            main [i] = currentHigh;
          }
       }
 
       // update SR sections
       if (trend[i] > 0) {
-         upLine  [i] = mainLine[i];
+         upLine  [i] = main[i];
          downLine[i] = EMPTY_VALUE;
          if (trend[i+1] < 0 && drawType==DRAW_LINE) {       // make sure the reversal becomes visible
             upLine[i+1] = downLine[i+1];
          }
       }
-      else /* trend[i] < 0 */{
+      else /*(trend[i] < 0)*/{
          upLine  [i] = EMPTY_VALUE;
-         downLine[i] = mainLine[i];
+         downLine[i] = main[i];
          if (trend[i+1] > 0 && drawType==DRAW_LINE) {       // make sure the reversal becomes visible
             downLine[i+1] = upLine[i+1];
          }
