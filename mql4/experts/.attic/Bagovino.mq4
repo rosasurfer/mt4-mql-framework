@@ -31,14 +31,14 @@ extern string Notify.onOpenSignal = "on | off | auto*";
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
+#include <functions/BarOpenEvent.mqh>
 #include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <functions/IsBarOpenEvent.mqh>
 #include <iCustom/icMACD.mqh>
 #include <iCustom/icRSI.mqh>
-#include <rsfLibs.mqh>
 
 // indicator settings
 int macd.fast.periods;
