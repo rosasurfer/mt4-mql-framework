@@ -81,7 +81,7 @@ int    last.signal = OP_UNDEFINED;
 
 
 /**
- * Initialization.
+ * Initialization
  *
  * @return int - error status
  */
