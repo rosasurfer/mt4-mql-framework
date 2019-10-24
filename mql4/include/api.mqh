@@ -404,9 +404,7 @@ int      FileReadLines(string filename, string result[], bool skipEmptyLines = f
 int      FindFileNames(string pattern, string &lpResults[], int flags = NULL);;
 datetime FxtToGmtTime(datetime fxtTime);;
 datetime FxtToServerTime(datetime fxtTime);;
-int      GetAccountHistory(int account, string results[][AH_COLUMNS]);;
 int      GetAccountNumber();;
-int      GetBalanceHistory(int account, datetime &times[], double &values[]);;
 int      GetCustomLogID();;
 int      GetFxtToGmtTimeOffset(datetime fxtTime);;
 int      GetFxtToServerTimeOffset(datetime fxtTime);;
@@ -453,8 +451,6 @@ string   GetWindowText(int hWnd);;
 datetime GmtToFxtTime(datetime gmtTime);;
 datetime GmtToServerTime(datetime gmtTime);;
 color    HSLToRGB(double hsl[3]);;
-int      iAccountBalance(int account, double buffer[], int bar);;
-int      iAccountBalanceSeries(int account, double &buffer[]);;
 int      IncreasePeriod(int period = NULL);;
 int      InitializeDoubleBuffer(double buffer[], int size);;
 int      InitializeStringBuffer(string &buffer[], int length);;

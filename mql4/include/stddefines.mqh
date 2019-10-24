@@ -442,30 +442,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define EVENT_CHART_CMD                1
 
 
-// Konstanten zum Zugriff auf die in CSV-Dateien gespeicherte Accounthistory
-#define AH_COLUMNS                    20
-#define I_AH_TICKET                    0
-#define I_AH_OPENTIME                  1
-#define I_AH_OPENTIMESTAMP             2
-#define I_AH_TYPEDESCRIPTION           3
-#define I_AH_TYPE                      4
-#define I_AH_SIZE                      5
-#define I_AH_SYMBOL                    6
-#define I_AH_OPENPRICE                 7
-#define I_AH_STOPLOSS                  8
-#define I_AH_TAKEPROFIT                9
-#define I_AH_CLOSETIME                10
-#define I_AH_CLOSETIMESTAMP           11
-#define I_AH_CLOSEPRICE               12
-#define I_AH_MAGICNUMBER              13
-#define I_AH_COMMISSION               14
-#define I_AH_SWAP                     15
-#define I_AH_NETPROFIT                16
-#define I_AH_GROSSPROFIT              17
-#define I_AH_BALANCE                  18
-#define I_AH_COMMENT                  19
-
-
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
 
