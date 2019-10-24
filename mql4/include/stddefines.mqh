@@ -346,24 +346,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define STYLE_DASHDOTDOT               4        // pen has alternating dashes and double dots
 
 
-// Indicator buffer identifiers zur Verwendung mit iCustom()
-#define BUFFER_INDEX_0                 0        // allgemein gültige ID's
-#define BUFFER_INDEX_1                 1
-#define BUFFER_INDEX_2                 2
-#define BUFFER_INDEX_3                 3
-#define BUFFER_INDEX_4                 4
-#define BUFFER_INDEX_5                 5
-#define BUFFER_INDEX_6                 6
-#define BUFFER_INDEX_7                 7
-#define BUFFER_1          BUFFER_INDEX_0
-#define BUFFER_2          BUFFER_INDEX_1
-#define BUFFER_3          BUFFER_INDEX_2
-#define BUFFER_4          BUFFER_INDEX_3
-#define BUFFER_5          BUFFER_INDEX_4
-#define BUFFER_6          BUFFER_INDEX_5
-#define BUFFER_7          BUFFER_INDEX_6
-#define BUFFER_8          BUFFER_INDEX_7
-
 #define Bands.MODE_MA                  0        // MA value
 #define Bands.MODE_UPPER               1        // upper band value
 #define Bands.MODE_LOWER               2        // lower band value
@@ -391,7 +373,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length
 
-#define SuperTrend.MODE_SR             0        // SuperTrend SR value
+#define SuperTrend.MODE_SR             0        // SuperTrend SR line
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
 
