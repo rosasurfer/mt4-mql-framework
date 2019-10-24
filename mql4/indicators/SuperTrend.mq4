@@ -10,6 +10,12 @@
  *
  * The indicator is similar to the HalfTrend indicator which uses a slightly different channel calculation and trend logic.
  *
+ * Indicator buffers for iCustom():
+ *  • SuperTrend.MODE_SR:    SR values
+ *  • SuperTrend.MODE_TREND: trend direction and length
+ *    - trend direction:      positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:         the absolute direction value is the length of the trend in bars since the last reversal
+ *
  * @see  http://www.forexfactory.com/showthread.php?t=214635  (Andrew Forex Trading System)
  * @see  http://www.forexfactory.com/showthread.php?t=268038  (Plateman's CCI aka SuperTrend)
  * @see  mql4/indicators/HalfTrend.mq4
