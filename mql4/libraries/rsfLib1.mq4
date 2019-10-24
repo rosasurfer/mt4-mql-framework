@@ -626,8 +626,8 @@ string GetServerName() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache if a new tick and UnchangedBars==0
-   int tick = __ExecutionContext[I_EC.ticks];
-   if (!__ExecutionContext[I_EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[iEC.ticks];
+   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -4499,8 +4499,8 @@ string GetServerTimezone() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after UnchangedBars == 0 on a new tick
-   int tick = __ExecutionContext[I_EC.ticks];
-   if (!__ExecutionContext[I_EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[iEC.ticks];
+   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
    static.lastTick = tick;
 
@@ -5324,7 +5324,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
-               if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+               if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5901,7 +5901,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          if (__LOG()) log("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (!IsTesting())                                    PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         else if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }

@@ -3,13 +3,12 @@
  *
  * @param  int timeframe   - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int cycleLength - indicator parameter
- * @param  int maxValues   - indicator parameter
  * @param  int iBuffer     - indicator buffer index of the value to return
  * @param  int iBar        - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar) {
+double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -20,15 +19,12 @@ double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, in
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.LineWidth
-
-                          maxValues,                                       // int    Max.Values
-
+                          -1,                                              // int    Max.Values
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-
                           "",                                              // string _____________________
                           lpSuperContext,                                  // int    __lpSuperContext
 
@@ -41,7 +37,7 @@ double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, in
       warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
-   error = __ExecutionContext[I_EC.mqlError];                              // TODO: synchronize execution contexts
+   error = __ExecutionContext[iEC.mqlError];                               // TODO: synchronize execution contexts
    if (error != NO_ERROR)
       return(!SetLastError(error));
    return(value);

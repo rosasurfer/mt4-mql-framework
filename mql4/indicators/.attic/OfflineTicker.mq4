@@ -21,7 +21,7 @@ int tickTimerId;
 int onInit() {
    if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       // Ticker installieren
-      int hWnd   = __ExecutionContext[I_EC.hChart];
+      int hWnd   = __ExecutionContext[iEC.hChart];
       int millis = 1000;
       int flags  = TICK_CHART_REFRESH;
 
