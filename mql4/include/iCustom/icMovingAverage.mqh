@@ -5,13 +5,12 @@
  * @param  int    maPeriods      - indicator parameter
  * @param  string maMethod       - indicator parameter
  * @param  string maAppliedPrice - indicator parameter
- * @param  int    maxValues      - indicator parameter
  * @param  int    iBuffer        - indicator buffer index of the value to return
  * @param  int    iBar           - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -24,16 +23,13 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.LineWidth
-
-                          maxValues,                                       // int    Max.Values
+                          -1,                                              // int    Max.Values
                           "",                                              // string _____________________
-
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string _____________________
-
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
@@ -45,7 +41,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
       warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
-   error = __ExecutionContext[I_EC.mqlError];                              // TODO: synchronize execution contexts
+   error = __ExecutionContext[iEC.mqlError];                               // TODO: synchronize execution contexts
    if (error != NO_ERROR)
       return(!SetLastError(error));
    return(value);

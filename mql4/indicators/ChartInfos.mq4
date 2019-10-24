@@ -1751,7 +1751,7 @@ bool UpdateOHLC() {
    // (2) Beginn und Ende der aktuellen Session ermitteln
    datetime sessionStart = GetSessionStartTime.srv(lastTickTime);                // throws ERR_MARKET_CLOSED
    if (sessionStart == NaT) {
-      if (__ExecutionContext[I_EC.mqlError] != ERR_MARKET_CLOSED)                // am Wochenende die letzte Session verwenden
+      if (__ExecutionContext[iEC.mqlError] != ERR_MARKET_CLOSED)                 // am Wochenende die letzte Session verwenden
          return(false);
       sessionStart = GetPrevSessionStartTime.srv(lastTickTime);
    }
@@ -4125,7 +4125,7 @@ bool AnalyzePos.ProcessLfxProfits() {
 bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
    // Company-ID im Fenster speichern bzw. löschen
-   int    hWnd    = __ExecutionContext[I_EC.hChart];
+   int    hWnd    = __ExecutionContext[iEC.hChart];
    string key     = __NAME() +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    if (mode.extern.notrading) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
    else                       RemoveWindowProperty(hWnd, key);
@@ -4180,7 +4180,7 @@ bool RestoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
-   int    hWnd    = __ExecutionContext[I_EC.hChart];
+   int    hWnd    = __ExecutionContext[iEC.hChart];
    string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);

@@ -685,9 +685,9 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
-   if      (IsTesting())                                                                                     win32 = true;
-   else if (IsIndicator())                                                                                   win32 = true;
-   else if (__ExecutionContext[I_EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   if      (IsTesting())                                                                                    win32 = true;
+   else if (IsIndicator())                                                                                  win32 = true;
+   else if (__ExecutionContext[iEC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    int button;
    if (!win32) button = MessageBox(message, caption, flags);
@@ -736,7 +736,7 @@ string GetClassName(int hWnd) {
  * @return bool
  */
 bool IsVisualModeFix() {
-   return(__ExecutionContext[I_EC.visualMode] != 0);
+   return(__ExecutionContext[iEC.visualMode] != 0);
 }
 
 
@@ -1591,7 +1591,7 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  * @return bool
  */
 bool __CHART() {
-   return(__ExecutionContext[I_EC.hChart] != 0);
+   return(__ExecutionContext[iEC.hChart] != 0);
 }
 
 
@@ -1604,7 +1604,7 @@ bool __CHART() {
  * @return bool
  */
 bool __LOG() {
-   return(__ExecutionContext[I_EC.logging] != 0);
+   return(__ExecutionContext[iEC.logging] != 0);
 }
 
 
@@ -2794,7 +2794,7 @@ bool This.IsTesting() {
    static bool result, resolved;
    if (!resolved) {
       if (IsTesting()) result = true;
-      else             result = __ExecutionContext[I_EC.testing] != 0;
+      else             result = __ExecutionContext[iEC.testing] != 0;
       resolved = true;
    }
    return(result);
@@ -3126,7 +3126,7 @@ string StrCapitalize(string value) {
 int Chart.Expert.Properties() {
    if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   int hWnd = __ExecutionContext[I_EC.hChart];
+   int hWnd = __ExecutionContext[iEC.hChart];
 
    if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3)->user32::PostMessageA() failed", ERR_WIN32_ERROR));
@@ -3145,7 +3145,7 @@ int Chart.Expert.Properties() {
 int Chart.SendTick(bool sound=false) {
    sound = sound!=0;
 
-   int hWnd = __ExecutionContext[I_EC.hChart];
+   int hWnd = __ExecutionContext[iEC.hChart];
 
    if (!This.IsTesting()) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - Expert::start() wird in Offline-Charts nicht getriggert
@@ -3167,7 +3167,7 @@ int Chart.SendTick(bool sound=false) {
  * @return int - Fehlerstatus
  */
 int Chart.Objects.UnselectAll() {
-   int hWnd = __ExecutionContext[I_EC.hChart];
+   int hWnd = __ExecutionContext[iEC.hChart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
    return(NO_ERROR);
 }
@@ -3179,7 +3179,7 @@ int Chart.Objects.UnselectAll() {
  * @return int - Fehlerstatus
  */
 int Chart.Refresh() {
-   int hWnd = __ExecutionContext[I_EC.hChart];
+   int hWnd = __ExecutionContext[iEC.hChart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
    return(NO_ERROR);
 }
@@ -3494,7 +3494,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (__ExecutionContext[I_EC.programCoreFunction] == CF_DEINIT)
+      if (__ExecutionContext[iEC.programCoreFunction] == CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3525,7 +3525,7 @@ bool Tester.IsPaused() {
    else {
       if (!IsVisualModeFix())                                                                            // EA/Indikator aus iCustom()
          return(false);                                                                                  // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __ExecutionContext[I_EC.programCoreFunction]==CF_DEINIT);          // der EA stoppt(e) also auch
+      testerStopped = (IsStopped() || __ExecutionContext[iEC.programCoreFunction]==CF_DEINIT);           // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3547,7 +3547,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || __ExecutionContext[I_EC.programCoreFunction]==CF_DEINIT);                 // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || __ExecutionContext[iEC.programCoreFunction]==CF_DEINIT);                  // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu Expert::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -3819,7 +3819,7 @@ string UninitializeReasonDescription(int reason) {
  * @return int
  */
 int ProgramInitReason() {
-   return(__ExecutionContext[I_EC.programInitReason]);
+   return(__ExecutionContext[iEC.programInitReason]);
 }
 
 

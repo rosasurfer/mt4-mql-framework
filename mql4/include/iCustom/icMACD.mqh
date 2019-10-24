@@ -2,21 +2,18 @@
  * Load the "MACD" indicator and return an indicator value.
  *
  * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
- *
  * @param  int    fastMaPeriods      - indicator parameter
  * @param  string fastMaMethod       - indicator parameter
  * @param  string fastMaAppliedPrice - indicator parameter
  * @param  int    slowMaPeriods      - indicator parameter
  * @param  string slowMaMethod       - indicator parameter
  * @param  string slowMaAppliedPrice - indicator parameter
- * @param  int    maxValues          - indicator parameter
- *
  * @param  int    iBuffer            - indicator buffer index of the value to return
  * @param  int    iBar               - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -31,19 +28,15 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
 
                           DodgerBlue,                                      // color  MainLine.Color
                           1,                                               // int    MainLine.Width
-
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-
-                          maxValues,                                       // int    Max.Values
-
+                          -1,                                              // int    Max.Values
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-
                           "",                                              // string _____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
@@ -56,7 +49,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
       warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
-   error = __ExecutionContext[I_EC.mqlError];                              // TODO: synchronize execution contexts
+   error = __ExecutionContext[iEC.mqlError];                               // TODO: synchronize execution contexts
    if (error != NO_ERROR)
       return(!SetLastError(error));
    return(value);
