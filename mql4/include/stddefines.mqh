@@ -182,9 +182,9 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Arrayindizes für Timezone-Transitionsdaten
-#define I_TRANSITION_TIME           0
-#define I_TRANSITION_OFFSET         1
-#define I_TRANSITION_DST            2
+#define TRANSITION_TIME             0
+#define TRANSITION_OFFSET           1
+#define TRANSITION_DST              2
 
 
 // Object property ids, siehe ObjectSet()
