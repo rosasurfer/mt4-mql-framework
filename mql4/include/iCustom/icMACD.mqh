@@ -49,7 +49,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
       warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
-   error = __ExecutionContext[iEC.mqlError];                               // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
    if (error != NO_ERROR)
       return(!SetLastError(error));
    return(value);

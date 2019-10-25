@@ -63,7 +63,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[iEC.programInitFlags];
+   int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -174,7 +174,7 @@ int init() {
  * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
  */
 bool init.UpdateGlobalVars() {
-   __lpSuperContext = __ExecutionContext[iEC.superContext];
+   __lpSuperContext = __ExecutionContext[EC.superContext];
    if (!__lpSuperContext) {                                    // with a super-context this indicator's context is already up-to-date
       ec_SetLogging(__ExecutionContext, IsLogging());          // TODO: move to Expander
    }
@@ -204,8 +204,8 @@ bool init.UpdateGlobalVars() {
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-   Tick           = __ExecutionContext[iEC.ticks       ];
-   Tick.Time      = __ExecutionContext[iEC.lastTickTime];
+   Tick           = __ExecutionContext[EC.ticks       ];
+   Tick.Time      = __ExecutionContext[EC.lastTickTime];
 
    __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);    // supported by experts only
    __LOG_WARN.mail  = false;                                   // ...
@@ -402,7 +402,7 @@ int start() {
 
    // (9) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[iEC.mqlError]|__ExecutionContext[iEC.dllError])
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       CheckErrors("start(10)", error);
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
@@ -530,7 +530,7 @@ int DeinitReason() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = __ExecutionContext[iEC.dllError];                 // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -538,7 +538,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = __ExecutionContext[iEC.mqlError];
+   int mql_error = __ExecutionContext[EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:

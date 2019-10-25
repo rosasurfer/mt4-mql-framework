@@ -626,8 +626,8 @@ string GetServerName() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache if a new tick and UnchangedBars==0
-   int tick = __ExecutionContext[iEC.ticks];
-   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[EC.ticks];
+   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -4280,8 +4280,8 @@ string GetServerTimezone() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after UnchangedBars == 0 on a new tick
-   int tick = __ExecutionContext[iEC.ticks];
-   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[EC.ticks];
+   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
    static.lastTick = tick;
 
@@ -4892,7 +4892,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * Extended version of the built-in function OrderSend().
  *
  * @param  _In_  string   symbol      - symbol to trade (NULL: current symbol)
- * @param  _In_  int      type        - trade operation type: OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP
+ * @param  _In_  int      type        - trade operation type
  * @param  _In_  double   lots        - trade volume in lots
  * @param  _In_  double   price       - limit price for pending orders (ignored for market orders)
  * @param  _In_  double   slippage    - acceptable slippage in pip (not in point)
@@ -4901,7 +4901,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * @param  _In_  string   comment     - order comment (max. 27 chars)
  * @param  _In_  int      magicNumber - magic order number
  * @param  _In_  datetime expires     - a pending order's expiration date (if supported by the broker)
- * @param  _In_  color    markerColor - color of the chart marker which is set
+ * @param  _In_  color    markerColor - color of the chart marker to set
  * @param  _In_  int      oeFlags     - additional flags controlling order execution
  * @param  _Out_ int      oe[]        - order execution details (struct ORDER_EXECUTION)
  *
@@ -4974,7 +4974,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
 
-   int ticket, time, firstTime = GetTickCount(), requotes, tempErrors;
+   int ticket, time, time1 = GetTickCount(), requotes, tempErrors;
 
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
@@ -5001,7 +5001,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       time   = GetTickCount();
       ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
 
-      oe.setDuration(oe, GetTickCount()-firstTime);                              // total time in milliseconds
+      oe.setDuration(oe, GetTickCount()-time1);                                  // total time in milliseconds
 
       if (ticket > 0) {
          OrderPush("OrderSendEx(20)");
@@ -5030,7 +5030,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
-               if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+               if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5607,7 +5607,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          if (__LOG()) log("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (!IsTesting())                                    PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         else if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }
