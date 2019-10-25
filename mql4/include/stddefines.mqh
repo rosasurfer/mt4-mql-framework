@@ -182,9 +182,9 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Arrayindizes für Timezone-Transitionsdaten
-#define I_TRANSITION_TIME           0
-#define I_TRANSITION_OFFSET         1
-#define I_TRANSITION_DST            2
+#define TRANSITION_TIME             0
+#define TRANSITION_OFFSET           1
+#define TRANSITION_DST              2
 
 
 // Object property ids, siehe ObjectSet()
@@ -275,19 +275,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_PERIODS_ALL          0x03FF           // 1023: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1
 
 
-// Array-Indizes für Timeframe-Operationen
-#define I_PERIOD_M1                    0
-#define I_PERIOD_M5                    1
-#define I_PERIOD_M15                   2
-#define I_PERIOD_M30                   3
-#define I_PERIOD_H1                    4
-#define I_PERIOD_H4                    5
-#define I_PERIOD_D1                    6
-#define I_PERIOD_W1                    7
-#define I_PERIOD_MN1                   8
-#define I_PERIOD_Q1                    9
-
-
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
 #define O_PUSH                         1
 #define O_POP                          2
@@ -346,24 +333,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define STYLE_DASHDOTDOT               4        // pen has alternating dashes and double dots
 
 
-// Indicator buffer identifiers zur Verwendung mit iCustom()
-#define BUFFER_INDEX_0                 0        // allgemein gültige ID's
-#define BUFFER_INDEX_1                 1
-#define BUFFER_INDEX_2                 2
-#define BUFFER_INDEX_3                 3
-#define BUFFER_INDEX_4                 4
-#define BUFFER_INDEX_5                 5
-#define BUFFER_INDEX_6                 6
-#define BUFFER_INDEX_7                 7
-#define BUFFER_1          BUFFER_INDEX_0
-#define BUFFER_2          BUFFER_INDEX_1
-#define BUFFER_3          BUFFER_INDEX_2
-#define BUFFER_4          BUFFER_INDEX_3
-#define BUFFER_5          BUFFER_INDEX_4
-#define BUFFER_6          BUFFER_INDEX_5
-#define BUFFER_7          BUFFER_INDEX_6
-#define BUFFER_8          BUFFER_INDEX_7
-
 #define Bands.MODE_MA                  0        // MA value
 #define Bands.MODE_UPPER               1        // upper band value
 #define Bands.MODE_LOWER               2        // lower band value
@@ -391,7 +360,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length
 
-#define SuperTrend.MODE_SR             0        // SuperTrend SR value
+#define SuperTrend.MODE_SR             0        // SuperTrend SR line
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
 
@@ -458,30 +427,6 @@ double  N_INF;                                              // -1.#INF: negative
 
 // Event-Flags
 #define EVENT_CHART_CMD                1
-
-
-// Konstanten zum Zugriff auf die in CSV-Dateien gespeicherte Accounthistory
-#define AH_COLUMNS                    20
-#define I_AH_TICKET                    0
-#define I_AH_OPENTIME                  1
-#define I_AH_OPENTIMESTAMP             2
-#define I_AH_TYPEDESCRIPTION           3
-#define I_AH_TYPE                      4
-#define I_AH_SIZE                      5
-#define I_AH_SYMBOL                    6
-#define I_AH_OPENPRICE                 7
-#define I_AH_STOPLOSS                  8
-#define I_AH_TAKEPROFIT                9
-#define I_AH_CLOSETIME                10
-#define I_AH_CLOSETIMESTAMP           11
-#define I_AH_CLOSEPRICE               12
-#define I_AH_MAGICNUMBER              13
-#define I_AH_COMMISSION               14
-#define I_AH_SWAP                     15
-#define I_AH_NETPROFIT                16
-#define I_AH_GROSSPROFIT              17
-#define I_AH_BALANCE                  18
-#define I_AH_COMMENT                  19
 
 
 /*
@@ -761,12 +706,12 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Array ID's für von ArrayCopyRates() definierte Arrays
-#define I_BAR.time                           0
-#define I_BAR.open                           1
-#define I_BAR.low                            2
-#define I_BAR.high                           3
-#define I_BAR.close                          4
-#define I_BAR.volume                         5
+#define BAR.time                             0
+#define BAR.open                             1
+#define BAR.low                              2
+#define BAR.high                             3
+#define BAR.close                            4
+#define BAR.volume                           5
 
 
 // Price-Bar ID's (siehe Historyfunktionen)

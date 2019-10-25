@@ -29,176 +29,176 @@
  *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } oe;                      // 136 byte = int[34]
  */
-#define I_OE.error                0                      // Array-Offsets
-#define I_OE.symbol               1
-#define I_OE.digits               5
-#define I_OE.stopDistance         6
-#define I_OE.freezeDistance       7
-#define I_OE.bid                  8
-#define I_OE.ask                  9
-#define I_OE.ticket              10
-#define I_OE.type                11
-#define I_OE.lots                12
-#define I_OE.openTime            13
-#define I_OE.openPrice           14
-#define I_OE.stopLoss            15
-#define I_OE.takeProfit          16
-#define I_OE.closeTime           17
-#define I_OE.closePrice          18
-#define I_OE.swap                19
-#define I_OE.commission          20
-#define I_OE.profit              21
-#define I_OE.comment             22
-#define I_OE.duration            29
-#define I_OE.requotes            30
-#define I_OE.slippage            31
-#define I_OE.remainingTicket     32
-#define I_OE.remainingLots       33
+#define OE.error                  0                      // Array-Offsets
+#define OE.symbol                 1
+#define OE.digits                 5
+#define OE.stopDistance           6
+#define OE.freezeDistance         7
+#define OE.bid                    8
+#define OE.ask                    9
+#define OE.ticket                10
+#define OE.type                  11
+#define OE.lots                  12
+#define OE.openTime              13
+#define OE.openPrice             14
+#define OE.stopLoss              15
+#define OE.takeProfit            16
+#define OE.closeTime             17
+#define OE.closePrice            18
+#define OE.swap                  19
+#define OE.commission            20
+#define OE.profit                21
+#define OE.comment               22
+#define OE.duration              29
+#define OE.requotes              30
+#define OE.slippage              31
+#define OE.remainingTicket       32
+#define OE.remainingLots         33
 
 
 // Getter
-int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.error          ]);                                         ORDER_EXECUTION.toStr(oe); }
-string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + I_OE.symbol*4));                                             ORDER_EXECUTION.toStr(oe); }
-int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.digits         ]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
-double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.freezeDistance ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
-double   oe.Bid                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.bid            ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
-double   oe.Ask                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.ask            ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
-int      oe.Ticket             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.ticket         ]);                                         ORDER_EXECUTION.toStr(oe); }
-int      oe.Type               (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.type           ]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.Lots               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[I_OE.lots           ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
-datetime oe.OpenTime           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.openTime       ]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.OpenPrice          (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.openPrice      ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
-double   oe.StopLoss           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.stopLoss       ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
-double   oe.TakeProfit         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.takeProfit     ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
-datetime oe.CloseTime          (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.closeTime      ]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.closePrice     ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
-double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[I_OE.swap           ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
-double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[I_OE.commission     ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
-double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[I_OE.profit         ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
-string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + I_OE.comment*4));                                            ORDER_EXECUTION.toStr(oe); }
-int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.duration       ]);                                         ORDER_EXECUTION.toStr(oe); }
-int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.requotes       ]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[I_OE.slippage       ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
-int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[I_OE.remainingTicket]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[I_OE.remainingLots  ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
+int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.error          ]);                                         ORDER_EXECUTION.toStr(oe); }
+string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + OE.symbol*4));                                             ORDER_EXECUTION.toStr(oe); }
+int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.digits         ]);                                         ORDER_EXECUTION.toStr(oe); }
+double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
+double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.freezeDistance ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
+double   oe.Bid                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.bid            ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
+double   oe.Ask                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.ask            ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
+int      oe.Ticket             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.ticket         ]);                                         ORDER_EXECUTION.toStr(oe); }
+int      oe.Type               (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.type           ]);                                         ORDER_EXECUTION.toStr(oe); }
+double   oe.Lots               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.lots           ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
+datetime oe.OpenTime           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.openTime       ]);                                         ORDER_EXECUTION.toStr(oe); }
+double   oe.OpenPrice          (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.openPrice      ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
+double   oe.StopLoss           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.stopLoss       ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
+double   oe.TakeProfit         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.takeProfit     ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
+datetime oe.CloseTime          (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.closeTime      ]);                                         ORDER_EXECUTION.toStr(oe); }
+double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.closePrice     ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
+double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.swap           ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
+double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.commission     ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
+double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.profit         ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
+string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + OE.comment*4));                                            ORDER_EXECUTION.toStr(oe); }
+int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.duration       ]);                                         ORDER_EXECUTION.toStr(oe); }
+int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.requotes       ]);                                         ORDER_EXECUTION.toStr(oe); }
+double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.slippage       ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
+int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.remainingTicket]);                                         ORDER_EXECUTION.toStr(oe); }
+double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.remainingLots  ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
 
-int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.error          ]);                                      ORDER_EXECUTION.toStr(oe); }
-string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.symbol)*4));               ORDER_EXECUTION.toStr(oe); }
-int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.digits         ]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
-double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.freezeDistance ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
-double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.bid            ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
-double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.ask            ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
-int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.ticket         ]);                                      ORDER_EXECUTION.toStr(oe); }
-int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.type           ]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][I_OE.lots           ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
-datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.openTime       ]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.openPrice      ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
-double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.stopLoss       ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
-double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.takeProfit     ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
-datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.closeTime      ]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.closePrice     ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
-double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][I_OE.swap           ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
-double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][I_OE.commission     ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
-double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][I_OE.profit         ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
-string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.comment)*4));              ORDER_EXECUTION.toStr(oe); }
-int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.duration       ]);                                      ORDER_EXECUTION.toStr(oe); }
-int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.requotes       ]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][I_OE.slippage       ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
-int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][I_OE.remainingTicket]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][I_OE.remainingLots  ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
+int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.error          ]);                                      ORDER_EXECUTION.toStr(oe); }
+string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.symbol)*4));               ORDER_EXECUTION.toStr(oe); }
+int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.digits         ]);                                      ORDER_EXECUTION.toStr(oe); }
+double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
+double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.freezeDistance ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
+double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.bid            ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
+double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.ask            ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
+int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.ticket         ]);                                      ORDER_EXECUTION.toStr(oe); }
+int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.type           ]);                                      ORDER_EXECUTION.toStr(oe); }
+double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.lots           ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
+datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.openTime       ]);                                      ORDER_EXECUTION.toStr(oe); }
+double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.openPrice      ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
+double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.stopLoss       ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
+double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.takeProfit     ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
+datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.closeTime      ]);                                      ORDER_EXECUTION.toStr(oe); }
+double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.closePrice     ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
+double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.swap           ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
+double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.commission     ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
+double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.profit         ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
+string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.comment)*4));              ORDER_EXECUTION.toStr(oe); }
+int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.duration       ]);                                      ORDER_EXECUTION.toStr(oe); }
+int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.requotes       ]);                                      ORDER_EXECUTION.toStr(oe); }
+double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.slippage       ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
+int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.remainingTicket]);                                      ORDER_EXECUTION.toStr(oe); }
+double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.remainingLots  ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
 
 
 // Setter
-int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[I_OE.error          ]  = error;                                                       return(error     ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[OE.error          ]  = error;                                                       return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(oe) + I_OE.symbol*4;
+   int dest = GetIntsAddress(oe) + OE.symbol*4;
    CopyMemory(dest, src, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                                                                              return(symbol    ); ORDER_EXECUTION.toStr(oe); }
-int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[I_OE.digits         ]  = digits;                                                      return(digits    ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[I_OE.stopDistance   ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[I_OE.freezeDistance ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setBid             (/*ORDER_EXECUTION*/int &oe[],          double   bid       ) { oe[I_OE.bid            ]  = MathRound(bid * MathPow(10, oe.Digits(oe)));                 return(bid       ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setAsk             (/*ORDER_EXECUTION*/int &oe[],          double   ask       ) { oe[I_OE.ask            ]  = MathRound(ask * MathPow(10, oe.Digits(oe)));                 return(ask       ); ORDER_EXECUTION.toStr(oe); }
-int      oe.setTicket          (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[I_OE.ticket         ]  = ticket;                                                      return(ticket    ); ORDER_EXECUTION.toStr(oe); }
-int      oe.setType            (/*ORDER_EXECUTION*/int &oe[],          int      type      ) { oe[I_OE.type           ]  = type;                                                        return(type      ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setLots            (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[I_OE.lots           ]  = MathRound(lots * 100);                                       return(lots      ); ORDER_EXECUTION.toStr(oe); }
-datetime oe.setOpenTime        (/*ORDER_EXECUTION*/int &oe[],          datetime openTime  ) { oe[I_OE.openTime       ]  = openTime;                                                    return(openTime  ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setOpenPrice       (/*ORDER_EXECUTION*/int &oe[],          double   openPrice ) { oe[I_OE.openPrice      ]  = MathRound(openPrice  * MathPow(10, oe.Digits(oe)));          return(openPrice ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setStopLoss        (/*ORDER_EXECUTION*/int &oe[],          double   stopLoss  ) { oe[I_OE.stopLoss       ]  = MathRound(stopLoss   * MathPow(10, oe.Digits(oe)));          return(stopLoss  ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setTakeProfit      (/*ORDER_EXECUTION*/int &oe[],          double   takeProfit) { oe[I_OE.takeProfit     ]  = MathRound(takeProfit * MathPow(10, oe.Digits(oe)));          return(takeProfit); ORDER_EXECUTION.toStr(oe); }
-datetime oe.setCloseTime       (/*ORDER_EXECUTION*/int &oe[],          datetime closeTime ) { oe[I_OE.closeTime      ]  = closeTime;                                                   return(closeTime ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setClosePrice      (/*ORDER_EXECUTION*/int &oe[],          double   closePrice) { oe[I_OE.closePrice     ]  = MathRound(closePrice * MathPow(10, oe.Digits(oe)));          return(closePrice); ORDER_EXECUTION.toStr(oe); }
-double   oe.setSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[I_OE.swap           ]  = MathRound(swap * 100);                                       return(swap      ); ORDER_EXECUTION.toStr(oe); }
-double   oe.addSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[I_OE.swap           ] += MathRound(swap * 100);                                       return(swap      ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[I_OE.commission     ]  = MathRound(comission * 100);                                  return(comission ); ORDER_EXECUTION.toStr(oe); }
-double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[I_OE.commission     ] += MathRound(comission * 100);                                  return(comission ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[I_OE.profit         ]  = MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
-double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[I_OE.profit         ] += MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
+   ArrayResize(array, 0);                                                                                                                                                            return(symbol    ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[OE.digits         ]  = digits;                                                      return(digits    ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[OE.stopDistance   ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[OE.freezeDistance ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setBid             (/*ORDER_EXECUTION*/int &oe[],          double   bid       ) { oe[OE.bid            ]  = MathRound(bid * MathPow(10, oe.Digits(oe)));                 return(bid       ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setAsk             (/*ORDER_EXECUTION*/int &oe[],          double   ask       ) { oe[OE.ask            ]  = MathRound(ask * MathPow(10, oe.Digits(oe)));                 return(ask       ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setTicket          (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[OE.ticket         ]  = ticket;                                                      return(ticket    ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setType            (/*ORDER_EXECUTION*/int &oe[],          int      type      ) { oe[OE.type           ]  = type;                                                        return(type      ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setLots            (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[OE.lots           ]  = MathRound(lots * 100);                                       return(lots      ); ORDER_EXECUTION.toStr(oe); }
+datetime oe.setOpenTime        (/*ORDER_EXECUTION*/int &oe[],          datetime openTime  ) { oe[OE.openTime       ]  = openTime;                                                    return(openTime  ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setOpenPrice       (/*ORDER_EXECUTION*/int &oe[],          double   openPrice ) { oe[OE.openPrice      ]  = MathRound(openPrice  * MathPow(10, oe.Digits(oe)));          return(openPrice ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setStopLoss        (/*ORDER_EXECUTION*/int &oe[],          double   stopLoss  ) { oe[OE.stopLoss       ]  = MathRound(stopLoss   * MathPow(10, oe.Digits(oe)));          return(stopLoss  ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setTakeProfit      (/*ORDER_EXECUTION*/int &oe[],          double   takeProfit) { oe[OE.takeProfit     ]  = MathRound(takeProfit * MathPow(10, oe.Digits(oe)));          return(takeProfit); ORDER_EXECUTION.toStr(oe); }
+datetime oe.setCloseTime       (/*ORDER_EXECUTION*/int &oe[],          datetime closeTime ) { oe[OE.closeTime      ]  = closeTime;                                                   return(closeTime ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setClosePrice      (/*ORDER_EXECUTION*/int &oe[],          double   closePrice) { oe[OE.closePrice     ]  = MathRound(closePrice * MathPow(10, oe.Digits(oe)));          return(closePrice); ORDER_EXECUTION.toStr(oe); }
+double   oe.setSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[OE.swap           ]  = MathRound(swap * 100);                                       return(swap      ); ORDER_EXECUTION.toStr(oe); }
+double   oe.addSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[OE.swap           ] += MathRound(swap * 100);                                       return(swap      ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[OE.commission     ]  = MathRound(comission * 100);                                  return(comission ); ORDER_EXECUTION.toStr(oe); }
+double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[OE.commission     ] += MathRound(comission * 100);                                  return(comission ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[OE.profit         ]  = MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
+double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[OE.profit         ] += MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment = \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(oe) + I_OE.comment*4;
+   int dest = GetIntsAddress(oe) + OE.comment*4;
    CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                                                                              return(comment   ); ORDER_EXECUTION.toStr(oe); }
-int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[I_OE.duration       ] = milliSec;                                                     return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
-int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[I_OE.requotes       ] = requotes;                                                     return(requotes  ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[I_OE.slippage       ] = MathRound(slippage * MathPow(10, oe.Digits(oe) & 1));         return(slippage  ); ORDER_EXECUTION.toStr(oe); }
-int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[I_OE.remainingTicket] = ticket;                                                       return(ticket    ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[I_OE.remainingLots  ] = MathRound(lots * 100);                                        return(lots      ); ORDER_EXECUTION.toStr(oe); }
+   ArrayResize(array, 0);                                                                                                                                                            return(comment   ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[OE.duration       ] = milliSec;                                                     return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[OE.requotes       ] = requotes;                                                     return(requotes  ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[OE.slippage       ] = MathRound(slippage * MathPow(10, oe.Digits(oe) & 1));         return(slippage  ); ORDER_EXECUTION.toStr(oe); }
+int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[OE.remainingTicket] = ticket;                                                       return(ticket    ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[OE.remainingLots  ] = MathRound(lots * 100);                                        return(lots      ); ORDER_EXECUTION.toStr(oe); }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error) {
-   if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][I_OE.error          ] = error;                                                     return(error     ); }
-                                                                                              oe[i][I_OE.error          ] = error;                                                     return(error     ); ORDER_EXECUTION.toStr(oe); }
+   if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][OE.error          ] = error;                                                     return(error     ); }
+                                                                                              oe[i][OE.error          ] = error;                                                     return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol)), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.symbol)*4;
+   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.symbol)*4;
    CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                                                                              return(symbol    ); ORDER_EXECUTION.toStr(oe); }
-int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][I_OE.digits         ]  = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][I_OE.stopDistance   ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][I_OE.freezeDistance ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setBid            (/*ORDER_EXECUTION*/int &oe[][], int i, double   bid       ) { oe[i][I_OE.bid            ]  = MathRound(bid * MathPow(10, oes.Digits(oe, i)));          return(bid       ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setAsk            (/*ORDER_EXECUTION*/int &oe[][], int i, double   ask       ) { oe[i][I_OE.ask            ]  = MathRound(ask * MathPow(10, oes.Digits(oe, i)));          return(ask       ); ORDER_EXECUTION.toStr(oe); }
-int      oes.setTicket         (/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][I_OE.ticket         ]  = ticket;                                                   return(ticket    ); ORDER_EXECUTION.toStr(oe); }
-int      oes.setType           (/*ORDER_EXECUTION*/int &oe[][], int i, int      type      ) { oe[i][I_OE.type           ]  = type;                                                     return(type      ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setLots           (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][I_OE.lots           ]  = MathRound(lots * 100);                                    return(lots      ); ORDER_EXECUTION.toStr(oe); }
-datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int &oe[][], int i, datetime openTime  ) { oe[i][I_OE.openTime       ]  = openTime;                                                 return(openTime  ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int &oe[][], int i, double   openPrice ) { oe[i][I_OE.openPrice      ]  = MathRound(openPrice  * MathPow(10, oes.Digits(oe, i)));   return(openPrice ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setStopLoss       (/*ORDER_EXECUTION*/int &oe[][], int i, double   stopLoss  ) { oe[i][I_OE.stopLoss       ]  = MathRound(stopLoss   * MathPow(10, oes.Digits(oe, i)));   return(stopLoss  ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int &oe[][], int i, double   takeProfit) { oe[i][I_OE.takeProfit     ]  = MathRound(takeProfit * MathPow(10, oes.Digits(oe, i)));   return(takeProfit); ORDER_EXECUTION.toStr(oe); }
-datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int &oe[][], int i, datetime closeTime ) { oe[i][I_OE.closeTime      ]  = closeTime;                                                return(closeTime ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setClosePrice     (/*ORDER_EXECUTION*/int &oe[][], int i, double   closePrice) { oe[i][I_OE.closePrice     ]  = MathRound(closePrice * MathPow(10, oes.Digits(oe, i)));   return(closePrice); ORDER_EXECUTION.toStr(oe); }
-double   oes.setSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][I_OE.swap           ]  = MathRound(swap * 100);                                    return(swap      ); ORDER_EXECUTION.toStr(oe); }
-double   oes.addSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][I_OE.swap           ] += MathRound(swap * 100);                                    return(swap      ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][I_OE.commission     ]  = MathRound(comission * 100);                               return(comission ); ORDER_EXECUTION.toStr(oe); }
-double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][I_OE.commission     ] += MathRound(comission * 100);                               return(comission ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][I_OE.profit         ]  = MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
-double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][I_OE.profit         ] += MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
+   ArrayResize(array, 0);                                                                                                                                                            return(symbol    ); ORDER_EXECUTION.toStr(oe); }
+int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][OE.digits         ]  = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][OE.stopDistance   ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][OE.freezeDistance ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setBid            (/*ORDER_EXECUTION*/int &oe[][], int i, double   bid       ) { oe[i][OE.bid            ]  = MathRound(bid * MathPow(10, oes.Digits(oe, i)));          return(bid       ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setAsk            (/*ORDER_EXECUTION*/int &oe[][], int i, double   ask       ) { oe[i][OE.ask            ]  = MathRound(ask * MathPow(10, oes.Digits(oe, i)));          return(ask       ); ORDER_EXECUTION.toStr(oe); }
+int      oes.setTicket         (/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][OE.ticket         ]  = ticket;                                                   return(ticket    ); ORDER_EXECUTION.toStr(oe); }
+int      oes.setType           (/*ORDER_EXECUTION*/int &oe[][], int i, int      type      ) { oe[i][OE.type           ]  = type;                                                     return(type      ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setLots           (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][OE.lots           ]  = MathRound(lots * 100);                                    return(lots      ); ORDER_EXECUTION.toStr(oe); }
+datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int &oe[][], int i, datetime openTime  ) { oe[i][OE.openTime       ]  = openTime;                                                 return(openTime  ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int &oe[][], int i, double   openPrice ) { oe[i][OE.openPrice      ]  = MathRound(openPrice  * MathPow(10, oes.Digits(oe, i)));   return(openPrice ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setStopLoss       (/*ORDER_EXECUTION*/int &oe[][], int i, double   stopLoss  ) { oe[i][OE.stopLoss       ]  = MathRound(stopLoss   * MathPow(10, oes.Digits(oe, i)));   return(stopLoss  ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int &oe[][], int i, double   takeProfit) { oe[i][OE.takeProfit     ]  = MathRound(takeProfit * MathPow(10, oes.Digits(oe, i)));   return(takeProfit); ORDER_EXECUTION.toStr(oe); }
+datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int &oe[][], int i, datetime closeTime ) { oe[i][OE.closeTime      ]  = closeTime;                                                return(closeTime ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setClosePrice     (/*ORDER_EXECUTION*/int &oe[][], int i, double   closePrice) { oe[i][OE.closePrice     ]  = MathRound(closePrice * MathPow(10, oes.Digits(oe, i)));   return(closePrice); ORDER_EXECUTION.toStr(oe); }
+double   oes.setSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][OE.swap           ]  = MathRound(swap * 100);                                    return(swap      ); ORDER_EXECUTION.toStr(oe); }
+double   oes.addSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][OE.swap           ] += MathRound(swap * 100);                                    return(swap      ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][OE.commission     ]  = MathRound(comission * 100);                               return(comission ); ORDER_EXECUTION.toStr(oe); }
+double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][OE.commission     ] += MathRound(comission * 100);                               return(comission ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][OE.profit         ]  = MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
+double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][OE.profit         ] += MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment = \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.comment)*4;
+   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.comment)*4;
    CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                                                                              return(comment   ); ORDER_EXECUTION.toStr(oe); }
-int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][I_OE.duration       ] = milliSec;                                                  return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
-int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][I_OE.requotes       ] = requotes;                                                  return(requotes  ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][I_OE.slippage       ] = MathRound(slippage * MathPow(10, oes.Digits(oe, i) & 1));  return(slippage  ); ORDER_EXECUTION.toStr(oe); }
-int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][I_OE.remainingTicket] = ticket;                                                    return(ticket    ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][I_OE.remainingLots  ] = MathRound(lots * 100);                                     return(lots      ); ORDER_EXECUTION.toStr(oe); }
+   ArrayResize(array, 0);                                                                                                                                                            return(comment   ); ORDER_EXECUTION.toStr(oe); }
+int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][OE.duration       ] = milliSec;                                                  return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
+int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][OE.requotes       ] = requotes;                                                  return(requotes  ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][OE.slippage       ] = MathRound(slippage * MathPow(10, oes.Digits(oe, i) & 1));  return(slippage  ); ORDER_EXECUTION.toStr(oe); }
+int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][OE.remainingTicket] = ticket;                                                    return(ticket    ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][OE.remainingLots  ] = MathRound(lots * 100);                                     return(lots      ); ORDER_EXECUTION.toStr(oe); }
 
 
 /**

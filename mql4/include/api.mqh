@@ -293,9 +293,12 @@ string   JoinStrings(string values[], string separator = ", ");;
 
 
 // include/iCustom/
-double   icMACD         (int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
-double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
-double   icNonLagMA     (int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
+double   icHalfTrend    (int timeframe, int periods, int iBuffer, int iBar);;
+double   icMACD         (int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
+double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
+double   icNonLagMA     (int timeframe, int cycleLength, int iBuffer, int iBar);;
+double   icRSI          (int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar);;
+double   icSuperTrend   (int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 double   icTrix         (int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 
@@ -401,9 +404,7 @@ int      FileReadLines(string filename, string result[], bool skipEmptyLines = f
 int      FindFileNames(string pattern, string &lpResults[], int flags = NULL);;
 datetime FxtToGmtTime(datetime fxtTime);;
 datetime FxtToServerTime(datetime fxtTime);;
-int      GetAccountHistory(int account, string results[][AH_COLUMNS]);;
 int      GetAccountNumber();;
-int      GetBalanceHistory(int account, datetime &times[], double &values[]);;
 int      GetCustomLogID();;
 int      GetFxtToGmtTimeOffset(datetime fxtTime);;
 int      GetFxtToServerTimeOffset(datetime fxtTime);;
@@ -450,8 +451,6 @@ string   GetWindowText(int hWnd);;
 datetime GmtToFxtTime(datetime gmtTime);;
 datetime GmtToServerTime(datetime gmtTime);;
 color    HSLToRGB(double hsl[3]);;
-int      iAccountBalance(int account, double buffer[], int bar);;
-int      iAccountBalanceSeries(int account, double &buffer[]);;
 int      IncreasePeriod(int period = NULL);;
 int      InitializeDoubleBuffer(double buffer[], int size);;
 int      InitializeStringBuffer(string &buffer[], int length);;

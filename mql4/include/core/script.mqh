@@ -49,7 +49,7 @@ int init() {
 
 
    // (2) user-spezifische Init-Tasks ausführen
-   int initFlags = __ExecutionContext[I_EC.programInitFlags];
+   int initFlags = __ExecutionContext[iEC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -146,7 +146,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (!(__ExecutionContext[I_EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {// Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+   if (!(__ExecutionContext[iEC.programInitFlags] & INIT_NO_BARS_REQUIRED)) { // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
@@ -158,7 +158,7 @@ int start() {
 
    // (4) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[I_EC.mqlError]|__ExecutionContext[I_EC.dllError])
+   if (error || last_error|__ExecutionContext[iEC.mqlError]|__ExecutionContext[iEC.dllError])
       CheckErrors("start(5)", error);
    return(last_error);
 }
@@ -274,7 +274,7 @@ int HandleScriptError(string location, string message, int error) {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = __ExecutionContext[I_EC.dllError];                // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[iEC.dllError];                 // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -282,7 +282,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = __ExecutionContext[I_EC.mqlError];
+   int mql_error = __ExecutionContext[iEC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:

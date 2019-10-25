@@ -207,8 +207,6 @@
 
 
    // sonstiges
-   int      GetAccountHistory(int account, string results[]);
-   int      GetBalanceHistory(int account, datetime times[], double values[]);
    int      SortTicketsChronological(int tickets[]);
 #import "rsfLib2.ex4"
    bool     SortClosedTickets(int keys[][]);
@@ -236,9 +234,6 @@
    bool     ObjectDeleteSilent(string label, string location);
    int      ObjectRegister(string label);
    int      DeleteRegisteredObjects(string prefix);
-
-   int      iAccountBalance(int account, double buffer[], int bar);
-   int      iAccountBalanceSeries(int account, double buffer[]);
 
 
    // toString-Funktionen

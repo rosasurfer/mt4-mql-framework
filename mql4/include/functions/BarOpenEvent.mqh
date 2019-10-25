@@ -47,8 +47,8 @@ bool IsBarOpenEvent(int timeframe = NULL) {
    bool result = false;
 
    // resolve event status by checking the previous tick
-   if (__ExecutionContext[I_EC.prevTickTime] < barOpenTimes[i]) {
-      if (!__ExecutionContext[I_EC.prevTickTime]) {
+   if (__ExecutionContext[iEC.prevTickTime] < barOpenTimes[i]) {
+      if (!__ExecutionContext[iEC.prevTickTime]) {
          if (IsExpert()) /*&&*/ if (IsTesting())                           // in Tester the first tick is always a BarOpen event
             result = true;
       }
