@@ -1005,12 +1005,12 @@ bool BarRangeSignal.Check(int index) {
    bool     signal.onTouch      = signal.config[index][SIGNAL_CONFIG_PARAM2       ] != 0;    // noch nicht implementiert
    int      signal.resetAfter   = signal.config[index][SIGNAL_CONFIG_PARAM3       ];         // noch nicht implementiert
 
-   int      testTimeframe       = signal.data  [index][BRS_TEST_TIMEFRAME         ];
-   double   signalLevelH        = signal.data  [index][BRS_SIGNAL_LEVEL_H         ];
-   double   signalLevelL        = signal.data  [index][BRS_SIGNAL_LEVEL_L         ];
-   int      testSessionCloseBar = signal.data  [index][BRS_TEST_SESSION_CLOSEBAR  ];
-   datetime lastSessionEndTime  = signal.data  [index][BRS_CURRENT_SESSION_ENDTIME];
-   int      lastChangedBars     = signal.data  [index][BRS_LAST_CHANGED_BARS      ];
+   int      testTimeframe       = signal.data  [index][I_BRS_TEST_TIMEFRAME         ];
+   double   signalLevelH        = signal.data  [index][I_BRS_SIGNAL_LEVEL_H         ];
+   double   signalLevelL        = signal.data  [index][I_BRS_SIGNAL_LEVEL_L         ];
+   int      testSessionCloseBar = signal.data  [index][I_BRS_TEST_SESSION_CLOSEBAR  ];
+   datetime lastSessionEndTime  = signal.data  [index][I_BRS_CURRENT_SESSION_ENDTIME];
+   int      lastChangedBars     = signal.data  [index][I_BRS_LAST_CHANGED_BARS      ];
 
 
    // (1) aktuellen Tick klassifizieren
@@ -1123,8 +1123,8 @@ string BarRangeSignal.Status(int index) {
    bool   signal.onTouch    = signal.config[index][SIGNAL_CONFIG_PARAM2   ] != 0;
    int    signal.resetAfter = signal.config[index][SIGNAL_CONFIG_PARAM3   ];
 
-   double signalLevelH      = signal.data  [index][BRS_SIGNAL_LEVEL_H     ];
-   double signalLevelL      = signal.data  [index][BRS_SIGNAL_LEVEL_L     ];
+   double signalLevelH      = signal.data  [index][I_BRS_SIGNAL_LEVEL_H   ];
+   double signalLevelL      = signal.data  [index][I_BRS_SIGNAL_LEVEL_L   ];
 
    string description = "Signal at break of "+ BarRangeDescription(signal.timeframe, signal.bar) +"      High"+ ifString(signal.barRange==100, "", "-"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "broken") +"    Low"+ ifString(signal.barRange==100, "", "+"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "broken") +"      onTouch: "+ ifString(signal.onTouch, "On", "Off");
    return(description);
