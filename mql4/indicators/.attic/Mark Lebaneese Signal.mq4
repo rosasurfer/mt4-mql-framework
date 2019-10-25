@@ -41,7 +41,6 @@ int    maxBars;                                    // Höchstanzahl im Chart zu a
 int    nlma.cycles;                                // NonLagMA-Parameter
 int    nlma.cycleLength;                           // ...
 int    nlma.cycleWindowSize;                       // ...
-int    nlma.maxValues;                             // ...
 
 
 double profit = 0;                                 // P/L aller geschlossenen Positionen in Pips
@@ -64,17 +63,14 @@ double profit.max = INT_MIN;                       // höchster registrierter P/L
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Validierung: Max.Bars
+   // Validierung: Max.Bars
    if (Max.Bars < -1) return(catch("onInit(1)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxBars = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-
-   // (2) NonLagMA-Parameter initialisieren
+   // NonLagMA-Parameter initialisieren
    nlma.cycles          =  4;
    nlma.cycleLength     = 20;
    nlma.cycleWindowSize = nlma.cycles*nlma.cycleLength + nlma.cycleLength-1;
-   nlma.maxValues       = maxBars + 50;            // sicherheitshalber ein paar Bars mehr, damit auch der älteste Trendwechsel korrekt detektiert wird
-
 
    SetIndexLabel(0, NULL);                         // Datenanzeige ausschalten
    return(catch("onInit(2)"));
@@ -124,7 +120,7 @@ int onTick() {
 
    // (2) Bars analysieren
    for (int bar=startBar; bar >= 0; bar--) {
-      int trend = icNonLagMA(NULL, nlma.cycleLength, nlma.maxValues, MODE_TREND, bar);
+      int trend = icNonLagMA(NULL, nlma.cycleLength, MODE_TREND, bar);
 
       // (2.1) vor kompletter Neuberechnung ersten Trendwechsel abwarten
       if (!UnchangedBars) {

@@ -135,9 +135,9 @@ bool EditFiles(string& filenames[]) {
  *
  * Datenformat:
  * ------------
- *  transition[I_TRANSITION_TIME  ] - GMT-Zeitpunkt des Wechsels oder -1, wenn der Wechsel unbekannt ist
- *  transition[I_TRANSITION_OFFSET] - GMT-Offset nach dem Wechsel
- *  transition[I_TRANSITION_DST   ] - ob nach dem Wechsel DST gilt oder nicht
+ *  transition[TRANSITION_TIME  ] - GMT-Zeitpunkt des Wechsels oder -1, wenn der Wechsel unbekannt ist
+ *  transition[TRANSITION_OFFSET] - GMT-Offset nach dem Wechsel
+ *  transition[TRANSITION_DST   ] - ob nach dem Wechsel DST gilt oder nicht
  */
 bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]) {
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
@@ -172,49 +172,49 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
    i = y-1970;
 
    while (true) {
-      if (i < 0)              { previousTransition[I_TRANSITION_TIME] = -1; break; }
-      if (lTimezone == "gmt") { previousTransition[I_TRANSITION_TIME] = -1; break; }
+      if (i < 0)              { previousTransition[TRANSITION_TIME] = -1; break; }
+      if (lTimezone == "gmt") { previousTransition[TRANSITION_TIME] = -1; break; }
 
       if (lTimezone == "america/new_york") {
          toDST = transitions.America_New_York[i][TR_TO_DST.local];
          toSTD = transitions.America_New_York[i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[I_TRANSITION_TIME] = toSTD; previousTransition[I_TRANSITION_OFFSET] = transitions.America_New_York[i][STD_OFFSET]; previousTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[I_TRANSITION_TIME] = toDST; previousTransition[I_TRANSITION_OFFSET] = transitions.America_New_York[i][DST_OFFSET]; previousTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/berlin") {
          toDST = transitions.Europe_Berlin   [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Berlin   [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[I_TRANSITION_TIME] = toSTD; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][STD_OFFSET]; previousTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[I_TRANSITION_TIME] = toDST; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][DST_OFFSET]; previousTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/kiev") {
          toDST = transitions.Europe_Kiev     [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Kiev     [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[I_TRANSITION_TIME] = toSTD; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][STD_OFFSET]; previousTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[I_TRANSITION_TIME] = toDST; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][DST_OFFSET]; previousTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/london") {
          toDST = transitions.Europe_London   [i][TR_TO_DST.local];
          toSTD = transitions.Europe_London   [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[I_TRANSITION_TIME] = toSTD; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_London   [i][STD_OFFSET]; previousTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[I_TRANSITION_TIME] = toDST; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_London   [i][DST_OFFSET]; previousTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/minsk") {
          toDST = transitions.Europe_Minsk    [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Minsk    [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[I_TRANSITION_TIME] = toSTD; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; previousTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[I_TRANSITION_TIME] = toDST; previousTransition[I_TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; previousTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone=="fxt" || lTimezone=="america/new_york+0700") {
          toDST = transitions.FXT             [i][TR_TO_DST.local];
          toSTD = transitions.FXT             [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[I_TRANSITION_TIME] = toSTD; previousTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; previousTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[I_TRANSITION_TIME] = toDST; previousTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; previousTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
       }
 
       else return(!catch("GetTimezoneTransitions(3)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
@@ -230,49 +230,49 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
    i = y-1970;
 
    while (true) {
-      if (i > iMax)           { nextTransition[I_TRANSITION_TIME] = -1; break; }
-      if (lTimezone == "gmt") { nextTransition[I_TRANSITION_TIME] = -1; break; }
+      if (i > iMax)           { nextTransition[TRANSITION_TIME] = -1; break; }
+      if (lTimezone == "gmt") { nextTransition[TRANSITION_TIME] = -1; break; }
 
       if (lTimezone == "america/new_york") {
          toDST = transitions.America_New_York[i][TR_TO_DST.local];
          toSTD = transitions.America_New_York[i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.America_New_York[i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.America_New_York[i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime < toDST)                            { nextTransition[TRANSITION_TIME] = toDST; nextTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][DST_OFFSET]; nextTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[TRANSITION_TIME] = toSTD; nextTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][STD_OFFSET]; nextTransition[TRANSITION_DST] = false; break; }
       }
 
       else if (lTimezone == "europe/berlin") {
          toDST = transitions.Europe_Berlin   [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Berlin   [i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime < toDST)                            { nextTransition[TRANSITION_TIME] = toDST; nextTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][DST_OFFSET]; nextTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[TRANSITION_TIME] = toSTD; nextTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][STD_OFFSET]; nextTransition[TRANSITION_DST] = false; break; }
       }
 
       else if (lTimezone == "europe/kiev") {
          toDST = transitions.Europe_Kiev     [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Kiev     [i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime < toDST)                            { nextTransition[TRANSITION_TIME] = toDST; nextTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][DST_OFFSET]; nextTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[TRANSITION_TIME] = toSTD; nextTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][STD_OFFSET]; nextTransition[TRANSITION_DST] = false; break; }
       }
 
       else if (lTimezone == "europe/london") {
          toDST = transitions.Europe_London   [i][TR_TO_DST.local];
          toSTD = transitions.Europe_London   [i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_London   [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_London   [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime < toDST)                            { nextTransition[TRANSITION_TIME] = toDST; nextTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][DST_OFFSET]; nextTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[TRANSITION_TIME] = toSTD; nextTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][STD_OFFSET]; nextTransition[TRANSITION_DST] = false; break; }
       }
 
       else if (lTimezone == "europe/minsk") {
          toDST = transitions.Europe_Minsk    [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Minsk    [i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime < toDST)                            { nextTransition[TRANSITION_TIME] = toDST; nextTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; nextTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[TRANSITION_TIME] = toSTD; nextTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; nextTransition[TRANSITION_DST] = false; break; }
       }
 
       else if (lTimezone=="fxt" || lTimezone=="america/new_york+0700") {
          toDST = transitions.FXT             [i][TR_TO_DST.local];
          toSTD = transitions.FXT             [i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime < toDST)                            { nextTransition[TRANSITION_TIME] = toDST; nextTransition[TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; nextTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[TRANSITION_TIME] = toSTD; nextTransition[TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; nextTransition[TRANSITION_DST] = false; break; }
       }
 
       else return(!catch("GetTimezoneTransitions(4)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
@@ -626,8 +626,8 @@ string GetServerName() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache if a new tick and UnchangedBars==0
-   int tick = __ExecutionContext[I_EC.ticks];
-   if (!__ExecutionContext[I_EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[iEC.ticks];
+   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -4033,139 +4033,6 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
 
 
 /**
- * Liest die History eines Accounts aus einer CSV-Datei in das angegebene Array ein (Werte werden im Array als Strings gespeichert).
- *
- * @param  int    account     - Account-Nummer
- * @param  string results[][] - Zielarray
- *
- * @return int - Fehlerstatus
- */
-int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
-   if (ArrayRange(results, 1) != AH_COLUMNS)
-      return(catch("GetAccountHistory(1)  invalid parameter results["+ ArrayRange(results, 0) +"]["+ ArrayRange(results, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
-
-   static int    static.account[1];
-   static string static.results[][AH_COLUMNS];
-
-   ArrayResize(results, 0);
-
-   // nach Möglichkeit die gecachten Daten liefern
-   if (account == static.account[0]) {
-      ArrayCopy(results, static.results);
-      return(catch("GetAccountHistory(3)"));
-   }
-
-   // Cache-Miss, Historydatei auslesen
-   string header[AH_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
-
-   string filename = ShortAccountCompany() +"/"+ account + "_account_history.csv";
-   int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
-   if (hFile < 0) {
-      int error = GetLastError();
-      if (error == ERR_CANNOT_OPEN_FILE)
-         return(error);
-      return(catch("GetAccountHistory(4)->FileOpen(\""+ filename +"\")", error));
-   }
-
-   string value;
-   bool   newLine=true, blankLine=false, lineEnd=true;
-   int    lines=0, row=-2, col=-1;
-   string result[][AH_COLUMNS]; ArrayResize(result, 0);        // tmp. Zwischenspeicher für ausgelesene Daten
-
-   // Daten feldweise einlesen und Zeilen erkennen
-   while (!FileIsEnding(hFile)) {
-      newLine = false;
-      if (lineEnd) {                                           // Wenn beim letzten Durchlauf das Zeilenende erreicht wurde,
-         newLine   = true;                                     // Flags auf Zeilenbeginn setzen.
-         blankLine = false;
-         lineEnd   = false;
-         col = -1;                                             // Spaltenindex vor der ersten Spalte (erste Spalte = 0)
-      }
-
-      // nächstes Feld auslesen
-      value = FileReadString(hFile);
-
-      // auf Leerzeilen, Zeilen- und Dateiende prüfen
-      if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
-         lineEnd = true;
-         if (newLine) {
-            if (!StringLen(value)) {
-               if (FileIsEnding(hFile))                        // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
-                  break;
-               blankLine = true;                               // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
-            }
-         }
-         lines++;
-      }
-
-      // Leerzeilen überspringen
-      if (blankLine)
-         continue;
-
-      value = StrTrim(value);
-
-      // Kommentarzeilen überspringen
-      if (newLine) /*&&*/ if (StringGetChar(value, 0)=='#')
-         continue;
-
-      // Zeilen- und Spaltenindex aktualisieren und Bereich überprüfen
-      col++;
-      if (lineEnd) /*&&*/ if (col!=AH_COLUMNS-1) {
-         error = catch("GetAccountHistory(5)  data format error in \""+ filename +"\", column count in line "+ lines +" is not "+ AH_COLUMNS, ERR_RUNTIME_ERROR);
-         break;
-      }
-      if (newLine)
-         row++;
-
-      // Headerinformationen in der ersten Datenzeile überprüfen und Headerzeile überspringen
-      if (row == -1) {
-         if (value != header[col]) {
-            error = catch("GetAccountHistory(6)  data format error in \""+ filename +"\", unexpected column header \""+ value +"\"", ERR_RUNTIME_ERROR);
-            break;
-         }
-         continue;            // jmp
-      }
-
-      // Ergebnisarray vergrößern und Rohdaten speichern (als String)
-      if (newLine)
-         ArrayResize(result, row+1);
-      result[row][col] = value;
-   }
-
-   // Hier hat entweder ein Formatfehler ERR_RUNTIME_ERROR (bereits gemeldet) oder das Dateiende END_OF_FILE ausgelöst.
-   if (!error) {
-      error = GetLastError();
-      if (error == ERR_END_OF_FILE) {
-         error = NO_ERROR;
-      }
-      else {
-         catch("GetAccountHistory(7)", error);
-      }
-   }
-
-   // vor evt. Fehler-Rückkehr auf jeden Fall Datei schließen
-   FileClose(hFile);
-
-   if (IsError(error))        // ret
-      return(error);
-
-
-   // Daten in Zielarray kopieren und cachen
-   if (ArrayRange(result, 0) > 0) {                                  // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
-      static.account[0] = account;
-      ArrayResize(static.results, 0);
-      ArrayCopy  (static.results, result);
-      ArrayResize(result, 0);
-
-      ArrayCopy(results, static.results);
-   }
-
-   ArrayResize(header, 0);
-   return(catch("GetAccountHistory(9)"));
-}
-
-
-/**
  * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Server-Verbindung).
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
@@ -4207,92 +4074,6 @@ int GetAccountNumber() {
       tester.result = account;
 
    return(account);                                                  // nicht die statische Testervariable zurückgeben (ist online immer 0)
-}
-
-
-/**
- * Schreibt die Balance-History eines Accounts in die angegebenen Ergebnisarrays (aufsteigend nach Zeit sortiert).
- *
- * @param  int      account  - Account-Nummer
- * @param  datetime times[]  - Zeiger auf Ergebnisarray für die Zeiten der Balanceänderung
- * @param  double   values[] - Zeiger auf Ergebnisarray der entsprechenden Balancewerte
- *
- * @return int - Fehlerstatus
- */
-int GetBalanceHistory(int account, datetime &times[], double &values[]) {
-   static int      static.account[1];
-   static datetime static.times [];
-   static double   static.values[];
-
-   ArrayResize(times,  0);
-   ArrayResize(values, 0);
-
-   // Daten nach Möglichkeit aus dem Cache liefern       TODO: paralleles Cachen mehrerer Wertereihen ermöglichen
-   if (account == static.account[0]) {
-      /**
-       * TODO: Fehler tritt nach Neustart auf, wenn Balance-Indikator geladen ist und AccountNumber() noch 0 zurückgibt
-       *
-       * rsfLib1: Error: incorrect start position 0 for ArrayCopy function
-       * rsfLib1: Log:   Balance::rsfLib1::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
-       * rsfLib1: Alert: ERROR:   AUDUSD,M15::Balance::rsfLib1::GetBalanceHistory(1)   [4051 - invalid function parameter]
-       */
-      ArrayCopy(times,  static.times);
-      ArrayCopy(values, static.values);
-      return(catch("GetBalanceHistory(1)"));
-   }
-
-   // Cache-Miss, Balance-Daten aus Account-History auslesen
-   string data[][AH_COLUMNS]; ArrayResize(data, 0);
-   int error = GetAccountHistory(account, data);
-   if (IsError(error)) {
-      if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(2", error));
-                                         return(catch("GetBalanceHistory(3)"));
-   }
-
-   // Balancedatensätze einlesen und auswerten (History ist nach CloseTime sortiert)
-   datetime time, lastTime;
-   double   balance, lastBalance;
-   int n, size=ArrayRange(data, 0);
-
-   if (size == 0)
-      return(catch("GetBalanceHistory(4)"));
-
-   for (int i=0; i<size; i++) {
-      balance = StrToDouble (data[i][I_AH_BALANCE       ]);
-      time    = StrToInteger(data[i][I_AH_CLOSETIMESTAMP]);
-
-      // der erste Datensatz wird immer geschrieben...
-      if (i == 0) {
-         ArrayResize(times,  n+1);
-         ArrayResize(values, n+1);
-         times [n] = time;
-         values[n] = balance;
-         n++;                                // n: Anzahl der existierenden Ergebnisdaten => ArraySize(lpTimes)
-      }
-      else if (balance != lastBalance) {
-         // ... alle weiteren nur, wenn die Balance sich geändert hat
-         if (time == lastTime) {             // Existieren mehrere Balanceänderungen zum selben Zeitpunkt,
-            values[n-1] = balance;           // wird der letzte Wert nur mit dem aktuellen überschrieben.
-         }
-         else {
-            ArrayResize(times,  n+1);
-            ArrayResize(values, n+1);
-            times [n] = time;
-            values[n] = balance;
-            n++;
-         }
-      }
-      lastTime    = time;
-      lastBalance = balance;
-   }
-
-   // Daten cachen
-   static.account[0] = account;
-   ArrayResize(static.times,  0); ArrayCopy(static.times,  times );
-   ArrayResize(static.values, 0); ArrayCopy(static.values, values);
-
-   ArrayResize(data, 0);
-   return(catch("GetBalanceHistory(5)"));
 }
 
 
@@ -4499,8 +4280,8 @@ string GetServerTimezone() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after UnchangedBars == 0 on a new tick
-   int tick = __ExecutionContext[I_EC.ticks];
-   if (!__ExecutionContext[I_EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[iEC.ticks];
+   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
    static.lastTick = tick;
 
@@ -4580,81 +4361,6 @@ datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONF
    if (offset == EMPTY_VALUE)
       return(NaT);
    return(gmtTime - offset);
-}
-
-
-/**
- * Berechnet den Balancewert eines Accounts am angegebenen Offset des aktuellen Charts und schreibt ihn in das Ergebnisarray.
- *
- * @param  int    account - Account, für den der Wert berechnet werden soll
- * @param  double buffer  - Ergebnisarray (z.B. Indikatorpuffer)
- * @param  int    bar     - Barindex des zu berechnenden Wertes (Chart-Offset)
- *
- * @return int - Fehlerstatus
- */
-int iAccountBalance(int account, double buffer[], int bar) {
-   // TODO: Berechnung einzelner Bar implementieren (zur Zeit wird der Indikator hier noch komplett neuberechnet)
-
-   if (iAccountBalanceSeries(account, buffer) == ERS_HISTORY_UPDATE)
-      return(SetLastError(ERS_HISTORY_UPDATE));
-
-   return(catch("iAccountBalance()"));
-}
-
-
-/**
- * Berechnet den Balanceverlauf eines Accounts für alle Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
- *
- * @param  int    account - Account-Nummer
- * @param  double buffer  - Ergebnisarray (z.B. Indikatorpuffer)
- *
- * @return int - Fehlerstatus
- */
-int iAccountBalanceSeries(int account, double &buffer[]) {
-   if (ArraySize(buffer) != Bars) {
-      ArrayResize(buffer, Bars);
-      ArrayInitialize(buffer, EMPTY_VALUE);
-   }
-
-   // Balance-History holen
-   datetime times []; ArrayResize(times , 0);
-   double   values[]; ArrayResize(values, 0);
-
-   int error = GetBalanceHistory(account, times, values);            // aufsteigend nach Zeit sortiert (in times[0] stehen die ältesten Werte)
-   if (IsError(error))
-      return(error);
-
-   int bar, lastBar, historySize=ArraySize(values);
-
-   // Balancewerte für Bars des aktuellen Charts ermitteln und ins Ergebnisarray schreiben
-   for (int i=0; i < historySize; i++) {
-      // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(NULL, NULL, times[i]);
-      if (bar == EMPTY_VALUE) return(last_error);
-      if (bar == -1)                                                 // dieser und alle folgenden Werte sind zu neu für den Chart
-         break;
-
-      // Lücken mit vorherigem Balancewert füllen
-      if (bar < lastBar-1) {
-         for (int z=lastBar-1; z > bar; z--) {
-            buffer[z] = buffer[lastBar];
-         }
-      }
-
-      // aktuellen Balancewert eintragen
-      buffer[bar] = values[i];
-      lastBar = bar;
-   }
-
-   // Ergebnisarray bis zur ersten Bar mit dem letzten bekannten Balancewert füllen
-   for (bar=lastBar-1; bar >= 0; bar--) {
-      buffer[bar] = buffer[lastBar];
-   }
-
-   if (ArraySize(times)  > 0) ArrayResize(times,  0);
-   if (ArraySize(values) > 0) ArrayResize(values, 0);
-
-   return(catch("iAccountBalanceSeries(2)"));
 }
 
 
@@ -5324,7 +5030,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
-               if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+               if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5901,7 +5607,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          if (__LOG()) log("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (!IsTesting())                                    PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         else if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }

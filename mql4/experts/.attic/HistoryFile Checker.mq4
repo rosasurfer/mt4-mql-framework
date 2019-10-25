@@ -240,11 +240,11 @@ string CreateReport() {
 
          debug("CreateReport()  time="+ GmtTimeFormat(bar.time, "%a, %d.%m.%Y %H:%M"));
 
-         if (last[I_TRANSITION_TIME] >= 0) debug("CreateReport()  last="+ GmtTimeFormat(last[I_TRANSITION_TIME], "%a, %d.%m.%Y %H:%M") +" ("+ ifString(last[I_TRANSITION_OFFSET]>=0, "+", "") + (last[I_TRANSITION_OFFSET]/HOURS) +"), DST="+ last[I_TRANSITION_DST]);
-         else                              debug("CreateReport()  last="+ last[I_TRANSITION_TIME]);
+         if (last[TRANSITION_TIME] >= 0) debug("CreateReport()  last="+ GmtTimeFormat(last[TRANSITION_TIME], "%a, %d.%m.%Y %H:%M") +" ("+ ifString(last[TRANSITION_OFFSET]>=0, "+", "") + (last[TRANSITION_OFFSET]/HOURS) +"), DST="+ last[TRANSITION_DST]);
+         else                            debug("CreateReport()  last="+ last[TRANSITION_TIME]);
 
-         if (next[I_TRANSITION_TIME] >= 0) debug("CreateReport()  next="+ GmtTimeFormat(next[I_TRANSITION_TIME], "%a, %d.%m.%Y %H:%M") +" ("+ ifString(next[I_TRANSITION_OFFSET]>=0, "+", "") + (next[I_TRANSITION_OFFSET]/HOURS) +"), DST="+ next[I_TRANSITION_DST]);
-         else                              debug("CreateReport()  next="+ next[I_TRANSITION_TIME]);
+         if (next[TRANSITION_TIME] >= 0) debug("CreateReport()  next="+ GmtTimeFormat(next[TRANSITION_TIME], "%a, %d.%m.%Y %H:%M") +" ("+ ifString(next[TRANSITION_OFFSET]>=0, "+", "") + (next[TRANSITION_OFFSET]/HOURS) +"), DST="+ next[TRANSITION_DST]);
+         else                            debug("CreateReport()  next="+ next[TRANSITION_TIME]);
 
          done = true;
       }

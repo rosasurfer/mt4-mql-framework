@@ -199,7 +199,7 @@ int onInit() {
 
    // setup the chart ticker
    if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetServerName(), "XTrade-")) {
-      int hWnd = __ExecutionContext[I_EC.hChart];
+      int hWnd = __ExecutionContext[iEC.hChart];
       int milliseconds = 500;
       int timerId = SetupTickTimer(hWnd, milliseconds, NULL);
       if (!timerId) return(catch("onInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
@@ -318,7 +318,7 @@ bool RefreshLfxOrders() {
  //if (  USDX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   USDX.orders) < 0) return(false);
  //if (  XAUI.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   XAUI.orders) < 0) return(false);
 
-   // initilaize limit processing
+   // initialize limit processing
    if (ArrayRange(AUDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  AUDLFX limit orders: "+ ArrayRange(AUDLFX.orders, 0));
    if (ArrayRange(CADLFX.orders, 0) != 0) debug("RefreshLfxOrders()  CADLFX limit orders: "+ ArrayRange(CADLFX.orders, 0));
    if (ArrayRange(CHFLFX.orders, 0) != 0) debug("RefreshLfxOrders()  CHFLFX limit orders: "+ ArrayRange(CHFLFX.orders, 0));
@@ -848,7 +848,7 @@ bool UpdateAccountDisplay() {
 bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    // Company-ID im Fenster speichern
-   int    hWnd = __ExecutionContext[I_EC.hChart];
+   int    hWnd = __ExecutionContext[iEC.hChart];
    string key  = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
 
@@ -885,7 +885,7 @@ bool RestoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
-   int    hWnd    = __ExecutionContext[I_EC.hChart];
+   int    hWnd    = __ExecutionContext[iEC.hChart];
    string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);

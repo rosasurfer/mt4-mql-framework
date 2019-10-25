@@ -81,7 +81,7 @@ int    last.signal = OP_UNDEFINED;
 
 
 /**
- * Initialization.
+ * Initialization
  *
  * @return int - error status
  */
@@ -247,8 +247,7 @@ bool Short.CheckClosePosition() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetMACD(int buffer, int bar) {
-   int maxValues = macd.slow.periods + 100;           // should cover the longest possible trending period (seen: 95)
-   return(icMACD(NULL, macd.fast.periods, macd.fast.method, PRICE_CLOSE, macd.slow.periods, macd.slow.method, PRICE_CLOSE, maxValues, buffer, bar));
+   return(icMACD(NULL, macd.fast.periods, macd.fast.method, PRICE_CLOSE, macd.slow.periods, macd.slow.method, PRICE_CLOSE, buffer, bar));
 }
 
 
@@ -261,8 +260,7 @@ double GetMACD(int buffer, int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetRSI(int buffer, int bar) {
-   int maxValues = 100;                               // must cover the oldest indicator value we will access in this program
-   return(icRSI(NULL, rsi.periods, PRICE_CLOSE, maxValues, buffer, bar));
+   return(icRSI(NULL, rsi.periods, PRICE_CLOSE, buffer, bar));
 }
 
 

@@ -101,7 +101,7 @@ string signal.info = "";                                    // trend change stat
 
 
 /**
- * Initialization.
+ * Initialization
  *
  * @return int - error status
  */
