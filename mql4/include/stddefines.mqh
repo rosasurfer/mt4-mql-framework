@@ -275,19 +275,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_PERIODS_ALL          0x03FF           // 1023: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1
 
 
-// Array-Indizes für Timeframe-Operationen
-#define I_PERIOD_M1                    0
-#define I_PERIOD_M5                    1
-#define I_PERIOD_M15                   2
-#define I_PERIOD_M30                   3
-#define I_PERIOD_H1                    4
-#define I_PERIOD_H4                    5
-#define I_PERIOD_D1                    6
-#define I_PERIOD_W1                    7
-#define I_PERIOD_MN1                   8
-#define I_PERIOD_Q1                    9
-
-
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
 #define O_PUSH                         1
 #define O_POP                          2
@@ -719,12 +706,12 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Array ID's für von ArrayCopyRates() definierte Arrays
-#define I_BAR.time                           0
-#define I_BAR.open                           1
-#define I_BAR.low                            2
-#define I_BAR.high                           3
-#define I_BAR.close                          4
-#define I_BAR.volume                         5
+#define BAR.time                             0
+#define BAR.open                             1
+#define BAR.low                              2
+#define BAR.high                             3
+#define BAR.close                            4
+#define BAR.volume                           5
 
 
 // Price-Bar ID's (siehe Historyfunktionen)
