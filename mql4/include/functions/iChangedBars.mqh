@@ -12,7 +12,7 @@
  * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags F_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  */
 int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL) {
-   if (__ExecutionContext[iEC.programCoreFunction] != CF_START) return(0);    // in init() oder deinit()
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(0);     // in init() oder deinit()
    if (symbol == "0")                                                         // (string) NULL
       symbol = Symbol();
 
