@@ -81,7 +81,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[iEC.programInitFlags];
+   int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
@@ -361,7 +361,7 @@ int start() {
 
    // (8) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[iEC.mqlError]|__ExecutionContext[iEC.dllError])
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
 
    return(ShowStatus(NO_ERROR));
@@ -509,14 +509,14 @@ bool IsLibrary() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // check and signal DLL errors
-   int dll_error = __ExecutionContext[iEC.dllError];                 // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
 
    // check MQL errors
-   int mql_error = __ExecutionContext[iEC.mqlError];
+   int mql_error = __ExecutionContext[EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:

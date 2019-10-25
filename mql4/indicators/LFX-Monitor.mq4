@@ -199,7 +199,7 @@ int onInit() {
 
    // setup the chart ticker
    if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetServerName(), "XTrade-")) {
-      int hWnd = __ExecutionContext[iEC.hChart];
+      int hWnd = __ExecutionContext[EC.hChart];
       int milliseconds = 500;
       int timerId = SetupTickTimer(hWnd, milliseconds, NULL);
       if (!timerId) return(catch("onInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
@@ -848,7 +848,7 @@ bool UpdateAccountDisplay() {
 bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    // Company-ID im Fenster speichern
-   int    hWnd = __ExecutionContext[iEC.hChart];
+   int    hWnd = __ExecutionContext[EC.hChart];
    string key  = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
 
@@ -885,7 +885,7 @@ bool RestoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
-   int    hWnd    = __ExecutionContext[iEC.hChart];
+   int    hWnd    = __ExecutionContext[EC.hChart];
    string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);
