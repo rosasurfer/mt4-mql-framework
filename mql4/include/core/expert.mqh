@@ -3,7 +3,7 @@
 int     __WHEREAMI__   = NULL;                                       // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
-extern bool     EA.ExtReporting                 = false;
+extern bool     EA.CreateReport                 = false;
 extern bool     EA.RecordEquity                 = false;
 extern datetime Test.StartTime                  = 0;                 // time to start a test
 extern double   Test.StartPrice                 = 0;                 // price to start a test
@@ -64,7 +64,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -136,7 +136,7 @@ int init() {
       //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
-            ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
+            ifString(!EA.CreateReport, "", NL+"EA.CreateReport=TRUE"                                        +";"),
             ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -191,7 +191,7 @@ int init() {
       string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
+            ifString(!EA.CreateReport, "", NL+"EA.CreateReport=TRUE"                                        +";"),
             ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -401,7 +401,7 @@ int deinit() {
          int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (EA.ExtReporting) {
+      if (!__STATUS_OFF) /*&&*/ if (EA.CreateReport) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
          Test_StopReporting(__ExecutionContext, time, Bars);
       }
@@ -647,7 +647,7 @@ bool Test.InitReporting() {
 
 
    // (2) prepare environment to collect data for reporting
-   if (EA.ExtReporting) {
+   if (EA.CreateReport) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
       Test_StartReporting(__ExecutionContext, time, Bars, test.report.id, test.report.symbol);
    }
