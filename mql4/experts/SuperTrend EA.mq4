@@ -25,8 +25,8 @@ int long.position;
 int short.position;
 
 // order marker colors
-#define CLR_OPEN_LONG   C'0,0,254'              // Blue - rgb(1,1,1)
-#define CLR_OPEN_SHORT  C'254,0,0'              // Red  - rgb(1,1,1)
+#define CLR_OPEN_LONG   Blue
+#define CLR_OPEN_SHORT  Red
 #define CLR_CLOSE       Orange
 
 
@@ -40,17 +40,15 @@ int onTick() {
       int trend = GetSuperTrend(SuperTrend.MODE_TREND, 1);
 
       if (trend == 1) {
-         debug("onTick(1)  SuperTrend turned up");
-         if (short.position != 0) ClosePosition(short.position);
+         ClosePosition(OP_SHORT);
          OpenPosition(OP_LONG);
       }
       if (trend == -1) {
-         debug("onTick(2)  SuperTrend turned down");
-         if (long.position != 0) ClosePosition(long.position);
+         ClosePosition(OP_LONG);
          OpenPosition(OP_SHORT);
       }
    }
-   return(catch("onTick(3)"));
+   return(catch("onTick(1)"));
 }
 
 
@@ -82,7 +80,9 @@ bool OpenPosition(int type) {
    double   price       = NULL;
    double   slippage    = 0.1;
    double   stopLoss    = NULL;
+          //stopLoss    = ifDouble(type==OP_LONG, Ask - 500*Pip, Bid + 500*Pip);
    double   takeProfit  = NULL;
+          //takeProfit  = ifDouble(type==OP_LONG, Ask + 500*Pip, Bid - 500*Pip);
    string   comment     = "";
    int      magicNumber = NULL;
    datetime expires     = NULL;
@@ -92,8 +92,8 @@ bool OpenPosition(int type) {
    int ticket = OrderSendEx(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(false);
 
-   if (type == OP_BUY) long.position  = ticket;
-   else                short.position = ticket;
+   if (type == OP_LONG) long.position  = ticket;
+   else                 short.position = ticket;
    return(true);
 }
 
@@ -101,19 +101,26 @@ bool OpenPosition(int type) {
 /**
  * Close an open position.
  *
- * @param  int ticket
+ * @param  int type - position type: OP_LONG|OP_SHORT
  *
  * @return bool - success status
  */
-bool ClosePosition(int ticket) {
+bool ClosePosition(int type) {
+   if      (type == OP_LONG) int ticket = long.position;
+   else if (type == OP_SHORT)    ticket = short.position;
+   else return(!catch("ClosePosition(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER));
+   if (!ticket) return(true);
+
    double slippage = 0.1;
-   int oe[], oeFlags = NULL;
+   int oeFlags = F_ERR_INVALID_TRADE_PARAMETERS, oe[];
 
-   if (!OrderCloseEx(ticket, NULL, slippage, CLR_CLOSE, oeFlags, oe)) return(false);
-
-   if (oe.Type(oe) == OP_BUY) long.position  = 0;
-   else                       short.position = 0;
-   return(true);
+   bool success = OrderCloseEx(ticket, NULL, slippage, CLR_CLOSE, oeFlags, oe);
+   if (success || oe.Error(oe)==ERR_INVALID_TRADE_PARAMETERS) {      // the order may be already closed by SL/TP
+      if (type == OP_LONG) long.position  = 0;
+      else                 short.position = 0;
+      return(true);
+   }
+   return(false);
 }
 
 
