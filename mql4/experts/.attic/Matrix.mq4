@@ -21,7 +21,6 @@ extern int BalanceDivider    = 1000;      // was "double DML  = 1000"
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <iCustom/icTrix.mqh>
 
 int m.level;
 
