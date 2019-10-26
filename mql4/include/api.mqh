@@ -126,6 +126,13 @@ datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
 bool     HandleEvent(int event);;
 string   HistoryFlagsToStr(int flags);;
+double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
+double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
+double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
+double   icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar);;
+double   icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar);;
+double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
+double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
@@ -290,16 +297,6 @@ string   JoinDoubles(double values[], string separator = ", ");;
 string   JoinDoublesEx(double values[], int digits, string separator = ", ");;
 string   JoinInts(int values[], string separator = ", ");;
 string   JoinStrings(string values[], string separator = ", ");;
-
-
-// include/iCustom/
-double   icHalfTrend    (int timeframe, int periods, int iBuffer, int iBar);;
-double   icMACD         (int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
-double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
-double   icNonLagMA     (int timeframe, int cycleLength, int iBuffer, int iBar);;
-double   icRSI          (int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar);;
-double   icSuperTrend   (int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
-double   icTrix         (int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 
 // include/structs/mt4/
