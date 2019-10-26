@@ -1,5 +1,5 @@
 /**
- * wip: Trend system following the SuperTrend or HalfTrend indicator
+ * A system following the trend of the SuperTrend or HalfTrend indicator.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
