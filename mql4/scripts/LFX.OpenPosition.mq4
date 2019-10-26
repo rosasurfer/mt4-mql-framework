@@ -255,11 +255,10 @@ int onStart() {
       double   tp          = NULL;
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
-      int      oeFlags     = NULL;
+      int oe[], oeFlags    = NULL;
                                                                                        // vor Trade-Request auf evt. aufgetretene Fehler prüfen
       if (IsError(catch("onStart8)"))) return(_last_error(ReleaseLock(mutex)));
 
-      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (!tickets[i])
          return(_int(ERR_RUNTIME_ERROR, ReleaseLock(mutex)));
