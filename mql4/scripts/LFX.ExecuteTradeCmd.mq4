@@ -397,9 +397,8 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       double   tp          = NULL;
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
-      int      oeFlags     = NULL;
+      int oe[], oeFlags    = NULL;
 
-      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (!tickets[i]) return(false);
       subPositions++;

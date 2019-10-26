@@ -6,7 +6,7 @@
  *
  * @return bool
  *
- * Note: The function doesn't recognize a BarOpen event if called at the first tick after program start or recompilation.
+ * Note: The function doesn't detect a BarOpen event at the first tick after program start or after recompilation.
  */
 bool IsBarOpenEvent(int timeframe = NULL) {
    if (IsLibrary()) return(!catch("IsBarOpenEvent(1)  function can't be used in a library (ticks not available)", ERR_FUNC_NOT_ALLOWED));
