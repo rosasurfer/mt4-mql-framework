@@ -17,7 +17,6 @@ extern int    iParameter = 12345;
 #include <rsfLibs.mqh>
 #include <functions/BarOpenEvent.mqh>
 #include <functions/JoinStrings.mqh>
-#include <iCustom/icTrix.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 
