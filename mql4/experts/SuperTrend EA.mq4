@@ -15,7 +15,6 @@ extern double Lotsize = 0.1;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/BarOpenEvent.mqh>
-#include <iCustom/icSuperTrend.mqh>
 
 
 /**
@@ -25,10 +24,6 @@ extern double Lotsize = 0.1;
  */
 int onTick() {
    if (IsBarOpenEvent()) {
-      int timeframe  = PERIOD_H1;
-      int atrPeriods = 5;
-      int smaPeriods = 50;
-      int trend = icSuperTrend(timeframe, atrPeriods, smaPeriods, SuperTrend.MODE_TREND, 1);
    }
    return(catch("onTick(1)"));
 }
