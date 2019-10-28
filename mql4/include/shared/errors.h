@@ -217,7 +217,7 @@
 #define ERR_CONCURRENT_MODIFICATION                               65550    // concurrent modification
 #define ERR_INVALID_ACCESS                                        65551    // invalid access
 #define ERR_ILLEGAL_STATE                                         65552    // illegal state
-#define ERR_MULTIPLE_SYMBOLS                                      65553    // multiple symbols encountered when only one was expected
+#define ERR_MIXED_SYMBOLS                                         65553    // mixed symbols encountered when only one was expected
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65554    // total position encountered when flat position was expected
 
 // user defined errors: >=100000 (0x186A0) Mapping von Windows- zu MQL-Fehlern: alle Fehler kodieren einen entsprechenden Windows-Fehler

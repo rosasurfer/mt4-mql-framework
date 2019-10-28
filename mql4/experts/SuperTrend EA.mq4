@@ -79,10 +79,8 @@ bool OpenPosition(int type) {
    double   lots        = Lotsize;
    double   price       = NULL;
    double   slippage    = 0.1;
-   double   stopLoss    = NULL;
-          //stopLoss    = ifDouble(type==OP_LONG, Ask - 500*Pip, Bid + 500*Pip);
-   double   takeProfit  = NULL;
-          //takeProfit  = ifDouble(type==OP_LONG, Ask + 500*Pip, Bid - 500*Pip);
+   double   stopLoss    = NULL; //stopLoss   = ifDouble(type==OP_LONG, Ask - 500*Pip, Bid + 500*Pip);
+   double   takeProfit  = NULL; //takeProfit = ifDouble(type==OP_LONG, Ask + 500*Pip, Bid - 500*Pip);
    string   comment     = "";
    int      magicNumber = NULL;
    datetime expires     = NULL;
