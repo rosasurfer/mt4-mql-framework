@@ -5743,7 +5743,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
  *
  * Notes: (1) Typical trade operation errors returned in oe.Error are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_MULTIPLE_SYMBOLS:         tickets belong to multiple symbols
+ *            - ERR_MIXED_SYMBOLS:            tickets belong to multiple symbols
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position or the tickets can't be closed by
  *                                            each other (anymore)
  *
@@ -5767,7 +5767,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
    string   symbol         = OrderSymbol();
    // opposite
    if (!SelectTicket(opposite, "OrderCloseByEx(7)", NULL, O_POP)) return(!oe.setError(oe, ERR_INVALID_TICKET));
-   if (symbol != OrderSymbol())                                   return(_false(Order.HandleError("OrderCloseByEx(8)  ticket #"+ opposite +" ("+ OperationTypeDescription(OrderType()) +" "+ OrderSymbol() +") is not opposite to ticket #"+ ticket +" ("+ OperationTypeDescription(ticketType) +" "+ symbol +")", ERR_MULTIPLE_SYMBOLS, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
+   if (symbol != OrderSymbol())                                   return(_false(Order.HandleError("OrderCloseByEx(8)  ticket #"+ opposite +" ("+ OperationTypeDescription(OrderType()) +" "+ OrderSymbol() +") is not opposite to ticket #"+ ticket +" ("+ OperationTypeDescription(ticketType) +" "+ symbol +")", ERR_MIXED_SYMBOLS, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
    if (OrderCloseTime() != 0)                                     return(_false(Order.HandleError("OrderCloseByEx(10)  opposite ticket #"+ opposite +" is not an open position (anymore)", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderCloseByEx(11)")));
    int      oppositeType     = OrderType();
    double   oppositeLots     = OrderLots();
@@ -6233,7 +6233,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
  *        (3) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to mixed symbols
+ *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
  */
 bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
@@ -6256,7 +6256,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersCloseSameSymbol(7)")) return(_false(oes.setError(oes, -1, ERR_INVALID_TICKET), OrderPop("OrdersCloseSameSymbol(8)")));
-      if (OrderSymbol() != symbol)                               return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
+      if (OrderSymbol() != symbol)                               return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -6372,7 +6372,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
  *        (4) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to mixed symbols
+ *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
  */
 int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
    // validate parameters
@@ -6394,7 +6394,7 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersHedge(6)", NULL, O_POP)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
-      if (OrderSymbol() != symbol)                                  return(_false(Order.HandleError("OrdersHedge(7)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersHedge(8)")));
+      if (OrderSymbol() != symbol)                                  return(_false(Order.HandleError("OrdersHedge(7)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersHedge(8)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -6530,7 +6530,7 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
  *
  *        (3) If an error occurred it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to multiple symbols
+ *            - ERR_MIXED_SYMBOLS:            the tickets belong to multiple symbols
  *            - ERR_TOTAL_POSITION_NOT_FLAT:  the total position of all tickets is not flat
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  */
@@ -6556,7 +6556,7 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersCloseHedged(6)", NULL, O_POP)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
-      if (OrderSymbol() != symbol)                                       return(_false(Order.HandleError("OrdersCloseHedged(7)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseHedged(8)")));
+      if (OrderSymbol() != symbol)                                       return(_false(Order.HandleError("OrdersCloseHedged(7)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseHedged(8)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );

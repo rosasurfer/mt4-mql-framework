@@ -501,7 +501,7 @@ string ErrorDescription(int error) {
       case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65550
       case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65551
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65552
-      case ERR_MULTIPLE_SYMBOLS           : return("multiple symbols encountered when only one was expected"   );    //  65553
+      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65553
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65554
    }
    return(StringConcatenate("unknown error (", error, ")"));
