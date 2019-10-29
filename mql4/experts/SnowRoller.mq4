@@ -61,8 +61,8 @@ extern string   GridDirection          = "Long | Short";          // there's no 
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
-extern string   StartConditions        = "";                      // @[bid|ask|price](double) && @time(datetime)
-extern string   StopConditions         = "";                      // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern string   StartConditions        = "";                      // @trend(<name>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
+extern string   StopConditions         = "";                      // @trend(<name>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime) | @profit(double[%])
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
 extern bool     ProfitDisplayInPercent = true;                    // whether PL values are displayed absolute or in percent
@@ -83,7 +83,7 @@ int      sequence.id;
 string   sequence.created;                         // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
 string   sequence.name;                            // "L.1234" | "S.2345"
 int      sequence.status;
-bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test can be loaded in a live chart)
+bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
 int      sequence.direction;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
@@ -114,7 +114,7 @@ string   statusFile      = "";                     // filename of the status fil
 string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
 
 // --- start conditions are AND combined ---
-bool     start.conditions;                         // whether any start conditions are active
+bool     start.conditions;                         // whether any start condition is active
 
 bool     start.price.condition;
 int      start.price.type;                         // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
