@@ -207,6 +207,7 @@ int init() {
 
    if (CheckErrors("init(17)"))
       return(last_error);
+   ShowStatus(last_error);
 
 
    // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
@@ -553,7 +554,7 @@ bool CheckErrors(string location, int setError = NULL) {
       ShowStatus(last_error);                                        // always show status if an error occurred
    return(__STATUS_OFF);
 
-   // dummy calls to suppress compiler warnings
+   // suppress compiler warnings
    __DummyCalls();
 }
 
