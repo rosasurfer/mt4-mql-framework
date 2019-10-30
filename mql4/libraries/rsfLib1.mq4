@@ -6272,8 +6272,6 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
    }
    OrderPop("OrdersCloseSameSymbol(15)");
 
-   if (IsTesting()) oeFlags |= F_OE_DONT_HEDGE;
-
    // simple close if a single ticket was passed or the flag F_OE_DONT_HEDGE is set
    if (sizeOfTickets==1 || oeFlags & F_OE_DONT_HEDGE) {
       int oe[], src, dest;
