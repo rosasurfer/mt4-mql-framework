@@ -2776,8 +2776,8 @@ bool ValidateInputs(bool interactive) {
    }
    StartLevel = Abs(StartLevel);
 
-   // StartConditions, AND combined: @trend(<name>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
-   // ---------------------------------------------------------------------------------------------------------------
+   // StartConditions, AND combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
+   // --------------------------------------------------------------------------------------------------------------------
    if (!isParameterChange || StartConditions!=last.StartConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
       start.conditions      = false;
@@ -5190,6 +5190,15 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
  */
 double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
    int periods = 3;
+
+   static string lastParams = "";
+   if (params != lastParams) {
+      if (!StrIsDigit(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      int iValue = StrToInteger(params);
+      if (iValue < 1)          return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods    = iValue;
+      lastParams = params;
+   }
    return(icHalfTrend(timeframe, periods, iBuffer, iBar));
 }
 
