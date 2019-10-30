@@ -113,8 +113,13 @@ double   sequence.stop.profit [];
 string   statusFile      = "";                     // filename of the status file
 string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
 
-// --- start conditions are AND combined ---
-bool     start.conditions;                         // whether any start condition is active
+// --- start conditions (AND combined) -----
+bool     start.conditions;                         // whether a start condition is active
+
+bool     start.trend.condition;
+string   start.trend.name;
+int      start.trend.timeframe;
+string   start.trend.params;
 
 bool     start.price.condition;
 int      start.price.type;                         // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
@@ -124,7 +129,7 @@ double   start.price.lastValue;
 bool     start.time.condition;
 datetime start.time.value;
 
-// --- stop conditions are OR combined -----
+// --- stop conditions (OR combined) -------
 bool     stop.price.condition;                     // whether a stop price condition is active
 int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   stop.price.value;
@@ -1127,7 +1132,22 @@ bool IsStartSignal() {
 
    if (start.conditions) {
 
-      // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt -----------------------------
+      // -- start.trend: bei Trendwechsel in Richtung der Sequenz erfüllt ---------------------------------------------------
+      if (start.trend.condition) {
+         if (IsBarOpenEvent(start.trend.timeframe)) {
+            int trend = GetStartTrendValue(1);
+
+            if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
+               message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ StartConditions +"\" fulfilled";
+               if (!IsTesting()) warn(message);
+               else if (__LOG()) log(message);
+               return(true);
+            }
+         }
+         return(false);
+      }
+
+      // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt --------------------------------------
       if (start.price.condition) {
          bool triggered = false;
          double price;
@@ -1144,27 +1164,27 @@ bool IsStartSignal() {
          if (!triggered) return(false);
 
          string sPrice = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-         message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ sPrice +"\" fulfilled";
+         message = "IsStartSignal(2)  sequence "+ sequence.name +" start condition \""+ sPrice +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
 
-      // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
+      // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt -------------------------------------------------------
       if (start.time.condition) {
-         if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
+         if (TimeCurrentEx("IsStartSignal(3)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
+         message = "IsStartSignal(4)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
 
-      // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
+      // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -----------------------------------------------------------------
    }
    else {
       // no start condition is a valid start signal, too
       if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
-         if (__LOG()) log("IsStartSignal(4)  sequence "+ sequence.name +" no start conditions defined");
+         if (__LOG()) log("IsStartSignal(5)  sequence "+ sequence.name +" no start conditions defined");
       }
    }
    return(true);
@@ -2680,11 +2700,11 @@ bool ValidateInputs.ID(bool interactive) {
 
 
 /**
- * Validate new or changing input parameters of a sequence. Parameters may have been entered through the input dialog,
- * may have been read and applied from a sequence status file or may have been deserialized and applied by the terminal
- * (e.g. at terminal restart).
+ * Validate new or changed input parameters of a sequence. Parameters may have been entered through the input dialog, may
+ * have been read and applied from a sequence status file or may have been deserialized and applied programmatically by the
+ * terminal (e.g. at terminal restart).
  *
- * @param  bool interactive - whether parameters have been entered through the input dialog
+ * @param  bool interactive - whether the parameters have been entered through the input dialog
  *
  * @return bool - whether the input parameters are valid
  */
@@ -2756,40 +2776,59 @@ bool ValidateInputs(bool interactive) {
    }
    StartLevel = Abs(StartLevel);
 
-   // StartConditions, AND-verknüpft: @[bid|ask|price](1.33) && @time(12:00)
-   // ----------------------------------------------------------------------
+   // StartConditions, AND combined: @trend(<name>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
+   // ---------------------------------------------------------------------------------------------------------------
    if (!isParameterChange || StartConditions!=last.StartConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
       start.conditions      = false;
+      start.trend.condition = false;
       start.price.condition = false;
       start.time.condition  = false;
 
-      // (6.1) StartConditions in einzelne Ausdrücke zerlegen
-      string exprs[], expr, elems[], key, value;
+      // StartConditions in einzelne Ausdrücke zerlegen
+      string exprs[], expr, elems[], key;
       int    iValue, time, sizeOfElems, sizeOfExprs = Explode(StartConditions, "&&", exprs, NULL);
       double dValue;
 
-      // (6.2) jeden Ausdruck parsen und validieren
+      // jeden Ausdruck parsen und validieren
       for (int i=0; i < sizeOfExprs; i++) {
-         start.conditions = false;                 // im Fehlerfall ist start.conditions deaktiviert
+         start.conditions = false;                      // im Fehlerfall ist start.conditions immer deaktiviert
+
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                   return(_false(ValidateInputs.OnError("ValidateInputs(16)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (sizeOfExprs > 1)                        return(_false(ValidateInputs.OnError("ValidateInputs(16)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateInputs.OnError("ValidateInputs(17)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateInputs.OnError("ValidateInputs(18)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateInputs.OnError("ValidateInputs(19)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         key   = StrTrim(elems[0]);
-         value = StrTrim(StrLeft(elems[1], -1));
-         if (!StringLen(value))                    return(_false(ValidateInputs.OnError("ValidateInputs(20)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')             return(_false(ValidateInputs.OnError("ValidateInputs(17)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2)      return(_false(ValidateInputs.OnError("ValidateInputs(18)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (!StrEndsWith(elems[1], ")"))               return(_false(ValidateInputs.OnError("ValidateInputs(19)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         key = StrTrim(elems[0]);
+         sValue = StrTrim(StrLeft(elems[1], -1));
+         if (!StringLen(sValue))                        return(_false(ValidateInputs.OnError("ValidateInputs(20)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (start.price.condition)             return(_false(ValidateInputs.OnError("ValidateInputs(21)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
-            value = StrReplace(value, "'", "");
-            if (!StrIsNumeric(value))              return(_false(ValidateInputs.OnError("ValidateInputs(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-            dValue = StrToDouble(value);
-            if (dValue <= 0)                       return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (key == "@trend") {
+            if (start.trend.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(21)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)", interactive)));
+            if (start.price.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
+            if (start.time.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
+            if (Explode(sValue, ":", elems, NULL) != 3) return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            sValue = StrTrim(elems[0]);
+            string indicatorFile = GetMqlDirectoryA() +"\\indicators\\"+ sValue +".ex4";
+            if (!IsFileA(indicatorFile))                return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator "+ DoubleQuoteStr(sValue) +" not found)", interactive)));
+            start.trend.name = StrToLower(sValue);
+            start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
+            if (start.trend.timeframe == -1)            return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
+            start.trend.params = StrTrim(elems[2]);
+            if (!StringLen(start.trend.params))         return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
+            start.trend.condition = true;
+         }
+
+         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
+            if (start.trend.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(28)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
+            if (start.price.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(29)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
+            sValue = StrReplace(sValue, "'", "");
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(30)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            dValue = StrToDouble(sValue);
+            if (dValue <= 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(31)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
@@ -2798,22 +2837,24 @@ bool ValidateInputs(bool interactive) {
             else                    start.price.type = PRICE_MEDIAN;
 
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0"))       // cut a "'0" for improved readability
+            if (StrEndsWith(exprs[i], "'0"))            // cut "'0" for improved readability
                exprs[i] = StrLeft(exprs[i], -2);
             exprs[i] = key +"("+ exprs[i] +")";
          }
 
          else if (key == "@time") {
-            if (start.time.condition)              return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
-            time = StrToTime(value);
-            if (IsError(GetLastError()))           return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (start.trend.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(32)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
+            if (start.time.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(33)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
+            time = StrToTime(sValue);
+            if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(34)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             start.time.condition = true;
             start.time.value     = time;
             exprs[i]             = key +"("+ TimeToStr(time) +")";
          }
-         else                                      return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         start.conditions = true;
+         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(35)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+
+         start.conditions = true;                       // im Erfolgsfall ist start.conditions aktiviert
       }
       if (start.conditions) StartConditions = JoinStrings(exprs, " && ");
       else                  StartConditions = "";
@@ -2828,29 +2869,29 @@ bool ValidateInputs(bool interactive) {
       stop.profitAbs.condition = false;
       stop.profitPct.condition = false;
 
-      // (7.1) StopConditions in einzelne Ausdrücke zerlegen
+      // StopConditions in einzelne Ausdrücke zerlegen
       sizeOfExprs = Explode(StrTrim(StopConditions), "||", exprs, NULL);
 
-      // (7.2) jeden Ausdruck parsen und validieren
+      // jeden Ausdruck parsen und validieren
       for (i=0; i < sizeOfExprs; i++) {
          expr = StrToLower(StrTrim(exprs[i]));
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                   return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfExprs > 1)                        return(_false(ValidateInputs.OnError("ValidateInputs(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateInputs.OnError("ValidateInputs(28)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateInputs.OnError("ValidateInputs(29)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateInputs.OnError("ValidateInputs(30)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         key   = StrTrim(elems[0]);
-         value = StrTrim(StrLeft(elems[1], -1));
-         if (!StringLen(value))                    return(_false(ValidateInputs.OnError("ValidateInputs(31)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')             return(_false(ValidateInputs.OnError("ValidateInputs(37)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2)      return(_false(ValidateInputs.OnError("ValidateInputs(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (!StrEndsWith(elems[1], ")"))               return(_false(ValidateInputs.OnError("ValidateInputs(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         key = StrTrim(elems[0]);
+         sValue = StrTrim(StrLeft(elems[1], -1));
+         if (!StringLen(sValue))                        return(_false(ValidateInputs.OnError("ValidateInputs(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
 
          if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (stop.price.condition)              return(_false(ValidateInputs.OnError("ValidateInputs(32)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
-            value = StrReplace(value, "'", "");
-            if (!StrIsNumeric(value))              return(_false(ValidateInputs.OnError("ValidateInputs(33)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(value);
-            if (dValue <= 0)                       return(_false(ValidateInputs.OnError("ValidateInputs(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (stop.price.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
+            sValue = StrReplace(sValue, "'", "");
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            dValue = StrToDouble(sValue);
+            if (dValue <= 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
@@ -2859,15 +2900,15 @@ bool ValidateInputs(bool interactive) {
             else                    stop.price.type = PRICE_MEDIAN;
 
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0"))       // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))            // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StrLeft(exprs[i], -2);
             exprs[i] = key +"("+ exprs[i] +")";
          }
 
          else if (key == "@time") {
-            if (stop.time.condition)               return(_false(ValidateInputs.OnError("ValidateInputs(35)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
-            time = StrToTime(value);
-            if (IsError(GetLastError()))           return(_false(ValidateInputs.OnError("ValidateInputs(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (stop.time.condition)                    return(_false(ValidateInputs.OnError("ValidateInputs(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
+            time = StrToTime(sValue);
+            if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(45)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             stop.time.condition = true;
             stop.time.value     = time;
@@ -2876,13 +2917,13 @@ bool ValidateInputs(bool interactive) {
 
          else if (key == "@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                   return(_false(ValidateInputs.OnError("ValidateInputs(37)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
-            sizeOfElems = Explode(value, "%", elems, NULL);
-            if (sizeOfElems > 2)                   return(_false(ValidateInputs.OnError("ValidateInputs(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            value = StrTrim(elems[0]);
-            if (!StringLen(value))                 return(_false(ValidateInputs.OnError("ValidateInputs(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(value))              return(_false(ValidateInputs.OnError("ValidateInputs(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(value);
+                                                        return(_false(ValidateInputs.OnError("ValidateInputs(46)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
+            sizeOfElems = Explode(sValue, "%", elems, NULL);
+            if (sizeOfElems > 2)                        return(_false(ValidateInputs.OnError("ValidateInputs(47)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            sValue = StrTrim(elems[0]);
+            if (!StringLen(sValue))                     return(_false(ValidateInputs.OnError("ValidateInputs(48)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(49)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.condition = true;
                stop.profitAbs.value     = NormalizeDouble(dValue, 2);
@@ -2895,7 +2936,7 @@ bool ValidateInputs(bool interactive) {
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
-         else                                      return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
@@ -2903,7 +2944,7 @@ bool ValidateInputs(bool interactive) {
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
-      sessionbreak.endtime   = NULL;               // real times are updated automatically on next use
+      sessionbreak.endtime   = NULL;                    // real times are updated automatically on next use
    }
 
    // ProfitDisplayInPercent: nothing to validate
@@ -2911,7 +2952,7 @@ bool ValidateInputs(bool interactive) {
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(42)"));
+   return(!last_error|catch("ValidateInputs(51)"));
 }
 
 
@@ -5045,6 +5086,128 @@ double RequiredDistance(double profit) {
    double level = MathPow(2*units + 0.25, 0.5) - 0.5;
    double distance = level * GridSize;
    return(RoundCeil(distance, 1));
+}
+
+
+/**
+ * Return the trend value of start condition's trend indicator.
+ *
+ * @param  int bar - bar index of the value to return
+ *
+ * @return int - trend value or NULL in case of errors
+ */
+int GetStartTrendValue(int bar) {
+   if (start.trend.name == "alma")           return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "moving average") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "nonlagma")       return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "triema")         return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "halftrend")      return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (start.trend.name == "supertrend")     return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
+
+   return(!catch("GetStartTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StartConditions), ERR_INVALID_CONFIG_VALUE));
+}
+
+
+/**
+ * Return an ALMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
+   int    maPeriods          = 38;
+   string maAppliedPrice     = "Close";
+   double distributionOffset = 0.85;
+   double distributionSigma  = 6.0;
+   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
+}
+
+
+/**
+ * Return a Moving Average indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
+   int    maPeriods      = 100;
+   string maMethod       = "SMA";
+   string maAppliedPrice = "Close";
+   return(icMovingAverage(timeframe, maPeriods, maMethod, maAppliedPrice, iBuffer, iBar));
+}
+
+
+/**
+ * Return a NonLagMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
+   int cycleLength = 20;
+   return(icNonLagMA(timeframe, cycleLength, iBuffer, iBar));
+}
+
+
+/**
+ * Return a TriEMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
+   int    maPeriods      = 38;
+   string maAppliedPrice = "Close";
+   return(icTriEMA(timeframe, maPeriods, maAppliedPrice, iBuffer, iBar));
+}
+
+
+/**
+ * Return a HalfTrend indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
+   int periods = 3;
+   return(icHalfTrend(timeframe, periods, iBuffer, iBar));
+}
+
+
+/**
+ * Return a SuperTrend indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
+   int atrPeriods = 5;
+   int smaPeriods = 50;
+   return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
 }
 
 

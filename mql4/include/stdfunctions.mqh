@@ -5972,6 +5972,58 @@ bool init.LogErrorsToSMS() {
 
 
 /**
+ * Load the "ALMA" indicator and return an indicator value.
+ *
+ * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    maPeriods          - indicator parameter
+ * @param  string maAppliedPrice     - indicator parameter
+ * @param  double distributionOffset - indicator parameter
+ * @param  double distributionSigma  - indicator parameter
+ * @param  int    iBuffer            - indicator buffer index of the value to return
+ * @param  int    iBar               - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "ALMA",
+                          maPeriods,                                       // int    MA.Periods
+                          maAppliedPrice,                                  // string MA.AppliedPrice
+                          distributionOffset,                              // double Distribution.Offset
+                          distributionSigma,                               // double Distribution.Sigma
+
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icALMA(1)", error));
+      warn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
  * Load the "HalfTrend" indicator and return an indicator value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
@@ -5994,12 +6046,12 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.LineWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
@@ -6102,12 +6154,12 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.LineWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
@@ -6148,13 +6200,13 @@ double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.LineWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-                          "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
 
@@ -6242,12 +6294,12 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.LineWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-                          "",                                              // string _____________________
+                          "",                                              // string ____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
@@ -6257,6 +6309,49 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperTrend(1)", error));
       warn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "TriEMA" indicator and return an indicator value.
+ *
+ * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    maPeriods      - indicator parameter
+ * @param  string maAppliedPrice - indicator parameter
+ * @param  int    iBuffer        - indicator buffer index of the value to return
+ * @param  int    iBar           - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "TriEMA",
+                          maPeriods,                                       // int    MA.Periods
+                          maAppliedPrice,                                  // string MA.AppliedPrice
+
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icTriEMA(1)", error));
+      warn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6401,12 +6496,14 @@ void __DummyCalls() {
    GT(NULL, NULL);
    HandleEvent(NULL);
    HistoryFlagsToStr(NULL);
+   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    icNonLagMA(NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
+   icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);

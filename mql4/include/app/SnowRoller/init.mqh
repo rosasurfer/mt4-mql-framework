@@ -196,8 +196,8 @@ void RestoreInputStatus() {
 
 
 /**
- * Backup or restore input parameter related status variables. These are all variables which change if one or more input
- * parameters change. Or in other words all variables modified by ValidateInputs().
+ * Backup or restore input parameter related status variables. These are all those variables which change if one or more
+ * input parameters change. Or in other words, all variables modified by ValidateInputs().
  *
  * @param  bool store - TRUE:  copy global values to internal storage (backup)
  *                      FALSE: copy internal values to global storage (restore)
@@ -212,6 +212,10 @@ void CopyInputStatus(bool store) {
    static int      _sequence.direction;
 
    static bool     _start.conditions;
+   static bool     _start.trend.condition;
+   static string   _start.trend.name;
+   static int      _start.trend.timeframe;
+   static string   _start.trend.params;
    static bool     _start.price.condition;
    static int      _start.price.type;
    static double   _start.price.value;
@@ -240,6 +244,10 @@ void CopyInputStatus(bool store) {
       _sequence.direction       = sequence.direction;
 
       _start.conditions         = start.conditions;
+      _start.trend.condition    = start.trend.condition;
+      _start.trend.name         = start.trend.name;
+      _start.trend.timeframe    = start.trend.timeframe;
+      _start.trend.params       = start.trend.params;
       _start.price.condition    = start.price.condition;
       _start.price.type         = start.price.type;
       _start.price.value        = start.price.value;
@@ -268,6 +276,10 @@ void CopyInputStatus(bool store) {
       sequence.direction        = _sequence.direction;
 
       start.conditions          = _start.conditions;
+      start.trend.condition     = _start.trend.condition;
+      start.trend.name          = _start.trend.name;
+      start.trend.timeframe     = _start.trend.timeframe;
+      start.trend.params        = _start.trend.params;
       start.price.condition     = _start.price.condition;
       start.price.type          = _start.price.type;
       start.price.value         = _start.price.value;
