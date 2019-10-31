@@ -5089,10 +5089,30 @@ int GetStartTrendValue(int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
-   int    maPeriods          = 38;
-   string maAppliedPrice     = "Close";
-   double distributionOffset = 0.85;
-   double distributionSigma  = 6.0;
+   if (!StringLen(params)) return(!catch("GetALMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   int    maPeriods;
+   string maAppliedPrice;
+   double distributionOffset;
+   double distributionSigma;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 4) return(!catch("GetALMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetALMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetALMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maAppliedPrice = sValue;
+      sValue = StrTrim(elems[2]);
+      if (!StrIsNumeric(sValue))                  return(!catch("GetALMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      distributionOffset = StrToDouble(sValue);
+      sValue = StrTrim(elems[3]);
+      if (!StrIsNumeric(sValue))                  return(!catch("GetALMA(6)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      distributionSigma = StrToDouble(sValue);
+      lastParams        = params;
+   }
    return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
 }
 
@@ -5108,9 +5128,26 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetMovingAverage(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
    int    maPeriods      = 100;
    string maMethod       = "SMA";
    string maAppliedPrice = "Close";
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 3) return(!catch("GetMovingAverage(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetMovingAverage(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetMovingAverage(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maMethod = sValue;
+      sValue = StrTrim(elems[2]);
+      if (!StringLen(sValue))                     return(!catch("GetMovingAverage(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maAppliedPrice = sValue;
+      lastParams     = params;
+   }
    return(icMovingAverage(timeframe, maPeriods, maMethod, maAppliedPrice, iBuffer, iBar));
 }
 
@@ -5126,7 +5163,16 @@ double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
-   int cycleLength = 20;
+   if (!StringLen(params)) return(!catch("GetNonLagMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   int cycleLength;
+
+   static string lastParams = "";
+   if (params != lastParams) {
+      if (!StrIsDigit(params)) return(!catch("GetNonLagMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      cycleLength = StrToInteger(params);
+      lastParams  = params;
+   }
    return(icNonLagMA(timeframe, cycleLength, iBuffer, iBar));
 }
 
@@ -5142,8 +5188,22 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
-   int    maPeriods      = 38;
-   string maAppliedPrice = "Close";
+   if (!StringLen(params)) return(!catch("GetTriEMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   int    maPeriods;
+   string maAppliedPrice;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetTriEMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetTriEMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetTriEMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maAppliedPrice = sValue;
+      lastParams     = params;
+   }
    return(icTriEMA(timeframe, maPeriods, maAppliedPrice, iBuffer, iBar));
 }
 
@@ -5159,14 +5219,14 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
-   int periods = 3;
+   if (!StringLen(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   int periods;
 
    static string lastParams = "";
    if (params != lastParams) {
-      if (!StrIsDigit(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      int iValue = StrToInteger(params);
-      if (iValue < 1)          return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      periods    = iValue;
+      if (!StrIsDigit(params)) return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods    = StrToInteger(params);
       lastParams = params;
    }
    return(icHalfTrend(timeframe, periods, iBuffer, iBar));
@@ -5184,8 +5244,22 @@ double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
-   int atrPeriods = 5;
-   int smaPeriods = 50;
+   if (!StringLen(params)) return(!catch("GetSuperTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   int atrPeriods;
+   int smaPeriods;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetSuperTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetSuperTrend(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      atrPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetSuperTrend(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      smaPeriods = StrToInteger(sValue);
+      lastParams = params;
+   }
    return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
 }
 
