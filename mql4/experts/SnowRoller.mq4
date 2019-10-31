@@ -2783,12 +2783,14 @@ bool ValidateInputs(bool interactive) {
             if (Explode(sValue, ":", elems, NULL) != 3) return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             sValue = StrTrim(elems[0]);
             string supported[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "HalfTrend", "SuperTrend"};
-            if (!StringInArrayI(supported, sValue))     return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
+            int idx = SearchStringArrayI(supported, sValue);
+            if (idx == -1)                              return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
             start.trend.name = StrToLower(sValue);
             start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)            return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
             start.trend.params = StrTrim(elems[2]);
             if (!StringLen(start.trend.params))         return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
+            exprs[i] = "@trend("+ supported[idx] +":"+ start.trend.timeframe +":"+ start.trend.params +")";
             start.trend.condition = true;
          }
 
@@ -5091,10 +5093,10 @@ int GetStartTrendValue(int bar) {
 double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetALMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   int    maPeriods;
-   string maAppliedPrice;
-   double distributionOffset;
-   double distributionSigma;
+   static int    maPeriods;
+   static string maAppliedPrice;
+   static double distributionOffset;
+   static double distributionSigma;
 
    static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
@@ -5130,9 +5132,9 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
 double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetMovingAverage(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   int    maPeriods      = 100;
-   string maMethod       = "SMA";
-   string maAppliedPrice = "Close";
+   static int    maPeriods;
+   static string maMethod;
+   static string maAppliedPrice;
 
    static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
@@ -5165,7 +5167,7 @@ double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
 double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetNonLagMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   int cycleLength;
+   static int cycleLength;
 
    static string lastParams = "";
    if (params != lastParams) {
@@ -5190,8 +5192,8 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
 double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetTriEMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   int    maPeriods;
-   string maAppliedPrice;
+   static int    maPeriods;
+   static string maAppliedPrice;
 
    static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
@@ -5221,7 +5223,7 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
 double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   int periods;
+   static int periods;
 
    static string lastParams = "";
    if (params != lastParams) {
@@ -5246,8 +5248,8 @@ double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
 double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetSuperTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   int atrPeriods;
-   int smaPeriods;
+   static int atrPeriods;
+   static int smaPeriods;
 
    static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
