@@ -1,53 +1,23 @@
 /**
- * SnowRoller - A Pyramiding Trade Manager
+ * SnowRoller - a pyramiding trade manager
  *
  *
- * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
- * the resulting trades in a pyramiding way. Credits for theoretical background and proof of concept go to Bernd Kreuss aka
- * 7bit and his publication "Snowballs and the Anti-Grid".
+ * With default settings this EA is just a trade manager and not a complete trading system. Entry and exit are defined
+ * manually and the EA manages the resulting trades in a pyramiding way.
+ *
+ * Theoretical background and PoC was provided by Bernd Kreuss aka 7bit in his publication "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * Important:    The EA is not FIFO conforming, and will never be.
- * Risk warning: A market can range longer than a trading account is able to survive.
+ * Input parameters: ...
  *
+ * Notes:
+ *  - The EA is not FIFO conforming, and will never be.
+ *  - A description of program actions, events and status changes can be found at the end of this file.
  *
- *  Actions, events and status changes:
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | Action           |       Events        |        Status      | Position |    BE calc.   |     Detection      |
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | EA.init()        |         -           | STATUS_UNDEFINED   |          |               |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | EA.start()       |         -           | STATUS_WAITING     |          |               |                    |
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |       -       |                    | sequence.start.time = change to STATUS_PROGRESSING
- *  |                  |                     |                    |          |               |                    |
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |       -       |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |  yes (begin)  |   maxLevel != 0    |
- *  |                  |                     |                    |          |               |                    |
- *  | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | StopSequence()   |         -           | STATUS_STOPPING    |    n     |  no (redraw)  | STATUS_STOPPING    |
- *  | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   |     redraw    | PositionClose      |
- *  |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | end of redraw | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | ResumeSequence() |         -           | STATUS_STARTING    |    0     |       -       |                    | no valid gridbase yet
- *  | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |       -       |                    |
- *  | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |               |                    |
- *  |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     |  yes (begin)  | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
- *  |                  |                     |                    |          |               |                    |
- *  | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      yes      |                    |
- *  | ...              |                     |                    |          |               |                    |
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
+ * Risk warning: A market can range longer without reaching the profit target than a trading account is able to survive.
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
@@ -57,7 +27,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   Sequence.ID            = "";
-extern string   GridDirection          = "Long | Short";          // there's no bi-directional mode
+extern string   GridDirection          = "Long | Short";          // no bi-directional mode as in the original
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
@@ -2812,8 +2782,8 @@ bool ValidateInputs(bool interactive) {
             if (start.time.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
             if (Explode(sValue, ":", elems, NULL) != 3) return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             sValue = StrTrim(elems[0]);
-            string indicatorFile = GetMqlDirectoryA() +"\\indicators\\"+ sValue +".ex4";
-            if (!IsFileA(indicatorFile))                return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator "+ DoubleQuoteStr(sValue) +" not found)", interactive)));
+            string supported[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "HalfTrend", "SuperTrend"};
+            if (!StringInArrayI(supported, sValue))     return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
             start.trend.name = StrToLower(sValue);
             start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)            return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
@@ -5097,12 +5067,12 @@ double RequiredDistance(double profit) {
  * @return int - trend value or NULL in case of errors
  */
 int GetStartTrendValue(int bar) {
-   if (start.trend.name == "alma")           return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "moving average") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "nonlagma")       return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "triema")         return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "halftrend")      return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
-   if (start.trend.name == "supertrend")     return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
+   if (start.trend.name == "alma"         ) return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "movingaverage") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "nonlagma"     ) return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "triema"       ) return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (start.trend.name == "supertrend"   ) return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
 
    return(!catch("GetStartTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StartConditions), ERR_INVALID_CONFIG_VALUE));
 }
@@ -5238,3 +5208,41 @@ string InputsToStr() {
                             "DisplayProfitInPercent=", BoolToStr(DisplayProfitInPercent),            ";")
    );
 }
+
+
+/*
+  Actions, events and status changes:
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | Action           |       Events        |        Status      | Position |     Detection      |
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | EA.init()        |         -           | STATUS_UNDEFINED   |          |                    |
+ |                  |                     |                    |          |                    |
+ | EA.start()       |         -           | STATUS_WAITING     |          |                    |
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |                    | sequence.start.time = change to STATUS_PROGRESSING
+ |                  |                     |                    |          |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
+ |                  |                     |                    |          |                    |
+ | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |   maxLevel != 0    |
+ |                  |                     |                    |          |                    |
+ | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |                    |
+ |                  |                     |                    |          |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
+ |                  |                     |                    |          |                    |
+ | StopSequence()   |         -           | STATUS_STOPPING    |    n     | STATUS_STOPPING    |
+ | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   | PositionClose      |
+ |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | ResumeSequence() |         -           | STATUS_STARTING    |    0     |                    | no valid gridbase yet
+ | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |                    |
+ | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |                    |
+ |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
+ |                  |                     |                    |          |                    |
+ | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |                    |
+ |                  |                     |                    |          |                    |
+ | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |                    |
+ |                  |                     |                    |          |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
+ | ...              |                     |                    |          |                    |
+ +------------------+---------------------+--------------------+----------+--------------------+
+*/
