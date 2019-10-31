@@ -76,7 +76,7 @@ int onDeinit() {
  */
 bool Subscribe() {
    // Subscribe-Message zusammenstellen: "Subscribe|{HWND_CHART}|{BackChannelName}"
-   int hWndChart = __ExecutionContext[iEC.hChart];
+   int hWndChart = __ExecutionContext[EC.hChart];
    string msg    = "Subscribe|"+ hWndChart +"|"+ qc.quotes.BackChannel;
 
    // Subscribe-Message verschicken
@@ -97,7 +97,7 @@ bool Subscribe() {
  */
 bool Unsubscribe() {
    // Unsubscribe-Message zusammenstellen: "Unsubscribe|{HWND_CHART}"
-   int hWndChart = __ExecutionContext[iEC.hChart];
+   int hWndChart = __ExecutionContext[EC.hChart];
    string msg    = "Unsubscribe|"+ hWndChart;
 
    // Unsubscribe-Message verschicken
@@ -142,7 +142,7 @@ bool ProcessMessages() {
 
    // (4) Messages verarbeiten
    static int hWndChart; if (!hWndChart) {
-      hWndChart = __ExecutionContext[iEC.hChart];
+      hWndChart = __ExecutionContext[EC.hChart];
    }
    string msgs[], terms[], sValue, sReason;
    int    termsSize, hWnd, msgId, msgsSize=Explode(messageBuffer[0], TAB, msgs, NULL);
@@ -225,7 +225,7 @@ bool StopSender() {
  */
 bool StartReceiver() {
    if (!hQC.quotes.Receiver) {
-      int hWndChart = __ExecutionContext[iEC.hChart];                // das ChartHandle wird als {UniqueId} benutzt
+      int hWndChart = __ExecutionContext[EC.hChart];                 // das ChartHandle wird als {UniqueId} benutzt
       qc.quotes.BackChannel = "MetaTrader::QuoteClient::"+ Symbol() +"::"+ IntToHexStr(hWndChart);
 
       hQC.quotes.Receiver = QC_StartReceiver(qc.quotes.BackChannel, hWndChart);

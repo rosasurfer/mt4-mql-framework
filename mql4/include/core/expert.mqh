@@ -3,7 +3,7 @@
 int     __WHEREAMI__   = NULL;                                       // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
-extern bool     EA.ExtReporting                 = false;
+extern bool     EA.CreateReport                 = false;
 extern bool     EA.RecordEquity                 = false;
 extern datetime Test.StartTime                  = 0;                 // time to start a test
 extern double   Test.StartPrice                 = 0;                 // price to start a test
@@ -64,7 +64,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -81,7 +81,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[iEC.programInitFlags];
+   int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
@@ -136,7 +136,7 @@ int init() {
       //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
-            ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
+            ifString(!EA.CreateReport, "", NL+"EA.CreateReport=TRUE"                                        +";"),
             ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -191,7 +191,7 @@ int init() {
       string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
+            ifString(!EA.CreateReport, "", NL+"EA.CreateReport=TRUE"                                        +";"),
             ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -207,6 +207,7 @@ int init() {
 
    if (CheckErrors("init(17)"))
       return(last_error);
+   ShowStatus(last_error);
 
 
    // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
@@ -361,7 +362,7 @@ int start() {
 
    // (8) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[iEC.mqlError]|__ExecutionContext[iEC.dllError])
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
 
    return(ShowStatus(NO_ERROR));
@@ -401,7 +402,7 @@ int deinit() {
          int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (EA.ExtReporting) {
+      if (!__STATUS_OFF) /*&&*/ if (EA.CreateReport) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
          Test_StopReporting(__ExecutionContext, time, Bars);
       }
@@ -509,14 +510,14 @@ bool IsLibrary() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // check and signal DLL errors
-   int dll_error = __ExecutionContext[iEC.dllError];                 // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
 
    // check MQL errors
-   int mql_error = __ExecutionContext[iEC.mqlError];
+   int mql_error = __ExecutionContext[EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -553,7 +554,7 @@ bool CheckErrors(string location, int setError = NULL) {
       ShowStatus(last_error);                                        // always show status if an error occurred
    return(__STATUS_OFF);
 
-   // dummy calls to suppress compiler warnings
+   // suppress compiler warnings
    __DummyCalls();
 }
 
@@ -647,7 +648,7 @@ bool Test.InitReporting() {
 
 
    // (2) prepare environment to collect data for reporting
-   if (EA.ExtReporting) {
+   if (EA.CreateReport) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
       Test_StartReporting(__ExecutionContext, time, Bars, test.report.id, test.report.symbol);
    }

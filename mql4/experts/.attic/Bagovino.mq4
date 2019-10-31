@@ -37,8 +37,6 @@ extern string Notify.onOpenSignal = "on | off | auto*";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <iCustom/icMACD.mqh>
-#include <iCustom/icRSI.mqh>
 
 // indicator settings
 int macd.fast.periods;

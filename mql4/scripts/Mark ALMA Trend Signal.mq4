@@ -21,7 +21,6 @@ extern int      Periods           = 38;
 #include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
-#include <iCustom/icMovingAverage.mqh>
 
 
 // trading configuration

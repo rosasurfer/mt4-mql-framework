@@ -626,8 +626,8 @@ string GetServerName() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache if a new tick and UnchangedBars==0
-   int tick = __ExecutionContext[iEC.ticks];
-   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[EC.ticks];
+   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -4280,8 +4280,8 @@ string GetServerTimezone() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after UnchangedBars == 0 on a new tick
-   int tick = __ExecutionContext[iEC.ticks];
-   if (!__ExecutionContext[iEC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[EC.ticks];
+   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
    static.lastTick = tick;
 
@@ -4892,7 +4892,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * Extended version of the built-in function OrderSend().
  *
  * @param  _In_  string   symbol      - symbol to trade (NULL: current symbol)
- * @param  _In_  int      type        - trade operation type: OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP
+ * @param  _In_  int      type        - trade operation type
  * @param  _In_  double   lots        - trade volume in lots
  * @param  _In_  double   price       - limit price for pending orders (ignored for market orders)
  * @param  _In_  double   slippage    - acceptable slippage in pip (not in point)
@@ -4901,7 +4901,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * @param  _In_  string   comment     - order comment (max. 27 chars)
  * @param  _In_  int      magicNumber - magic order number
  * @param  _In_  datetime expires     - a pending order's expiration date (if supported by the broker)
- * @param  _In_  color    markerColor - color of the chart marker which is set
+ * @param  _In_  color    markerColor - color of the chart marker to set
  * @param  _In_  int      oeFlags     - additional flags controlling order execution
  * @param  _Out_ int      oe[]        - order execution details (struct ORDER_EXECUTION)
  *
@@ -4974,7 +4974,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
 
-   int ticket, time, firstTime = GetTickCount(), requotes, tempErrors;
+   int ticket, time, time1 = GetTickCount(), requotes, tempErrors;
 
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
@@ -5001,7 +5001,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       time   = GetTickCount();
       ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
 
-      oe.setDuration(oe, GetTickCount()-firstTime);                              // total time in milliseconds
+      oe.setDuration(oe, GetTickCount()-time1);                                  // total time in milliseconds
 
       if (ticket > 0) {
          OrderPush("OrderSendEx(20)");
@@ -5030,7 +5030,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
-               if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+               if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5607,7 +5607,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          if (__LOG()) log("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (!IsTesting())                                    PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[iEC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         else if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }
@@ -5743,7 +5743,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
  *
  * Notes: (1) Typical trade operation errors returned in oe.Error are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_MULTIPLE_SYMBOLS:         tickets belong to multiple symbols
+ *            - ERR_MIXED_SYMBOLS:            tickets belong to multiple symbols
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position or the tickets can't be closed by
  *                                            each other (anymore)
  *
@@ -5767,7 +5767,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
    string   symbol         = OrderSymbol();
    // opposite
    if (!SelectTicket(opposite, "OrderCloseByEx(7)", NULL, O_POP)) return(!oe.setError(oe, ERR_INVALID_TICKET));
-   if (symbol != OrderSymbol())                                   return(_false(Order.HandleError("OrderCloseByEx(8)  ticket #"+ opposite +" ("+ OperationTypeDescription(OrderType()) +" "+ OrderSymbol() +") is not opposite to ticket #"+ ticket +" ("+ OperationTypeDescription(ticketType) +" "+ symbol +")", ERR_MULTIPLE_SYMBOLS, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
+   if (symbol != OrderSymbol())                                   return(_false(Order.HandleError("OrderCloseByEx(8)  ticket #"+ opposite +" ("+ OperationTypeDescription(OrderType()) +" "+ OrderSymbol() +") is not opposite to ticket #"+ ticket +" ("+ OperationTypeDescription(ticketType) +" "+ symbol +")", ERR_MIXED_SYMBOLS, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
    if (OrderCloseTime() != 0)                                     return(_false(Order.HandleError("OrderCloseByEx(10)  opposite ticket #"+ opposite +" is not an open position (anymore)", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderCloseByEx(11)")));
    int      oppositeType     = OrderType();
    double   oppositeLots     = OrderLots();
@@ -6233,7 +6233,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
  *        (3) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to mixed symbols
+ *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
  */
 bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
@@ -6256,7 +6256,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersCloseSameSymbol(7)")) return(_false(oes.setError(oes, -1, ERR_INVALID_TICKET), OrderPop("OrdersCloseSameSymbol(8)")));
-      if (OrderSymbol() != symbol)                               return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
+      if (OrderSymbol() != symbol)                               return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -6271,8 +6271,6 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
       oes.setComment   (oes, i, OrderComment()   );
    }
    OrderPop("OrdersCloseSameSymbol(15)");
-
-   if (IsTesting()) oeFlags |= F_OE_DONT_HEDGE;
 
    // simple close if a single ticket was passed or the flag F_OE_DONT_HEDGE is set
    if (sizeOfTickets==1 || oeFlags & F_OE_DONT_HEDGE) {
@@ -6372,7 +6370,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
  *        (4) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to mixed symbols
+ *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
  */
 int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
    // validate parameters
@@ -6394,7 +6392,7 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersHedge(6)", NULL, O_POP)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
-      if (OrderSymbol() != symbol)                                  return(_false(Order.HandleError("OrdersHedge(7)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersHedge(8)")));
+      if (OrderSymbol() != symbol)                                  return(_false(Order.HandleError("OrdersHedge(7)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersHedge(8)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -6530,7 +6528,7 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
  *
  *        (3) If an error occurred it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_MULTIPLE_SYMBOLS:         the tickets belong to multiple symbols
+ *            - ERR_MIXED_SYMBOLS:            the tickets belong to multiple symbols
  *            - ERR_TOTAL_POSITION_NOT_FLAT:  the total position of all tickets is not flat
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  */
@@ -6556,7 +6554,7 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersCloseHedged(6)", NULL, O_POP)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
-      if (OrderSymbol() != symbol)                                       return(_false(Order.HandleError("OrdersCloseHedged(7)  tickets belong to multiple symbols", ERR_MULTIPLE_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseHedged(8)")));
+      if (OrderSymbol() != symbol)                                       return(_false(Order.HandleError("OrdersCloseHedged(7)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseHedged(8)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );

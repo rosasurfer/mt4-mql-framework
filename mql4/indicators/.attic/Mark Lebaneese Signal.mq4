@@ -29,7 +29,6 @@ extern bool Alerts   = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <iCustom/icNonLagMA.mqh>
 
 
 // Zugriff auf NonLagMA-Buffer

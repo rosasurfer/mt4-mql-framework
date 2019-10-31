@@ -12,7 +12,7 @@ int init() {
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
-   __lpSuperContext = __ExecutionContext[iEC.superContext];
+   __lpSuperContext = __ExecutionContext[EC.superContext];
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -92,7 +92,7 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
-   return(__ExecutionContext[iEC.programType] & MT_EXPERT != 0);
+   return(__ExecutionContext[EC.programType] & MT_EXPERT != 0);
 }
 
 
@@ -102,7 +102,7 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
-   return(__ExecutionContext[iEC.programType] & MT_SCRIPT != 0);
+   return(__ExecutionContext[EC.programType] & MT_SCRIPT != 0);
 }
 
 
@@ -112,7 +112,7 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
-   return(__ExecutionContext[iEC.programType] & MT_INDICATOR != 0);
+   return(__ExecutionContext[EC.programType] & MT_INDICATOR != 0);
 }
 
 

@@ -1,53 +1,23 @@
 /**
- * SnowRoller - A Pyramiding Trade Manager
+ * SnowRoller - a pyramiding trade manager
  *
  *
- * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
- * the resulting trades in a pyramiding way. Credits for theoretical background and proof of concept go to Bernd Kreuss aka
- * 7bit and his publication "Snowballs and the Anti-Grid".
+ * With default settings this EA is just a trade manager and not a complete trading system. Entry and exit are defined
+ * manually and the EA manages the resulting trades in a pyramiding way.
+ *
+ * Theoretical background and PoC was provided by Bernd Kreuss aka 7bit in his publication "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * Important:    The EA is not FIFO conforming, and will never be.
- * Risk warning: A market can range longer than a trading account is able to survive.
+ * Input parameters: ...
  *
+ * Notes:
+ *  - The EA is not FIFO conforming, and will never be.
+ *  - A description of program actions, events and status changes can be found at the end of this file.
  *
- *  Actions, events and status changes:
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | Action           |       Events        |        Status      | Position |    BE calc.   |     Detection      |
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | EA.init()        |         -           | STATUS_UNDEFINED   |          |               |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | EA.start()       |         -           | STATUS_WAITING     |          |               |                    |
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |       -       |                    | sequence.start.time = change to STATUS_PROGRESSING
- *  |                  |                     |                    |          |               |                    |
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |       -       |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |  yes (begin)  |   maxLevel != 0    |
- *  |                  |                     |                    |          |               |                    |
- *  | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | StopSequence()   |         -           | STATUS_STOPPING    |    n     |  no (redraw)  | STATUS_STOPPING    |
- *  | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   |     redraw    | PositionClose      |
- *  |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | end of redraw | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | ResumeSequence() |         -           | STATUS_STARTING    |    0     |       -       |                    | no valid gridbase yet
- *  | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |       -       |                    |
- *  | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |               |                    |
- *  |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     |  yes (begin)  | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
- *  |                  |                     |                    |          |               |                    |
- *  | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      yes      |                    |
- *  |                  |                     |                    |          |               |                    |
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      yes      |                    |
- *  | ...              |                     |                    |          |               |                    |
- *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
+ * Risk warning: A market can range longer without reaching the profit target than a trading account is able to survive.
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
@@ -57,15 +27,15 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   Sequence.ID            = "";
-extern string   GridDirection          = "Long | Short";          // there's no bi-directional mode
+extern string   GridDirection          = "Long | Short";          // no bi-directional mode as in the original
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
-extern string   StartConditions        = "";                      // @[bid|ask|price](double) && @time(datetime)
-extern string   StopConditions         = "";                      // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
+extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime) | @profit(double[%])
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
-extern bool     ProfitDisplayInPercent = true;                    // whether PL values are displayed absolute or in percent
+extern bool     DisplayProfitInPercent = true;                    // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -83,7 +53,7 @@ int      sequence.id;
 string   sequence.created;                         // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
 string   sequence.name;                            // "L.1234" | "S.2345"
 int      sequence.status;
-bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test can be loaded in a live chart)
+bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
 int      sequence.direction;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
@@ -113,8 +83,13 @@ double   sequence.stop.profit [];
 string   statusFile      = "";                     // filename of the status file
 string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
 
-// --- start conditions are AND combined ---
-bool     start.conditions;                         // whether any start conditions are active
+// --- start conditions (AND combined) -----
+bool     start.conditions;                         // whether a start condition is active
+
+bool     start.trend.condition;
+string   start.trend.name;
+int      start.trend.timeframe;
+string   start.trend.params;
 
 bool     start.price.condition;
 int      start.price.type;                         // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
@@ -124,7 +99,7 @@ double   start.price.lastValue;
 bool     start.time.condition;
 datetime start.time.value;
 
-// --- stop conditions are OR combined -----
+// --- stop conditions (OR combined) -------
 bool     stop.price.condition;                     // whether a stop price condition is active
 int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   stop.price.value;
@@ -400,7 +375,7 @@ bool StopSequence() {
    // hedge open positions
    int sizeOfPositions = ArraySize(openPositions);
    if (sizeOfPositions > 0) {
-      oeFlags = F_OE_DONT_CHECK_STATUS;                                       // skip status check to prevent errors
+      oeFlags = F_OE_DONT_CHECK_STATUS;                                    // skip status check to prevent errors
       int ticket = OrdersHedge(openPositions, slippage, oeFlags, oes); if (!ticket) return(!SetLastError(oes.Error(oes, 0)));
       ArrayPushInt(openPositions, ticket);
       sizeOfPositions++;
@@ -1127,7 +1102,22 @@ bool IsStartSignal() {
 
    if (start.conditions) {
 
-      // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt -----------------------------
+      // -- start.trend: bei Trendwechsel in Richtung der Sequenz erfüllt ---------------------------------------------------
+      if (start.trend.condition) {
+         if (IsBarOpenEvent(start.trend.timeframe)) {
+            int trend = GetStartTrendValue(1);
+
+            if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
+               message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ StartConditions +"\" fulfilled";
+               if (!IsTesting()) warn(message);
+               else if (__LOG()) log(message);
+               return(true);
+            }
+         }
+         return(false);
+      }
+
+      // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt --------------------------------------
       if (start.price.condition) {
          bool triggered = false;
          double price;
@@ -1144,27 +1134,27 @@ bool IsStartSignal() {
          if (!triggered) return(false);
 
          string sPrice = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-         message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ sPrice +"\" fulfilled";
+         message = "IsStartSignal(2)  sequence "+ sequence.name +" start condition \""+ sPrice +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
 
-      // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
+      // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt -------------------------------------------------------
       if (start.time.condition) {
-         if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
+         if (TimeCurrentEx("IsStartSignal(3)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
+         message = "IsStartSignal(4)  sequence "+ sequence.name +" start condition \"@time("+ TimeToStr(start.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
 
-      // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
+      // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -----------------------------------------------------------------
    }
    else {
       // no start condition is a valid start signal, too
       if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
-         if (__LOG()) log("IsStartSignal(4)  sequence "+ sequence.name +" no start conditions defined");
+         if (__LOG()) log("IsStartSignal(5)  sequence "+ sequence.name +" no start conditions defined");
       }
    }
    return(true);
@@ -2375,7 +2365,7 @@ void SS.LotSize() {
    if (!__CHART()) return;
    double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
 
-   if (ProfitDisplayInPercent) str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
+   if (DisplayProfitInPercent) str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
    else                        str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
@@ -2402,7 +2392,7 @@ void SS.Stops() {
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
    if (sequence.stops > 0) {
-      if (ProfitDisplayInPercent) str.sequence.stopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
+      if (DisplayProfitInPercent) str.sequence.stopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
       else                        str.sequence.stopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
    }
 }
@@ -2414,7 +2404,7 @@ void SS.Stops() {
 void SS.TotalPL() {
    if (!__CHART()) return;
    if (sequence.maxLevel == 0)      str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   else if (ProfitDisplayInPercent) str.sequence.totalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+   else if (DisplayProfitInPercent) str.sequence.totalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
    else                             str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
 }
 
@@ -2424,7 +2414,7 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-   if (ProfitDisplayInPercent) str.sequence.maxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+   if (DisplayProfitInPercent) str.sequence.maxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
    else                        str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
@@ -2435,7 +2425,7 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-   if (ProfitDisplayInPercent) str.sequence.maxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   if (DisplayProfitInPercent) str.sequence.maxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
    else                        str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
@@ -2455,7 +2445,7 @@ void SS.ProfitPerLevel() {
       int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
       double profit   = levels * stopSize;
 
-      if (ProfitDisplayInPercent) str.sequence.profitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
+      if (DisplayProfitInPercent) str.sequence.profitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
       else                        str.sequence.profitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
    }
 }
@@ -2601,7 +2591,7 @@ string   last.StartConditions;
 string   last.StopConditions;
 datetime last.Sessionbreak.StartTime;
 datetime last.Sessionbreak.EndTime;
-bool     last.ProfitDisplayInPercent;
+bool     last.DisplayProfitInPercent;
 
 
 /**
@@ -2619,7 +2609,7 @@ void BackupInputs() {
    last.StopConditions         = StringConcatenate(StopConditions,  "");
    last.Sessionbreak.StartTime = Sessionbreak.StartTime;
    last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
-   last.ProfitDisplayInPercent = ProfitDisplayInPercent;
+   last.DisplayProfitInPercent = DisplayProfitInPercent;
 }
 
 
@@ -2636,7 +2626,7 @@ void RestoreInputs() {
    StopConditions         = last.StopConditions;
    Sessionbreak.StartTime = last.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
-   ProfitDisplayInPercent = last.ProfitDisplayInPercent;
+   DisplayProfitInPercent = last.DisplayProfitInPercent;
 }
 
 
@@ -2680,11 +2670,11 @@ bool ValidateInputs.ID(bool interactive) {
 
 
 /**
- * Validate new or changing input parameters of a sequence. Parameters may have been entered through the input dialog,
- * may have been read and applied from a sequence status file or may have been deserialized and applied by the terminal
- * (e.g. at terminal restart).
+ * Validate new or changed input parameters of a sequence. Parameters may have been entered through the input dialog, may
+ * have been read and applied from a sequence status file or may have been deserialized and applied programmatically by the
+ * terminal (e.g. at terminal restart).
  *
- * @param  bool interactive - whether parameters have been entered through the input dialog
+ * @param  bool interactive - whether the parameters have been entered through the input dialog
  *
  * @return bool - whether the input parameters are valid
  */
@@ -2756,40 +2746,61 @@ bool ValidateInputs(bool interactive) {
    }
    StartLevel = Abs(StartLevel);
 
-   // StartConditions, AND-verknüpft: @[bid|ask|price](1.33) && @time(12:00)
-   // ----------------------------------------------------------------------
+   // StartConditions, AND combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
+   // --------------------------------------------------------------------------------------------------------------------
    if (!isParameterChange || StartConditions!=last.StartConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
       start.conditions      = false;
+      start.trend.condition = false;
       start.price.condition = false;
       start.time.condition  = false;
 
-      // (6.1) StartConditions in einzelne Ausdrücke zerlegen
-      string exprs[], expr, elems[], key, value;
+      // StartConditions in einzelne Ausdrücke zerlegen
+      string exprs[], expr, elems[], key;
       int    iValue, time, sizeOfElems, sizeOfExprs = Explode(StartConditions, "&&", exprs, NULL);
       double dValue;
 
-      // (6.2) jeden Ausdruck parsen und validieren
+      // jeden Ausdruck parsen und validieren
       for (int i=0; i < sizeOfExprs; i++) {
-         start.conditions = false;                 // im Fehlerfall ist start.conditions deaktiviert
+         start.conditions = false;                      // im Fehlerfall ist start.conditions immer deaktiviert
+
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                   return(_false(ValidateInputs.OnError("ValidateInputs(16)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (sizeOfExprs > 1)                        return(_false(ValidateInputs.OnError("ValidateInputs(16)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateInputs.OnError("ValidateInputs(17)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateInputs.OnError("ValidateInputs(18)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateInputs.OnError("ValidateInputs(19)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         key   = StrTrim(elems[0]);
-         value = StrTrim(StrLeft(elems[1], -1));
-         if (!StringLen(value))                    return(_false(ValidateInputs.OnError("ValidateInputs(20)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')             return(_false(ValidateInputs.OnError("ValidateInputs(17)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2)      return(_false(ValidateInputs.OnError("ValidateInputs(18)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (!StrEndsWith(elems[1], ")"))               return(_false(ValidateInputs.OnError("ValidateInputs(19)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         key = StrTrim(elems[0]);
+         sValue = StrTrim(StrLeft(elems[1], -1));
+         if (!StringLen(sValue))                        return(_false(ValidateInputs.OnError("ValidateInputs(20)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (start.price.condition)             return(_false(ValidateInputs.OnError("ValidateInputs(21)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
-            value = StrReplace(value, "'", "");
-            if (!StrIsNumeric(value))              return(_false(ValidateInputs.OnError("ValidateInputs(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-            dValue = StrToDouble(value);
-            if (dValue <= 0)                       return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (key == "@trend") {
+            if (start.trend.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(21)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)", interactive)));
+            if (start.price.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
+            if (start.time.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
+            if (Explode(sValue, ":", elems, NULL) != 3) return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            sValue = StrTrim(elems[0]);
+            string supported[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "HalfTrend", "SuperTrend"};
+            int idx = SearchStringArrayI(supported, sValue);
+            if (idx == -1)                              return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
+            start.trend.name = StrToLower(sValue);
+            start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
+            if (start.trend.timeframe == -1)            return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
+            start.trend.params = StrTrim(elems[2]);
+            if (!StringLen(start.trend.params))         return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
+            exprs[i] = "@trend("+ supported[idx] +":"+ start.trend.timeframe +":"+ start.trend.params +")";
+            start.trend.condition = true;
+         }
+
+         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
+            if (start.trend.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(28)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
+            if (start.price.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(29)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
+            sValue = StrReplace(sValue, "'", "");
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(30)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            dValue = StrToDouble(sValue);
+            if (dValue <= 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(31)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
@@ -2798,22 +2809,24 @@ bool ValidateInputs(bool interactive) {
             else                    start.price.type = PRICE_MEDIAN;
 
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0"))       // cut a "'0" for improved readability
+            if (StrEndsWith(exprs[i], "'0"))            // cut "'0" for improved readability
                exprs[i] = StrLeft(exprs[i], -2);
             exprs[i] = key +"("+ exprs[i] +")";
          }
 
          else if (key == "@time") {
-            if (start.time.condition)              return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
-            time = StrToTime(value);
-            if (IsError(GetLastError()))           return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (start.trend.condition)                  return(_false(ValidateInputs.OnError("ValidateInputs(32)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
+            if (start.time.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(33)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
+            time = StrToTime(sValue);
+            if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(34)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             start.time.condition = true;
             start.time.value     = time;
             exprs[i]             = key +"("+ TimeToStr(time) +")";
          }
-         else                                      return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-         start.conditions = true;
+         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(35)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
+
+         start.conditions = true;                       // im Erfolgsfall ist start.conditions aktiviert
       }
       if (start.conditions) StartConditions = JoinStrings(exprs, " && ");
       else                  StartConditions = "";
@@ -2828,29 +2841,29 @@ bool ValidateInputs(bool interactive) {
       stop.profitAbs.condition = false;
       stop.profitPct.condition = false;
 
-      // (7.1) StopConditions in einzelne Ausdrücke zerlegen
+      // StopConditions in einzelne Ausdrücke zerlegen
       sizeOfExprs = Explode(StrTrim(StopConditions), "||", exprs, NULL);
 
-      // (7.2) jeden Ausdruck parsen und validieren
+      // jeden Ausdruck parsen und validieren
       for (i=0; i < sizeOfExprs; i++) {
          expr = StrToLower(StrTrim(exprs[i]));
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                   return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfExprs > 1)                        return(_false(ValidateInputs.OnError("ValidateInputs(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')        return(_false(ValidateInputs.OnError("ValidateInputs(28)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2) return(_false(ValidateInputs.OnError("ValidateInputs(29)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (!StrEndsWith(elems[1], ")"))          return(_false(ValidateInputs.OnError("ValidateInputs(30)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-         key   = StrTrim(elems[0]);
-         value = StrTrim(StrLeft(elems[1], -1));
-         if (!StringLen(value))                    return(_false(ValidateInputs.OnError("ValidateInputs(31)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')             return(_false(ValidateInputs.OnError("ValidateInputs(37)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2)      return(_false(ValidateInputs.OnError("ValidateInputs(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (!StrEndsWith(elems[1], ")"))               return(_false(ValidateInputs.OnError("ValidateInputs(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         key = StrTrim(elems[0]);
+         sValue = StrTrim(StrLeft(elems[1], -1));
+         if (!StringLen(sValue))                        return(_false(ValidateInputs.OnError("ValidateInputs(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
 
          if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (stop.price.condition)              return(_false(ValidateInputs.OnError("ValidateInputs(32)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
-            value = StrReplace(value, "'", "");
-            if (!StrIsNumeric(value))              return(_false(ValidateInputs.OnError("ValidateInputs(33)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(value);
-            if (dValue <= 0)                       return(_false(ValidateInputs.OnError("ValidateInputs(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (stop.price.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
+            sValue = StrReplace(sValue, "'", "");
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            dValue = StrToDouble(sValue);
+            if (dValue <= 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
@@ -2859,15 +2872,15 @@ bool ValidateInputs(bool interactive) {
             else                    stop.price.type = PRICE_MEDIAN;
 
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0"))       // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))            // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StrLeft(exprs[i], -2);
             exprs[i] = key +"("+ exprs[i] +")";
          }
 
          else if (key == "@time") {
-            if (stop.time.condition)               return(_false(ValidateInputs.OnError("ValidateInputs(35)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
-            time = StrToTime(value);
-            if (IsError(GetLastError()))           return(_false(ValidateInputs.OnError("ValidateInputs(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (stop.time.condition)                    return(_false(ValidateInputs.OnError("ValidateInputs(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
+            time = StrToTime(sValue);
+            if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(45)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             stop.time.condition = true;
             stop.time.value     = time;
@@ -2876,13 +2889,13 @@ bool ValidateInputs(bool interactive) {
 
          else if (key == "@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                   return(_false(ValidateInputs.OnError("ValidateInputs(37)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
-            sizeOfElems = Explode(value, "%", elems, NULL);
-            if (sizeOfElems > 2)                   return(_false(ValidateInputs.OnError("ValidateInputs(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            value = StrTrim(elems[0]);
-            if (!StringLen(value))                 return(_false(ValidateInputs.OnError("ValidateInputs(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(value))              return(_false(ValidateInputs.OnError("ValidateInputs(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(value);
+                                                        return(_false(ValidateInputs.OnError("ValidateInputs(46)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
+            sizeOfElems = Explode(sValue, "%", elems, NULL);
+            if (sizeOfElems > 2)                        return(_false(ValidateInputs.OnError("ValidateInputs(47)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            sValue = StrTrim(elems[0]);
+            if (!StringLen(sValue))                     return(_false(ValidateInputs.OnError("ValidateInputs(48)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(49)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.condition = true;
                stop.profitAbs.value     = NormalizeDouble(dValue, 2);
@@ -2895,7 +2908,7 @@ bool ValidateInputs(bool interactive) {
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
-         else                                      return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
@@ -2903,15 +2916,15 @@ bool ValidateInputs(bool interactive) {
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
-      sessionbreak.endtime   = NULL;               // real times are updated automatically on next use
+      sessionbreak.endtime   = NULL;                    // real times are updated automatically on next use
    }
 
-   // ProfitDisplayInPercent: nothing to validate
+   // DisplayProfitInPercent: nothing to validate
 
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(42)"));
+   return(!last_error|catch("ValidateInputs(51)"));
 }
 
 
@@ -3205,7 +3218,7 @@ bool SaveSequence() {
    ArrayPushString(lines, /*string*/   "StopConditions="        + StopConditions        );
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
-   ArrayPushString(lines, /*bool*/     "ProfitDisplayInPercent="+ ProfitDisplayInPercent);
+   ArrayPushString(lines, /*bool*/     "DisplayProfitInPercent="+ DisplayProfitInPercent);
 
    // Laufzeit-Variablen
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
@@ -3328,7 +3341,7 @@ bool LoadSequence() {
                    //"StopConditions"          ,                        // optional
                      "Sessionbreak.StartTime"  ,
                      "Sessionbreak.EndTime"    ,
-                   //"ProfitDisplayInPercent"  ,                        // optional
+                   //"DisplayProfitInPercent"  ,                        // optional
                      ---------------------------
                      "rt.sequence.startEquity" ,
                      "rt.sequence.maxProfit"   ,
@@ -3417,9 +3430,9 @@ bool LoadSequence() {
          Sessionbreak.EndTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
-      else if (key == "ProfitDisplayInPercent") {
+      else if (key == "DisplayProfitInPercent") {
          if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         ProfitDisplayInPercent = _bool(StrToInteger(value));
+         DisplayProfitInPercent = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
    }
@@ -5046,3 +5059,266 @@ double RequiredDistance(double profit) {
    double distance = level * GridSize;
    return(RoundCeil(distance, 1));
 }
+
+
+/**
+ * Return the trend value of start condition's trend indicator.
+ *
+ * @param  int bar - bar index of the value to return
+ *
+ * @return int - trend value or NULL in case of errors
+ */
+int GetStartTrendValue(int bar) {
+   if (start.trend.name == "alma"         ) return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "movingaverage") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "nonlagma"     ) return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "triema"       ) return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.name == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (start.trend.name == "supertrend"   ) return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
+
+   return(!catch("GetStartTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StartConditions), ERR_INVALID_CONFIG_VALUE));
+}
+
+
+/**
+ * Return an ALMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetALMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int    maPeriods;
+   static string maAppliedPrice;
+   static double distributionOffset;
+   static double distributionSigma;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 4) return(!catch("GetALMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetALMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetALMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maAppliedPrice = sValue;
+      sValue = StrTrim(elems[2]);
+      if (!StrIsNumeric(sValue))                  return(!catch("GetALMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      distributionOffset = StrToDouble(sValue);
+      sValue = StrTrim(elems[3]);
+      if (!StrIsNumeric(sValue))                  return(!catch("GetALMA(6)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      distributionSigma = StrToDouble(sValue);
+      lastParams        = params;
+   }
+   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
+}
+
+
+/**
+ * Return a Moving Average indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetMovingAverage(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int    maPeriods;
+   static string maMethod;
+   static string maAppliedPrice;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 3) return(!catch("GetMovingAverage(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetMovingAverage(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetMovingAverage(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maMethod = sValue;
+      sValue = StrTrim(elems[2]);
+      if (!StringLen(sValue))                     return(!catch("GetMovingAverage(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maAppliedPrice = sValue;
+      lastParams     = params;
+   }
+   return(icMovingAverage(timeframe, maPeriods, maMethod, maAppliedPrice, iBuffer, iBar));
+}
+
+
+/**
+ * Return a NonLagMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetNonLagMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int cycleLength;
+
+   static string lastParams = "";
+   if (params != lastParams) {
+      if (!StrIsDigit(params)) return(!catch("GetNonLagMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      cycleLength = StrToInteger(params);
+      lastParams  = params;
+   }
+   return(icNonLagMA(timeframe, cycleLength, iBuffer, iBar));
+}
+
+
+/**
+ * Return a TriEMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetTriEMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int    maPeriods;
+   static string maAppliedPrice;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetTriEMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetTriEMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetTriEMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      maAppliedPrice = sValue;
+      lastParams     = params;
+   }
+   return(icTriEMA(timeframe, maPeriods, maAppliedPrice, iBuffer, iBar));
+}
+
+
+/**
+ * Return a HalfTrend indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int periods;
+
+   static string lastParams = "";
+   if (params != lastParams) {
+      if (!StrIsDigit(params)) return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods    = StrToInteger(params);
+      lastParams = params;
+   }
+   return(icHalfTrend(timeframe, periods, iBuffer, iBar));
+}
+
+
+/**
+ * Return a SuperTrend indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetSuperTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int atrPeriods;
+   static int smaPeriods;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetSuperTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetSuperTrend(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      atrPeriods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetSuperTrend(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      smaPeriods = StrToInteger(sValue);
+      lastParams = params;
+   }
+   return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
+                            "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
+                            "GridSize=",               GridSize,                                     ";", NL,
+                            "LotSize=",                NumberToStr(LotSize, ".1+"),                  ";", NL,
+                            "StartLevel=",             StartLevel,                                   ";", NL,
+                            "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
+                            "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
+                            "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
+                            "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";", NL,
+                            "DisplayProfitInPercent=", BoolToStr(DisplayProfitInPercent),            ";")
+   );
+}
+
+
+/*
+  Actions, events and status changes:
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | Action           |       Events        |        Status      | Position |     Detection      |
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | EA.init()        |         -           | STATUS_UNDEFINED   |          |                    |
+ |                  |                     |                    |          |                    |
+ | EA.start()       |         -           | STATUS_WAITING     |          |                    |
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |                    | sequence.start.time = change to STATUS_PROGRESSING
+ |                  |                     |                    |          |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
+ |                  |                     |                    |          |                    |
+ | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |   maxLevel != 0    |
+ |                  |                     |                    |          |                    |
+ | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |                    |
+ |                  |                     |                    |          |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
+ |                  |                     |                    |          |                    |
+ | StopSequence()   |         -           | STATUS_STOPPING    |    n     | STATUS_STOPPING    |
+ | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   | PositionClose      |
+ |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
+ +------------------+---------------------+--------------------+----------+--------------------+
+ | ResumeSequence() |         -           | STATUS_STARTING    |    0     |                    | no valid gridbase yet
+ | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |                    |
+ | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |                    |
+ |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
+ |                  |                     |                    |          |                    |
+ | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |                    |
+ |                  |                     |                    |          |                    |
+ | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |                    |
+ |                  |                     |                    |          |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
+ | ...              |                     |                    |          |                    |
+ +------------------+---------------------+--------------------+----------+--------------------+
+*/

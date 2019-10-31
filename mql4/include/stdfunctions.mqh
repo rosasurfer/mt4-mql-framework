@@ -501,7 +501,7 @@ string ErrorDescription(int error) {
       case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65550
       case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65551
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65552
-      case ERR_MULTIPLE_SYMBOLS           : return("multiple symbols encountered when only one was expected"   );    //  65553
+      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65553
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65554
    }
    return(StringConcatenate("unknown error (", error, ")"));
@@ -685,9 +685,9 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
-   if      (IsTesting())                                                                                    win32 = true;
-   else if (IsIndicator())                                                                                  win32 = true;
-   else if (__ExecutionContext[iEC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   if      (IsTesting())                                                                                   win32 = true;
+   else if (IsIndicator())                                                                                 win32 = true;
+   else if (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    int button;
    if (!win32) button = MessageBox(message, caption, flags);
@@ -736,7 +736,7 @@ string GetClassName(int hWnd) {
  * @return bool
  */
 bool IsVisualModeFix() {
-   return(__ExecutionContext[iEC.visualMode] != 0);
+   return(__ExecutionContext[EC.visualMode] != 0);
 }
 
 
@@ -1591,7 +1591,7 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  * @return bool
  */
 bool __CHART() {
-   return(__ExecutionContext[iEC.hChart] != 0);
+   return(__ExecutionContext[EC.hChart] != 0);
 }
 
 
@@ -1604,7 +1604,7 @@ bool __CHART() {
  * @return bool
  */
 bool __LOG() {
-   return(__ExecutionContext[iEC.logging] != 0);
+   return(__ExecutionContext[EC.logging] != 0);
 }
 
 
@@ -2794,7 +2794,7 @@ bool This.IsTesting() {
    static bool result, resolved;
    if (!resolved) {
       if (IsTesting()) result = true;
-      else             result = __ExecutionContext[iEC.testing] != 0;
+      else             result = __ExecutionContext[EC.testing] != 0;
       resolved = true;
    }
    return(result);
@@ -3126,7 +3126,7 @@ string StrCapitalize(string value) {
 int Chart.Expert.Properties() {
    if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   int hWnd = __ExecutionContext[iEC.hChart];
+   int hWnd = __ExecutionContext[EC.hChart];
 
    if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3)->user32::PostMessageA() failed", ERR_WIN32_ERROR));
@@ -3145,7 +3145,7 @@ int Chart.Expert.Properties() {
 int Chart.SendTick(bool sound=false) {
    sound = sound!=0;
 
-   int hWnd = __ExecutionContext[iEC.hChart];
+   int hWnd = __ExecutionContext[EC.hChart];
 
    if (!This.IsTesting()) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - Expert::start() wird in Offline-Charts nicht getriggert
@@ -3167,7 +3167,7 @@ int Chart.SendTick(bool sound=false) {
  * @return int - Fehlerstatus
  */
 int Chart.Objects.UnselectAll() {
-   int hWnd = __ExecutionContext[iEC.hChart];
+   int hWnd = __ExecutionContext[EC.hChart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
    return(NO_ERROR);
 }
@@ -3179,7 +3179,7 @@ int Chart.Objects.UnselectAll() {
  * @return int - Fehlerstatus
  */
 int Chart.Refresh() {
-   int hWnd = __ExecutionContext[iEC.hChart];
+   int hWnd = __ExecutionContext[EC.hChart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
    return(NO_ERROR);
 }
@@ -3494,7 +3494,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (__ExecutionContext[iEC.programCoreFunction] == CF_DEINIT)
+      if (__ExecutionContext[EC.programCoreFunction] == CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3525,7 +3525,7 @@ bool Tester.IsPaused() {
    else {
       if (!IsVisualModeFix())                                                                            // EA/Indikator aus iCustom()
          return(false);                                                                                  // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __ExecutionContext[iEC.programCoreFunction]==CF_DEINIT);           // der EA stoppt(e) also auch
+      testerStopped = (IsStopped() || __ExecutionContext[EC.programCoreFunction]==CF_DEINIT);            // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3547,7 +3547,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || __ExecutionContext[iEC.programCoreFunction]==CF_DEINIT);                  // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || __ExecutionContext[EC.programCoreFunction]==CF_DEINIT);                   // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu Expert::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -3819,7 +3819,7 @@ string UninitializeReasonDescription(int reason) {
  * @return int
  */
 int ProgramInitReason() {
-   return(__ExecutionContext[iEC.programInitReason]);
+   return(__ExecutionContext[EC.programInitReason]);
 }
 
 
@@ -5972,7 +5972,441 @@ bool init.LogErrorsToSMS() {
 
 
 /**
- * Unterdrückt unnütze Compilerwarnungen.
+ * Load the "ALMA" indicator and return an indicator value.
+ *
+ * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    maPeriods          - indicator parameter
+ * @param  string maAppliedPrice     - indicator parameter
+ * @param  double distributionOffset - indicator parameter
+ * @param  double distributionSigma  - indicator parameter
+ * @param  int    iBuffer            - indicator buffer index of the value to return
+ * @param  int    iBar               - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "ALMA",
+                          maPeriods,                                       // int    MA.Periods
+                          maAppliedPrice,                                  // string MA.AppliedPrice
+                          distributionOffset,                              // double Distribution.Offset
+                          distributionSigma,                               // double Distribution.Sigma
+
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icALMA(1)", error));
+      warn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "HalfTrend" indicator and return an indicator value.
+ *
+ * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int periods   - indicator parameter
+ * @param  int iBuffer   - indicator buffer index of the value to return
+ * @param  int iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "HalfTrend",
+                          periods,                                         // int    Periods
+
+                          DodgerBlue,                                      // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          CLR_NONE,                                        // color  Color.Channel
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icHalfTrend(1)", error));
+      warn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "MACD" indicator and return an indicator value.
+ *
+ * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    fastMaPeriods      - indicator parameter
+ * @param  string fastMaMethod       - indicator parameter
+ * @param  string fastMaAppliedPrice - indicator parameter
+ * @param  int    slowMaPeriods      - indicator parameter
+ * @param  string slowMaMethod       - indicator parameter
+ * @param  string slowMaAppliedPrice - indicator parameter
+ * @param  int    iBuffer            - indicator buffer index of the value to return
+ * @param  int    iBar               - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "MACD ",
+                          fastMaPeriods,                                   // int    Fast.MA.Periods
+                          fastMaMethod,                                    // string Fast.MA.Method
+                          fastMaAppliedPrice,                              // string Fast.MA.AppliedPrice
+
+                          slowMaPeriods,                                   // int    Slow.MA.Periods
+                          slowMaMethod,                                    // string Slow.MA.Method
+                          slowMaAppliedPrice,                              // string Slow.MA.AppliedPrice
+
+                          DodgerBlue,                                      // color  MainLine.Color
+                          1,                                               // int    MainLine.Width
+                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Red,                                             // color  Histogram.Color.Lower
+                          2,                                               // int    Histogram.Style.Width
+                          -1,                                              // int    Max.Values
+                          "",                                              // string _____________________
+                          "off",                                           // string Signal.onZeroCross
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string _____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icMACD(1)", error));
+      warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "Moving Average" indicator and return an indicator value.
+ *
+ * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    maPeriods      - indicator parameter
+ * @param  string maMethod       - indicator parameter
+ * @param  string maAppliedPrice - indicator parameter
+ * @param  int    iBuffer        - indicator buffer index of the value to return
+ * @param  int    iBar           - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "Moving Average",
+                          maPeriods,                                       // int    MA.Periods
+                          maMethod,                                        // string MA.Method
+                          maAppliedPrice,                                  // string MA.AppliedPrice
+
+                          Blue,                                            // color  Color.UpTrend
+                          Orange,                                          // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icMovingAverage(1)", error));
+      warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "NonLagMA" indicator and return an indicator value.
+ *
+ * @param  int timeframe   - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int cycleLength - indicator parameter
+ * @param  int iBuffer     - indicator buffer index of the value to return
+ * @param  int iBar        - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "NonLagMA",
+                          cycleLength,                                     // int    Cycle.Length
+
+                          RoyalBlue,                                       // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Dot",                                           // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icNonLagMA(1)", error));
+      warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "RSI" indicator and return an indicator value.
+ *
+ * @param  int    timeframe       - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    rsiPeriods      - indicator parameter
+ * @param  string rsiAppliedPrice - indicator parameter
+ * @param  int    iBuffer         - indicator buffer index of the value to return
+ * @param  int    iBar            - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "RSI ",
+                          rsiPeriods,                                      // int    RSI.Periods
+                          rsiAppliedPrice,                                 // string RSI.AppliedPrice
+
+                          Blue,                                            // color  MainLine.Color
+                          1,                                               // int    MainLine.Width
+                          Blue,                                            // color  Histogram.Color.Upper
+                          Red,                                             // color  Histogram.Color.Lower
+                          0,                                               // int    Histogram.Style.Width
+                          -1,                                              // int    Max.Values
+                          "",                                              // string _____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icRSI(1)", error));
+      warn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "SuperTrend" indicator and return an indicator value.
+ *
+ * @param  int timeframe  - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int atrPeriods - indicator parameter
+ * @param  int smaPeriods - indicator parameter
+ * @param  int iBuffer    - indicator buffer index of the value to return
+ * @param  int iBar       - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "SuperTrend",
+                          atrPeriods,                                      // int    ATR.Periods
+                          smaPeriods,                                      // int    SMA.Periods
+
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          CLR_NONE,                                        // color  Color.Channel
+                          CLR_NONE,                                        // color  Color.MovingAverage
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icSuperTrend(1)", error));
+      warn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "TriEMA" indicator and return an indicator value.
+ *
+ * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    maPeriods      - indicator parameter
+ * @param  string maAppliedPrice - indicator parameter
+ * @param  int    iBuffer        - indicator buffer index of the value to return
+ * @param  int    iBar           - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "TriEMA",
+                          maPeriods,                                       // int    MA.Periods
+                          maAppliedPrice,                                  // string MA.AppliedPrice
+
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icTriEMA(1)", error));
+      warn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Load the "Trix" indicator and return an indicator value.
+ *
+ * @param  int    timeframe       - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    emaPeriods      - indicator parameter
+ * @param  string emaAppliedPrice - indicator parameter
+ * @param  int    iBuffer         - indicator buffer index of the value to return
+ * @param  int    iBar            - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "Trix",
+                          emaPeriods,                                      // int    EMA.Periods
+                          emaAppliedPrice,                                 // string EMA.AppliedPrice
+
+                          DodgerBlue,                                      // color  MainLine.Color
+                          1,                                               // int    MainLine.Width
+                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Red,                                             // color  Histogram.Color.Lower
+                          2,                                               // int    Histogram.Style.Width
+                          -1,                                              // int    Max.Values
+                          "",                                              // string _____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icTrix(1)", error));
+      warn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
+ * Suppress compiler warnings.
  */
 void __DummyCalls() {
    bool   bNull;
@@ -6062,6 +6496,15 @@ void __DummyCalls() {
    GT(NULL, NULL);
    HandleEvent(NULL);
    HistoryFlagsToStr(NULL);
+   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icHalfTrend(NULL, NULL, NULL, NULL);
+   icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
+   icNonLagMA(NULL, NULL, NULL, NULL);
+   icRSI(NULL, NULL, NULL, NULL, NULL);
+   icSuperTrend(NULL, NULL, NULL, NULL, NULL);
+   icTriEMA(NULL, NULL, NULL, NULL, NULL);
+   icTrix(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
