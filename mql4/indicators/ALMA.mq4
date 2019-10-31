@@ -218,7 +218,7 @@ int onInit() {
 int afterInit() {
    // ggf. Offline-Ticker installieren
    if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
-      int hWnd    = __ExecutionContext[iEC.hChart];
+      int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10000;                                           // alle 10 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));

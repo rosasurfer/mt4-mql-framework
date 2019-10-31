@@ -195,7 +195,7 @@ int onInit() {
 int afterInit() {
    // im synthetischen Chart Ticker installieren, weil u.U. keiner läuft (z.B. wenn ChartInfos nicht geladen sind)
    if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
-      int hWnd    = __ExecutionContext[iEC.hChart];
+      int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10000;                                           // nur alle 10 Sekunden (konservativ, auf VPS ohne ChartInfos ausreichend)
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));

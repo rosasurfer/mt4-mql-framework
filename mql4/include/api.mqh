@@ -126,6 +126,15 @@ datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
 bool     HandleEvent(int event);;
 string   HistoryFlagsToStr(int flags);;
+double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar);;
+double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
+double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
+double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
+double   icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar);;
+double   icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar);;
+double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
+double   icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer, int iBar);;
+double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
@@ -290,16 +299,6 @@ string   JoinDoubles(double values[], string separator = ", ");;
 string   JoinDoublesEx(double values[], int digits, string separator = ", ");;
 string   JoinInts(int values[], string separator = ", ");;
 string   JoinStrings(string values[], string separator = ", ");;
-
-
-// include/iCustom/
-double   icHalfTrend    (int timeframe, int periods, int iBuffer, int iBar);;
-double   icMACD         (int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
-double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
-double   icNonLagMA     (int timeframe, int cycleLength, int iBuffer, int iBar);;
-double   icRSI          (int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar);;
-double   icSuperTrend   (int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
-double   icTrix         (int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 
 // include/structs/mt4/
@@ -691,9 +690,9 @@ int      SyncMainContext_deinit(int ec[], int uninitReason);;
 int      SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 int      SyncMainContext_start(int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);;
 bool     TerminalIsPortableMode();;
-double   Test_GetCommission(int ec[], double lots);;
-bool     Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);;
 bool     Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);;
+bool     Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);;
+double   Test_GetCommission(int ec[], double lots);;
 bool     Test_StartReporting(int ec[], datetime from, int bars, int reportId, string reportSymbol);;
 bool     Test_StopReporting (int ec[], datetime to,   int bars);;
 int      Tester_GetBarModel();;
