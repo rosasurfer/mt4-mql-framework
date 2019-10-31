@@ -5,7 +5,7 @@
  * With default settings this EA is just a trade manager and not a complete trading system. Entry and exit are defined
  * manually and the EA manages the resulting trades in a pyramiding way.
  *
- * Theoretical background and PoC was provided by Bernd Kreuss aka 7bit in his publication "Snowballs and the Anti-Grid".
+ * Theoretical background and proof-of-concept was provided in "Snowballs and the Anti-Grid" by Bernd Kreuss aka 7bit.
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
