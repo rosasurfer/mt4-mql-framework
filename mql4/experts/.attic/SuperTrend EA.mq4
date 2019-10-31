@@ -1,7 +1,7 @@
 /**
  * A system following the trend of the SuperTrend or HalfTrend indicator.
  *
- * Note: Incomplete work in progress, don't use in real account.
+ * Note: Test prototype, don't use in a real account.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
