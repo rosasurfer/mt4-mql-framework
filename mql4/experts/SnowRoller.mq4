@@ -5,7 +5,7 @@
  * With default settings this EA is just a trade manager and not a complete trading system. Entry and exit are defined
  * manually and the EA manages the resulting trades in a pyramiding way.
  *
- * Theoretical background and proof-of-concept was provided in "Snowballs and the Anti-Grid" by Bernd Kreuss aka 7bit.
+ * Theoretical background and proof-of-concept was provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
@@ -17,7 +17,7 @@
  *  - The EA is not FIFO conforming, and will never be.
  *  - A description of program actions, events and status changes can be found at the end of this file.
  *
- * Risk warning: A market can range longer without reaching the profit target than a trading account is able to survive.
+ * Risk warning: A market can range longer without reaching the profit target than a trading account can survive.
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
@@ -27,12 +27,12 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   Sequence.ID            = "";
-extern string   GridDirection          = "Long | Short";          // no bi-directional mode as in the original
+extern string   GridDirection          = "Long | Short";          // no bi-directional mode
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
-extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
-extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime) | @profit(double[%])
+extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
+extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
 extern bool     DisplayProfitInPercent = true;                    // whether PL values are displayed absolute or in percent
@@ -87,7 +87,7 @@ string   statusDirectory = "";                     // directory the status file 
 bool     start.conditions;                         // whether a start condition is active
 
 bool     start.trend.condition;
-string   start.trend.name;
+string   start.trend.indicator;
 int      start.trend.timeframe;
 string   start.trend.params;
 
@@ -100,6 +100,11 @@ bool     start.time.condition;
 datetime start.time.value;
 
 // --- stop conditions (OR combined) -------
+bool     stop.trend.condition;                     // whether a stop trend condition is active
+string   stop.trend.indicator;
+int      stop.trend.timeframe;
+string   stop.trend.params;
+
 bool     stop.price.condition;                     // whether a stop price condition is active
 int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   stop.price.value;
@@ -1203,7 +1208,20 @@ bool IsStopSignal() {
    if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
    string message;
 
-   // User-definierte StopConditions prüfen
+   // -- stop.trend: bei Trendwechsel entgegen der Richtung der Sequenz erfüllt ---------------------------------------------
+   if (stop.trend.condition) {
+      if (IsBarOpenEvent(stop.trend.timeframe)) {
+         int trend = GetStopTrendValue(1);
+
+         if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
+            message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@trend("+ stop.trend.indicator +":"+ TimeframeDescription(stop.trend.timeframe) +":"+ stop.trend.params +")\" fulfilled";
+            if (!IsTesting()) warn(message);
+            else if (__LOG()) log(message);
+            return(true);
+         }
+      }
+   }
+
    // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
@@ -1221,7 +1239,7 @@ bool IsStopSignal() {
 
       if (triggered) {
          string sPrice = "@"+ StrToLower(PriceTypeDescription(stop.price.type)) +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
-         message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \""+ sPrice +"\" fulfilled";
+         message = "IsStopSignal(2)  sequence "+ sequence.name +" stop condition \""+ sPrice +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.price.condition = false;
@@ -1231,8 +1249,8 @@ bool IsStopSignal() {
 
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
-      if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         message = "IsStopSignal(3)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+      if (TimeCurrentEx("IsStopSignal(3)") >= stop.time.value) {
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.time.condition = false;
@@ -1243,7 +1261,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@profit("+ DoubleToStr(stop.profitAbs.value, 2) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ DoubleToStr(stop.profitAbs.value, 2) +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitAbs.condition = false;
@@ -1257,7 +1275,7 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+         message = "IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitPct.condition = false;
@@ -1268,7 +1286,7 @@ bool IsStopSignal() {
    // -- session break ------------------------------------------------------------------------------------------------------
    sessionbreak.active = IsSessionBreak();
    if (sessionbreak.active) {
-      if (__LOG()) log("IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")");
+      if (__LOG()) log("IsStopSignal(7)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")");
       return(true);
    }
 
@@ -2746,10 +2764,13 @@ bool ValidateInputs(bool interactive) {
    }
    StartLevel = Abs(StartLevel);
 
-   // StartConditions, AND combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](double) | @time(datetime)
-   // --------------------------------------------------------------------------------------------------------------------
+   string trendIndicators[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "HalfTrend", "SuperTrend"};
+
+
+   // StartConditions, AND combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
+   // ---------------------------------------------------------------------------------------------------------------------------
+   // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
    if (!isParameterChange || StartConditions!=last.StartConditions) {
-      // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
       start.conditions      = false;
       start.trend.condition = false;
       start.price.condition = false;
@@ -2782,15 +2803,14 @@ bool ValidateInputs(bool interactive) {
             if (start.time.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
             if (Explode(sValue, ":", elems, NULL) != 3) return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             sValue = StrTrim(elems[0]);
-            string supported[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "HalfTrend", "SuperTrend"};
-            int idx = SearchStringArrayI(supported, sValue);
+            int idx = SearchStringArrayI(trendIndicators, sValue);
             if (idx == -1)                              return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
-            start.trend.name = StrToLower(sValue);
+            start.trend.indicator = StrToLower(sValue);
             start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)            return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
             start.trend.params = StrTrim(elems[2]);
             if (!StringLen(start.trend.params))         return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
-            exprs[i] = "@trend("+ supported[idx] +":"+ start.trend.timeframe +":"+ start.trend.params +")";
+            exprs[i] = "@trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) +":"+ start.trend.params +")";
             start.trend.condition = true;
          }
 
@@ -2832,10 +2852,11 @@ bool ValidateInputs(bool interactive) {
       else                  StartConditions = "";
    }
 
-   // StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
-   // ----------------------------------------------------------------------------------------
+   // StopConditions, OR combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
+   // ---------------------------------------------------------------------------------------------------------------------------------------
    // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
    if (!isParameterChange || StopConditions!=last.StopConditions) {
+      stop.trend.condition     = false;
       stop.price.condition     = false;
       stop.time.condition      = false;
       stop.profitAbs.condition = false;
@@ -2858,12 +2879,27 @@ bool ValidateInputs(bool interactive) {
          sValue = StrTrim(StrLeft(elems[1], -1));
          if (!StringLen(sValue))                        return(_false(ValidateInputs.OnError("ValidateInputs(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (stop.price.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
+         if (key == "@trend") {
+            if (stop.trend.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple trend conditions)", interactive)));
+            if (Explode(sValue, ":", elems, NULL) != 3) return(_false(ValidateInputs.OnError("ValidateInputs(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            sValue = StrTrim(elems[0]);
+            idx = SearchStringArrayI(trendIndicators, sValue);
+            if (idx == -1)                              return(_false(ValidateInputs.OnError("ValidateInputs(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
+            stop.trend.indicator = StrToLower(sValue);
+            stop.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
+            if (stop.trend.timeframe == -1)             return(_false(ValidateInputs.OnError("ValidateInputs(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)", interactive)));
+            stop.trend.params = StrTrim(elems[2]);
+            if (!StringLen(stop.trend.params))          return(_false(ValidateInputs.OnError("ValidateInputs(45)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)", interactive)));
+            exprs[i] = "@trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) +":"+ stop.trend.params +")";
+            stop.trend.condition = true;
+         }
+
+         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
+            if (stop.price.condition)                   return(_false(ValidateInputs.OnError("ValidateInputs(46)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(47)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (dValue <= 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(48)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
@@ -2878,9 +2914,9 @@ bool ValidateInputs(bool interactive) {
          }
 
          else if (key == "@time") {
-            if (stop.time.condition)                    return(_false(ValidateInputs.OnError("ValidateInputs(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
+            if (stop.time.condition)                    return(_false(ValidateInputs.OnError("ValidateInputs(49)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(sValue);
-            if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(45)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             stop.time.condition = true;
             stop.time.value     = time;
@@ -2889,12 +2925,12 @@ bool ValidateInputs(bool interactive) {
 
          else if (key == "@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                        return(_false(ValidateInputs.OnError("ValidateInputs(46)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
+                                                        return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
             sizeOfElems = Explode(sValue, "%", elems, NULL);
-            if (sizeOfElems > 2)                        return(_false(ValidateInputs.OnError("ValidateInputs(47)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                        return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(elems[0]);
-            if (!StringLen(sValue))                     return(_false(ValidateInputs.OnError("ValidateInputs(48)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(49)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StringLen(sValue))                     return(_false(ValidateInputs.OnError("ValidateInputs(53)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(54)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.condition = true;
@@ -2908,7 +2944,7 @@ bool ValidateInputs(bool interactive) {
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
-         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
@@ -2924,7 +2960,7 @@ bool ValidateInputs(bool interactive) {
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(51)"));
+   return(!last_error|catch("ValidateInputs(56)"));
 }
 
 
@@ -5062,21 +5098,40 @@ double RequiredDistance(double profit) {
 
 
 /**
- * Return the trend value of start condition's trend indicator.
+ * Return the trend value of a start condition's trend indicator.
  *
  * @param  int bar - bar index of the value to return
  *
  * @return int - trend value or NULL in case of errors
  */
 int GetStartTrendValue(int bar) {
-   if (start.trend.name == "alma"         ) return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "movingaverage") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "nonlagma"     ) return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "triema"       ) return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.name == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
-   if (start.trend.name == "supertrend"   ) return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
+   if (start.trend.indicator == "alma"         ) return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.indicator == "movingaverage") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.indicator == "nonlagma"     ) return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.indicator == "triema"       ) return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.indicator == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (start.trend.indicator == "supertrend"   ) return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
 
    return(!catch("GetStartTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StartConditions), ERR_INVALID_CONFIG_VALUE));
+}
+
+
+/**
+ * Return the trend value of a stop condition's trend indicator.
+ *
+ * @param  int bar - bar index of the value to return
+ *
+ * @return int - trend value or NULL in case of errors
+ */
+int GetStopTrendValue(int bar) {
+   if (stop.trend.indicator == "alma"         ) return(GetALMA         (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
+   if (stop.trend.indicator == "movingaverage") return(GetMovingAverage(stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
+   if (stop.trend.indicator == "nonlagma"     ) return(GetNonLagMA     (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
+   if (stop.trend.indicator == "triema"       ) return(GetTriEMA       (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
+   if (stop.trend.indicator == "halftrend"    ) return(GetHalfTrend    (stop.trend.timeframe, stop.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (stop.trend.indicator == "supertrend"   ) return(GetSuperTrend   (stop.trend.timeframe, stop.trend.params, SuperTrend.MODE_TREND,    bar));
+
+   return(!catch("GetStopTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StopConditions), ERR_INVALID_CONFIG_VALUE));
 }
 
 

@@ -213,7 +213,7 @@ void CopyInputStatus(bool store) {
 
    static bool     _start.conditions;
    static bool     _start.trend.condition;
-   static string   _start.trend.name;
+   static string   _start.trend.indicator;
    static int      _start.trend.timeframe;
    static string   _start.trend.params;
    static bool     _start.price.condition;
@@ -222,6 +222,10 @@ void CopyInputStatus(bool store) {
    static bool     _start.time.condition;
    static datetime _start.time.value;
 
+   static bool     _stop.trend.condition;
+   static string   _stop.trend.indicator;
+   static int      _stop.trend.timeframe;
+   static string   _stop.trend.params;
    static bool     _stop.price.condition;
    static int      _stop.price.type;
    static double   _stop.price.value;
@@ -245,7 +249,7 @@ void CopyInputStatus(bool store) {
 
       _start.conditions         = start.conditions;
       _start.trend.condition    = start.trend.condition;
-      _start.trend.name         = start.trend.name;
+      _start.trend.indicator    = start.trend.indicator;
       _start.trend.timeframe    = start.trend.timeframe;
       _start.trend.params       = start.trend.params;
       _start.price.condition    = start.price.condition;
@@ -254,6 +258,10 @@ void CopyInputStatus(bool store) {
       _start.time.condition     = start.time.condition;
       _start.time.value         = start.time.value;
 
+      _stop.trend.condition     = stop.trend.condition;
+      _stop.trend.indicator     = stop.trend.indicator;
+      _stop.trend.timeframe     = stop.trend.timeframe;
+      _stop.trend.params        = stop.trend.params;
       _stop.price.condition     = stop.price.condition;
       _stop.price.type          = stop.price.type;
       _stop.price.value         = stop.price.value;
@@ -277,7 +285,7 @@ void CopyInputStatus(bool store) {
 
       start.conditions          = _start.conditions;
       start.trend.condition     = _start.trend.condition;
-      start.trend.name          = _start.trend.name;
+      start.trend.indicator     = _start.trend.indicator;
       start.trend.timeframe     = _start.trend.timeframe;
       start.trend.params        = _start.trend.params;
       start.price.condition     = _start.price.condition;
@@ -286,6 +294,10 @@ void CopyInputStatus(bool store) {
       start.time.condition      = _start.time.condition;
       start.time.value          = _start.time.value;
 
+      stop.trend.condition      = _stop.trend.condition;
+      stop.trend.indicator      = _stop.trend.indicator;
+      stop.trend.timeframe      = _stop.trend.timeframe;
+      stop.trend.params         = _stop.trend.params;
       stop.price.condition      = _stop.price.condition;
       stop.price.type           = _stop.price.type;
       stop.price.value          = _stop.price.value;
