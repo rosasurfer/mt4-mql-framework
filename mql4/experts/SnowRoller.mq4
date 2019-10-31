@@ -1113,7 +1113,7 @@ bool IsStartSignal() {
             int trend = GetStartTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ StartConditions +"\" fulfilled";
+               message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ StartConditions +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
                if (!IsTesting()) warn(message);
                else if (__LOG()) log(message);
                return(true);
@@ -1214,7 +1214,7 @@ bool IsStopSignal() {
          int trend = GetStopTrendValue(1);
 
          if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-            message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@trend("+ stop.trend.indicator +":"+ TimeframeDescription(stop.trend.timeframe) +":"+ stop.trend.params +")\" fulfilled";
+            message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@trend("+ stop.trend.indicator +":"+ TimeframeDescription(stop.trend.timeframe) +":"+ stop.trend.params +")\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
             return(true);
