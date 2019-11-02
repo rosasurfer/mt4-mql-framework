@@ -147,9 +147,9 @@
    datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
-   // Event-Listener/Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
+   // Event-Listener/Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung müssen die Handler im Programm implementiert werden.
    bool     onBarOpen();
-   bool     onChartCommand(string data[]);
+   bool     onCommand(string data[]);
 
 
    // Farben

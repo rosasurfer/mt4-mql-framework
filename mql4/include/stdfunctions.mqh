@@ -788,7 +788,7 @@ bool HandleEvent(int event) {
    string sResults[]; ArrayResize(sResults, 0);
 
    if (EventListener_ChartCommand(sResults))
-      return(onChartCommand(sResults));
+      return(onCommand(sResults));
    return(true);
 }
 
@@ -3490,12 +3490,11 @@ int Tester.GetBarModel() {
 int Tester.Pause() {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
+   if (!IsScript() && __ExecutionContext[EC.programCoreFunction]==CF_DEINIT)
+      return(NO_ERROR);                                              // SendMessage() darf in deinit() nicht mehr benutzt werden
+
    if (Tester.IsPaused())
       return(NO_ERROR);                                              // skipping
-
-   if (!IsScript())
-      if (__ExecutionContext[EC.programCoreFunction] == CF_DEINIT)
-         return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd)
@@ -6658,8 +6657,8 @@ void __DummyCalls() {
 
 
 #import "rsfLib1.ex4"
-   bool     onBarOpen     (             );
-   bool     onChartCommand(string data[]);
+   bool     onBarOpen();
+   bool     onCommand(string data[]);
 
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayPopInt(int array[]);
