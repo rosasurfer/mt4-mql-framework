@@ -183,6 +183,7 @@ string   sSequenceProfitPerLevel = "";
 string   sSequencePlStats        = "";
 string   sStartConditions        = "";
 string   sStopConditions         = "";
+string   sAutoResume             = "";
 
 
 #include <app/SnowRoller/init.mqh>
@@ -2301,7 +2302,7 @@ int CreateMagicNumber(int level) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__CHART()) return(error);
 
-   string msg, sAtLevel, sAutoResume, sError;
+   string msg, sAtLevel, sError;
 
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
@@ -2317,8 +2318,6 @@ int ShowStatus(int error = NO_ERROR) {
       default:
          return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
    }
-
-   if (AutoResume) sAutoResume = StringConcatenate("AutoResume: On", NL);
 
    msg = StringConcatenate(__NAME(), msg, sError,                                                  NL,
                                                                                                    NL,
@@ -2364,6 +2363,7 @@ void SS.All() {
    SS.MissedLevels();
    SS.LotSize();
    SS.StartStopConditions();
+   SS.AutoResume();
    SS.Stops();
    SS.TotalPL();
    SS.MaxProfit();
@@ -2428,7 +2428,7 @@ void SS.LotSize() {
 
 
 /**
- * ShowStatus(): Aktualisiert die String-Repräsentation von start/stopConditions.
+ * ShowStatus(): Update the string representation of input parameters "StartConditions" and "StopConditions".
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
@@ -2436,7 +2436,17 @@ void SS.StartStopConditions() {
    sStopConditions  = "";
 
    if (StartConditions != "") sStartConditions = "Start:             "+ StartConditions + NL;
-   if (StopConditions  != "") sStopConditions  = "Stop:              "+  StopConditions  + NL;
+   if (StopConditions  != "") sStopConditions  = "Stop:              "+ StopConditions  + NL;
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of input parameter "AutoResume".
+ */
+void SS.AutoResume() {
+   if (!__CHART()) return;
+   if (AutoResume) sAutoResume = "AutoResume: On"+ NL;
+   else            sAutoResume = "";
 }
 
 
@@ -2993,6 +3003,9 @@ bool ValidateInputs(bool interactive) {
       StopConditions = JoinStrings(exprs, " || ");
    }
 
+   // AutoResume
+   if (AutoResume && !start.trend.condition)            return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StartConditions for AutoResume = "+ DoubleQuoteStr(StartConditions), interactive)));
+
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
@@ -3001,10 +3014,10 @@ bool ValidateInputs(bool interactive) {
 
    // DisplayProfitInPercent: nothing to validate
 
-   // __STATUS_INVALID_INPUT zurücksetzen
+   // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(56)"));
+   return(!last_error|catch("ValidateInputs(57)"));
 }
 
 
