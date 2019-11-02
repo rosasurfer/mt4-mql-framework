@@ -170,19 +170,19 @@ int      ignoreClosedPositions[];                  // ...
 int      startStopDisplayMode = SDM_PRICE;         // whether start/stop markers are displayed
 int      orderDisplayMode     = ODM_PYRAMID;       // current order display mode
 
-string   str.LotSize                 = "";         // caching vars to speed-up execution of ShowStatus()
-string   str.grid.base               = "";
-string   str.sequence.direction      = "";
-string   str.sequence.missedLevels   = "";
-string   str.sequence.stops          = "";
-string   str.sequence.stopsPL        = "";
-string   str.sequence.totalPL        = "";
-string   str.sequence.maxProfit      = "";
-string   str.sequence.maxDrawdown    = "";
-string   str.sequence.profitPerLevel = "";
-string   str.sequence.plStats        = "";
-string   str.startConditions         = "";
-string   str.stopConditions          = "";
+string   sLotSize                = "";             // caching vars to speed-up execution of ShowStatus()
+string   sGridbase               = "";
+string   sSequenceDirection      = "";
+string   sSequenceMissedLevels   = "";
+string   sSequenceStops          = "";
+string   sSequenceStopsPL        = "";
+string   sSequenceTotalPL        = "";
+string   sSequenceMaxProfit      = "";
+string   sSequenceMaxDrawdown    = "";
+string   sSequenceProfitPerLevel = "";
+string   sSequencePlStats        = "";
+string   sStartConditions        = "";
+string   sStopConditions         = "";
 
 
 #include <app/SnowRoller/init.mqh>
@@ -204,14 +204,15 @@ int onTick() {
 
    bool gridChanged;                                        // whether the current grid base or level changed
    int  activatedOrders[];                                  // indexes of activated client-side orders
+   bool neverStarted = !ArraySize(sequence.start.event);
 
    // ...sequence waits for start signal...
-   if (sequence.status == STATUS_WAITING) {
+   if (neverStarted && sequence.status==STATUS_WAITING) {
       if (IsStartSignal()) StartSequence();
    }
 
    // ...or sequence waits for resume signal...
-   else if (sequence.status == STATUS_STOPPED) {
+   else if (sequence.status==STATUS_STOPPED || sequence.status==STATUS_WAITING) {
       if (IsResumeSignal()) ResumeSequence();
    }
 
@@ -328,6 +329,12 @@ bool StartSequence() {
    // disable all start conditions
    start.conditions = false; SS.StartStopConditions();
    RedrawStartStop();
+
+   // deactivate all start conditions
+   start.conditions      = false;
+   start.trend.condition = false;
+   start.price.condition = false;
+   start.time.condition  = false; SS.StartStopConditions();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
    return(!catch("StartSequence(5)"));
@@ -502,6 +509,17 @@ bool StopSequence() {
       SS.ProfitPerLevel();
    }
 
+   // switch back to STATUS_WAITING if AutoResume is enabled and a start.trend.condition is configured
+   if (!sessionbreak.active && AutoResume) {
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT) {
+         if (start.trend.description != "") {
+            start.conditions      = true;
+            start.trend.condition = true; SS.StartStopConditions();
+            sequence.status       = STATUS_WAITING;
+         }
+      }
+   }
+
    // save sequence
    if (!SaveSequence()) return(false);
 
@@ -537,10 +555,9 @@ bool ArrayAddInt(int &array[], int value) {
  * @return bool - success status
  */
 bool ResumeSequence() {
-   if (IsLastError())                                                                return(false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                    return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) return(!catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
-   sessionbreak.active = false;
+   if (IsLastError())                                                               return(false);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                   return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_WAITING) return(!catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -551,7 +568,7 @@ bool ResumeSequence() {
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
-   // Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
+   // Nach einem vorhergehenden Fehler kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
    if (sequence.level > 0) {
       for (int level=1; level <= sequence.level; level++) {
          int i = Grid.FindOpenPosition(level);
@@ -601,7 +618,11 @@ bool ResumeSequence() {
    if (!UpdatePendingOrders()) return(false);
 
    // deactivate all start conditions
-   start.conditions = false; SS.StartStopConditions();
+   sessionbreak.active   = false;
+   start.conditions      = false;
+   start.trend.condition = false;
+   start.price.condition = false;
+   start.time.condition  = false; SS.StartStopConditions();
 
    // Status aktualisieren und speichern
    bool changes;
@@ -1181,7 +1202,7 @@ bool IsStartSignal() {
  * @return bool
  */
 bool IsResumeSignal() {
-   if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
+   if (IsLastError()) return(false);
 
    if (sessionbreak.active) {
       datetime prevEndtime = sessionbreak.endtime;
@@ -2280,34 +2301,38 @@ int CreateMagicNumber(int level) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__CHART()) return(error);
 
-   string msg, sError;
+   string msg, sAtLevel, sAutoResume, sError;
 
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
 
    switch (sequence.status) {
-      case STATUS_UNDEFINED:   msg =                                      " not initialized"; break;
-      case STATUS_WAITING:     msg = StringConcatenate("  ", Sequence.ID, " waiting");        break;
-      case STATUS_STARTING:    msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, str.sequence.missedLevels, ")"); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, str.sequence.missedLevels, ")"); break;
-      case STATUS_STOPPING:    msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, str.sequence.missedLevels, ")"); break;
-      case STATUS_STOPPED:     msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, str.sequence.missedLevels, ")"); break;
+      case STATUS_UNDEFINED:   msg = " not initialized"; break;
+      case STATUS_WAITING:           if (sequence.maxLevel != 0) sAtLevel = StringConcatenate(" at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")");
+                               msg = StringConcatenate("  ", Sequence.ID, " waiting", sAtLevel); break;
+      case STATUS_STARTING:    msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPING:    msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
       default:
          return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME(), msg, sError,                                                         NL,
-                                                                                                          NL,
-                           "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
-                           "LotSize:         ",  str.LotSize, str.sequence.profitPerLevel,                NL,
-                           "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
-                           "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
-                           str.startConditions,                                    // if set it ends with NL
-                           str.stopConditions,                                     // if set it ends with NL
-                           "Breakeven: ",                                                                 NL);
+   if (AutoResume) sAutoResume = StringConcatenate("AutoResume: On", NL);
 
-   // 1 line margin-top for instrument and indicator legend
-   Comment(StringConcatenate(NL, NL, msg));
+   msg = StringConcatenate(__NAME(), msg, sError,                                                  NL,
+                                                                                                   NL,
+                           "Grid:              ", GridSize, " pip", sGridbase, sSequenceDirection, NL,
+                           "LotSize:          ",  sLotSize, sSequenceProfitPerLevel,               NL,
+                           "Stops:            ",  sSequenceStops, sSequenceStopsPL,                NL,
+                           "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats,               NL,
+                           sStartConditions,                                // if set it ends with NL,
+                           sStopConditions,                                 // if set it ends with NL,
+                           sAutoResume,                                     // if set it ends with NL,
+                           "Breakeven: ",                                                          NL);
+
+   // 3 lines margin-top for instrument and indicator legend
+   Comment(StringConcatenate(NL, NL, NL, msg));
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
@@ -2364,7 +2389,7 @@ void SS.SequenceId() {
 void SS.GridBase() {
    if (!__CHART()) return;
    if (ArraySize(grid.base.event) > 0) {
-      str.grid.base = " @ "+ NumberToStr(grid.base, PriceFormat);
+      sGridbase = " @ "+ NumberToStr(grid.base, PriceFormat);
    }
 }
 
@@ -2374,7 +2399,7 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-   str.sequence.direction = "  ("+ StrToLower(directionDescr[sequence.direction]) +")";
+   sSequenceDirection = "  ("+ StrToLower(directionDescr[sequence.direction]) +")";
 }
 
 
@@ -2385,8 +2410,8 @@ void SS.MissedLevels() {
    if (!__CHART()) return;
 
    int size = ArraySize(sequence.missedLevels);
-   if (!size) str.sequence.missedLevels = "";
-   else       str.sequence.missedLevels = ", missed: "+ JoinInts(sequence.missedLevels);
+   if (!size) sSequenceMissedLevels = "";
+   else       sSequenceMissedLevels = ", missed: "+ JoinInts(sequence.missedLevels);
 }
 
 
@@ -2397,8 +2422,8 @@ void SS.LotSize() {
    if (!__CHART()) return;
    double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
 
-   if (DisplayProfitInPercent) str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
-   else                        str.LotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
+   if (DisplayProfitInPercent) sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
+   else                        sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
 
@@ -2407,11 +2432,11 @@ void SS.LotSize() {
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
-   str.startConditions = "";
-   str.stopConditions  = "";
+   sStartConditions = "";
+   sStopConditions  = "";
 
-   if (StartConditions != "") str.startConditions = "Start:            "+ StartConditions + NL;
-   if (StopConditions  != "") str.stopConditions  = "Stop:            "+  StopConditions  + NL;
+   if (StartConditions != "") sStartConditions = "Start:             "+ StartConditions + NL;
+   if (StopConditions  != "") sStopConditions  = "Stop:              "+  StopConditions  + NL;
 }
 
 
@@ -2420,12 +2445,12 @@ void SS.StartStopConditions() {
  */
 void SS.Stops() {
    if (!__CHART()) return;
-   str.sequence.stops = sequence.stops +" stop"+ ifString(sequence.stops==1, "", "s");
+   sSequenceStops = sequence.stops +" stop"+ ifString(sequence.stops==1, "", "s");
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
    if (sequence.stops > 0) {
-      if (DisplayProfitInPercent) str.sequence.stopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
-      else                        str.sequence.stopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
+      if (DisplayProfitInPercent) sSequenceStopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
+      else                        sSequenceStopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
    }
 }
 
@@ -2435,9 +2460,9 @@ void SS.Stops() {
  */
 void SS.TotalPL() {
    if (!__CHART()) return;
-   if (sequence.maxLevel == 0)      str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   else if (DisplayProfitInPercent) str.sequence.totalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-   else                             str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
+   if (sequence.maxLevel == 0)      sSequenceTotalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
+   else if (DisplayProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+   else                             sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
 }
 
 
@@ -2446,8 +2471,8 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-   if (DisplayProfitInPercent) str.sequence.maxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-   else                        str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
+   if (DisplayProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+   else                        sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
 
@@ -2457,8 +2482,8 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-   if (DisplayProfitInPercent) str.sequence.maxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
-   else                        str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+   if (DisplayProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   else                        sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
 
@@ -2470,15 +2495,15 @@ void SS.ProfitPerLevel() {
    if (!__CHART()) return;
 
    if (!sequence.level) {
-      str.sequence.profitPerLevel = "";               // no display if no position is open
+      sSequenceProfitPerLevel = "";                // no display if no position is open
    }
    else {
       double stopSize = GridSize * PipValue(LotSize);
       int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
       double profit   = levels * stopSize;
 
-      if (DisplayProfitInPercent) str.sequence.profitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
-      else                        str.sequence.profitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
+      if (DisplayProfitInPercent) sSequenceProfitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
+      else                        sSequenceProfitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
    }
 }
 
@@ -2489,7 +2514,7 @@ void SS.ProfitPerLevel() {
 void SS.PLStats() {
    if (!__CHART()) return;
    if (sequence.maxLevel != 0) {    // no display until a position was opened
-      str.sequence.plStats = "  ("+ str.sequence.maxProfit +"/"+ str.sequence.maxDrawdown +")";
+      sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
    }
 }
 
