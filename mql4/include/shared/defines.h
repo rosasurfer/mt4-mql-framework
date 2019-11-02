@@ -389,6 +389,7 @@
 #define CornflowerBlue                   0xED9564
 #define Cornsilk                         0xDCF8FF
 #define Crimson                          0x3C14DC
+#define Cyan                                 Aqua              // alias
 #define DarkBlue                         0x8B0000
 #define DarkGoldenrod                    0x0B86B8
 #define DarkGray                         0xA9A9A9
