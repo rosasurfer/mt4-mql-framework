@@ -7362,8 +7362,8 @@ void Library.ResetGlobalVars() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",      ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen()              { return(!catch("onBarOpen(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onCommand(string data[]) { return(!catch("onCommand(1)", ERR_NOT_IMPLEMENTED)); }
 
 
 #import "rsfLib2.ex4"

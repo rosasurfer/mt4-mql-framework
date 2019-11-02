@@ -263,18 +263,18 @@ int onTick() {
 
 
 /**
- * Process received chart commands.
+ * Handle incoming commands.
  *
- * @param  string commands[] - received commands
+ * @param  string commands[] - received external commands
  *
  * @return bool - success status
  *
  * Message format:
  *   "cmd=account:[{companyKey}:{accountKey}]"  => switch/select the current trade account
  */
-bool onChartCommand(string commands[]) {
+bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if (StrStartsWith(commands[i], "cmd=account:")) {
@@ -289,9 +289,9 @@ bool onChartCommand(string commands[]) {
          }
          continue;
       }
-      warn("onChartCommand(2)  unknown chart command = "+ DoubleQuoteStr(commands[i]));
+      warn("onCommand(2)  unknown command = "+ DoubleQuoteStr(commands[i]));
    }
-   return(!catch("onChartCommand(3)"));
+   return(!catch("onCommand(3)"));
 }
 
 

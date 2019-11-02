@@ -468,7 +468,7 @@ int      MergeStringArrays(string array1[], string array2[], string merged[]);;
 bool     ObjectDeleteSilent(string label, string location);;
 int      ObjectRegister(string label);;
 bool     onBarOpen();;
-bool     onChartCommand(string data[]);;
+bool     onCommand(string data[]);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);;
 bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);;
 bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);;

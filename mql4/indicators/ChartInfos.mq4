@@ -322,12 +322,11 @@ bool CheckLastError(string location) {
 
 
 /**
- * Handler für ChartCommands.
+ * Handle incoming commands.
  *
- * @param  string commands[] - die eingetroffenen Commands
+ * @param  string commands[] - received external commands
  *
- * @return bool - Erfolgsstatus
- *
+ * @return bool - success status
  *
  * Messageformat: "cmd=account:[{companyId}:{account}]" - Schaltet den externen Account um.
  *                "cmd=ToggleOpenOrders"                - Schaltet die Anzeige der offenen Orders ein/aus.
@@ -336,9 +335,9 @@ bool CheckLastError(string location) {
  *                "cmd=EditAccountConfig"               - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
  *                                                        da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
  */
-bool onChartCommand(string commands[]) {
+bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if (commands[i] == "cmd=EditAccountConfig") {
@@ -384,9 +383,9 @@ bool onChartCommand(string commands[]) {
          ArrayResize(positions.config.comments, 0);
          continue;
       }
-      warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
+      warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
    }
-   return(!catch("onChartCommand(3)"));
+   return(!catch("onCommand(3)"));
 }
 
 
@@ -1786,7 +1785,7 @@ bool UpdateOHLC() {
 
 
 /**
- * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onChartCommand()-Handler.
+ * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onCommand()-Handler.
  *
  * @return bool - Erfolgsstatus
  */
