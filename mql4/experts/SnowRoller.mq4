@@ -33,7 +33,7 @@ extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
-extern bool     AutoResume             = false;                   //
+extern bool     AutoResume             = false;                   // whether to automatically re-activate a trend StartCondition after StopSequence()
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
 extern bool     DisplayProfitInPercent = true;                    // whether PL values are displayed absolute or in percent
@@ -51,8 +51,8 @@ extern bool     DisplayProfitInPercent = true;                    // whether PL 
 #include <win32api.mqh>
 
 int      sequence.id;
-string   sequence.created;                         // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
-string   sequence.name;                            // "L.1234" | "S.2345"
+string   sequence.created = "";                    // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
+string   sequence.name    = "";                    // "L.1234" | "S.2345"
 int      sequence.status;
 bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
 int      sequence.direction;
@@ -88,46 +88,46 @@ string   statusDirectory = "";                     // directory the status file 
 bool     start.conditions;                         // whether a start condition is active
 
 bool     start.trend.condition;
-string   start.trend.indicator;
+string   start.trend.indicator   = "";
 int      start.trend.timeframe;
-string   start.trend.params;
-string   start.trend.description;
+string   start.trend.params      = "";
+string   start.trend.description = "";
 
 bool     start.price.condition;
 int      start.price.type;                         // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   start.price.value;
 double   start.price.lastValue;
-string   start.price.description;
+string   start.price.description = "";
 
 bool     start.time.condition;
 datetime start.time.value;
-string   start.time.description;
+string   start.time.description = "";
 
 // --- stop conditions (OR combined) -------
 bool     stop.trend.condition;                     // whether a stop trend condition is active
-string   stop.trend.indicator;
+string   stop.trend.indicator   = "";
 int      stop.trend.timeframe;
-string   stop.trend.params;
-string   stop.trend.description;
+string   stop.trend.params      = "";
+string   stop.trend.description = "";
 
 bool     stop.price.condition;                     // whether a stop price condition is active
 int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
 double   stop.price.value;
 double   stop.price.lastValue;
-string   stop.price.description;
+string   stop.price.description = "";
 
 bool     stop.time.condition;                      // whether a stop time condition is active
 datetime stop.time.value;
-string   stop.time.description;
+string   stop.time.description = "";
 
 bool     stop.profitAbs.condition;                 // whether an absolute stop profit condition is active
 double   stop.profitAbs.value;
-string   stop.profitAbs.description;
+string   stop.profitAbs.description = "";
 
 bool     stop.profitPct.condition;                 // whether a percentage stop profit condition is active
 double   stop.profitPct.value;
-double   stop.profitPct.absValue = INT_MAX;
-string   stop.profitPct.description;
+double   stop.profitPct.absValue    = INT_MAX;
+string   stop.profitPct.description = "";
 
 // --- session break management ------------
 datetime sessionbreak.starttime;
@@ -236,15 +236,15 @@ int onTick() {
 
 
 /**
- * Handler for incoming ChartCommand events.
+ * Handle incoming commands.
  *
- * @param  string commands[] - received chart commands
+ * @param  string commands[] - received external commands
  *
  * @return bool - success status
  */
-bool onChartCommand(string commands[]) {
-   if (ArraySize(commands) == 0)
-      return(_true(warn("onChartCommand(1)  empty parameter commands = {}")));
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands))
+      return(_true(warn("onCommand(1)  empty parameter commands = {}")));
 
    string cmd = commands[0];
 
@@ -273,7 +273,7 @@ bool onChartCommand(string commands[]) {
    else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
 
    // log unknown commands and let the EA continue
-   return(_true(warn("onChartCommand(2)  unknown command \""+ cmd +"\"")));
+   return(_true(warn("onCommand(2)  unknown command \""+ cmd +"\"")));
 }
 
 
@@ -344,19 +344,20 @@ bool StopSequence() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED)  // after test end we only clean-up
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED)  // only at test end status may be STATUS_STOPPED
          return(!catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   // a waiting sequence was not yet started and is just cancelled
+   // a waiting sequence will be cancelled
    if (sequence.status == STATUS_WAITING) {
       if (IsTesting()) Tester.Pause();
       SetLastError(ERR_CANCELLED_BY_USER);
       return(!catch("StopSequence(3)"));
    }
 
+   // If UpdateStatus() detects an externally closed position it sets STATUS_STOPPING and calls StopSequence().
    if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPING;
       if (__LOG()) log("StopSequence(4)  stopping sequence "+ sequence.name +" at level "+ sequence.level);
@@ -547,7 +548,7 @@ bool ResumeSequence() {
    datetime startTime;
    double   gridBase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
-   sequence.status     = STATUS_STARTING;
+   sequence.status = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
    // Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
@@ -608,8 +609,6 @@ bool ResumeSequence() {
    if (!UpdateStatus(changes, iNull)) return(false);           // erzeugt, wird es in UpdateStatus() mit PL=0.00 "geschlossen" und der Sequence-Level verringert.
    if (changes) UpdatePendingOrders();                         // In diesem Fall müssen die Pending-Orders nochmal aktualisiert werden.
    if (!SaveSequence()) return(false);
-
-   // Anzeige aktualisieren
    RedrawStartStop();
 
    if (__LOG()) log("ResumeSequence(7)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
@@ -1177,7 +1176,7 @@ bool IsStartSignal() {
 
 
 /**
- * Whether a resume condition is satisfied for a stopped sequence.
+ * Whether a resume condition is satisfied for a waiting or a stopped sequence.
  *
  * @return bool
  */
@@ -3191,7 +3190,7 @@ bool SaveSequence() {
    // oder wenn die Sequenz gestoppt wurde.
    if (IsTesting() /*&& !__LOG()*/) {                                // enable !__LOG() to always save if logging is enabled
       static bool statusSaved = false;
-      if (statusSaved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
+      if (statusSaved && sequence.status!=STATUS_STOPPED && sequence.status!=STATUS_WAITING && __WHEREAMI__!=CF_DEINIT)
          return(true);                                               // skip saving
    }
 
@@ -3385,18 +3384,18 @@ bool LoadSequence() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Created", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Created", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer
-                     "Symbol"                  ,                        //  nicht in einer einzigen Zeile steht.
+                     "Symbol"                  ,                        //  nicht vollständig in einer einzigen Zeile steht.
                      "Created"                 ,
                      "Sequence.ID"             ,
                      "GridDirection"           ,
                      "GridSize"                ,
                      "LotSize"                 ,
-                   //"StartLevel"              ,                        // optional
-                   //"StartConditions"         ,                        // optional
-                   //"StopConditions"          ,                        // optional
-                     "AutoResume"              ,                        // TODO: make required (really?)
+                     "StartLevel"              ,
+                     "StartConditions"         ,
+                     "StopConditions"          ,
+                     "AutoResume"              ,
                      "Sessionbreak.StartTime"  ,
                      "Sessionbreak.EndTime"    ,
                    //"DisplayProfitInPercent"  ,                        // optional
@@ -3479,22 +3478,22 @@ bool LoadSequence() {
          ArrayDropString(keys, key);
       }
       else if (key == "AutoResume") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          AutoResume = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.StartTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sessionbreak.StartTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.EndTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sessionbreak.EndTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "DisplayProfitInPercent") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(13)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          DisplayProfitInPercent = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
@@ -3504,7 +3503,7 @@ bool LoadSequence() {
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTestSequence() || !StrStartsWithI(accountValue, ShortAccountCompany() +":"))
-         return(_false(catch("LoadSequence(13)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
+         return(_false(catch("LoadSequence(14)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
    }
 
    // Runtime-Settings auslesen, validieren und übernehmen
@@ -3526,7 +3525,7 @@ bool LoadSequence() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("LoadSequence(14)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("LoadSequence(15)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
@@ -3534,16 +3533,16 @@ bool LoadSequence() {
          if (!LoadSequence.RuntimeStatus(fileName, lines[i], key, value, keys)) return(false);
       }
    }
-   if (ArraySize(keys) > 0)                                                return(_false(catch("LoadSequence(15)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                                return(_false(catch("LoadSequence(16)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("LoadSequence(16)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("LoadSequence(17)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("LoadSequence(17)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("LoadSequence(18)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!last_error|catch("LoadSequence(18)"));
+   return(!last_error|catch("LoadSequence(19)"));
 }
 
 
@@ -5044,10 +5043,9 @@ bool UpdateProfitTargets() {
    double beDistance       = RequiredDistance(MathAbs(losses));
    double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance)*Pip;
    sequence.breakeven      = NormalizeDouble(bePrice, Digits);
-   debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
+   //debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
 
    // calculate TP price
-
    return(!catch("UpdateProfitTargets(2)"));
 }
 

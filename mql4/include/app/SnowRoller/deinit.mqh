@@ -60,7 +60,7 @@ int onDeinitChartClose() {
 
 
 /**
- * Online:    Never encountered. By default tracked in Expander::onDeinitUndefined().
+ * Online:    Never encountered, and therefore tracked in Expander::onDeinitUndefined().
  * In tester: Called if a test finished regularily, i.e. the test period ended.
  *
  * @return int - error status
@@ -74,7 +74,7 @@ int onDeinitUndefined() {
          bool bNull;
          int  iNull[];
          if (UpdateStatus(bNull, iNull))
-            StopSequence();                                       // ruft intern SaveSequence() auf
+            StopSequence();
          ShowStatus();
       }
       return(last_error);
