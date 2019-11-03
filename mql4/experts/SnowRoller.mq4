@@ -36,7 +36,7 @@ extern string   StopConditions         = "";                      // @trend(<ind
 extern bool     AutoResume             = false;                   // whether to automatically re-activate a trend StartCondition after StopSequence()
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
-extern bool     DisplayProfitInPercent = true;                    // whether PL values are displayed absolute or in percent
+extern bool     ShowProfitInPercent    = true;                    // whether PL values are displayed absolutely or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -231,7 +231,7 @@ int onTick() {
       test.equity.value = sequence.startEquity + sequence.totalPL;
 
    // update display of profit targets
-   if (IsBarOpenEvent(PERIOD_M1)) DisplayProfitTargets();
+   if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
 
    return(last_error);
 }
@@ -501,7 +501,7 @@ bool StopSequence(int stopType) {
       sequence.status = STATUS_STOPPED;
       if (__LOG()) log("StopSequence(11)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level);
       UpdateProfitTargets();
-      DisplayProfitTargets();
+      ShowProfitTargets();
       SS.ProfitPerLevel();
    }
 
@@ -1496,7 +1496,7 @@ bool UpdatePendingOrders() {
       if (__LOG()) log("UpdatePendingOrders(6)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
    UpdateProfitTargets();
-   DisplayProfitTargets();
+   ShowProfitTargets();
    SS.ProfitPerLevel();
 
    if (ordersChanged)
@@ -2344,8 +2344,8 @@ void SS.LotSize() {
    if (!__CHART()) return;
    double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
 
-   if (DisplayProfitInPercent) sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
-   else                        sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
+   if (ShowProfitInPercent) sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
+   else                     sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
 
@@ -2381,8 +2381,8 @@ void SS.Stops() {
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
    if (sequence.stops > 0) {
-      if (DisplayProfitInPercent) sSequenceStopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
-      else                        sSequenceStopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
+      if (ShowProfitInPercent) sSequenceStopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
+      else                     sSequenceStopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
    }
 }
 
@@ -2392,9 +2392,9 @@ void SS.Stops() {
  */
 void SS.TotalPL() {
    if (!__CHART()) return;
-   if (sequence.maxLevel == 0)      sSequenceTotalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   else if (DisplayProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-   else                             sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+   if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
+   else if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+   else                          sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
 }
 
 
@@ -2403,8 +2403,8 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-   if (DisplayProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-   else                        sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
+   if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+   else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
 
@@ -2414,8 +2414,8 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-   if (DisplayProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
-   else                        sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+   if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
 
@@ -2434,8 +2434,8 @@ void SS.ProfitPerLevel() {
       int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
       double profit   = levels * stopSize;
 
-      if (DisplayProfitInPercent) sSequenceProfitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
-      else                        sSequenceProfitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
+      if (ShowProfitInPercent) sSequenceProfitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
+      else                     sSequenceProfitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
    }
 }
 
@@ -2581,7 +2581,7 @@ string   last.StopConditions;
 bool     last.AutoResume;
 datetime last.Sessionbreak.StartTime;
 datetime last.Sessionbreak.EndTime;
-bool     last.DisplayProfitInPercent;
+bool     last.ShowProfitInPercent;
 
 
 /**
@@ -2600,7 +2600,7 @@ void BackupInputs() {
    last.AutoResume             = AutoResume;
    last.Sessionbreak.StartTime = Sessionbreak.StartTime;
    last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
-   last.DisplayProfitInPercent = DisplayProfitInPercent;
+   last.ShowProfitInPercent    = ShowProfitInPercent;
 }
 
 
@@ -2618,7 +2618,7 @@ void RestoreInputs() {
    AutoResume             = last.AutoResume;
    Sessionbreak.StartTime = last.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
-   DisplayProfitInPercent = last.DisplayProfitInPercent;
+   ShowProfitInPercent    = last.ShowProfitInPercent;
 }
 
 
@@ -2934,7 +2934,7 @@ bool ValidateInputs(bool interactive) {
       sessionbreak.endtime   = NULL;                    // real times are updated automatically on next use
    }
 
-   // DisplayProfitInPercent: nothing to validate
+   // ShowProfitInPercent: nothing to validate
 
    // reset __STATUS_INVALID_INPUT
    if (interactive)
@@ -3234,7 +3234,7 @@ bool SaveSequence() {
    ArrayPushString(lines, /*bool*/     "AutoResume="            + AutoResume            );
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
-   ArrayPushString(lines, /*bool*/     "DisplayProfitInPercent="+ DisplayProfitInPercent);
+   ArrayPushString(lines, /*bool*/     "ShowProfitInPercent="   + ShowProfitInPercent   );
 
    // Laufzeit-Variablen
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
@@ -3358,7 +3358,7 @@ bool LoadSequence() {
                      "AutoResume"              ,
                      "Sessionbreak.StartTime"  ,
                      "Sessionbreak.EndTime"    ,
-                   //"DisplayProfitInPercent"  ,                        // optional
+                   //"ShowProfitInPercent"     ,                        // optional
                      ---------------------------
                      "rt.sequence.startEquity" ,
                      "rt.sequence.maxProfit"   ,
@@ -3452,9 +3452,9 @@ bool LoadSequence() {
          Sessionbreak.EndTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
-      else if (key == "DisplayProfitInPercent") {
+      else if (key == "ShowProfitInPercent") {
          if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(13)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         DisplayProfitInPercent = _bool(StrToInteger(value));
+         ShowProfitInPercent = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
    }
@@ -5011,11 +5011,11 @@ bool UpdateProfitTargets() {
 
 
 /**
- * Display the current profit targets.
+ * Show the current profit targets.
  *
  * @return bool - success status
  */
-bool DisplayProfitTargets() {
+bool ShowProfitTargets() {
    if (IsLastError())       return(false);
    if (!sequence.breakeven) return(true);
 
@@ -5035,7 +5035,7 @@ bool DisplayProfitTargets() {
    ObjectSet(label, OBJPROP_COLOR,  Blue);
    ObjectSet(label, OBJPROP_BACK,   true);
 
-   return(!catch("DisplayProfitTargets(1)"));
+   return(!catch("ShowProfitTargets(1)"));
 }
 
 
@@ -5322,7 +5322,7 @@ string InputsToStr() {
                             "AutoResume=",             BoolToStr(AutoResume),                        ";", NL,
                             "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
                             "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";", NL,
-                            "DisplayProfitInPercent=", BoolToStr(DisplayProfitInPercent),            ";")
+                            "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";")
    );
 }
 
