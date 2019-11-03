@@ -3490,6 +3490,9 @@ int Tester.GetBarModel() {
 int Tester.Pause() {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
+   if (!IsVisualModeFix())
+      return(NO_ERROR);                                              // skipping
+
    if (!IsScript() && __ExecutionContext[EC.programCoreFunction]==CF_DEINIT)
       return(NO_ERROR);                                              // SendMessage() darf in deinit() nicht mehr benutzt werden
 
@@ -3767,9 +3770,9 @@ datetime TimeCurrentEx(string location="") {
 
 
 /**
- * Gibt die lesbare Konstante eines ModuleType-Flags zurück.
+ * Return a readable version of a module type flag.
  *
- * @param  int fType - ModuleType-Flag
+ * @param  int fType - combination of one or more module type flags
  *
  * @return string
  */
@@ -5027,9 +5030,9 @@ int StrToTradeDirection(string value, int execFlags=NULL) {
 
 
 /**
- * Gibt die lesbare Konstante eines TradeCommands zurück.
+ * Return a readable version of a trade command.
  *
- * @param  int cmd - TradeCommand
+ * @param  int cmd - trade command
  *
  * @return string
  */
@@ -5378,9 +5381,9 @@ string MovingAverageMethodDescription(int method) {
 
 
 /**
- * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
+ * Return a readable version of a MovingAverage method.
  *
- * @param  int type - MA-Methode
+ * @param  int method
  *
  * @return string
  */
@@ -5404,9 +5407,9 @@ string MovingAverageMethodToStr(int method) {
 
 
 /**
- * Gibt die lesbare Konstante eines Price-Identifiers zurück.
+ * Return a readable version of a price type identifier.
  *
- * @param  int type - Price-Type
+ * @param  int type - price type
  *
  * @return string
  */
@@ -5521,9 +5524,9 @@ string FileAccessModeToStr(int mode) {
 
 
 /**
- * Gibt die lesbare Konstante eines SwapCalculation-Modes zurück.
+ * Return a readable version of a swap calculation mode.
  *
- * @param  int mode - SwapCalculation-Mode
+ * @param  int mode
  *
  * @return string
  */
