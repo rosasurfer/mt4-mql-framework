@@ -203,7 +203,7 @@ int onTick() {
       return(last_error);
 
    bool gridChanged;                                        // whether the current grid base or level changed
-   int  activatedOrders[];                                  // indexes of activated client-side orders
+   int  signal, activatedOrders[];                          // indexes of activated client-side orders
    bool neverStarted = !ArraySize(sequence.start.event);
 
    // ...sequence is stopped...
@@ -212,13 +212,16 @@ int onTick() {
 
    // ...or sequence waits for start/resume signal...
    else if (sequence.status == STATUS_WAITING) {
-      if (neverStarted) { if (IsStartSignal())  StartSequence();  }
-      else              { if (IsResumeSignal()) ResumeSequence(); }
+      signal = IsStartSignal();
+      if (signal != 0) {
+         if (neverStarted) StartSequence();
+         else              ResumeSequence();
+      }
    }
 
    // ...or sequence is running...
    else if (UpdateStatus(gridChanged, activatedOrders)) {
-      int signal = IsStopSignal();
+      signal = IsStopSignal();
       if (!signal) {
          if (ArraySize(activatedOrders) > 0) ExecuteOrders(activatedOrders);
          if (Tick==1 || gridChanged)         UpdatePendingOrders();
@@ -354,6 +357,8 @@ bool StopSequence(int stopType) {
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
+
+   bool entryStatus = sequence.status;
 
    // a waiting sequence has no open orders (before first start or after stop)
    if (sequence.status == STATUS_WAITING) {
@@ -505,28 +510,37 @@ bool StopSequence(int stopType) {
       SS.ProfitPerLevel();
    }
 
-   // update start/stop/auto-resume configuration accordingly (sequence.status is STATUS_STOPPED)
+   // update start/stop/auto-resume configuration (sequence.status is STATUS_STOPPED)
    start.conditions = false;
 
    switch (stopType) {
-      case STOP_SESSIONBREAK:                // implies auto-resume and temporarily disables all other start/stop conditions
+      case STOP_SESSIONBREAK:                            // implies auto-resume, temporarily overrides all other conditions
+         if (entryStatus == STATUS_PROGRESSING) {
+            start.time.condition    = false;             // define a start @price condition matching the stop price
+            start.price.type        = ifInt(sequence.direction==D_LONG, PRICE_ASK, PRICE_BID);
+            start.price.value       = sequence.stop.price[ArraySize(sequence.stop.event)-1];
+            start.price.lastValue   = NULL;
+            start.price.description = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +", sessionbreak)";
+            start.price.condition   = true;
+            start.conditions        = true; SS.StartStopConditions();
+         }
          sessionbreak.active = true;
          sequence.status     = STATUS_WAITING;
          break;
 
-      case STOP_TREND:                       // auto-resume if enabled and StartCondition is @trend
+      case STOP_TREND:                                   // auto-resume if enabled and StartCondition is @trend
          if (AutoResume && start.trend.description!="") {
-            start.conditions      = true;
-            start.trend.condition = true; SS.StartStopConditions();
+            start.trend.condition = true;
+            start.conditions      = true; SS.StartStopConditions();
             sequence.status       = STATUS_WAITING;
          }
          break;
 
-      case STOP_TP:                          // no auto-resume
+      case STOP_TP:                                      // no auto-resume
       case STOP_SL:
       case STOP_PRICE:
       case STOP_TIME:
-      case NULL:                             // explicit stop (manual or at end of test)
+      case NULL:                                         // explicit stop (manual or at end of test)
          break;
 
       default: return(!catch("StopSequence(12)  unsupported parameter stopType = "+ stopType, ERR_INVALID_PARAMETER));
@@ -537,7 +551,7 @@ bool StopSequence(int stopType) {
 
    // in tester: pause or stop
    if (IsTesting()) {
-      if (IsVisualMode()) Tester.Pause();    // TODO: else if (!sessionbreak.active) Tester.Stop();
+      if (IsVisualMode()) Tester.Pause();                // TODO: else if (!sessionbreak.active) Tester.Stop();
    }
    return(!catch("StopSequence(13)"));
 }
@@ -1054,12 +1068,18 @@ bool IsOrderClosedBySL() {
  * @return bool - ob die konfigurierten Startbedingungen erfüllt sind
  */
 bool IsStartSignal() {
-   if (IsLastError())                                                               return(false);
-   if (sequence.status!=STATUS_WAITING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
+   if (last_error || sequence.status!=STATUS_WAITING) return(false);
    string message;
 
-   if (start.conditions) {
+   // -- session break: overrides all other start/stop conditions -----------------------------------------------------------
+   if (sessionbreak.active) {
+      if (IsSessionBreak())
+         return(false);
+      sessionbreak.active = false;                       // session break has ended, continue with regular start conditions
+   }
 
+
+   if (start.conditions) {
       // -- start.trend: bei Trendwechsel in Richtung der Sequenz erfüllt ---------------------------------------------------
       if (start.trend.condition) {
          if (IsBarOpenEvent(start.trend.timeframe)) {
@@ -1093,8 +1113,9 @@ bool IsStartSignal() {
          if (!triggered) return(false);
 
          message = "IsStartSignal(2)  sequence "+ sequence.name +" start condition \""+ start.price.description +"\" fulfilled";
-         if (!IsTesting()) warn(message);
-         else if (__LOG()) log(message);
+         bool afterSessionBreak = StrEndsWith(start.price.description, "sessionbreak)");
+         if (!IsTesting() && !afterSessionBreak) warn(message);
+         else if (__LOG())                       log(message);
       }
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt -------------------------------------------------------
@@ -1109,45 +1130,14 @@ bool IsStartSignal() {
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -----------------------------------------------------------------
-   }
-   else {
-      // no start condition is a valid start signal, too
-      if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
-         if (__LOG()) log("IsStartSignal(5)  sequence "+ sequence.name +" no start conditions defined");
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Whether a resume condition is satisfied for a waiting sequence.
- *
- * @return bool
- */
-bool IsResumeSignal() {
-   if (IsLastError()) return(false);
-
-   if (sessionbreak.active) {
-      datetime prevEndtime = sessionbreak.endtime;
-
-      if (!IsSessionBreak()) {
-         static datetime endtime; if (!endtime) endtime = prevEndtime;
-         double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
-
-         // wait for the stop price to be reached
-         if (sequence.direction == D_LONG) bool priceReached = (Ask <= stopPrice);
-         else                                   priceReached = (Bid >= stopPrice);
-         if (priceReached) {
-            if (__LOG()) log("IsResumeSignal(1)  sequence "+ sequence.name +" resume condition \""+ ifString(sequence.direction==D_LONG, "@ask(<=", "@bid(>=") + NumberToStr(stopPrice, PriceFormat) +") after sessionbreak until "+ GmtTimeFormat(endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
-            return(true);
-         }
-      }
-      return(false);
+      return(true);
    }
 
-   if (start.conditions)
-      return(IsStartSignal());
+   // no enabled start conditions: a valid signal at sequence creation only
+   if (ArraySize(sequence.start.event) == 0) {
+      if (__LOG()) log("IsStartSignal(5)  sequence "+ sequence.name +" no start conditions defined, starting...");
+      return(true);
+   }
 
    return(false);
 }
@@ -1156,11 +1146,16 @@ bool IsResumeSignal() {
 /**
  * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are OR combined.
  *
- * @return int - the fulfilled stop condition id or NULL if no stop condition is satisfied
+ * @return int - the fulfilled stop condition identfier or NULL if no stop condition is satisfied
  */
 int IsStopSignal() {
-   if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(NULL);
+   if (last_error || sequence.status!=STATUS_PROGRESSING) return(NULL);
    string message;
+
+   // -- session break: overrides all start/stop conditions -----------------------------------------------------------------
+   if (sessionbreak.active) {
+      return(NULL);
+   }
 
    // -- stop.trend: bei Trendwechsel entgegen der Richtung der Sequenz erfüllt ---------------------------------------------
    if (stop.trend.condition) {
@@ -1253,7 +1248,8 @@ int IsStopSignal() {
 
 
 /**
- * Whether the current server time falls into a seesionbreak.
+ * Whether the current server time falls into a sessionbreak. After function return the global vars sessionbreak.starttime
+ * and sessionbreak.endtime are updated and current (sessionbreak.active is not modified).
  *
  * @return bool
  */
@@ -1297,7 +1293,7 @@ bool IsSessionBreak() {
       if (__LOG()) log("IsSessionBreak(1)  recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
-   // perform check
+   // perform final check
    return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
 }
 
