@@ -130,10 +130,9 @@ double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
 // --- session break management ------------
+bool     sessionbreak.active;                      // temporarily overrides all other start/stop conditions
 datetime sessionbreak.starttime;
 datetime sessionbreak.endtime;
-bool     sessionbreak.active;
-bool     sessionbreak.disabled;                    // a single sessionbreak may be disabled by manual control
 
 // --- grid base management ----------------
 double   grid.base;                                // current grid base
@@ -207,23 +206,24 @@ int onTick() {
    int  activatedOrders[];                                  // indexes of activated client-side orders
    bool neverStarted = !ArraySize(sequence.start.event);
 
-   // ...sequence waits for start signal...
-   if (neverStarted && sequence.status==STATUS_WAITING) {
-      if (IsStartSignal()) StartSequence();
+   // ...sequence is stopped...
+   if (sequence.status==STATUS_STOPPED) {
    }
 
-   // ...or sequence waits for resume signal...
-   else if (sequence.status==STATUS_STOPPED || sequence.status==STATUS_WAITING) {
-      if (IsResumeSignal()) ResumeSequence();
+   // ...or sequence waits for start/resume signal...
+   else if (sequence.status == STATUS_WAITING) {
+      if (neverStarted) { if (IsStartSignal())  StartSequence();  }
+      else              { if (IsResumeSignal()) ResumeSequence(); }
    }
 
    // ...or sequence is running...
    else if (UpdateStatus(gridChanged, activatedOrders)) {
-      if (IsStopSignal()) StopSequence();
-      else {
+      int signal = IsStopSignal();
+      if (!signal) {
          if (ArraySize(activatedOrders) > 0) ExecuteOrders(activatedOrders);
          if (Tick==1 || gridChanged)         UpdatePendingOrders();
       }
+      else StopSequence(signal);
    }
 
    // update equity value for equity recorder
@@ -266,7 +266,7 @@ bool onCommand(string commands[]) {
             int  iNull[];
             if (!UpdateStatus(bNull, iNull))
                return(false);
-            return(StopSequence());
+            return(StopSequence(NULL));
       }
       return(true);
    }
@@ -317,19 +317,15 @@ bool StartSequence() {
 
    // open start positions if configured (and update sequence start price)
    if (sequence.level != 0) {
-      datetime dNull;
-      if (!RestorePositions(dNull, startPrice)) return(false);
+      if (!RestorePositions(startTime, startPrice)) return(false);
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
+   RedrawStartStop();
 
    sequence.status = STATUS_PROGRESSING;
 
    // open the next stop orders
    if (!UpdatePendingOrders()) return(false);
-
-   // disable all start conditions
-   start.conditions = false; SS.StartStopConditions();
-   RedrawStartStop();
 
    // deactivate all start conditions
    start.conditions      = false;
@@ -343,166 +339,165 @@ bool StartSequence() {
 
 
 /**
- * Closes all open positions, deletes pending orders and stops the sequence.
+ * Close all open positions and delete pending orders. Stop the sequence and configure auto-resuming: If auto-resuming for a
+ * start trend condition is enabled the sequence is automatically resumed the next time the trend condition is fulfilled.
+ * If the sequence is stopped due to a session break it is automatically resumed after the session break ends.
+ *
+ * @param  int stopType - type of a triggered stop condition or NULL if no condition was triggered (explicit stop).
  *
  * @return bool - success status
  */
-bool StopSequence() {
-   if (IsLastError())                             return(false);
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
-
-   if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status!=STATUS_STOPPED)  // only at test end status may be STATUS_STOPPED
-         return(!catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
+bool StopSequence(int stopType) {
+   if (IsLastError())                                                          return(false);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                              return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   // a waiting sequence will be cancelled
+   // a waiting sequence has no open orders (before first start or after stop)
    if (sequence.status == STATUS_WAITING) {
-      if (IsTesting()) Tester.Pause();
-      SetLastError(ERR_CANCELLED_BY_USER);
-      return(!catch("StopSequence(3)"));
+      sequence.status = STATUS_STOPPED;
+      if (__LOG()) log("StopSequence(3)  sequence "+ sequence.name +" stopped");
    }
 
-   // If UpdateStatus() detects an externally closed position it sets STATUS_STOPPING and calls StopSequence().
-   if (sequence.status != STATUS_STOPPED) {
+   // a progressing sequence has open orders to close
+   else if (sequence.status == STATUS_PROGRESSING) {
       sequence.status = STATUS_STOPPING;
       if (__LOG()) log("StopSequence(4)  stopping sequence "+ sequence.name +" at level "+ sequence.level);
-   }
 
-   double stopPrice, slippage = 2;                                         // 2 pip
-   int level, oeFlags, oes[][ORDER_EXECUTION.intSize];
-   int pendingLimits[], openPositions[], sizeOfTickets = ArraySize(orders.ticket);
-   ArrayResize(pendingLimits, 0);
-   ArrayResize(openPositions, 0);
+      // close open orders
+      double stopPrice, slippage = 2;                                         // 2 pip
+      int level, oeFlags, oes[][ORDER_EXECUTION.intSize];
+      int pendingLimits[], openPositions[], sizeOfTickets = ArraySize(orders.ticket);
+      ArrayResize(pendingLimits, 0);
+      ArrayResize(openPositions, 0);
 
-   // get all locally active orders (pending limits and open positions)
-   for (int i=sizeOfTickets-1; i >= 0; i--) {
-      if (!orders.closeTime[i]) {                                          // local: if (isOpen)
-         level = orders.level[i];
-         if (orders.ticket[i] < 0) {                                       // drop client-side managed pending orders
-            if (!Grid.DropData(i)) return(false);
-            sizeOfTickets--;
-            ArrayAddInt(pendingLimits, -1);                                // decrease indexes of already stored limits
+      // get all locally active orders (pending limits and open positions)
+      for (int i=sizeOfTickets-1; i >= 0; i--) {
+         if (!orders.closeTime[i]) {                                          // local: if (isOpen)
+            level = orders.level[i];
+            if (orders.ticket[i] < 0) {                                       // drop client-side managed pending orders
+               if (!Grid.DropData(i)) return(false);
+               sizeOfTickets--;
+               ArrayAddInt(pendingLimits, -1);                                // decrease indexes of already stored limits
+            }
+            else {
+               ArrayPushInt(pendingLimits, i);                                // pending entry or stop limit
+               if (orders.type[i] != OP_UNDEFINED)
+                  ArrayPushInt(openPositions, orders.ticket[i]);              // open position
+            }
+            if (Abs(level) == 1) break;
+         }
+      }
+
+      // hedge open positions
+      int sizeOfPositions = ArraySize(openPositions);
+      if (sizeOfPositions > 0) {
+         oeFlags = F_OE_DONT_CHECK_STATUS;                                    // skip status check to prevent errors
+         int ticket = OrdersHedge(openPositions, slippage, oeFlags, oes); if (!ticket) return(!SetLastError(oes.Error(oes, 0)));
+         ArrayPushInt(openPositions, ticket);
+         sizeOfPositions++;
+         stopPrice = oes.ClosePrice(oes, 0);
+      }
+
+      // delete all pending limits
+      int sizeOfPendings = ArraySize(pendingLimits);
+      for (i=0; i < sizeOfPendings; i++) {                                    // ordered by descending grid level
+         if (orders.type[pendingLimits[i]] == OP_UNDEFINED) {
+            int error = Grid.DeleteOrder(pendingLimits[i]);                   // removes the order from the order arrays
+            if (!error) continue;
+            if (error == -1) {                                                // entry stop is already executed
+               if (!SelectTicket(orders.ticket[pendingLimits[i]], "StopSequence(5)")) return(false);
+               orders.type      [pendingLimits[i]] = OrderType();
+               orders.openEvent [pendingLimits[i]] = CreateEventId();
+               orders.openTime  [pendingLimits[i]] = OrderOpenTime();
+               orders.openPrice [pendingLimits[i]] = OrderOpenPrice();
+               orders.swap      [pendingLimits[i]] = OrderSwap();
+               orders.commission[pendingLimits[i]] = OrderCommission();
+               orders.profit    [pendingLimits[i]] = OrderProfit();
+               if (__LOG()) log("StopSequence(6)  "+ UpdateStatus.OrderFillMsg(pendingLimits[i]));
+               if (IsStopOrderType(orders.pendingType[pendingLimits[i]])) {   // the next grid level was triggered
+                  sequence.level   += Sign(orders.level[pendingLimits[i]]);
+                  sequence.maxLevel = Sign(orders.level[pendingLimits[i]]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               }
+               else {                                                         // a previously missed grid level was triggered
+                  ArrayDropInt(sequence.missedLevels, orders.level[pendingLimits[i]]);
+                  SS.MissedLevels();
+               }
+               if (__LOG()) log("StopSequence(7)  sequence "+ sequence.name +" adding ticket #"+ OrderTicket() +" to open positions");
+               ArrayPushInt(openPositions, OrderTicket());                    // add to open positions
+               i--;                                                           // process the position's stoploss limit
+            }
+            else return(false);
          }
          else {
-            ArrayPushInt(pendingLimits, i);                                // pending entry or stop limit
-            if (orders.type[i] != OP_UNDEFINED)
-               ArrayPushInt(openPositions, orders.ticket[i]);              // open position
-         }
-         if (Abs(level) == 1) break;
-      }
-   }
-
-   // hedge open positions
-   int sizeOfPositions = ArraySize(openPositions);
-   if (sizeOfPositions > 0) {
-      oeFlags = F_OE_DONT_CHECK_STATUS;                                    // skip status check to prevent errors
-      int ticket = OrdersHedge(openPositions, slippage, oeFlags, oes); if (!ticket) return(!SetLastError(oes.Error(oes, 0)));
-      ArrayPushInt(openPositions, ticket);
-      sizeOfPositions++;
-      stopPrice = oes.ClosePrice(oes, 0);
-   }
-
-   // delete all pending limits
-   int sizeOfPendings = ArraySize(pendingLimits);
-   for (i=0; i < sizeOfPendings; i++) {                                    // ordered by descending grid level
-      if (orders.type[pendingLimits[i]] == OP_UNDEFINED) {
-         int error = Grid.DeleteOrder(pendingLimits[i]);                   // removes the order from the order arrays
-         if (!error) continue;
-         if (error == -1) {                                                // entry stop is already executed
-            if (!SelectTicket(orders.ticket[pendingLimits[i]], "StopSequence(5)")) return(false);
-            orders.type      [pendingLimits[i]] = OrderType();
-            orders.openEvent [pendingLimits[i]] = CreateEventId();
-            orders.openTime  [pendingLimits[i]] = OrderOpenTime();
-            orders.openPrice [pendingLimits[i]] = OrderOpenPrice();
-            orders.swap      [pendingLimits[i]] = OrderSwap();
-            orders.commission[pendingLimits[i]] = OrderCommission();
-            orders.profit    [pendingLimits[i]] = OrderProfit();
-            if (__LOG()) log("StopSequence(6)  "+ UpdateStatus.OrderFillMsg(pendingLimits[i]));
-            if (IsStopOrderType(orders.pendingType[pendingLimits[i]])) {   // the next grid level was triggered
-               sequence.level   += Sign(orders.level[pendingLimits[i]]);
-               sequence.maxLevel = Sign(orders.level[pendingLimits[i]]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+            error = Grid.DeleteLimit(pendingLimits[i]);
+            if (!error) continue;
+            if (error == -1) {                                                // stoploss is already executed
+               if (!SelectTicket(orders.ticket[pendingLimits[i]], "StopSequence(8)")) return(false);
+               orders.closeEvent[pendingLimits[i]] = CreateEventId();
+               orders.closeTime [pendingLimits[i]] = OrderCloseTime();
+               orders.closePrice[pendingLimits[i]] = OrderClosePrice();
+               orders.closedBySL[pendingLimits[i]] = true;
+               orders.swap      [pendingLimits[i]] = OrderSwap();
+               orders.commission[pendingLimits[i]] = OrderCommission();
+               orders.profit    [pendingLimits[i]] = OrderProfit();
+               if (__LOG()) log("StopSequence(9)  "+ UpdateStatus.StopLossMsg(pendingLimits[i]));
+               sequence.stops++;
+               sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[pendingLimits[i]] + orders.commission[pendingLimits[i]] + orders.profit[pendingLimits[i]], 2); SS.Stops();
+               ArrayDropInt(openPositions, OrderTicket());                    // remove from open positions
             }
-            else {                                                         // a previously missed grid level was triggered
-               ArrayDropInt(sequence.missedLevels, orders.level[pendingLimits[i]]);
-               SS.MissedLevels();
+            else return(false);
+         }
+      }
+
+      // close open positions
+      int pos;
+      sizeOfPositions = ArraySize(openPositions);
+      double remainingSwap, remainingCommission, remainingProfit;
+
+      if (sizeOfPositions > 0) {
+         if (!OrdersClose(openPositions, slippage, CLR_CLOSE, NULL, oes)) return(!SetLastError(oes.Error(oes, 0)));
+         for (i=0; i < sizeOfPositions; i++) {
+            pos = SearchIntArray(orders.ticket, openPositions[i]);
+            if (pos != -1) {
+               orders.closeEvent[pos] = CreateEventId();
+               orders.closeTime [pos] = oes.CloseTime (oes, i);
+               orders.closePrice[pos] = oes.ClosePrice(oes, i);
+               orders.closedBySL[pos] = false;
+               orders.swap      [pos] = oes.Swap      (oes, i);
+               orders.commission[pos] = oes.Commission(oes, i);
+               orders.profit    [pos] = oes.Profit    (oes, i);
             }
-            if (__LOG()) log("StopSequence(7)  sequence "+ sequence.name +" adding ticket #"+ OrderTicket() +" to open positions");
-            ArrayPushInt(openPositions, OrderTicket());                    // add to open positions
-            i--;                                                           // process the position's stoploss limit
+            else {
+               remainingSwap       += oes.Swap      (oes, i);
+               remainingCommission += oes.Commission(oes, i);
+               remainingProfit     += oes.Profit    (oes, i);
+            }
+            sequence.closedPL = NormalizeDouble(sequence.closedPL + oes.Swap(oes, i) + oes.Commission(oes, i) + oes.Profit(oes, i), 2);
          }
-         else return(false);
+         pos = ArraySize(orders.ticket)-1;                                    // the last ticket is always a closed position
+         orders.swap      [pos] += remainingSwap;
+         orders.commission[pos] += remainingCommission;
+         orders.profit    [pos] += remainingProfit;
       }
-      else {
-         error = Grid.DeleteLimit(pendingLimits[i]);
-         if (!error) continue;
-         if (error == -1) {                                                // stoploss is already executed
-            if (!SelectTicket(orders.ticket[pendingLimits[i]], "StopSequence(8)")) return(false);
-            orders.closeEvent[pendingLimits[i]] = CreateEventId();
-            orders.closeTime [pendingLimits[i]] = OrderCloseTime();
-            orders.closePrice[pendingLimits[i]] = OrderClosePrice();
-            orders.closedBySL[pendingLimits[i]] = true;
-            orders.swap      [pendingLimits[i]] = OrderSwap();
-            orders.commission[pendingLimits[i]] = OrderCommission();
-            orders.profit    [pendingLimits[i]] = OrderProfit();
-            if (__LOG()) log("StopSequence(9)  "+ UpdateStatus.StopLossMsg(pendingLimits[i]));
-            sequence.stops++;
-            sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[pendingLimits[i]] + orders.commission[pendingLimits[i]] + orders.profit[pendingLimits[i]], 2); SS.Stops();
-            ArrayDropInt(openPositions, OrderTicket());                    // remove from open positions
-         }
-         else return(false);
-      }
-   }
 
-   // close open positions
-   int pos;
-   sizeOfPositions = ArraySize(openPositions);
-   double remainingSwap, remainingCommission, remainingProfit;
+      // update statistics and sequence status
+      sequence.floatingPL = 0;
+      sequence.totalPL    = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.TotalPL();
+      if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
+      else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
-   if (sizeOfPositions > 0) {
-      if (!OrdersClose(openPositions, slippage, CLR_CLOSE, NULL, oes)) return(!SetLastError(oes.Error(oes, 0)));
-      for (i=0; i < sizeOfPositions; i++) {
-         pos = SearchIntArray(orders.ticket, openPositions[i]);
-         if (pos != -1) {
-            orders.closeEvent[pos] = CreateEventId();
-            orders.closeTime [pos] = oes.CloseTime (oes, i);
-            orders.closePrice[pos] = oes.ClosePrice(oes, i);
-            orders.closedBySL[pos] = false;
-            orders.swap      [pos] = oes.Swap      (oes, i);
-            orders.commission[pos] = oes.Commission(oes, i);
-            orders.profit    [pos] = oes.Profit    (oes, i);
-         }
-         else {
-            remainingSwap       += oes.Swap      (oes, i);
-            remainingCommission += oes.Commission(oes, i);
-            remainingProfit     += oes.Profit    (oes, i);
-         }
-         sequence.closedPL = NormalizeDouble(sequence.closedPL + oes.Swap(oes, i) + oes.Commission(oes, i) + oes.Profit(oes, i), 2);
-      }
-      pos = ArraySize(orders.ticket)-1;                                    // the last ticket is always a closed position
-      orders.swap      [pos] += remainingSwap;
-      orders.commission[pos] += remainingCommission;
-      orders.profit    [pos] += remainingProfit;
-   }
+      int n = ArraySize(sequence.stop.event) - 1;
+      if (!stopPrice) stopPrice = ifDouble(sequence.direction==D_LONG, Bid, Ask);
 
-   // update sequence status and stop data
-   sequence.floatingPL = 0;
-   sequence.totalPL    = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.TotalPL();
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
+      sequence.stop.event [n] = CreateEventId();
+      sequence.stop.time  [n] = TimeCurrentEx("StopSequence(10)");
+      sequence.stop.price [n] = stopPrice;
+      sequence.stop.profit[n] = sequence.totalPL;
+      RedrawStartStop();
 
-   int n = ArraySize(sequence.stop.event) - 1;
-   if (!stopPrice) stopPrice = ifDouble(sequence.direction==D_LONG, Bid, Ask);
-
-   sequence.stop.event [n] = CreateEventId();
-   sequence.stop.time  [n] = TimeCurrentEx("StopSequence(10)");
-   sequence.stop.price [n] = stopPrice;
-   sequence.stop.profit[n] = sequence.totalPL;
-   RedrawStartStop();
-
-   if (sequence.status != STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;
       if (__LOG()) log("StopSequence(11)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level);
       UpdateProfitTargets();
@@ -510,15 +505,31 @@ bool StopSequence() {
       SS.ProfitPerLevel();
    }
 
-   // switch back to STATUS_WAITING if AutoResume is enabled and a start.trend.condition is configured
-   if (!sessionbreak.active && AutoResume) {
-      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT) {
-         if (start.trend.description != "") {
+   // update start/stop/auto-resume configuration accordingly (sequence.status is STATUS_STOPPED)
+   start.conditions = false;
+
+   switch (stopType) {
+      case STOP_SESSIONBREAK:                // implies auto-resume and temporarily disables all other start/stop conditions
+         sessionbreak.active = true;
+         sequence.status     = STATUS_WAITING;
+         break;
+
+      case STOP_TREND:                       // auto-resume if enabled and StartCondition is @trend
+         if (AutoResume && start.trend.description!="") {
             start.conditions      = true;
             start.trend.condition = true; SS.StartStopConditions();
             sequence.status       = STATUS_WAITING;
          }
-      }
+         break;
+
+      case STOP_TP:                          // no auto-resume
+      case STOP_SL:
+      case STOP_PRICE:
+      case STOP_TIME:
+      case NULL:                             // explicit stop (manual or at end of test)
+         break;
+
+      default: return(!catch("StopSequence(12)  unsupported parameter stopType = "+ stopType, ERR_INVALID_PARAMETER));
    }
 
    // save sequence
@@ -526,10 +537,9 @@ bool StopSequence() {
 
    // in tester: pause or stop
    if (IsTesting()) {
-      if (IsVisualMode())            Tester.Pause();
-      else if (!sessionbreak.active) Tester.Stop();
+      if (IsVisualMode()) Tester.Pause();    // TODO: else if (!sessionbreak.active) Tester.Stop();
    }
-   return(!catch("StopSequence(12)"));
+   return(!catch("StopSequence(13)"));
 }
 
 
@@ -725,11 +735,11 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
  */
 bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
    gridChanged = gridChanged!=0;
+   if (IsLastError())                         return(false);
+   if (sequence.status == STATUS_WAITING)     return(true);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  cannot update order status of "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
    ArrayResize(activatedOrders, 0);
-   if (IsLastError())                     return(false);
-   if (sequence.status == STATUS_WAITING) return(true);
-
    bool wasPending, isClosed, openPositions, updateStatusLocation;
    int  closed[][2], close[2], sizeOfTickets=ArraySize(orders.ticket); ArrayResize(closed, 0);
    sequence.floatingPL = 0;
@@ -742,7 +752,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
          // client-seitige PendingOrders prüfen
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {   // handles stop and limit orders
-               if (__LOG()) log("UpdateStatus(1)  "+ UpdateStatus.StopTriggerMsg(i));
+               if (__LOG()) log("UpdateStatus(2)  "+ UpdateStatus.StopTriggerMsg(i));
                ArrayPushInt(activatedOrders, i);
             }
             continue;
@@ -751,11 +761,11 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
          // Magic-Ticket #-2 prüfen (wird sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
             orders.closeEvent[i] = CreateEventId();                                 // Event-ID kann sofort vergeben werden.
-            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(2)");
+            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(3)");
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
             Chart.MarkPositionClosed(i);
-            if (__LOG()) log("UpdateStatus(3)  "+ UpdateStatus.StopLossMsg(i));
+            if (__LOG()) log("UpdateStatus(4)  "+ UpdateStatus.StopLossMsg(i));
 
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++; SS.Stops();
@@ -765,7 +775,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
          }
 
          // reguläre server-seitige Tickets
-         if (!SelectTicket(orders.ticket[i], "UpdateStatus(4)")) return(false);
+         if (!SelectTicket(orders.ticket[i], "UpdateStatus(5)")) return(false);
 
          if (wasPending) {
             // beim letzten Aufruf Pending-Order
@@ -778,7 +788,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
                orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
                orders.profit    [i] = OrderProfit();
                Chart.MarkOrderFilled(i);
-               if (__LOG()) log("UpdateStatus(5)  "+ UpdateStatus.OrderFillMsg(i));
+               if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.OrderFillMsg(i));
 
                if (IsStopOrderType(orders.pendingType[i])) {
                   sequence.level   += Sign(orders.level[i]);
@@ -804,7 +814,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
             if (orders.type[i] != OP_UNDEFINED) {
                openPositions = true;
                if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.StopTriggerMsg(i));
+                  if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopTriggerMsg(i));
                   ArrayPushInt(activatedOrders, i);
                }
             }
@@ -822,20 +832,17 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
 
             if (orders.closedBySL[i]) {                                             // ausgestoppt
                orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-               if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
+               if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
                sequence.level  -= Sign(orders.level[i]);
                sequence.stops++;
                sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
                gridChanged      = true;
             }
-            else {                                                                  // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
+            else {                                                                  // manually closed or automatically closed at test end
                close[0] = OrderCloseTime();
                close[1] = OrderTicket();                                            // Geschlossene Positionen werden zwischengespeichert, um ihnen Event-IDs
                ArrayPushInts(closed, close);                                        // zeitlich *nach* den ausgestoppten Positionen zuweisen zu können.
-
-               if (sequence.status != STATUS_STOPPED)
-                  sequence.status = STATUS_STOPPING;
-               if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.PositionCloseMsg(i));
+               if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
                sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
             }
          }
@@ -848,7 +855,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
       ArraySort(closed);
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
-         if (n == -1) return(!catch("UpdateStatus(9)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_ILLEGAL_STATE));
+         if (n == -1) return(!catch("UpdateStatus(10)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_ILLEGAL_STATE));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -859,44 +866,27 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
    else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
-   // ggf. Status aktualisieren
-   if (sequence.status == STATUS_STOPPING) {
-      if (!openPositions) {                                                         // Aufruf im Tester bei Auto-Close am Testende
-         n = ArraySize(sequence.stop.event) - 1;
-         sequence.stop.event [n] = CreateEventId();
-         sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
-         sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequence.stop.price[n]) return(false);
-         sequence.stop.profit[n] = sequence.totalPL;
-
-         sequence.status = STATUS_STOPPED;
-         if (__LOG()) log("UpdateStatus(10)  STATUS_STOPPED");
-         RedrawStartStop();
+   // trail gridbase
+   if (!sequence.level) {
+      if (!sizeOfTickets) {                                                   // the pending order was manually cancelled
+         SetLastError(ERR_CANCELLED_BY_USER);
       }
-   }
+      else {
+         double last = grid.base;
+         if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+         else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
-   // ggf. Gridbasis trailen
-   else if (sequence.status == STATUS_PROGRESSING) {
-      if (!sequence.level) {
-         if (!sizeOfTickets) {                                                      // the pending order was manually cancelled
-            SetLastError(ERR_CANCELLED_BY_USER);
+         if (NE(grid.base, last, Digits)) {
+            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
+            gridChanged = true;
          }
-         else {
-            double last = grid.base;
-            if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-            else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-
-            if (NE(grid.base, last, Digits)) {
-               GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
-               gridChanged = true;
-            }
-            else if (NE(orders.gridBase[sizeOfTickets-1], grid.base, Digits)) {     // Gridbasis des letzten Tickets inspizieren, da Trailing online
-               gridChanged = true;                                                  // u.U. verzögert wird
-            }
+         else if (NE(orders.gridBase[sizeOfTickets-1], grid.base, Digits)) {  // Gridbasis des letzten Tickets inspizieren, da Trailing online
+            gridChanged = true;                                               // u.U. verzögert wird
          }
       }
    }
 
-   // ggf. Ort der Statusdatei aktualisieren
+   // update status file location                                             // TODO: obsolete
    if (updateStatusLocation)
       UpdateStatusLocation();
    return(!catch("UpdateStatus(12)"));
@@ -997,73 +987,6 @@ string UpdateStatus.StopTriggerMsg(int i) {
       // sequence L.8692.+17 #1 client-side stoploss at 1.5457'2 was triggered
       return("sequence "+ sSequence +" #"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" was triggered");
    }
-}
-
-
-/**
- * Ermittelt die StopTime der aktuell gestoppten Sequenz. Aufruf nur nach externem SnowRoller.Stop().
- *
- * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
- */
-datetime UpdateStatus.CalculateStopTime() {
-   if (sequence.status != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopTime(1)  cannot calculate stop time of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE)));
-   if (!sequence.level)                    return(_NULL(catch("UpdateStatus.CalculateStopTime(2)  cannot calculate stop time of sequence at level "+ sequence.level, ERR_ILLEGAL_STATE)));
-
-   datetime stopTime;
-   int n=sequence.level, sizeofTickets=ArraySize(orders.ticket);
-
-   for (int i=sizeofTickets-1; n != 0; i--) {
-      if (orders.closeTime[i] == 0) {
-         if (IsTesting() && __WHEREAMI__==CF_DEINIT && orders.type[i]==OP_UNDEFINED)
-            continue;                                                // offene Pending-Orders ignorieren
-         return(_NULL(catch("UpdateStatus.CalculateStopTime(3)  #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
-      }
-      if (orders.type[i] == OP_UNDEFINED)                            // gestrichene Pending-Orders ignorieren
-         continue;
-      if (orders.closedBySL[i])                                      // ausgestoppte Positionen ignorieren
-         continue;
-
-      if (orders.level[i] != n)
-         return(_NULL(catch("UpdateStatus.CalculateStopTime(4)  #"+ orders.ticket[i] +" (level "+ orders.level[i] +") doesn't match the expected level "+ n, ERR_RUNTIME_ERROR)));
-
-      stopTime = Max(stopTime, orders.closeTime[i]);
-      n -= Sign(n);
-   }
-   return(stopTime);
-}
-
-
-/**
- * Ermittelt den durchschnittlichen StopPrice der aktuell gestoppten Sequenz. Aufruf nur nach externem SnowRoller.Stop().
- *
- * @return double - Preis oder NULL, falls ein Fehler auftrat
- */
-double UpdateStatus.CalculateStopPrice() {
-   if (sequence.status != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopPrice(1)  cannot calculate stop price of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE)));
-   if (!sequence.level)                    return(_NULL(catch("UpdateStatus.CalculateStopPrice(2)  cannot calculate stop price of sequence at level "+ sequence.level, ERR_ILLEGAL_STATE)));
-
-   double stopPrice;
-   int n=sequence.level, sizeofTickets=ArraySize(orders.ticket);
-
-   for (int i=sizeofTickets-1; n != 0; i--) {
-      if (orders.closeTime[i] == 0) {
-         if (IsTesting() && __WHEREAMI__==CF_DEINIT && orders.type[i]==OP_UNDEFINED)
-            continue;                                                // offene Pending-Orders ignorieren
-         return(_NULL(catch("UpdateStatus.CalculateStopPrice(3)  #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
-      }
-      if (orders.type[i] == OP_UNDEFINED)                            // gestrichene Pending-Orders ignorieren
-         continue;
-      if (orders.closedBySL[i])                                      // ausgestoppte Positionen ignorieren
-         continue;
-
-      if (orders.level[i] != n)
-         return(_NULL(catch("UpdateStatus.CalculateStopPrice(4)  #"+ orders.ticket[i] +" (level "+ orders.level[i] +") doesn't match the expected level "+ n, ERR_RUNTIME_ERROR)));
-
-      stopPrice += orders.closePrice[i];
-      n -= Sign(n);
-   }
-
-   return(NormalizeDouble(stopPrice/Abs(sequence.level), Digits));
 }
 
 
@@ -1198,7 +1121,7 @@ bool IsStartSignal() {
 
 
 /**
- * Whether a resume condition is satisfied for a waiting or a stopped sequence.
+ * Whether a resume condition is satisfied for a waiting sequence.
  *
  * @return bool
  */
@@ -1233,10 +1156,10 @@ bool IsResumeSignal() {
 /**
  * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are OR combined.
  *
- * @return bool
+ * @return int - the fulfilled stop condition id or NULL if no stop condition is satisfied
  */
-bool IsStopSignal() {
-   if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
+int IsStopSignal() {
+   if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(NULL);
    string message;
 
    // -- stop.trend: bei Trendwechsel entgegen der Richtung der Sequenz erfüllt ---------------------------------------------
@@ -1249,7 +1172,7 @@ bool IsStopSignal() {
             message = message +" ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
-            return(true);
+            return(STOP_TREND);
          }
       }
    }
@@ -1274,7 +1197,7 @@ bool IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.price.condition = false;
-         return(true);
+         return(STOP_PRICE);
       }
    }
 
@@ -1286,7 +1209,7 @@ bool IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.time.condition = false;
-         return(true);
+         return(STOP_TIME);
       }
    }
 
@@ -1298,7 +1221,7 @@ bool IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitAbs.condition = false;
-         return(true);
+         return(STOP_TP);
       }
    }
 
@@ -1313,20 +1236,19 @@ bool IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitPct.condition = false;
-         return(true);
+         return(STOP_TP);
       }
    }
 
    // -- session break ------------------------------------------------------------------------------------------------------
-   sessionbreak.active = IsSessionBreak();
-   if (sessionbreak.active) {
+   if (IsSessionBreak()) {
       message = "IsStopSignal(7)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled";
       message = message +" ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
       if (__LOG()) log(message);
-      return(true);
+      return(STOP_SESSIONBREAK);
    }
 
-   return(false);
+   return(NULL);
 }
 
 
@@ -4842,14 +4764,14 @@ int ResizeArrays(int size, bool reset=false) {
 
 
 /**
- * Gibt die lesbare Konstante eines Status-Events zurück.
+ * Return a readable version of a status event identifier.
  *
- * @param  int type - Event-Type
+ * @param  int event
  *
  * @return string
  */
-string StatusEventToStr(int type) {
-   switch (type) {
+string StatusEventToStr(int event) {
+   switch (event) {
       case EV_SEQUENCE_START  : return("EV_SEQUENCE_START"  );
       case EV_SEQUENCE_STOP   : return("EV_SEQUENCE_STOP"   );
       case EV_GRIDBASE_CHANGE : return("EV_GRIDBASE_CHANGE" );
@@ -4857,7 +4779,7 @@ string StatusEventToStr(int type) {
       case EV_POSITION_STOPOUT: return("EV_POSITION_STOPOUT");
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
-   return(_EMPTY_STR(catch("StatusEventToStr(1)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusEventToStr(1)  illegal parameter event = "+ event, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -4902,9 +4824,9 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 
 /**
- * Gibt die lesbare Konstante eines Status-Codes zurück.
+ * Return a readable version of a sequence status code.
  *
- * @param  int status - Status-Code
+ * @param  int status
  *
  * @return string
  */

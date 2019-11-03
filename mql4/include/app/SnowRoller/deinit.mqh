@@ -6,7 +6,7 @@
  */
 int onDeinitParameterChange() {
    BackupInputs();
-   return(-1);                                  // -1: skip all other deinit tasks
+   return(-1);                                                    // -1: skip all other deinit tasks
 }
 
 
@@ -17,7 +17,7 @@ int onDeinitParameterChange() {
  */
 int onDeinitChartChange() {
    BackupInputs();
-   return(-1);                                  // -1: skip all other deinit tasks
+   return(-1);                                                    // -1: skip all other deinit tasks
 }
 
 
@@ -43,7 +43,7 @@ int onDeinitChartClose() {
       if (IsLastError()) {
          // Statusfile löschen
          FileDelete(MQL.GetStatusFileName());
-         GetLastError();                                             // falls in FileDelete() ein Fehler auftrat
+         GetLastError();                                          // falls in FileDelete() ein Fehler auftrat
 
          // Der Fenstertitel des Testers kann nicht zurückgesetzt werden: SendMessage() führt in deinit() zu Deadlock.
       }
@@ -54,7 +54,7 @@ int onDeinitChartClose() {
    }
 
    // Nicht im Tester
-   StoreChartStatus();                                               // für Terminal-Restart oder Profilwechsel
+   StoreChartStatus();                                            // für Terminal-Restart oder Profilwechsel
    return(last_error);
 }
 
@@ -74,7 +74,7 @@ int onDeinitUndefined() {
          bool bNull;
          int  iNull[];
          if (UpdateStatus(bNull, iNull))
-            StopSequence();
+            StopSequence(NULL);
          ShowStatus();
       }
       return(last_error);
@@ -102,7 +102,7 @@ int onDeinitRemove() {
  */
 int onDeinitRecompile() {
    StoreChartStatus();
-   return(-1);                                  // -1: skip all other deinit tasks
+   return(-1);                                                    // -1: skip all other deinit tasks
 }
 
 
