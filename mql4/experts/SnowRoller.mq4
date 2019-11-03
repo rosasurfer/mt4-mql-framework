@@ -214,8 +214,8 @@ int onTick() {
    else if (sequence.status == STATUS_WAITING) {
       signal = IsStartSignal();
       if (signal != 0) {
-         if (neverStarted) StartSequence();
-         else              ResumeSequence();
+         if (neverStarted) StartSequence(signal);
+         else              ResumeSequence(signal);
       }
    }
 
@@ -255,8 +255,8 @@ bool onCommand(string commands[]) {
 
    if (cmd == "start") {
       switch (sequence.status) {
-         case STATUS_WAITING: return(StartSequence());
-         case STATUS_STOPPED: return(ResumeSequence());
+         case STATUS_WAITING: return(StartSequence(NULL));
+         case STATUS_STOPPED: return(ResumeSequence(NULL));
       }
       return(true);
    }
@@ -285,9 +285,11 @@ bool onCommand(string commands[]) {
 /**
  * Start a new trade sequence.
  *
+ * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (explicit start)
+ *
  * @return bool - success status
  */
-bool StartSequence() {
+bool StartSequence(int signal) {
    if (IsLastError())                     return(false);
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  cannot start "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
 
@@ -346,11 +348,11 @@ bool StartSequence() {
  * start trend condition is enabled the sequence is automatically resumed the next time the trend condition is fulfilled.
  * If the sequence is stopped due to a session break it is automatically resumed after the session break ends.
  *
- * @param  int stopType - type of a triggered stop condition or NULL if no condition was triggered (explicit stop).
+ * @param  int signal - signal which triggered a stop condition or NULL if no condition was triggered (explicit stop)
  *
  * @return bool - success status
  */
-bool StopSequence(int stopType) {
+bool StopSequence(int signal) {
    if (IsLastError())                                                          return(false);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                              return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status] +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
@@ -513,7 +515,7 @@ bool StopSequence(int stopType) {
    // update start/stop/auto-resume configuration (sequence.status is STATUS_STOPPED)
    start.conditions = false;
 
-   switch (stopType) {
+   switch (signal) {
       case STOP_SESSIONBREAK:                            // implies auto-resume, temporarily overrides all other conditions
          if (entryStatus == STATUS_PROGRESSING) {
             start.time.condition    = false;             // define a start @price condition matching the stop price
@@ -543,7 +545,7 @@ bool StopSequence(int stopType) {
       case NULL:                                         // explicit stop (manual or at end of test)
          break;
 
-      default: return(!catch("StopSequence(12)  unsupported parameter stopType = "+ stopType, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopSequence(12)  unsupported parameter signal = "+ signal, ERR_INVALID_PARAMETER));
    }
 
    // save sequence
@@ -577,9 +579,11 @@ bool ArrayAddInt(int &array[], int value) {
 /**
  * Setzt eine gestoppte Sequenz fort.
  *
+ * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (explicit resume)
+ *
  * @return bool - success status
  */
-bool ResumeSequence() {
+bool ResumeSequence(int resume) {
    if (IsLastError())                                                               return(false);
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                   return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_WAITING) return(!catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_ILLEGAL_STATE));
