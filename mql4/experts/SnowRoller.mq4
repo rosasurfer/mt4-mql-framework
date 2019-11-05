@@ -2,18 +2,20 @@
  * SnowRoller - a pyramiding trade manager
  *
  *
- * With default settings this EA is just a trade manager and not a complete trading system. Entry and exit are defined
+ * With default settings this EA is just a trade manager and not a complete system. Start and stop conditions are defined
  * manually and the EA manages the resulting trades in a pyramiding way.
  *
- * Theoretical background and proof-of-concept was provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
+ * Theoretical background and proof-of-concept are provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * The EA is not FIFO conforming, and will never be.
+ * This EA is not FIFO conforming, and will never be. A description of program actions, events and status changes can be
+ * found at the end of this file.
  *
- * Risk warning: A market can range longer without reaching the profit target than a trading account can survive.
+ *
+ * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
@@ -5331,37 +5333,39 @@ string InputsToStr() {
 
 /*
   Actions, events and status changes:
- +------------------+---------------------+--------------------+----------+--------------------+
- | Action           |       Events        |        Status      | Position |     Detection      |
- +------------------+---------------------+--------------------+----------+--------------------+
- | EA.init()        |         -           | STATUS_UNDEFINED   |          |                    |
- |                  |                     |                    |          |                    |
- | EA.start()       |         -           | STATUS_WAITING     |          |                    |
- +------------------+---------------------+--------------------+----------+--------------------+
- | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |                    | sequence.start.time = change to STATUS_PROGRESSING
- |                  |                     |                    |          |                    |
- | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
- |                  |                     |                    |          |                    |
- | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |   maxLevel != 0    |
- |                  |                     |                    |          |                    |
- | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |                    |
- |                  |                     |                    |          |                    |
- | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
- |                  |                     |                    |          |                    |
- | StopSequence()   |         -           | STATUS_STOPPING    |    n     | STATUS_STOPPING    |
- | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   | PositionClose      |
- |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
- +------------------+---------------------+--------------------+----------+--------------------+
- | ResumeSequence() |         -           | STATUS_STARTING    |    0     |                    | no valid gridbase yet
- | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |                    |
- | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |                    |
- |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
- |                  |                     |                    |          |                    |
- | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |                    |
- |                  |                     |                    |          |                    |
- | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |                    |
- |                  |                     |                    |          |                    |
- | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |                    |
- | ...              |                     |                    |          |                    |
- +------------------+---------------------+--------------------+----------+--------------------+
+ +------------------+---------------------+--------------------+
+ | Action           |       Events        |        Status      |
+ +------------------+---------------------+--------------------+
+ | EA::init()       |         -           | STATUS_UNDEFINED   |
+ +------------------+---------------------+--------------------+
+ | EA::start()      |         -           | STATUS_WAITING     |
+ |                  |                     |                    |
+ | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | StopSequence()   |         -           | STATUS_STOPPING    |
+ | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |
+ |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |
+ +------------------+---------------------+--------------------+
+ | StartCondition   |         -           | STATUS_WAITING     |
+ |                  |                     |                    |
+ | ResumeSequence() |         -           | STATUS_STARTING    |
+ | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |
+ | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |
+ |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |
+ |                  |                     |                    |
+ | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
+ | ...              |                     |                    |
+ +------------------+---------------------+--------------------+
 */
