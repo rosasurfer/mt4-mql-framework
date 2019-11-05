@@ -11,11 +11,7 @@
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * Input parameters: ...
- *
- * Notes:
- *  - The EA is not FIFO conforming, and will never be.
- *  - A description of program actions, events and status changes can be found at the end of this file.
+ * The EA is not FIFO conforming, and will never be.
  *
  * Risk warning: A market can range longer without reaching the profit target than a trading account can survive.
  */
@@ -255,8 +251,12 @@ bool onCommand(string commands[]) {
 
    if (cmd == "start") {
       switch (sequence.status) {
-         case STATUS_WAITING: return(StartSequence(NULL));
-         case STATUS_STOPPED: return(ResumeSequence(NULL));
+         case STATUS_WAITING:
+         case STATUS_STOPPED:
+            bool neverStarted = !ArraySize(sequence.start.event);
+            if (neverStarted) StartSequence(NULL);
+            else              ResumeSequence(NULL);
+
       }
       return(true);
    }
@@ -553,7 +553,8 @@ bool StopSequence(int signal) {
 
    // in tester: pause or stop
    if (IsTesting()) {
-      if (IsVisualMode()) Tester.Pause();                // TODO: else if (!sessionbreak.active) Tester.Stop();
+      if (IsVisualMode())                         Tester.Pause();
+      else if (sequence.status == STATUS_STOPPED) Tester.Stop();
    }
    return(!catch("StopSequence(13)"));
 }
@@ -1137,7 +1138,7 @@ bool IsStartSignal() {
       return(true);
    }
 
-   // no enabled start conditions: a valid signal at sequence creation only
+   // no start conditions: a valid start signal at sequence creation only
    if (ArraySize(sequence.start.event) == 0) {
       if (__LOG()) log("IsStartSignal(5)  sequence "+ sequence.name +" no start conditions defined, starting...");
       return(true);
@@ -1263,7 +1264,8 @@ bool IsSessionBreak() {
    datetime serverTime = TimeServer();
    if (!serverTime) return(false);
 
-   if (serverTime >= sessionbreak.endtime) {                      // check whether to recalculate sessionbreak times
+   // check whether to recalculate sessionbreak times
+   if (serverTime >= sessionbreak.endtime) {
       int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
       int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
       if (!startOffset && !endOffset)
@@ -1297,7 +1299,7 @@ bool IsSessionBreak() {
       if (__LOG()) log("IsSessionBreak(1)  recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
-   // perform final check
+   // perform the actual check
    return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
 }
 
@@ -2245,11 +2247,11 @@ int ShowStatus(int error = NO_ERROR) {
                                                                                                    NL,
                            "Grid:              ", GridSize, " pip", sGridbase, sSequenceDirection, NL,
                            "LotSize:          ",  sLotSize, sSequenceProfitPerLevel,               NL,
-                           "Stops:            ",  sSequenceStops, sSequenceStopsPL,                NL,
-                           "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats,               NL,
                            sStartConditions,                                // if set it ends with NL,
                            sStopConditions,                                 // if set it ends with NL,
                            sAutoResume,                                     // if set it ends with NL,
+                           "Stops:            ",  sSequenceStops, sSequenceStopsPL,                NL,
+                           "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats,               NL,
                            "Breakeven: ",                                                          NL);
 
    // 3 lines margin-top for instrument and indicator legend
@@ -2367,8 +2369,8 @@ void SS.StartStopConditions() {
  */
 void SS.AutoResume() {
    if (!__CHART()) return;
-   if (AutoResume) sAutoResume = "AutoResume: On"+ NL;
-   else            sAutoResume = "";
+   if (AutoResume) sAutoResume = "AutoResume: On" + NL;
+   else            sAutoResume = "AutoResume: Off"+ NL;
 }
 
 
