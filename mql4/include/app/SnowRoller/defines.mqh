@@ -17,7 +17,6 @@ string  directionDescr[] = {"Long", "Short"};
 #define STATUS_PROGRESSING          3
 #define STATUS_STOPPING             4
 #define STATUS_STOPPED              5
-string  sequenceStatusDescr[] = {"undefined", "waiting", "starting", "progressing", "stopping", "stopped"};
 
 
 // stop condition types
