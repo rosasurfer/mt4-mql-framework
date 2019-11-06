@@ -18,13 +18,12 @@
 #define STATUS_STOPPED              5
 
 
-// stop condition types
-#define STOP_PRICE                  1
-#define STOP_TIME                   2
-#define STOP_SESSIONBREAK           3
-#define STOP_TP                     4
-#define STOP_SL                     5
-#define STOP_TREND                  6
+// start/stop signal types
+#define SIGNAL_PRICETIME            1           // a price, time or combined price-time condition
+#define SIGNAL_TREND                2
+#define SIGNAL_TP                   3
+#define SIGNAL_SL                   4
+#define SIGNAL_SESSIONBREAK         5
 
 
 // event types for SynchronizeStatus()
@@ -50,15 +49,15 @@ int     startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 
 
 // order display modes (can't be combined)
-#define ODM_NONE                    0              // no display
-#define ODM_STOPS                   1              // pendings,       closedBySL
-#define ODM_PYRAMID                 2              // pendings, open,             closed
-#define ODM_ALL                     3              // pendings, open, closedBySL, closed
+#define ODM_NONE                    0           // no display
+#define ODM_STOPS                   1           // pendings,       closedBySL
+#define ODM_PYRAMID                 2           // pendings, open,             closed
+#define ODM_ALL                     3           // pendings, open, closedBySL, closed
 int     orderDisplayModes[] = {ODM_NONE, ODM_STOPS, ODM_PYRAMID, ODM_ALL};
 
 
-// order display colors
-#define CLR_PENDING        DeepSkyBlue
-#define CLR_LONG           Blue
-#define CLR_SHORT          Red
-#define CLR_CLOSE          Orange
+// order marker colors
+#define CLR_PENDING     DeepSkyBlue
+#define CLR_LONG        Blue
+#define CLR_SHORT       Red
+#define CLR_CLOSE       Orange
