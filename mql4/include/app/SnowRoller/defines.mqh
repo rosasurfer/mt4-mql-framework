@@ -1,13 +1,12 @@
 
-#define STRATEGY_ID               103              // unique strategy id (between 101-1023)
-#define SID_MIN                  1000              // min. sequence id value (at least 4 digits)
-#define SID_MAX                 16383              // max. sequence id value (at most 14 bits which is "32767 >> 1")
+#define STRATEGY_ID               103           // unique strategy id (between 101-1023)
+#define SID_MIN                  1000           // min. sequence id value (at least 4 digits)
+#define SID_MAX                 16383           // max. sequence id value (at most 14 bits which is "32767 >> 1")
 
 
 // grid direction types
-#define D_LONG                OP_LONG              // 0
-#define D_SHORT              OP_SHORT              // 1
-string  directionDescr[] = {"Long", "Short"};
+#define D_LONG   TRADE_DIRECTION_LONG           // 1
+#define D_SHORT TRADE_DIRECTION_SHORT           // 2
 
 
 // sequence status values
@@ -38,7 +37,7 @@ string  directionDescr[] = {"Long", "Short"};
 
 
 // start/stop display modes
-#define SDM_NONE                    0              // no display
+#define SDM_NONE                    0           // no display
 #define SDM_PRICE    SYMBOL_LEFTPRICE
 int     startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 
@@ -59,7 +58,7 @@ int     orderDisplayModes[] = {ODM_NONE, ODM_STOPS, ODM_PYRAMID, ODM_ALL};
 
 
 // order display colors
-#define CLR_PENDING                 DeepSkyBlue
-#define CLR_LONG                    Blue
-#define CLR_SHORT                   Red
-#define CLR_CLOSE                   Orange
+#define CLR_PENDING        DeepSkyBlue
+#define CLR_LONG           Blue
+#define CLR_SHORT          Red
+#define CLR_CLOSE          Orange

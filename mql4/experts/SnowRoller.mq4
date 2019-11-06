@@ -297,7 +297,7 @@ bool StartSequence(int signal) {
    if (IsLastError())                     return(false);
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new sequence now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new \""+ StrToLower(TradeDirectionDescription(sequence.direction)) +"\" sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    sequence.status = STATUS_STARTING;
@@ -2299,7 +2299,7 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-   sSequenceDirection = "  ("+ StrToLower(directionDescr[sequence.direction]) +")";
+   sSequenceDirection = "  ("+ StrToLower(TradeDirectionDescription(sequence.direction)) +")";
 }
 
 
@@ -2468,7 +2468,7 @@ bool RestoreChartStatus() {
       else {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
-         sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
+         sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
          sequence.status = STATUS_WAITING;
          SetCustomLog(sequence.id, NULL);
       }
@@ -2632,7 +2632,7 @@ bool ValidateInputs.ID(bool interactive) {
 
    sequence.id   = iValue; SS.SequenceId();
    Sequence.ID   = ifString(IsTestSequence(), "T", "") + sequence.id;
-   sequence.name = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
+   sequence.name = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
    SetCustomLog(sequence.id, NULL);
 
    return(true);
@@ -2673,14 +2673,14 @@ bool ValidateInputs(bool interactive) {
 
    // GridDirection
    string sValue = StrToLower(StrTrim(GridDirection));
-   if      (StrStartsWith("long",  sValue)) int _direction = D_LONG;
-   else if (StrStartsWith("short", sValue))     _direction = D_SHORT;
+   if      (StrStartsWith("long",  sValue)) sValue = "Long";
+   else if (StrStartsWith("short", sValue)) sValue = "Short";
    else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(4)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
-   if (isParameterChange && directionDescr[_direction]!=last.GridDirection) {
+   if (isParameterChange && !StrCompareI(sValue, last.GridDirection)) {
       if (ArraySize(sequence.start.event) > 0)                    return(_false(ValidateInputs.OnError("ValidateInputs(5)", "Cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   sequence.direction = _direction;
-   GridDirection      = directionDescr[sequence.direction]; SS.GridDirection();
+   sequence.direction = StrToTradeDirection(sValue);
+   GridDirection      = sValue; SS.GridDirection();
    sequence.name      = StrLeft(GridDirection, 1) +"."+ sequence.id;
 
    // GridSize

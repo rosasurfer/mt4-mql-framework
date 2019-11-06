@@ -128,9 +128,9 @@
 
 
 // trade directions, can be used as flags
-#define TRADE_DIRECTIONS_LONG             1
-#define TRADE_DIRECTIONS_SHORT            2
-#define TRADE_DIRECTIONS_BOTH             3
+#define TRADE_DIRECTION_LONG              1
+#define TRADE_DIRECTION_SHORT             2
+#define TRADE_DIRECTION_BOTH              3
 
 
 // time constants
