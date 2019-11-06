@@ -24,7 +24,7 @@ extern int      Periods           = 38;
 
 
 // trading configuration
-int trade.directions = TRADE_DIRECTIONS_BOTH;
+int trade.directions = TRADE_DIRECTION_BOTH;
 int trade.startBar;
 int ticket;                                              // virtual ticket number
 
@@ -59,7 +59,7 @@ int onInit() {
    }
    else strValue = Trades.Directions;
    trade.directions = StrToTradeDirection(strValue, F_ERR_INVALID_PARAMETER);
-   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTION_BOTH)
       return(catch("onInit(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
    Trades.Directions = TradeDirectionDescription(trade.directions);
 
@@ -84,13 +84,13 @@ int onStart() {
    // (2) calculate signals for each bar
    for (bar=trade.startBar; bar >= 0; bar--) {
       // check long conditions
-      if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
+      if (trade.directions & TRADE_DIRECTION_LONG && 1) {
          if (!long.position) Long.CheckOpenSignal(bar);
          else                Long.CheckCloseSignal(bar);       // don't check for close on an open signal
       }
 
       // check short conditions
-      if (trade.directions & TRADE_DIRECTIONS_SHORT && 1) {
+      if (trade.directions & TRADE_DIRECTION_SHORT && 1) {
          if (!short.position) Short.CheckOpenSignal(bar);
          else                 Short.CheckCloseSignal(bar);     // don't check for close on an open signal
       }

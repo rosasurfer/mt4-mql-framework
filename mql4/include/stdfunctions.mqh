@@ -5004,7 +5004,7 @@ int StrToOperationType(string value) {
 /**
  * Return the integer constant of a trade direction identifier.
  *
- * @param  string value     - trade directions: [TRADE_DIRECTIONS_][LONG|SHORT|BOTH]
+ * @param  string value     - trade directions: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
  * @param  int    execFlags - execution control: error flags to set silently (default: none)
  *
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
@@ -5012,17 +5012,17 @@ int StrToOperationType(string value) {
 int StrToTradeDirection(string value, int execFlags=NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
+   if (StrStartsWith(str, "TRADE_DIRECTION_"))
       str = StrRight(str, -17);
 
-   if (str ==                     "LONG" ) return(TRADE_DIRECTIONS_LONG);
-   if (str == ""+ TRADE_DIRECTIONS_LONG  ) return(TRADE_DIRECTIONS_LONG);
+   if (str ==                    "LONG" ) return(TRADE_DIRECTION_LONG);
+   if (str == ""+ TRADE_DIRECTION_LONG  ) return(TRADE_DIRECTION_LONG);
 
-   if (str ==                     "SHORT") return(TRADE_DIRECTIONS_SHORT);
-   if (str == ""+ TRADE_DIRECTIONS_SHORT ) return(TRADE_DIRECTIONS_SHORT);
+   if (str ==                    "SHORT") return(TRADE_DIRECTION_SHORT);
+   if (str == ""+ TRADE_DIRECTION_SHORT ) return(TRADE_DIRECTION_SHORT);
 
-   if (str ==                     "BOTH" ) return(TRADE_DIRECTIONS_BOTH);
-   if (str == ""+ TRADE_DIRECTIONS_BOTH  ) return(TRADE_DIRECTIONS_BOTH);
+   if (str ==                    "BOTH" ) return(TRADE_DIRECTION_BOTH);
+   if (str == ""+ TRADE_DIRECTION_BOTH  ) return(TRADE_DIRECTION_BOTH);
 
    if (!execFlags & F_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    else                                      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
