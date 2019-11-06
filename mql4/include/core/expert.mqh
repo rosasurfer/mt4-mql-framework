@@ -14,6 +14,8 @@ extern double   Test.StartPrice                 = 0;                 // price to
 double rates[][6];
 
 // test metadata
+string test.starttime          = "";
+string test.startprice         = "";
 string test.report.server      = "XTrade-Testresults";
 int    test.report.id          = 0;
 string test.report.symbol      = "";
@@ -203,7 +205,11 @@ int init() {
 
 
    // (10) in Tester: log MarketInfo() data
-   if (IsTesting()) Test.LogMarketInfo();
+   if (IsTesting()) {
+      Test.LogMarketInfo();
+      test.starttime  = ifString(!Test.StartTime, "", TimeToStr(Test.StartTime, TIME_FULL));
+      test.startprice = ifString(!Test.StartPrice, "", NumberToStr(Test.StartPrice, PriceFormat));
+   }
 
    if (CheckErrors("init(17)"))
       return(last_error);
@@ -313,21 +319,26 @@ int start() {
    // (4) Im Tester StartTime/StartPrice abwarten
    if (IsTesting()) {
       if (Test.StartTime != 0) {
-         if (Tick.Time < Test.StartTime)
+         if (Tick.Time < Test.StartTime) {
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.starttime));
             return(last_error);
+         }
          Test.StartTime = 0;
       }
       if (Test.StartPrice != 0) {
          static double test.lastPrice; if (!test.lastPrice) {
             test.lastPrice = Bid;
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.startprice));
             return(last_error);
          }
          if (LT(test.lastPrice, Test.StartPrice)) /*&&*/ if (LT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.startprice));
             return(last_error);
          }
          if (GT(test.lastPrice, Test.StartPrice)) /*&&*/ if (GT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.startprice));
             return(last_error);
          }
          Test.StartPrice = 0;
