@@ -563,6 +563,20 @@ string StrReplaceR(string object, string search, string replace) {
 
 
 /**
+ * Alias of StringSubstrFix()
+ *
+ * @param  string object
+ * @param  int    start
+ * @param  int    length
+ *
+ * @return string
+ */
+string StrSubstr(string object, int start, int length = INT_MAX) {
+   return(StringSubstrFix(object, start, length));
+}
+
+
+/**
  * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
  * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
  *
@@ -572,7 +586,7 @@ string StrReplaceR(string object, string search, string replace) {
  *
  * @return string
  */
-string StringSubstrFix(string object, int start, int length=INT_MAX) {
+string StringSubstrFix(string object, int start, int length = INT_MAX) {
    if (length == 0)
       return("");
 
@@ -583,6 +597,11 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
       start += 1 + length;
       length = Abs(length);
    }
+
+   if (length == INT_MAX) {
+      length = INT_MAX - 1;            // length must be lower than INT_MAX
+   }
+
    return(StringSubstr(object, start, length));
 }
 
@@ -1941,7 +1960,7 @@ int CountDecimals(double number) {
  * @return string
  */
 string StrLeft(string value, int n) {
-   if (n > 0) return(StringSubstr   (value, 0, n                 ));
+   if (n > 0) return(StringSubstrFix(value, 0, n                 ));
    if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
    return("");
 }
@@ -3561,7 +3580,8 @@ bool Tester.IsStopped() {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0) return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length == INT_MAX) return(_EMPTY_STR(catch("CreateString(2)  too large parameter length: INT_MAX", ERR_INVALID_PARAMETER)));
 
    if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
                                                                      // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
