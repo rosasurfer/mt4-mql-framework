@@ -528,7 +528,7 @@ bool StopSequence(int signal) {
             start.price.lastValue   = NULL;
             start.price.description = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +", sessionbreak)";
             start.price.condition   = true;
-            start.conditions        = true; SS.StartStopConditions();
+            start.conditions        = true;
          }
          sequence.status = STATUS_WAITING;
          break;
@@ -536,18 +536,28 @@ bool StopSequence(int signal) {
       case SIGNAL_TREND:                                 // auto-resume if enabled and StartCondition is @trend
          if (AutoResume && start.trend.description!="") {
             start.trend.condition = true;
-            start.conditions      = true; SS.StartStopConditions();
+            start.conditions      = true;
             sequence.status       = STATUS_WAITING;
          }
+         stop.trend.condition = false;
          break;
 
       case SIGNAL_PRICETIME:                             // no auto-resume
-      case SIGNAL_TP:
+         stop.price.condition = false;
+         stop.time.condition  = false;
+         break;
+
+      case SIGNAL_TP:                                    // no auto-resume
+         stop.profitAbs.condition = false;
+         stop.profitPct.condition = false;
+         break;
+
       case NULL:                                         // explicit stop (manual or at end of test)
          break;
 
       default: return(!catch("StopSequence(11)  unsupported stop signal = "+ signal, ERR_INVALID_PARAMETER));
    }
+   SS.StartStopConditions();
 
    // save sequence
    if (!SaveSequence()) return(false);
@@ -2221,10 +2231,10 @@ int ShowStatus(int error = NO_ERROR) {
                                                                                                    NL,
                            "Grid:              ", GridSize, " pip", sGridbase, sSequenceDirection, NL,
                            "LotSize:          ",  sLotSize, sSequenceProfitPerLevel,               NL,
-                           sStartConditions,                                // if set it ends with NL,
-                           sStopConditions,                                 // if set it ends with NL,
+                           "Start:             ", sStartConditions,                                NL,
+                           "Stop:              ", sStopConditions,                                 NL,
                            sAutoResume,                                     // if set it ends with NL,
-                           "Stops:            ",  sSequenceStops, sSequenceStopsPL,                NL,
+                           "Stops:             ", sSequenceStops, sSequenceStopsPL,                NL,
                            "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats,               NL,
                            "Breakeven: ",                                                          NL);
 
@@ -2330,11 +2340,48 @@ void SS.LotSize() {
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
-   sStartConditions = "";
-   sStopConditions  = "";
 
-   if (StartConditions != "") sStartConditions = "Start:             "+ StartConditions + NL;
-   if (StopConditions  != "") sStopConditions  = "Stop:              "+ StopConditions  + NL;
+   string sValue = "";
+   if (start.price.description!="" || start.time.description!="") {
+      if (start.price.description != "") {
+         sValue = ifString(start.price.condition, "@", "!") + start.price.description;
+      }
+      if (start.time.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " && ") + ifString(start.time.condition, "@", "!") + start.time.description;
+      }
+   }
+   if (start.trend.description != "") {
+      if (start.price.description!="" && start.time.description!="") {
+         sValue = "("+ sValue +")";
+      }
+      if (start.price.description!="" || start.time.description!="") {
+         sValue = sValue +" || ";
+      }
+      sValue = sValue + ifString(start.trend.condition, "@", "!") + start.trend.description;
+   }
+   if (sValue == "") sStartConditions = "-";
+   else              sStartConditions = sValue;
+   StartConditions = sValue;
+
+   sValue = "";
+   if (stop.price.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
+   }
+   if (stop.time.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+   }
+   if (stop.profitAbs.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
+   }
+   if (stop.profitPct.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
+   }
+   if (stop.trend.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.trend.condition, "@", "!") + stop.trend.description;
+   }
+   if (sValue == "") sStopConditions = "-";
+   else              sStopConditions = sValue;
+   StopConditions = sValue;
 }
 
 
@@ -2760,7 +2807,7 @@ bool ValidateInputs(bool interactive) {
             if (start.trend.timeframe == -1)            return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
             start.trend.params = StrTrim(elems[2]);
             if (!StringLen(start.trend.params))         return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
-            exprs[i] = "@trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) +":"+ start.trend.params +")";
+            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) +":"+ start.trend.params +")";
             start.trend.description = exprs[i];
             start.trend.condition   = true;
          }
@@ -2778,7 +2825,7 @@ bool ValidateInputs(bool interactive) {
             else if (key == "@ask") start.price.type = PRICE_ASK;
             else                    start.price.type = PRICE_MEDIAN;
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            exprs[i] = key +"("+ StrLeftTo(exprs[i], "'0") +")";  // cut "'0" for improved readability
+            exprs[i] = StrSubstr(key, 1) +"("+ StrLeftTo(exprs[i], "'0") +")";   // cut "'0" for improved readability
             start.price.description = exprs[i];
             start.price.condition   = true;
          }
@@ -2790,7 +2837,7 @@ bool ValidateInputs(bool interactive) {
             if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(34)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             start.time.value = time;
-            exprs[i]         = key +"("+ TimeToStr(time) +")";
+            exprs[i]         = "time("+ TimeToStr(time) +")";
             start.time.description = exprs[i];
             start.time.condition   = true;
          }
@@ -2840,7 +2887,7 @@ bool ValidateInputs(bool interactive) {
             if (stop.trend.timeframe == -1)             return(_false(ValidateInputs.OnError("ValidateInputs(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)", interactive)));
             stop.trend.params = StrTrim(elems[2]);
             if (!StringLen(stop.trend.params))          return(_false(ValidateInputs.OnError("ValidateInputs(45)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)", interactive)));
-            exprs[i] = "@trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) +":"+ stop.trend.params +")";
+            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) +":"+ stop.trend.params +")";
             stop.trend.description = exprs[i];
             stop.trend.condition   = true;
          }
@@ -2857,7 +2904,7 @@ bool ValidateInputs(bool interactive) {
             else if (key == "@ask") stop.price.type = PRICE_ASK;
             else                    stop.price.type = PRICE_MEDIAN;
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            exprs[i] = key +"("+ StrLeftTo(exprs[i], "'0") +")";  // cut "'0" for improved readability
+            exprs[i] = StrSubstr(key, 1) +"("+ StrLeftTo(exprs[i], "'0") +")";   // cut "'0" for improved readability
             stop.price.description = exprs[i];
             stop.price.condition   = true;
          }
@@ -2868,7 +2915,7 @@ bool ValidateInputs(bool interactive) {
             if (IsError(GetLastError()))                return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             // TODO: Validierung von @time ist unzureichend
             stop.time.value       = time;
-            exprs[i]              = key +"("+ TimeToStr(time) +")";
+            exprs[i]              = "time("+ TimeToStr(time) +")";
             stop.time.description = exprs[i];
             stop.time.condition   = true;
          }
@@ -2884,14 +2931,14 @@ bool ValidateInputs(bool interactive) {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                   = key +"("+ DoubleToStr(dValue, 2) +")";
+               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
                stop.profitAbs.description = exprs[i];
                stop.profitAbs.condition   = true;
             }
             else {
                stop.profitPct.value       = dValue;
                stop.profitPct.absValue    = INT_MAX;
-               exprs[i]                   = key +"("+ NumberToStr(dValue, ".+") +"%)";
+               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
                stop.profitPct.description = exprs[i];
                stop.profitPct.condition   = true;
             }
