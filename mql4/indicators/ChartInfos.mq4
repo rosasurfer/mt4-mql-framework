@@ -2248,7 +2248,7 @@ bool CustomPositions.ReadConfig() {
                if (pos == -1) confComment = StrTrim(confComment);
                else           confComment = StrTrim(StrLeft(confComment, pos));
                if (StrStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
-                  confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
+                  confComment = StrSubstr(confComment, 1, StringLen(confComment)-2);
             }
 
             // Konfiguration auswerten
