@@ -1087,7 +1087,7 @@ int IsStartSignal() {
             int trend = GetStartTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \""+ start.trend.description +"\" fulfilled";
+               message = "IsStartSignal(1)  sequence "+ sequence.name +" start condition \"@"+ start.trend.description +"\" fulfilled";
                message = message +" ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
                if (!IsTesting()) warn(message);
                else if (__LOG()) log(message);
@@ -1113,7 +1113,7 @@ int IsStartSignal() {
          start.price.lastValue = price;
          if (!triggered) return(NULL);
 
-         message = "IsStartSignal(2)  sequence "+ sequence.name +" start condition \""+ start.price.description +"\" fulfilled";
+         message = "IsStartSignal(2)  sequence "+ sequence.name +" start condition \"@"+ start.price.description +"\" fulfilled";
          bool afterSessionBreak = StrEndsWith(start.price.description, "sessionbreak)");
          if (!IsTesting() && !afterSessionBreak) warn(message);
          else if (__LOG())                       log(message);
@@ -1124,7 +1124,7 @@ int IsStartSignal() {
          if (TimeCurrentEx("IsStartSignal(3)") < start.time.value)
             return(NULL);
 
-         message = "IsStartSignal(4)  sequence "+ sequence.name +" start condition \""+ start.time.description +"\" fulfilled";
+         message = "IsStartSignal(4)  sequence "+ sequence.name +" start condition \"@"+ start.time.description +"\" fulfilled";
          message = message +" ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
@@ -1164,7 +1164,7 @@ int IsStopSignal() {
          int trend = GetStopTrendValue(1);
 
          if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-            message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \""+ stop.trend.description +"\" fulfilled";
+            message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@"+ stop.trend.description +"\" fulfilled";
             message = message +" ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
@@ -1189,7 +1189,7 @@ int IsStopSignal() {
       stop.price.lastValue = price;
 
       if (triggered) {
-         message = "IsStopSignal(2)  sequence "+ sequence.name +" stop condition \""+ stop.price.description +"\" fulfilled";
+         message = "IsStopSignal(2)  sequence "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.price.condition = false;
@@ -1200,7 +1200,7 @@ int IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(3)") >= stop.time.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \""+ stop.time.description +"\" fulfilled";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" fulfilled";
          message = message +" ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
@@ -1212,7 +1212,7 @@ int IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \""+ stop.profitAbs.description +"\" fulfilled";
+         message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled";
          message = message +" ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
@@ -1227,7 +1227,7 @@ int IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(6)  sequence "+ sequence.name +" stop condition \""+ stop.profitPct.description +"\" fulfilled";
+         message = "IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled";
          message = message +" ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
