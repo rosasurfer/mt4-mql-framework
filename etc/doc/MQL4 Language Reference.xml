@@ -7566,10 +7566,11 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
          Returns a copy of the extracted substring if possible, otherwise an empty string.
          <br/>
          <br/>
-         <span style="color:red">Bug:</span><br/>
+         <span style="color:red">Bugs:</span><br/>
          <li>Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.</li>
          <li>Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="const">NULL</span>).
              StringSubstr(value, start, length=0) gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.</li>
+         <li>Paramter length muß kleiner als <span class="const">INT_MAX</span> sein.</li>
          <br/>
          Workaround: <span style="color:blue">StringSubstrFix()</span> verwenden
       </content>
