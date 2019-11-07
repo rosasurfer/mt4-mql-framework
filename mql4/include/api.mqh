@@ -222,7 +222,6 @@ bool     StrContains(string object, string substring);;
 bool     StrContainsI(string object, string substring);;
 bool     StrEndsWithI(string object, string suffix);;
 int      StrFindR(string object, string search);;
-string   StringSubstrFix(string object, int start, int length = INT_MAX);;
 bool     StrIsDigit(string value);;
 bool     StrIsEmailAddress(string value);;
 bool     StrIsInteger(string value);;

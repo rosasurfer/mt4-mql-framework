@@ -529,7 +529,7 @@ string StrReplace(string object, string search, string replace) {
    string result = "";
 
    while (found > -1) {
-      result = StringConcatenate(result, StringSubstrFix(object, from, found-from), replace);
+      result = StringConcatenate(result, StrSubstr(object, from, found-from), replace);
       from   = found + StringLen(search);
       found  = StringFind(object, search, from);
    }
@@ -563,20 +563,8 @@ string StrReplaceR(string object, string search, string replace) {
 
 
 /**
- * Alias of StringSubstrFix()
+ * Drop-in replacement for the flawed built-in function StringSubstr()
  *
- * @param  string object
- * @param  int    start
- * @param  int    length
- *
- * @return string
- */
-string StrSubstr(string object, int start, int length = INT_MAX) {
-   return(StringSubstrFix(object, start, length));
-}
-
-
-/**
  * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
  * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
  *
@@ -586,7 +574,7 @@ string StrSubstr(string object, int start, int length = INT_MAX) {
  *
  * @return string
  */
-string StringSubstrFix(string object, int start, int length = INT_MAX) {
+string StrSubstr(string object, int start, int length = INT_MAX) {
    if (length == 0)
       return("");
 
@@ -1960,8 +1948,8 @@ int CountDecimals(double number) {
  * @return string
  */
 string StrLeft(string value, int n) {
-   if (n > 0) return(StringSubstrFix(value, 0, n                 ));
-   if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
+   if (n > 0) return(StrSubstr(value, 0, n                 ));
+   if (n < 0) return(StrSubstr(value, 0, StringLen(value)+n));
    return("");
 }
 
@@ -5199,7 +5187,7 @@ string NumberToStr(double value, string mask) {
    int dLeft = StringFind(outStr, ".");
    if (nLeft == -1) nLeft = dLeft;
    else             nLeft = Min(nLeft, dLeft);
-   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
+   outStr = StrSubstr(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
 
    // Dezimal-Separator anpassen
    if (swapSeparators)
@@ -5210,7 +5198,7 @@ string NumberToStr(double value, string mask) {
       string out1;
       i = nLeft;
       while (i > 3) {
-         out1 = StringSubstrFix(outStr, 0, i-3);
+         out1 = StrSubstr(outStr, 0, i-3);
          if (StringGetChar(out1, i-4) == ' ')
             break;
          outStr = StringConcatenate(out1, sepThousand, StringSubstr(outStr, i-3));
@@ -6621,7 +6609,6 @@ void __DummyCalls() {
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
-   StringSubstrFix(NULL, NULL);
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
@@ -6639,6 +6626,7 @@ void __DummyCalls() {
    StrRightFrom(NULL, NULL);
    StrRightPad(NULL, NULL);
    StrStartsWithI(NULL, NULL);
+   StrSubstr(NULL, NULL);
    StrToBool(NULL);
    StrToHexStr(NULL);
    StrToLower(NULL);
