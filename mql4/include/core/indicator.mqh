@@ -440,17 +440,17 @@ int deinit() {
                                                                                  //
    if (!error) {                                                                 //
       switch (UninitializeReason()) {                                            //
-         case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
-         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;          //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;          //
-         case UR_UNDEFINED  : error = onDeinitUndefined();       break;          //
-         case UR_REMOVE     : error = onDeinitRemove();          break;          //
-         case UR_RECOMPILE  : error = onDeinitRecompile();       break;          //
+         case UR_PARAMETERS : error = onDeinitParameters();    break;            //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;            //
+         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;            //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;            //
+         case UR_UNDEFINED  : error = onDeinitUndefined();     break;            //
+         case UR_REMOVE     : error = onDeinitRemove();        break;            //
+         case UR_RECOMPILE  : error = onDeinitRecompile();     break;            //
          // build > 509                                                          //
-         case UR_TEMPLATE   : error = onDeinitTemplate();        break;          //
-         case UR_INITFAILED : error = onDeinitFailed();          break;          //
-         case UR_CLOSE      : error = onDeinitClose();           break;          //
+         case UR_TEMPLATE   : error = onDeinitTemplate();      break;            //
+         case UR_INITFAILED : error = onDeinitFailed();        break;            //
+         case UR_CLOSE      : error = onDeinitClose();         break;            //
                                                                                  //
          default:                                                                //
             CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
@@ -760,7 +760,7 @@ int onDeinit()
  *
  * @return int - error status
  *
-int onDeinitParameterChange()
+int onDeinitParameters()
    return(NO_ERROR);
 }
 

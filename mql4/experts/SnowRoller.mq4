@@ -2604,7 +2604,7 @@ bool     last.ShowProfitInPercent;
 
 /**
  * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitChartChange() and onDeinitParameterChange().
+ * function and can be restored in init(). Called only from onDeinitChartChange() and onDeinitParameters().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()

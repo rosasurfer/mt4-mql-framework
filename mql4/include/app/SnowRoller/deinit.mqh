@@ -4,7 +4,7 @@
  *
  * @return int - error status
  */
-int onDeinitParameterChange() {
+int onDeinitParameters() {
    BackupInputs();
    return(-1);                                                    // -1: skip all other deinit tasks
 }

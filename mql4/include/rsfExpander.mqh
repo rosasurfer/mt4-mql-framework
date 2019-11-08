@@ -154,7 +154,7 @@
    int      onDeinitAccountChange();
    int      onDeinitChartChange();
    int      onDeinitChartClose();
-   int      onDeinitParameterChange();
+   int      onDeinitParameters();
    int      onDeinitRecompile();
    int      onDeinitRemove();
    int      onDeinitUndefined();

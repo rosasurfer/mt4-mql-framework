@@ -93,7 +93,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameterChange()
+   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameters()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
