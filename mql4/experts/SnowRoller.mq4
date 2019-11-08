@@ -3241,8 +3241,8 @@ bool SaveSequence() {
    string lines[]; ArrayResize(lines, 0);
    ArrayPushString(lines, /*string  */ "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
    ArrayPushString(lines, /*string  */ "Symbol="                + Symbol()              );
-   ArrayPushString(lines, /*string  */ "Created="               + sequence.created      );
    ArrayPushString(lines, /*string  */ "Sequence.ID="           + Sequence.ID           );
+   ArrayPushString(lines, /*string  */ "Created="               + sequence.created      );
    ArrayPushString(lines, /*string  */ "GridDirection="         + GridDirection         );
    ArrayPushString(lines, /*int     */ "GridSize="              + GridSize              );
    ArrayPushString(lines, /*double  */ "LotSize="+    NumberToStr(LotSize, ".+")        );
@@ -3362,11 +3362,11 @@ bool LoadSequence() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Created", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Sequence.ID", "Created", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer
                      "Symbol"                  ,                        //  nicht vollständig in einer einzigen Zeile steht.
-                     "Created"                 ,
                      "Sequence.ID"             ,
+                     "Created"                 ,
                      "GridDirection"           ,
                      "GridSize"                ,
                      "LotSize"                 ,
@@ -3413,10 +3413,6 @@ bool LoadSequence() {
          if (value != Symbol())                  return(_false(catch("LoadSequence(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
-      else if (key == "Created") {
-         sequence.created = value;
-         ArrayDropString(keys, key);
-      }
       else if (key == "Sequence.ID") {
          value = StrToUpper(value);
          if (StrLeft(value, 1) == "T") {
@@ -3425,6 +3421,10 @@ bool LoadSequence() {
          }
          if (value != ""+ sequence.id)           return(_false(catch("LoadSequence(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
+         ArrayDropString(keys, key);
+      }
+      else if (key == "Created") {
+         sequence.created = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridDirection") {
