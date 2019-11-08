@@ -132,7 +132,7 @@ string   stop.profitPct.description = "";
 // --- session break management ------------
 datetime sessionbreak.starttime;
 datetime sessionbreak.endtime;
-bool     sessionbreak.waiting;                     // whether the sequence waits to resume during and after a session break
+bool     sessionbreak.waiting;                     // whether the sequence waits to resume during or after a session break
 
 // --- grid base management ----------------
 double   grid.base;                                // current grid base
