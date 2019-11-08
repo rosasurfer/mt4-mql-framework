@@ -85,7 +85,7 @@ string   statusFile      = "";                     // filename of the status fil
 string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
 
 // --- start conditions (AND combined) -----
-bool     start.conditions;                         // whether a start condition is active
+bool     start.conditions;                         // whether any start condition is active
 
 bool     start.trend.condition;
 string   start.trend.indicator   = "";
@@ -130,9 +130,9 @@ double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
 // --- session break management ------------
-bool     sessionbreak.active;                      // whether the sequence waits to resume due to a session break
-datetime sessionbreak.starttime;                   // (during and after a session break)
+datetime sessionbreak.starttime;
 datetime sessionbreak.endtime;
+bool     sessionbreak.waiting;                     // whether the sequence waits to resume during and after a session break
 
 // --- grid base management ----------------
 double   grid.base;                                // current grid base
@@ -306,7 +306,7 @@ bool StartSequence(int signal) {
    if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name + ifString(sequence.level, " at level "+ Abs(sequence.level), ""));
 
    // configure/deactivate start conditions
-   sessionbreak.active   = false;
+   sessionbreak.waiting  = false;
    start.price.condition = false;
    start.time.condition  = false;
    start.trend.condition = (start.trend.condition && AutoResume);
@@ -524,8 +524,8 @@ bool StopSequence(int signal) {
 
    switch (signal) {
       case SIGNAL_SESSIONBREAK:                          // implies auto-resume and ignores all other conditions
-         sessionbreak.active = (entryStatus == STATUS_PROGRESSING);
-         sequence.status     = STATUS_WAITING;
+         sessionbreak.waiting = (entryStatus == STATUS_PROGRESSING);
+         sequence.status      = STATUS_WAITING;
          break;
 
       case SIGNAL_TREND:                                 // auto-resume if enabled and StartCondition is @trend
@@ -607,7 +607,7 @@ bool ResumeSequence(int signal) {
    if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
    // configure/deactivate start conditions
-   sessionbreak.active   = false;
+   sessionbreak.waiting  = false;
    start.price.condition = false;
    start.time.condition  = false;
    start.trend.condition = (start.trend.condition && AutoResume);
@@ -1080,7 +1080,7 @@ int IsStartSignal() {
    bool triggered, resuming = (sequence.maxLevel != 0);
 
    // -- sessionbreak: wait for the stop price to be reached ----------------------------------------------------------------
-   if (sessionbreak.active) {
+   if (sessionbreak.waiting) {
       double price = sequence.stop.price[ArraySize(sequence.stop.price)-1];
       if (sequence.direction == D_LONG) triggered = (Ask <= price);
       else                              triggered = (Bid >= price);
@@ -3205,7 +3205,7 @@ bool SaveSequence() {
 
    bool     start.*.condition;            // nein: wird aus StartConditions abgeleitet
    bool     stop.*.condition;             // nein: wird aus StopConditions abgeleitet
-   bool     sessionbreak.active;          // ja
+   bool     sessionbreak.waiting;         // ja
 
    double   grid.base;                    // nein: wird aus Gridbase-History restauriert
    int      grid.base.event[];            // ja
@@ -3273,7 +3273,7 @@ bool SaveSequence() {
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values));
       if (sequence.status==STATUS_WAITING)
-   ArrayPushString(lines, /*int*/    "rt.sessionbreak="         + sessionbreak.active);
+   ArrayPushString(lines, /*int*/    "rt.sessionbreak.waiting=" + sessionbreak.waiting);
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels));
       if (ArraySize(ignorePendingOrders) > 0)
@@ -3543,7 +3543,7 @@ bool LoadSequence.RuntimeStatus(string file, string line, string key, string val
    double   rt.sequence.maxDrawdown=-127.80
    string   rt.sequence.starts=1|1328701713|1.32677|1000, 2|1329999999|1.33215|1200
    string   rt.sequence.stops=3|1328701999|1.32734|1200, 0|0|0|0
-   int      rt.sessionbreak=1
+   int      rt.sessionbreak.waiting=1
    string   rt.sequence.missedLevels=-6,-7,-8,-14
    string   rt.ignorePendingOrders=66064890,66064891,66064892
    string   rt.ignoreOpenPositions=66064890,66064891,66064892
@@ -3675,9 +3675,9 @@ bool LoadSequence.RuntimeStatus(string file, string line, string key, string val
       }
       ArrayDropString(keys, key);
    }
-   else if (key == "rt.sessionbreak") {
-      if (!StrIsDigit(value))                                               return(_false(catch("LoadSequence.RuntimeStatus(27)  illegal sessionbreak status \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      sessionbreak.active = (StrToInteger(value));
+   else if (key == "rt.sessionbreak.waiting") {
+      if (!StrIsDigit(value))                                               return(_false(catch("LoadSequence.RuntimeStatus(27)  illegal sessionbreak waiting status \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      sessionbreak.waiting = (StrToInteger(value));
    }
    else if (key == "rt.sequence.missedLevels") {
       // rt.sequence.missedLevels=-6,-7,-8,-14
@@ -4095,8 +4095,8 @@ bool SynchronizeStatus() {
    }
 
    // validate sessionbreak status
-   if (sessionbreak.active) /*&&*/ if (sequence.status!=STATUS_WAITING)
-      return(_false(catch("SynchronizeStatus(10)  sessionbreak.active="+ sessionbreak.active +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
+   if (sessionbreak.waiting) /*&&*/ if (sequence.status!=STATUS_WAITING)
+      return(_false(catch("SynchronizeStatus(10)  sessionbreak.waiting="+ sessionbreak.waiting +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
 
    // permanente Statusänderungen speichern
    if (permanentStatusChange)
