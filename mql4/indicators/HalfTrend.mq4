@@ -5,7 +5,7 @@
  * The indicator is similar to the SuperTrend indicator which uses a slightly different channel calculation and trend logic.
  *
  * Indicator buffers for iCustom():
- *  • HalfTrend.MODE_SR:    SR values
+ *  • HalfTrend.MODE_MAIN:  main SR values
  *  • HalfTrend.MODE_TREND: trend direction and length
  *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
@@ -49,7 +49,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_chart_window
 #property indicator_buffers   6
 
-#define MODE_MAIN             HalfTrend.MODE_SR          // indicator buffer ids
+#define MODE_MAIN             HalfTrend.MODE_MAIN        // indicator buffer ids
 #define MODE_TREND            HalfTrend.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
