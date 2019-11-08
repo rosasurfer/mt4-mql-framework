@@ -3,16 +3,25 @@
  *
  *
  * With default settings this EA is only a trade manager and not a complete system. Start and stop conditions are defined
- * manually and the EA manages the resulting trades in a pyramiding way.
- *
- * Theoretical background and proof-of-concept were provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
+ * manually and the EA manages the resulting trades in a pyramiding way. Theoretical background and proof-of-concept were
+ * provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
+ * 7bit: "The statement looks indeed amazing and I have tripled my live account during the last 3 months..."
+ *       (edit: that's 44%/month or 10%/week)
+ *  @see https://www.forexfactory.com/showthread.php?p=3788747#post3788747
+ *  @see https://www.forexfactory.com/showthread.php?p=3792045#post3792045
+ *
+ * 7bit: "The only thing I can tell you is to be careful with your lot size. Never use more than leverage 1 for the initial
+ *       level (0.01 lot per $1000 account size). Trade only one direction at a time, this is better for your psychology."
+ *  @see https://www.forexfactory.com/showthread.php?p=3973581#post3973581
+ *
  * The EA is not FIFO conforming, and will never be. A description of program actions, events and status changes is appended
  * at the end of this file.
+ *
  *
  * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
  */
@@ -23,7 +32,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";
+extern string   Sequence.ID            = "";                      // sequence to load from a status file (default: empty)
 extern string   GridDirection          = "Long | Short";          // no bi-directional mode
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
@@ -37,9 +46,6 @@ extern bool     ShowProfitInPercent    = true;                    // whether PL 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
- * Input parameters:
- */
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfHistory.mqh>
