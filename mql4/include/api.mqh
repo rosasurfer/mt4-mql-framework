@@ -663,7 +663,7 @@ int      onDeinitChartChange();;
 int      onDeinitChartClose();;
 int      onDeinitClose();;
 int      onDeinitFailed();;
-int      onDeinitParameterChange();;
+int      onDeinitParameters();;
 int      onDeinitRecompile();;
 int      onDeinitRemove();;
 int      onDeinitTemplate();;
