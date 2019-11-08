@@ -2,18 +2,17 @@
  * SnowRoller - a pyramiding trade manager
  *
  *
- * With default settings this EA is just a trade manager and not a complete system. Start and stop conditions are defined
+ * With default settings this EA is only a trade manager and not a complete system. Start and stop conditions are defined
  * manually and the EA manages the resulting trades in a pyramiding way.
  *
- * Theoretical background and proof-of-concept are provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
+ * Theoretical background and proof-of-concept were provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * This EA is not FIFO conforming, and will never be. A description of program actions, events and status changes is appended
+ * The EA is not FIFO conforming, and will never be. A description of program actions, events and status changes is appended
  * at the end of this file.
- *
  *
  * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
  */
@@ -32,12 +31,15 @@ extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
 extern bool     AutoResume             = false;                   // whether to automatically re-activate a trend StartCondition after StopSequence()
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT (the date part is ignored)
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT (the date part is ignored)
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the date part is ignored
 extern bool     ShowProfitInPercent    = true;                    // whether PL values are displayed absolutely or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Input parameters:
+ */
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfHistory.mqh>
