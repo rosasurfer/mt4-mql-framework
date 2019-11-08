@@ -11,18 +11,19 @@
  * The indicator is similar to the HalfTrend indicator which uses a slightly different channel calculation and trend logic.
  *
  * Indicator buffers for iCustom():
- *  • SuperTrend.MODE_SR:    SR values
+ *  • SuperTrend.MODE_MAIN:  main SR values
  *  • SuperTrend.MODE_TREND: trend direction and length
  *    - trend direction:      positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:         the absolute direction value is the length of the trend in bars since the last reversal
  *
+ * @see  https://financestrategysystem.com/supertrend-tradestation-and-multicharts/
  * @see  http://www.forexfactory.com/showthread.php?t=214635  (Andrew Forex Trading System)
  * @see  http://www.forexfactory.com/showthread.php?t=268038  (Plateman's CCI aka SuperTrend)
  * @see  mql4/indicators/HalfTrend.mq4
  *
- * Notes: In the above links a CCI is used to get the SMA component for averaging price. Here the CCI is replaced and the SMA
- *        is directly used. The defining element for the final indicator result is the ATR channel, exact price has only
- *        negligible impact. Therefore the original SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
+ * Notes: In the above FF links a CCI is used to get the SMA component for averaging price. Here the CCI is replaced and the
+ *        SMA is used directly. The defining element for the indicator result is the ATR channel, not exact price or the SMA.
+ *        Therefore the original SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -62,7 +63,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_chart_window
 #property indicator_buffers   7
 
-#define MODE_MAIN             SuperTrend.MODE_SR         // indicator buffer ids
+#define MODE_MAIN             SuperTrend.MODE_MAIN       // indicator buffer ids
 #define MODE_TREND            SuperTrend.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3

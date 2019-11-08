@@ -343,7 +343,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define Fisher.MODE_MAIN               0        // Fisher Transform main line
 #define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
 
-#define HalfTrend.MODE_SR              0        // HalfTrend SR line
+#define HalfTrend.MODE_MAIN            0        // HalfTrend SR line
 #define HalfTrend.MODE_TREND           1        // HalfTrend trend direction and length
 
 #define MACD.MODE_MAIN                 0        // MACD main line
@@ -360,7 +360,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length
 
-#define SuperTrend.MODE_SR             0        // SuperTrend SR line
+#define SuperTrend.MODE_MAIN           0        // SuperTrend SR line
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
 
