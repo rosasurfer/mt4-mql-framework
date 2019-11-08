@@ -179,8 +179,8 @@ int CreateStatusBox() {
 
 
 /**
- * Backup input parameter related status variables before parameter changes. In case of input errors the variables can be
- * restored afterwards. Called only from onInitParameters().
+ * Backup status variables depending on input parameters before parameter changes. In case of input errors the variables can
+ * be restored afterwards. Called only from onInitParameters().
  */
 void BackupInputStatus() {
    CopyInputStatus(true);
@@ -188,7 +188,7 @@ void BackupInputStatus() {
 
 
 /**
- * Restore input parameter related status variables. Called only from onInitParameters().
+ * Restore status variables depending on input parameters. Called only from onInitParameters().
  */
 void RestoreInputStatus() {
    CopyInputStatus(false);
@@ -196,8 +196,8 @@ void RestoreInputStatus() {
 
 
 /**
- * Backup or restore input parameter related status variables. These are all those variables which change if one or more
- * input parameters change. Or in other words, all variables modified by ValidateInputs().
+ * Backup or restore status variables depending on input parameters. These are all variables which change if an input
+ * parameter changes.
  *
  * @param  bool store - TRUE:  copy global values to internal storage (backup)
  *                      FALSE: copy internal values to global storage (restore)
