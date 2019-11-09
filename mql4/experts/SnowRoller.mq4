@@ -1481,7 +1481,7 @@ bool UpdatePendingOrders() {
    }
 
    if (limitOrders > 0) {
-      sMissedLevels = StrRight(sMissedLevels, -2); SS.MissedLevels();
+      sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
       if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
    }
    UpdateProfitTargets();
@@ -2496,7 +2496,7 @@ bool RestoreChartStatus() {
 
       if (StrStartsWith(sValue, "T")) {
          sequence.isTest = true;
-         sValue = StrRight(sValue, -1);
+         sValue = StrSubstr(sValue, 1);
       }
       int iValue = StrToInteger(sValue);
       if (!iValue) {
@@ -2651,25 +2651,24 @@ bool ValidateInputs.ID(bool interactive) {
    if (isParameterChange)
       interactive = true;
 
-   string strValue = StrToUpper(StrTrim(Sequence.ID));
+   string sValue = StrToUpper(StrTrim(Sequence.ID));
 
-   if (!StringLen(strValue))
+   if (!StringLen(sValue))
       return(false);
 
-   if (StrLeft(strValue, 1) == "T") {
+   if (StrLeft(sValue, 1) == "T") {
       sequence.isTest = true;
-      strValue = StrRight(strValue, -1);
+      sValue = StrSubstr(sValue, 1);
    }
-   if (!StrIsDigit(strValue))
+   if (!StrIsDigit(sValue))
       return(_false(ValidateInputs.OnError("ValidateInputs.ID(1)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
 
-   int iValue = StrToInteger(strValue);
+   int iValue = StrToInteger(sValue);
    if (iValue < SID_MIN || iValue > SID_MAX)
       return(_false(ValidateInputs.OnError("ValidateInputs.ID(2)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
 
-   sequence.id   = iValue; SS.SequenceId();
-   Sequence.ID   = ifString(IsTestSequence(), "T", "") + sequence.id;
-   sequence.name = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+   sequence.id = iValue; SS.SequenceId();
+   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
    SetCustomLog(sequence.id, NULL);
 
    return(true);
@@ -3068,7 +3067,7 @@ bool ResolveStatusLocation() {
       return(!catch("ResolveStatusLocation(1)  status file not found", ERR_FILE_NOT_FOUND));
    }
 
-   statusDirectory = StrRight(directory, -StringLen(filesDirectory));
+   statusDirectory = StrSubstr(directory, StringLen(filesDirectory));
    statusFile      = file;
    return(true);
 }
@@ -3414,7 +3413,7 @@ bool LoadSequence() {
          value = StrToUpper(value);
          if (StrLeft(value, 1) == "T") {
             sequence.isTest = true;
-            value = StrRight(value, -1);
+            value = StrSubstr(value, 1);
          }
          if (value != ""+ sequence.id)           return(_false(catch("LoadSequence(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
@@ -3766,7 +3765,7 @@ bool LoadSequence.RuntimeStatus(string file, string line, string key, string val
    else if (StrStartsWith(key, "rt.order.")) {
       // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
       // Orderindex
-      string strIndex = StrRight(key, -9);
+      string strIndex = StrSubstr(key, 9);
       if (!StrIsDigit(strIndex))                                            return(_false(catch("LoadSequence.RuntimeStatus(44)  illegal order index \""+ key +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       i = StrToInteger(strIndex);
       if (ArraySize(orders.ticket) > i) /*&&*/ if (orders.ticket[i]!=0)     return(_false(catch("LoadSequence.RuntimeStatus(45)  duplicate order index "+ key +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));

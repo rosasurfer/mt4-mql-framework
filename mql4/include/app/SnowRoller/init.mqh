@@ -11,9 +11,10 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (LoadSequence())
+      if (LoadSequence()) {
          if (ValidateInputs(interactive))
             SynchronizeStatus();
+      }
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
