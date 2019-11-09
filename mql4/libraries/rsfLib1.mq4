@@ -5595,7 +5595,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
             }
             if (!remainder) {
                if (!StrStartsWithI(OrderComment(), "to #")) return(_false(Order.HandleError("OrderCloseEx(30)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(31)")));
-               sValue1 = StrRight(OrderComment(), -4);
+               sValue1 = StrSubstr(OrderComment(), 4);
                if (!StrIsDigit(sValue1))                    return(_false(Order.HandleError("OrderCloseEx(32)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(33)")));
                remainder = StrToInteger(sValue1);
                if (!remainder)                              return(_false(Order.HandleError("OrderCloseEx(34)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(35)")));
