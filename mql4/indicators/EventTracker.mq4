@@ -222,10 +222,10 @@ bool Configure() {
          }
          else if (StrStartsWith(sValue, "THIS")) {
             signal.bar = 0;
-            sValue     = StrTrim(StrRight(sValue, -4));
+            sValue     = StrTrim(StrSubstr(sValue, 4));
 
-            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrRight(sValue, -1));       // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
+            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrSubstr(sValue, 1));       // ein "-" vorn abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft(sValue, -1));        // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -245,9 +245,9 @@ bool Configure() {
          }
          else if (StrStartsWith(sValue, "LAST")) {
             signal.bar = 1;
-            sValue     = StrTrim(StrRight(sValue, -4));
+            sValue     = StrTrim(StrSubstr(sValue, 4));
 
-            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrRight(sValue, -1));       // ein "-" vorn abschneiden
+            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrSubstr(sValue, 1));       // ein "-" vorn abschneiden
             if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
@@ -273,10 +273,10 @@ bool Configure() {
                if ('0'<=char && char<='9') sDigits = StrLeft(sValue, j+1);
                else                        break;
             }
-            sValue     = StrTrim(StrRight(sValue, -j));                                         // Zahl vorn abschneiden
+            sValue     = StrTrim(StrSubstr(sValue, j));                                         // Zahl vorn abschneiden
             signal.bar = StrToInteger(sDigits);
 
-            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrRight(sValue, -1));             // ein "-" vorn abschneiden
+            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrSubstr(sValue, 1));             // ein "-" vorn abschneiden
             if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft (sValue, -1));             // ein "s" hinten abschneiden
 
             // Timeframe des Strings parsen
@@ -443,9 +443,9 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
             else                        break;
          }
          int iValue = StrToInteger(sDigits);
-         value = StrToUpper(StrTrim(StrRight(value, -j)));                                // Zahl vorn abschneiden
+         value = StrToUpper(StrTrim(StrSubstr(value, j)));                                // Zahl vorn abschneiden
 
-         if (StrStartsWith(value, "-")) value = StrTrim(StrRight(value, -1));             // ein "-" vorn abschneiden
+         if (StrStartsWith(value, "-")) value = StrTrim(StrSubstr(value, 1));             // ein "-" vorn abschneiden
          if (StrEndsWith  (value, "S")) value = StrTrim(StrLeft (value, -1));             // ein "s" hinten abschneiden
 
          if      (value == "MINUTE") iValue *=    MINUTES;

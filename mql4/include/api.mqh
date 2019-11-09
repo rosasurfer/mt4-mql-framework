@@ -239,7 +239,7 @@ string   StrRight(string value, int n);;
 string   StrRightFrom(string value, string substring, int count = 1);;
 string   StrRightPad(string input, int pad_length, string pad_string = " ");;
 bool     StrStartsWithI(string object, string prefix);;
-string   StrSubstr(string object, int start, int length = INT_MAX);;
+string   StrSubstr(string str, int start, int length = INT_MAX);;
 bool     StrToBool(string value);;
 string   StrToHexStr(string value);;
 string   StrToLower(string value);;
