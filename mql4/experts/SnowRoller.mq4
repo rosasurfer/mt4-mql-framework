@@ -31,9 +31,9 @@ extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
 extern bool     AutoResume             = false;                   // whether to automatically re-activate a trend StartCondition after StopSequence()
+extern bool     ShowProfitInPercent    = true;                    // whether PL values are displayed absolutely or in percent
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the date part is ignored
-extern bool     ShowProfitInPercent    = true;                    // whether PL values are displayed absolutely or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2210,25 +2210,25 @@ int ShowStatus(int error = NO_ERROR) {
    switch (sequence.status) {
       case STATUS_UNDEFINED:   msg = " not initialized"; break;
       case STATUS_WAITING:           if (sequence.maxLevel != 0) sAtLevel = StringConcatenate(" at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")");
-                               msg = StringConcatenate("  ", Sequence.ID, " waiting", sAtLevel); break;
-      case STATUS_STARTING:    msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STOPPING:    msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STOPPED:     msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+                               msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " waiting", sAtLevel); break;
+      case STATUS_STARTING:    msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPING:    msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
       default:
          return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME(), msg, sError,                                                  NL,
-                                                                                                   NL,
-                           "Grid:              ", GridSize, " pip", sGridbase, sSequenceDirection, NL,
-                           "LotSize:          ",  sLotSize, sSequenceProfitPerLevel,               NL,
-                           "Start:             ", sStartConditions,                                NL,
-                           "Stop:              ", sStopConditions,                                 NL,
-                           sAutoResume,                                     // if set it ends with NL,
-                           "Stops:             ", sSequenceStops, sSequenceStopsPL,                NL,
-                           "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats,               NL,
-                           "Breakeven: ",                                                          NL);
+   msg = StringConcatenate(__NAME(), msg, sError,                                    NL,
+                                                                                     NL,
+                           "Grid:              ", GridSize, " pip", sGridbase,       NL,
+                           "LotSize:          ",  sLotSize, sSequenceProfitPerLevel, NL,
+                           "Start:             ", sStartConditions,                  NL,
+                           "Stop:              ", sStopConditions,                   NL,
+                           sAutoResume,                       // if set it ends with NL,
+                           "Stops:             ", sSequenceStops, sSequenceStopsPL,  NL,
+                           "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats, NL,
+                           "Breakeven: ",                                            NL);
 
    // 3 lines margin-top for instrument and indicator legend
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -2299,7 +2299,7 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-   sSequenceDirection = "  ("+ StrToLower(TradeDirectionDescription(sequence.direction)) +")";
+   sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
 }
 
 
@@ -2594,9 +2594,9 @@ int      last.StartLevel;
 string   last.StartConditions;
 string   last.StopConditions;
 bool     last.AutoResume;
+bool     last.ShowProfitInPercent;
 datetime last.Sessionbreak.StartTime;
 datetime last.Sessionbreak.EndTime;
-bool     last.ShowProfitInPercent;
 
 
 /**
@@ -2613,9 +2613,9 @@ void BackupInputs() {
    last.StartConditions        = StringConcatenate(StartConditions, "");
    last.StopConditions         = StringConcatenate(StopConditions,  "");
    last.AutoResume             = AutoResume;
+   last.ShowProfitInPercent    = ShowProfitInPercent;
    last.Sessionbreak.StartTime = Sessionbreak.StartTime;
    last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
-   last.ShowProfitInPercent    = ShowProfitInPercent;
 }
 
 
@@ -2631,9 +2631,9 @@ void RestoreInputs() {
    StartConditions        = last.StartConditions;
    StopConditions         = last.StopConditions;
    AutoResume             = last.AutoResume;
+   ShowProfitInPercent    = last.ShowProfitInPercent;
    Sessionbreak.StartTime = last.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
-   ShowProfitInPercent    = last.ShowProfitInPercent;
 }
 
 
@@ -2943,13 +2943,13 @@ bool ValidateInputs(bool interactive) {
    // AutoResume
    if (AutoResume && !start.trend.condition)            return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StartConditions for AutoResume = "+ DoubleQuoteStr(StartConditions), interactive)));
 
+   // ShowProfitInPercent: nothing to validate
+
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
       sessionbreak.endtime   = NULL;                    // real times are updated automatically on next use
    }
-
-   // ShowProfitInPercent: nothing to validate
 
    // reset __STATUS_INVALID_INPUT
    if (interactive)
@@ -3247,9 +3247,9 @@ bool SaveSequence() {
    ArrayPushString(lines, /*string  */ "StartConditions="       + StartConditions       );
    ArrayPushString(lines, /*string  */ "StopConditions="        + StopConditions        );
    ArrayPushString(lines, /*bool    */ "AutoResume="            + AutoResume            );
+   ArrayPushString(lines, /*bool    */ "ShowProfitInPercent="   + ShowProfitInPercent   );
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
-   ArrayPushString(lines, /*bool    */ "ShowProfitInPercent="   + ShowProfitInPercent   );
 
    // Laufzeit-Variablen
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
@@ -3371,9 +3371,9 @@ bool LoadSequence() {
                      "StartConditions"         ,
                      "StopConditions"          ,
                      "AutoResume"              ,
+                   //"ShowProfitInPercent"     ,                        // optional
                      "Sessionbreak.StartTime"  ,
                      "Sessionbreak.EndTime"    ,
-                   //"ShowProfitInPercent"     ,                        // optional
                      ---------------------------
                      "rt.sequence.startEquity" ,
                      "rt.sequence.maxProfit"   ,
@@ -3457,19 +3457,19 @@ bool LoadSequence() {
          AutoResume = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
-      else if (key == "Sessionbreak.StartTime") {
+      else if (key == "ShowProfitInPercent") {
          if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         ShowProfitInPercent = _bool(StrToInteger(value));
+         ArrayDropString(keys, key);
+      }
+      else if (key == "Sessionbreak.StartTime") {
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sessionbreak.StartTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.EndTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         Sessionbreak.EndTime = StrToInteger(value);
-         ArrayDropString(keys, key);
-      }
-      else if (key == "ShowProfitInPercent") {
          if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(13)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         ShowProfitInPercent = _bool(StrToInteger(value));
+         Sessionbreak.EndTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
    }
@@ -5355,9 +5355,9 @@ string InputsToStr() {
                             "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
                             "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
                             "AutoResume=",             BoolToStr(AutoResume),                        ";", NL,
+                            "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
                             "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
-                            "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";", NL,
-                            "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";")
+                            "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
    );
 }
 
