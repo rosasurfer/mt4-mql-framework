@@ -10,15 +10,6 @@
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * 7bit: "The statement looks indeed amazing and I have tripled my live account during the last 3 months..."
- *       (edit: that's 44%/month or 10%/week)
- *  @see https://www.forexfactory.com/showthread.php?p=3788747#post3788747
- *  @see https://www.forexfactory.com/showthread.php?p=3792045#post3792045
- *
- * 7bit: "The only thing I can tell you is to be careful with your lot size. Never use more than leverage 1 for the initial
- *       level (0.01 lot per $1000 account size). Trade only one direction at a time, this is better for your psychology."
- *  @see https://www.forexfactory.com/showthread.php?p=3973581#post3973581
- *
  * The EA is not FIFO conforming, and will never be. A description of program actions, events and status changes is appended
  * at the end of this file.
  *
@@ -32,7 +23,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                      // sequence to load from a status file (default: empty)
+extern string   Sequence.ID            = "";                      // sequence to load from a status file
 extern string   GridDirection          = "Long | Short";          // no bi-directional mode
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
