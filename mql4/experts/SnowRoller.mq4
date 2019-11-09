@@ -2328,39 +2328,44 @@ void SS.LotSize() {
 
 
 /**
- * ShowStatus(): Update the string representation of input parameters "StartConditions" and "StopConditions".
+ * ShowStatus(): Update the string representation of the configured start/stop conditions.
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
 
+   // start conditions (time before price))
    string sValue = "";
-   if (start.price.description!="" || start.time.description!="") {
-      if (start.price.description != "") {
-         sValue = ifString(start.price.condition, "@", "!") + start.price.description;
-      }
+   if (start.time.description!="" || start.price.description!="") {
       if (start.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " && ") + ifString(start.time.condition, "@", "!") + start.time.description;
+         sValue = ifString(start.time.condition, "@", "!") + start.time.description;
+      }
+      if (start.price.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " && ") + ifString(start.price.condition, "@", "!") + start.price.description;
       }
    }
    if (start.trend.description != "") {
-      if (start.price.description!="" && start.time.description!="") {
+      if (start.time.description!="" && start.price.description!="") {
          sValue = "("+ sValue +")";
       }
-      if (start.price.description!="" || start.time.description!="") {
+      if (start.time.description!="" || start.price.description!="") {
          sValue = sValue +" || ";
       }
       sValue = sValue + ifString(start.trend.condition, "@", "!") + start.trend.description;
    }
+   if (sessionbreak.waiting) {
+      if (sValue != "") sValue = "  ("+ sValue+")";
+      sValue = "sessionbreak"+ sValue;
+   }
    if (sValue == "") sStartConditions = "-";
    else              sStartConditions = sValue;
-   StartConditions = sValue;
 
+   // stop conditions (time before price))
    sValue = "";
-   if (stop.price.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
-   }
    if (stop.time.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+   }
+   if (stop.price.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
    }
    if (stop.profitAbs.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
@@ -2374,6 +2379,9 @@ void SS.StartStopConditions() {
    if (sValue == "") sStopConditions = "-";
    else              sStopConditions = sValue;
    StopConditions = sValue;
+
+   // also update the input parameters which are used by SaveSequence()
+   UpdateStartStopInputs();
 }
 
 
@@ -2688,7 +2696,7 @@ bool ValidateInputs(bool interactive) {
    interactive = interactive!=0;
    if (IsLastError()) return(false);
 
-   bool isParameterChange = (ProgramInitReason() == IR_PARAMETERS);  // otherwise inputs have been applied programmatically
+   bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
    if (isParameterChange)
       interactive = true;
 
@@ -2836,8 +2844,7 @@ bool ValidateInputs(bool interactive) {
 
          start.conditions = true;                       // im Erfolgsfall ist start.conditions aktiviert
       }
-      if (start.conditions) StartConditions = JoinStrings(exprs, " && ");
-      else                  StartConditions = "";
+      // the input parameter is rewritten later, @see UpdateStartStopInputs()
    }
 
    // StopConditions, OR combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
@@ -2936,7 +2943,7 @@ bool ValidateInputs(bool interactive) {
          }
          else                                           return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
-      StopConditions = JoinStrings(exprs, " || ");
+      // the input parameter is rewritten later, @see UpdateStartStopInputs()
    }
 
    // AutoResume
@@ -3151,7 +3158,7 @@ int CreateEventId() {
 
 
 /**
- * Store the current sequence status in a file. A sequence can be reloaded from such a file (e.g. on terminal restart).
+ * Store the current sequence status to a file. A sequence can be reloaded from such a file (e.g. on terminal restart).
  *
  * @return bool - success status
  */
@@ -5330,6 +5337,54 @@ double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
       lastParams = params;
    }
    return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
+}
+
+
+/**
+ * Update the input parameters "StartConditions" and "StopConditions" to contain only active conditions. The updated parameters
+ * are written to the status file by SaveSequence().
+ */
+void UpdateStartStopInputs() {
+   string sValue = "";
+
+   // StartConditions (time before price)
+   if (start.conditions) {
+      if (start.time.condition) {
+         sValue = "@"+ start.time.description;
+      }
+      if (start.price.condition) {
+         sValue = sValue + ifString(sValue=="", "", " && ") +"@"+ start.price.description;
+      }
+      if (start.trend.condition) {
+         if (start.time.condition && start.price.condition) {
+            sValue = "("+ sValue +")";
+         }
+         if (start.time.condition || start.price.condition) {
+            sValue = sValue +" || ";
+         }
+         sValue = sValue +"@"+ start.trend.description;
+      }
+   }
+   StartConditions = sValue;
+
+   // StopConditions
+   sValue = "";
+   if (stop.time.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
+   }
+   if (stop.price.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
+   }
+   if (stop.profitAbs.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
+   }
+   if (stop.profitPct.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
+   }
+   if (stop.trend.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.trend.description;
+   }
+   StopConditions = sValue;
 }
 
 
