@@ -180,7 +180,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
       else if (name == "trigger") {
          if (StringLen(sValue) < 2)                                         return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
          if (!StrStartsWith(sValue, "\"") || !StrEndsWith(sValue, "\""))    return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
-         sValue = StrLeft(StrRight(sValue, -1), -1);
+         sValue = StrLeft(StrSubstr(sValue, 1), -1);
          if (StrContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
          _trigger = StrReplace(StrReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
       }
@@ -371,7 +371,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (4.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
-      log("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StrRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
+      log("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StrSubstr(overLeverageMsg, 2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
 
 
    // (5) Directions der Teilpositionen bestimmen
@@ -384,8 +384,8 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    // (6) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
       if ( StrStartsWith(comment, lfxCurrency)) comment = StrRightFrom(comment, lfxCurrency);
-      if ( StrStartsWith(comment, "."        )) comment = StrRight(comment, -1);
-      if ( StrStartsWith(comment, "#"        )) comment = StrRight(comment, -1);
+      if ( StrStartsWith(comment, "."        )) comment = StrSubstr(comment, 1);
+      if ( StrStartsWith(comment, "#"        )) comment = StrSubstr(comment, 1);
       if (!StrStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
    int    magicNumber = lo.Ticket(lo);
    double openPrice   = 1.0;
@@ -619,9 +619,9 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
 
 
    // (5) Logmessage ausgeben                                        // letzten Counter ermitteln
-   if (StrStartsWith(oldComment, lo.Currency(lo))) oldComment = StrRight(oldComment, -3);
-   if (StrStartsWith(oldComment, "."            )) oldComment = StrRight(oldComment, -1);
-   if (StrStartsWith(oldComment, "#"            )) oldComment = StrRight(oldComment, -1);
+   if (StrStartsWith(oldComment, lo.Currency(lo))) oldComment = StrSubstr(oldComment, 3);
+   if (StrStartsWith(oldComment, "."            )) oldComment = StrSubstr(oldComment, 1);
+   if (StrStartsWith(oldComment, "#"            )) oldComment = StrSubstr(oldComment, 1);
    int    counter  = StrToInteger(oldComment);
    string symbol.i = currency +"."+ counter;
 

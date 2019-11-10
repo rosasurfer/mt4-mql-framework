@@ -26,7 +26,7 @@ int onDeinit() {
  *
  * @return int - Fehlerstatus
  */
-int onDeinitParameterChange() {
+int onDeinitParameters() {
    // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
    if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.bCache, lfxOrders.dCache) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));

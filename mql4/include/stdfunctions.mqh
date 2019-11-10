@@ -88,7 +88,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       else {
          int pos = StringFind(name, "::");
          if (pos == -1) nameInstanceId = StringConcatenate(        name,       "(", logId, ")");
-         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
       }
 
       // log the error
@@ -109,7 +109,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);          // wrap message after the closing function brace
-         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
+         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
@@ -158,7 +158,7 @@ int warn(string message, int error=NO_ERROR) {
    if (logId != 0) {
       int pos = StringFind(name, "::");
       if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
-      else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+      else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
    }
    else              nameWithId = name;
 
@@ -181,7 +181,7 @@ int warn(string message, int error=NO_ERROR) {
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
+      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
@@ -234,7 +234,7 @@ int log(string message, int error = NO_ERROR) {
    if (logId != 0) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
-      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
    }
    Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));  // global Log: ggf. mit Instanz-ID
 
@@ -529,7 +529,7 @@ string StrReplace(string object, string search, string replace) {
    string result = "";
 
    while (found > -1) {
-      result = StringConcatenate(result, StringSubstrFix(object, from, found-from), replace);
+      result = StringConcatenate(result, StrSubstr(object, from, found-from), replace);
       from   = found + StringLen(search);
       found  = StringFind(object, search, from);
    }
@@ -563,27 +563,34 @@ string StrReplaceR(string object, string search, string replace) {
 
 
 /**
+ * Drop-in replacement for the flawed built-in function StringSubstr()
+ *
  * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
  * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
  *
- * @param  string object
+ * @param  string str
  * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
  * @param  int    length - wenn negativ, Anzahl der zurückzugebenden Zeichen links vom Startindex
  *
  * @return string
  */
-string StringSubstrFix(string object, int start, int length=INT_MAX) {
+string StrSubstr(string str, int start, int length = INT_MAX) {
    if (length == 0)
       return("");
 
    if (start < 0)
-      start = Max(0, start + StringLen(object));
+      start = Max(0, start + StringLen(str));
 
    if (length < 0) {
       start += 1 + length;
       length = Abs(length);
    }
-   return(StringSubstr(object, start, length));
+
+   if (length == INT_MAX) {
+      length = INT_MAX - start;        // start + length must not be larger than INT_MAX
+   }
+
+   return(StringSubstr(str, start, length));
 }
 
 
@@ -788,7 +795,7 @@ bool HandleEvent(int event) {
    string sResults[]; ArrayResize(sResults, 0);
 
    if (EventListener_ChartCommand(sResults))
-      return(onChartCommand(sResults));
+      return(onCommand(sResults));
    return(true);
 }
 
@@ -1941,8 +1948,8 @@ int CountDecimals(double number) {
  * @return string
  */
 string StrLeft(string value, int n) {
-   if (n > 0) return(StringSubstr   (value, 0, n                 ));
-   if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
+   if (n > 0) return(StrSubstr(value, 0, n                 ));
+   if (n < 0) return(StrSubstr(value, 0, StringLen(value)+n));
    return("");
 }
 
@@ -2053,7 +2060,7 @@ string StrRightFrom(string value, string substring, int count=1) {
             return("");
          count--;
       }
-      return(StrRight(value, -(pos + StringLen(substring))));
+      return(StrSubstr(value, pos+StringLen(substring)));
    }
 
 
@@ -2076,12 +2083,12 @@ string StrRightFrom(string value, string substring, int count=1) {
             start = pos+1;
             pos   = StringFind(value, substring, start);
          }
-         return(StrRight(value, -(start-1 + StringLen(substring))));
+         return(StrSubstr(value, start-1 + StringLen(substring)));
       }
 
       return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
       //pos = StringFindEx(value, substring, count);
-      //return(StrRight(value, -(pos + StringLen(substring))));
+      //return(StrSubstr(value, pos + StringLen(substring)));
    }
 
    // Anzahl == 0
@@ -2300,7 +2307,7 @@ bool StrIsPhoneNumber(string value) {
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
    if (StrStartsWith(s, "+" )) {
-      s = StrRight(s, -1);
+      s = StrSubstr(s, 1);
       if (StrStartsWith(s, "0")) return(false);
    }
 
@@ -2346,7 +2353,7 @@ int StrToMaMethod(string value, int execFlags=NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
-      str = StrRight(str, -5);
+      str = StrSubstr(str, 5);
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
@@ -3111,7 +3118,7 @@ string StrToHexStr(string value) {
 string StrCapitalize(string value) {
    if (!StringLen(value))
       return(value);
-   return(StringConcatenate(StrToUpper(StrLeft(value, 1)), StrRight(value, -1)));
+   return(StringConcatenate(StrToUpper(StrLeft(value, 1)), StrSubstr(value, 1)));
 }
 
 
@@ -3490,12 +3497,14 @@ int Tester.GetBarModel() {
 int Tester.Pause() {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (Tester.IsPaused())
+   if (!IsVisualModeFix())
       return(NO_ERROR);                                              // skipping
 
-   if (!IsScript())
-      if (__ExecutionContext[EC.programCoreFunction] == CF_DEINIT)
-         return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
+   if (!IsScript() && __ExecutionContext[EC.programCoreFunction]==CF_DEINIT)
+      return(NO_ERROR);                                              // SendMessage() darf in deinit() nicht mehr benutzt werden
+
+   if (Tester.IsPaused())
+      return(NO_ERROR);                                              // skipping
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd)
@@ -3559,7 +3568,8 @@ bool Tester.IsStopped() {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0) return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length == INT_MAX) return(_EMPTY_STR(catch("CreateString(2)  too large parameter length: INT_MAX", ERR_INVALID_PARAMETER)));
 
    if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
                                                                      // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
@@ -3768,9 +3778,9 @@ datetime TimeCurrentEx(string location="") {
 
 
 /**
- * Gibt die lesbare Konstante eines ModuleType-Flags zurück.
+ * Return a readable version of a module type flag.
  *
- * @param  int fType - ModuleType-Flag
+ * @param  int fType - combination of one or more module type flags
  *
  * @return string
  */
@@ -4538,7 +4548,7 @@ color NameToColor(string name) {
 
    name = StrToLower(name);
    if (StrStartsWith(name, "clr"))
-      name = StrRight(name, -3);
+      name = StrSubstr(name, 3);
 
    if (name == "none"             ) return(CLR_NONE         );
    if (name == "aliceblue"        ) return(AliceBlue        );
@@ -4979,7 +4989,7 @@ int StrToOperationType(string value) {
    }
    else {
       if (StrStartsWith(str, "OP_"))
-         str = StrRight(str, -3);
+         str = StrSubstr(str, 3);
       if (str == "BUY"       ) return(OP_BUY      );
       if (str == "SELL"      ) return(OP_SELL     );
       if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
@@ -5002,7 +5012,7 @@ int StrToOperationType(string value) {
 /**
  * Return the integer constant of a trade direction identifier.
  *
- * @param  string value     - trade directions: [TRADE_DIRECTIONS_][LONG|SHORT|BOTH]
+ * @param  string value     - trade directions: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
  * @param  int    execFlags - execution control: error flags to set silently (default: none)
  *
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
@@ -5010,17 +5020,17 @@ int StrToOperationType(string value) {
 int StrToTradeDirection(string value, int execFlags=NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
-      str = StrRight(str, -17);
+   if (StrStartsWith(str, "TRADE_DIRECTION_"))
+      str = StrSubstr(str, 17);
 
-   if (str ==                     "LONG" ) return(TRADE_DIRECTIONS_LONG);
-   if (str == ""+ TRADE_DIRECTIONS_LONG  ) return(TRADE_DIRECTIONS_LONG);
+   if (str ==                    "LONG" ) return(TRADE_DIRECTION_LONG);
+   if (str == ""+ TRADE_DIRECTION_LONG  ) return(TRADE_DIRECTION_LONG);
 
-   if (str ==                     "SHORT") return(TRADE_DIRECTIONS_SHORT);
-   if (str == ""+ TRADE_DIRECTIONS_SHORT ) return(TRADE_DIRECTIONS_SHORT);
+   if (str ==                    "SHORT") return(TRADE_DIRECTION_SHORT);
+   if (str == ""+ TRADE_DIRECTION_SHORT ) return(TRADE_DIRECTION_SHORT);
 
-   if (str ==                     "BOTH" ) return(TRADE_DIRECTIONS_BOTH);
-   if (str == ""+ TRADE_DIRECTIONS_BOTH  ) return(TRADE_DIRECTIONS_BOTH);
+   if (str ==                    "BOTH" ) return(TRADE_DIRECTION_BOTH);
+   if (str == ""+ TRADE_DIRECTION_BOTH  ) return(TRADE_DIRECTION_BOTH);
 
    if (!execFlags & F_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    else                                      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
@@ -5028,9 +5038,9 @@ int StrToTradeDirection(string value, int execFlags=NULL) {
 
 
 /**
- * Gibt die lesbare Konstante eines TradeCommands zurück.
+ * Return a readable version of a trade command.
  *
- * @param  int cmd - TradeCommand
+ * @param  int cmd - trade command
  *
  * @return string
  */
@@ -5177,7 +5187,7 @@ string NumberToStr(double value, string mask) {
    int dLeft = StringFind(outStr, ".");
    if (nLeft == -1) nLeft = dLeft;
    else             nLeft = Min(nLeft, dLeft);
-   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
+   outStr = StrSubstr(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
 
    // Dezimal-Separator anpassen
    if (swapSeparators)
@@ -5188,7 +5198,7 @@ string NumberToStr(double value, string mask) {
       string out1;
       i = nLeft;
       while (i > 3) {
-         out1 = StringSubstrFix(outStr, 0, i-3);
+         out1 = StrSubstr(outStr, 0, i-3);
          if (StringGetChar(out1, i-4) == ' ')
             break;
          outStr = StringConcatenate(out1, sepThousand, StringSubstr(outStr, i-3));
@@ -5198,7 +5208,7 @@ string NumberToStr(double value, string mask) {
 
    // Subpip-Separator einfügen
    if (nSubpip > 0)
-      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrRight(outStr, nRight-nSubpip));
+      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrSubstr(outStr, nSubpip-nRight));
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
@@ -5273,7 +5283,7 @@ string PeriodFlagsToStr(int flags) {
    if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
 
    if (StringLen(result) > 0)
-      result = StrRight(result, -1);
+      result = StrSubstr(result, 1);
    return(result);
 }
 
@@ -5295,7 +5305,7 @@ string HistoryFlagsToStr(int flags) {
    if (flags & HST_TIME_IS_OPENTIME     && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME"    );
 
    if (StringLen(result) > 0)
-      result = StrRight(result, -1);
+      result = StrSubstr(result, 1);
    return(result);
 }
 
@@ -5333,7 +5343,7 @@ int StrToPriceType(string value, int execFlags = NULL) {
    }
    else {
       if (StrStartsWith(str, "PRICE_"))
-         str = StrRight(str, -6);
+         str = StrSubstr(str, 6);
 
       if (str == "OPEN"            ) return(PRICE_OPEN    );
       if (str == "HIGH"            ) return(PRICE_HIGH    );
@@ -5379,9 +5389,9 @@ string MovingAverageMethodDescription(int method) {
 
 
 /**
- * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
+ * Return a readable version of a MovingAverage method.
  *
- * @param  int type - MA-Methode
+ * @param  int method
  *
  * @return string
  */
@@ -5405,9 +5415,9 @@ string MovingAverageMethodToStr(int method) {
 
 
 /**
- * Gibt die lesbare Konstante eines Price-Identifiers zurück.
+ * Return a readable version of a price type identifier.
  *
- * @param  int type - Price-Type
+ * @param  int type - price type
  *
  * @return string
  */
@@ -5462,7 +5472,7 @@ int StrToPeriod(string value, int execFlags=NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
-      str = StrRight(str, -7);
+      str = StrSubstr(str, 7);
 
    if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
    if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
@@ -5522,9 +5532,9 @@ string FileAccessModeToStr(int mode) {
 
 
 /**
- * Gibt die lesbare Konstante eines SwapCalculation-Modes zurück.
+ * Return a readable version of a swap calculation mode.
  *
- * @param  int mode - SwapCalculation-Mode
+ * @param  int mode
  *
  * @return string
  */
@@ -5770,8 +5780,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 bool SendSMS(string receiver, string message) {
    string _receiver = StrReplaceR(StrReplace(StrTrim(receiver), "-", ""), " ", "");
 
-   if      (StrStartsWith(_receiver, "+" )) _receiver = StrRight(_receiver, -1);
-   else if (StrStartsWith(_receiver, "00")) _receiver = StrRight(_receiver, -2);
+   if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
+   else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
    if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
    // (1) Zugangsdaten für SMS-Gateway holen
@@ -6599,7 +6609,6 @@ void __DummyCalls() {
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
-   StringSubstrFix(NULL, NULL);
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
@@ -6617,6 +6626,7 @@ void __DummyCalls() {
    StrRightFrom(NULL, NULL);
    StrRightPad(NULL, NULL);
    StrStartsWithI(NULL, NULL);
+   StrSubstr(NULL, NULL);
    StrToBool(NULL);
    StrToHexStr(NULL);
    StrToLower(NULL);
@@ -6658,8 +6668,8 @@ void __DummyCalls() {
 
 
 #import "rsfLib1.ex4"
-   bool     onBarOpen     (             );
-   bool     onChartCommand(string data[]);
+   bool     onBarOpen();
+   bool     onCommand(string data[]);
 
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayPopInt(int array[]);

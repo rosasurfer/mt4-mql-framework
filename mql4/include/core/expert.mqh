@@ -14,6 +14,8 @@ extern double   Test.StartPrice                 = 0;                 // price to
 double rates[][6];
 
 // test metadata
+string test.starttime          = "";
+string test.startprice         = "";
 string test.report.server      = "XTrade-Testresults";
 int    test.report.id          = 0;
 string test.report.symbol      = "";
@@ -203,7 +205,11 @@ int init() {
 
 
    // (10) in Tester: log MarketInfo() data
-   if (IsTesting()) Test.LogMarketInfo();
+   if (IsTesting()) {
+      Test.LogMarketInfo();
+      test.starttime  = ifString(!Test.StartTime, "", TimeToStr(Test.StartTime, TIME_FULL));
+      test.startprice = ifString(!Test.StartPrice, "", NumberToStr(Test.StartPrice, PriceFormat));
+   }
 
    if (CheckErrors("init(17)"))
       return(last_error);
@@ -313,21 +319,26 @@ int start() {
    // (4) Im Tester StartTime/StartPrice abwarten
    if (IsTesting()) {
       if (Test.StartTime != 0) {
-         if (Tick.Time < Test.StartTime)
+         if (Tick.Time < Test.StartTime) {
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.starttime));
             return(last_error);
+         }
          Test.StartTime = 0;
       }
       if (Test.StartPrice != 0) {
          static double test.lastPrice; if (!test.lastPrice) {
             test.lastPrice = Bid;
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.startprice));
             return(last_error);
          }
          if (LT(test.lastPrice, Test.StartPrice)) /*&&*/ if (LT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.startprice));
             return(last_error);
          }
          if (GT(test.lastPrice, Test.StartPrice)) /*&&*/ if (GT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
+            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", test.startprice));
             return(last_error);
          }
          Test.StartPrice = 0;
@@ -417,17 +428,17 @@ int deinit() {
    error = onDeinit();                                                     // Preprocessing-Hook
    if (!error) {                                                           //
       switch (UninitializeReason()) {                                      //
-         case UR_PARAMETERS : error = onDeinitParameterChange(); break;    //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;    //
-         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;    //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;    //
-         case UR_UNDEFINED  : error = onDeinitUndefined();       break;    //
-         case UR_REMOVE     : error = onDeinitRemove();          break;    //
-         case UR_RECOMPILE  : error = onDeinitRecompile();       break;    //
+         case UR_PARAMETERS : error = onDeinitParameters();    break;      //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
+         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
+         case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
+         case UR_REMOVE     : error = onDeinitRemove();        break;      //
+         case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
          // build > 509                                                    //
-         case UR_TEMPLATE   : error = onDeinitTemplate();        break;    //
-         case UR_INITFAILED : error = onDeinitFailed();          break;    //
-         case UR_CLOSE      : error = onDeinitClose();           break;    //
+         case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
+         case UR_INITFAILED : error = onDeinitFailed();        break;      //
+         case UR_CLOSE      : error = onDeinitClose();         break;      //
                                                                            //
          default:                                                          //
             CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
@@ -624,7 +635,7 @@ bool Test.InitReporting() {
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
          if (StrStartsWithI(symbol, name)) {
-            suffix = StrRight(symbol, -StringLen(name));
+            suffix = StrSubstr(symbol, StringLen(name));
             if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
                maxId = Max(maxId, StrToInteger(suffix));
             }
@@ -880,7 +891,7 @@ int onDeinit()
  *
  * @return int - error status
  *
-int onDeinitParameterChange()
+int onDeinitParameters()
    return(NO_ERROR);
 }
 

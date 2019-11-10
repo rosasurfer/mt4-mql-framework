@@ -116,22 +116,22 @@ int onTick() {
 
 
 /**
- * Handle incoming chart commands.
+ * Handle incoming commands.
  *
- * @param  string commands[] - the received commands
+ * @param  string commands[] - received external commands
  *
  * @return bool - success status
  */
-bool onChartCommand(string commands[]) {
+bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if      (commands[i] == "Timeframe=Up"  ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
       else if (commands[i] == "Timeframe=Down") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
-      else warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
+      else warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
    }
-   return(!catch("onChartCommand(3)"));
+   return(!catch("onCommand(3)"));
 }
 
 

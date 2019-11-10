@@ -11,9 +11,10 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (LoadSequence())
+      if (LoadSequence()) {
          if (ValidateInputs(interactive))
             SynchronizeStatus();
+      }
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
@@ -32,7 +33,7 @@ int onInitUser() {
             sequence.isTest = false;
             sequence.id     = ids[i];
             Sequence.ID     = sequence.id; SS.SequenceId();
-            sequence.name   = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
+            sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
             if (LoadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
@@ -54,7 +55,7 @@ int onInitUser() {
       sequence.id      = CreateSequenceId();
       Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
       sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
-      sequence.name    = StrLeft(directionDescr[sequence.direction], 1) +"."+ sequence.id;
+      sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
       sequence.status  = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
@@ -93,7 +94,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameterChange()
+   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameters()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
@@ -159,7 +160,7 @@ int afterInit() {
 int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
-   int x[]={2, 101, 150}, y=38, fontSize=68, rectangles=ArraySize(x);
+   int x[]={2, 101, 160}, y=51, fontSize=74, rectangles=ArraySize(x);
    color  bgColor = C'248,248,248';                         // that's chart background color
    string label;
 
@@ -179,8 +180,8 @@ int CreateStatusBox() {
 
 
 /**
- * Backup input parameter related status variables before parameter changes. In case of input errors the variables can be
- * restored afterwards. Called only from onInitParameters().
+ * Backup status variables depending on input parameters before parameter changes. In case of input errors the variables can
+ * be restored afterwards. Called only from onInitParameters().
  */
 void BackupInputStatus() {
    CopyInputStatus(true);
@@ -188,7 +189,7 @@ void BackupInputStatus() {
 
 
 /**
- * Restore input parameter related status variables. Called only from onInitParameters().
+ * Restore status variables depending on input parameters. Called only from onInitParameters().
  */
 void RestoreInputStatus() {
    CopyInputStatus(false);
@@ -196,8 +197,8 @@ void RestoreInputStatus() {
 
 
 /**
- * Backup or restore input parameter related status variables. These are all those variables which change if one or more
- * input parameters change. Or in other words, all variables modified by ValidateInputs().
+ * Backup or restore status variables depending on input parameters. These are all variables which change if an input
+ * parameter changes.
  *
  * @param  bool store - TRUE:  copy global values to internal storage (backup)
  *                      FALSE: copy internal values to global storage (restore)
@@ -213,91 +214,127 @@ void CopyInputStatus(bool store) {
 
    static bool     _start.conditions;
    static bool     _start.trend.condition;
-   static string   _start.trend.name;
+   static string   _start.trend.indicator;
    static int      _start.trend.timeframe;
    static string   _start.trend.params;
+   static string   _start.trend.description;
    static bool     _start.price.condition;
    static int      _start.price.type;
    static double   _start.price.value;
+   static string   _start.price.description;
    static bool     _start.time.condition;
    static datetime _start.time.value;
+   static string   _start.time.description;
 
+   static bool     _stop.trend.condition;
+   static string   _stop.trend.indicator;
+   static int      _stop.trend.timeframe;
+   static string   _stop.trend.params;
+   static string   _stop.trend.description;
    static bool     _stop.price.condition;
    static int      _stop.price.type;
    static double   _stop.price.value;
+   static string   _stop.price.description;
    static bool     _stop.time.condition;
    static datetime _stop.time.value;
+   static string   _stop.time.description;
    static bool     _stop.profitAbs.condition;
    static double   _stop.profitAbs.value;
+   static string   _stop.profitAbs.description;
    static bool     _stop.profitPct.condition;
    static double   _stop.profitPct.value;
    static double   _stop.profitPct.absValue;
+   static string   _stop.profitPct.description;
 
    static datetime _sessionbreak.starttime;
    static datetime _sessionbreak.endtime;
 
    if (store) {
-      _sequence.id              = sequence.id;
-      _sequence.created         = sequence.created;
-      _sequence.name            = sequence.name;
-      _sequence.isTest          = sequence.isTest;
-      _sequence.direction       = sequence.direction;
+      _sequence.id                = sequence.id;
+      _sequence.created           = sequence.created;
+      _sequence.name              = sequence.name;
+      _sequence.isTest            = sequence.isTest;
+      _sequence.direction         = sequence.direction;
 
-      _start.conditions         = start.conditions;
-      _start.trend.condition    = start.trend.condition;
-      _start.trend.name         = start.trend.name;
-      _start.trend.timeframe    = start.trend.timeframe;
-      _start.trend.params       = start.trend.params;
-      _start.price.condition    = start.price.condition;
-      _start.price.type         = start.price.type;
-      _start.price.value        = start.price.value;
-      _start.time.condition     = start.time.condition;
-      _start.time.value         = start.time.value;
+      _start.conditions           = start.conditions;
+      _start.trend.condition      = start.trend.condition;
+      _start.trend.indicator      = start.trend.indicator;
+      _start.trend.timeframe      = start.trend.timeframe;
+      _start.trend.params         = start.trend.params;
+      _start.trend.description    = start.trend.description;
+      _start.price.condition      = start.price.condition;
+      _start.price.type           = start.price.type;
+      _start.price.value          = start.price.value;
+      _start.price.description    = start.price.description;
+      _start.time.condition       = start.time.condition;
+      _start.time.value           = start.time.value;
+      _start.time.description     = start.time.description;
 
-      _stop.price.condition     = stop.price.condition;
-      _stop.price.type          = stop.price.type;
-      _stop.price.value         = stop.price.value;
-      _stop.time.condition      = stop.time.condition;
-      _stop.time.value          = stop.time.value;
-      _stop.profitAbs.condition = stop.profitAbs.condition;
-      _stop.profitAbs.value     = stop.profitAbs.value;
-      _stop.profitPct.condition = stop.profitPct.condition;
-      _stop.profitPct.value     = stop.profitPct.value;
-      _stop.profitPct.absValue  = stop.profitPct.absValue;
+      _stop.trend.condition       = stop.trend.condition;
+      _stop.trend.indicator       = stop.trend.indicator;
+      _stop.trend.timeframe       = stop.trend.timeframe;
+      _stop.trend.params          = stop.trend.params;
+      _stop.trend.description     = stop.trend.description;
+      _stop.price.condition       = stop.price.condition;
+      _stop.price.type            = stop.price.type;
+      _stop.price.value           = stop.price.value;
+      _stop.price.description     = stop.price.description;
+      _stop.time.condition        = stop.time.condition;
+      _stop.time.value            = stop.time.value;
+      _stop.time.description      = stop.time.description;
+      _stop.profitAbs.condition   = stop.profitAbs.condition;
+      _stop.profitAbs.value       = stop.profitAbs.value;
+      _stop.profitAbs.description = stop.profitAbs.description;
+      _stop.profitPct.condition   = stop.profitPct.condition;
+      _stop.profitPct.value       = stop.profitPct.value;
+      _stop.profitPct.absValue    = stop.profitPct.absValue;
+      _stop.profitPct.description = stop.profitPct.description;
 
-      _sessionbreak.starttime   = sessionbreak.starttime;
-      _sessionbreak.endtime     = sessionbreak.endtime;
+      _sessionbreak.starttime     = sessionbreak.starttime;
+      _sessionbreak.endtime       = sessionbreak.endtime;
    }
    else {
-      sequence.id               = _sequence.id;
-      sequence.created          = _sequence.created;
-      sequence.name             = _sequence.name;
-      sequence.isTest           = _sequence.isTest;
-      sequence.direction        = _sequence.direction;
+      sequence.id                = _sequence.id;
+      sequence.created           = _sequence.created;
+      sequence.name              = _sequence.name;
+      sequence.isTest            = _sequence.isTest;
+      sequence.direction         = _sequence.direction;
 
-      start.conditions          = _start.conditions;
-      start.trend.condition     = _start.trend.condition;
-      start.trend.name          = _start.trend.name;
-      start.trend.timeframe     = _start.trend.timeframe;
-      start.trend.params        = _start.trend.params;
-      start.price.condition     = _start.price.condition;
-      start.price.type          = _start.price.type;
-      start.price.value         = _start.price.value;
-      start.time.condition      = _start.time.condition;
-      start.time.value          = _start.time.value;
+      start.conditions           = _start.conditions;
+      start.trend.condition      = _start.trend.condition;
+      start.trend.indicator      = _start.trend.indicator;
+      start.trend.timeframe      = _start.trend.timeframe;
+      start.trend.params         = _start.trend.params;
+      start.trend.description    = _start.trend.description;
+      start.price.condition      = _start.price.condition;
+      start.price.type           = _start.price.type;
+      start.price.value          = _start.price.value;
+      start.price.description    = _start.price.description;
+      start.time.condition       = _start.time.condition;
+      start.time.value           = _start.time.value;
+      start.time.description     = _start.time.description;
 
-      stop.price.condition      = _stop.price.condition;
-      stop.price.type           = _stop.price.type;
-      stop.price.value          = _stop.price.value;
-      stop.time.condition       = _stop.time.condition;
-      stop.time.value           = _stop.time.value;
-      stop.profitAbs.condition  = _stop.profitAbs.condition;
-      stop.profitAbs.value      = _stop.profitAbs.value;
-      stop.profitPct.condition  = _stop.profitPct.condition;
-      stop.profitPct.value      = _stop.profitPct.value;
-      stop.profitPct.absValue   = _stop.profitPct.absValue;
+      stop.trend.condition       = _stop.trend.condition;
+      stop.trend.indicator       = _stop.trend.indicator;
+      stop.trend.timeframe       = _stop.trend.timeframe;
+      stop.trend.params          = _stop.trend.params;
+      stop.trend.description     = _stop.trend.description;
+      stop.price.condition       = _stop.price.condition;
+      stop.price.type            = _stop.price.type;
+      stop.price.value           = _stop.price.value;
+      stop.price.description     = _stop.price.description;
+      stop.time.condition        = _stop.time.condition;
+      stop.time.value            = _stop.time.value;
+      stop.time.description      = _stop.time.description;
+      stop.profitAbs.condition   = _stop.profitAbs.condition;
+      stop.profitAbs.value       = _stop.profitAbs.value;
+      stop.profitAbs.description = _stop.profitAbs.description;
+      stop.profitPct.condition   = _stop.profitPct.condition;
+      stop.profitPct.value       = _stop.profitPct.value;
+      stop.profitPct.absValue    = _stop.profitPct.absValue;
+      stop.profitPct.description = _stop.profitPct.description;
 
-      sessionbreak.starttime    = _sessionbreak.starttime;
-      sessionbreak.endtime      = _sessionbreak.endtime;
+      sessionbreak.starttime     = _sessionbreak.starttime;
+      sessionbreak.endtime       = _sessionbreak.endtime;
    }
 }
