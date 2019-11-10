@@ -148,6 +148,12 @@ int onInitRecompile() {
 int afterInit() {
    CreateStatusBox();
    SS.All();
+
+   if (IsTesting()) {
+      test.onTrendChangePause  = GetConfigBool(__NAME() +".Tester", "OnTrendChangePause");
+      test.onSessionBreakPause = GetConfigBool(__NAME() +".Tester", "OnSessionBreakPause");
+      test.onStopPause         = GetConfigBool(__NAME() +".Tester", "OnStopPause");
+   }
    return(last_error);
 }
 
