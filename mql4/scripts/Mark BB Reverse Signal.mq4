@@ -28,7 +28,7 @@ extern bool     Close.One.In.Profit = true;              // whether to close pos
 
 
 // trading configuration
-int trade.directions = TRADE_DIRECTIONS_BOTH;
+int trade.directions = TRADE_DIRECTION_BOTH;
 int ticket           = 0;                                // virtual ticket number
 
 // position tracking
@@ -67,7 +67,7 @@ int onInit() {
    }
    else strValue = Trades.Directions;
    trade.directions = StrToTradeDirection(strValue, F_ERR_INVALID_PARAMETER);
-   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTION_BOTH)
       return(catch("onInit(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
    Trades.Directions = TradeDirectionDescription(trade.directions);
 
@@ -92,14 +92,14 @@ int onStart() {
    // (2) calculate signals for each bar
    for (bar=startBar; bar >= 0; bar--) {
       // check long conditions
-      if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
+      if (trade.directions & TRADE_DIRECTION_LONG && 1) {
          int lastPositions = long.positions;
          if (long.positions < Open.Max.Positions)             Long.CheckOpenSignal(bar);
          if (long.positions && long.positions==lastPositions) Long.CheckCloseSignal(bar);    // don't check for close on an open signal
       }
 
       // check short conditions
-      if (trade.directions & TRADE_DIRECTIONS_SHORT && 1) {
+      if (trade.directions & TRADE_DIRECTION_SHORT && 1) {
          lastPositions = short.positions;
          if (short.positions < Open.Max.Positions)              Short.CheckOpenSignal(bar);
          if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(bar); // don't check for close on an open signal

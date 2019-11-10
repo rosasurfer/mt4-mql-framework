@@ -322,12 +322,11 @@ bool CheckLastError(string location) {
 
 
 /**
- * Handler für ChartCommands.
+ * Handle incoming commands.
  *
- * @param  string commands[] - die eingetroffenen Commands
+ * @param  string commands[] - received external commands
  *
- * @return bool - Erfolgsstatus
- *
+ * @return bool - success status
  *
  * Messageformat: "cmd=account:[{companyId}:{account}]" - Schaltet den externen Account um.
  *                "cmd=ToggleOpenOrders"                - Schaltet die Anzeige der offenen Orders ein/aus.
@@ -336,9 +335,9 @@ bool CheckLastError(string location) {
  *                "cmd=EditAccountConfig"               - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
  *                                                        da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
  */
-bool onChartCommand(string commands[]) {
+bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if (commands[i] == "cmd=EditAccountConfig") {
@@ -384,9 +383,9 @@ bool onChartCommand(string commands[]) {
          ArrayResize(positions.config.comments, 0);
          continue;
       }
-      warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
+      warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
    }
-   return(!catch("onChartCommand(3)"));
+   return(!catch("onCommand(3)"));
 }
 
 
@@ -650,7 +649,7 @@ int ShowOpenOrders() {
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
-               if (StrStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StrRight(comment, -1)));
+               if (StrStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StrSubstr(comment, 1)));
                else                             comment = "";
                ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
             }
@@ -1598,7 +1597,7 @@ bool UpdatePositions() {
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
                sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
                if (StringGetChar(sComment, 0) == '#')
-                  sComment = StringConcatenate(lfxCurrency, ".", StrRight(sComment, -1));
+                  sComment = StringConcatenate(lfxCurrency, ".", StrSubstr(sComment, 1));
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
       }
@@ -1786,7 +1785,7 @@ bool UpdateOHLC() {
 
 
 /**
- * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onChartCommand()-Handler.
+ * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onCommand()-Handler.
  *
  * @return bool - Erfolgsstatus
  */
@@ -2243,13 +2242,13 @@ bool CustomPositions.ReadConfig() {
             hstComment  = "";
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
-               confComment = StrRight(iniValue, -pos-1);
+               confComment = StrSubstr(iniValue, pos+1);
                iniValue    = StrTrim(StrLeft(iniValue, pos));
                pos = StringFind(confComment, ";");
                if (pos == -1) confComment = StrTrim(confComment);
                else           confComment = StrTrim(StrLeft(confComment, pos));
                if (StrStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
-                  confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
+                  confComment = StrSubstr(confComment, 1, StringLen(confComment)-2);
             }
 
             // Konfiguration auswerten
@@ -2277,7 +2276,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "#")) {             // Ticket
-                  strTicket = StrTrim(StrRight(values[n], -1));
+                  strTicket = StrTrim(StrSubstr(values[n], 1));
                   if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = StrToInteger(strTicket);
                   termValue1 = EMPTY;                                // alle verbleibenden Lots
@@ -2314,7 +2313,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "E")) {             // E = Equity
-                  strSize = StrTrim(StrRight(values[n], -1));
+                  strSize = StrTrim(StrSubstr(values[n], 1));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(strSize);
@@ -2364,9 +2363,9 @@ bool CustomPositions.ReadConfig() {
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  strPrice = StrTrim(StrRight(values[n], -pos-1));
+                  strPrice = StrTrim(StrSubstr(values[n], pos+1));
                   if (StrStartsWith(strPrice, "@"))
-                     strPrice = StrTrim(StrRight(strPrice, -1));
+                     strPrice = StrTrim(StrSubstr(strPrice, 1));
                   if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(strPrice);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2382,9 +2381,9 @@ bool CustomPositions.ReadConfig() {
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  strPrice = StrTrim(StrRight(values[n], -pos-1));
+                  strPrice = StrTrim(StrSubstr(values[n], pos+1));
                   if (StrStartsWith(strPrice, "@"))
-                     strPrice = StrTrim(StrRight(strPrice, -1));
+                     strPrice = StrTrim(StrSubstr(strPrice, 1));
                   if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(strPrice);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2399,7 +2398,7 @@ bool CustomPositions.ReadConfig() {
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   if (MathModFix(termValue1, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  strTicket = StrTrim(StrRight(values[n], -pos-1));
+                  strTicket = StrTrim(StrSubstr(values[n], pos+1));
                   if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = StrToInteger(strTicket);
                   termValue2 = NULL;
@@ -2482,13 +2481,13 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
    string term.orig = StrTrim(term);
           term      = StrToUpper(term.orig);
    if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
-   term = StrTrim(StrRight(term, -1));
+   term = StrTrim(StrSubstr(term, 1));
 
    if     (!StrStartsWith(term, "T"    )) isTotal = false;
    else if (StrStartsWith(term, "THIS" )) isTotal = false;
    else if (StrStartsWith(term, "TODAY")) isTotal = false;
    else                                   isTotal = true;
-   if (isTotal) term = StrTrim(StrRight(term, -1));
+   if (isTotal) term = StrTrim(StrSubstr(term, 1));
 
    bool     isSingleTimespan, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
@@ -2502,7 +2501,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}-NULL
       //       NULL-{DateTime}
       dtFrom = ParseDateTime(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StrTrim(StrRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtTo   = ParseDateTime(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
@@ -2667,13 +2666,13 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    string term.orig = StrTrim(term);
           term      = StrToUpper(term.orig);
    if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
-   term = StrTrim(StrRight(term, -1));
+   term = StrTrim(StrSubstr(term, 1));
 
    if     (!StrStartsWith(term, "T"    )) isTotalHistory = false;
    else if (StrStartsWith(term, "THIS" )) isTotalHistory = false;
    else if (StrStartsWith(term, "TODAY")) isTotalHistory = false;
    else                                   isTotalHistory = true;
-   if (isTotalHistory) term = StrTrim(StrRight(term, -1));
+   if (isTotalHistory) term = StrTrim(StrSubstr(term, 1));
 
    bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
@@ -2706,7 +2705,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       // {DateTime}-NULL
       //       NULL-{DateTime}
       dtFrom = ParseDateTime(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StrTrim(StrRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtTo   = ParseDateTime(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
@@ -3037,7 +3036,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          else if (StringLen(sDD) > 2) {                              // Tag + Zeit:  "2014.01.15 12:34:56"
             int pos = StringFind(sDD, " ");
             if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            sTime = StrTrim(StrRight(sDD, -pos-1));
+            sTime = StrTrim(StrSubstr(sDD, pos+1));
             sDD   = StrTrim(StrLeft (sDD,  pos  ));
          }
          else {                                                      // nur Tag
@@ -4281,7 +4280,7 @@ int ReadExternalPositions(string provider, string signal) {
          if (Explode(value, ",", values, NULL) != 10) return(_EMPTY(catch("ReadExternalPositions(3)  invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Ticket
-         sValue = StrRight(key, -StringLen(symbol));
+         sValue = StrSubstr(key, StringLen(symbol));
          if (StringGetChar(sValue, 0) != '.')         return(_EMPTY(catch("ReadExternalPositions(4)  invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          sValue = StringSubstr(sValue, 1);
          if (!StrIsDigit(sValue))                     return(_EMPTY(catch("ReadExternalPositions(5)  invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4410,7 +4409,7 @@ int ReadExternalPositions(string provider, string signal) {
          if (Explode(value, ",", values, NULL) != 13) return(_EMPTY(catch("ReadExternalPositions(21)  invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Ticket
-         sValue = StrRight(key, -StringLen(symbol));
+         sValue = StrSubstr(key, StringLen(symbol));
          if (StringGetChar(sValue, 0) != '.')         return(_EMPTY(catch("ReadExternalPositions(22)  invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          sValue = StringSubstr(sValue, 1);
          if (!StrIsDigit(sValue))                     return(_EMPTY(catch("ReadExternalPositions(23)  invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));

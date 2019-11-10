@@ -5595,7 +5595,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
             }
             if (!remainder) {
                if (!StrStartsWithI(OrderComment(), "to #")) return(_false(Order.HandleError("OrderCloseEx(30)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(31)")));
-               sValue1 = StrRight(OrderComment(), -4);
+               sValue1 = StrSubstr(OrderComment(), 4);
                if (!StrIsDigit(sValue1))                    return(_false(Order.HandleError("OrderCloseEx(32)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(33)")));
                remainder = StrToInteger(sValue1);
                if (!remainder)                              return(_false(Order.HandleError("OrderCloseEx(34)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(35)")));
@@ -7362,8 +7362,8 @@ void Library.ResetGlobalVars() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",      ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen()              { return(!catch("onBarOpen(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onCommand(string data[]) { return(!catch("onCommand(1)", ERR_NOT_IMPLEMENTED)); }
 
 
 #import "rsfLib2.ex4"
