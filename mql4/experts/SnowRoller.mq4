@@ -181,6 +181,11 @@ string   sStartConditions        = "";
 string   sStopConditions         = "";
 string   sAutoResume             = "";
 
+// --- debug settings ----------------------
+bool     test.onTrendChangePause  = false;         // whether to pause the tester when a trend condition changes
+bool     test.onSessionBreakPause = false;         // whether to pause the tester on a sessionbreak stop
+bool     test.onStopPause         = false;         // whether to pause the tester when any stop condition is fulfilled
+
 
 #include <app/SnowRoller/init.mqh>
 #include <app/SnowRoller/deinit.mqh>
@@ -344,6 +349,12 @@ bool StartSequence(int signal) {
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+
+   // pause the tester according to the configuration
+   if (IsTesting() && IsVisualMode()) {
+      if      (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+   }
    return(!catch("StartSequence(5)"));
 }
 
@@ -557,10 +568,14 @@ bool StopSequence(int signal) {
    // save sequence
    if (!SaveSequence()) return(false);
 
-   // in tester: pause or stop
+   // pause/stop the tester according to the configuration
    if (IsTesting()) {
-      if (IsVisualMode())                         Tester.Pause();
-      else if (sequence.status == STATUS_STOPPED) Tester.Stop();
+      if (IsVisualMode()) {
+         if      (test.onStopPause)                                        Tester.Pause();
+         else if (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+         else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+      }
+      else if (sequence.status == STATUS_STOPPED)                          Tester.Stop();
    }
    return(!catch("StopSequence(12)"));
 }
@@ -610,12 +625,12 @@ bool ResumeSequence(int signal) {
    start.trend.condition = (start.trend.condition && AutoResume);
    start.conditions      = false; SS.StartStopConditions();
 
-   // Nach einem vorhergehenden Fehler kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
+   // check for existing positions (after a former error some levels may already be open)
    if (sequence.level > 0) {
       for (int level=1; level <= sequence.level; level++) {
          int i = Grid.FindOpenPosition(level);
          if (i != -1) {
-            gridBase = orders.gridBase[i];                     // look-up a previously used gridbase
+            gridBase = orders.gridBase[i];                     // get the previously used gridbase
             break;
          }
       }
@@ -630,45 +645,51 @@ bool ResumeSequence(int signal) {
       }
    }
 
-   // Gridbasis neu setzen, wenn keine offenen Positionen gefunden wurden.
    if (!gridBase) {
+      // define the new gridbase if no open positions have been found
       startTime  = TimeCurrentEx("ResumeSequence(3)");
       startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
       GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
    }
    else {
-      grid.base = NormalizeDouble(gridBase, Digits);           // Gridbasis der vorhandenen Positionen übernehmen (sollte schon gesetzt sein, doch wer weiß...)
+      grid.base = NormalizeDouble(gridBase, Digits);           // re-use the previously used gridbase
    }
 
-   // vorherige Positionen wieder in den Markt legen und last(OrderOpenTime) und avg(OrderOpenPrice) erhalten
+   // open the previously active Positionen and receive last(OrderOpenTime) and avg(OrderOpenPrice)
    if (!RestorePositions(startTime, startPrice)) return(false);
 
-   // neuen Sequenzstart speichern
+   // store new sequence start
    ArrayPushInt   (sequence.start.event,  CreateEventId() );
    ArrayPushInt   (sequence.start.time,   startTime       );
    ArrayPushDouble(sequence.start.price,  startPrice      );
-   ArrayPushDouble(sequence.start.profit, sequence.totalPL);   // entspricht dem letzten Stop-Wert
+   ArrayPushDouble(sequence.start.profit, sequence.totalPL);   // same as at the last stop
 
-   ArrayPushInt   (sequence.stop.event,  0);                   // sequence.starts/stops synchron halten
+   ArrayPushInt   (sequence.stop.event,  0);                   // keep sequence.starts/stops synchronous
    ArrayPushInt   (sequence.stop.time,   0);
    ArrayPushDouble(sequence.stop.price,  0);
    ArrayPushDouble(sequence.stop.profit, 0);
 
    sequence.status = STATUS_PROGRESSING;                       // TODO: correct the resulting gridbase and adjust the previously set stoplosses
 
-   // Stop-Orders vervollständigen
+   // update stop orders
    if (!UpdatePendingOrders()) return(false);
 
-   // Status aktualisieren und speichern
+   // update and store status
    bool changes;
-   int  iNull[];                                               // Wurde in RestorePositions()->Grid.AddPosition() ein Magic-Ticket #-2 for "Spread violation"
-   if (!UpdateStatus(changes, iNull)) return(false);           // erzeugt, wird es in UpdateStatus() mit PL=0.00 "geschlossen" und der Sequence-Level verringert.
-   if (changes) UpdatePendingOrders();                         // In diesem Fall müssen die Pending-Orders nochmal aktualisiert werden.
+   int  iNull[];                                               // If RestorePositions() encountered a magic ticket #-2 (spread violation)
+   if (!UpdateStatus(changes, iNull)) return(false);           // UpdateStatus() closes it with PL=0.00 and decreases the grid level.
+   if (changes) UpdatePendingOrders();                         // In this case pending orders need to be updated again.
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
    if (__LOG()) log("ResumeSequence(4)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
-   return(!last_error|catch("ResumeSequence(5)"));
+
+   // pause the tester according to the configuration
+   if (IsTesting() && IsVisualMode()) {
+      if      (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+   }
+   return(!catch("ResumeSequence(5)"));
 }
 
 
@@ -680,7 +701,7 @@ bool ResumeSequence(int signal) {
  *
  * @return bool - success status
  *
- * NOTE: If the sequence is at level 0 the passed variables are not modified.
+ * Note: If the sequence is at level 0 the passed variables are not modified.
  */
 bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                      return(false);
