@@ -111,10 +111,10 @@ int onInit() {
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string values[], sValue = StrToLower(MA.AppliedPrice);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   string sValues[], sValue = StrToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                   // default price type
@@ -134,9 +134,9 @@ int onInit() {
 
    // Draw.Type
    sValue = StrToLower(Draw.Type);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
@@ -185,7 +185,7 @@ int onInit() {
    IndicatorShortName(shortName);                        // chart context menu
    SetIndexLabel(MODE_EMA_1,     NULL);
    SetIndexLabel(MODE_EMA_2,     NULL);
-   SetIndexLabel(MODE_EMA_3,     shortName);             // "Data" window and tooltips
+   SetIndexLabel(MODE_EMA_3,     shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" length");
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
@@ -268,7 +268,7 @@ int onTick() {
    if (!IsSuperContext()) {
        @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, thirdEma[0], SubPipDigits, trend[0], Time[0]);
 
-      // signal trend changes
+      // detect trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
          else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
@@ -322,14 +322,14 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   int dType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
-   int dWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
+   int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
+   int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_UPTREND1,  dType,     EMPTY, dWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, dType,     EMPTY, dWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  dType,     EMPTY, dWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_UPTREND1,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, drType,    EMPTY, drWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 

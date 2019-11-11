@@ -134,10 +134,10 @@ int onInit() {
    if (Color.MovingAverage == 0xFF000000) Color.MovingAverage = CLR_NONE;
 
    // Draw.Type
-   string values[], sValue = StrToLower(Draw.Type);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   string sValues[], sValue = StrToLower(Draw.Type);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
@@ -321,7 +321,7 @@ int onTick() {
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, trend[0], 0, trend[0], Time[0]);
 
-      // signal trend changes
+      // detect trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
          else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
@@ -375,16 +375,16 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
 
-   int dType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
-   int dWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
+   int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
+   int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MAIN,       DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_TREND,      DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_UPTREND,    dType,     EMPTY, dWidth, Color.UpTrend      ); SetIndexArrow(MODE_UPTREND,   159);
-   SetIndexStyle(MODE_DOWNTREND,  dType,     EMPTY, dWidth, Color.DownTrend    ); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,  Color.Channel      );
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,  Color.Channel      );
-   SetIndexStyle(MODE_MA,         DRAW_LINE, EMPTY, EMPTY,  Color.MovingAverage);
+   SetIndexStyle(MODE_UPTREND,    drType,    EMPTY, drWidth, Color.UpTrend      ); SetIndexArrow(MODE_UPTREND,   159);
+   SetIndexStyle(MODE_DOWNTREND,  drType,    EMPTY, drWidth, Color.DownTrend    ); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,   Color.Channel      );
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,   Color.Channel      );
+   SetIndexStyle(MODE_MA,         DRAW_LINE, EMPTY, EMPTY,   Color.MovingAverage);
 
    if (Color.Channel == CLR_NONE) {
       SetIndexLabel(MODE_UPPER_BAND, NULL);
@@ -395,12 +395,8 @@ void SetIndicatorOptions() {
       SetIndexLabel(MODE_LOWER_BAND, __NAME() +" lower band");
    }
 
-   if (Color.MovingAverage == CLR_NONE) {
-      SetIndexLabel(MODE_MA, NULL);
-   }
-   else {
-      SetIndexLabel(MODE_MA, __NAME() +" SMA("+ SMA.Periods +")");
-   }
+   if (Color.MovingAverage == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
+   else                                 SetIndexLabel(MODE_MA, __NAME() +" SMA("+ SMA.Periods +")");
 }
 
 
