@@ -4,6 +4,12 @@
  *
  * A moving average with bar weigths using a Gaussian distribution function.
  *
+ * Indicator buffers for iCustom():
+ *  • MovingAverage.MODE_MA:    MA values
+ *  • MovingAverage.MODE_TREND: trend direction and length
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *
  * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  */
@@ -213,7 +219,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(NO_ERROR);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 
