@@ -2,7 +2,7 @@
  * SnowRoller - a pyramiding trade manager
  *
  *
- * With default settings this EA is only a trade manager and not a complete system. Start and stop conditions are defined
+ * With default settings this EA is just a trade manager and not a complete system. Start and stop conditions are defined
  * manually and the EA manages the resulting trades in a pyramiding way. Theoretical background and proof-of-concept were
  * provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
  *
@@ -10,7 +10,7 @@
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * The EA is not FIFO conforming, and will never be. A description of program actions, events and status changes is appended
+ * The EA is not FIFO conforming, and will never be. A description of program actions, events and status changes can be found
  * at the end of this file.
  *
  *
@@ -2354,39 +2354,37 @@ void SS.LotSize() {
 void SS.StartStopConditions() {
    if (!__CHART()) return;
 
-   // start conditions (time before price))
+   // start conditions, order: [sessionbreak+] trend, time, price
    string sValue = "";
    if (start.time.description!="" || start.price.description!="") {
       if (start.time.description != "") {
-         sValue = ifString(start.time.condition, "@", "!") + start.time.description;
+         sValue = sValue + ifString(start.time.condition, "@", "!") + start.time.description;
       }
       if (start.price.description != "") {
          sValue = sValue + ifString(sValue=="", "", " && ") + ifString(start.price.condition, "@", "!") + start.price.description;
       }
    }
    if (start.trend.description != "") {
+      string sTrend = ifString(start.trend.condition, "@", "!") + start.trend.description;
+
       if (start.time.description!="" && start.price.description!="") {
          sValue = "("+ sValue +")";
       }
       if (start.time.description!="" || start.price.description!="") {
-         sValue = sValue +" || ";
+         sValue = sTrend +" || "+ sValue;
       }
-      sValue = sValue + ifString(start.trend.condition, "@", "!") + start.trend.description;
    }
    if (sessionbreak.waiting) {
-      if (sValue != "") sValue = "  ("+ sValue+")";
+      if (sValue != "") sValue = " + "+ sValue;
       sValue = "sessionbreak"+ sValue;
    }
    if (sValue == "") sStartConditions = "-";
    else              sStartConditions = sValue;
 
-   // stop conditions (time before price))
+   // stop conditions, order: trend, profit, time, price
    sValue = "";
-   if (stop.time.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
-   }
-   if (stop.price.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
+   if (stop.trend.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.trend.condition, "@", "!") + stop.trend.description;
    }
    if (stop.profitAbs.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
@@ -2394,14 +2392,17 @@ void SS.StartStopConditions() {
    if (stop.profitPct.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
    }
-   if (stop.trend.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.trend.condition, "@", "!") + stop.trend.description;
+   if (stop.time.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+   }
+   if (stop.price.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
    }
    if (sValue == "") sStopConditions = "-";
    else              sStopConditions = sValue;
    StopConditions = sValue;
 
-   // also update the input parameters which are used by SaveSequence()
+   // also update the input parameters used by SaveSequence()
    UpdateStartStopInputs();
 }
 
@@ -3278,7 +3279,8 @@ bool SaveSequence() {
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
 
-   // Laufzeit-Variablen
+   // Runtime vars
+   ArrayPushString(lines, /*int   */ "rt.sessionbreak.waiting="+ sessionbreak.waiting);
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
       string values[]; ArrayResize(values, 0);
    ArrayPushString(lines, /*double*/ "rt.sequence.maxProfit="  + NumberToStr(sequence.maxProfit, ".+"));
@@ -3296,7 +3298,6 @@ bool SaveSequence() {
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values));
-   ArrayPushString(lines, /*int   */ "rt.sessionbreak.waiting=" + sessionbreak.waiting);
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels));
       if (ArraySize(ignorePendingOrders) > 0)
@@ -5401,7 +5402,7 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
 void UpdateStartStopInputs() {
    string sValue = "";
 
-   // StartConditions (time before price)
+   // StartConditions, order: trend, time, price
    if (start.conditions) {
       if (start.time.condition) {
          sValue = "@"+ start.time.description;
@@ -5421,13 +5422,10 @@ void UpdateStartStopInputs() {
    }
    StartConditions = sValue;
 
-   // StopConditions
+   // StopConditions, order: trend, profit, time, price
    sValue = "";
-   if (stop.time.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
-   }
-   if (stop.price.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
+   if (stop.trend.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.trend.description;
    }
    if (stop.profitAbs.condition) {
       sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
@@ -5435,8 +5433,11 @@ void UpdateStartStopInputs() {
    if (stop.profitPct.condition) {
       sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
    }
-   if (stop.trend.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.trend.description;
+   if (stop.time.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
+   }
+   if (stop.price.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
    }
    StopConditions = sValue;
 }
