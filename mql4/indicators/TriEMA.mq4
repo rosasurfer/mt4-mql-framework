@@ -25,8 +25,8 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
-
 extern string __________________________;
+
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
@@ -173,7 +173,7 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downTrend);            // on-bar uptrends:                visible
 
    // chart legend
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
       chartLegendLabel = CreateLegendLabel(indicatorName);
