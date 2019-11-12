@@ -189,7 +189,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(NO_ERROR);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 

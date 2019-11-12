@@ -8,7 +8,6 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function;       SMMA(n) = EMA(2*n-1)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
@@ -235,7 +234,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(NO_ERROR);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 

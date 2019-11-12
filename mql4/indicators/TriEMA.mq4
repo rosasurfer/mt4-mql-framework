@@ -216,7 +216,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(last_error);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 
