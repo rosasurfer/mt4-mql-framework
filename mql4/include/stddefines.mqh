@@ -337,9 +337,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define Bands.MODE_UPPER               1        // upper band value
 #define Bands.MODE_LOWER               2        // lower band value
 
-#define Filter.MODE_MAIN               0        // filter main line
-#define Filter.MODE_TREND              1        // filter trend direction and length
-
 #define Fisher.MODE_MAIN               0        // Fisher Transform main line
 #define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
 
