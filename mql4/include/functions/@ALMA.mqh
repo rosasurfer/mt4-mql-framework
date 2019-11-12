@@ -6,6 +6,7 @@
  * @param  double offset [optional] - Offset der Gauﬂ'schen Normalverteilung (default: 0.85)
  * @param  double sigma  [optional] - Steilheit der Gauﬂ'schen Normalverteilung (default: 6.0)
  *
+ * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  */
 void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0) {
@@ -13,8 +14,9 @@ void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, 
       catch("@ALMA.CalculateWeights(1)  illegal parameter periods = "+ periods, ERR_INVALID_PARAMETER);
       return;
    }
-   if (ArraySize(weights) != periods)
+   if (ArraySize(weights) != periods) {
       ArrayResize(weights, periods);
+   }
 
    double dist = (periods-1) * offset;                      // m: Abstand des Scheitelpunkts der Glocke von der ‰ltesten Bar; im Original floor(value)
    double s    = periods / sigma;                           // s: Steilheit der Glocke

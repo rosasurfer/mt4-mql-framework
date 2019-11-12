@@ -1,5 +1,5 @@
 /**
- * HalfTrend indicator - a support/resistance line defined by a trading range channel.
+ * HalfTrend indicator - a support/resistance line defined by a trading range channel
  *
  *
  * The indicator is similar to the SuperTrend indicator which uses a slightly different channel calculation and trend logic.
@@ -7,10 +7,10 @@
  * Indicator buffers for iCustom():
  *  • HalfTrend.MODE_MAIN:  main SR values
  *  • HalfTrend.MODE_TREND: trend direction and length
- *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:    positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:       the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  mql4/indicators/SuperTrend.mq4
+ * @see  /mql4/indicators/SuperTrend.mq4
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -26,7 +26,6 @@ extern color  Color.Channel        = CLR_NONE;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
-
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -63,8 +62,8 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_color5    CLR_NONE
 #property indicator_color6    CLR_NONE
 
-double main     [];                                      // all SR values:      invisible, displayed in "Data" window
-double trend    [];                                      // trend direction:    invisible
+double main     [];                                      // all SR values:      invisible, displayed in legend and "Data" window
+double trend    [];                                      // trend direction:    invisible, displayed in "Data" window
 double upLine   [];                                      // support line:       visible
 double downLine [];                                      // resistance line:    visible
 double upperBand[];                                      // upper channel band: visible
@@ -90,7 +89,7 @@ string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
 
-string signal.info = "";                                 // chart legend info
+string signal.info = "";                                 // additional chart legend info
 
 
 /**
@@ -113,10 +112,10 @@ int onInit() {
    if (Color.Channel   == 0xFF000000) Color.Channel   = CLR_NONE;
 
    // Draw.Type
-   string values[], sValue = StrToLower(Draw.Type);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   string sValues[], sValue = StrToLower(Draw.Type);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
@@ -132,7 +131,7 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
-   if (!Configure.Signal("HalfTrend", Signal.onTrendChange, signals))                                           return(last_error);
+   if (!Configure.Signal(__NAME(), Signal.onTrendChange, signals))                                              return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -144,8 +143,8 @@ int onInit() {
    }
 
    // buffer management
-   SetIndexBuffer(MODE_MAIN,       main     );           // all SR values:      invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_TREND,      trend    );           // trend direction:    invisible
+   SetIndexBuffer(MODE_MAIN,       main     );           // all SR values:      invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,      trend    );           // trend direction:    invisible, displayed in "Data" window
    SetIndexBuffer(MODE_UPTREND,    upLine   );           // support line:       visible
    SetIndexBuffer(MODE_DOWNTREND,  downLine );           // resistance line:    visible
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);           // upper channel band: visible
@@ -161,7 +160,7 @@ int onInit() {
    // names, labels, styles and display options
    IndicatorShortName(indicatorName);                    // chart context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     __NAME() +" length");
+   SetIndexLabel(MODE_TREND,     indicatorName +" length");
    SetIndexLabel(MODE_UPTREND,   NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    IndicatorDigits(Digits);
@@ -190,7 +189,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(NO_ERROR);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -289,12 +288,11 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      // update chart legend
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, trend[0], 0, trend[0], Time[0]);
 
-      // signal trend changes
+      // detect trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND  );
+         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
          else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
@@ -303,7 +301,7 @@ int onTick() {
 
 
 /**
- * Event handler called if trend direction has changed.
+ * Event handler for trend changes.
  *
  * @param  int trend - direction
  *
@@ -315,7 +313,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      log("onTrendChange(1)  "+ message);
+      if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -326,7 +324,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      log("onTrendChange(2)  "+ message);
+      if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
@@ -346,15 +344,15 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
 
-   int dType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
-   int dWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
+   int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
+   int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MAIN,       DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_TREND,      DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_UPTREND,    dType,     EMPTY, dWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   159);
-   SetIndexStyle(MODE_DOWNTREND,  dType,     EMPTY, dWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,  Color.Channel  );
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,  Color.Channel  );
+   SetIndexStyle(MODE_UPTREND,    drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   159);
+   SetIndexStyle(MODE_DOWNTREND,  drType,    EMPTY, drWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,   Color.Channel  );
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,   Color.Channel  );
 
    if (Color.Channel == CLR_NONE) {
       SetIndexLabel(MODE_UPPER_BAND, NULL);

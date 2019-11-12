@@ -6279,6 +6279,54 @@ double icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer,
 
 
 /**
+ * Load the "Ehler's 2-Pole-SuperSmoother" indicator and return an indicator value.
+ *
+ * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    filterPeriods      - indicator parameter
+ * @param  string filterAppliedPrice - indicator parameter
+ * @param  int    iBuffer            - indicator buffer index of the value to return
+ * @param  int    iBar               - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icSuperSmoother(int timeframe, int filterPeriods, string filterAppliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "Ehlers 2-Pole-SuperSmoother",
+                          filterPeriods,                                   // int    Filter.Periods
+                          filterAppliedPrice,                              // string Filter.AppliedPrice
+
+                          Blue,                                            // color  Color.UpTrend
+                          Orange,                                          // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icSuperSmoother(1)", error));
+      warn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
  * Load the "SuperTrend" indicator and return an indicator value.
  *
  * @param  int timeframe  - timeframe to load the indicator (NULL: the current timeframe)
@@ -6352,7 +6400,12 @@ double icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.LineWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string ________________
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
@@ -6512,6 +6565,7 @@ void __DummyCalls() {
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    icNonLagMA(NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
+   icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);

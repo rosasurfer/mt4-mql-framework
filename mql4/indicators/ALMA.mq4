@@ -1,7 +1,18 @@
 /**
- * Multi-color Arnaud Legoux Moving Average
+ * Arnaud Legoux Moving Average
  *
- * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ *
+ * A moving average with bar weigths using a Gaussian distribution function.
+ *
+ * Indicator buffers for iCustom():
+ *  • MovingAverage.MODE_MA:    MA values
+ *  • MovingAverage.MODE_TREND: trend direction and length
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *
+ * @author  Arnaud Legoux
+ * @see     http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ *
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -11,16 +22,14 @@ int __DEINIT_FLAGS__[];
 
 extern int    MA.Periods           = 38;
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset: 0..1 (offset of parabola vertex)
+extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma        (parabola steepness)
 
-extern double Distribution.Offset  = 0.85;                           // Gauss'scher Verteilungsoffset: 0..1 (Position des Glockenscheitels)
-extern double Distribution.Sigma   = 6.0;                            // Gauss'sches Verteilungs-Sigma       (Steilheit der Glocke)
-
-extern color  Color.UpTrend        = Blue;                           // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 3;
-
-extern int    Max.Values           = 5000;                           // max. amount of values to calculate (-1: all)
+extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -41,39 +50,37 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 
-#define MODE_MA               MovingAverage.MODE_MA                  // Buffer-ID's
-#define MODE_TREND            MovingAverage.MODE_TREND               //
-#define MODE_UPTREND          2                                      //
-#define MODE_DOWNTREND        3                                      // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_UPTREND1         MODE_UPTREND                           // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
-#define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
-
 #property indicator_chart_window
 #property indicator_buffers   5
 
-#property indicator_width1    0
-#property indicator_width2    0
-#property indicator_width3    3
-#property indicator_width4    3
-#property indicator_width5    3
+#define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND
+#define MODE_UPTREND          2
+#define MODE_DOWNTREND        3
+#define MODE_UPTREND1         MODE_UPTREND
+#define MODE_UPTREND2         4
 
-double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im Data window)
-double bufferTrend    [];                                            // Trend: +/-         unsichtbar
-double bufferUpTrend1 [];                                            // UpTrend-Linie 1:   sichtbar
-double bufferDownTrend[];                                            // DownTrend-Linie:   sichtbar (überlagert UpTrend-Linie 1)
-double bufferUpTrend2 [];                                            // UpTrend-Linie 2:   sichtbar (überlagert DownTrend-Linie)
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+#property indicator_color4    CLR_NONE
+#property indicator_color5    CLR_NONE
 
-int    ma.periods;
-int    ma.method;
-int    ma.appliedPrice;
+double main     [];                                      // ALMA main values: invisible, displayed in legend and "Data" window
+double trend    [];                                      // trend direction:  invisible, displayed in "Data" window
+double upTrend1 [];                                      // uptrend values:   visible
+double downTrend[];                                      // downtrend values: visible
+double upTrend2 [];                                      // on-bar uptrends:  visible
 
-double alma.weights[];                                               // Gewichtungen der einzelnen Bars des ALMA's
+int    maAppliedPrice;
+double almaWeights[];                                    // bar weights
 
-int    draw.type      = DRAW_LINE;                                   // DRAW_LINE | DRAW_ARROW
-int    draw.arrowSize = 1;                                           // default symbol size for Draw.Type="dot"
-int    maxValues;                                                    // Höchstanzahl darzustellender Werte
-string legendLabel;
-string ma.shortName;                                                 // Name für Chart, Data window und Kontextmenüs
+int    maxValues;
+int    drawType      = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
+int    drawArrowSize = 1;                                // default symbol size for Draw.Type="dot"
+
+string indicatorName;
+string chartLegendLabel;
 
 bool   signals;
 
@@ -88,9 +95,7 @@ string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
 
-string signal.info = "";                                             // Infotext in der Chartlegende
-
-int    tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
+string signal.info = "";                                 // additional chart legend info
 
 
 /**
@@ -103,57 +108,56 @@ int onInit() {
       if (!RestoreInputParameters()) return(last_error);
    }
 
-   // (1) validate inputs
+   // validate inputs
    // MA.Periods
-   if (MA.Periods < 2)               return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   ma.periods = MA.Periods;
+   if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string values[], sValue = StrToLower(MA.AppliedPrice);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   string sValues[], sValue=StrToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if (sValue == "") sValue = "close";                               // default price type
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ma.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue == "") sValue = "close";                   // default price type
+   maAppliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice == -1) {
+      if      (StrStartsWith("open",     sValue)) maAppliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) maAppliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) maAppliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) maAppliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) maAppliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) maAppliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) maAppliedPrice = PRICE_WEIGHTED;
+      else                 return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
-   MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
+   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
-   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
    sValue = StrToLower(Draw.Type);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                              return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
+   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.LineWidth
-   if (Draw.LineWidth < 0)           return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5)           return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth < 0) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth > 5) return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)              return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // Signals
-   if (!Configure.Signal("ALMA", Signal.onTrendChange, signals))                                                return(last_error);
+   // signals
+   if (!Configure.Signal(__NAME(), Signal.onTrendChange, signals))                                              return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -164,97 +168,48 @@ int onInit() {
       else signals = false;
    }
 
+   // buffer management
+   SetIndexBuffer(MODE_MA,        main     );            // MA main values:   invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:  invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND1,  upTrend1 );            // uptrend values:   visible
+   SetIndexBuffer(MODE_DOWNTREND, downTrend);            // downtrend values: visible
+   SetIndexBuffer(MODE_UPTREND2,  upTrend2 );            // on-bar uptrends:  visible
 
-   // (2) Chart-Legende erzeugen
-   string strAppliedPrice = "";
-   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   ma.shortName = "ALMA("+ MA.Periods + strAppliedPrice +")";
+   // chart legend
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
-       legendLabel  = CreateLegendLabel(ma.shortName);
-       ObjectRegister(legendLabel);
+       chartLegendLabel = CreateLegendLabel(indicatorName);
+       ObjectRegister(chartLegendLabel);
    }
 
-
-   // (3) ALMA-Gewichtungen berechnen
-   if (ma.periods > 1)                                                  // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      @ALMA.CalculateWeights(alma.weights, ma.periods, Distribution.Offset, Distribution.Sigma);
-
-
-   // (4.1) Bufferverwaltung
-   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar, jedoch Anzeige im Data window
-   SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // Trend: +/-         unsichtbar
-   SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // UpTrend-Linie 1:   sichtbar
-   SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // DownTrend-Linie:   sichtbar
-   SetIndexBuffer(MODE_UPTREND2,  bufferUpTrend2 );                     // UpTrend-Linie 2:   sichtbar
-
-   // (4.2) Anzeigeoptionen
-   IndicatorShortName(ma.shortName);                                    // Context Menu
-   string dataName = "ALMA("+ MA.Periods +")";
-   SetIndexLabel(MODE_MA,        dataName);                             // Tooltip und Data window
-   SetIndexLabel(MODE_TREND,     NULL);
+   // names, labels, styles and display options
+   string shortName = __NAME() +"("+ MA.Periods +")";
+   IndicatorShortName(shortName);
+   SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
+   SetIndexLabel(MODE_TREND,     shortName +" length");
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
-   IndicatorDigits(SubPipDigits);
-
-   // (4.3) Zeichenoptionen
-   int startDraw = 0;
-   if (Max.Values >= 0) startDraw = Bars - Max.Values;
-   if (startDraw  <  0) startDraw = 0;
-   SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
-   SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
+   IndicatorDigits(Digits);
    SetIndicatorOptions();
+
+   // pre-calculate ALMA bar weights
+   @ALMA.CalculateWeights(almaWeights, MA.Periods, Distribution.Offset, Distribution.Sigma);
 
    return(catch("onInit(7)"));
 }
 
 
 /**
- * Initialisierung Postprocessing-Hook
+ * Deinitialization
  *
- * @return int - Fehlerstatus
- */
-int afterInit() {
-   // ggf. Offline-Ticker installieren
-   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
-      int hWnd    = __ExecutionContext[EC.hChart];
-      int millis  = 10000;                                           // alle 10 Sekunden
-      int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
-      if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
-      tickTimerId = timerId;
-      //debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
-
-      // Status des Offline-Tickers im Chart anzeigen
-      string label = __NAME() +".Status";
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
-         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
-         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder Marker, grün="Online"
-         ObjectRegister(label);
-      }
-   }
-   return(catch("afterInit(3)"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
-   // ggf. Offline-Ticker deinstallieren
-   if (tickTimerId > NULL) {
-      int id = tickTimerId; tickTimerId = NULL;
-      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
-   }
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit(2)"));
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -265,7 +220,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(last_error);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -275,90 +230,76 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(bufferMA))                                            // kann bei Terminal-Start auftreten
-      return(log("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // check for finished buffer initialization (needed on terminal start)
+   if (!ArraySize(main))
+      return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(bufferMA,        EMPTY_VALUE);
-      ArrayInitialize(bufferTrend,               0);
-      ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
-      ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
+      ArrayInitialize(main,      EMPTY_VALUE);
+      ArrayInitialize(trend,               0);
+      ArrayInitialize(upTrend1,  EMPTY_VALUE);
+      ArrayInitialize(downTrend, EMPTY_VALUE);
+      ArrayInitialize(upTrend2,  EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
-
-   // (1) synchronize buffers with a shifted offline chart
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(upTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(downTrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(upTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-
-   if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
-      return(NO_ERROR);
-
-
-   // (2) Startbar der Berechnung ermitteln
+   // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-ma.periods);
+   int startBar = Min(bars-1, Bars-MA.Periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
+   // recalculate changed bars
+   for (int bar=startBar; bar >= 0; bar--) {
+      main[bar] = 0;
+      for (int i=0; i < MA.Periods; i++) {
+         main[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
+      }
+      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, SubPipDigits);
+   }
 
-   // Laufzeit auf Toshiba Satellite:
-   // -------------------------------
-   // H1 ::ALMA(7xD1)::onTick()   weights(  168)=0.000 sec   buffer(2000)=0.110 sec   loops=   336.000
-   // M30::ALMA(7xD1)::onTick()   weights(  336)=0.000 sec   buffer(2000)=0.250 sec   loops=   672.000
-   // M15::ALMA(7xD1)::onTick()   weights(  672)=0.000 sec   buffer(2000)=0.453 sec   loops= 1.344.000
-   // M5 ::ALMA(7xD1)::onTick()   weights( 2016)=0.016 sec   buffer(2000)=1.547 sec   loops= 4.032.000
-   // M1 ::ALMA(7xD1)::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20.160.000 (20 Mill. Durchläufe)
+   if (!IsSuperContext()) {
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], SubPipDigits, trend[0], Time[0]);
+
+      // detect trend changes
+      if (signals) /*&&*/ if (IsBarOpenEvent()) {
+         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
+         else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
+      }
+   }
+   return(last_error);
+
+   // Speed benchmark on Toshiba Satellite
+   // ------------------------------------
+   // H1 ::ALMA(7xD1)::onTick()   weights(  168)=0.000 sec   buffer(2000)=0.110 sec   loops=   336,000
+   // M30::ALMA(7xD1)::onTick()   weights(  336)=0.000 sec   buffer(2000)=0.250 sec   loops=   672,000
+   // M15::ALMA(7xD1)::onTick()   weights(  672)=0.000 sec   buffer(2000)=0.453 sec   loops= 1,344,000
+   // M5 ::ALMA(7xD1)::onTick()   weights( 2016)=0.016 sec   buffer(2000)=1.547 sec   loops= 4,032,000
+   // M1 ::ALMA(7xD1)::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20,160,000 (20 million passes)
    //
-   // Laufzeit auf Toshiba Portege:
-   // -----------------------------
+   // Speed benchmark on Toshiba Portege
+   // ----------------------------------
    // H1 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.078 sec
    // M30::ALMA(7xD1)::onTick()                              buffer(2000)=0.156 sec
    // M15::ALMA(7xD1)::onTick()                              buffer(2000)=0.312 sec
    // M5 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.952 sec
    // M1 ::ALMA(7xD1)::onTick()                              buffer(2000)=4.773 sec
    //
-   // Fazit: weights-Berechnung ist vernachlässigbar, Schwachpunkt ist die verschachtelte Schleife in MA-Berechnung
-
-
-   // (3) ungültige Bars neuberechnen
-   for (int bar=startBar; bar >= 0; bar--) {
-      // Moving Average
-      bufferMA[bar] = 0;
-      for (int i=0; i < ma.periods; i++) {
-         bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
-      }
-
-      // Trend aktualisieren
-      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, draw.type, true, true, SubPipDigits);
-   }
-
-
-   if (!IsSuperContext()) {
-      // (4) Legende aktualisieren
-      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
-
-
-      // (5) Signale: Trendwechsel signalisieren
-      if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
-         else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
-      }
-   }
-   return(last_error);
+   // Conclusion: weights calculation is ignorable, bottleneck is the nested loop in MA calculation
 }
 
 
 /**
- * Event handler called if trend has changed.
+ * Event handler for trend changes.
  *
  * @param  int trend - direction
  *
@@ -369,8 +310,8 @@ bool onTrendChange(int trend) {
    int error = 0;
 
    if (trend == MODE_UPTREND) {
-      message = ma.shortName +" turned up: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      log("onTrendChange(1)  "+ message);
+      message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -380,8 +321,8 @@ bool onTrendChange(int trend) {
    }
 
    if (trend == MODE_DOWNTREND) {
-      message = ma.shortName +" turned down: "+ NumberToStr(bufferMA[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      log("onTrendChange(2)  "+ message);
+      message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
@@ -401,14 +342,14 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
 
-   int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
-   int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
+   int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
+   int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_UPTREND1,  drawType,  EMPTY, drawWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, drawType,  EMPTY, drawWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  drawType,  EMPTY, drawWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_UPTREND1,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, drType,    EMPTY, drWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 
