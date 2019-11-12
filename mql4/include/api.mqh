@@ -132,6 +132,7 @@ double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fa
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
 double   icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar);;
 double   icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar);;
+double   icSuperSmoother(int timeframe, int filterPeriods, string filterAppliedPrice, int iBuffer, int iBar);;
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 double   icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer, int iBar);;
 double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;

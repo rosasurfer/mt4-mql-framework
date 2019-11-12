@@ -10,7 +10,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ * @author  Arnaud Legoux
+ * @see     http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  */
 #include <stddefines.mqh>
@@ -21,8 +22,8 @@ int __DEINIT_FLAGS__[];
 
 extern int    MA.Periods           = 38;
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset: 0..1 (Position des Glockenscheitels)
-extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma        (Steilheit der Glocke)
+extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset: 0..1 (offset of parabola vertex)
+extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma        (parabola steepness)
 
 extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
