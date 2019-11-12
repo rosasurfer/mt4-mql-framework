@@ -13,8 +13,9 @@ void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, 
       catch("@ALMA.CalculateWeights(1)  illegal parameter periods = "+ periods, ERR_INVALID_PARAMETER);
       return;
    }
-   if (ArraySize(weights) != periods)
+   if (ArraySize(weights) != periods) {
       ArrayResize(weights, periods);
+   }
 
    double dist = (periods-1) * offset;                      // m: Abstand des Scheitelpunkts der Glocke von der ältesten Bar; im Original floor(value)
    double s    = periods / sigma;                           // s: Steilheit der Glocke
