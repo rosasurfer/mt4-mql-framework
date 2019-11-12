@@ -2781,7 +2781,7 @@ bool ValidateInputs(bool interactive) {
    }
    StartLevel = Abs(StartLevel);
 
-   string trendIndicators[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "HalfTrend", "SuperTrend"};
+   string trendIndicators[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "SuperSmoother", "HalfTrend", "SuperTrend"};
 
 
    // StartConditions, AND combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
@@ -5146,13 +5146,14 @@ double RequiredDistance(double profit) {
  */
 int GetStartTrendValue(int bar) {
    if (start.trend.indicator == "alma"         ) return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
+   if (start.trend.indicator == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
    if (start.trend.indicator == "movingaverage") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
    if (start.trend.indicator == "nonlagma"     ) return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.indicator == "triema"       ) return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
-   if (start.trend.indicator == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (start.trend.indicator == "supersmoother") return(GetSuperSmoother(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
    if (start.trend.indicator == "supertrend"   ) return(GetSuperTrend   (start.trend.timeframe, start.trend.params, SuperTrend.MODE_TREND,    bar));
+   if (start.trend.indicator == "triema"       ) return(GetTriEMA       (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
 
-   return(!catch("GetStartTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StartConditions), ERR_INVALID_CONFIG_VALUE));
+   return(!catch("GetStartTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(start.trend.indicator), ERR_INVALID_CONFIG_VALUE));
 }
 
 
@@ -5165,13 +5166,14 @@ int GetStartTrendValue(int bar) {
  */
 int GetStopTrendValue(int bar) {
    if (stop.trend.indicator == "alma"         ) return(GetALMA         (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
+   if (stop.trend.indicator == "halftrend"    ) return(GetHalfTrend    (stop.trend.timeframe, stop.trend.params, HalfTrend.MODE_TREND,     bar));
    if (stop.trend.indicator == "movingaverage") return(GetMovingAverage(stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
    if (stop.trend.indicator == "nonlagma"     ) return(GetNonLagMA     (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
-   if (stop.trend.indicator == "triema"       ) return(GetTriEMA       (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
-   if (stop.trend.indicator == "halftrend"    ) return(GetHalfTrend    (stop.trend.timeframe, stop.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (stop.trend.indicator == "supersmoother") return(GetSuperSmoother(stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
    if (stop.trend.indicator == "supertrend"   ) return(GetSuperTrend   (stop.trend.timeframe, stop.trend.params, SuperTrend.MODE_TREND,    bar));
+   if (stop.trend.indicator == "triema"       ) return(GetTriEMA       (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
 
-   return(!catch("GetStopTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(StopConditions), ERR_INVALID_CONFIG_VALUE));
+   return(!catch("GetStopTrendValue(1)  unsupported trend indicator "+ DoubleQuoteStr(stop.trend.indicator), ERR_INVALID_CONFIG_VALUE));
 }
 
 
@@ -5215,6 +5217,31 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
 
 
 /**
+ * Return a HalfTrend indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int periods;
+
+   static string lastParams = "";
+   if (params != lastParams) {
+      if (!StrIsDigit(params)) return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods    = StrToInteger(params);
+      lastParams = params;
+   }
+   return(icHalfTrend(timeframe, periods, iBuffer, iBar));
+}
+
+
+/**
  * Return a Moving Average indicator value.
  *
  * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
@@ -5227,25 +5254,25 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
 double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetMovingAverage(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   static int    maPeriods;
-   static string maMethod;
-   static string maAppliedPrice;
+   static int    periods;
+   static string method;
+   static string appliedPrice;
 
    static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
       if (Explode(params, ",", elems, NULL) != 3) return(!catch("GetMovingAverage(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       sValue = StrTrim(elems[0]);
       if (!StrIsDigit(sValue))                    return(!catch("GetMovingAverage(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maPeriods = StrToInteger(sValue);
+      periods = StrToInteger(sValue);
       sValue = StrTrim(elems[1]);
       if (!StringLen(sValue))                     return(!catch("GetMovingAverage(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maMethod = sValue;
+      method = sValue;
       sValue = StrTrim(elems[2]);
       if (!StringLen(sValue))                     return(!catch("GetMovingAverage(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maAppliedPrice = sValue;
-      lastParams     = params;
+      appliedPrice = sValue;
+      lastParams   = params;
    }
-   return(icMovingAverage(timeframe, maPeriods, maMethod, maAppliedPrice, iBuffer, iBar));
+   return(icMovingAverage(timeframe, periods, method, appliedPrice, iBuffer, iBar));
 }
 
 
@@ -5275,7 +5302,7 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
 
 
 /**
- * Return a TriEMA indicator value.
+ * Return an indicator value from "Ehler's 2-Pole-SuperSmoother Filter".
  *
  * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
  * @param  string params    - additional comma-separated indicator parameters
@@ -5284,49 +5311,24 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
-   if (!StringLen(params)) return(!catch("GetTriEMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+double GetSuperSmoother(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetSuperSmoother(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   static int    maPeriods;
-   static string maAppliedPrice;
+   static int    periods;
+   static string appliedPrice;
 
    static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
-      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetTriEMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetSuperSmoother(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       sValue = StrTrim(elems[0]);
-      if (!StrIsDigit(sValue))                    return(!catch("GetTriEMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maPeriods = StrToInteger(sValue);
-      sValue = StrTrim(elems[1]);
-      if (!StringLen(sValue))                     return(!catch("GetTriEMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maAppliedPrice = sValue;
-      lastParams     = params;
+      if (!StrIsDigit(sValue))                    return(!catch("GetSuperSmoother(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods = StrToInteger(sValue);
+      sValue = StrTrim(elems[2]);
+      if (!StringLen(sValue))                     return(!catch("GetSuperSmoother(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      appliedPrice = sValue;
+      lastParams   = params;
    }
-   return(icTriEMA(timeframe, maPeriods, maAppliedPrice, iBuffer, iBar));
-}
-
-
-/**
- * Return a HalfTrend indicator value.
- *
- * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
- * @param  string params    - additional comma-separated indicator parameters
- * @param  int    iBuffer   - buffer index of the value to return
- * @param  int    iBar      - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
-   if (!StringLen(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-
-   static int periods;
-
-   static string lastParams = "";
-   if (params != lastParams) {
-      if (!StrIsDigit(params)) return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      periods    = StrToInteger(params);
-      lastParams = params;
-   }
-   return(icHalfTrend(timeframe, periods, iBuffer, iBar));
+   return(icSuperSmoother(timeframe, periods, appliedPrice, iBuffer, iBar));
 }
 
 
@@ -5358,6 +5360,37 @@ double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
       lastParams = params;
    }
    return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
+}
+
+
+/**
+ * Return a TriEMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetTriEMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int    periods;
+   static string appliedPrice;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetTriEMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetTriEMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StringLen(sValue))                     return(!catch("GetTriEMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      appliedPrice = sValue;
+      lastParams   = params;
+   }
+   return(icTriEMA(timeframe, periods, appliedPrice, iBuffer, iBar));
 }
 
 

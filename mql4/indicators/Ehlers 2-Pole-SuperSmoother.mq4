@@ -6,16 +6,16 @@
  * more smooth at the cost of a bit more lag.
  *
  * Indicator buffers for iCustom():
- *  • Filter.MODE_MAIN:  filter values
- *  • Filter.MODE_TREND: trend direction and length
- *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
+ *  • MovingAverage.MODE_MA:    all filter values
+ *  • MovingAverage.MODE_TREND: trend direction and length
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @author  Witold Wozniak (http://www.mqlsoft.com/)
+ * @author  John F. Ehlers
  * @see     "/etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures [Ehlers, 2004].pdf"
  *
  *
- * TODO: analyze/update the required run-up period
+ * TODO: analyze and fix the required run-up period
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -53,8 +53,8 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_chart_window
 #property indicator_buffers   5
 
-#define MODE_MAIN             Filter.MODE_MAIN           // indicator buffer ids
-#define MODE_TREND            Filter.MODE_TREND
+#define MODE_MAIN             MovingAverage.MODE_MA      // indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND1         MODE_UPTREND
@@ -164,6 +164,8 @@ int onInit() {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+
+      debug("onInit(0.1)  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1);
       }
@@ -279,7 +281,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, main[0], SubPipDigits, trend[0], Time[0]);
+       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], SubPipDigits, trend[0], Time[0]);
 
       // detect trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
