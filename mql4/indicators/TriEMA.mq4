@@ -23,7 +23,7 @@ extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typi
 extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
-extern int    Draw.LineWidth       = 2;
+extern int    Draw.LineWidth       = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
 
 extern string __________________________;
@@ -173,15 +173,15 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downTrend);            // on-bar uptrends:                visible
 
    // chart legend
-   string shortName = __NAME() +"("+ MA.Periods +")", strAppliedPrice = "";
-   if (maAppliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(maAppliedPrice);
-   indicatorName = __NAME() +"("+ MA.Periods + strAppliedPrice +")";
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
+   indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
       chartLegendLabel = CreateLegendLabel(indicatorName);
       ObjectRegister(chartLegendLabel);
    }
 
    // names, labels, styles and display options
+   string shortName = __NAME() +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart context menu
    SetIndexLabel(MODE_EMA_1,     NULL);
    SetIndexLabel(MODE_EMA_2,     NULL);
