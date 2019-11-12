@@ -19,7 +19,7 @@
  * @see  https://financestrategysystem.com/supertrend-tradestation-and-multicharts/
  * @see  http://www.forexfactory.com/showthread.php?t=214635  (Andrew Forex Trading System)
  * @see  http://www.forexfactory.com/showthread.php?t=268038  (Plateman's CCI aka SuperTrend)
- * @see  mql4/indicators/HalfTrend.mq4
+ * @see  /mql4/indicators/HalfTrend.mq4
  *
  * Notes: In the above FF links a CCI is used to get the SMA component for averaging price. Here the CCI is replaced and the
  *        SMA is used directly. The defining element for the indicator is the ATR channel, not price or the SMA. Therefore
@@ -41,8 +41,8 @@ extern color  Color.MovingAverage  = CLR_NONE;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
-
 extern string __________________________;
+
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
