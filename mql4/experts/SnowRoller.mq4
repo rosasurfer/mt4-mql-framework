@@ -307,18 +307,37 @@ bool StartSequence(int signal) {
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name + ifString(sequence.level, " at level "+ Abs(sequence.level), ""));
 
-   // configure/deactivate start conditions
-   sessionbreak.waiting  = false;
-   start.price.condition = false;
-   start.time.condition  = false;
-   start.trend.condition = (start.trend.condition && AutoResume);
-   start.conditions      = false; SS.StartStopConditions();
+   // update start/stop conditions
+   switch (signal) {
+      case SIGNAL_SESSIONBREAK:
+         sessionbreak.waiting = false;
+         break;
+
+      case SIGNAL_TREND:
+         start.trend.condition = AutoResume;
+         break;
+
+      case SIGNAL_PRICETIME:
+         start.price.condition = false;
+         start.time.condition  = false;
+         break;
+
+      case NULL:                                            // manual start
+         sessionbreak.waiting  = false;
+         start.trend.condition = AutoResume;
+         start.price.condition = false;
+         start.time.condition  = false;
+         break;
+
+      default: return(!catch("StartSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
+   }
+   SS.StartStopConditions();
 
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
    sequence.maxLevel    = sequence.level;
 
-   datetime startTime  = TimeCurrentEx("StartSequence(3)");
+   datetime startTime  = TimeCurrentEx("StartSequence(4)");
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
 
    ArrayPushInt   (sequence.start.event,  CreateEventId());
@@ -348,14 +367,14 @@ bool StartSequence(int signal) {
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("StartSequence(4)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+   if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
 
    // pause the tester according to the configuration
    if (IsTesting() && IsVisualMode()) {
       if      (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
       else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
    }
-   return(!catch("StartSequence(5)"));
+   return(!catch("StartSequence(6)"));
 }
 
 
@@ -527,19 +546,17 @@ bool StopSequence(int signal) {
       SS.ProfitPerLevel();
    }
 
-   // update start/stop/auto-resume configuration (sequence.status is STATUS_STOPPED)
-   start.conditions = false;
-
+   // update start/stop conditions (sequence.status is STATUS_STOPPED)
    switch (signal) {
-      case SIGNAL_SESSIONBREAK:                          // implies auto-resume and ignores all other conditions
-         sessionbreak.waiting = (entryStatus == STATUS_PROGRESSING);
+      case SIGNAL_SESSIONBREAK:
+         sessionbreak.waiting = true;
          sequence.status      = STATUS_WAITING;
          break;
 
       case SIGNAL_TREND:                                 // auto-resume if enabled and StartCondition is @trend
-         if (AutoResume && start.trend.description!="") {
-            start.trend.condition = true;
+         if (start.trend.description!="" && AutoResume) {
             start.conditions      = true;
+            start.trend.condition = true;
             stop.trend.condition  = true;
             sequence.status       = STATUS_WAITING;
          }
@@ -618,12 +635,31 @@ bool ResumeSequence(int signal) {
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
-   // configure/deactivate start conditions
-   sessionbreak.waiting  = false;
-   start.price.condition = false;
-   start.time.condition  = false;
-   start.trend.condition = (start.trend.condition && AutoResume);
-   start.conditions      = false; SS.StartStopConditions();
+   // update start/stop conditions
+   switch (signal) {
+      case SIGNAL_SESSIONBREAK:
+         sessionbreak.waiting = false;
+         break;
+
+      case SIGNAL_TREND:
+         start.trend.condition = AutoResume;
+         break;
+
+      case SIGNAL_PRICETIME:
+         start.price.condition = false;
+         start.time.condition  = false;
+         break;
+
+      case NULL:                                               // manual resume
+         sessionbreak.waiting  = false;
+         start.trend.condition = AutoResume;
+         start.price.condition = false;
+         start.time.condition  = false;
+         break;
+
+      default: return(!catch("ResumeSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
+   }
+   SS.StartStopConditions();
 
    // check for existing positions (after a former error some levels may already be open)
    if (sequence.level > 0) {
@@ -647,7 +683,7 @@ bool ResumeSequence(int signal) {
 
    if (!gridBase) {
       // define the new gridbase if no open positions have been found
-      startTime  = TimeCurrentEx("ResumeSequence(3)");
+      startTime  = TimeCurrentEx("ResumeSequence(4)");
       startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
       GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
    }
@@ -682,14 +718,14 @@ bool ResumeSequence(int signal) {
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("ResumeSequence(4)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting() && IsVisualMode()) {
       if      (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
       else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
    }
-   return(!catch("ResumeSequence(5)"));
+   return(!catch("ResumeSequence(6)"));
 }
 
 
@@ -2968,8 +3004,7 @@ bool ValidateInputs(bool interactive) {
       // the input parameter is rewritten later, @see UpdateStartStopInputs()
    }
 
-   // AutoResume
-   if (AutoResume && !start.trend.condition)            return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StartConditions for AutoResume = "+ DoubleQuoteStr(StartConditions), interactive)));
+   // AutoResume: nothing to validate
 
    // ShowProfitInPercent: nothing to validate
 
@@ -2982,7 +3017,7 @@ bool ValidateInputs(bool interactive) {
    // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(57)"));
+   return(!last_error|catch("ValidateInputs(56)"));
 }
 
 
@@ -3190,11 +3225,11 @@ bool SaveSequence() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert,
-   // oder wenn die Sequenz gestoppt wurde.
-   if (IsTesting() /*&& !__LOG()*/) {                                // enable !__LOG() to always save if logging is enabled
+   // oder wenn die Sequenz gestoppt wird.
+   if (IsTesting() /*&& !__LOG()*/) {                    // enable !__LOG() to always save in tester if logging is enabled
       static bool statusSaved = false;
-      if (statusSaved && sequence.status!=STATUS_STOPPED && sequence.status!=STATUS_WAITING && __WHEREAMI__!=CF_DEINIT)
-         return(true);                                               // skip saving
+      if (statusSaved && sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
+         return(true);                                   // skip saving
    }
 
    /*
@@ -3355,9 +3390,13 @@ bool SaveSequence() {
    FileClose(hFile);
    statusSaved = true;
 
+   //debug("SaveSequence(0.1)  StartConditions="+ StartConditions);
+   //debug("SaveSequence(0.2)  StopConditions="+  StopConditions);
+   //debug("SaveSequence(0.3)  AutoResume="+      AutoResume);
+
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
-   return(!last_error|catch("SaveSequence(6)"));
+   return(!catch("SaveSequence(6)"));
 }
 
 
