@@ -307,7 +307,7 @@ int onTick() {
  * @return bool - success status
  */
 bool onTrendChange(int trend) {
-   string message = "";
+   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
    int error = 0;
 
    if (trend == MODE_UPTREND) {
@@ -316,8 +316,8 @@ bool onTrendChange(int trend) {
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
       return(!error);
    }
 
@@ -327,8 +327,8 @@ bool onTrendChange(int trend) {
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
       return(!error);
    }
 
