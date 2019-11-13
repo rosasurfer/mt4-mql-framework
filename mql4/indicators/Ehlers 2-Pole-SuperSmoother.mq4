@@ -191,7 +191,7 @@ int onInit() {
    string shortName = "2-Pole-Filter("+ Filter.Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     shortName +" length");
+   SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
