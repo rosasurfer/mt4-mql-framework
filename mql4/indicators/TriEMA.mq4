@@ -186,7 +186,7 @@ int onInit() {
    SetIndexLabel(MODE_EMA_1,     NULL);
    SetIndexLabel(MODE_EMA_2,     NULL);
    SetIndexLabel(MODE_EMA_3,     shortName);             // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     shortName +" length");
+   SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
