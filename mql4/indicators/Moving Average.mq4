@@ -201,7 +201,7 @@ int onInit() {
    string shortName = __NAME() +"("+ MA.Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     shortName +" length");
+   SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
