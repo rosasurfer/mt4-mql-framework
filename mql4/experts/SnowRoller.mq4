@@ -1448,7 +1448,7 @@ bool ExecuteOrders(int orders[]) {
    if (!UpdateStatus(bNull, iNull)) return(false);
    if (!SaveSequence()) return(false);
 
-   return(!last_error|catch("ExecuteOrders(10)"));
+   return(!catch("ExecuteOrders(10)"));
 }
 
 
@@ -1776,7 +1776,7 @@ bool Grid.AddPosition(int level) {
       return(false);
 
    ArrayResize(oe, 0);
-   return(!last_error|catch("Grid.AddPosition(7)"));
+   return(!catch("Grid.AddPosition(7)"));
 }
 
 
@@ -2419,7 +2419,10 @@ void SS.StartStopConditions() {
       if (start.time.description!="" && start.price.description!="") {
          sValue = "("+ sValue +")";
       }
-      if (start.time.description!="" || start.price.description!="") {
+      if (start.time.description=="" && start.price.description=="") {
+         sValue = sTrend;
+      }
+      else {
          sValue = sTrend +" || "+ sValue;
       }
    }
@@ -2449,10 +2452,6 @@ void SS.StartStopConditions() {
    }
    if (sValue == "") sStopConditions = "-";
    else              sStopConditions = sValue;
-   StopConditions = sValue;
-
-   // also update the input parameters used by SaveSequence()
-   UpdateStartStopInputs();
 }
 
 
@@ -2915,7 +2914,7 @@ bool ValidateInputs(bool interactive) {
 
          start.conditions = true;                       // im Erfolgsfall ist start.conditions aktiviert
       }
-      // the input parameter is rewritten later, @see UpdateStartStopInputs()
+      // the input parameter is not rewritten
    }
 
    // StopConditions, OR combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
@@ -3014,7 +3013,7 @@ bool ValidateInputs(bool interactive) {
          }
          else                                           return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
-      // the input parameter is rewritten later, @see UpdateStartStopInputs()
+      // the input parameter is not rewritten
    }
 
    // AutoResume: nothing to validate
@@ -3030,7 +3029,7 @@ bool ValidateInputs(bool interactive) {
    // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(56)"));
+   return(!catch("ValidateInputs(56)"));
 }
 
 
@@ -3596,7 +3595,7 @@ bool LoadSequence() {
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!last_error|catch("LoadSequence(19)"));
+   return(!catch("LoadSequence(19)"));
 }
 
 
@@ -3989,7 +3988,7 @@ bool LoadSequence.RuntimeStatus(string file, string line, string key, string val
 
    ArrayResize(values, 0);
    ArrayResize(data,   0);
-   return(!last_error|catch("LoadSequence.RuntimeStatus(96)"));
+   return(!catch("LoadSequence.RuntimeStatus(96)"));
 }
 
 
@@ -4257,7 +4256,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
    else if (  isClosed) lpPermanentChange = true;
    else                 lpPermanentChange = lpPermanentChange || NE(lastSwap, OrderSwap());
 
-   return(!last_error|catch("Sync.UpdateOrder(3)"));
+   return(!catch("Sync.UpdateOrder(3)"));
 }
 
 
@@ -5447,6 +5446,8 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
       lastParams   = params;
    }
    return(icTriEMA(timeframe, periods, appliedPrice, iBuffer, iBar));
+
+   UpdateStartStopInputs();
 }
 
 
