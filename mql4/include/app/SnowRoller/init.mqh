@@ -102,6 +102,15 @@ int onInitParameters() {
       RestoreInputStatus();
       return(last_error);
    }
+   if (sequence.status == STATUS_STOPPED) {
+      if (start.conditions) {
+         sequence.status = STATUS_WAITING;
+      }
+   }
+   else if (sequence.status == STATUS_WAITING) {
+      if (!start.conditions) {                              // TODO: evaluate sessionbreak.waiting
+      }
+   }
    if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
       SaveSequence();
    return(last_error);
@@ -213,8 +222,9 @@ void CopyInputStatus(bool store) {
    store = store!=0;
 
    static int      _sequence.id;
-   static string   _sequence.created;
    static string   _sequence.name;
+   static string   _sequence.created;
+   static int      _sequence.status;
    static bool     _sequence.isTest;
    static int      _sequence.direction;
 
@@ -257,8 +267,9 @@ void CopyInputStatus(bool store) {
 
    if (store) {
       _sequence.id                = sequence.id;
-      _sequence.created           = sequence.created;
       _sequence.name              = sequence.name;
+      _sequence.created           = sequence.created;
+      _sequence.status            = sequence.status;
       _sequence.isTest            = sequence.isTest;
       _sequence.direction         = sequence.direction;
 
@@ -301,8 +312,9 @@ void CopyInputStatus(bool store) {
    }
    else {
       sequence.id                = _sequence.id;
-      sequence.created           = _sequence.created;
       sequence.name              = _sequence.name;
+      sequence.created           = _sequence.created;
+      sequence.status            = _sequence.status;
       sequence.isTest            = _sequence.isTest;
       sequence.direction         = _sequence.direction;
 

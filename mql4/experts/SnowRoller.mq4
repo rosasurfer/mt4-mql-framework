@@ -48,8 +48,8 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the
 #include <win32api.mqh>
 
 int      sequence.id;
-string   sequence.created = "";                    // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
 string   sequence.name    = "";                    // "L.1234" | "S.2345"
+string   sequence.created = "";                    // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
 int      sequence.status;
 bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
 int      sequence.direction;
@@ -315,18 +315,21 @@ bool StartSequence(int signal) {
 
       case SIGNAL_TREND:
          start.trend.condition = AutoResume;
+         start.conditions      = false;
          break;
 
       case SIGNAL_PRICETIME:
          start.price.condition = false;
          start.time.condition  = false;
+         start.conditions      = false;
          break;
 
       case NULL:                                            // manual start
          sessionbreak.waiting  = false;
-         start.trend.condition = AutoResume;
+         start.trend.condition = (start.trend.description!="" && AutoResume);
          start.price.condition = false;
          start.time.condition  = false;
+         start.conditions      = false;
          break;
 
       default: return(!catch("StartSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -576,6 +579,13 @@ bool StopSequence(int signal) {
          break;
 
       case NULL:                                         // explicit stop (manual or at end of test)
+         if (entryStatus == STATUS_WAITING) {
+            start.trend.condition = false;
+            start.price.condition = false;
+            start.time.condition  = false;
+            start.conditions      = false;
+            sessionbreak.waiting  = false;
+         }
          break;
 
       default: return(!catch("StopSequence(11)  unsupported stop signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -643,18 +653,21 @@ bool ResumeSequence(int signal) {
 
       case SIGNAL_TREND:
          start.trend.condition = AutoResume;
+         start.conditions      = false;
          break;
 
       case SIGNAL_PRICETIME:
          start.price.condition = false;
          start.time.condition  = false;
+         start.conditions      = false;
          break;
 
       case NULL:                                               // manual resume
          sessionbreak.waiting  = false;
-         start.trend.condition = AutoResume;
+         start.trend.condition = (start.trend.description!="" && AutoResume);
          start.price.condition = false;
          start.time.condition  = false;
+         start.conditions      = false;
          break;
 
       default: return(!catch("ResumeSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -1126,7 +1139,7 @@ bool IsOrderClosedBySL() {
 /**
  * Whether a start or resume condition is satisfied for a waiting sequence. Price and time conditions are AND combined.
  *
- * @return int - the fulfilled start condition signal identfier or NULL if no start condition is satisfied
+ * @return int - the signal identifier of the fulfilled start condition or NULL if no start condition is satisfied
  */
 int IsStartSignal() {
    if (last_error || sequence.status!=STATUS_WAITING) return(NULL);
@@ -1207,7 +1220,7 @@ int IsStartSignal() {
 /**
  * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are OR combined.
  *
- * @return int - the fulfilled stop condition signal identifier or NULL if no stop condition is satisfied
+ * @return int - the signal identifier of the fulfilled stop condition or NULL if no stop condition is satisfied
  */
 int IsStopSignal() {
    if (last_error || sequence.status!=STATUS_PROGRESSING) return(NULL);
@@ -4150,10 +4163,13 @@ bool SynchronizeStatus() {
       permanentStatusChange = true;
    }
 
-   // validate sessionbreak status
+   // update status
+   if (sequence.status == STATUS_STOPPED) {
+      if (start.conditions) sequence.status = STATUS_WAITING;
+   }
    if (sessionbreak.waiting) {
-      if      (sequence.status == STATUS_STOPPED) sequence.status = STATUS_WAITING;
-      else if (sequence.status != STATUS_WAITING) return(_false(catch("SynchronizeStatus(10)  sessionbreak.waiting="+ sessionbreak.waiting +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
+      if (sequence.status == STATUS_STOPPED) sequence.status = STATUS_WAITING;
+      if (sequence.status != STATUS_WAITING) return(_false(catch("SynchronizeStatus(10)  sessionbreak.waiting="+ sessionbreak.waiting +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
    }
 
    // store status changes
