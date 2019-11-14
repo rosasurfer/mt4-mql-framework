@@ -169,7 +169,7 @@ int onInit() {
    // names, labels, styles and display options
    IndicatorShortName(indicatorName);                    // chart context menu
    SetIndexLabel(MODE_MA,        indicatorName);         // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     indicatorName +" length");
+   SetIndexLabel(MODE_TREND,     indicatorName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
