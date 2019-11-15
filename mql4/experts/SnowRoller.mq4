@@ -1448,7 +1448,7 @@ bool ExecuteOrders(int orders[]) {
    if (!UpdateStatus(bNull, iNull)) return(false);
    if (!SaveSequence()) return(false);
 
-   return(!last_error|catch("ExecuteOrders(10)"));
+   return(!catch("ExecuteOrders(10)"));
 }
 
 
@@ -1776,7 +1776,7 @@ bool Grid.AddPosition(int level) {
       return(false);
 
    ArrayResize(oe, 0);
-   return(!last_error|catch("Grid.AddPosition(7)"));
+   return(!catch("Grid.AddPosition(7)"));
 }
 
 
@@ -2419,7 +2419,10 @@ void SS.StartStopConditions() {
       if (start.time.description!="" && start.price.description!="") {
          sValue = "("+ sValue +")";
       }
-      if (start.time.description!="" || start.price.description!="") {
+      if (start.time.description=="" && start.price.description=="") {
+         sValue = sTrend;
+      }
+      else {
          sValue = sTrend +" || "+ sValue;
       }
    }
@@ -2449,10 +2452,6 @@ void SS.StartStopConditions() {
    }
    if (sValue == "") sStopConditions = "-";
    else              sStopConditions = sValue;
-   StopConditions = sValue;
-
-   // also update the input parameters used by SaveSequence()
-   UpdateStartStopInputs();
 }
 
 
@@ -2915,7 +2914,7 @@ bool ValidateInputs(bool interactive) {
 
          start.conditions = true;                       // im Erfolgsfall ist start.conditions aktiviert
       }
-      // the input parameter is rewritten later, @see UpdateStartStopInputs()
+      // the input parameter is not rewritten
    }
 
    // StopConditions, OR combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
@@ -3014,7 +3013,7 @@ bool ValidateInputs(bool interactive) {
          }
          else                                           return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
-      // the input parameter is rewritten later, @see UpdateStartStopInputs()
+      // the input parameter is not rewritten
    }
 
    // AutoResume: nothing to validate
@@ -3030,7 +3029,7 @@ bool ValidateInputs(bool interactive) {
    // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!last_error|catch("ValidateInputs(56)"));
+   return(!catch("ValidateInputs(56)"));
 }
 
 
@@ -3310,6 +3309,10 @@ bool SaveSequence() {
    int      ignoreClosedPositions[];      // optional (werden nur gespeichert, wenn belegt)
    */
 
+   // convert active start/stop conditions (skip inactive conditions)
+   string sActiveStartConditions="", sActiveStopConditions="";
+   GetActiveConditions(sActiveStartConditions, sActiveStopConditions);
+
    // Dateiinhalt zusammenstellen: Konfiguration und Input-Parameter
    string lines[]; ArrayResize(lines, 0);
    ArrayPushString(lines, /*string  */ "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
@@ -3320,8 +3323,8 @@ bool SaveSequence() {
    ArrayPushString(lines, /*int     */ "GridSize="              + GridSize              );
    ArrayPushString(lines, /*double  */ "LotSize="+    NumberToStr(LotSize, ".+")        );
    ArrayPushString(lines, /*int     */ "StartLevel="            + StartLevel            );
-   ArrayPushString(lines, /*string  */ "StartConditions="       + StartConditions       );
-   ArrayPushString(lines, /*string  */ "StopConditions="        + StopConditions        );
+   ArrayPushString(lines, /*string  */ "StartConditions="       + sActiveStartConditions);
+   ArrayPushString(lines, /*string  */ "StopConditions="        + sActiveStopConditions );
    ArrayPushString(lines, /*bool    */ "AutoResume="            + AutoResume            );
    ArrayPushString(lines, /*bool    */ "ShowProfitInPercent="   + ShowProfitInPercent   );
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
@@ -3403,13 +3406,65 @@ bool SaveSequence() {
    FileClose(hFile);
    statusSaved = true;
 
-   //debug("SaveSequence(0.1)  StartConditions="+ StartConditions);
-   //debug("SaveSequence(0.2)  StopConditions="+  StopConditions);
-   //debug("SaveSequence(0.3)  AutoResume="+      AutoResume);
-
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
    return(!catch("SaveSequence(6)"));
+}
+
+
+/**
+ * Return a string representation of active start and stop conditions as saved by SaveSequence().
+ * are written to the status file by SaveSequence().
+ *
+ * @param  _Out_ string &startConditions - reference to variable for active start conditions
+ * @param  _Out_ string &stopConditions  - reference to variable for active stop conditions
+ *
+ * @return bool - success status
+ */
+void GetActiveConditions(string &startConditions, string &stopConditions) {
+   string sValue = "";
+
+   // active start conditions (order: trend, time, price)
+   if (start.conditions) {
+      if (start.time.condition) {
+         sValue = "@"+ start.time.description;
+      }
+      if (start.price.condition) {
+         sValue = sValue + ifString(sValue=="", "", " && ") +"@"+ start.price.description;
+      }
+      if (start.trend.condition) {
+         if (start.time.condition && start.price.condition) {
+            sValue = "("+ sValue +")";
+         }
+         if (start.time.condition || start.price.condition) {
+            sValue = " || "+ sValue;
+         }
+         sValue = "@"+ start.trend.description + sValue;
+      }
+   }
+   startConditions = sValue;
+
+   // active stop conditions (order: trend, profit, time, price)
+   sValue = "";
+   if (stop.trend.condition) {
+      sValue = "@"+ stop.trend.description;
+   }
+   if (stop.profitAbs.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
+   }
+   if (stop.profitPct.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
+   }
+   if (stop.time.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
+   }
+   if (stop.price.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
+   }
+   stopConditions = sValue;
+
+   debug("ActiveConditions(0.1)  startConditions="+ startConditions);
+   debug("ActiveConditions(0.2)  stopConditions="+ stopConditions);
 }
 
 
@@ -3596,7 +3651,7 @@ bool LoadSequence() {
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!last_error|catch("LoadSequence(19)"));
+   return(!catch("LoadSequence(19)"));
 }
 
 
@@ -3989,7 +4044,7 @@ bool LoadSequence.RuntimeStatus(string file, string line, string key, string val
 
    ArrayResize(values, 0);
    ArrayResize(data,   0);
-   return(!last_error|catch("LoadSequence.RuntimeStatus(96)"));
+   return(!catch("LoadSequence.RuntimeStatus(96)"));
 }
 
 
@@ -4257,7 +4312,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
    else if (  isClosed) lpPermanentChange = true;
    else                 lpPermanentChange = lpPermanentChange || NE(lastSwap, OrderSwap());
 
-   return(!last_error|catch("Sync.UpdateOrder(3)"));
+   return(!catch("Sync.UpdateOrder(3)"));
 }
 
 
@@ -5447,54 +5502,6 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
       lastParams   = params;
    }
    return(icTriEMA(timeframe, periods, appliedPrice, iBuffer, iBar));
-}
-
-
-/**
- * Update the input parameters "StartConditions" and "StopConditions" to contain only active conditions. The updated parameters
- * are written to the status file by SaveSequence().
- */
-void UpdateStartStopInputs() {
-   string sValue = "";
-
-   // StartConditions, order: trend, time, price
-   if (start.conditions) {
-      if (start.time.condition) {
-         sValue = "@"+ start.time.description;
-      }
-      if (start.price.condition) {
-         sValue = sValue + ifString(sValue=="", "", " && ") +"@"+ start.price.description;
-      }
-      if (start.trend.condition) {
-         if (start.time.condition && start.price.condition) {
-            sValue = "("+ sValue +")";
-         }
-         if (start.time.condition || start.price.condition) {
-            sValue = sValue +" || ";
-         }
-         sValue = sValue +"@"+ start.trend.description;
-      }
-   }
-   StartConditions = sValue;
-
-   // StopConditions, order: trend, profit, time, price
-   sValue = "";
-   if (stop.trend.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.trend.description;
-   }
-   if (stop.profitAbs.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
-   }
-   if (stop.profitPct.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
-   }
-   if (stop.time.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
-   }
-   if (stop.price.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
-   }
-   StopConditions = sValue;
 }
 
 
