@@ -60,7 +60,7 @@ int onInitUser() {
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
 
-      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves
+      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves the sequence
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
          SaveSequence();
       }

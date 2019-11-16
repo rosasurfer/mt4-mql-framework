@@ -30,7 +30,8 @@ extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                      // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
-extern bool     AutoResume             = false;                   // whether to automatically re-activate a trend StartCondition after StopSequence()
+extern bool     AutoResume             = false;                   // whether to automatically reactivate a trend start condition after StopSequence(SIGNAL_TREND)
+extern bool     AutoRestart            = false;                   // whether to automatically reset and restart a sequence after TP is reached
 extern bool     ShowProfitInPercent    = true;                    // whether PL values are displayed absolutely or in percent
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the date part is ignored
@@ -573,7 +574,7 @@ bool StopSequence(int signal) {
          stop.time.condition  = false;
          break;
 
-      case SIGNAL_TP:                                    // no auto-resume
+      case SIGNAL_TP:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
          break;
@@ -591,9 +592,12 @@ bool StopSequence(int signal) {
       default: return(!catch("StopSequence(11)  unsupported stop signal = "+ signal, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
+   SaveSequence();
 
-   // save sequence
-   if (!SaveSequence()) return(false);
+   // restart sequence if configured (to STATUS_WAITING)
+   if (signal==SIGNAL_TP && AutoRestart) {
+      ResetSequence();
+   }
 
    // pause/stop the tester according to the configuration
    if (IsTesting()) {
@@ -605,6 +609,49 @@ bool StopSequence(int signal) {
       else if (sequence.status == STATUS_STOPPED)                          Tester.Stop();
    }
    return(!catch("StopSequence(12)"));
+}
+
+
+/**
+ * Reset a sequence to its initial state. Called if AutoRestart is enabled and the sequence was stopped due to a reached
+ * profit target.
+ *
+ * @return bool - success status
+ */
+bool ResetSequence() {
+   if (IsLastError())                   return(false);
+   if (sequence.status!=STATUS_STOPPED) return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
+
+   return(!catch("ResetSequence(2)", ERR_NOT_IMPLEMENTED));
+
+   sequence.status = STATUS_UNDEFINED;
+
+   if (start.trend.description    != "") { start.trend.condition    = true; start.conditions = true; }
+   if (stop.trend.description     != "")   stop.trend.condition     = true;
+   if (stop.profitAbs.description != "")   stop.profitAbs.condition = true;
+   if (stop.profitPct.description != "")   stop.profitPct.condition = true;
+
+
+   // from onInitUser(): initialize a new sequence
+   bool interactive = true;
+   if (ValidateInputs(interactive)) {
+      sequence.isTest  = IsTesting();
+      sequence.id      = CreateSequenceId();
+      Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
+      sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+      sequence.status  = STATUS_WAITING;
+
+      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves the sequence
+         if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
+         SaveSequence();
+      }
+   }
+
+   sequence.status = STATUS_WAITING;
+   SaveSequence();
+
+   return(!catch("ResetSequence(3)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -2672,6 +2719,7 @@ int      last.StartLevel;
 string   last.StartConditions;
 string   last.StopConditions;
 bool     last.AutoResume;
+bool     last.AutoRestart;
 bool     last.ShowProfitInPercent;
 datetime last.Sessionbreak.StartTime;
 datetime last.Sessionbreak.EndTime;
@@ -2691,6 +2739,7 @@ void BackupInputs() {
    last.StartConditions        = StringConcatenate(StartConditions, "");
    last.StopConditions         = StringConcatenate(StopConditions,  "");
    last.AutoResume             = AutoResume;
+   last.AutoRestart            = AutoRestart;
    last.ShowProfitInPercent    = ShowProfitInPercent;
    last.Sessionbreak.StartTime = Sessionbreak.StartTime;
    last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
@@ -2709,6 +2758,7 @@ void RestoreInputs() {
    StartConditions        = last.StartConditions;
    StopConditions         = last.StopConditions;
    AutoResume             = last.AutoResume;
+   AutoRestart            = last.AutoRestart;
    ShowProfitInPercent    = last.ShowProfitInPercent;
    Sessionbreak.StartTime = last.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
@@ -3016,8 +3066,8 @@ bool ValidateInputs(bool interactive) {
       // the input parameter is not rewritten
    }
 
-   // AutoResume: nothing to validate
-
+   // AutoResume:          nothing to validate
+   // AutoRestart:         nothing to validate
    // ShowProfitInPercent: nothing to validate
 
    // Sessionbreak.StartTime/EndTime
@@ -3326,6 +3376,7 @@ bool SaveSequence() {
    ArrayPushString(lines, /*string  */ "StartConditions="       + sActiveStartConditions);
    ArrayPushString(lines, /*string  */ "StopConditions="        + sActiveStopConditions );
    ArrayPushString(lines, /*bool    */ "AutoResume="            + AutoResume            );
+   ArrayPushString(lines, /*bool    */ "AutoRestart="           + AutoRestart           );
    ArrayPushString(lines, /*bool    */ "ShowProfitInPercent="   + ShowProfitInPercent   );
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
    ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
@@ -3493,7 +3544,7 @@ bool LoadSequence() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Sequence.ID", "Created", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Sequence.ID", "Created", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "AutoRestart", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer
                      "Symbol"                  ,                        //  nicht vollständig in einer einzigen Zeile steht.
                      "Sequence.ID"             ,
@@ -3505,6 +3556,7 @@ bool LoadSequence() {
                      "StartConditions"         ,
                      "StopConditions"          ,
                      "AutoResume"              ,
+                     "AutoRestart"             ,
                    //"ShowProfitInPercent"     ,                        // optional
                      "Sessionbreak.StartTime"  ,
                      "Sessionbreak.EndTime"    ,
@@ -3591,18 +3643,23 @@ bool LoadSequence() {
          AutoResume = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
-      else if (key == "ShowProfitInPercent") {
+      else if (key == "AutoRestart") {
          if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         AutoRestart = _bool(StrToInteger(value));
+         ArrayDropString(keys, key);
+      }
+      else if (key == "ShowProfitInPercent") {
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ShowProfitInPercent = _bool(StrToInteger(value));
          ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.StartTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(13)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sessionbreak.StartTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.EndTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(13)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(_false(catch("LoadSequence(14)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sessionbreak.EndTime = StrToInteger(value);
          ArrayDropString(keys, key);
       }
@@ -3612,7 +3669,7 @@ bool LoadSequence() {
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTestSequence() || !StrStartsWithI(accountValue, ShortAccountCompany() +":"))
-         return(_false(catch("LoadSequence(14)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
+         return(_false(catch("LoadSequence(15)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
    }
 
    // Runtime-Settings auslesen, validieren und übernehmen
@@ -3634,7 +3691,7 @@ bool LoadSequence() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("LoadSequence(15)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("LoadSequence(16)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
@@ -3642,16 +3699,16 @@ bool LoadSequence() {
          if (!LoadSequence.RuntimeStatus(fileName, lines[i], key, value, keys)) return(false);
       }
    }
-   if (ArraySize(keys) > 0)                                                return(_false(catch("LoadSequence(16)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                                return(_false(catch("LoadSequence(17)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("LoadSequence(17)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("LoadSequence(18)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("LoadSequence(18)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("LoadSequence(19)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!catch("LoadSequence(19)"));
+   return(!catch("LoadSequence(20)"));
 }
 
 
@@ -5519,6 +5576,7 @@ string InputsToStr() {
                             "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
                             "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
                             "AutoResume=",             BoolToStr(AutoResume),                        ";", NL,
+                            "AutoRestart=",            BoolToStr(AutoRestart),                       ";", NL,
                             "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
                             "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
                             "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
