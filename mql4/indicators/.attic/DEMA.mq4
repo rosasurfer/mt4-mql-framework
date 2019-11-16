@@ -1,10 +1,9 @@
 /**
- * Derived Double Exponential Moving Average (DEMA) by Patrick G. Mulloy
+ * Double Exponential Moving Average (DEMA) by Patrick G. Mulloy
  *
  *
- * The name suggests the DEMA is calculated by simply applying exponential smoothing twice which is not the case. Instead
- * the name "double" comes from the fact that for the calculation a double-smoothed EMA is subtracted from a previously
- * doubled regular EMA:
+ * Opposite to what its name suggests the DEMA is not an EMA applied twice. Instead for calculation a double-smoothed EMA is
+ * subtracted from a previously doubled regular EMA:
  *
  *   DEMA(n) = 2*EMA(n) - EMA(EMA(n))
  *
