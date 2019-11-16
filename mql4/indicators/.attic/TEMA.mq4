@@ -2,8 +2,8 @@
  * Triple Exponential Moving Average (TEMA) by Patrick G. Mulloy
  *
  *
- * The TEMA is not a three times applied EMA = EMA(EMA(EMA(n))). For calculation the value of a double-smoothed EMA is
- * subtracted 3 times from a tripled regular EMA. Finally a aingle triple-smoothed EMA is added.
+ * Opposite to its name the TEMA is not a three times applied EMA as in EMA(EMA(EMA(n))). Instead for calculation the value
+ * of a double-smoothed EMA is subtracted 3 times from a tripled regular EMA. Finally a aingle triple-smoothed EMA is added.
  *
  *   TEMA(n) = 3*EMA(n) - 3*EMA(EMA(n)) + EMA(EMA(EMA(n)))
  *
