@@ -4,9 +4,6 @@
  * The standard Stochastic Oszillator displays dominant up/down cycles of the underlying price series and is calculated as
  * EMA(EMA(Stochastics(N))). The Double-Stochastic Oszillator by Walter Bressert calculates a second stochastics from the
  * standard Stochastic Oszillator. The formula is Stochastics(Stochastics(N)).
- *
- *
- * Indicator buffers for iCustom():
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
