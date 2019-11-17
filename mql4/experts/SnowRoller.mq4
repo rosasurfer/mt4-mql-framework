@@ -48,12 +48,13 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
+// --- sequence data -----------------------
 int      sequence.id;
 string   sequence.name    = "";                    // "L.1234" | "S.2345"
 string   sequence.created = "";                    // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
-int      sequence.status;
 bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
 int      sequence.direction;
+int      sequence.status;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
 int      sequence.missedLevels[];                  // missed grid levels, e.g. in a fast moving market
@@ -621,37 +622,161 @@ bool StopSequence(int signal) {
 bool ResetSequence() {
    if (IsLastError())                   return(false);
    if (sequence.status!=STATUS_STOPPED) return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
+   if (!AutoRestart)                    return(!catch("ResetSequence(2)  cannot restart sequence "+ sequence.name +" (AutoRestart not enabled)", ERR_ILLEGAL_STATE));
+   if (start.trend.description == "")   return(!catch("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_ILLEGAL_STATE));
 
-   return(!catch("ResetSequence(2)", ERR_NOT_IMPLEMENTED));
+   // reset input parameters
+   StartLevel = 0;
 
-   sequence.status = STATUS_UNDEFINED;
+   // reset global vars
+   if (true) {                                           // just a block to separate the code
+      // --- sequence data ------------------
+      //sequence.id           = ...                      // unchanged
+      //sequence.name         = ...                      // unchanged
+      //sequence.created      = ...                      // unchanged
+      //sequence.isTest       = ...                      // unchanged
+      //sequence.direction    = ...                      // unchanged
+      sequence.status         = STATUS_UNDEFINED;
+      sequence.level          = 0;
+      sequence.maxLevel       = 0;
+      ArrayResize(sequence.missedLevels, 0);
+      //sequence.startEquity  = ...                      // kept           TODO: really?
+      sequence.stops          = 0;
+      sequence.stopsPL        = 0;
+      sequence.closedPL       = 0;
+      sequence.floatingPL     = 0;
+      sequence.totalPL        = 0;
+      sequence.maxProfit      = 0;
+      sequence.maxDrawdown    = 0;
+      sequence.profitPerLevel = 0;
+      sequence.breakeven      = 0;
+      //sequence.commission   = ...                      // kept
 
-   if (start.trend.description    != "") { start.trend.condition    = true; start.conditions = true; }
-   if (stop.trend.description     != "")   stop.trend.condition     = true;
-   if (stop.profitAbs.description != "")   stop.profitAbs.condition = true;
-   if (stop.profitPct.description != "")   stop.profitPct.condition = true;
+      ArrayResize(sequence.start.event,  0);
+      ArrayResize(sequence.start.time,   0);
+      ArrayResize(sequence.start.price,  0);
+      ArrayResize(sequence.start.profit, 0);
 
+      ArrayResize(sequence.stop.event,  0);
+      ArrayResize(sequence.stop.time,   0);
+      ArrayResize(sequence.stop.price,  0);
+      ArrayResize(sequence.stop.profit, 0);
 
-   // from onInitUser(): initialize a new sequence
-   bool interactive = true;
-   if (ValidateInputs(interactive)) {
-      sequence.isTest  = IsTesting();
-      sequence.id      = CreateSequenceId();
-      Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
-      sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
-      sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
-      sequence.status  = STATUS_WAITING;
+      //statusFile               = ...                   // unchanged
+      //statusDirectory          = ...                   // unchanged      TODO: remove
 
-      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves the sequence
-         if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
-         SaveSequence();
-      }
+      // --- start conditions ---------------
+      start.conditions           = true;
+      start.trend.condition      = true;
+      //start.trend.indicator    = ...                   // unchanged
+      //start.trend.timeframe    = ...                   // unchanged
+      //start.trend.params       = ...                   // unchanged
+      //start.trend.description  = ...                   // unchanged
+
+      start.price.condition      = false;
+      start.price.type           = 0;
+      start.price.value          = 0;
+      start.price.lastValue      = 0;
+      start.price.description    = "";
+
+      start.time.condition       = false;
+      start.time.value           = 0;
+      start.time.description     = "";
+
+      // --- stop conditions ----------------
+      stop.trend.condition       = (stop.trend.description != "");
+      stop.trend.indicator       = ifString(stop.trend.condition, stop.trend.indicator,   "");
+      stop.trend.timeframe       = ifInt   (stop.trend.condition, stop.trend.timeframe,    0);
+      stop.trend.params          = ifString(stop.trend.condition, stop.trend.params,      "");
+      stop.trend.description     = ifString(stop.trend.condition, stop.trend.description, "");
+
+      stop.price.condition       = false;
+      stop.price.type            = 0;
+      stop.price.value           = 0;
+      stop.price.lastValue       = 0;
+      stop.price.description     = "";
+
+      stop.time.condition        = false;
+      stop.time.value            = 0;
+      stop.time.description      = "";
+
+      stop.profitAbs.condition   = (stop.profitAbs.description != "");
+      stop.profitAbs.value       = ifDouble(stop.profitAbs.condition, stop.profitAbs.value, 0);
+      stop.profitAbs.description = ifString(stop.profitAbs.condition, stop.profitAbs.description, "");
+
+      stop.profitPct.condition   = (stop.profitPct.description != "");
+      stop.profitPct.value       = ifDouble(stop.profitPct.condition, stop.profitPct.value,          0);
+      stop.profitPct.absValue    = ifDouble(stop.profitPct.condition, stop.profitPct.absValue, INT_MAX);
+      stop.profitPct.description = ifString(stop.profitPct.condition, stop.profitPct.description,   "");
+
+      // --- session break management -------
+      sessionbreak.starttime     = 0;
+      sessionbreak.endtime       = 0;
+      sessionbreak.waiting       = false;
+
+      // --- grid base management -----------
+      grid.base                  = 0;
+      ArrayResize(grid.base.event, 0);
+      ArrayResize(grid.base.time,  0);
+      ArrayResize(grid.base.value, 0);
+
+      // --- order data ---------------------
+      ArrayResize(orders.ticket,          0);
+      ArrayResize(orders.level,           0);
+      ArrayResize(orders.gridBase,        0);
+      ArrayResize(orders.pendingType,     0);
+      ArrayResize(orders.pendingTime,     0);
+      ArrayResize(orders.pendingPrice,    0);
+      ArrayResize(orders.type,            0);
+      ArrayResize(orders.openEvent,       0);
+      ArrayResize(orders.openTime,        0);
+      ArrayResize(orders.openPrice,       0);
+      ArrayResize(orders.closeEvent,      0);
+      ArrayResize(orders.closeTime,       0);
+      ArrayResize(orders.closePrice,      0);
+      ArrayResize(orders.stopLoss,        0);
+      ArrayResize(orders.clientsideLimit, 0);
+      ArrayResize(orders.closedBySL,      0);
+      ArrayResize(orders.swap,            0);
+      ArrayResize(orders.commission,      0);
+      ArrayResize(orders.profit,          0);
+
+      // --- other --------------------------
+      ArrayResize(ignorePendingOrders,   0);
+      ArrayResize(ignoreOpenPositions,   0);
+      ArrayResize(ignoreClosedPositions, 0);
+
+      //startStopDisplayMode     = ...                   // kept
+      //orderDisplayMode         = ...                   // kept
+
+      sLotSize                   = "";
+      sGridbase                  = "";
+      sSequenceDirection         = "";
+      sSequenceMissedLevels      = "";
+      sSequenceStops             = "";
+      sSequenceStopsPL           = "";
+      sSequenceTotalPL           = "";
+      sSequenceMaxProfit         = "";
+      sSequenceMaxDrawdown       = "";
+      sSequenceProfitPerLevel    = "";
+      sSequencePlStats           = "";
+      sStartConditions           = "";
+      sStopConditions            = "";
+      sAutoResume                = "";
+
+      // --- debug settings -----------------
+      //test.onTrendChangePause  = ...                   // unchanged
+      //test.onSessionBreakPause = ...                   // unchanged
+      //test.onStopPause         = ...                   // unchanged
    }
 
    sequence.status = STATUS_WAITING;
+   SS.All();
+
+   if (__LOG()) log("ResetSequence(4)  sequence "+ sequence.name +" reset, waiting for start condition");
    SaveSequence();
 
-   return(!catch("ResetSequence(3)", ERR_NOT_IMPLEMENTED));
+   return(!catch("ResetSequence(5)"));
 }
 
 
@@ -1555,14 +1680,14 @@ bool UpdatePendingOrders() {
    if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
       if (NE(grid.base, orders.gridBase[i], Digits)) {
-         static double lastTrailed = INT_MIN;                     // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
-         if (IsTesting() || GetTickCount()-lastTrailed > 3000) {  // at each tick. Wait 3 seconds between consecutive trailings.
-            type = Grid.TrailPendingOrder(i); if (!type) return(false);
-            if (IsLimitOrderType(type)) {                         // TrailPendingOrder() missed a level
-               lastExistingLevel = nextLevel;                     // -1 | +1
+         static double lastTrailed = INT_MIN;                           // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
+         if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // at each tick. Wait 3 seconds between consecutive trailings.
+            type = Grid.TrailPendingOrder(i); if (!type) return(false); //
+            if (IsLimitOrderType(type)) {                               // TrailPendingOrder() missed a level
+               lastExistingLevel = nextLevel;                           // -1 | +1
                sequence.level    = nextLevel;
                sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastExistingLevel;
-               nextLevel        += nextLevel;                     // -2 | +2
+               nextLevel        += nextLevel;                           // -2 | +2
                nextStopExists    = false;
             }
             ordersChanged = true;
@@ -2727,7 +2852,7 @@ datetime last.Sessionbreak.EndTime;
 
 /**
  * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitChartChange() and onDeinitParameters().
+ * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
@@ -2747,7 +2872,7 @@ void BackupInputs() {
 
 
 /**
- * Restore backed-up input parameters. Called only from onInitTimeframeChange() and onInitParameters().
+ * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
    Sequence.ID            = last.Sequence.ID;
@@ -2964,7 +3089,6 @@ bool ValidateInputs(bool interactive) {
 
          start.conditions = true;                       // im Erfolgsfall ist start.conditions aktiviert
       }
-      // the input parameter is not rewritten
    }
 
    // StopConditions, OR combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
@@ -3063,7 +3187,6 @@ bool ValidateInputs(bool interactive) {
          }
          else                                           return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
-      // the input parameter is not rewritten
    }
 
    // AutoResume:          nothing to validate
@@ -3292,15 +3415,17 @@ bool SaveSequence() {
       static bool statusSaved = false;
       if (statusSaved && sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
          return(true);                                   // skip saving
+
+      // TODO: do we need to reset the static var on AutoRestart?
    }
 
    /*
    Speichernotwendigkeit der einzelnen Variablen
    ---------------------------------------------
    int      sequence.id;                  // nein: wird aus Statusdatei ermittelt
-   int      sequence.status;              // nein: kann aus Orderdaten und offenen Positionen restauriert werden
    bool     sequence.isTest;              // nein: wird aus Statusdatei ermittelt
    int      sequence.direction;           // nein: wird aus Statusdatei ermittelt
+   int      sequence.status;              // nein: kann aus Orderdaten und offenen Positionen restauriert werden
    int      sequence.level;               // nein: kann aus Orderdaten restauriert werden
    int      sequence.maxLevel;            // nein: kann aus Orderdaten restauriert werden
    int      sequence.missedLevels[];      // optional: wird gespeichert, wenn belegt

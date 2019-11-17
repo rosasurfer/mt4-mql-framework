@@ -30,10 +30,10 @@ int onInitUser() {
          PlaySoundEx("Windows Notify.wav");
          button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids) +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
          if (button == IDYES) {
-            sequence.isTest = false;
             sequence.id     = ids[i];
             Sequence.ID     = sequence.id; SS.SequenceId();
             sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+            sequence.isTest = false;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
             if (LoadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
@@ -51,11 +51,11 @@ int onInitUser() {
 
    // ...zum Schluﬂ neue Sequenz anlegen
    if (ValidateInputs(interactive)) {
-      sequence.isTest  = IsTesting();
       sequence.id      = CreateSequenceId();
       Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
       sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
       sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+      sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequence.id, statusDirectory + statusFile);
@@ -223,9 +223,9 @@ void CopyInputStatus(bool store) {
    static int      _sequence.id;
    static string   _sequence.name;
    static string   _sequence.created;
-   static int      _sequence.status;
    static bool     _sequence.isTest;
    static int      _sequence.direction;
+   static int      _sequence.status;
 
    static bool     _start.conditions;
    static bool     _start.trend.condition;
@@ -268,9 +268,9 @@ void CopyInputStatus(bool store) {
       _sequence.id                = sequence.id;
       _sequence.name              = sequence.name;
       _sequence.created           = sequence.created;
-      _sequence.status            = sequence.status;
       _sequence.isTest            = sequence.isTest;
       _sequence.direction         = sequence.direction;
+      _sequence.status            = sequence.status;
 
       _start.conditions           = start.conditions;
       _start.trend.condition      = start.trend.condition;
@@ -313,9 +313,9 @@ void CopyInputStatus(bool store) {
       sequence.id                = _sequence.id;
       sequence.name              = _sequence.name;
       sequence.created           = _sequence.created;
-      sequence.status            = _sequence.status;
       sequence.isTest            = _sequence.isTest;
       sequence.direction         = _sequence.direction;
+      sequence.status            = _sequence.status;
 
       start.conditions           = _start.conditions;
       start.trend.condition      = _start.trend.condition;
