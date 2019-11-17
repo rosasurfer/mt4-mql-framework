@@ -20,7 +20,7 @@
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * The EA is not FIFO conforming, and will never be. It requires an account with support for "close opposite positions".
+ * The EA is not FIFO conforming (and will never be) and requires an account with support for "close opposite positions".
  * It does not support bucket shop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not set to zero.
  *
  *
@@ -78,14 +78,14 @@ double   sequence.maxProfit;                       // max. experienced total seq
 double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
 double   sequence.profitPerLevel;                  // current profit amount per grid level
 double   sequence.breakeven;                       // current breakeven price
-double   sequence.commission;                      // commission value per grid level:          -n...0
+double   sequence.commission;                      // commission value per grid level: -n...0
 
-int      sequence.start.event [];                  // sequence starts (moment status changes to STATUS_PROGRESSING)
+int      sequence.start.event [];                  // sequence starts (the moment status changes to STATUS_PROGRESSING)
 datetime sequence.start.time  [];
 double   sequence.start.price [];
 double   sequence.start.profit[];
 
-int      sequence.stop.event  [];                  // sequence stops (moment status changes to STATUS_STOPPED)
+int      sequence.stop.event  [];                  // sequence stops (the moment status changes to STATUS_STOPPED)
 datetime sequence.stop.time   [];
 double   sequence.stop.price  [];                  // average realized close price of all closed positions
 double   sequence.stop.profit [];
@@ -138,16 +138,16 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
-// --- session break management ------------
+// --- session break management ------------       // configurable via inputs and framework config
 datetime sessionbreak.starttime;
 datetime sessionbreak.endtime;
 bool     sessionbreak.waiting;                     // whether the sequence waits to resume during or after a session break
 
 // --- grid base management ----------------
 double   grid.base;                                // current grid base
-int      grid.base.event  [];                      // grid base history
-datetime grid.base.time   [];
-double   grid.base.value  [];
+int      grid.base.event[];                        // grid base history
+datetime grid.base.time [];
+double   grid.base.value[];
 
 // --- order data --------------------------
 int      orders.ticket         [];
@@ -193,9 +193,9 @@ string   sStartConditions        = "";
 string   sStopConditions         = "";
 string   sAutoResume             = "";
 
-// --- debug settings ----------------------
+// --- debug settings ----------------------       // configurable via framework config
 bool     test.onTrendChangePause  = false;         // whether to pause the tester when a trend condition changes
-bool     test.onSessionBreakPause = false;         // whether to pause the tester on a sessionbreak stop
+bool     test.onSessionBreakPause = false;         // whether to pause the tester on a sessionbreak stop/resume
 bool     test.onStopPause         = false;         // whether to pause the tester when any stop condition is fulfilled
 
 
@@ -2578,9 +2578,8 @@ void SS.All() {
  * ShowStatus(): Aktualisiert die Anzeige der Sequenz-ID in der Titelzeile des Testers.
  */
 void SS.SequenceId() {
-   if (IsTesting()) {
-      if (!SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id))
-         catch("SS.SequenceId(1)->user32::SetWindowTextA()", ERR_WIN32_ERROR);
+   if (IsTesting() && IsVisualMode()) {
+      SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id);
    }
 }
 
@@ -2590,6 +2589,7 @@ void SS.SequenceId() {
  */
 void SS.GridBase() {
    if (!__CHART()) return;
+
    if (ArraySize(grid.base.event) > 0) {
       sGridbase = " @ "+ NumberToStr(grid.base, PriceFormat);
    }
@@ -2601,7 +2601,10 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-   sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
+
+   if (sequence.direction != 0) {
+      sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
+   }
 }
 
 
@@ -2622,8 +2625,8 @@ void SS.MissedLevels() {
  */
 void SS.LotSize() {
    if (!__CHART()) return;
-   double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
 
+   double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
    if (ShowProfitInPercent) sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
    else                     sLotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
@@ -2692,6 +2695,7 @@ void SS.StartStopConditions() {
  */
 void SS.AutoResume() {
    if (!__CHART()) return;
+
    if (AutoResume) sAutoResume = "AutoResume: On" + NL;
    else            sAutoResume = "AutoResume: Off"+ NL;
 }
@@ -2717,7 +2721,9 @@ void SS.Stops() {
  */
 void SS.TotalPL() {
    if (!__CHART()) return;
-   if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
+
+   // Anzeige wird nicht vor der ersten offenen Position gesetzt
+   if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";
    else if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
    else                          sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
 }
@@ -2728,6 +2734,7 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
+
    if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
    else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
@@ -2739,6 +2746,7 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
+
    if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
    else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
@@ -2770,6 +2778,7 @@ void SS.ProfitPerLevel() {
  */
 void SS.PLStats() {
    if (!__CHART()) return;
+
    if (sequence.maxLevel != 0) {    // no display until a position was opened
       sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
    }
