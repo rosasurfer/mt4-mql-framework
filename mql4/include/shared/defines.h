@@ -12,7 +12,7 @@
 #define MAX_SYMBOL_GROUP_LENGTH          15
 #define MAX_SYMBOL_LENGTH                11
 
-#define NL                             "\n"              // new line (MQL file functions replace 0x0A by 0x0D0A)
+#define NL                             "\n"              // new line (MQL file functions always write Windows line endings: 0x0D0A)
 #define TAB                            "\t"              // tab
 
 
@@ -31,7 +31,7 @@
 #define MODULETYPE_INDICATOR              1
 #define MODULETYPE_EXPERT                 2
 #define MODULETYPE_SCRIPT                 4
-#define MODULETYPE_LIBRARY                8              // no independent program
+#define MODULETYPE_LIBRARY                8              // not an independent program
 
 
 // MQL program types
@@ -63,7 +63,7 @@
 #define REASON_CHARTCLOSE                 4              // | chart closed or new template applied | chart closed                     |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_PARAMETERS                 5              // | input parameters changed                                                |
-#define REASON_ACCOUNT                    6              // | reconnection due to changed account settings                            |
+#define REASON_ACCOUNT                    6              // | reconnection due to a changed trading account                           |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_TEMPLATE                   7              // | -                                    | new template applied             |
 #define REASON_INITFAILED                 8              // | -                                    | OnInit() returned an error       |
@@ -189,7 +189,7 @@
 #define zFEB                      zFEBRUARY
 #define zMAR                         zMARCH
 #define zAPR                         zAPRIL
-//efine zMAY                           zMAY                    // short equals long form
+//efine zMAY                           zMAY              // short equals long form
 #define zJUN                          zJUNE
 #define zJUL                          zJULY
 #define zAUG                        zAUGUST
@@ -217,7 +217,7 @@
 #define FEB                        FEBRUARY
 #define MAR                           MARCH
 #define APR                           APRIL
-//efine MAY                             MAY                    // short equals long form
+//efine MAY                             MAY              // short equals long form
 #define JUN                            JUNE
 #define JUL                            JULY
 #define AUG                          AUGUST
@@ -228,11 +228,11 @@
 
 
 // init()-Flags
-#define INIT_TIMEZONE                     1                    // stellt eine korrekte Timezone-Konfiguration sicher
-#define INIT_PIPVALUE                     2                    // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
-#define INIT_BARS_ON_HIST_UPDATE          4                    //
-#define INIT_CUSTOMLOG                    8                    // das Programm verwendet ein eigenes Logfile
-#define INIT_NO_BARS_REQUIRED            16                    // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
+#define INIT_TIMEZONE                     1              // stellt eine korrekte Timezone-Konfiguration sicher
+#define INIT_PIPVALUE                     2              // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
+#define INIT_BARS_ON_HIST_UPDATE          4              //
+#define INIT_CUSTOMLOG                    8              // das Programm verwendet ein eigenes Logfile
+#define INIT_NO_BARS_REQUIRED            16              // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
 
 
 // Timezones
@@ -262,7 +262,7 @@
 
 
 // MT4 internal messages
-#define MT4_TICK                          2                    // a virtual tick, triggers start()
+#define MT4_TICK                          2              // a virtual tick, triggers start()
 
 #define MT4_LOAD_STANDARD_INDICATOR      13
 #define MT4_LOAD_CUSTOM_INDICATOR        15
@@ -273,7 +273,7 @@
 
 #define MT4_COMPILE_REQUEST           12345
 #define MT4_COMPILE_PERMISSION        12346
-#define MT4_MQL_REFRESH               12349                    // rescan und reload modified .ex4 files
+#define MT4_MQL_REFRESH               12349              // rescan und reload modified .ex4 files
 
 
 // Bar model types in the Tester
@@ -283,11 +283,11 @@
 
 
 // Konfiguration-Flags für synthetische Ticks
-#define TICK_OFFLINE_EA                   1                    // Default-Tick, Expert::start() wird in Offline-Charts getriggert (nur bei bestehender Server-Connection)
-#define TICK_CHART_REFRESH                2                    // statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
-#define TICK_TESTER                       4                    // statt eines regulären Ticks wird das Command ID_CHART_STEPFORWARD an den Chart geschickt (für Tester)
-#define TICK_IF_VISIBLE                   8                    // Ticks werden nur verschickt, wenn der Chart mindestens teilweise sichtbar ist (default: off)
-#define TICK_PAUSE_ON_WEEKEND            16                    // Ticks werden nur zu regulären Forex-Handelszeiten verschickt (default: off)
+#define TICK_OFFLINE_EA                   1              // Default-Tick, Expert::start() wird in Offline-Charts getriggert (nur bei bestehender Server-Connection)
+#define TICK_CHART_REFRESH                2              // statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
+#define TICK_TESTER                       4              // statt eines regulären Ticks wird das Command ID_CHART_STEPFORWARD an den Chart geschickt (für Tester)
+#define TICK_IF_VISIBLE                   8              // Ticks werden nur verschickt, wenn der Chart mindestens teilweise sichtbar ist (default: off)
+#define TICK_PAUSE_ON_WEEKEND            16              // Ticks werden nur zu regulären Forex-Handelszeiten verschickt (default: off)
 
 
 /**
@@ -296,77 +296,77 @@
  * ID naming and numbering conventions used by MFC 2.0 for resources, commands, strings, controls and child windows:
  * @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
  */
-#define ID_EXPERTS_ONOFF                    33020              // Toolbar: Experts on/off                    Ctrl+E
+#define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
 
-#define ID_CHART_REFRESH                    33324              // Chart:   Refresh
-#define ID_CHART_STEPFORWARD                33197              //          One bar forward                      F12
-#define ID_CHART_STEPBACKWARD               33198              //          One bar backward               Shift+F12
-#define ID_CHART_EXPERT_PROPERTIES          33048              //          Expert properties dialog              F7
-#define ID_CHART_OBJECTS_UNSELECTALL        35462              //          Objects: Unselect All
+#define ID_CHART_REFRESH                    33324        // Chart:   Refresh
+#define ID_CHART_STEPFORWARD                33197        //          One bar forward                      F12
+#define ID_CHART_STEPBACKWARD               33198        //          One bar backward               Shift+F12
+#define ID_CHART_EXPERT_PROPERTIES          33048        //          Expert properties dialog              F7
+#define ID_CHART_OBJECTS_UNSELECTALL        35462        //          Objects: Unselect All
 
-#define ID_WINDOW_NEWWINDOW                 57648              // Window:  New Window
-#define ID_WINDOW_TILEWINDOWS               38259              //          Tile Windows                       Alt+R
-#define ID_WINDOW_CASCADE                   57650              //          Cascade
-#define ID_WINDOW_TILEHORIZONTALLY          57651              //          Tile Horizontally
-#define ID_WINDOW_TILEVERTICALLY            57652              //          Tile Vertically
-#define ID_WINDOW_ARRANGEICONS              57649              //          Arrange Icons
+#define ID_WINDOW_NEWWINDOW                 57648        // Window:  New Window
+#define ID_WINDOW_TILEWINDOWS               38259        //          Tile Windows                       Alt+R
+#define ID_WINDOW_CASCADE                   57650        //          Cascade
+#define ID_WINDOW_TILEHORIZONTALLY          57651        //          Tile Horizontally
+#define ID_WINDOW_TILEVERTICALLY            57652        //          Tile Vertically
+#define ID_WINDOW_ARRANGEICONS              57649        //          Arrange Icons
 
-#define ID_MARKETWATCH_SYMBOLS              33171              // Market Watch: Symbols
+#define ID_MARKETWATCH_SYMBOLS              33171        // Market Watch: Symbols
 
-#define ID_TESTER_TICK       ID_CHART_STEPFORWARD              // Tester:  Next Tick                            F12
+#define ID_TESTER_TICK       ID_CHART_STEPFORWARD        // Tester:  Next Tick                            F12
 
 
 // MT4 control ids (Controls, Fenster)
-#define IDC_TOOLBAR                         59419              // Toolbar
-#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160              // MQL4/MQL5 button (builds <= 509)
-#define IDC_TOOLBAR_SEARCHBOX               38213              // search box       (builds  > 509)
-#define IDC_STATUSBAR                       59393              // status bar
-#define IDC_MDI_CLIENT                      59648              // MDI container (holds all charts)
-#define IDC_DOCKABLES_CONTAINER             59422              // window containing all child windows docked to the main application window
-#define IDC_UNDOCKED_CONTAINER              59423              // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
+#define IDC_TOOLBAR                         59419        // Toolbar
+#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 button (builds <= 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213        // search box       (builds  > 509)
+#define IDC_STATUSBAR                       59393        // status bar
+#define IDC_MDI_CLIENT                      59648        // MDI container (holds all charts)
+#define IDC_DOCKABLES_CONTAINER             59422        // window containing all child windows docked to the main application window
+#define IDC_UNDOCKED_CONTAINER              59423        // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
 
-#define IDC_MARKETWATCH                        80              // Market Watch
-#define IDC_MARKETWATCH_SYMBOLS             35441              // Market Watch - Symbols
-#define IDC_MARKETWATCH_TICKCHART           35442              // Market Watch - Tick Chart
+#define IDC_MARKETWATCH                        80        // Market Watch
+#define IDC_MARKETWATCH_SYMBOLS             35441        // Market Watch - Symbols
+#define IDC_MARKETWATCH_TICKCHART           35442        // Market Watch - Tick Chart
 
-#define IDC_NAVIGATOR                          82              // Navigator
-#define IDC_NAVIGATOR_COMMON                35439              // Navigator - Common
-#define IDC_NAVIGATOR_FAVOURITES            35440              // Navigator - Favourites
+#define IDC_NAVIGATOR                          82        // Navigator
+#define IDC_NAVIGATOR_COMMON                35439        // Navigator - Common
+#define IDC_NAVIGATOR_FAVOURITES            35440        // Navigator - Favourites
 
-#define IDC_TERMINAL                           81              // Terminal
-#define IDC_TERMINAL_TRADE                  33217              // Terminal - Trade
-#define IDC_TERMINAL_ACCOUNTHISTORY         33208              // Terminal - Account History
-#define IDC_TERMINAL_NEWS                   33211              // Terminal - News
-#define IDC_TERMINAL_ALERTS                 33206              // Terminal - Alerts
-#define IDC_TERMINAL_MAILBOX                33210              // Terminal - Mailbox
-#define IDC_TERMINAL_COMPANY                 4078              // Terminal - Company
-#define IDC_TERMINAL_MARKET                  4081              // Terminal - Market
-#define IDC_TERMINAL_SIGNALS                 1405              // Terminal - Signals
-#define IDC_TERMINAL_CODEBASE               33212              // Terminal - Code Base
-#define IDC_TERMINAL_EXPERTS                35434              // Terminal - Experts
-#define IDC_TERMINAL_JOURNAL                33209              // Terminal - Journal
+#define IDC_TERMINAL                           81        // Terminal
+#define IDC_TERMINAL_TRADE                  33217        // Terminal - Trade
+#define IDC_TERMINAL_ACCOUNTHISTORY         33208        // Terminal - Account History
+#define IDC_TERMINAL_NEWS                   33211        // Terminal - News
+#define IDC_TERMINAL_ALERTS                 33206        // Terminal - Alerts
+#define IDC_TERMINAL_MAILBOX                33210        // Terminal - Mailbox
+#define IDC_TERMINAL_COMPANY                 4078        // Terminal - Company
+#define IDC_TERMINAL_MARKET                  4081        // Terminal - Market
+#define IDC_TERMINAL_SIGNALS                 1405        // Terminal - Signals
+#define IDC_TERMINAL_CODEBASE               33212        // Terminal - Code Base
+#define IDC_TERMINAL_EXPERTS                35434        // Terminal - Experts
+#define IDC_TERMINAL_JOURNAL                33209        // Terminal - Journal
 
-#define IDC_TESTER                             83              // Tester
-#define IDC_TESTER_SETTINGS                 33215              // Tester - Settings
-#define IDC_TESTER_SETTINGS_EXPERT           1128              // Tester - Settings - Expert selection
-#define IDC_TESTER_SETTINGS_SYMBOL           1347              // Tester - Settings - Symbol selection
-#define IDC_TESTER_SETTINGS_BARMODEL         4027              // Tester - Settings - Bar model selection
-#define IDC_TESTER_SETTINGS_OPTIMIZATION     1029              // Tester - Settings - Optimization checkbox
-#define IDC_TESTER_SETTINGS_PERIOD           1228              // Tester - Settings - Period selection
-#define IDC_TESTER_SETTINGS_USEDATE          1023              // Tester - Settings - Use date checkbox
-#define IDC_TESTER_SETTINGS_VISUALMODE       1400              // Tester - Settings - Visual mode checkbox
-#define IDC_TESTER_SETTINGS_TRACKBAR         1401              // Tester - Settings - Speed slider
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
-#define IDC_TESTER_SETTINGS_SKIPTO           1403              // Tester - Settings - Skip to button
-#define IDC_TESTER_SETTINGS_EXPERTPROPS      1025              // Tester - Settings - Expert properties button
-#define IDC_TESTER_SETTINGS_SYMBOLPROPS      1030              // Tester - Settings - Symbol properties button
-#define IDC_TESTER_SETTINGS_OPENCHART        1028              // Tester - Settings - Open chart button
-#define IDC_TESTER_SETTINGS_MODIFYEXPERT     1399              // Tester - Settings - Modify expert button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
-#define IDC_TESTER_RESULTS                  33214              // Tester - Results
-#define IDC_TESTER_GRAPH                    33207              // Tester - Graph
-#define IDC_TESTER_REPORT                   33213              // Tester - Report
-#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS              // Tester - Journal (same as Terminal - Experts)
+#define IDC_TESTER                             83        // Tester
+#define IDC_TESTER_SETTINGS                 33215        // Tester - Settings
+#define IDC_TESTER_SETTINGS_EXPERT           1128        // Tester - Settings - Expert selection
+#define IDC_TESTER_SETTINGS_SYMBOL           1347        // Tester - Settings - Symbol selection
+#define IDC_TESTER_SETTINGS_BARMODEL         4027        // Tester - Settings - Bar model selection
+#define IDC_TESTER_SETTINGS_OPTIMIZATION     1029        // Tester - Settings - Optimization checkbox
+#define IDC_TESTER_SETTINGS_PERIOD           1228        // Tester - Settings - Period selection
+#define IDC_TESTER_SETTINGS_USEDATE          1023        // Tester - Settings - Use date checkbox
+#define IDC_TESTER_SETTINGS_VISUALMODE       1400        // Tester - Settings - Visual mode checkbox
+#define IDC_TESTER_SETTINGS_TRACKBAR         1401        // Tester - Settings - Speed slider
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402        // Tester - Settings - Pause/Resume button
+#define IDC_TESTER_SETTINGS_SKIPTO           1403        // Tester - Settings - Skip to button
+#define IDC_TESTER_SETTINGS_EXPERTPROPS      1025        // Tester - Settings - Expert properties button
+#define IDC_TESTER_SETTINGS_SYMBOLPROPS      1030        // Tester - Settings - Symbol properties button
+#define IDC_TESTER_SETTINGS_OPENCHART        1028        // Tester - Settings - Open chart button
+#define IDC_TESTER_SETTINGS_MODIFYEXPERT     1399        // Tester - Settings - Modify expert button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034        // Tester - Settings - Start/Stop button
+#define IDC_TESTER_RESULTS                  33214        // Tester - Results
+#define IDC_TESTER_GRAPH                    33207        // Tester - Graph
+#define IDC_TESTER_REPORT                   33213        // Tester - Report
+#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (same as Terminal - Experts)
 
 
 // Farben
@@ -389,7 +389,7 @@
 #define CornflowerBlue                   0xED9564
 #define Cornsilk                         0xDCF8FF
 #define Crimson                          0x3C14DC
-#define Cyan                                 Aqua              // alias
+#define Cyan                                 Aqua        // alias
 #define DarkBlue                         0x8B0000
 #define DarkGoldenrod                    0x0B86B8
 #define DarkGray                         0xA9A9A9

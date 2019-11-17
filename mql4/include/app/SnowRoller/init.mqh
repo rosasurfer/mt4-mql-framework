@@ -11,7 +11,7 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (LoadSequence()) {
+      if (ReadSequence()) {
          if (ValidateInputs(interactive))
             SynchronizeStatus();
       }
@@ -36,7 +36,7 @@ int onInitUser() {
             sequence.isTest = false;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (LoadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
+            if (ReadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
                if (ValidateInputs(false))                   //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
             return(last_error);
@@ -79,7 +79,7 @@ int onInitTemplate() {
 
    // im Chart gespeicherte Sequenz restaurieren
    if (RestoreChartStatus()) {
-      if (LoadSequence())
+      if (ReadSequence())
          if (ValidateInputs(interactive))
             SynchronizeStatus();
    }
