@@ -1220,11 +1220,11 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf "Lower-Then".
+ * Correct comparison of two doubles for "Lower-Than".
  *
- * @param  double double1 - erster Wert
- * @param  double double2 - zweiter Wert
- * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ * @param  double double1 - first value
+ * @param  double double2 - second value
+ * @param  int    digits  - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
@@ -1236,11 +1236,11 @@ bool LT(double double1, double double2, int digits=8) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf "Lower-Or-Equal".
+ * Correct comparison of two doubles for "Lower-Or-Equal".
  *
- * @param  double double1 - erster Wert
- * @param  double double2 - zweiter Wert
- * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ * @param  double double1 - first value
+ * @param  double double2 - second value
+ * @param  int    digits  - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
@@ -1252,11 +1252,11 @@ bool LE(double double1, double double2, int digits=8) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf Gleichheit "Equal".
+ * Correct comparison of two doubles for "Equal".
  *
- * @param  double double1 - erster Wert
- * @param  double double2 - zweiter Wert
- * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ * @param  double double1 - first value
+ * @param  double double2 - second value
+ * @param  int    digits  - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
@@ -1295,11 +1295,11 @@ bool EQ(double double1, double double2, int digits=8) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf Ungleichheit "Not-Equal".
+ * Correct comparison of two doubles for "Not-Equal".
  *
- * @param  double double1 - erster Wert
- * @param  double double2 - zweiter Wert
- * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ * @param  double double1 - first value
+ * @param  double double2 - second value
+ * @param  int    digits  - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
@@ -1309,11 +1309,11 @@ bool NE(double double1, double double2, int digits=8) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf "Greater-Or-Equal".
+ * Correct comparison of two doubles for "Greater-Or-Equal".
  *
- * @param  double double1 - erster Wert
- * @param  double double2 - zweiter Wert
- * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ * @param  double double1 - first value
+ * @param  double double2 - second value
+ * @param  int    digits  - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
@@ -1325,11 +1325,11 @@ bool GE(double double1, double double2, int digits=8) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf "Greater-Then".
+ * Correct comparison of two doubles for "Greater-Than".
  *
- * @param  double double1 - erster Wert
- * @param  double double2 - zweiter Wert
- * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ * @param  double double1 - first value
+ * @param  double double2 - second value
+ * @param  int    digits  - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
