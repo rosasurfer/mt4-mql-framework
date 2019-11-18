@@ -516,7 +516,7 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
    string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
-   return(GetIniStringRaw(globalConfig, section, key, defaultValue));
+   return(GetIniStringRawA(globalConfig, section, key, defaultValue));
 }
 
 
@@ -535,7 +535,7 @@ string GetLocalConfigStringRaw(string section, string key, string defaultValue =
    string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
-   return(GetIniStringRaw(localConfig, section, key, defaultValue));
+   return(GetIniStringRawA(localConfig, section, key, defaultValue));
 }
 
 
@@ -554,7 +554,7 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
       return(defaultValue);
-   return(GetIniStringRaw(accountConfig, section, key, defaultValue));
+   return(GetIniStringRawA(accountConfig, section, key, defaultValue));
 }
 
 
