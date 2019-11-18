@@ -440,7 +440,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
    string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
-   return(GetIniString(globalConfig, section, key, defaultValue));
+   return(GetIniStringA(globalConfig, section, key, defaultValue));
 }
 
 
@@ -459,7 +459,7 @@ string GetLocalConfigString(string section, string key, string defaultValue = ""
    string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
-   return(GetIniString(localConfig, section, key, defaultValue));
+   return(GetIniStringA(localConfig, section, key, defaultValue));
 }
 
 
@@ -478,7 +478,7 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
       return(defaultValue);
-   return(GetIniString(accountConfig, section, key, defaultValue));
+   return(GetIniStringA(accountConfig, section, key, defaultValue));
 }
 
 
@@ -575,7 +575,7 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
 bool GetIniBool(string fileName, string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   string value = GetIniString(fileName, section, key, defaultValue);   // (string)(bool) defaultValue
+   string value = GetIniStringA(fileName, section, key, defaultValue);   // (string)(bool) defaultValue
 
    if (value == "")       return(defaultValue);
 
@@ -612,7 +612,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
  * @return color - configuration value
  */
 color GetIniColor(string fileName, string section, string key, color defaultValue = CLR_NONE) {
-   string value = GetIniString(fileName, section, key, "");
+   string value = GetIniStringA(fileName, section, key, "");
 
    if (value == "") return(defaultValue);
 
@@ -658,7 +658,7 @@ int GetIniInt(string fileName, string section, string key, int defaultValue = 0)
  * @return double - configuration value
  */
 double GetIniDouble(string fileName, string section, string key, double defaultValue = 0) {
-   string value = GetIniString(fileName, section, key, "");
+   string value = GetIniStringA(fileName, section, key, "");
    if (value == "")
       return(defaultValue);
    return(StrToDouble(value));

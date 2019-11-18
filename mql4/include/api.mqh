@@ -607,7 +607,7 @@ string   GetFinalPathNameA(string name);;
 string   GetGlobalConfigPathA();;
 datetime GetGmtTime();;
 int      GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);;
-string   GetIniString(string fileName, string section, string key, string defaultValue);;
+string   GetIniStringA(string fileName, string section, string key, string defaultValue);;
 string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);;
 int      GetIntsAddress(int array[]);;
 int      GetLastWin32Error();;

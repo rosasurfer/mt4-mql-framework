@@ -307,14 +307,14 @@ bool Configure() {
          // subKeys[2]: zusätzlicher Parameter
          if (subKeysSize == 3) {
             sParam = StrTrim(subKeys[2]);
-            sValue = GetIniString(accountConfig, section, keys[i], "");
+            sValue = GetIniStringA(accountConfig, section, keys[i], "");
             if (!Configure.SetParameter(signal, signal.timeframe, signal.bar, sParam, sValue))
                return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
             continue;
          }
 
          // (2.3) ini-Value parsen
-         iniValue = GetIniString(accountConfig, section, keys[i], "");
+         iniValue = GetIniStringA(accountConfig, section, keys[i], "");
          if (signal == SIGNAL_BAR_CLOSE) {
             signal.enabled = GetIniBool(accountConfig, section, keys[i]);     // Default-Values für BarClose
             signal.param1  = NULL;                                            // (unbenutzt)
