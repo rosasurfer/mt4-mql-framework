@@ -3350,7 +3350,7 @@ bool ResolveStatusLocation() {
 
    // Location-Variablen zurücksetzen
    InitStatusLocation();
-   string filesDirectory  = GetFullMqlFilesPath() +"\\";
+   string filesDirectory  = GetMqlFilesPath() +"\\";
    string statusDirectory = MQL.GetStatusDirName();
    string directory="", subdirs[], subdir="", location="", file="";
 
@@ -3477,14 +3477,27 @@ bool SaveSequence() {
    if (!sequence.id)                              return(!catch("SaveSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
+   string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
+   string section = "General";
+   string key     = qc.TradeCmdChannel;
+   string value   = "1";
+   if (!WritePrivateProfileStringA(section, key, value, file))
+      return(!catch("QC.StartTradeCmdReceiver(3)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+
+
+
+   return(false);
+
+
+
+   // --- old single sequence version ---------------------------------------------------------------------------------------
+
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert,
    // oder wenn die Sequenz gestoppt wird.
-   if (IsTesting() /*&& !__LOG()*/) {                    // enable !__LOG() to always save in tester if logging is enabled
+   if (IsTesting() /*&& !__LOG()*/) {                    // TODO: move to debug config => enable !__LOG() to always save in tester if logging is enabled
       static bool statusSaved = false;
       if (statusSaved && sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
          return(true);                                   // skip saving
-
-      // TODO: do we need to reset the static var on AutoRestart?
    }
 
    /*
@@ -3637,12 +3650,12 @@ bool SaveSequence() {
    // alles speichern
    string filename = MQL.GetStatusFileName();
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
-   if (hFile < 0) return(_false(catch("SaveSequence(4)->FileOpen(\""+ filename +"\")")));
+   if (hFile < 0) return(_false(catch("SaveSequence(4)->FileOpen(filename="+ DoubleQuoteStr(filename) +")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
          int error = GetLastError();
-         catch("SaveSequence(5)->FileWrite(line #"+ (i+1) +") failed to \""+ filename +"\"", ifInt(error, error, ERR_RUNTIME_ERROR));
+         catch("SaveSequence(5)->FileWrite(line #"+ (i+1) +") failed, filename="+ DoubleQuoteStr(filename), ifInt(error, error, ERR_RUNTIME_ERROR));
          FileClose(hFile);
          return(false);
       }

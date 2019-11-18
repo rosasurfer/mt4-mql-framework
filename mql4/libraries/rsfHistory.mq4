@@ -171,7 +171,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
    string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir = GetFullMqlFilesPath()+"\\"+ mqlHstDir;           // Verzeichnisname für Win32-Dateifunktionen
+   string fullHstDir = GetMqlFilesPath()+"\\"+ mqlHstDir;               // Verzeichnisname für Win32-Dateifunktionen
    string baseName, mqlFileName, fullFileName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
@@ -301,7 +301,7 @@ int HistorySet.Get(string symbol, string server="") {
 
    // (3) existierende HistoryFiles suchen
    string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir = GetFullMqlFilesPath() +"\\"+ mqlHstDir;          // Verzeichnisname für Win32-Dateifunktionen
+   string fullHstDir = GetMqlFilesPath() +"\\"+ mqlHstDir;              // Verzeichnisname für Win32-Dateifunktionen
 
    string baseName, mqlFileName, fullFileName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
@@ -463,7 +463,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
    // (1) Datei öffnen
    string mqlHstDir   = "history\\"+ server +"\\";                                  // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir  = GetFullMqlFilesPath() +"\\"+ mqlHstDir;                     // Verzeichnisname für Win32-Dateifunktionen
+   string fullHstDir  = GetMqlFilesPath() +"\\"+ mqlHstDir;                         // Verzeichnisname für Win32-Dateifunktionen
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
    // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
