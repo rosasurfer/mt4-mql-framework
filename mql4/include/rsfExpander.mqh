@@ -49,7 +49,7 @@
    string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    string   GetIniString(string fileName, string section, string key, string defaultValue);
-   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
+   string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);
    string   GetLocalConfigPathA();
    bool     IsGlobalConfigKey(string section, string key);
    bool     IsIniKey(string fileName, string section, string key);

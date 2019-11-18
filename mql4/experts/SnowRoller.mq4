@@ -171,6 +171,8 @@ double   orders.commission     [];
 double   orders.profit         [];
 
 // --- other -------------------------------
+int      lastEventId;
+
 int      ignorePendingOrders  [];                  // orphaned tickets to ignore
 int      ignoreOpenPositions  [];                  // ...
 int      ignoreClosedPositions[];                  // ...
@@ -3452,9 +3454,6 @@ string MQL.GetStatusDirName() {
 string MQL.GetStatusFileName() {
    return(statusDirectory + statusFile);
 }
-
-
-int lastEventId;
 
 
 /**

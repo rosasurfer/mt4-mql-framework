@@ -2232,7 +2232,7 @@ bool CustomPositions.ReadConfig() {
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {               // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
-            iniValue = GetIniStringRaw(file, section, keys[i], "");
+            iniValue = GetIniStringRawA(file, section, keys[i], "");
             iniValue = StrReplace(iniValue, TAB, " ");
 
             // Kommentar auswerten
