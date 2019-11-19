@@ -3477,21 +3477,57 @@ bool SaveSequence() {
    if (!sequence.id)                              return(!catch("SaveSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
+   string file = GetMqlFilesPath() +"\\"+ MQL.GetStatusFileName();
+
    string section = "General";
-   string key     = qc.TradeCmdChannel;
-   string value   = "1";
-   if (!WritePrivateProfileStringA(section, key, value, file))
-      return(!catch("QC.StartTradeCmdReceiver(3)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+   WritePrivateProfileStringA(section, "Account", ShortAccountCompany() +":"+ GetAccountNumber(),        file);
+   WritePrivateProfileStringA(section, "Symbol",                   Symbol(),                             file);
+   WritePrivateProfileStringA(section, "Sequence.ID",              Sequence.ID,                          file);
+      string sGridDirection = StrCapitalize(TradeDirectionDescription(sequence.direction));
+   WritePrivateProfileStringA(section, "GridDirection",            sGridDirection,                       file);
 
+   section = "SnowRoller-001";
+   WritePrivateProfileStringA(section, "Created",                  sequence.created,                     file);
+   WritePrivateProfileStringA(section, "GridSize",                 GridSize,                             file);
+   WritePrivateProfileStringA(section, "LotSize",                  NumberToStr(LotSize, ".+"),           file);
+   WritePrivateProfileStringA(section, "StartLevel",               StartLevel,                           file);
+      string sActiveStartConditions="", sActiveStopConditions="";
+      SaveSequence.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
+   WritePrivateProfileStringA(section, "StartConditions",          sActiveStartConditions,               file);
+   WritePrivateProfileStringA(section, "StopConditions",           sActiveStopConditions,                file);
+   WritePrivateProfileStringA(section, "AutoResume",               AutoResume,                           file);
+   WritePrivateProfileStringA(section, "AutoRestart",              AutoRestart,                          file);
+   WritePrivateProfileStringA(section, "ShowProfitInPercent",      ShowProfitInPercent,                  file);
+   WritePrivateProfileStringA(section, "Sessionbreak.StartTime",   Sessionbreak.StartTime,               file);
+   WritePrivateProfileStringA(section, "Sessionbreak.EndTime",     Sessionbreak.EndTime,                 file);
 
+   WritePrivateProfileStringA(section, "rt.sessionbreak.waiting",  sessionbreak.waiting,                 file);
+   WritePrivateProfileStringA(section, "rt.sequence.startEquity",  DoubleToStr(sequence.startEquity, 2), file);
+   WritePrivateProfileStringA(section, "rt.sequence.maxProfit",    DoubleToStr(sequence.maxProfit, 2),   file);
+   WritePrivateProfileStringA(section, "rt.sequence.maxDrawdown",  DoubleToStr(sequence.maxDrawdown, 2), file);
+      string sStarts = SaveSequence.StartStopToStr(sequence.start.event, sequence.start.time, sequence.start.price, sequence.start.profit);
+   WritePrivateProfileStringA(section, "rt.sequence.starts",       sStarts,                              file);
+      string sStops = SaveSequence.StartStopToStr(sequence.stop.event, sequence.stop.time, sequence.stop.price, sequence.stop.profit);
+   WritePrivateProfileStringA(section, "rt.sequence.stops",        sStops,                               file);
+      string sGridBase = SaveSequence.GridBaseToStr();
+   WritePrivateProfileStringA(section, "rt.grid.base",             sGridBase,                            file);
+   WritePrivateProfileStringA(section, "rt.sequence.missedLevels", JoinInts(sequence.missedLevels),      file);
+   WritePrivateProfileStringA(section, "rt.ignorePendingOrders",   JoinInts(ignorePendingOrders),        file);
+   WritePrivateProfileStringA(section, "rt.ignoreOpenPositions",   JoinInts(ignoreOpenPositions),        file);
+   WritePrivateProfileStringA(section, "rt.ignoreClosedPositions", JoinInts(ignoreClosedPositions),      file);
 
-   return(false);
+   // TODO: If ArraySize(orders) ever decreases the file contains orphaned .ini keys and the logic breaks.
+   //       - empty the section to write to (but don't delete it to keep its position)
+   //       - write section entries
+   int size = ArraySize(orders.ticket);
+   for (int i=0; i < size; i++) {
+      WritePrivateProfileStringA(section, "rt.order."+ i, SaveSequence.OrderToStr(i), file);
+   }
 
+   return(!catch("SaveSequence(2)"));
 
 
    // --- old single sequence version ---------------------------------------------------------------------------------------
-
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert,
    // oder wenn die Sequenz gestoppt wird.
    if (IsTesting() /*&& !__LOG()*/) {                    // TODO: move to debug config => enable !__LOG() to always save in tester if logging is enabled
@@ -3499,186 +3535,18 @@ bool SaveSequence() {
       if (statusSaved && sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
          return(true);                                   // skip saving
    }
-
-   /*
-   Speichernotwendigkeit der einzelnen Variablen
-   ---------------------------------------------
-   int      sequence.id;                  // nein: wird aus Statusdatei ermittelt
-   bool     sequence.isTest;              // nein: wird aus Statusdatei ermittelt
-   int      sequence.direction;           // nein: wird aus Statusdatei ermittelt
-   int      sequence.status;              // nein: kann aus Orderdaten und offenen Positionen restauriert werden
-   int      sequence.level;               // nein: kann aus Orderdaten restauriert werden
-   int      sequence.maxLevel;            // nein: kann aus Orderdaten restauriert werden
-   int      sequence.missedLevels[];      // optional: wird gespeichert, wenn belegt
-   double   sequence.startEquity;         // ja
-   int      sequence.stops;               // nein: kann aus Orderdaten restauriert werden
-   double   sequence.stopsPL;             // nein: kann aus Orderdaten restauriert werden
-   double   sequence.closedPL;            // nein: kann aus Orderdaten restauriert werden
-   double   sequence.floatingPL;          // nein: kann aus offenen Positionen restauriert werden
-   double   sequence.totalPL;             // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
-   double   sequence.maxProfit;           // ja
-   double   sequence.maxDrawdown;         // ja
-   double   sequence.profitPerLevel;      // nein
-   double   sequence.commission;          // nein: wird aus Config ermittelt
-
-   int      sequence.start.event [];      // ja
-   datetime sequence.start.time  [];      // ja
-   double   sequence.start.price [];      // ja
-   double   sequence.start.profit[];      // ja
-
-   int      sequence.stop.event [];       // ja
-   datetime sequence.stop.time  [];       // ja
-   double   sequence.stop.price [];       // ja
-   double   sequence.stop.profit[];       // ja
-
-   bool     start.*.condition;            // nein: wird aus StartConditions abgeleitet
-   bool     stop.*.condition;             // nein: wird aus StopConditions abgeleitet
-   bool     sessionbreak.waiting;         // ja
-
-   double   grid.base;                    // nein: wird aus Gridbase-History restauriert
-   int      grid.base.event[];            // ja
-   datetime grid.base.time [];            // ja
-   double   grid.base.value[];            // ja
-
-   int      orders.ticket         [];     // ja:  0
-   int      orders.level          [];     // ja:  1
-   double   orders.gridBase       [];     // ja:  2
-   int      orders.pendingType    [];     // ja:  3
-   datetime orders.pendingTime    [];     // ja:  4   kein Event
-   double   orders.pendingPrice   [];     // ja:  5
-   int      orders.type           [];     // ja:  6
-   int      orders.openEvent      [];     // ja:  7
-   datetime orders.openTime       [];     // ja:  8   EV_POSITION_OPEN
-   double   orders.openPrice      [];     // ja:  9
-   int      orders.closeEvent     [];     // ja: 10
-   datetime orders.closeTime      [];     // ja: 11   EV_POSITION_STOPOUT | EV_POSITION_CLOSE
-   double   orders.closePrice     [];     // ja: 12
-   double   orders.stopLoss       [];     // ja: 13
-   bool     orders.clientsideLimit[];     // ja: 14
-   bool     orders.closedBySL     [];     // ja: 15
-   double   orders.swap           [];     // ja: 16
-   double   orders.commission     [];     // ja: 17
-   double   orders.profit         [];     // ja: 18
-
-   int      ignorePendingOrders  [];      // optional (werden nur gespeichert, wenn belegt)
-   int      ignoreOpenPositions  [];      // optional (werden nur gespeichert, wenn belegt)
-   int      ignoreClosedPositions[];      // optional (werden nur gespeichert, wenn belegt)
-   */
-
-   // convert active start/stop conditions (skip inactive conditions)
-   string sActiveStartConditions="", sActiveStopConditions="";
-   GetActiveConditions(sActiveStartConditions, sActiveStopConditions);
-
-   // Dateiinhalt zusammenstellen: Konfiguration und Input-Parameter
-   string lines[]; ArrayResize(lines, 0);
-   ArrayPushString(lines, /*string  */ "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
-   ArrayPushString(lines, /*string  */ "Symbol="                + Symbol()              );
-   ArrayPushString(lines, /*string  */ "Sequence.ID="           + Sequence.ID           );
-   ArrayPushString(lines, /*string  */ "Created="               + sequence.created      );
-   ArrayPushString(lines, /*string  */ "GridDirection="         + GridDirection         );
-   ArrayPushString(lines, /*int     */ "GridSize="              + GridSize              );
-   ArrayPushString(lines, /*double  */ "LotSize="+    NumberToStr(LotSize, ".+")        );
-   ArrayPushString(lines, /*int     */ "StartLevel="            + StartLevel            );
-   ArrayPushString(lines, /*string  */ "StartConditions="       + sActiveStartConditions);
-   ArrayPushString(lines, /*string  */ "StopConditions="        + sActiveStopConditions );
-   ArrayPushString(lines, /*bool    */ "AutoResume="            + AutoResume            );
-   ArrayPushString(lines, /*bool    */ "AutoRestart="           + AutoRestart           );
-   ArrayPushString(lines, /*bool    */ "ShowProfitInPercent="   + ShowProfitInPercent   );
-   ArrayPushString(lines, /*datetime*/ "Sessionbreak.StartTime="+ Sessionbreak.StartTime);
-   ArrayPushString(lines, /*datetime*/ "Sessionbreak.EndTime="  + Sessionbreak.EndTime  );
-
-   // Runtime vars
-   ArrayPushString(lines, /*int   */ "rt.sessionbreak.waiting="+ sessionbreak.waiting);
-   ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
-      string values[]; ArrayResize(values, 0);
-   ArrayPushString(lines, /*double*/ "rt.sequence.maxProfit="  + NumberToStr(sequence.maxProfit, ".+"));
-   ArrayPushString(lines, /*double*/ "rt.sequence.maxDrawdown="+ NumberToStr(sequence.maxDrawdown, ".+"));
-      int size = ArraySize(sequence.start.event);
-      for (int i=0; i < size; i++)
-         ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
-      if (size == 0)
-         ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values));
-      ArrayResize(values, 0);
-      size = ArraySize(sequence.stop.event);
-      for (i=0; i < size; i++)
-         ArrayPushString(values, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
-      if (size == 0)
-         ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values));
-      if (ArraySize(sequence.missedLevels) > 0)
-   ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels));
-      if (ArraySize(ignorePendingOrders) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders));
-      if (ArraySize(ignoreOpenPositions) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignoreOpenPositions="  + JoinInts(ignoreOpenPositions));
-      if (ArraySize(ignoreClosedPositions) > 0)
-   ArrayPushString(lines, /*string*/ "rt.ignoreClosedPositions="+ JoinInts(ignoreClosedPositions));
-      ArrayResize(values, 0);
-      size = ArraySize(grid.base.event);
-      for (i=0; i < size; i++)
-         ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", NumberToStr(grid.base.value[i], ".+")));
-      if (size == 0)
-         ArrayPushString(values, "0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.grid.base="            + JoinStrings(values));
-
-   size = ArraySize(orders.ticket);
-   for (i=0; i < size; i++) {
-      int      ticket       = orders.ticket         [i];    //  0
-      int      level        = orders.level          [i];    //  1
-      double   gridBase     = orders.gridBase       [i];    //  2
-      int      pendingType  = orders.pendingType    [i];    //  3
-      datetime pendingTime  = orders.pendingTime    [i];    //  4
-      double   pendingPrice = orders.pendingPrice   [i];    //  5
-      int      type         = orders.type           [i];    //  6
-      int      openEvent    = orders.openEvent      [i];    //  7
-      datetime openTime     = orders.openTime       [i];    //  8
-      double   openPrice    = orders.openPrice      [i];    //  9
-      int      closeEvent   = orders.closeEvent     [i];    // 10
-      datetime closeTime    = orders.closeTime      [i];    // 11
-      double   closePrice   = orders.closePrice     [i];    // 12
-      double   stopLoss     = orders.stopLoss       [i];    // 13
-      bool     clientLimit  = orders.clientsideLimit[i];    // 14
-      bool     closedBySL   = orders.closedBySL     [i];    // 15
-      double   swap         = orders.swap           [i];    // 16
-      double   commission   = orders.commission     [i];    // 17
-      double   profit       = orders.profit         [i];    // 18
-      ArrayPushString(lines, StringConcatenate("rt.order.", i, "=", ticket, ",", level, ",", NumberToStr(NormalizeDouble(gridBase, Digits), ".+"), ",", pendingType, ",", pendingTime, ",", NumberToStr(NormalizeDouble(pendingPrice, Digits), ".+"), ",", type, ",", openEvent, ",", openTime, ",", NumberToStr(NormalizeDouble(openPrice, Digits), ".+"), ",", closeEvent, ",", closeTime, ",", NumberToStr(NormalizeDouble(closePrice, Digits), ".+"), ",", NumberToStr(NormalizeDouble(stopLoss, Digits), ".+"), ",", clientLimit, ",", closedBySL, ",", NumberToStr(swap, ".+"), ",", NumberToStr(commission, ".+"), ",", NumberToStr(profit, ".+")));
-      //rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
-   }
-
-   // alles speichern
-   string filename = MQL.GetStatusFileName();
-   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
-   if (hFile < 0) return(_false(catch("SaveSequence(4)->FileOpen(filename="+ DoubleQuoteStr(filename) +")")));
-
-   for (i=0; i < ArraySize(lines); i++) {
-      if (FileWrite(hFile, lines[i]) < 0) {
-         int error = GetLastError();
-         catch("SaveSequence(5)->FileWrite(line #"+ (i+1) +") failed, filename="+ DoubleQuoteStr(filename), ifInt(error, error, ERR_RUNTIME_ERROR));
-         FileClose(hFile);
-         return(false);
-      }
-   }
-   FileClose(hFile);
    statusSaved = true;
-
-   ArrayResize(lines,  0);
-   ArrayResize(values, 0);
-   return(!catch("SaveSequence(6)"));
 }
 
 
 /**
- * Return a string representation of active start and stop conditions as saved by SaveSequence().
- * are written to the status file by SaveSequence().
+ * Return a string representation of active start and stop conditions as stored by SaveSequence(). The returned values don't
+ * contain inactive conditions.
  *
- * @param  _Out_ string &startConditions - reference to variable for active start conditions
- * @param  _Out_ string &stopConditions  - reference to variable for active stop conditions
- *
- * @return bool - success status
+ * @param  _Out_ string &startConditions - variable to receive active start conditions
+ * @param  _Out_ string &stopConditions  - variable to receive active stop conditions
  */
-void GetActiveConditions(string &startConditions, string &stopConditions) {
+void SaveSequence.ConditionsToStr(string &startConditions, string &stopConditions) {
    string sValue = "";
 
    // active start conditions (order: trend, time, price)
@@ -3701,16 +3569,10 @@ void GetActiveConditions(string &startConditions, string &stopConditions) {
    }
    startConditions = sValue;
 
-   // active stop conditions (order: trend, profit, time, price)
+   // active stop conditions (order: trend, time, price, profit)
    sValue = "";
    if (stop.trend.condition) {
       sValue = "@"+ stop.trend.description;
-   }
-   if (stop.profitAbs.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
-   }
-   if (stop.profitPct.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
    }
    if (stop.time.condition) {
       sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
@@ -3718,10 +3580,89 @@ void GetActiveConditions(string &startConditions, string &stopConditions) {
    if (stop.price.condition) {
       sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
    }
+   if (stop.profitAbs.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
+   }
+   if (stop.profitPct.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
+   }
    stopConditions = sValue;
+}
 
-   debug("ActiveConditions(0.1)  startConditions="+ startConditions);
-   debug("ActiveConditions(0.2)  stopConditions="+ stopConditions);
+
+/**
+ * Return a string representation of sequence starts or stops as stored by SaveSequence().
+ *
+ * @param  int      events [] - sequence start or stop event ids
+ * @param  datetime times  [] - sequence start or stop times
+ * @param  double   prices [] - sequence start or stop prices
+ * @param  double   profits[] - sequence start or stop profit amounts
+ *
+ * @return string
+ */
+string SaveSequence.StartStopToStr(int events[], datetime times[], double prices[], double profits[]) {
+   string values[]; ArrayResize(values, 0);
+   int size = ArraySize(events);
+
+   for (int i=0; i < size; i++) {
+      ArrayPushString(values, StringConcatenate(events[i], "|", times[i], "|", DoubleToStr(prices[i], Digits), "|", DoubleToStr(profits[i], 2)));
+   }
+   if (!size) ArrayPushString(values, "0|0|0|0");
+
+   string result = JoinStrings(values);
+   ArrayResize(values, 0);
+   return(result);
+}
+
+
+/**
+ * Return a string representation of the gridbase history as stored by SaveSequence().
+ *
+ * @return string
+ */
+string SaveSequence.GridBaseToStr() {
+   string values[]; ArrayResize(values, 0);
+   int size = ArraySize(grid.base.event);
+
+   for (int i=0; i < size; i++) {
+      ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", DoubleToStr(grid.base.value[i], Digits)));
+   }
+   if (!size) ArrayPushString(values, "0|0|0");
+
+   string result = JoinStrings(values);
+   ArrayResize(values, 0);
+   return(result);
+}
+
+
+/**
+ * Return a string representation of an order record as stored by SaveSequence().
+ *
+ * @param int index - index of the order record
+ *
+ * @return string
+ */
+string SaveSequence.OrderToStr(int index) {
+   int      ticket       = orders.ticket         [index];
+   int      level        = orders.level          [index];
+   double   gridBase     = orders.gridBase       [index];
+   int      pendingType  = orders.pendingType    [index];
+   datetime pendingTime  = orders.pendingTime    [index];
+   double   pendingPrice = orders.pendingPrice   [index];
+   int      orderType    = orders.type           [index];
+   int      openEvent    = orders.openEvent      [index];
+   datetime openTime     = orders.openTime       [index];
+   double   openPrice    = orders.openPrice      [index];
+   int      closeEvent   = orders.closeEvent     [index];
+   datetime closeTime    = orders.closeTime      [index];
+   double   closePrice   = orders.closePrice     [index];
+   double   stopLoss     = orders.stopLoss       [index];
+   bool     clientLimit  = orders.clientsideLimit[index];
+   bool     closedBySL   = orders.closedBySL     [index];
+   double   swap         = orders.swap           [index];
+   double   commission   = orders.commission     [index];
+   double   profit       = orders.profit         [index];
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridBase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", clientLimit, ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
