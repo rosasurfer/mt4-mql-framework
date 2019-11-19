@@ -601,8 +601,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    string key     = ticket;
    string value   = GetIniStringA(file, section, key, "");
    if (!StringLen(value)) {
-      if (IsIniKey(file, section, key)) return(!catch("LFX.GetOrder(2)  invalid order entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-                                        return(-1);                  // Ticket nicht gefunden
+      if (IsIniKeyA(file, section, key)) return(!catch("LFX.GetOrder(2)  invalid order entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+                                         return(-1);                 // Ticket nicht gefunden
    }
 
 

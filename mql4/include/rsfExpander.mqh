@@ -52,7 +52,7 @@
    string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);
    string   GetLocalConfigPathA();
    bool     IsGlobalConfigKey(string section, string key);
-   bool     IsIniKey(string fileName, string section, string key);
+   bool     IsIniKeyA(string fileName, string section, string key);
    bool     IsIniSection(string fileName, string section);
    bool     IsLocalConfigKey(string section, string key);
 

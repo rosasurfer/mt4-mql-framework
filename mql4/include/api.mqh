@@ -640,7 +640,7 @@ bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string name);;
 bool     IsFileA(string name);;
 bool     IsGlobalConfigKey        (string section, string key);;
-bool     IsIniKey(string fileName, string section, string key);;
+bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSection(string fileName, string section);;
 bool     IsJunctionA(string name);;
 bool     IsLocalConfigKey(string section, string key);;
