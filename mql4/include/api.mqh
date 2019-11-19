@@ -643,7 +643,7 @@ bool     IsGlobalConfigKeyA(string section, string key);;
 bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSectionA(string fileName, string section);;
 bool     IsJunctionA(string name);;
-bool     IsLocalConfigKey(string section, string key);;
+bool     IsLocalConfigKeyA(string section, string key);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlinkA(string name);;
 bool     IsUIThread(int threadId);;
