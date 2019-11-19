@@ -3477,54 +3477,55 @@ bool SaveSequence() {
    if (!sequence.id)                              return(!catch("SaveSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   string file = GetMqlFilesPath() +"\\"+ MQL.GetStatusFileName();
+   string sGridDirection = StrCapitalize(TradeDirectionDescription(sequence.direction));
+   string sStarts        = SaveSequence.StartStopToStr(sequence.start.event, sequence.start.time, sequence.start.price, sequence.start.profit);
+   string sStops         = SaveSequence.StartStopToStr(sequence.stop.event, sequence.stop.time, sequence.stop.price, sequence.stop.profit);
+   string sGridBase      = SaveSequence.GridBaseToStr();
+   string sActiveStartConditions="", sActiveStopConditions="";
+   SaveSequence.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
+
+   string file = GetMqlFilesPath() +"/"+ MQL.GetStatusFileName();
 
    string section = "General";
-   WritePrivateProfileStringA(section, "Account", ShortAccountCompany() +":"+ GetAccountNumber(),        file);
-   WritePrivateProfileStringA(section, "Symbol",                   Symbol(),                             file);
-   WritePrivateProfileStringA(section, "Sequence.ID",              Sequence.ID,                          file);
-      string sGridDirection = StrCapitalize(TradeDirectionDescription(sequence.direction));
-   WritePrivateProfileStringA(section, "GridDirection",            sGridDirection,                       file);
+   WriteIniString(file, section, "Account",                  ShortAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Symbol",                   Symbol());
+   WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
+   WriteIniString(file, section, "GridDirection",            sGridDirection);
 
    section = "SnowRoller-001";
-   WritePrivateProfileStringA(section, "Created",                  sequence.created,                     file);
-   WritePrivateProfileStringA(section, "GridSize",                 GridSize,                             file);
-   WritePrivateProfileStringA(section, "LotSize",                  NumberToStr(LotSize, ".+"),           file);
-   WritePrivateProfileStringA(section, "StartLevel",               StartLevel,                           file);
-      string sActiveStartConditions="", sActiveStopConditions="";
-      SaveSequence.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
-   WritePrivateProfileStringA(section, "StartConditions",          sActiveStartConditions,               file);
-   WritePrivateProfileStringA(section, "StopConditions",           sActiveStopConditions,                file);
-   WritePrivateProfileStringA(section, "AutoResume",               AutoResume,                           file);
-   WritePrivateProfileStringA(section, "AutoRestart",              AutoRestart,                          file);
-   WritePrivateProfileStringA(section, "ShowProfitInPercent",      ShowProfitInPercent,                  file);
-   WritePrivateProfileStringA(section, "Sessionbreak.StartTime",   Sessionbreak.StartTime,               file);
-   WritePrivateProfileStringA(section, "Sessionbreak.EndTime",     Sessionbreak.EndTime,                 file);
+   WriteIniString(file, section, "Created",                  sequence.created);
+   WriteIniString(file, section, "GridSize",                 GridSize);
+   WriteIniString(file, section, "LotSize",                  NumberToStr(LotSize, ".+"));
+   WriteIniString(file, section, "StartLevel",               StartLevel);
+   WriteIniString(file, section, "StartConditions",          sActiveStartConditions);
+   WriteIniString(file, section, "StopConditions",           sActiveStopConditions);
+   WriteIniString(file, section, "AutoResume",               AutoResume);
+   WriteIniString(file, section, "AutoRestart",              AutoRestart);
+   WriteIniString(file, section, "ShowProfitInPercent",      ShowProfitInPercent);
+   WriteIniString(file, section, "Sessionbreak.StartTime",   Sessionbreak.StartTime);
+   WriteIniString(file, section, "Sessionbreak.EndTime",     Sessionbreak.EndTime);
 
-   WritePrivateProfileStringA(section, "rt.sessionbreak.waiting",  sessionbreak.waiting,                 file);
-   WritePrivateProfileStringA(section, "rt.sequence.startEquity",  DoubleToStr(sequence.startEquity, 2), file);
-   WritePrivateProfileStringA(section, "rt.sequence.maxProfit",    DoubleToStr(sequence.maxProfit, 2),   file);
-   WritePrivateProfileStringA(section, "rt.sequence.maxDrawdown",  DoubleToStr(sequence.maxDrawdown, 2), file);
-      string sStarts = SaveSequence.StartStopToStr(sequence.start.event, sequence.start.time, sequence.start.price, sequence.start.profit);
-   WritePrivateProfileStringA(section, "rt.sequence.starts",       sStarts,                              file);
-      string sStops = SaveSequence.StartStopToStr(sequence.stop.event, sequence.stop.time, sequence.stop.price, sequence.stop.profit);
-   WritePrivateProfileStringA(section, "rt.sequence.stops",        sStops,                               file);
-      string sGridBase = SaveSequence.GridBaseToStr();
-   WritePrivateProfileStringA(section, "rt.grid.base",             sGridBase,                            file);
-   WritePrivateProfileStringA(section, "rt.sequence.missedLevels", JoinInts(sequence.missedLevels),      file);
-   WritePrivateProfileStringA(section, "rt.ignorePendingOrders",   JoinInts(ignorePendingOrders),        file);
-   WritePrivateProfileStringA(section, "rt.ignoreOpenPositions",   JoinInts(ignoreOpenPositions),        file);
-   WritePrivateProfileStringA(section, "rt.ignoreClosedPositions", JoinInts(ignoreClosedPositions),      file);
+   WriteIniString(file, section, "rt.sessionbreak.waiting",  sessionbreak.waiting);
+   WriteIniString(file, section, "rt.sequence.startEquity",  DoubleToStr(sequence.startEquity, 2));
+   WriteIniString(file, section, "rt.sequence.maxProfit",    DoubleToStr(sequence.maxProfit, 2));
+   WriteIniString(file, section, "rt.sequence.maxDrawdown",  DoubleToStr(sequence.maxDrawdown, 2));
+   WriteIniString(file, section, "rt.sequence.starts",       sStarts);
+   WriteIniString(file, section, "rt.sequence.stops",        sStops);
+   WriteIniString(file, section, "rt.grid.base",             sGridBase);
+   WriteIniString(file, section, "rt.sequence.missedLevels", JoinInts(sequence.missedLevels));
+   WriteIniString(file, section, "rt.ignorePendingOrders",   JoinInts(ignorePendingOrders));
+   WriteIniString(file, section, "rt.ignoreOpenPositions",   JoinInts(ignoreOpenPositions));
+   WriteIniString(file, section, "rt.ignoreClosedPositions", JoinInts(ignoreClosedPositions));
 
    // TODO: If ArraySize(orders) ever decreases the file contains orphaned .ini keys and the logic breaks.
    //       - empty the section to write to (but don't delete it to keep its position)
    //       - write section entries
    int size = ArraySize(orders.ticket);
    for (int i=0; i < size; i++) {
-      WritePrivateProfileStringA(section, "rt.order."+ i, SaveSequence.OrderToStr(i), file);
+      WriteIniString(file, section, "rt.order."+ i, SaveSequence.OrderToStr(i));
    }
 
-   return(!catch("SaveSequence(2)"));
+   return(!catch("SaveSequence(4)"));
 
 
    // --- old single sequence version ---------------------------------------------------------------------------------------
@@ -3663,6 +3664,35 @@ string SaveSequence.OrderToStr(int index) {
    double   commission   = orders.commission     [index];
    double   profit       = orders.profit         [index];
    return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridBase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", clientLimit, ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+}
+
+
+/**
+ * Write a configuration value to an .ini file. If the file does not exist an attempt is made to create it.
+ *
+ * @param  string fileName - name of the file (with any extension)
+ * @param  string section  - case-insensitive configuration section name
+ * @param  string key      - case-insensitive configuration key
+ * @param  string value    - configuration value
+ *
+ * @return bool - success status
+ */
+bool WriteIniString(string fileName, string section, string key, string value) {
+   if (!IsFileA(fileName)) {
+      fileName = StrReplace(fileName, "\\", "/");
+      string directory = StrLeftTo(fileName, "/", -1);
+      if (directory != fileName) {
+         int error = CreateDirectoryRecursive(directory);
+         if (IsError(error)) {
+            return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
+         }
+      }
+      //else: fileName doesn't contain a dir separator
+   }
+   if (!WritePrivateProfileStringA(section, key, value, fileName)) {
+      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR));
+   }
+   return(true);
 }
 
 
