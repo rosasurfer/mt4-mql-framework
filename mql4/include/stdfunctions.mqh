@@ -1125,9 +1125,9 @@ double GetCommission(double lots = 1.0) {
          string section = "Commissions";
          string key     = company +"."+ currency +"."+ account;
 
-         if (!IsGlobalConfigKey(section, key)) {
+         if (!IsGlobalConfigKeyA(section, key)) {
             key = company +"."+ currency;
-            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
+            if (!IsGlobalConfigKeyA(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
          }
          rate = GetGlobalConfigDouble(section, key);
          if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_VALUE)));

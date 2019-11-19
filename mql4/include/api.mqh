@@ -639,7 +639,7 @@ string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string name);;
 bool     IsFileA(string name);;
-bool     IsGlobalConfigKey        (string section, string key);;
+bool     IsGlobalConfigKeyA(string section, string key);;
 bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSectionA(string fileName, string section);;
 bool     IsJunctionA(string name);;
