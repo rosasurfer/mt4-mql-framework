@@ -34,7 +34,7 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
  * @return bool
  */
 bool IsConfigKey(string section, string key) {
-   if (IsGlobalConfigKey (section, key)) return(true);
+   if (IsGlobalConfigKeyA(section, key)) return(true);
    if (IsLocalConfigKey  (section, key)) return(true);
    if (IsAccountConfigKey(section, key)) return(true);
    return(false);
