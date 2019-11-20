@@ -53,6 +53,7 @@ int onInitUser() {
    if (ValidateInputs(interactive)) {
       sequence.id      = CreateSequenceId();
       Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.cycle   = 1;
       sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
       sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
       sequence.isTest  = IsTesting();
@@ -156,9 +157,11 @@ int onInitRecompile() {
  */
 int afterInit() {
    if (IsTesting()) {
-      test.onTrendChangePause  = GetConfigBool(__NAME() +".Tester", "OnTrendChangePause");
-      test.onSessionBreakPause = GetConfigBool(__NAME() +".Tester", "OnSessionBreakPause");
-      test.onStopPause         = GetConfigBool(__NAME() +".Tester", "OnStopPause");
+      string section = __NAME() +".Tester";
+      tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
+      tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
+      tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
+      tester.reduceWriteStatus   = GetConfigBool(section, "ReduceWriteStatus",   true);
    }
    CreateStatusBox();
    SS.All();
@@ -211,7 +214,7 @@ void RestoreInputStatus() {
 
 
 /**
- * Backup or restore status variables depending on input parameters. These are all variables which change if an input
+ * Backup or restore status variables which depend on input parameters. These are all variables which may change if an input
  * parameter changes.
  *
  * @param  bool store - TRUE:  copy global values to internal storage (backup)
@@ -221,6 +224,7 @@ void CopyInputStatus(bool store) {
    store = store!=0;
 
    static int      _sequence.id;
+   static int      _sequence.cycle;
    static string   _sequence.name;
    static string   _sequence.created;
    static bool     _sequence.isTest;
@@ -266,6 +270,7 @@ void CopyInputStatus(bool store) {
 
    if (store) {
       _sequence.id                = sequence.id;
+      _sequence.cycle             = sequence.cycle;
       _sequence.name              = sequence.name;
       _sequence.created           = sequence.created;
       _sequence.isTest            = sequence.isTest;
@@ -311,6 +316,7 @@ void CopyInputStatus(bool store) {
    }
    else {
       sequence.id                = _sequence.id;
+      sequence.cycle             = _sequence.cycle;
       sequence.name              = _sequence.name;
       sequence.created           = _sequence.created;
       sequence.isTest            = _sequence.isTest;

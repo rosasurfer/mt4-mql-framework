@@ -60,6 +60,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the
 
 // --- sequence data -----------------------
 int      sequence.id;
+int      sequence.cycle;                           // counter of restarted sequences if AutoRestart=On: 1...+n
 string   sequence.name    = "";                    // "L.1234" | "S.2345"
 string   sequence.created = "";                    // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
 bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
@@ -138,8 +139,8 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
-// --- session break management ------------       // configurable via inputs and framework config
-datetime sessionbreak.starttime;
+// --- session break management ------------
+datetime sessionbreak.starttime;                   // configurable via inputs and framework config
 datetime sessionbreak.endtime;
 bool     sessionbreak.waiting;                     // whether the sequence waits to resume during or after a session break
 
@@ -195,10 +196,11 @@ string   sStartConditions        = "";
 string   sStopConditions         = "";
 string   sAutoResume             = "";
 
-// --- debug settings ----------------------       // configurable via framework config
-bool     test.onTrendChangePause  = false;         // whether to pause the tester when a trend condition changes
-bool     test.onSessionBreakPause = false;         // whether to pause the tester on a sessionbreak stop/resume
-bool     test.onStopPause         = false;         // whether to pause the tester when any stop condition is fulfilled
+// --- debug settings ----------------------       // configurable via framework config; @see EA::afterInit()
+bool     tester.onTrendChangePause  = false;       // whether to pause the tester when a trend condition changes
+bool     tester.onSessionBreakPause = false;       // whether to pause the tester on a sessionbreak stop/resume
+bool     tester.onStopPause         = false;       // whether to pause the tester when any stop condition is fulfilled
+bool     tester.reduceWriteStatus   = true;        // whether to skip redundant status file writing in tester
 
 
 #include <app/SnowRoller/init.mqh>
@@ -433,8 +435,8 @@ bool StartSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting() && IsVisualMode()) {
-      if      (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
-      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+      if      (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
    }
    return(!catch("StartSequence(6)"));
 }
@@ -665,11 +667,11 @@ bool StopSequence(int signal) {
    // pause/stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (test.onStopPause)                                        Tester.Pause();
-         else if (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
-         else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+         if      (tester.onStopPause)                                        Tester.Pause();
+         else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+         else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
       }
-      else if (sequence.status == STATUS_STOPPED)                          Tester.Stop();
+      else if (sequence.status == STATUS_STOPPED)                            Tester.Stop();
    }
    return(!catch("StopSequence(12)"));
 }
@@ -691,9 +693,10 @@ bool ResetSequence() {
    StartLevel = 0;
 
    // reset global vars
-   if (true) {                                           // just a block to separate the code
+   if (true) {                                           // a block to just separate the code
       // --- sequence data ------------------
       //sequence.id           = ...                      // unchanged
+      sequence.cycle++;                                  // increase restart cycle
       //sequence.name         = ...                      // unchanged
       //sequence.created      = ...                      // unchanged
       //sequence.isTest       = ...                      // unchanged
@@ -808,36 +811,36 @@ bool ResetSequence() {
       ArrayResize(ignoreOpenPositions,   0);
       ArrayResize(ignoreClosedPositions, 0);
 
-      //startStopDisplayMode     = ...                   // kept
-      //orderDisplayMode         = ...                   // kept
+      //startStopDisplayMode       = ...                 // kept
+      //orderDisplayMode           = ...                 // kept
 
-      sLotSize                   = "";
-      sGridbase                  = "";
-      sSequenceDirection         = "";
-      sSequenceMissedLevels      = "";
-      sSequenceStops             = "";
-      sSequenceStopsPL           = "";
-      sSequenceTotalPL           = "";
-      sSequenceMaxProfit         = "";
-      sSequenceMaxDrawdown       = "";
-      sSequenceProfitPerLevel    = "";
-      sSequencePlStats           = "";
-      sStartConditions           = "";
-      sStopConditions            = "";
-      sAutoResume                = "";
+      sLotSize                     = "";
+      sGridbase                    = "";
+      sSequenceDirection           = "";
+      sSequenceMissedLevels        = "";
+      sSequenceStops               = "";
+      sSequenceStopsPL             = "";
+      sSequenceTotalPL             = "";
+      sSequenceMaxProfit           = "";
+      sSequenceMaxDrawdown         = "";
+      sSequenceProfitPerLevel      = "";
+      sSequencePlStats             = "";
+      sStartConditions             = "";
+      sStopConditions              = "";
+      sAutoResume                  = "";
 
       // --- debug settings -----------------
-      //test.onTrendChangePause  = ...                   // unchanged
-      //test.onSessionBreakPause = ...                   // unchanged
-      //test.onStopPause         = ...                   // unchanged
+      //tester.onTrendChangePause  = ...                 // unchanged
+      //tester.onSessionBreakPause = ...                 // unchanged
+      //tester.onStopPause         = ...                 // unchanged
+      //tester.reduceWriteStatus   = ...                 // unchanged
    }
 
    sequence.status = STATUS_WAITING;
    SS.All();
-
-   if (__LOG()) log("ResetSequence(4)  sequence "+ sequence.name +" reset, waiting for start condition");
    SaveSequence();
 
+   if (__LOG()) log("ResetSequence(4)  sequence "+ sequence.name +" reset, waiting for start condition");
    return(!catch("ResetSequence(5)"));
 }
 
@@ -969,8 +972,8 @@ bool ResumeSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting() && IsVisualMode()) {
-      if      (test.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
-      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+      if      (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
    }
    return(!catch("ResumeSequence(6)"));
 }
@@ -3468,7 +3471,7 @@ int CreateEventId() {
 
 
 /**
- * Store the current sequence status to a file. A sequence can be reloaded from such a file (e.g. on terminal restart).
+ * Store the current sequence status to a file. The sequence can be reloaded from such a file (e.g. on terminal restart).
  *
  * @return bool - success status
  */
@@ -3477,6 +3480,16 @@ bool SaveSequence() {
    if (!sequence.id)                              return(!catch("SaveSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
+   // In tester skip writing the status file after each trade request, except the first time, after sequence stop and at test end.
+   if (IsTesting() && tester.reduceWriteStatus) {
+      static bool saved = false;
+      if (saved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT) {
+         return(true);
+      }
+      saved = true;
+   }
+
+   string sCycle         = StrPadLeft(sequence.cycle, 3, "0");
    string sGridDirection = StrCapitalize(TradeDirectionDescription(sequence.direction));
    string sStarts        = SaveSequence.StartStopToStr(sequence.start.event, sequence.start.time, sequence.start.price, sequence.start.profit);
    string sStops         = SaveSequence.StartStopToStr(sequence.stop.event, sequence.stop.time, sequence.stop.price, sequence.stop.profit);
@@ -3492,7 +3505,7 @@ bool SaveSequence() {
    WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
    WriteIniString(file, section, "GridDirection",            sGridDirection);
 
-   section = "SnowRoller-001";
+   section = "SnowRoller-"+ sCycle;
    WriteIniString(file, section, "Created",                  sequence.created);
    WriteIniString(file, section, "GridSize",                 GridSize);
    WriteIniString(file, section, "LotSize",                  NumberToStr(LotSize, ".+"));
@@ -3517,7 +3530,7 @@ bool SaveSequence() {
    WriteIniString(file, section, "rt.ignoreOpenPositions",   JoinInts(ignoreOpenPositions));
    WriteIniString(file, section, "rt.ignoreClosedPositions", JoinInts(ignoreClosedPositions));
 
-   // TODO: If ArraySize(orders) ever decreases the file contains orphaned .ini keys and the logic breaks.
+   // TODO: If ArraySize(orders) ever decreases the file will contain orphaned .ini keys and the logic will break.
    //       - empty the section to write to (but don't delete it to keep its position)
    //       - write section entries
    int size = ArraySize(orders.ticket);
@@ -3525,18 +3538,7 @@ bool SaveSequence() {
       WriteIniString(file, section, "rt.order."+ i, SaveSequence.OrderToStr(i));
    }
 
-   return(!catch("SaveSequence(4)"));
-
-
-   // --- old single sequence version ---------------------------------------------------------------------------------------
-   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert,
-   // oder wenn die Sequenz gestoppt wird.
-   if (IsTesting() /*&& !__LOG()*/) {                    // TODO: move to debug config => enable !__LOG() to always save in tester if logging is enabled
-      static bool statusSaved = false;
-      if (statusSaved && sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
-         return(true);                                   // skip saving
-   }
-   statusSaved = true;
+   return(!catch("SaveSequence(2)"));
 }
 
 
