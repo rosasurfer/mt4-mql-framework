@@ -196,12 +196,12 @@ string   sStartConditions        = "";
 string   sStopConditions         = "";
 string   sAutoResume             = "";
 
-// --- debug settings ----------------------       // configurable via framework config; @see EA::afterInit()
-bool     tester.onTrendChangePause  = false;       // whether to pause the tester when a trend condition changes
+// --- debug settings ----------------------       // configurable via framework config, @see SnowRoller::afterInit()
+bool     tester.onStopPause         = false;       // whether to pause the tester on any fulfilled stop condition
 bool     tester.onSessionBreakPause = false;       // whether to pause the tester on a sessionbreak stop/resume
+bool     tester.onTrendChangePause  = false;       // whether to pause the tester when a trend condition changes
 bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when the profit target is reached
-bool     tester.onStopPause         = false;       // whether to pause the tester when any stop condition is fulfilled
-bool     tester.reduceWriteStatus   = true;        // whether to skip redundant status file writing in tester
+bool     tester.reduceStatusWrites  = true;        // whether to skip redundant status file writing in tester
 
 
 #include <app/SnowRoller/init.mqh>
@@ -660,7 +660,7 @@ bool StopSequence(int signal) {
    SS.StartStopConditions();
    SaveSequence();
 
-   // restart sequence if configured (to STATUS_WAITING)
+   // reset the sequence and start a new cycle (using the same sequence id)
    if (signal==SIGNAL_TP && AutoRestart) {
       ResetSequence();
    }
@@ -668,9 +668,10 @@ bool StopSequence(int signal) {
    // pause/stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (tester.onStopPause)                                        Tester.Pause();
+         if      (tester.onStopPause)                                        Tester.Pause();    // pause on any stop
          else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
          else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+         else if (tester.onTakeProfitPause   && signal==SIGNAL_TP)           Tester.Pause();
       }
       else if (sequence.status == STATUS_STOPPED)                            Tester.Stop();
    }
@@ -835,7 +836,7 @@ bool ResetSequence() {
       //tester.onSessionBreakPause = ...                 // unchanged
       //tester.onTakeProfitPause   = ...                 // unchanged
       //tester.onStopPause         = ...                 // unchanged
-      //tester.reduceWriteStatus   = ...                 // unchanged
+      //tester.reduceStatusWrites  = ...                 // unchanged
    }
 
    sequence.status = STATUS_WAITING;
@@ -3483,7 +3484,7 @@ bool SaveSequence() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
    // In tester skip writing the status file after each trade request, except the first time, after sequence stop and at test end.
-   if (IsTesting() && tester.reduceWriteStatus) {
+   if (IsTesting() && tester.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT) {
          return(true);

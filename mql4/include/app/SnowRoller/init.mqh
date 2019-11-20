@@ -158,11 +158,11 @@ int onInitRecompile() {
 int afterInit() {
    if (IsTesting()) {
       string section = __NAME() +".Tester";
-      tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
-      tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
-      tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
       tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
-      tester.reduceWriteStatus   = GetConfigBool(section, "ReduceWriteStatus",   true);
+      tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
+      tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
+      tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
+      tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
    }
    CreateStatusBox();
    SS.All();
