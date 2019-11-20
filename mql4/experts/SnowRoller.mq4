@@ -199,6 +199,7 @@ string   sAutoResume             = "";
 // --- debug settings ----------------------       // configurable via framework config; @see EA::afterInit()
 bool     tester.onTrendChangePause  = false;       // whether to pause the tester when a trend condition changes
 bool     tester.onSessionBreakPause = false;       // whether to pause the tester on a sessionbreak stop/resume
+bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when the profit target is reached
 bool     tester.onStopPause         = false;       // whether to pause the tester when any stop condition is fulfilled
 bool     tester.reduceWriteStatus   = true;        // whether to skip redundant status file writing in tester
 
@@ -832,6 +833,7 @@ bool ResetSequence() {
       // --- debug settings -----------------
       //tester.onTrendChangePause  = ...                 // unchanged
       //tester.onSessionBreakPause = ...                 // unchanged
+      //tester.onTakeProfitPause   = ...                 // unchanged
       //tester.onStopPause         = ...                 // unchanged
       //tester.reduceWriteStatus   = ...                 // unchanged
    }
