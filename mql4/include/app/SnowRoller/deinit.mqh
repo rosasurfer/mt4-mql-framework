@@ -34,17 +34,8 @@ int onDeinitChartChange() {
 int onDeinitChartClose() {
    // Im Tester
    if (IsTesting()) {
-      /**
-       * !!! Vorsicht: Die start()-Funktion wurde gewaltsam beendet, die primitiven Variablen können Datenmüll enthalten !!!
-       *
-       * Das Flag "Statusfile nicht löschen" kann nicht über primitive Variablen oder den Chart kommuniziert werden.
-       *  => Strings/Arrays testen (ansonsten globale Variable mit Thread-ID)
-       */
+      // !!! Vorsicht: Die start()-Funktion wurde gewaltsam beendet, die primitiven Variablen können Datenmüll enthalten !!!
       if (IsLastError()) {
-         // Statusfile löschen
-         FileDelete(MQL.GetStatusFileName());
-         GetLastError();                                          // falls in FileDelete() ein Fehler auftrat
-
          // Der Fenstertitel des Testers kann nicht zurückgesetzt werden: SendMessage() führt in deinit() zu Deadlock.
       }
       else {

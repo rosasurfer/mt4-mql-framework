@@ -91,9 +91,6 @@ datetime sequence.stop.time   [];
 double   sequence.stop.price  [];                  // average realized close price of all closed positions
 double   sequence.stop.profit [];
 
-string   statusFile      = "";                     // filename of the status file
-string   statusDirectory = "";                     // directory the status file is stored (relative to "files/")
-
 // --- start conditions (AND combined) -----
 bool     start.conditions;                         // whether any start condition is active
 
@@ -739,9 +736,6 @@ bool ResetSequence() {
       ArrayResize(sequence.stop.price,  0);
       ArrayResize(sequence.stop.profit, 0);
 
-      //statusFile               = ...                   // unchanged
-      //statusDirectory          = ...                   // unchanged      TODO: remove
-
       // --- start conditions ---------------
       start.conditions           = true;
       start.trend.condition      = true;
@@ -1079,7 +1073,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  cannot update order status of "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
    ArrayResize(activatedOrders, 0);
-   bool wasPending, isClosed, openPositions, updateStatusLocation;
+   bool wasPending, isClosed, openPositions;
    int  closed[][2], close[2], sizeOfTickets=ArraySize(orders.ticket); ArrayResize(closed, 0);
    sequence.floatingPL = 0;
 
@@ -1138,7 +1132,6 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
                   ArrayDropInt(sequence.missedLevels, orders.level[i]);             // update missed grid levels
                   SS.MissedLevels();
                }
-               updateStatusLocation = updateStatusLocation || !sequence.maxLevel;   // what's this needed for???
             }
          }
          else {
@@ -1225,9 +1218,6 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
       }
    }
 
-   // update status file location                                             // TODO: obsolete
-   if (updateStatusLocation)
-      UpdateStatusLocation();
    return(!catch("UpdateStatus(12)"));
 }
 
@@ -3336,154 +3326,18 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
 
 
 /**
- * Initialisiert die Dateinamensvariablen der Statusdatei mit den Ausgangswerten einer neuen Sequenz.
- *
- * @return bool - success status
- */
-bool InitStatusLocation() {
-   if (IsLastError()) return( false);
-   if (!sequence.id)  return(_false(catch("InitStatusLocation(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
-
-   if      (IsTesting())      statusDirectory = "presets\\";
-   else if (IsTestSequence()) statusDirectory = "presets\\tester\\";
-   else                       statusDirectory = "presets\\"+ ShortAccountCompany() +"\\";
-
-   statusFile = StrToLower(StdSymbol()) +".SR."+ sequence.id +".set";
-   return(true);
-}
-
-
-/**
- * Aktualisiert die Dateinamensvariablen der Statusdatei. SaveSequence() erkennt die Änderung und verschiebt die Datei automatisch.
- *
- * @return bool - success status
- */
-bool UpdateStatusLocation() {
-   if (IsLastError()) return( false);
-   if (!sequence.id)  return(_false(catch("UpdateStatusLocation(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
-
-   // TODO: Prüfen, ob statusFile existiert und ggf. aktualisieren
-
-   if      (IsTesting())      statusDirectory = "presets\\";
-   else if (IsTestSequence()) statusDirectory = "presets\\tester\\";
-   else                       statusDirectory = "presets\\"+ ShortAccountCompany() +"\\";
-   return(true);
-}
-
-
-/**
- * Restauriert anhand der verfügbaren Informationen Ort und Namen der Statusdatei, wird nur aus ReadSequence() heraus aufgerufen.
- *
- * @return bool - Erfolgsstatus
- */
-bool ResolveStatusLocation() {
-   if (IsLastError()) return(false);
-
-   // Location-Variablen zurücksetzen
-   InitStatusLocation();
-   string filesDirectory  = GetMqlFilesPath() +"\\";
-   string statusDirectory = MQL.GetStatusDirName();
-   string directory="", subdirs[], subdir="", location="", file="";
-
-   while (true) {
-      if (location != "") {
-         // mit location: das angegebene Unterverzeichnis durchsuchen
-         directory = filesDirectory + statusDirectory + StdSymbol() +"\\"+ location +"\\";
-         if (ResolveStatusLocation.FindFile(directory, file))
-            break;
-         return(false);
-      }
-
-      // ohne location: zuerst Basisverzeichnis durchsuchen...
-      directory = filesDirectory + statusDirectory;
-      if (ResolveStatusLocation.FindFile(directory, file))
-         break;
-      if (IsLastError()) return(false);
-
-      // ohne location: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
-      directory = directory + StdSymbol() +"\\";
-      int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY); if (size == -1) return(false);
-
-      for (int i=0; i < size; i++) {
-         subdir = directory + subdirs[i] +"\\";
-         if (ResolveStatusLocation.FindFile(subdir, file)) {
-            directory = subdir;
-            location  = subdirs[i];
-            break;
-         }
-         if (IsLastError()) return(false);
-      }
-      if (StringLen(file) > 0)
-         break;
-      return(!catch("ResolveStatusLocation(1)  status file not found", ERR_FILE_NOT_FOUND));
-   }
-
-   statusDirectory = StrSubstr(directory, StringLen(filesDirectory));
-   statusFile      = file;
-   return(true);
-}
-
-
-/**
- * Durchsucht das angegebene Verzeichnis nach einer passenden Statusdatei und schreibt das Ergebnis in die übergebene Variable.
- *
- * @param  string directory - vollständiger Name des zu durchsuchenden Verzeichnisses
- * @param  string lpFile    - Zeiger auf Variable zur Aufnahme des gefundenen Dateinamens
- *
- * @return bool - success status
- */
-bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
-   if (IsLastError()) return( false);
-   if (!sequence.id)  return(_false(catch("ResolveStatusLocation.FindFile(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
-
-   if (!StrEndsWith(directory, "\\"))
-      directory = directory +"\\";
-
-   string sequencePattern = "SR*"+ sequence.id;                                  // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
-   string sequenceNames[2];
-          sequenceNames[0]= "SR."+ sequence.id +".";
-          sequenceNames[1]= "SR."+ sequence.id +"_";
-
-   string filePattern = directory +"*"+ sequencePattern +"*set";
-   string files[];
-
-   int size = FindFileNames(filePattern, files, FF_FILESONLY);                   // Dateien suchen, die den Sequenznamen enthalten und mit "set" enden
-   if (size == -1) return(false);
-
-   for (int i=0; i < size; i++) {
-      if (!StrStartsWithI(files[i], sequenceNames[0]))
-         if (!StrStartsWithI(files[i], sequenceNames[1]))
-            if (!StrContainsI(files[i], "."+ sequenceNames[0]))
-               if (!StrContainsI(files[i], "."+ sequenceNames[1]))
-         continue;
-      if (StrEndsWithI(files[i], ".set")) {
-         lpFile = files[i];                                                      // Abbruch nach Fund der ersten .set-Datei
-         return(true);
-      }
-   }
-
-   lpFile = "";
-   return(false);
-}
-
-
-/**
- * Return the name of the status file directory relative to "files/".
- *
- * @return string - directory name ending with a backslash
- */
-string MQL.GetStatusDirName() {
-   return(statusDirectory);
-}
-
-
-/**
- * Return the name of the status file relative to "files/".
+ * Return the full name of the status file.
  *
  * @return string
  */
-string MQL.GetStatusFileName() {
-   return(statusDirectory + statusFile);
+string GetStatusFileName() {
+   string directory, baseName=StrToLower(StdSymbol()) +".SR."+ sequence.id +".set";
+
+   if      (IsTesting())      directory = GetMqlFilesPath() +"\\presets\\";
+   else if (IsTestSequence()) directory = GetMqlFilesPath() +"\\presets\\tester\\";
+   else                       directory = GetMqlFilesPath() +"\\presets\\"+ ShortAccountCompany() +"\\";
+
+   return(directory + baseName);
 }
 
 
@@ -3525,7 +3379,7 @@ bool SaveSequence() {
    string sActiveStartConditions="", sActiveStopConditions="";
    SaveSequence.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
 
-   string file = GetMqlFilesPath() +"/"+ MQL.GetStatusFileName();
+   string file = GetStatusFileName();
 
    string section = "General";
    WriteIniString(file, section, "Account",                  ShortAccountCompany() +":"+ GetAccountNumber());
@@ -3727,20 +3581,15 @@ bool WriteIniString(string fileName, string section, string key, string value) {
 
 
 /**
- * Liest den Status einer Sequenz aus der entsprechenden Datei ein und restauriert die internen Variablen.
+ * Restore full internal state of the current sequence with data from the sequence's status file.
  *
- * @return bool - ob der Status erfolgreich restauriert wurde
+ * @return bool - success status
  */
 bool ReadSequence() {
    if (IsLastError()) return( false);
    if (!sequence.id)  return(_false(catch("ReadSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
 
-   // Pfade und Dateinamen bestimmen
-   string fileName = MQL.GetStatusFileName();
-   if (!MQL.IsFile(fileName)) {
-      if (!ResolveStatusLocation()) return(false);
-      fileName = MQL.GetStatusFileName();
-   }
+   string fileName = GetStatusFileName();
 
    // Datei einlesen
    string lines[];

@@ -58,8 +58,9 @@ int onInitUser() {
       sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
-      InitStatusLocation();
-      SetCustomLog(sequence.id, statusDirectory + statusFile);
+
+      string logFile = StrLeft(GetStatusFileName(), -3) +"log";
+      SetCustomLog(sequence.id, logFile);
 
       if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves the sequence
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
