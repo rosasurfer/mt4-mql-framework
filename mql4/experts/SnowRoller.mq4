@@ -400,11 +400,12 @@ bool StartSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
    sequence.maxLevel    = sequence.level;
 
-   debug("StartSequence(0.1)  startEquity="+ DoubleToStr(sequence.startEquity, 2) +"  stop.profitValue="+ DoubleToStr(stop.profitPct.absValue, 2));
+   bool compoundProfits = false;
+   if (IsTesting() && !compoundProfits) sequence.startEquity = tester.startEquity;
+   else                                 sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
    datetime startTime  = TimeCurrentEx("StartSequence(4)");
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);

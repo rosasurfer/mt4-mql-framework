@@ -16,12 +16,13 @@ double rates[][6];
 // test metadata
 string tester.starttime         = "";
 string tester.startprice        = "";
+double tester.startEquity       = 0;
 string tester.reportServer      = "XTrade-Testresults";
 int    tester.reportId          = 0;
 string tester.reportSymbol      = "";
 string tester.reportDescription = "";
-int    tester.hEquitySet        = 0;                                 // handle of the equity curve's history set
 double tester.equityValue       = 0;                                 // default: AccountEquity()-AccountCredit(), may be overridden
+int    tester.hEquitySet        = 0;                                 // handle of the equity curve's history set
 
 
 /**
@@ -207,8 +208,9 @@ int init() {
    // (10) in Tester: log MarketInfo() data
    if (IsTesting()) {
       Tester.LogMarketInfo();
-      tester.starttime  = ifString(!Tester.StartTime, "", TimeToStr(Tester.StartTime, TIME_FULL));
-      tester.startprice = ifString(!Tester.StartPrice, "", NumberToStr(Tester.StartPrice, PriceFormat));
+      tester.starttime   = ifString(!Tester.StartTime, "", TimeToStr(Tester.StartTime, TIME_FULL));
+      tester.startprice  = ifString(!Tester.StartPrice, "", NumberToStr(Tester.StartPrice, PriceFormat));
+      tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
 
    if (CheckErrors("init(17)"))
