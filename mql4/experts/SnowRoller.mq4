@@ -195,6 +195,8 @@ string   sSequencePlStats        = "";
 string   sStartConditions        = "";
 string   sStopConditions         = "";
 string   sAutoResume             = "";
+string   sAutoRestart            = "";
+string   sRestartStats           = "";
 
 // --- debug settings ----------------------       // configurable via framework config, @see SnowRoller::afterInit()
 bool     tester.onStopPause         = false;       // whether to pause the tester on any fulfilled stop condition
@@ -297,7 +299,7 @@ int onTick() {
 
    // update current equity value for equity recorder
    if (EA.RecordEquity)
-      test.equity.value = sequence.startEquity + sequence.totalPL;
+      tester.equityValue = sequence.startEquity + sequence.totalPL;
 
    // update profit targets
    if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
@@ -401,6 +403,8 @@ bool StartSequence(int signal) {
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
    sequence.maxLevel    = sequence.level;
+
+   debug("StartSequence(0.1)  startEquity="+ DoubleToStr(sequence.startEquity, 2) +"  stop.profitValue="+ DoubleToStr(stop.profitPct.absValue, 2));
 
    datetime startTime  = TimeCurrentEx("StartSequence(4)");
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
@@ -691,6 +695,11 @@ bool ResetSequence() {
    if (!AutoRestart)                    return(!catch("ResetSequence(2)  cannot restart sequence "+ sequence.name +" (AutoRestart not enabled)", ERR_ILLEGAL_STATE));
    if (start.trend.description == "")   return(!catch("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_ILLEGAL_STATE));
 
+   // memorize needed vars
+   int    iCycle   = sequence.cycle;
+   string sPL      = sSequenceTotalPL;
+   string sPlStats = sSequencePlStats;
+
    // reset input parameters
    StartLevel = 0;
 
@@ -830,6 +839,7 @@ bool ResetSequence() {
       sStartConditions             = "";
       sStopConditions              = "";
       sAutoResume                  = "";
+      sRestartStats                = NL +" "+ iCycle +":  "+ sPL + sPlStats + sRestartStats;
 
       // --- debug settings -----------------
       //tester.onTrendChangePause  = ...                 // unchanged
@@ -2536,9 +2546,11 @@ int ShowStatus(int error = NO_ERROR) {
                            "Start:             ", sStartConditions,                  NL,
                            "Stop:              ", sStopConditions,                   NL,
                            sAutoResume,                       // if set it ends with NL,
+                           sAutoRestart,                      // if set it ends with NL,
                            "Stops:             ", sSequenceStops, sSequenceStopsPL,  NL,
                            "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats, NL,
-                           "Breakeven: ",                                            NL);
+                           sRestartStats
+                           );
 
    // 3 lines margin-top for instrument and indicator legend
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -2572,13 +2584,14 @@ void SS.All() {
    SS.GridDirection();
    SS.MissedLevels();
    SS.LotSize();
+   SS.ProfitPerLevel();
    SS.StartStopConditions();
    SS.AutoResume();
+   SS.AutoRestart();
    SS.Stops();
    SS.TotalPL();
    SS.MaxProfit();
    SS.MaxDrawdown();
-   SS.ProfitPerLevel();
 }
 
 
@@ -2706,6 +2719,17 @@ void SS.AutoResume() {
 
    if (AutoResume) sAutoResume = "AutoResume: On" + NL;
    else            sAutoResume = "AutoResume: Off"+ NL;
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of input parameter "AutoRestart".
+ */
+void SS.AutoRestart() {
+   if (!__CHART()) return;
+
+   if (AutoRestart) sAutoRestart = "AutoRestart: On ("+ sequence.cycle +")" + NL;
+   else             sAutoRestart = "AutoRestart: Off"+ NL;
 }
 
 
