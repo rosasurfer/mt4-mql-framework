@@ -11,10 +11,7 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (ReadSequence()) {
-         if (ValidateInputs(interactive))
-            SynchronizeStatus();
-      }
+      RestoreSequence(interactive);
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
@@ -36,9 +33,7 @@ int onInitUser() {
             sequence.isTest = false;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (ReadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
-               if (ValidateInputs(false))                   //       sofort nach neuer Sequenz fragen.
-                  SynchronizeStatus();
+            RestoreSequence(false);
             return(last_error);
          }
          if (button == IDCANCEL)
@@ -77,13 +72,9 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitTemplate() {
-   bool interactive = false;
-
    // im Chart gespeicherte Sequenz restaurieren
    if (RestoreChartStatus()) {
-      if (ReadSequence())
-         if (ValidateInputs(interactive))
-            SynchronizeStatus();
+      RestoreSequence(false);
    }
    DeleteChartStatus();
    return(last_error);
@@ -199,8 +190,8 @@ int CreateStatusBox() {
 
 
 /**
- * Backup status variables depending on input parameters before parameter changes. In case of input errors the variables can
- * be restored afterwards. Called only from onInitParameters().
+ * Backup status variables which may change by modifying input parameters. This way status can be restored in case of input
+ * errors. Called only from onInitParameters().
  */
 void BackupInputStatus() {
    CopyInputStatus(true);
@@ -208,7 +199,7 @@ void BackupInputStatus() {
 
 
 /**
- * Restore status variables depending on input parameters. Called only from onInitParameters().
+ * Restore status variables from the backup. Called only from onInitParameters().
  */
 void RestoreInputStatus() {
    CopyInputStatus(false);
@@ -216,11 +207,10 @@ void RestoreInputStatus() {
 
 
 /**
- * Backup or restore status variables which depend on input parameters. These are all variables which may change if an input
- * parameter changes.
+ * Backup or restore status variables related to input parameter changes.
  *
- * @param  bool store - TRUE:  copy global values to internal storage (backup)
- *                      FALSE: copy internal values to global storage (restore)
+ * @param  bool store - TRUE:  copy status to internal storage (backup)
+ *                      FALSE: copy internal storage to status (restore)
  */
 void CopyInputStatus(bool store) {
    store = store!=0;

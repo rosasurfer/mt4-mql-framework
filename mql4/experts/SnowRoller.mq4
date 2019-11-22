@@ -3333,11 +3333,10 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
 string GetStatusFileName() {
    string directory, baseName=StrToLower(StdSymbol()) +".SR."+ sequence.id +".set";
 
-   if      (IsTesting())      directory = GetMqlFilesPath() +"\\presets\\";
-   else if (IsTestSequence()) directory = GetMqlFilesPath() +"\\presets\\tester\\";
-   else                       directory = GetMqlFilesPath() +"\\presets\\"+ ShortAccountCompany() +"\\";
+   if (IsTestSequence()) directory = "\\presets\\";
+   else                  directory = "\\presets\\"+ ShortAccountCompany() +"\\";
 
-   return(directory + baseName);
+   return(GetMqlFilesPath() + directory + baseName);
 }
 
 
@@ -3362,7 +3361,7 @@ bool SaveSequence() {
    if (!sequence.id)                              return(!catch("SaveSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // In tester skip writing the status file after each trade request, except the first time, after sequence stop and at test end.
+   // In tester skip updating the status file on most calls; except the first call, after sequence stop and at test end.
    if (IsTesting() && tester.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT) {
@@ -3381,7 +3380,7 @@ bool SaveSequence() {
 
    string file = GetStatusFileName();
 
-   string section = "General";
+   string section = "Common";
    WriteIniString(file, section, "Account",                  ShortAccountCompany() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",                   Symbol());
    WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
@@ -3562,50 +3561,100 @@ string SaveSequence.OrderToStr(int index) {
  * @return bool - success status
  */
 bool WriteIniString(string fileName, string section, string key, string value) {
-   if (!IsFileA(fileName)) {
-      fileName = StrReplace(fileName, "\\", "/");
-      string directory = StrLeftTo(fileName, "/", -1);
-      if (directory != fileName) {
-         int error = CreateDirectoryRecursive(directory);
-         if (IsError(error)) {
-            return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
+   if (!WritePrivateProfileStringA(section, key, value, fileName)) {
+      int error = GetLastWin32Error();
+
+      if (error == ERROR_PATH_NOT_FOUND) {
+         string name = StrReplace(fileName, "\\", "/");
+         string directory = StrLeftTo(name, "/", -1);
+
+         if (directory!=name) /*&&*/ if (!IsDirectoryA(directory)) {
+            error = CreateDirectoryRecursive(directory);
+            if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
+            return(WriteIniString(fileName, section, key, value));
          }
       }
-      //else: fileName doesn't contain a dir separator
-   }
-   if (!WritePrivateProfileStringA(section, key, value, fileName)) {
-      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR));
+      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR+error));
    }
    return(true);
 }
 
 
 /**
- * Restore full internal state of the current sequence with data from the sequence's status file.
+ *
+ * @param  bool interactive - whether input parameters have been entered through the input dialog
+ *
+ * @return bool - success status
+ */
+bool RestoreSequence(bool interactive) {
+   interactive = interactive!=0;
+   if (IsLastError())                return(false);
+
+   if (!ReadSequence())              return(false);      // read the status file
+   if (!ValidateInputs(interactive)) return(false);      // validate restored input parameters logically
+   if (!SynchronizeStatus())         return(false);      // synchronize restored state with trade server state
+   return(true);
+}
+
+
+/**
+ * Restore the internal state of the current sequence from the sequence's status file. Always part of RestoreSequence().
  *
  * @return bool - success status
  */
 bool ReadSequence() {
-   if (IsLastError()) return( false);
-   if (!sequence.id)  return(_false(catch("ReadSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
+   if (IsLastError())  return(false);
+   if (!sequence.id)   return(!catch("ReadSequence(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
 
-   string fileName = GetStatusFileName();
+   string file = GetStatusFileName();
+   if (!IsFileA(file)) return(!catch("ReadSequence(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
-   // Datei einlesen
-   string lines[];
-   int size = FileReadLines(fileName, lines, true); if (size < 0) return(false);
-   if (size == 0) {
-      FileDelete(fileName);
-      return(_false(catch("ReadSequence(2)  status for sequence "+ ifString(IsTestSequence(), "T", "") + sequence.id +" not found", ERR_RUNTIME_ERROR)));
+   // [Common]
+   string section = "Common";
+   string sAccount       = GetIniStringA(file, section, "Account",       "");
+   string sSymbol        = GetIniStringA(file, section, "Symbol",        "");
+   string sSequenceId    = GetIniStringA(file, section, "Sequence.ID",   "");
+   string sGridDirection = GetIniStringA(file, section, "GridDirection", "");
+
+   string sAccountRequired = ShortAccountCompany() +":"+ GetAccountNumber();
+   if (sAccount != sAccountRequired) return(!catch("ReadSequence(3)  account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   if (sSymbol  != Symbol())         return(!catch("ReadSequence(4)  symbol mis-match "+ DoubleQuoteStr(sSymbol) +"/"+ DoubleQuoteStr(Symbol()) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   string sValue = sSequenceId;
+   if (StrLeft(sValue, 1) == "T") {
+      sequence.isTest = true;
+      sValue = StrSubstr(sValue, 1);
+   }
+   if (sValue != ""+ sequence.id)    return(!catch("ReadSequence(5)  invalid or missing Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   Sequence.ID = sSequenceId;
+   if (sGridDirection == "")         return(!catch("ReadSequence(6)  invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   GridDirection = sGridDirection;
+
+   // [SnowRoller-xxx]
+   string sections[];
+
+
+   //GetIniSections(file, except="Common");
+   //SortStringsI(sections);
+   for (int i=0; i < ArraySize(sections); i++) {
    }
 
+
+
+
+
+   if (!catch("ReadSequence(5)"))
+      SetLastError(ERR_CANCELLED_BY_USER);
+   return(!last_error);
+
+
+
+   // --- old version -------------------------------------------------------------------------------------------------------
+   string lines[];
+   int size = FileReadLines(file, lines, true);
+
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Sequence.ID", "Created", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "AutoRestart", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
-   /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer
-                     "Symbol"                  ,                        //  nicht vollständig in einer einzigen Zeile steht.
-                     "Sequence.ID"             ,
-                     "Created"                 ,
-                     "GridDirection"           ,
+   string keys[] = { "Created", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "AutoRestart", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
+   /*                "Created"                 ,      // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer nicht vollständig in einer einzigen Zeile steht.
                      "GridSize"                ,
                      "LotSize"                 ,
                      "StartLevel"              ,
@@ -3613,7 +3662,7 @@ bool ReadSequence() {
                      "StopConditions"          ,
                      "AutoResume"              ,
                      "AutoRestart"             ,
-                   //"ShowProfitInPercent"     ,                        // optional
+                     "ShowProfitInPercent"     ,      // optional
                      "Sessionbreak.StartTime"  ,
                      "Sessionbreak.EndTime"    ,
                      ---------------------------
@@ -3623,109 +3672,63 @@ bool ReadSequence() {
                      "rt.sequence.starts"      ,
                      "rt.sequence.stops"       ,
                      "rt.sessionbreak.waiting" ,
-                   //"rt.sequence.missedLevels",                        // optional
-                   //"rt.ignorePendingOrders"  ,                        // optional
-                   //"rt.ignoreOpenPositions"  ,                        // optional
-                   //"rt.ignoreClosedPositions",                        // optional
+                     "rt.sequence.missedLevels",      // optional
+                     "rt.ignorePendingOrders"  ,      // optional
+                     "rt.ignoreOpenPositions"  ,      // optional
+                     "rt.ignoreClosedPositions",      // optional
                      "rt.grid.base"            ,
    */
 
 
    // (3.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
-   string parts[], key, value, accountValue;
-   int    accountLine;
+   string parts[], key, value;
 
-   for (int i=0; i < size; i++) {
-      if (StrStartsWith(StrTrim(lines[i]), "#")) // Kommentare überspringen
-         continue;
-
-      if (Explode(lines[i], "=", parts, 2) < 2)  return(_false(catch("ReadSequence(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+   for (i=0; i < size; i++) {
+      if (Explode(lines[i], "=", parts, 2) < 2)  return(!catch("ReadSequence(3)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
-      if (key == "Account") {
-         accountValue = value;
-         accountLine  = i;
-         ArrayDropString(keys, key);             // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
-      }
-      else if (key == "Symbol") {
-         if (value != Symbol())                  return(_false(catch("ReadSequence(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         ArrayDropString(keys, key);
-      }
-      else if (key == "Sequence.ID") {
-         value = StrToUpper(value);
-         if (StrLeft(value, 1) == "T") {
-            sequence.isTest = true;
-            value = StrSubstr(value, 1);
-         }
-         if (value != ""+ sequence.id)           return(_false(catch("ReadSequence(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-         ArrayDropString(keys, key);
-      }
-      else if (key == "Created") {
+      if (key == "Created") {
          sequence.created = value;
-         ArrayDropString(keys, key);
-      }
-      else if (key == "GridDirection") {
-         if (value == "")                        return(_false(catch("ReadSequence(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
-         GridDirection = value;
-         ArrayDropString(keys, key);
-      }
+     }
       else if (key == "GridSize") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(7)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          GridSize = StrToInteger(value);
-         ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StrIsNumeric(value))               return(_false(catch("ReadSequence(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))               return(!catch("ReadSequence(8)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          LotSize = StrToDouble(value);
-         ArrayDropString(keys, key);
       }
       else if (key == "StartLevel") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(9)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(9)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          StartLevel = StrToInteger(value);
-         ArrayDropString(keys, key);
       }
       else if (key == "StartConditions") {
          StartConditions = value;
-         ArrayDropString(keys, key);
       }
       else if (key == "StopConditions") {
          StopConditions = value;
-         ArrayDropString(keys, key);
       }
       else if (key == "AutoResume") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(10)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          AutoResume = _bool(StrToInteger(value));
-         ArrayDropString(keys, key);
       }
       else if (key == "AutoRestart") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(11)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          AutoRestart = _bool(StrToInteger(value));
-         ArrayDropString(keys, key);
       }
       else if (key == "ShowProfitInPercent") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(12)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          ShowProfitInPercent = _bool(StrToInteger(value));
-         ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.StartTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(13)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(13)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          Sessionbreak.StartTime = StrToInteger(value);
-         ArrayDropString(keys, key);
       }
       else if (key == "Sessionbreak.EndTime") {
-         if (!StrIsDigit(value))                 return(_false(catch("ReadSequence(14)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                 return(!catch("ReadSequence(14)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          Sessionbreak.EndTime = StrToInteger(value);
-         ArrayDropString(keys, key);
       }
-   }
-
-   // Abhängigkeiten validieren
-   // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
-   if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
-      if (IsTesting() || !IsTestSequence() || !StrStartsWithI(accountValue, ShortAccountCompany() +":"))
-         return(_false(catch("ReadSequence(15)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
    }
 
    // Runtime-Settings auslesen, validieren und übernehmen
@@ -3747,19 +3750,19 @@ bool ReadSequence() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("ReadSequence(16)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("ReadSequence(16)  invalid status file \""+ file +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
       if (StrStartsWith(key, "rt.")) {
-         if (!ReadSequence.RuntimeStatus(fileName, lines[i], key, value, keys)) return(false);
+         if (!ReadSequence.RuntimeStatus(file, lines[i], key, value, keys)) return(false);
       }
    }
-   if (ArraySize(keys) > 0)                                                return(_false(catch("ReadSequence(17)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                                return(_false(catch("ReadSequence(17)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
    // Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("ReadSequence(18)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("ReadSequence(19)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("ReadSequence(18)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("ReadSequence(19)  one or more order entries missing in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
