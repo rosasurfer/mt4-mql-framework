@@ -6,7 +6,7 @@
  */
 #import "rsfExpander.dll"
 
-   // terminal runtime status and/or interaction
+   // terminal status/interaction
    int      FindInputDialog(int programType, string programName);
    string   GetMqlDirectoryA();
    int      GetTerminalBuild();
@@ -30,7 +30,7 @@
    bool     TerminalIsPortableMode();
    int      WM_MT4();
 
-   // Strategy Tester
+   // strategy tester
    int      FindTesterWindow();
    int      Tester_GetBarModel();
    datetime Tester_GetStartDate();
@@ -41,7 +41,7 @@
    //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
-   // Chart-Status/Interaktion
+   // chart status/interaction
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
@@ -71,7 +71,7 @@
    bool     IsJunctionA(string name);
    bool     IsSymlinkA(string name);
 
-   // Pointer-Handling (Speicheradressen von Arrays und Strings)
+   // pointer utlities
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);

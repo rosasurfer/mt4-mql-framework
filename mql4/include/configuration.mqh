@@ -579,8 +579,8 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
 
    if (value == "")       return(defaultValue);
 
-   if (value == "0")      return(false);     // numeric zero
-   if (value == "1")      return(true);      // numeric one
+   if (value == "0")      return(false);
+   if (value == "1")      return(true);
 
    string lValue = StrToLower(value);
    if (lValue == "on")    return(true);
