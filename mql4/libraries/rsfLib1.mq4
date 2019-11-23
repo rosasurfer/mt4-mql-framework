@@ -76,11 +76,11 @@ bool EditFile(string filename) {
 /**
  * Öffnet eine oder mehrere Dateien im Texteditor.
  *
- * @param  string filenames[] - Dateinamen
+ * @param  string &filenames[] - Dateinamen
  *
  * @return bool - Erfolgsstatus
  */
-bool EditFiles(string& filenames[]) {
+bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
    if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames = {}", ERR_INVALID_PARAMETER));
 
@@ -578,9 +578,9 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
 /**
  * Return all keys of an .ini file section.
  *
- * @param  __In__  string fileName - .ini filename
- * @param  __In__  string section  - .ini file section
- * @param  __Out__ string keys[]   - array receiving the found keys
+ * @param  _In_  string fileName - initialization filename
+ * @param  _In_  string section  - initialization file section
+ * @param  _Out_ string keys[]   - array receiving the found keys
  *
  * @return int - number of found keys or EMPTY (-1) in case of errors
  */
@@ -606,6 +606,39 @@ int GetIniKeys(string fileName, string section, string &keys[]) {
       return(size);
    return(EMPTY);
 }
+
+
+/**
+ * Return all section names of an .ini file.
+ *
+ * @param  _In_  string fileName - initialization filename
+ * @param  _Out_ string names[]  - array receiving the found section names
+ *
+ * @return int - number of found section names or EMPTY (-1) in case of errors
+ */
+int GetIniSections(string fileName, string &names[]) {
+   int bufferSize = 512;
+   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
+
+   int chars = GetIniSectionsA(fileName, buffer, bufferSize);
+
+   // handle a too small buffer
+   while (chars == bufferSize-2) {
+      bufferSize <<= 1;
+      InitializeByteBuffer(buffer, bufferSize);
+      chars = GetIniSectionsA(fileName, buffer, bufferSize);
+   }
+
+   if (!chars) int size = ArrayResize(names, 0);            // file not found or no sections
+   else            size = ExplodeStrings(buffer, names);
+
+   ArrayResize(buffer, 0);
+
+   if (!catch("GetIniSections(1)"))
+      return(size);
+   return(EMPTY);
+}
+
 
 
 /**
@@ -7371,6 +7404,7 @@ void Library.ResetGlobalVars() {
 
 #import "rsfExpander.dll"
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
+   int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
    int    pi_hProcess(int pi[]);
    int    pi_hThread(int pi[]);
    int    si_setFlags(int si[], int flags);
