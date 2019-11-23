@@ -3633,7 +3633,7 @@ bool ReadSequence() {
    string sections[];
 
 
-   //GetIniSections(file, except="Common");
+   //GetIniSections(file);
    //SortStringsI(sections);
    for (int i=0; i < ArraySize(sections); i++) {
    }

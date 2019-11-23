@@ -2365,8 +2365,7 @@ int BufferGetChar(int buffer[], int pos) {
 
 
 /**
- * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-
- * Characters) zurück.
+ * Konvertiert den in einem Buffer gespeicherten Unicode-String in einen ANSI-String und gibt ihn zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int from     - Index des ersten Integers der Zeichensequenz
@@ -2397,7 +2396,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
          int byte2 = word >> 8 & 0xFF;
 
          if (byte1 && !byte2) sChar = CharToStr(byte1);
-         else                 sChar = "¿";                           // multi-byte character
+         else                 sChar = "¿";                           // multibyte character
          result = StringConcatenate(result, sChar);
          shift += 16;
       }
