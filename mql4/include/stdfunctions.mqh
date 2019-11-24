@@ -484,25 +484,27 @@ string ErrorDescription(int error) {
       case ERR_WEBREQUEST_REQUEST_FAILED  : return("HTTP request failed"                                       );    //   5203
 
       // user defined errors: 65536-99999 (0x10000-0x1869F)
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65536
-      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   );    //  65537
-      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      );    //  65538
-      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65539   status
-      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65540
-      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                   );    //  65541
-      case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                               );    //  65542
-      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 );    //  65543
-      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       );    //  65544
-      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 );    //  65545
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         );    //  65546
-      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                );    //  65547   status
-      case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65548
-      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      );    //  65549
-      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65550
-      case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65551
-      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65552
-      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65553
-      case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65554
+      case ERR_USER_ERROR_FIRST           : return("first user error"                                          );    //  65536
+      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         );    //  65537
+      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65538
+      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                );    //  65539   status
+      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      );    //  65540
+      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      );    //  65541
+      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65542
+      case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65543
+      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 );    //  65544
+      case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                               );    //  65545
+      case ERR_INVALID_FILE_FORMAT        : return("invalid file format"                                       );    //  65546
+      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                   );    //  65547
+      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       );    //  65548
+      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 );    //  65549
+      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65550
+      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   );    //  65551
+      case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65552
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65553
+      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
+      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
+      case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }

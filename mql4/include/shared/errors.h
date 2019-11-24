@@ -199,26 +199,27 @@
 #define ERR_WEBREQUEST_REQUEST_FAILED                              5203    // HTTP request failed
 
 // user defined errors: 65536-99999 (0x10000-0x1869F)
-#define ERR_RUNTIME_ERROR                                         65536    // runtime error
-#define ERR_USER_ERROR_FIRST                          ERR_RUNTIME_ERROR    // MetaQuotes alias
-#define ERR_NOT_IMPLEMENTED                                       65537    // feature not implemented
-#define ERR_FUNC_NOT_ALLOWED                                      65538    // function not allowed
-#define ERS_TERMINAL_NOT_YET_READY                                65539    // terminal not yet ready (in Scripten Fehler, sonst Status)
-#define ERR_TERMINAL_INIT_FAILURE                                 65540    // multiple Expert::init() calls
-#define ERR_INVALID_INPUT_PARAMETER                               65541    // invalid input parameter
-#define ERR_INVALID_CONFIG_VALUE                                  65542    // invalid configuration parameter
-#define ERR_INVALID_TIMEZONE_CONFIG                               65543    // invalid or missing timezone configuration
-#define ERR_INVALID_MARKET_DATA                                   65544    // invalid MarketInfo() data
-#define ERR_INVALID_COMMAND                                       65545    // invalid or unknown command
-#define ERR_CANCELLED_BY_USER                                     65546    // execution cancelled by user
-#define ERS_EXECUTION_STOPPING                                    65547    // IsStopped() returned TRUE (Status)
-#define ERR_ORDER_CHANGED                                         65548    // order status changed
-#define ERR_HISTORY_INSUFFICIENT                                  65549    // history insufficient for calculation
-#define ERR_CONCURRENT_MODIFICATION                               65550    // concurrent modification
-#define ERR_INVALID_ACCESS                                        65551    // invalid access
-#define ERR_ILLEGAL_STATE                                         65552    // illegal state
-#define ERR_MIXED_SYMBOLS                                         65553    // mixed symbols encountered when only one was expected
-#define ERR_TOTAL_POSITION_NOT_FLAT                               65554    // total position encountered when flat position was expected
+#define ERR_USER_ERROR_FIRST                                      65536    // MetaQuotes definition
+#define ERR_CANCELLED_BY_USER                                     65537    // execution cancelled by user
+#define ERR_CONCURRENT_MODIFICATION                               65538    // concurrent modification
+#define ERS_EXECUTION_STOPPING                                    65539    // IsStopped() returned TRUE                    (status)
+#define ERR_FUNC_NOT_ALLOWED                                      65540    // function not allowed
+#define ERR_HISTORY_INSUFFICIENT                                  65541    // history insufficient for calculation
+#define ERR_ILLEGAL_STATE                                         65542    // illegal state
+#define ERR_INVALID_ACCESS                                        65543    // invalid access
+#define ERR_INVALID_COMMAND                                       65544    // invalid or unknown command
+#define ERR_INVALID_CONFIG_VALUE                                  65545    // invalid configuration parameter
+#define ERR_INVALID_FILE_FORMAT                                   65546    // invalid file format
+#define ERR_INVALID_INPUT_PARAMETER                               65547    // invalid input parameter
+#define ERR_INVALID_MARKET_DATA                                   65548    // invalid MarketInfo() data
+#define ERR_INVALID_TIMEZONE_CONFIG                               65549    // invalid or missing timezone configuration
+#define ERR_MIXED_SYMBOLS                                         65550    // mixed symbols encountered when only one was expected
+#define ERR_NOT_IMPLEMENTED                                       65551    // feature not implemented
+#define ERR_ORDER_CHANGED                                         65552    // order status changed
+#define ERR_RUNTIME_ERROR                                         65553    // runtime error
+#define ERR_TERMINAL_INIT_FAILURE                                 65554    // multiple Expert::init() calls
+#define ERS_TERMINAL_NOT_YET_READY                                65555    // terminal not yet ready                       (status; in scripts treated like an error)
+#define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 
 // user defined errors: >=100000 (0x186A0) Mapping von Windows- zu MQL-Fehlern: alle Fehler kodieren einen entsprechenden Windows-Fehler
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

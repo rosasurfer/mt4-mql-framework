@@ -3633,6 +3633,11 @@ bool ReadStatus() {
    string sections[];
    int size = ReadStatusSections(file, sections); if (!size) return(false);
 
+   int finishedCycles = size-1;
+   for (int i=0; i < finishedCycles; i++) {
+   }
+
+
 
 
 
@@ -3678,14 +3683,14 @@ bool ReadStatus() {
    // (3.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
    string parts[], key, value;
 
-   for (int i=0; i < size; i++) {
+   for (i=0; i < size; i++) {
       if (Explode(lines[i], "=", parts, 2) < 2)  return(!catch("ReadStatus(3)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
       if (key == "Created") {
          sequence.created = value;
-     }
+      }
       else if (key == "GridSize") {
          if (!StrIsDigit(value))                 return(!catch("ReadStatus(7)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          GridSize = StrToInteger(value);
@@ -3767,24 +3772,26 @@ bool ReadStatus() {
 
 
 /**
- * Return the cycle section names (format: "SnowRoller-xxx") found in the specified status file, in ascending order.
+ * Return the "SnowRoller-xxx" cycle section names found in the specified status file, in ascending order.
  *
  * @param  _In_  string file    - status filename
  * @param  _Out_ string names[] - array receiving the found section names
  *
- * @return int - number of found section names or NULL in case of errors
+ * @return int - number of found section names (minimum 1) or NULL in case of errors
  */
 int ReadStatusSections(string file, string &names[]) {
    int size = GetIniSections(file, names);
    if (!size) return(NULL);
 
    for (int i=size-1; i >= 0; i--) {
-      if (!StrStartsWithI(names[i], "SnowRoller-")) {
-         ArraySpliceStrings(names, i, 1);                   // drop all except cycle sections
+      if (!StrStartsWithI(names[i], "SnowRoller-")) {       // drop all except "SnowRoller-" sections
+         ArraySpliceStrings(names, i, 1);
          size--;
       }
    }
-   SortMqlStringsA(names, size);
+
+   if (!SortStrings(names)) return(NULL);
+   if (!size)               return(!catch("ReadStatusSections(1)  invalid status file "+ DoubleQuoteStr(file) +" (no \"SnowRoller\" sections found)", ERR_INVALID_FILE_FORMAT));
    return(size);
 }
 

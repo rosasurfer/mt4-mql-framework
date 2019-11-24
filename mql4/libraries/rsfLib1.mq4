@@ -759,6 +759,19 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
+ * Sort an array of strings.
+ *
+ * @param  string values[]
+ *
+ * @return bool - success status
+ */
+bool SortStrings(string &values[]) {
+   if (ArrayDimension(values) > 1) return(catch("SortStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   return(SortMqlStringsA(values, ArraySize(values)));
+}
+
+
+/**
  * Sortiert die übergebenen Tickets in chronologischer Reihenfolge (nach OpenTime und Ticket#).
  *
  * @param  int tickets[] - zu sortierende Tickets
@@ -7410,6 +7423,7 @@ void Library.ResetGlobalVars() {
    int    si_setFlags(int si[], int flags);
    int    si_setShowWindow(int si[], int cmdShow);
    int    si_setSize(int si[], int size);
+   bool   SortMqlStringsA(string values[], int size);
    bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
    int    tzi_Bias(int tzi[]);
