@@ -2,11 +2,11 @@
  * SnowRoller - a pyramiding trade manager
  *
  *
- * Theoretical background and proof-of-concept were provided by Bernd Kreuss aka 7bit in "Snowballs and the Anti-Grid".
+ * For theoretical background and proof-of-concept see the article "Snowballs and the Anti-Grid" by Bernd Kreuss aka 7bit.
  *
- * This EA can be used as just a trade manager or as a complete trading system. Once started the EA waits until one of the
- * defined start conditions is fulfilled. It then manages the resulting trades in a pyramiding way until one of the defined
- * stop conditions is fulfilled.
+ * This EA is a re-implementation of the above concept. It can be used as a trade manager or as a complete trading system.
+ * Once started the EA waits until one of the defined start conditions is fulfilled. It then manages the resulting trades in
+ * a pyramiding way until one of the defined stop conditions is fulfilled.
  *
  * If AutoResume is enabled and start/stop define a trend condition the EA waits after a met stop condition and continues
  * when the next trend start condition comes true. After the profit target is reached the EA finally stops.
@@ -16,12 +16,12 @@
  *
  * In "/mql4/scripts" are two accompanying scripts "SnowRoller.Start" and "SnowRoller.Stop" to manually control the EA.
  *
- *  @see  https://sites.google.com/site/prof7bit/snowball
- *  @see  https://www.forexfactory.com/showthread.php?t=226059
- *  @see  https://www.forexfactory.com/showthread.php?t=239717
+ *  @see  https://sites.google.com/site/prof7bit/snowball       ("Snowballs and the Anti-Grid")
+ *  @see  https://www.forexfactory.com/showthread.php?t=226059  ("")
+ *  @see  https://www.forexfactory.com/showthread.php?t=239717  ("")
  *
- * The EA is not FIFO conforming (and will never be) and requires an account with support for "close opposite positions".
- * It does not support bucket shop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not set to zero.
+ * The EA is not FIFO conforming (and will never be) and requires an account with support for "close by opposite positions".
+ * It does not support bucket shop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not set to 0 (zero).
  *
  *
  * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
@@ -61,9 +61,9 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';  // in FXT, the
 // --- sequence data -----------------------
 int      sequence.id;
 int      sequence.cycle;                           // counter of restarted sequences if AutoRestart=On: 1...+n
-string   sequence.name    = "";                    // "L.1234" | "S.2345"
+string   sequence.name    = "";                    // "L.1234" | "S.5678"
 string   sequence.created = "";                    // GmtTimeFormat(datetime, "%a, %Y.%m.%d %H:%M:%S")
-bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test may be loaded in a live chart)
+bool     sequence.isTest;                          // whether the sequence is/was a test (a finished test can be loaded into a live chart)
 int      sequence.direction;
 int      sequence.status;
 int      sequence.level;                           // current grid level:      -n...0...+n
@@ -3617,25 +3617,49 @@ bool ReadStatus() {
    string sGridDirection = GetIniStringA(file, section, "GridDirection", "");
 
    string sAccountRequired = ShortAccountCompany() +":"+ GetAccountNumber();
-   if (sAccount != sAccountRequired) return(!catch("ReadStatus(3)  account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
-   if (sSymbol  != Symbol())         return(!catch("ReadStatus(4)  symbol mis-match "+ DoubleQuoteStr(sSymbol) +"/"+ DoubleQuoteStr(Symbol()) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   if (sAccount != sAccountRequired) return(!catch("ReadStatus(3)  account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (sSymbol  != Symbol())         return(!catch("ReadStatus(4)  symbol mis-match "+ DoubleQuoteStr(sSymbol) +"/"+ DoubleQuoteStr(Symbol()) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    string sValue = sSequenceId;
    if (StrLeft(sValue, 1) == "T") {
       sequence.isTest = true;
       sValue = StrSubstr(sValue, 1);
    }
-   if (sValue != ""+ sequence.id)    return(!catch("ReadStatus(5)  invalid or missing Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   if (sValue != ""+ sequence.id)    return(!catch("ReadStatus(5)  invalid or missing Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sequence.ID = sSequenceId;
-   if (sGridDirection == "")         return(!catch("ReadStatus(6)  invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
+   if (sGridDirection == "")         return(!catch("ReadStatus(6)  invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    GridDirection = sGridDirection;
 
    // [SnowRoller-xxx]
    string sections[];
    int size = ReadStatusSections(file, sections); if (!size) return(false);
 
-   int finishedCycles = size-1;
-   for (int i=0; i < finishedCycles; i++) {
-   }
+   // finished cycles: read results only
+   for (int i=0; i < size-1; i++) {}
+
+   // last cycle: restore all data
+   section = sections[size-1];
+   string sCreated               = GetIniStringA(file, section, "Created",                "");
+   string sGridSize              = GetIniStringA(file, section, "GridSize",               "");
+   string sLotSize               = GetIniStringA(file, section, "LotSize",                "");
+   string sStartLevel            = GetIniStringA(file, section, "StartLevel",             "");
+   string sStartConditions       = GetIniStringA(file, section, "StartConditions",        "");
+   string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");
+   string sAutoResume            = GetIniStringA(file, section, "AutoResume",             "");
+   string sAutoRestart           = GetIniStringA(file, section, "AutoRestart",            "");
+   string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");
+   string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");
+   string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");
+
+   sequence.created = sCreated;      // TODO: convert to datetime value
+   if (!StrIsDigit(sGridSize))       return(!catch("ReadStatus(6)  invalid or missing GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   GridSize = StrToInteger(sGridSize);
+   if (!StrIsNumeric(sLotSize))      return(!catch("ReadStatus(6)  invalid or missing LotSize "+ DoubleQuoteStr(sLotSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   LotSize = StrToDouble(sLotSize);
+   if (!StrIsDigit(sStartLevel))     return(!catch("ReadStatus(6)  invalid or missing StartLevel "+ DoubleQuoteStr(sStartLevel) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   StartLevel = StrToInteger(sStartLevel);
+   StartConditions = sStartConditions;
+   StopConditions  = sStopConditions;
+
 
 
 
@@ -3653,13 +3677,8 @@ bool ReadStatus() {
    size = FileReadLines(file, lines, true);
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Created", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "AutoRestart", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
-   /*                "Created"                 ,      // Der Compiler kommt mit den Zeilennummern durcheinander, wenn der Initializer nicht vollständig in einer einzigen Zeile steht.
-                     "GridSize"                ,
-                     "LotSize"                 ,
-                     "StartLevel"              ,
-                     "StartConditions"         ,
-                     "StopConditions"          ,
+   string keys[] = { "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
+   /*
                      "AutoResume"              ,
                      "AutoRestart"             ,
                      "ShowProfitInPercent"     ,      // optional
@@ -3684,32 +3703,7 @@ bool ReadStatus() {
    string parts[], key, value;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)  return(!catch("ReadStatus(3)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
-      key   = StrTrim(parts[0]);
-      value = StrTrim(parts[1]);
-
-      if (key == "Created") {
-         sequence.created = value;
-      }
-      else if (key == "GridSize") {
-         if (!StrIsDigit(value))                 return(!catch("ReadStatus(7)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
-         GridSize = StrToInteger(value);
-      }
-      else if (key == "LotSize") {
-         if (!StrIsNumeric(value))               return(!catch("ReadStatus(8)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
-         LotSize = StrToDouble(value);
-      }
-      else if (key == "StartLevel") {
-         if (!StrIsDigit(value))                 return(!catch("ReadStatus(9)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
-         StartLevel = StrToInteger(value);
-      }
-      else if (key == "StartConditions") {
-         StartConditions = value;
-      }
-      else if (key == "StopConditions") {
-         StopConditions = value;
-      }
-      else if (key == "AutoResume") {
+      if (key == "AutoResume") {
          if (!StrIsDigit(value))                 return(!catch("ReadStatus(10)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
          AutoResume = _bool(StrToInteger(value));
       }
