@@ -88,6 +88,8 @@
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
+   bool     SortMqlStringsA(string values[], int size);
+   //bool   SortMqlStringsW(string values[], int size);
    bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
    bool     StrIsNull(string str);

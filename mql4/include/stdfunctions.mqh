@@ -511,29 +511,29 @@ string ErrorDescription(int error) {
 /**
  * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
  *
- * @param  string object  - Ausgangsstring
+ * @param  string value   - Ausgangsstring
  * @param  string search  - Suchstring
  * @param  string replace - Ersatzstring
  *
  * @return string - modifizierter String
  */
-string StrReplace(string object, string search, string replace) {
-   if (!StringLen(object)) return(object);
-   if (!StringLen(search)) return(object);
-   if (search == replace)  return(object);
+string StrReplace(string value, string search, string replace) {
+   if (!StringLen(value))  return(value);
+   if (!StringLen(search)) return(value);
+   if (search == replace)  return(value);
 
-   int from=0, found=StringFind(object, search);
+   int from=0, found=StringFind(value, search);
    if (found == -1)
-      return(object);
+      return(value);
 
    string result = "";
 
    while (found > -1) {
-      result = StringConcatenate(result, StrSubstr(object, from, found-from), replace);
+      result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
       from   = found + StringLen(search);
-      found  = StringFind(object, search, from);
+      found  = StringFind(value, search, from);
    }
-   result = StringConcatenate(result, StringSubstr(object, from));
+   result = StringConcatenate(result, StringSubstr(value, from));
 
    return(result);
 }
@@ -543,16 +543,16 @@ string StrReplace(string object, string search, string replace) {
  * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
  * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
  *
- * @param  string object  - Ausgangsstring
+ * @param  string value   - Ausgangsstring
  * @param  string search  - Suchstring
  * @param  string replace - Ersatzstring
  *
  * @return string - rekursiv modifizierter String
  */
-string StrReplaceR(string object, string search, string replace) {
-   if (!StringLen(object)) return(object);
+string StrReplaceR(string value, string search, string replace) {
+   if (!StringLen(value)) return(value);
 
-   string lastResult="", result=object;
+   string lastResult="", result=value;
 
    while (result != lastResult) {
       lastResult = result;
@@ -2099,60 +2099,60 @@ string StrRightFrom(string value, string substring, int count=1) {
 /**
  * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object - zu prüfender String
+ * @param  string value  - zu prüfender String
  * @param  string prefix - Substring
  *
  * @return bool
  */
-bool StrStartsWithI(string object, string prefix) {
+bool StrStartsWithI(string value, string prefix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(object)) return(false);
+         if (StrIsNull(value))  return(false);
          if (StrIsNull(prefix)) return(!catch("StrStartsWithI(1)  invalid parameter prefix: (NULL)", error));
       }
       catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))         return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
-   return(StringFind(StrToUpper(object), StrToUpper(prefix)) == 0);
+   return(StringFind(StrToUpper(value), StrToUpper(prefix)) == 0);
 }
 
 
 /**
  * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object - zu prüfender String
+ * @param  string value  - zu prüfender String
  * @param  string suffix - Substring
  *
  * @return bool
  */
-bool StrEndsWithI(string object, string suffix) {
+bool StrEndsWithI(string value, string suffix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(object)) return(false);
+         if (StrIsNull(value))  return(false);
          if (StrIsNull(suffix)) return(!catch("StrEndsWithI(1)  invalid parameter suffix: (NULL)", error));
       }
       catch("StrEndsWithI(2)", error);
    }
 
-   int lenObject = StringLen(object);
+   int lenValue = StringLen(value);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)             return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)          return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
 
-   if (lenObject < lenSuffix)
+   if (lenValue < lenSuffix)
       return(false);
 
-   object = StrToUpper(object);
+   value = StrToUpper(value);
    suffix = StrToUpper(suffix);
 
-   if (lenObject == lenSuffix)
-      return(object == suffix);
+   if (lenValue == lenSuffix)
+      return(value == suffix);
 
-   int start = lenObject-lenSuffix;
-   return(StringFind(object, suffix, start) == start);
+   int start = lenValue-lenSuffix;
+   return(StringFind(value, suffix, start) == start);
 }
 
 
@@ -4272,48 +4272,48 @@ bool StrCompareI(string string1, string string2) {
 /**
  * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird beachtet.
  *
- * @param  string object    - zu durchsuchender String
+ * @param  string value     - zu durchsuchender String
  * @param  string substring - zu suchender Substring
  *
  * @return bool
  */
-bool StrContains(string object, string substring) {
+bool StrContains(string value, string substring) {
    if (!StringLen(substring))
       return(!catch("StrContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
-   return(StringFind(object, substring) != -1);
+   return(StringFind(value, substring) != -1);
 }
 
 
 /**
  * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object    - zu durchsuchender String
+ * @param  string value     - zu durchsuchender String
  * @param  string substring - zu suchender Substring
  *
  * @return bool
  */
-bool StrContainsI(string object, string substring) {
+bool StrContainsI(string value, string substring) {
    if (!StringLen(substring))
       return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
-   return(StringFind(StrToUpper(object), StrToUpper(substring)) != -1);
+   return(StringFind(StrToUpper(value), StrToUpper(substring)) != -1);
 }
 
 
 /**
  * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
- * @param  string object - zu durchsuchender String
+ * @param  string value  - zu durchsuchender String
  * @param  string search - zu suchender Substring
  *
  * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
  */
-int StrFindR(string object, string search) {
-   int lenObject = StringLen(object),
+int StrFindR(string value, string search) {
+   int lenValue  = StringLen(value),
        lastFound = -1,
        result    =  0;
 
-   for (int i=0; i < lenObject; i++) {
-      result = StringFind(object, search, i);
+   for (int i=0; i < lenValue; i++) {
+      result = StringFind(value, search, i);
       if (result == -1)
          break;
       lastFound = result;

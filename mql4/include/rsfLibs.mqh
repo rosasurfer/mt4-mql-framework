@@ -1,5 +1,5 @@
 /**
- * letzte Version mit vollständigem Funktions-Listing: git commit deaf9a4 (2015.06.14 10:29:29 GMT)
+ * Letzte Version mit vollständigem Funktions-Listing: git commit deaf9a4 (2015.06.14 10:29:29 GMT)
  */
 #import "rsfLib1.ex4"
 
@@ -98,6 +98,10 @@
    //int    BufferSetChar(int buffer[], int pos, int char);
 
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
+
+
+   // configuration
+   int      GetIniSections(string fileName, string &names[]);
 
 
    // Date/Time

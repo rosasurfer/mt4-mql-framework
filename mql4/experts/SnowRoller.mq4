@@ -3631,12 +3631,7 @@ bool ReadSequence() {
 
    // [SnowRoller-xxx]
    string sections[];
-
-
-   //GetIniSections(file);
-   //SortStringsI(sections);
-   for (int i=0; i < ArraySize(sections); i++) {
-   }
+   int size = ReadSequenceSections(file, sections); if (!size) return(false);
 
 
 
@@ -3650,7 +3645,7 @@ bool ReadSequence() {
 
    // --- old version -------------------------------------------------------------------------------------------------------
    string lines[];
-   int size = FileReadLines(file, lines, true);
+   size = FileReadLines(file, lines, true);
 
    // notwendige Schlüssel definieren
    string keys[] = { "Created", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "AutoResume", "AutoRestart", "Sessionbreak.StartTime", "Sessionbreak.EndTime", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.sessionbreak.waiting", "rt.grid.base" };
@@ -3683,7 +3678,7 @@ bool ReadSequence() {
    // (3.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
    string parts[], key, value;
 
-   for (i=0; i < size; i++) {
+   for (int i=0; i < size; i++) {
       if (Explode(lines[i], "=", parts, 2) < 2)  return(!catch("ReadSequence(3)  invalid status file "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
@@ -3768,6 +3763,33 @@ bool ReadSequence() {
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
    return(!catch("ReadSequence(20)"));
+}
+
+
+/**
+ * Return the cycle section names (format: "SnowRoller-xxx") found in the specified status file, in ascending order.
+ *
+ * @param  _In_  string file    - status filename
+ * @param  _Out_ string names[] - array receiving the found section names
+ *
+ * @return int - number of found section names or NULL in case of errors
+ */
+int ReadSequenceSections(string file, string &names[]) {
+   int size = GetIniSections(file, names);
+   if (!size) return(NULL);
+
+   for (int i=size-1; i >= 0; i--) {
+      if (!StrStartsWithI(names[i], "SnowRoller-")) {
+         ArraySpliceStrings(names, i, 1);                   // drop all except cycle sections
+         size--;
+      }
+   }
+
+   debug("ReadSequenceSections(0.1)  unsorted: "+ StringsToStr(names, NULL));
+   SortMqlStringsA(names, size);
+   debug("ReadSequenceSections(0.2)  sorted:   "+ StringsToStr(names, NULL));
+
+   return(size);
 }
 
 
