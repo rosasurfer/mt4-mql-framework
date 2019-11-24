@@ -2877,39 +2877,47 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
 
 
 /**
- * Konvertiert einen String in einen Boolean. Die Strings "1", "on", "true" und "yes" sowie numerische String ungleich 0
- * (zero) werden als TRUE, alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden, leading/
- * trailing White-Space wird ignoriert. Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0
- * statt großem Buchstaben O und umgekehrt).
+ * Konvertiert einen String in einen Boolean.
  *
- * @param  string value - der zu konvertierende String
+ * Ist der Parameter strict = TRUE, werden die Strings "1" und "0", "on" und "off", "true" und "false", "yes" and "no" ohne
+ * Beachtung von Groß-/Kleinschreibung konvertiert und alle anderen Werte lösen einen Fehler aus.
+ *
+ * Ist der Parameter strict = FALSE (default), werden unscharfe Rechtschreibfehler automatisch korrigiert (z.B. Ziffer 0 statt
+ * großem Buchstaben O und umgekehrt), numerische Werte ungleich "1" und "0" entsprechend interpretiert und alle Werte, die
+ * nicht als TRUE interpretiert werden können, als FALSE interpretiert.
+ *
+ * Leading/trailing White-Space wird in allen Fällen ignoriert.
+ *
+ * @param  string value             - der zu konvertierende String
+ * @param  bool   strict [optional] - default: inaktiv
  *
  * @return bool
  */
-bool StrToBool(string value) {
+bool StrToBool(string value, bool strict = false) {
+   strict = strict!=0;
+
    value = StrTrim(value);
-
-   if (value == "" )      return( false);
-   if (value == "0")      return( false);                // zero
-   if (value == "1")      return( true );                // one
-   if (value == "O")      return(_false(log("StrToBool(1)  value "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
-
    string lValue = StrToLower(value);
-   if (lValue == "on"   ) return( true );
-   if (lValue == "off"  ) return( false);
-   if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
-   if (lValue == "0ff"  ) return(_false(log("StrToBool(3)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
 
-   if (lValue == "true" ) return( true );
-   if (lValue == "false") return( false);
+   if (value  == "1"    ) return(true );
+   if (value  == "0"    ) return(false);
+   if (lValue == "on"   ) return(true );
+   if (lValue == "off"  ) return(false);
+   if (lValue == "true" ) return(true );
+   if (lValue == "false") return(false);
+   if (lValue == "yes"  ) return(true );
+   if (lValue == "no"   ) return(false);
 
-   if (lValue == "yes"  ) return( true );
-   if (lValue == "no"   ) return( false);
-   if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
+   if (strict) return(!catch("StrToBool(1)  cannot convert string "+ DoubleQuoteStr(value) +" to boolean (strict mode enabled)", ERR_INVALID_PARAMETER));
+
+   if (value == ""    ) return( false);
+   if (value == "O"   ) return(_false(log("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
+   if (lValue == "0n" ) return(_true (log("StrToBool(3)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
+   if (lValue == "0ff") return(_false(log("StrToBool(4)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
+   if (lValue == "n0" ) return(_false(log("StrToBool(5)  string "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
 
    if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
-
    return(false);
 }
 

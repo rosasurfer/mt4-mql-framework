@@ -75,10 +75,9 @@
    // pointer utlities
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
-   int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
-   int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
-   //int    GetPointedAddress(void  &value);          //          Adresse ist ungültig und kann einen Crash auslösen.
+   int      GetDoublesAddress(double values[]);       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
+   int      GetStringAddress (string value   );       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
+   int      GetStringsAddress(string values[]);       //          Adresse ist ungültig und kann einen Crash auslösen.
 
    string   GetStringA(int address);
    //string GetStringW(int address);
