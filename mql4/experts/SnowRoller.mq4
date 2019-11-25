@@ -150,16 +150,16 @@ datetime sessionbreak.starttime;                   // configurable via inputs an
 datetime sessionbreak.endtime;
 bool     sessionbreak.waiting;                     // whether the sequence waits to resume during or after a session break
 
-// --- grid base management ----------------
-double   grid.base;                                // current grid base
-int      grid.base.event[];                        // grid base history
-datetime grid.base.time [];
-double   grid.base.value[];
+// --- gridbase management -----------------
+double   gridbase;                                 // current gridbase
+int      gridbase.event[];                         // gridbase history
+datetime gridbase.time [];
+double   gridbase.price[];
 
 // --- order data --------------------------
 int      orders.ticket         [];
 int      orders.level          [];                 // order grid level: -n...-1 | 1...+n
-double   orders.gridBase       [];                 // grid base when the order was active
+double   orders.gridBase       [];                 // gridbase when the order was active
 int      orders.pendingType    [];                 // pending order type (if applicable)        or -1
 datetime orders.pendingTime    [];                 // time of OrderOpen() or last OrderModify() or  0
 double   orders.pendingPrice   [];                 // pending entry limit                       or  0
@@ -188,7 +188,7 @@ int      startStopDisplayMode = SDM_PRICE;         // whether start/stop markers
 int      orderDisplayMode     = ODM_PYRAMID;       // current order display mode
 
 string   sLotSize                = "";             // caching vars to speed-up execution of ShowStatus()
-string   sGridbase               = "";
+string   sGridBase               = "";
 string   sSequenceDirection      = "";
 string   sSequenceMissedLevels   = "";
 string   sSequenceStops          = "";
@@ -236,7 +236,7 @@ bool     tester.reduceStatusWrites  = true;        // whether to skip redundant 
  |                     |                     |                    |
  | (order stopped out) | EV_POSITION_STOPOUT | STATUS_PROGRESSING |
  |                     |                     |                    |
- | TrailGridbase()     | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
+ | TrailGridBase()     | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
  |                     |                     |                    |
  | (stop condition)    |         -           | STATUS_PROGRESSING |
  |                     |                     |                    |
@@ -255,7 +255,7 @@ bool     tester.reduceStatusWrites  = true;        // whether to skip redundant 
  |                     |                     |                    |
  | (order stopped out) | EV_POSITION_STOPOUT | STATUS_PROGRESSING |
  |                     |                     |                    |
- | TrailGridbase()     | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
+ | TrailGridBase()     | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |
  | ...                 |                     |                    |
  +---------------------+---------------------+--------------------+
 */
@@ -275,7 +275,7 @@ int onTick() {
       return(last_error);
 
    int  signal, activatedOrders[];                          // indexes of activated client-side orders
-   bool gridChanged;                                        // whether the current grid base or level changed
+   bool gridChanged;                                        // whether the current gridbase or level changed
 
    // sequence either waits for start/resume signal...
    if (sequence.status == STATUS_WAITING) {
@@ -426,7 +426,7 @@ bool StartSequence(int signal) {
    ArrayPushDouble(sequence.stop.price,   0);
    ArrayPushDouble(sequence.stop.profit,  0);
 
-   // set the grid base (event after sequence.start.time in time)
+   // set the gridbase (event after sequence.start.time in time)
    double gridBase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
    GridBase.Reset(startTime, gridBase);
 
@@ -794,11 +794,11 @@ bool ResetSequence() {
       sessionbreak.endtime       = 0;
       sessionbreak.waiting       = false;
 
-      // --- grid base management -----------
-      grid.base                  = 0;
-      ArrayResize(grid.base.event, 0);
-      ArrayResize(grid.base.time,  0);
-      ArrayResize(grid.base.value, 0);
+      // --- gridbase management ------------
+      gridbase                   = 0;
+      ArrayResize(gridbase.event, 0);
+      ArrayResize(gridbase.time,  0);
+      ArrayResize(gridbase.price, 0);
 
       // --- order data ---------------------
       ArrayResize(orders.ticket,          0);
@@ -830,7 +830,7 @@ bool ResetSequence() {
       //orderDisplayMode           = ...                 // kept
 
       sLotSize                     = "";
-      sGridbase                    = "";
+      sGridBase                    = "";
       sSequenceDirection           = "";
       sSequenceMissedLevels        = "";
       sSequenceStops               = "";
@@ -897,7 +897,7 @@ bool ResumeSequence(int signal) {
    double   gridBase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
    sequence.status = STATUS_STARTING;
-   if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // update start/stop conditions
    switch (signal) {
@@ -952,10 +952,10 @@ bool ResumeSequence(int signal) {
       // define the new gridbase if no open positions have been found
       startTime  = TimeCurrentEx("ResumeSequence(4)");
       startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
-      GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
+      GridBase.Change(startTime, gridbase + startPrice - lastStopPrice);
    }
    else {
-      grid.base = NormalizeDouble(gridBase, Digits);           // re-use the previously used gridbase
+      gridbase = NormalizeDouble(gridBase, Digits);            // re-use the previously used gridbase
    }
 
    // open the previously active Positionen and receive last(OrderOpenTime) and avg(OrderOpenPrice)
@@ -985,7 +985,7 @@ bool ResumeSequence(int signal) {
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(grid.base, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting() && IsVisualMode()) {
@@ -1071,7 +1071,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  _Out_ bool &gridChanged       - variable indicating whether the current grid base or level changed
+ * @param  _Out_ bool &gridChanged       - variable indicating whether the current gridbase or level changed
  * @param  _Out_ int   activatedOrders[] - array receiving the order indexes of activated client-side stops/limits
  *
  * @return bool - success status
@@ -1213,15 +1213,15 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
          SetLastError(ERR_CANCELLED_BY_USER);
       }
       else {
-         double last = grid.base;
-         if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-         else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+         double last = gridbase;
+         if (sequence.direction == D_LONG) gridbase = MathMin(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
+         else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
-         if (NE(grid.base, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), grid.base);
+         if (NE(gridbase, last, Digits)) {
+            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), gridbase);
             gridChanged = true;
          }
-         else if (NE(orders.gridBase[sizeOfTickets-1], grid.base, Digits)) {  // Gridbasis des letzten Tickets inspizieren, da Trailing online
+         else if (NE(orders.gridBase[sizeOfTickets-1], gridbase, Digits)) {   // Gridbasis des letzten Tickets inspizieren, da Trailing online
             gridChanged = true;                                               // u.U. verzögert wird
          }
       }
@@ -1757,7 +1757,7 @@ bool UpdatePendingOrders() {
    // trail a first level stop order (always an existing next level order, thus at the last index)
    if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
-      if (NE(grid.base, orders.gridBase[i], Digits)) {
+      if (NE(gridbase, orders.gridBase[i], Digits)) {
          static double lastTrailed = INT_MIN;                           // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
          if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // at each tick. Wait 3 seconds between consecutive trailings.
             type = Grid.TrailPendingOrder(i); if (!type) return(false); //
@@ -1825,9 +1825,9 @@ bool UpdatePendingOrders() {
 double GridBase.Reset(datetime time, double value) {
    if (IsLastError()) return(0);
 
-   ArrayResize(grid.base.event, 0);
-   ArrayResize(grid.base.time,  0);
-   ArrayResize(grid.base.value, 0);
+   ArrayResize(gridbase.event, 0);
+   ArrayResize(gridbase.time,  0);
+   ArrayResize(gridbase.price, 0);
 
    return(GridBase.Change(time, value));
 }
@@ -1845,36 +1845,36 @@ double GridBase.Change(datetime time, double value) {
    value = NormalizeDouble(value, Digits);
 
    if (sequence.maxLevel == 0) {                            // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
-      ArrayResize(grid.base.event, 0);
-      ArrayResize(grid.base.time,  0);
-      ArrayResize(grid.base.value, 0);
+      ArrayResize(gridbase.event, 0);
+      ArrayResize(gridbase.time,  0);
+      ArrayResize(gridbase.price, 0);
    }
 
-   int size = ArraySize(grid.base.event);                   // ab dem ersten ausgeführten Trade werden neue Werte angefügt
+   int size = ArraySize(gridbase.event);                    // ab dem ersten ausgeführten Trade werden neue Werte angefügt
    if (size == 0) {
-      ArrayPushInt   (grid.base.event, CreateEventId());
-      ArrayPushInt   (grid.base.time,  time           );
-      ArrayPushDouble(grid.base.value, value          );
+      ArrayPushInt   (gridbase.event, CreateEventId());
+      ArrayPushInt   (gridbase.time,  time           );
+      ArrayPushDouble(gridbase.price, value          );
       size++;
    }
    else {
       datetime lastStartTime = sequence.start.time[ArraySize(sequence.start.time)-1];
-      int minute=time/MINUTE, lastMinute=grid.base.time[size-1]/MINUTE;
+      int minute=time/MINUTE, lastMinute=gridbase.time[size-1]/MINUTE;
 
       if (time<=lastStartTime || minute!=lastMinute) {      // store all events
-         ArrayPushInt   (grid.base.event, CreateEventId());
-         ArrayPushInt   (grid.base.time,  time           );
-         ArrayPushDouble(grid.base.value, value          );
+         ArrayPushInt   (gridbase.event, CreateEventId());
+         ArrayPushInt   (gridbase.time,  time           );
+         ArrayPushDouble(gridbase.price, value          );
          size++;
       }
       else {                                                // compact redundant events, store only the last one per minute
-         grid.base.event[size-1] = CreateEventId();
-         grid.base.time [size-1] = time;
-         grid.base.value[size-1] = value;
+         gridbase.event[size-1] = CreateEventId();
+         gridbase.time [size-1] = time;
+         gridbase.price[size-1] = value;
       }
    }
 
-   grid.base = value; SS.GridBase();
+   gridbase = value; SS.GridBase();
    return(value);
 }
 
@@ -1896,7 +1896,7 @@ int Grid.AddPendingOrder(int level) {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   double price=grid.base + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
+   double price=gridbase + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
    int counter, ticket, oe[];
    if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
    else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
@@ -1925,7 +1925,7 @@ int Grid.AddPendingOrder(int level) {
    // prepare order dataset
    //int    ticket          = ...                  // use as is
    //int    level           = ...                  // ...
-   //double grid.base       = ...                  // ...
+   //double gridbase        = ...                  // ...
 
    //int    pendingType     = ...                  // ...
    datetime pendingTime     = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(6)");
@@ -1947,7 +1947,7 @@ int Grid.AddPendingOrder(int level) {
    double   profit          = NULL;
 
    // store dataset
-   if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideLimit, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideLimit, closedBySL, swap, commission, profit))
       return(NULL);
 
    if (last_error || catch("Grid.AddPendingOrder(7)"))
@@ -2001,7 +2001,7 @@ bool Grid.AddPosition(int level) {
    // Daten speichern
    //int    ticket       = ...                     // unverändert
    //int    level        = ...                     // unverändert
-   //double grid.base    = ...                     // unverändert
+   //double gridbase     = ...                     // unverändert
 
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
@@ -2022,7 +2022,7 @@ bool Grid.AddPosition(int level) {
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
-   if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideSL, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideSL, closedBySL, swap, commission, profit))
       return(false);
 
    ArrayResize(oe, 0);
@@ -2051,7 +2051,7 @@ int Grid.TrailPendingOrder(int i) {
    int      ticket       = orders.ticket[i], oe[];
    int      level        = orders.level[i];
    datetime pendingTime;
-   double   pendingPrice = NormalizeDouble(grid.base +          level * GridSize * Pips, Digits);
+   double   pendingPrice = NormalizeDouble(gridbase +           level * GridSize * Pips, Digits);
    double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
 
    if (!SelectTicket(ticket, "Grid.TrailPendingOrder(4)", true)) return(NULL);
@@ -2088,7 +2088,7 @@ int Grid.TrailPendingOrder(int i) {
    }
 
    // update changed data (ignore current ticket state which may be different)
-   orders.gridBase    [i] = grid.base;
+   orders.gridBase    [i] = gridbase;
    orders.pendingTime [i] = pendingTime;
    orders.pendingPrice[i] = pendingPrice;
    orders.stopLoss    [i] = stopLoss;
@@ -2347,7 +2347,7 @@ int SubmitMarketOrder(int type, int level, bool clientsideSL, int oe[]) {
 
    double   price       = NULL;
    double   slippage    = 0.1;
-   double   stopLoss    = ifDouble(clientsideSL, NULL, grid.base + (level-Sign(level))*GridSize*Pips);
+   double   stopLoss    = ifDouble(clientsideSL, NULL, gridbase + (level-Sign(level))*GridSize*Pips);
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
@@ -2394,7 +2394,7 @@ int SubmitStopOrder(int type, int level, int oe[]) {
    if (type==OP_BUYSTOP  && level <= 0)                                         return(_NULL(catch("SubmitStopOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
-   double   stopPrice   = grid.base + level*GridSize*Pips;
+   double   stopPrice   = gridbase + level*GridSize*Pips;
    double   slippage    = NULL;
    double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
@@ -2437,7 +2437,7 @@ int SubmitLimitOrder(int type, int level, int oe[]) {
    if (type==OP_BUYLIMIT  && level <= 0)                                        return(_NULL(catch("SubmitLimitOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
-   double   limitPrice  = grid.base + level*GridSize*Pips;
+   double   limitPrice  = gridbase + level*GridSize*Pips;
    double   slippage    = NULL;
    double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
@@ -2541,7 +2541,7 @@ int ShowStatus(int error = NO_ERROR) {
 
    msg = StringConcatenate(__NAME(), msg, sError,                                    NL,
                                                                                      NL,
-                           "Grid:              ", GridSize, " pip", sGridbase,       NL,
+                           "Grid:              ", GridSize, " pip", sGridBase,       NL,
                            "LotSize:          ",  sLotSize, sSequenceProfitPerLevel, NL,
                            "Start:             ", sStartConditions,                  NL,
                            "Stop:              ", sStopConditions,                   NL,
@@ -2606,13 +2606,13 @@ void SS.SequenceId() {
 
 
 /**
- * ShowStatus(): Aktualisiert die String-Repräsentation von grid.base.
+ * ShowStatus(): Aktualisiert die String-Repräsentation von gridbase.
  */
 void SS.GridBase() {
    if (!__CHART()) return;
 
-   if (ArraySize(grid.base.event) > 0) {
-      sGridbase = " @ "+ NumberToStr(grid.base, PriceFormat);
+   if (ArraySize(gridbase.event) > 0) {
+      sGridBase = " @ "+ NumberToStr(gridbase, PriceFormat);
    }
 }
 
@@ -3414,7 +3414,7 @@ bool SaveSequence() {
    WriteIniString(file, section, "rt.sequence.maxDrawdown",  DoubleToStr(sequence.maxDrawdown, 2));
    WriteIniString(file, section, "rt.sequence.starts",       sStarts);
    WriteIniString(file, section, "rt.sequence.stops",        sStops);
-   WriteIniString(file, section, "rt.grid.base",             sGridBase);
+   WriteIniString(file, section, "rt.gridbase",              sGridBase);
    WriteIniString(file, section, "rt.sequence.missedLevels", JoinInts(sequence.missedLevels));
    WriteIniString(file, section, "rt.ignorePendingOrders",   JoinInts(ignorePendingOrders));
    WriteIniString(file, section, "rt.ignoreOpenPositions",   JoinInts(ignoreOpenPositions));
@@ -3515,10 +3515,10 @@ string SaveSequence.StartStopToStr(int events[], datetime times[], double prices
  */
 string SaveSequence.GridBaseToStr() {
    string values[]; ArrayResize(values, 0);
-   int size = ArraySize(grid.base.event);
+   int size = ArraySize(gridbase.event);
 
    for (int i=0; i < size; i++) {
-      ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", DoubleToStr(grid.base.value[i], Digits)));
+      ArrayPushString(values, StringConcatenate(gridbase.event[i], "|", gridbase.time[i], "|", DoubleToStr(gridbase.price[i], Digits)));
    }
    if (!size) ArrayPushString(values, "0|0|0");
 
@@ -3680,6 +3680,7 @@ bool ReadStatus() {
    string sMaxDrawdown         = GetIniStringA(file, section, "rt.sequence.maxDrawdown", "");      // double  rt.sequence.maxDrawdown=-127.80
    string sStarts              = GetIniStringA(file, section, "rt.sequence.starts",      "");      // mixed[] rt.sequence.starts=1|1328701713|1.32677|1000.00, 3|1329999999|1.33215|1200.00
    string sStops               = GetIniStringA(file, section, "rt.sequence.stops",       "");      // mixed[] rt.sequence.stops= 2|1328701999|1.32734|1200.00, 0|0|0.00000|0.00
+   string sGridBase            = GetIniStringA(file, section, "rt.gridbase",             "");      // mixed[] rt.gridbase= 4|1331710960|1.56743, 5|1331711010|1.56714
 
    sessionbreak.waiting = StrToBool(sSessionbreakWaiting);
    if (!StrIsNumeric(sStartEquity))         return(!catch("ReadStatus(12)  invalid or missing sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3695,21 +3696,19 @@ bool ReadStatus() {
    if (!success)                            return(!catch("ReadStatus(17)  invalid or missing sequence.stops "+ DoubleQuoteStr(sStops) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))
                                             return(!catch("ReadStatus(18)  sequence.starts["+ ArraySize(sequence.start.event) +"]/sequence.stops["+ ArraySize(sequence.stop.event) +"] mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+  success = ReadStatus.ParseGridBase(sGridBase);
+   if (!success)                            return(!catch("ReadStatus(19)  invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
 
 
 
-
-
-   if (!catch("ReadStatus(19)"))
+   if (!catch("ReadStatus(20)"))
       SetLastError(ERR_CANCELLED_BY_USER);
    return(!last_error);
 
 
-
    // --- old version -------------------------------------------------------------------------------------------------------
    /*
-   "rt.grid.base"            ,
    "rt.sequence.missedLevels",
    "rt.ignorePendingOrders"  ,
    "rt.ignoreOpenPositions"  ,
@@ -3725,13 +3724,31 @@ bool ReadStatus() {
    if (IntInArray(orders.ticket, 0))                                       return(_false(catch("ReadStatus(19)  one or more order entries missing in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
    // check start events for "0|0|0|0" values (allowed only before first start)
+   // check order of start/stop events
+   // check order of start/stop times
+
+   // check:  gridbaseEvent[0] && !starts
+   // check: !gridbaseEvent[0] &&  starts
+
+   //// GridBase-Event
+   //int gridBaseEvent = StrToInteger(value);
+   //int starts = ArraySize(sequence.start.event);
+   //if (!gridBaseEvent) {
+   //   if (sizeOfRecords==1 && record=="0|0|0") {
+   //      if (starts > 0)
+   //         return(_false(catch("ReadStatus.Runtime(38)  sequence.start/gridbase["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   //      break;
+   //   }
+   //}
+   //else if (!starts)                                                  return(_false(catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+
 
    return(!catch("ReadStatus(20)"));
 }
 
 
 /**
- * Return the "SnowRoller-xxx" cycle section names found in the specified status file, in ascending order.
+ * Return the "SnowRoller-xxx" cycle section names found in the specified status file, sorted in ascending order.
  *
  * @param  _In_  string file    - status filename
  * @param  _Out_ string names[] - array receiving the found section names
@@ -3743,14 +3760,16 @@ int ReadStatusSections(string file, string &names[]) {
    if (!size) return(NULL);
 
    for (int i=size-1; i >= 0; i--) {
-      if (!StrStartsWithI(names[i], "SnowRoller-")) {       // drop all except "SnowRoller-" sections
-         ArraySpliceStrings(names, i, 1);
-         size--;
+      if (StrStartsWithI(names[i], "SnowRoller-")) {
+         if (StrIsDigit(StrRight(names[i], -11)))
+            continue;
       }
+      ArraySpliceStrings(names, i, 1);                // drop all sections not matching '/SnowRoller-[0-9]+/i'
+      size--;
    }
-
-   if (!SortStrings(names)) return(NULL);
+   if (!SortStrings(names)) return(NULL);             // TODO: implement natural sorting
    if (!size)               return(!catch("ReadStatusSections(1)  invalid status file "+ DoubleQuoteStr(file) +" (no \"SnowRoller\" sections found)", ERR_INVALID_FILE_FORMAT));
+
    return(size);
 }
 
@@ -3758,7 +3777,7 @@ int ReadStatusSections(string file, string &names[]) {
 /**
  * Parse and store the string representation of sequence start/stop data.
  *
- * @param  string   value     - string representation to parse
+ * @param  string   value     - string to parse
  * @param  int      events [] - array receiving the start/stop events
  * @param  datetime times  [] - array receiving the start/stop times
  * @param  double   prices [] - array receiving the start/stop prices
@@ -3778,7 +3797,7 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
 
    for (int i=0; i < sizeOfRecords; i++) {
       record = StrTrim(records[i]);
-      if (Explode(record, "|", data, NULL) != 4) return(!catch("ReadStatus.ParseStartStop(1)  invalid amount of sequence start/stop details in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      if (Explode(record, "|", data, NULL) != 4) return(!catch("ReadStatus.ParseStartStop(1)  invalid number of fields in sequence start/stop record "+ DoubleQuoteStr(record) +" (not 4)", ERR_INVALID_FILE_FORMAT));
 
       // event
       sValue = StrTrim(data[0]);
@@ -3804,7 +3823,7 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
       if (!event && (time  || price))            return(!catch("ReadStatus.ParseStartStop(7)  invalid start/stop event in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
       if (!time  && (event || price))            return(!catch("ReadStatus.ParseStartStop(8)  invalid start/stop time in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
       if (!price && (event || time ))            return(!catch("ReadStatus.ParseStartStop(9)  invalid start/stop price in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
-      if (!event && i < sizeOfRecords-1)         return(!catch("ReadStatus.ParseStartStop(10)  illegal empty start/stop record at position "+ (i+1) +": "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      if (!event && i < sizeOfRecords-1)         return(!catch("ReadStatus.ParseStartStop(10)  illegal start/stop record at position "+ (i+1) +": "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
 
       ArrayPushInt   (events,  event );
       ArrayPushInt   (times,   time  );
@@ -3814,6 +3833,58 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
    }
 
    return(!catch("ReadStatus.ParseStartStop(11)"));
+}
+
+
+/**
+ * Parse and store the string representation of the gridbase history.
+ *
+ * @param  string value - string to parse
+ *
+ * @return bool - success status
+ */
+bool ReadStatus.ParseGridBase(string value) {
+   if (IsLastError()) return(false);
+   int      event, lastEvent;
+   datetime time;
+   double   price;                               // rt.gridbase=1|1331710960|1.56743, 2|1331711010|1.56714
+
+   string records[], record, data[], sValue;
+   int sizeOfRecords = Explode(value, ",", records, NULL);
+
+   for (int i=0; i < sizeOfRecords; i++) {
+      record = StrTrim(records[i]);
+      if (Explode(record, "|", data, NULL) != 3) return(!catch("ReadStatus.ParseGridBase(1)  invalid number of fields in gridbase record "+ DoubleQuoteStr(record) +" (not 3)", ERR_INVALID_FILE_FORMAT));
+
+      // event
+      sValue = StrTrim(data[0]);
+      if (!StrIsDigit(sValue))                   return(!catch("ReadStatus.ParseGridBase(2)  invalid gridbase event in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      event = StrToInteger(sValue);
+
+      // time
+      sValue = StrTrim(data[1]);
+      if (!StrIsDigit(sValue))                   return(!catch("ReadStatus.ParseGridBase(3)  invalid gridbase time in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      time = StrToInteger(sValue);
+
+      // price
+      sValue = StrTrim(data[2]);
+      if (!StrIsNumeric(sValue))                 return(!catch("ReadStatus.ParseGridBase(4)  invalid gridbase price in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      price = StrToDouble(sValue);
+      if (LT(price, 0))                          return(!catch("ReadStatus.ParseGridBase(5)  invalid gridbase price in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+
+      if (!event && (time  || price))            return(!catch("ReadStatus.ParseGridBase(6)  invalid gridbase event in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      if (!time  && (event || price))            return(!catch("ReadStatus.ParseGridBase(7)  invalid gridbase time in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      if (!price && (event || time ))            return(!catch("ReadStatus.ParseGridBase(8)  invalid gridbase price in record "+ DoubleQuoteStr(record), ERR_INVALID_FILE_FORMAT));
+      if (!event && i > 0)                       return(!catch("ReadStatus.ParseGridBase(9)  illegal gridbase record at position "+ (i+1) +": "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+      if (event < lastEvent)                     return(!catch("ReadStatus.ParseGridBase(10)  invalid gridbase event order in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+      lastEvent = event;
+
+      ArrayPushInt   (gridbase.event, event);
+      ArrayPushInt   (gridbase.time,  time );
+      ArrayPushDouble(gridbase.price, price);
+      lastEventId = Max(lastEventId, event);
+   }
+   return(!catch("ReadStatus.ParseGridBase(11)"));
 }
 
 
@@ -3828,7 +3899,6 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
 bool ReadStatus.Runtime(string key, string value) {
    if (IsLastError()) return(false);
    /*
-   string   rt.grid.base=4|1331710960|1.56743, 5|1331711010|1.56714
    string   rt.sequence.missedLevels=-6,-7,-8,-14
    string   rt.ignorePendingOrders=66064890,66064891,66064892
    string   rt.ignoreOpenPositions=66064890,66064891,66064892
@@ -3909,40 +3979,6 @@ bool ReadStatus.Runtime(string key, string value) {
             if (!ticket)                                                    return(_false(catch("ReadStatus.Runtime(35)  illegal ticket #"+ ticket +" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
             ArrayPushInt(ignoreClosedPositions, ticket);
          }
-      }
-   }
-   else if (key == "rt.grid.base") {
-      // rt.grid.base=1|1331710960|1.56743, 2|1331711010|1.56714
-      sizeOfValues = Explode(value, ",", values, NULL);
-      for (i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 3)                      return(_false(catch("ReadStatus.Runtime(36)  illegal number of grid.base["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-         value = StrTrim(data[0]);                 // GridBase-Event
-         if (!StrIsDigit(value))                                            return(_false(catch("ReadStatus.Runtime(37)  illegal grid.base.event["+ i +"] \""+ value +"\" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         int gridBaseEvent = StrToInteger(value);
-         int starts = ArraySize(sequence.start.event);
-         if (gridBaseEvent == 0) {
-            if (sizeOfValues==1 && values[0]=="0|0|0") {
-               if (starts > 0)                                              return(_false(catch("ReadStatus.Runtime(38)  sequence.start/grid.base["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-               break;
-            }                                                               return(_false(catch("ReadStatus.Runtime(39)  illegal grid.base.event["+ i +"] "+ gridBaseEvent +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         }
-         else if (!starts)                                                  return(_false(catch("ReadStatus.Runtime(40)  sequence.start/grid.base["+ i +"] mis-match "+ starts +"/\""+ values[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-         value = StrTrim(data[1]);                 // GridBase-Zeitpunkt
-         if (!StrIsDigit(value))                                            return(_false(catch("ReadStatus.Runtime(41)  illegal grid.base.time["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         datetime gridBaseTime = StrToInteger(value);
-         if (!gridBaseTime)                                                 return(_false(catch("ReadStatus.Runtime(42)  illegal grid.base.time["+ i +"] "+ gridBaseTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-         value = StrTrim(data[2]);                 // GridBase-Wert
-         if (!StrIsNumeric(value))                                          return(_false(catch("ReadStatus.Runtime(43)  illegal grid.base.value["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         double gridBaseValue = StrToDouble(value);
-         if (LE(gridBaseValue, 0))                                          return(_false(catch("ReadStatus.Runtime(44)  illegal grid.base.value["+ i +"] "+ NumberToStr(gridBaseValue, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-         ArrayPushInt   (grid.base.event, gridBaseEvent);
-         ArrayPushInt   (grid.base.time,  gridBaseTime );
-         ArrayPushDouble(grid.base.value, gridBaseValue);
-         lastEventId = Max(lastEventId, gridBaseEvent);
       }
    }
    else if (StrStartsWith(key, "rt.order.")) {
@@ -4236,8 +4272,8 @@ bool SynchronizeStatus() {
       ArrayResize(orphanedClosedPositions, 0);
    }
 
-   if (ArraySize(sequence.start.event) > 0) /*&&*/ if (ArraySize(grid.base.event)==0)
-      return(_false(catch("SynchronizeStatus(8)  illegal number of grid.base events = "+ 0, ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) > 0) /*&&*/ if (ArraySize(gridbase.event)==0)
+      return(_false(catch("SynchronizeStatus(8)  illegal number of gridbase events = "+ 0, ERR_RUNTIME_ERROR)));
 
 
    // Status und Variablen synchronisieren
@@ -4334,7 +4370,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
 
    if (EQ(OrderStopLoss(), 0)) {
       if (!orders.clientsideLimit[i]) {
-         orders.stopLoss       [i] = NormalizeDouble(grid.base + (orders.level[i]-Sign(orders.level[i]))*GridSize*Pips, Digits);
+         orders.stopLoss       [i] = NormalizeDouble(gridbase + (orders.level[i]-Sign(orders.level[i]))*GridSize*Pips, Digits);
          orders.clientsideLimit[i] = true;
          lpPermanentChange         = true;
       }
@@ -4419,9 +4455,9 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
    }
 
    // (1.2) GridBase-Änderungen
-   int sizeOfGridBase = ArraySize(grid.base.event);
+   int sizeOfGridBase = ArraySize(gridbase.event);
    for (i=0; i < sizeOfGridBase; i++) {
-      Sync.PushEvent(events, grid.base.event[i], grid.base.time[i], EV_GRIDBASE_CHANGE, grid.base.value[i], i);
+      Sync.PushEvent(events, gridbase.event[i], gridbase.time[i], EV_GRIDBASE_CHANGE, gridbase.price[i], i);
    }
 
    // (1.3) Tickets
@@ -4499,7 +4535,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       // -- EV_GRIDBASE_CHANGE -------------
       else if (type == EV_GRIDBASE_CHANGE) {
          if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPED)     return(_false(catch("Sync.ProcessEvents(7)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
-         grid.base = gridBase;
+         gridbase = gridBase;
          if (sequence.status == STATUS_PROGRESSING) {
             if (sequence.level != 0)                                                     return(_false(catch("Sync.ProcessEvents(8)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          }
@@ -4507,7 +4543,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
             reopenedPositions = 0;
             sequence.status   = STATUS_STARTING;
          }
-         grid.base.event[index] = id;
+         gridbase.event[index] = id;
       }
       // -- EV_POSITION_OPEN ---------------
       else if (type == EV_POSITION_OPEN) {
@@ -5217,11 +5253,11 @@ bool UpdateProfitTargets() {
 
    // calculate breakeven price (profit = losses)
    double price            = ifDouble(sequence.direction==D_LONG, Bid, Ask);
-   double gridbaseDistance = MathAbs(price - grid.base)/Pip;
+   double gridbaseDistance = MathAbs(price - gridbase)/Pip;
    double potentialProfit  = PotentialProfit(gridbaseDistance);
    double losses           = sequence.totalPL - potentialProfit;
    double beDistance       = RequiredDistance(MathAbs(losses));
-   double bePrice          = grid.base + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance)*Pip;
+   double bePrice          = gridbase + ifDouble(sequence.direction==D_LONG, beDistance, -beDistance)*Pip;
    sequence.breakeven      = NormalizeDouble(bePrice, Digits);
    //debug("UpdateProfitTargets(1)  level="+ sequence.level +"  gridbaseDist="+ DoubleToStr(gridbaseDistance, 1) +"  potential="+ DoubleToStr(potentialProfit, 2) +"  beDist="+ DoubleToStr(beDistance, 1) +" => "+ NumberToStr(bePrice, PriceFormat));
 
