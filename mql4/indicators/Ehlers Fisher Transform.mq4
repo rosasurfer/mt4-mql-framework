@@ -222,8 +222,8 @@ void SetIndicatorOptions() {
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
-   SetIndexStyle(MODE_MAIN,          DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_SECTION,       DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_MAIN,          DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_SECTION,       DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
