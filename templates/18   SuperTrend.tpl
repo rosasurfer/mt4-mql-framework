@@ -8781,8 +8781,6 @@ name=SuperTrend
 flags=339
 window_num=0
 <inputs>
-Color.MovingAverage=-16777216
-Line.Width=3
 </inputs>
 </expert>
 </indicator>

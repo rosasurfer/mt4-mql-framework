@@ -2910,8 +2910,8 @@ bool StrToBool(string value, bool strict = false) {
 
    if (strict) return(!catch("StrToBool(1)  cannot convert string "+ DoubleQuoteStr(value) +" to boolean (strict mode enabled)", ERR_INVALID_PARAMETER));
 
-   if (value == ""    ) return( false);
-   if (value == "O"   ) return(_false(log("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
+   if (value  == ""   ) return( false);
+   if (value  == "O"  ) return(_false(log("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
    if (lValue == "0n" ) return(_true (log("StrToBool(3)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
    if (lValue == "0ff") return(_false(log("StrToBool(4)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
    if (lValue == "n0" ) return(_false(log("StrToBool(5)  string "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
