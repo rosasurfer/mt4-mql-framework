@@ -3696,7 +3696,7 @@ bool ReadStatus() {
    if (!success)                            return(!catch("ReadStatus(17)  invalid or missing sequence.stops "+ DoubleQuoteStr(sStops) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))
                                             return(!catch("ReadStatus(18)  sequence.starts["+ ArraySize(sequence.start.event) +"]/sequence.stops["+ ArraySize(sequence.stop.event) +"] mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-  success = ReadStatus.ParseGridBase(sGridBase);
+   success = ReadStatus.ParseGridBase(sGridBase);
    if (!success)                            return(!catch("ReadStatus(19)  invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
 

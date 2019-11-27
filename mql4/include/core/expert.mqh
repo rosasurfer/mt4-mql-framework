@@ -148,9 +148,8 @@ int init() {
    }
 
 
-   // (8) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
-   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-
-   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).
+   // (8) Execute init() event handlers. Following event handlers are only executed if none of the already executed handlers
+   //     returned with an error.
    //
    // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
@@ -184,7 +183,7 @@ int init() {
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
-   if (error != -1)                                                           //
+   if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // post-processing hook
    if (CheckErrors("init(16)")) return(last_error);
 
