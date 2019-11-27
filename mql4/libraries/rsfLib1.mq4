@@ -4009,16 +4009,16 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string input     - zu zerlegender String
- * @param  string separator - Trennstring
- * @param  string results[] - Zielarray für die Teilstrings
- * @param  int    limit     - maximale Anzahl von Teilstrings (default: kein Limit)
+ * @param  _In_  string input            - zu zerlegender String
+ * @param  _In_  string separator        - Trennstring
+ * @param  _Out_ string results[]        - Zielarray für die Teilstrings
+ * @param  _In_  int    limit [optional] - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder -1 (EMPTY), wennn ein Fehler auftrat
  */
 int Explode(string input, string separator, string &results[], int limit = NULL) {
-   // Der Parameter input *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
-   // vor Modifikation von results[] eine Kopie von input und verwenden diese.
+   // Der Parameter input *könnte* eine Referenz auf ein Element des Ergebnisarrays results[] sein, daher erstellen wir
+   // vor Modifikation von results[] eine Kopie von input und verarbeiten diese.
    string _input = StringConcatenate(input, "");
 
    int lenInput     = StringLen(input),
