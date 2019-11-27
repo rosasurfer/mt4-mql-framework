@@ -3599,7 +3599,11 @@ bool RestoreSequence(bool interactive) {
    interactive = interactive!=0;
    if (IsLastError())                return(false);
 
-   if (!ReadStatus())                return(false);      // read the status file
+   debug("RestoreSequence(0.1)->ReadStatus()...");
+   bool success = ReadStatus();
+   debug("RestoreSequence(0.2)  OK");
+
+   if (!success)                     return(false);      // read the status file
    if (!ValidateInputs(interactive)) return(false);      // validate restored input parameters
    if (!SynchronizeStatus())         return(false);      // synchronize restored state with trade server state
    return(true);
@@ -3674,13 +3678,17 @@ bool ReadStatus() {
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
 
    // runtime vars
-   string sSessionbreakWaiting = GetIniStringA(file, section, "rt.sessionbreak.waiting", "");      // bool    rt.sessionbreak.waiting=1
-   string sStartEquity         = GetIniStringA(file, section, "rt.sequence.startEquity", "");      // double  rt.sequence.startEquity=7801.13
-   string sMaxProfit           = GetIniStringA(file, section, "rt.sequence.maxProfit",   "");      // double  rt.sequence.maxProfit=200.13
-   string sMaxDrawdown         = GetIniStringA(file, section, "rt.sequence.maxDrawdown", "");      // double  rt.sequence.maxDrawdown=-127.80
-   string sStarts              = GetIniStringA(file, section, "rt.sequence.starts",      "");      // mixed[] rt.sequence.starts=1|1328701713|1.32677|1000.00, 3|1329999999|1.33215|1200.00
-   string sStops               = GetIniStringA(file, section, "rt.sequence.stops",       "");      // mixed[] rt.sequence.stops= 2|1328701999|1.32734|1200.00, 0|0|0.00000|0.00
-   string sGridBase            = GetIniStringA(file, section, "rt.gridbase",             "");      // mixed[] rt.gridbase= 4|1331710960|1.56743, 5|1331711010|1.56714
+   string sSessionbreakWaiting = GetIniStringA(file, section, "rt.sessionbreak.waiting",  "");     // bool    rt.sessionbreak.waiting=1
+   string sStartEquity         = GetIniStringA(file, section, "rt.sequence.startEquity",  "");     // double  rt.sequence.startEquity=7801.13
+   string sMaxProfit           = GetIniStringA(file, section, "rt.sequence.maxProfit",    "");     // double  rt.sequence.maxProfit=200.13
+   string sMaxDrawdown         = GetIniStringA(file, section, "rt.sequence.maxDrawdown",  "");     // double  rt.sequence.maxDrawdown=-127.80
+   string sStarts              = GetIniStringA(file, section, "rt.sequence.starts",       "");     // mixed[] rt.sequence.starts=1|1328701713|1.32677|1000.00, 3|1329999999|1.33215|1200.00
+   string sStops               = GetIniStringA(file, section, "rt.sequence.stops",        "");     // mixed[] rt.sequence.stops= 2|1328701999|1.32734|1200.00, 0|0|0.00000|0.00
+   string sGridBase            = GetIniStringA(file, section, "rt.gridbase",              "");     // mixed[] rt.gridbase= 4|1331710960|1.56743, 5|1331711010|1.56714
+   string sMissedLevels        = GetIniStringA(file, section, "rt.sequence.missedLevels", "");     // int[]   rt.sequence.missedLevels=-6,-7,-8,-14
+   string sPendingOrders       = GetIniStringA(file, section, "rt.ignorePendingOrders",   "");     // int[]   rt.ignorePendingOrders=66064890,66064891,66064892
+   string sOpenPositions       = GetIniStringA(file, section, "rt.ignoreOpenPositions",   "");     // int[]   rt.ignoreOpenPositions=66064890,66064891,66064892
+   string sClosedOrders        = GetIniStringA(file, section, "rt.ignoreClosedPositions", "");     // int[]   rt.ignoreClosedPositions=66064890,66064891,66064892
 
    sessionbreak.waiting = StrToBool(sSessionbreakWaiting);
    if (!StrIsNumeric(sStartEquity))         return(!catch("ReadStatus(12)  invalid or missing sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3698,23 +3706,22 @@ bool ReadStatus() {
                                             return(!catch("ReadStatus(18)  sequence.starts["+ ArraySize(sequence.start.event) +"]/sequence.stops["+ ArraySize(sequence.stop.event) +"] mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseGridBase(sGridBase);
    if (!success)                            return(!catch("ReadStatus(19)  invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   success = ReadStatus.ParseMissedLevels(sMissedLevels);
+   if (!success)                            return(!catch("ReadStatus(20)  invalid missed gridlevels "+ DoubleQuoteStr(sMissedLevels) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   success = ReadStatus.ParseTickets(sPendingOrders, ignorePendingOrders);
+   if (!success)                            return(!catch("ReadStatus(21)  invalid ignored pending orders "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   success = ReadStatus.ParseTickets(sOpenPositions, ignoreOpenPositions);
+   if (!success)                            return(!catch("ReadStatus(22)  invalid ignored open positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   success = ReadStatus.ParseTickets(sOpenPositions, ignoreClosedPositions);
+   if (!success)                            return(!catch("ReadStatus(23)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
 
-
-
-   if (!catch("ReadStatus(20)"))
+   if (!catch("ReadStatus(24)"))
       SetLastError(ERR_CANCELLED_BY_USER);
    return(!last_error);
 
 
    // --- old version -------------------------------------------------------------------------------------------------------
-   /*
-   "rt.sequence.missedLevels",
-   "rt.ignorePendingOrders"  ,
-   "rt.ignoreOpenPositions"  ,
-   "rt.ignoreClosedPositions",
-   */
-
    // Runtime-Settings auslesen, validieren und übernehmen
    for (int i=0; i < size; i++) {
       ReadStatus.Runtime("rt.{key}", "rt.{value}");
@@ -3740,7 +3747,7 @@ bool ReadStatus() {
    //      break;
    //   }
    //}
-   //else if (!starts)                                                  return(_false(catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   //else if (!starts) return(_false(catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
 
    return(!catch("ReadStatus(20)"));
@@ -3777,20 +3784,20 @@ int ReadStatusSections(string file, string &names[]) {
 /**
  * Parse and store the string representation of sequence start/stop data.
  *
- * @param  string   value     - string to parse
- * @param  int      events [] - array receiving the start/stop events
- * @param  datetime times  [] - array receiving the start/stop times
- * @param  double   prices [] - array receiving the start/stop prices
- * @param  double   profits[] - array receiving the start/stop PL amounts
+ * @param  _In_  string   value     - string to parse
+ * @param  _Out_ int      events [] - array receiving the start/stop events
+ * @param  _Out_ datetime times  [] - array receiving the start/stop times
+ * @param  _Out_ double   prices [] - array receiving the start/stop prices
+ * @param  _Out_ double   profits[] - array receiving the start/stop PL amounts
  *
  * @return bool - success status
  */
 bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], double &prices[], double &profits[]) {
    if (IsLastError()) return(false);
-   int      event;
-   datetime time;
-   double   price;                               // rt.sequence.starts: 1|1328701713|1.32677|1000.00,  3|1329999999|1.33215|1200.00
-   double   profit;                              // rt.sequence.stops:  2|1328701999|1.32734|1200.00,  0|0|0.00000|0.00
+   int      event;  ArrayResize(events,  0);
+   datetime time;   ArrayResize(times,   0);
+   double   price;  ArrayResize(prices,  0);     // rt.sequence.starts: 1|1328701713|1.32677|1000.00,  3|1329999999|1.33215|1200.00
+   double   profit; ArrayResize(profits, 0);     // rt.sequence.stops:  2|1328701999|1.32734|1200.00,  0|0|0.00000|0.00
 
    string records[], record, data[], sValue;
    int sizeOfRecords = Explode(value, ",", records, NULL);
@@ -3845,12 +3852,12 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
  */
 bool ReadStatus.ParseGridBase(string value) {
    if (IsLastError()) return(false);
-   int      event, lastEvent;
-   datetime time;
-   double   price;                               // rt.gridbase=1|1331710960|1.56743, 2|1331711010|1.56714
+   int      event; ArrayResize(gridbase.event, 0);
+   datetime time;  ArrayResize(gridbase.time,  0);
+   double   price; ArrayResize(gridbase.price, 0);    // rt.gridbase=1|1331710960|1.56743, 2|1331711010|1.56714
 
    string records[], record, data[], sValue;
-   int sizeOfRecords = Explode(value, ",", records, NULL);
+   int lastEvent, sizeOfRecords=Explode(value, ",", records, NULL);
 
    for (int i=0; i < sizeOfRecords; i++) {
       record = StrTrim(records[i]);
@@ -3889,6 +3896,67 @@ bool ReadStatus.ParseGridBase(string value) {
 
 
 /**
+ * Parse and store the string representation of missed gridlevels.
+ *
+ * @param  string value - string to parse
+ *
+ * @return bool - success status
+ */
+bool ReadStatus.ParseMissedLevels(string value) {
+   if (IsLastError()) return(false);
+   ArrayResize(sequence.missedLevels, 0);             // rt.sequence.missedLevels=-6,-7,-8,-14
+
+   if (StringLen(value) > 0) {
+      string values[], sValue;
+      int sizeOfValues=Explode(value, ",", values, NULL), level, lastLevel, sign, lastSign;
+
+      for (int i=0; i < sizeOfValues; i++) {
+         sValue = StrTrim(values[i]);
+         if (!StrIsInteger(sValue))        return(!catch("ReadStatus.ParseMissedLevels(1)  invalid missed gridlevel in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+         level = StrToInteger(sValue);
+         if (!level)                       return(!catch("ReadStatus.ParseMissedLevels(2)  illegal missed gridlevel in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+         sign = Sign(level);
+         if (lastSign && sign!=lastSign)   return(!catch("ReadStatus.ParseMissedLevels(3)  illegal missed gridlevel in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+         if (Abs(level) <= Abs(lastLevel)) return(!catch("ReadStatus.ParseMissedLevels(4)  illegal missed gridlevel in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+         lastSign  = sign;
+         lastLevel = level;
+
+         ArrayPushInt(sequence.missedLevels, level);
+      }
+   }
+   return(!catch("ReadStatus.ParseMissedLevels(5)"));
+}
+
+
+/**
+ * Parse and store the string representation of order tickets.
+ *
+ * @param  _In_  string value     - string to parse
+ * @param  _Out_ int    tickets[] - array receiving the parsed ticket ids
+ *
+ * @return bool - success status
+ */
+bool ReadStatus.ParseTickets(string value, int &tickets[]) {
+   if (IsLastError()) return(false);
+   ArrayResize(tickets, 0);                           // rt.ignorePendingOrders=66064890,66064891,66064892
+                                                      // rt.ignoreOpenPositions=66064890,66064891,66064892
+   if (StringLen(value) > 0) {                        // rt.ignoreClosedPositions=66064890,66064891,66064892
+      string values[], sValue;
+      int ticket, sizeOfValues=Explode(value, ",", values, NULL);
+
+      for (int i=0; i < sizeOfValues; i++) {
+         sValue = StrTrim(values[i]);
+         if (!StrIsDigit(sValue)) return(!catch("ReadStatus.ParseTickets(1)  invalid ticket "+ DoubleQuoteStr(sValue) +" in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+         ticket = StrToInteger(sValue);
+         if (!ticket)             return(!catch("ReadStatus.ParseTickets(2)  illegal ticket #"+ ticket +" in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
+         ArrayPushInt(tickets, ticket);
+      }
+   }
+   return(!catch("ReadStatus.ParseTickets(3)"));
+}
+
+
+/**
  * Restauriert eine oder mehrere Laufzeitvariablen.
  *
  * @param  string key   - Schlüssel der Einstellung
@@ -3899,112 +3967,55 @@ bool ReadStatus.ParseGridBase(string value) {
 bool ReadStatus.Runtime(string key, string value) {
    if (IsLastError()) return(false);
    /*
-   string   rt.sequence.missedLevels=-6,-7,-8,-14
-   string   rt.ignorePendingOrders=66064890,66064891,66064892
-   string   rt.ignoreOpenPositions=66064890,66064891,66064892
-   string   rt.ignoreClosedPositions=66064890,66064891,66064892
-   string   rt.order.0=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
-
-            rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
-            -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            int      ticket       = values[ 0];
-            int      level        = values[ 1];
-            double   gridBase     = values[ 2];
-            int      pendingType  = values[ 3];
-            datetime pendingTime  = values[ 4];
-            double   pendingPrice = values[ 5];
-            int      type         = values[ 6];
-            int      openEvent    = values[ 7];
-            datetime openTime     = values[ 8];
-            double   openPrice    = values[ 9];
-            int      closeEvent   = values[10];
-            datetime closeTime    = values[11];
-            double   closePrice   = values[12];
-            double   stopLoss     = values[13];
-            bool     clientLimit  = values[14];
-            bool     closedBySL   = values[15];
-            double   swap         = values[16];
-            double   commission   = values[17];
-            double   profit       = values[18];
+   string rt.order.0=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
+          rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
+          --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+          int      ticket       = values[ 0];
+          int      level        = values[ 1];
+          double   gridBase     = values[ 2];
+          int      pendingType  = values[ 3];
+          datetime pendingTime  = values[ 4];
+          double   pendingPrice = values[ 5];
+          int      type         = values[ 6];
+          int      openEvent    = values[ 7];
+          datetime openTime     = values[ 8];
+          double   openPrice    = values[ 9];
+          int      closeEvent   = values[10];
+          datetime closeTime    = values[11];
+          double   closePrice   = values[12];
+          double   stopLoss     = values[13];
+          bool     clientLimit  = values[14];
+          bool     closedBySL   = values[15];
+          double   swap         = values[16];
+          double   commission   = values[17];
+          double   profit       = values[18];
    */
    string values[], data[], file, line;
 
-   if (key == "rt.sequence.missedLevels") {
-      // rt.sequence.missedLevels=-6,-7,-8,-14
-      if (StringLen(value) > 0) {
-         int sizeOfValues = Explode(value, ",", values, NULL);
-         for (int i=0; i < sizeOfValues; i++) {
-            string sLevel = StrTrim(values[i]);
-            if (!StrIsInteger(sLevel))                                      return(_false(catch("ReadStatus.Runtime(28)  illegal missed grid level \""+ sLevel +"\" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            int level = StrToInteger(sLevel);
-            if (!level)                                                     return(_false(catch("ReadStatus.Runtime(29)  illegal missed grid level "+ level +" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            ArrayPushInt(sequence.missedLevels, level);
-         }
-      }
-   }
-   else if (key == "rt.ignorePendingOrders") {
-      // rt.ignorePendingOrders=66064890,66064891,66064892
-      if (StringLen(value) > 0) {
-         sizeOfValues = Explode(value, ",", values, NULL);
-         for (i=0; i < sizeOfValues; i++) {
-            string sTicket = StrTrim(values[i]);
-            if (!StrIsDigit(sTicket))                                       return(_false(catch("ReadStatus.Runtime(30)  illegal ticket \""+ sTicket +"\" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            int ticket = StrToInteger(sTicket);
-            if (!ticket)                                                    return(_false(catch("ReadStatus.Runtime(31)  illegal ticket #"+ ticket +" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            ArrayPushInt(ignorePendingOrders, ticket);
-         }
-      }
-   }
-   else if (key == "rt.ignoreOpenPositions") {
-      // rt.ignoreOpenPositions=66064890,66064891,66064892
-      if (StringLen(value) > 0) {
-         sizeOfValues = Explode(value, ",", values, NULL);
-         for (i=0; i < sizeOfValues; i++) {
-            sTicket = StrTrim(values[i]);
-            if (!StrIsDigit(sTicket))                                       return(_false(catch("ReadStatus.Runtime(32)  illegal ticket \""+ sTicket +"\" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            ticket = StrToInteger(sTicket);
-            if (!ticket)                                                    return(_false(catch("ReadStatus.Runtime(33)  illegal ticket #"+ ticket +" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            ArrayPushInt(ignoreOpenPositions, ticket);
-         }
-      }
-   }
-   else if (key == "rt.ignoreClosedPositions") {
-      // rt.ignoreClosedPositions=66064890,66064891,66064892
-      if (StringLen(value) > 0) {
-         sizeOfValues = Explode(value, ",", values, NULL);
-         for (i=0; i < sizeOfValues; i++) {
-            sTicket = StrTrim(values[i]);
-            if (!StrIsDigit(sTicket))                                       return(_false(catch("ReadStatus.Runtime(34)  illegal ticket \""+ sTicket +"\" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            ticket = StrToInteger(sTicket);
-            if (!ticket)                                                    return(_false(catch("ReadStatus.Runtime(35)  illegal ticket #"+ ticket +" in status file (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            ArrayPushInt(ignoreClosedPositions, ticket);
-         }
-      }
-   }
-   else if (StrStartsWith(key, "rt.order.")) {
+   if (StrStartsWith(key, "rt.order.")) {
       // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
       // Orderindex
       string strIndex = StrSubstr(key, 9);
       if (!StrIsDigit(strIndex))                                            return(_false(catch("ReadStatus.Runtime(45)  illegal order index \""+ key +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      i = StrToInteger(strIndex);
+      int i = StrToInteger(strIndex);
       if (ArraySize(orders.ticket) > i) /*&&*/ if (orders.ticket[i]!=0)     return(_false(catch("ReadStatus.Runtime(46)  duplicate order index "+ key +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // Orderdaten
       if (Explode(value, ",", values, NULL) != 19)                          return(_false(catch("ReadStatus.Runtime(47)  illegal number of order details ("+ ArraySize(values) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // ticket
-      sTicket = StrTrim(values[0]);
+      string sTicket = StrTrim(values[0]);
       if (!StrIsInteger(sTicket))                                           return(_false(catch("ReadStatus.Runtime(48)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      ticket = StrToInteger(sTicket);
+      int ticket = StrToInteger(sTicket);
       if (ticket > 0) {
          if (IntInArray(orders.ticket, ticket))                             return(_false(catch("ReadStatus.Runtime(49)  duplicate ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       }
       else if (ticket!=-1 && ticket!=-2)                                    return(_false(catch("ReadStatus.Runtime(50)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // level
-      sLevel = StrTrim(values[1]);
+      string sLevel = StrTrim(values[1]);
       if (!StrIsInteger(sLevel))                                            return(_false(catch("ReadStatus.Runtime(51)  illegal grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      level = StrToInteger(sLevel);
+      int level = StrToInteger(sLevel);
       if (!level)                                                           return(_false(catch("ReadStatus.Runtime(52)  illegal grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // gridBase

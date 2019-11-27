@@ -35,7 +35,7 @@ int    tester.hEquitySet        = 0;                                 // handle o
 int init() {
    if (__STATUS_OFF) {                                               // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason == ERR_TERMINAL_INIT_FAILURE) {
-         ForceAlert("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
+         //ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
       }
       else ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
