@@ -1,9 +1,9 @@
 /**
  * Global constants and variables
  */
-#property stacksize 32768                                   // internally a regular constant
-
-#include <mqldefines.mqh>
+#property stacksize 262144                                  // According to MetaQuotes the default stacksize in between is at least 256kb, in older
+                                                            // builds it used to be much smaller.
+#include <mqldefines.mqh>                                   // @see https://docs.mql4.com/basis/variables/local
 #include <win32defines.mqh>
 #include <structs/sizes.mqh>
 
