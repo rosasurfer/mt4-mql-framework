@@ -2040,21 +2040,20 @@ string StrRight(string value, int n) {
  * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
  * Teilstring nicht.
  *
- * @param  string value     - Ausgangsstring
- * @param  string substring - der das Ergebnis begrenzende Teilstring
- * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                            Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
- *                            zurückgegeben.
- *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
- *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings, wird
- *                            der gesamte String zurückgegeben.
+ * @param  string value            - Ausgangsstring
+ * @param  string substring        - der das Ergebnis begrenzende Teilstring
+ * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
+ *                                   Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
+ *                                   zurückgegeben.
+ *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ *                                   Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings,
+ *                                   wird der gesamte String zurückgegeben.
  * @return string
  */
-string StrRightFrom(string value, string substring, int count=1) {
+string StrRightFrom(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-
-   // (1) positive Anzahl: von vorn zählen
+   // positive Anzahl: von vorn zählen
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2065,8 +2064,7 @@ string StrRightFrom(string value, string substring, int count=1) {
       return(StrSubstr(value, pos+StringLen(substring)));
    }
 
-
-   // (2) negative Anzahl: von hinten zählen
+   // negative Anzahl: von hinten zählen
    if (count < 0) {
       /*
       while(count < 0) {
