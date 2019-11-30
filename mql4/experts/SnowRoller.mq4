@@ -3603,9 +3603,6 @@ bool RestoreSequence(bool interactive) {
    bool success = ReadStatus();
    debug("RestoreSequence(0.2)  OK");
 
-   SetLastError(ERR_CANCELLED_BY_USER);
-   return(false);
-
    if (!success)                     return(false);      // read the status file
    if (!ValidateInputs(interactive)) return(false);      // validate restored input parameters
    if (!SynchronizeStatus())         return(false);      // synchronize restored state with trade server state
@@ -3649,7 +3646,6 @@ bool ReadStatus() {
    string sections[];
    int size = ReadStatusSections(file, sections); if (!size) return(false);
 
-   // input parameters
    section = sections[size-1];
    string sCreated               = GetIniStringA(file, section, "Created",                "");     // string   Created=Tue, 2019.09.24 01:00:00
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");     // int      GridSize=20
@@ -3680,7 +3676,6 @@ bool ReadStatus() {
    if (!StrIsDigit(sSessionbreakEndTime))   return(!catch("ReadStatus(11)  invalid or missing Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
 
-   // runtime vars
    string sSessionbreakWaiting = GetIniStringA(file, section, "rt.sessionbreak.waiting",  "");     // bool    rt.sessionbreak.waiting=1
    string sStartEquity         = GetIniStringA(file, section, "rt.sequence.startEquity",  "");     // double  rt.sequence.startEquity=7801.13
    string sMaxProfit           = GetIniStringA(file, section, "rt.sequence.maxProfit",    "");     // double  rt.sequence.maxProfit=200.13
@@ -3719,37 +3714,40 @@ bool ReadStatus() {
    if (!success)                            return(!catch("ReadStatus(23)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
 
-   return(!catch("ReadStatus(24)"));
+   catch("ReadStatus(24)");
+   SetLastError(ERR_CANCELLED_BY_USER);
+   if (IsLastError()) return(false);
 
 
    // --- old version -------------------------------------------------------------------------------------------------------
    // Runtime-Settings auslesen, validieren und übernehmen
-   //for (int i=0; i < size; i++) {
-   //   ReadStatus.Runtime("rt.{key}", "rt.{value}");
+   for (int i=0; i < size; i++) {
+      ReadStatus.Runtime("rt.{key}", "rt.{value}");
+   }
+
+   // Abhängigkeiten validieren
+   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("ReadStatus(19)  one or more order entries missing in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+   // check start events for "0|0|0|0" values (allowed only before first start)
+   // check order of start/stop events
+   // check order of start/stop times
+
+   // check:  gridbaseEvent[0] && !starts
+   // check: !gridbaseEvent[0] &&  starts
+
+   //// GridBase-Event
+   //int gridBaseEvent = StrToInteger(value);
+   //int starts = ArraySize(sequence.start.event);
+   //if (!gridBaseEvent) {
+   //   if (sizeOfRecords==1 && record=="0|0|0") {
+   //      if (starts > 0)
+   //         return(_false(catch("ReadStatus.Runtime(38)  sequence.start/gridbase["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   //      break;
+   //   }
    //}
-   //
-   //// Abhängigkeiten validieren
-   //if (IntInArray(orders.ticket, 0))                                       return(_false(catch("ReadStatus(19)  one or more order entries missing in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
-   //
-   //// check start events for "0|0|0|0" values (allowed only before first start)
-   //// check order of start/stop events
-   //// check order of start/stop times
-   //
-   //// check:  gridbaseEvent[0] && !starts
-   //// check: !gridbaseEvent[0] &&  starts
-   //
-   ////// GridBase-Event
-   ////int gridBaseEvent = StrToInteger(value);
-   ////int starts = ArraySize(sequence.start.event);
-   ////if (!gridBaseEvent) {
-   ////   if (sizeOfRecords==1 && record=="0|0|0") {
-   ////      if (starts > 0)
-   ////         return(_false(catch("ReadStatus.Runtime(38)  sequence.start/gridbase["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-   ////      break;
-   ////   }
-   ////}
-   ////else if (!starts) return(_false(catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-   //return(!catch("ReadStatus(20)"));
+   //else if (!starts) return(_false(catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+
+   return(!catch("ReadStatus(20)"));
 }
 
 
