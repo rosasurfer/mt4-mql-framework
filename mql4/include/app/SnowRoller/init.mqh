@@ -142,12 +142,14 @@ int onInitRecompile() {
 
 
 /**
- * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
- * returned with -1 (which signals a hard stop as opposite to a regular error).
+ * Initialization post-processing hook. Not called if the reason-specific event handler returned with an error.
  *
  * @return int - error status
  */
 int afterInit() {
+   CreateStatusBox();
+   SS.All();
+
    if (IsTesting()) {
       string section = __NAME() +".Tester";
       tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
@@ -156,8 +158,9 @@ int afterInit() {
       tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
       tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
    }
-   CreateStatusBox();
-   SS.All();
+   else if (IsTestSequence() && sequence.status!=STATUS_STOPPED) {
+      sequence.status = STATUS_STOPPED;                     // a finished test loaded into an online chart
+   }
    return(last_error);
 }
 

@@ -317,7 +317,7 @@ int onTick() {
 /**
  * Handle incoming commands.
  *
- * @param  string commands[] - received external commands
+ * @param  string commands[] - received commands
  *
  * @return bool - success status
  */
@@ -328,6 +328,9 @@ bool onCommand(string commands[]) {
    string cmd = commands[0];
 
    if (cmd == "start") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
@@ -340,6 +343,9 @@ bool onCommand(string commands[]) {
    }
 
    else if (cmd == "stop") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
       switch (sequence.status) {
          case STATUS_PROGRESSING:
             bool bNull;
@@ -3542,6 +3548,7 @@ string SaveSequence.OrderToStr(int index) {
 
 
 /**
+ * Restore the internal state of the EA from the current sequence's status file.
  *
  * @param  bool interactive - whether input parameters have been entered through the input dialog
  *
@@ -3551,19 +3558,15 @@ bool RestoreSequence(bool interactive) {
    interactive = interactive!=0;
    if (IsLastError())                return(false);
 
-   debug("RestoreSequence(0.1)->ReadStatus()...");
-   bool success = ReadStatus();
-   debug("RestoreSequence(0.2)  OK");
-
-   if (!success)                     return(false);      // read the status file
+   if (!ReadStatus())                return(false);      // read the status file
    if (!ValidateInputs(interactive)) return(false);      // validate restored input parameters
-   if (!SynchronizeStatus())         return(false);      // synchronize restored state with trade server state
+   if (!SynchronizeStatus())         return(false);      // synchronize restored state with the trade server
    return(true);
 }
 
 
 /**
- * Restore the internal state of the current sequence from the sequence's status file. Always part of RestoreSequence().
+ * Read the current sequence's status file and restore internal variables. Always part of RestoreSequence().
  *
  * @return bool - success status
  */
@@ -3674,10 +3677,9 @@ bool ReadStatus() {
    success = ReadStatus.ParseTickets(sOpenPositions, ignoreClosedPositions);
    if (!success)                            return(!catch("ReadStatus(25)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
-   ResizeOrderArrays(0);
    string orderKeys[], sOrder;
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
-
+   ResizeOrderArrays(0);
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
       success = ReadStatus.ParseOrder(sOrder);

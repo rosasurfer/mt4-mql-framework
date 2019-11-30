@@ -48,7 +48,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(__NAME(), "No sequence ready to start found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(__NAME(), "No sequence to start found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }
