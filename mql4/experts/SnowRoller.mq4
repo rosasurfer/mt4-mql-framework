@@ -3425,7 +3425,7 @@ bool SaveSequence() {
    //       - write section entries
    int size = ArraySize(orders.ticket);
    for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "rt.order."+ i, SaveSequence.OrderToStr(i));
+      WriteIniString(file, section, "rt.order."+ StrPadLeft(i, 4, "0"), SaveSequence.OrderToStr(i));
    }
 
    return(!catch("SaveSequence(2)"));
@@ -3615,8 +3615,8 @@ bool ReadStatus() {
    // [SnowRoller-xxx] last cycle
    string sections[];
    int size = ReadStatusSections(file, sections); if (!size) return(false);
-
    section = sections[size-1];
+
    string sCreated               = GetIniStringA(file, section, "Created",                "");     // string   Created=Tue, 2019.09.24 01:00:00
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");     // int      GridSize=20
    string sLotSize               = GetIniStringA(file, section, "LotSize",                "");     // double   LotSize=0.01
@@ -3683,21 +3683,42 @@ bool ReadStatus() {
    success = ReadStatus.ParseTickets(sOpenPositions, ignoreClosedPositions);
    if (!success)                            return(!catch("ReadStatus(23)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
+   ArrayResize(orders.ticket,          0);
+   ArrayResize(orders.level,           0);
+   ArrayResize(orders.gridBase,        0);
+   ArrayResize(orders.pendingType,     0);
+   ArrayResize(orders.pendingTime,     0);
+   ArrayResize(orders.pendingPrice,    0);
+   ArrayResize(orders.type,            0);
+   ArrayResize(orders.openEvent,       0);
+   ArrayResize(orders.openTime,        0);
+   ArrayResize(orders.openPrice,       0);
+   ArrayResize(orders.closeEvent,      0);
+   ArrayResize(orders.closeTime,       0);
+   ArrayResize(orders.closePrice,      0);
+   ArrayResize(orders.stopLoss,        0);
+   ArrayResize(orders.clientsideLimit, 0);
+   ArrayResize(orders.closedBySL,      0);
+   ArrayResize(orders.swap,            0);
+   ArrayResize(orders.commission,      0);
+   ArrayResize(orders.profit,          0);
 
-   catch("ReadStatus(24)");
+   string orderKeys[], sOrder;
+   size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
+   for (int i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
+      success = ReadStatus.ParseOrder(sOrder);
+      if (!success) return(!catch("ReadStatus(24)  invalid order record "+ DoubleQuoteStr(orderKeys[i]) +" = "+ DoubleQuoteStr(sOrder) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   }
+
+   debug("ReadStatus(0.1)  orders="+ StringsToStr(orderKeys, NULL));
+
+   catch("ReadStatus(25)");
    SetLastError(ERR_CANCELLED_BY_USER);
    if (IsLastError()) return(false);
 
 
    // --- old version -------------------------------------------------------------------------------------------------------
-   // Runtime-Settings auslesen, validieren und übernehmen
-   for (int i=0; i < size; i++) {
-      ReadStatus.Runtime("rt.{key}", "rt.{value}");
-   }
-
-   // Abhängigkeiten validieren
-   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("ReadStatus(19)  one or more order entries missing in file \""+ file +"\"", ERR_RUNTIME_ERROR)));
-
    // check start events for "0|0|0|0" values (allowed only before first start)
    // check order of start/stop events
    // check order of start/stop times
@@ -3711,13 +3732,11 @@ bool ReadStatus() {
    //if (!gridBaseEvent) {
    //   if (sizeOfRecords==1 && record=="0|0|0") {
    //      if (starts > 0)
-   //         return(_false(catch("ReadStatus.Runtime(38)  sequence.start/gridbase["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   //         return(!catch("ReadStatus.Runtime(38)  sequence.start/gridbase["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    //      break;
    //   }
    //}
-   //else if (!starts) return(_false(catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-   return(!catch("ReadStatus(20)"));
+   //else if (!starts) return(!catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 }
 
 
@@ -3733,9 +3752,11 @@ int ReadStatusSections(string file, string &names[]) {
    int size = GetIniSections(file, names);
    if (!size) return(NULL);
 
+   string prefix = "SnowRoller-";
+
    for (int i=size-1; i >= 0; i--) {
-      if (StrStartsWithI(names[i], "SnowRoller-")) {
-         if (StrIsDigit(StrRight(names[i], -11)))
+      if (StrStartsWithI(names[i], prefix)) {
+         if (StrIsDigit(StrRightFrom(names[i], prefix)))
             continue;
       }
       ArraySpliceStrings(names, i, 1);                // drop all sections not matching '/SnowRoller-[0-9]+/i'
@@ -3744,6 +3765,34 @@ int ReadStatusSections(string file, string &names[]) {
    if (!SortStrings(names)) return(NULL);             // TODO: implement natural sorting
    if (!size)               return(!catch("ReadStatusSections(1)  invalid status file "+ DoubleQuoteStr(file) +" (no \"SnowRoller\" sections found)", ERR_INVALID_FILE_FORMAT));
 
+   return(size);
+}
+
+
+/**
+ * Return the order keys ("rt.order.xxx") found in the specified status file section, sorted in ascending order.
+ *
+ * @param  _In_  string file    - status filename
+ * @param  _In_  string section - status section
+ * @param  _Out_ string keys[]  - array receiving the found order keys
+ *
+ * @return int - number of found order keys or EMPTY (-1) in case of errors
+ */
+int ReadStatusOrders(string file, string section, string &keys[]) {
+   int size = GetIniKeys(file, section, keys);
+   if (size < 0) return(EMPTY);
+
+   string prefix = "rt.order.";
+
+   for (int i=size-1; i >= 0; i--) {
+      if (StrStartsWithI(keys[i], prefix)) {
+         if (StrIsDigit(StrRightFrom(keys[i], prefix)))
+            continue;
+      }
+      ArraySpliceStrings(keys, i, 1);                 // drop all keys not matching '/rt\.order\.[0-9]+/i'
+      size--;
+   }
+   if (!SortStrings(keys)) return(EMPTY);             // TODO: implement natural sorting
    return(size);
 }
 
@@ -3924,195 +3973,181 @@ bool ReadStatus.ParseTickets(string value, int &tickets[]) {
 
 
 /**
- * Restauriert eine oder mehrere Laufzeitvariablen.
+ * Parse and store the string representation of an order.
  *
- * @param  string key   - Schlüssel der Einstellung
- * @param  string value - Wert der Einstellung
+ * @param  string value - string to parse
  *
  * @return bool - success status
  */
-bool ReadStatus.Runtime(string key, string value) {
+bool ReadStatus.ParseOrder(string value) {
    if (IsLastError()) return(false);
    /*
-   string rt.order.0=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
-          rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
-          --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-          int      ticket       = values[ 0];
-          int      level        = values[ 1];
-          double   gridBase     = values[ 2];
-          int      pendingType  = values[ 3];
-          datetime pendingTime  = values[ 4];
-          double   pendingPrice = values[ 5];
-          int      type         = values[ 6];
-          int      openEvent    = values[ 7];
-          datetime openTime     = values[ 8];
-          double   openPrice    = values[ 9];
-          int      closeEvent   = values[10];
-          datetime closeTime    = values[11];
-          double   closePrice   = values[12];
-          double   stopLoss     = values[13];
-          bool     clientLimit  = values[14];
-          bool     closedBySL   = values[15];
-          double   swap         = values[16];
-          double   commission   = values[17];
-          double   profit       = values[18];
+   rt.order.0=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
+   rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
+   --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   int      ticket       = values[ 0];
+   int      level        = values[ 1];
+   double   gridBase     = values[ 2];
+   int      pendingType  = values[ 3];
+   datetime pendingTime  = values[ 4];
+   double   pendingPrice = values[ 5];
+   int      type         = values[ 6];
+   int      openEvent    = values[ 7];
+   datetime openTime     = values[ 8];
+   double   openPrice    = values[ 9];
+   int      closeEvent   = values[10];
+   datetime closeTime    = values[11];
+   double   closePrice   = values[12];
+   double   stopLoss     = values[13];
+   bool     clientLimit  = values[14];
+   bool     closedBySL   = values[15];
+   double   swap         = values[16];
+   double   commission   = values[17];
+   double   profit       = values[18];
    */
-   string values[], data[], file, line;
+   string values[];
+   if (Explode(value, ",", values, NULL) != 19)                          return(!catch("ReadStatus.ParseOrder(1)  illegal number of order details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
 
-   if (StrStartsWith(key, "rt.order.")) {
-      // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
-      // Orderindex
-      string strIndex = StrSubstr(key, 9);
-      if (!StrIsDigit(strIndex))                                            return(_false(catch("ReadStatus.Runtime(45)  illegal order index \""+ key +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int i = StrToInteger(strIndex);
-      if (ArraySize(orders.ticket) > i) /*&&*/ if (orders.ticket[i]!=0)     return(_false(catch("ReadStatus.Runtime(46)  duplicate order index "+ key +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   // ticket
+   string sTicket = StrTrim(values[0]);
+   if (!StrIsInteger(sTicket))                                           return(!catch("ReadStatus.ParseOrder(2)  illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
+   int ticket = StrToInteger(sTicket);
+   if (ticket > 0) {
+      if (IntInArray(orders.ticket, ticket))                             return(!catch("ReadStatus.ParseOrder(3)  duplicate ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
+   }
+   else if (ticket!=-1 && ticket!=-2)                                    return(!catch("ReadStatus.ParseOrder(4)  illegal ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
 
-      // Orderdaten
-      if (Explode(value, ",", values, NULL) != 19)                          return(_false(catch("ReadStatus.Runtime(47)  illegal number of order details ("+ ArraySize(values) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   // level
+   string sLevel = StrTrim(values[1]);
+   if (!StrIsInteger(sLevel))                                            return(!catch("ReadStatus.ParseOrder(5)  illegal grid level "+ DoubleQuoteStr(sLevel) +" in order record", ERR_INVALID_FILE_FORMAT));
+   int level = StrToInteger(sLevel);
+   if (!level)                                                           return(!catch("ReadStatus.ParseOrder(6)  illegal grid level "+ level +" in order record", ERR_INVALID_FILE_FORMAT));
 
-      // ticket
-      string sTicket = StrTrim(values[0]);
-      if (!StrIsInteger(sTicket))                                           return(_false(catch("ReadStatus.Runtime(48)  illegal ticket \""+ sTicket +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int ticket = StrToInteger(sTicket);
-      if (ticket > 0) {
-         if (IntInArray(orders.ticket, ticket))                             return(_false(catch("ReadStatus.Runtime(49)  duplicate ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      }
-      else if (ticket!=-1 && ticket!=-2)                                    return(_false(catch("ReadStatus.Runtime(50)  illegal ticket #"+ ticket +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   // gridbase
+   string sGridbase = StrTrim(values[2]);
+   if (!StrIsNumeric(sGridbase))                                         return(!catch("ReadStatus.ParseOrder(7)  illegal order gridbase "+ DoubleQuoteStr(sGridbase) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double gridbase = StrToDouble(sGridbase);
+   if (LE(gridbase, 0))                                                  return(!catch("ReadStatus.ParseOrder(8)  illegal order gridbase "+ NumberToStr(gridbase, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
 
-      // level
-      string sLevel = StrTrim(values[1]);
-      if (!StrIsInteger(sLevel))                                            return(_false(catch("ReadStatus.Runtime(51)  illegal grid level \""+ sLevel +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int level = StrToInteger(sLevel);
-      if (!level)                                                           return(_false(catch("ReadStatus.Runtime(52)  illegal grid level "+ level +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   // pendingType
+   string sPendingType = StrTrim(values[3]);
+   if (!StrIsInteger(sPendingType))                                      return(!catch("ReadStatus.ParseOrder(9)  illegal pending order type "+ DoubleQuoteStr(sPendingType) +" in order record", ERR_INVALID_FILE_FORMAT));
+   int pendingType = StrToInteger(sPendingType);
+   if (pendingType!=OP_UNDEFINED && !IsPendingOrderType(pendingType))    return(!catch("ReadStatus.ParseOrder(10)  illegal pending order type "+ DoubleQuoteStr(sPendingType) +" in order record", ERR_INVALID_FILE_FORMAT));
 
-      // gridBase
-      string sGridBase = StrTrim(values[2]);
-      if (!StrIsNumeric(sGridBase))                                         return(_false(catch("ReadStatus.Runtime(53)  illegal order gridbase \""+ sGridBase +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double gridBase = StrToDouble(sGridBase);
-      if (LE(gridBase, 0))                                                  return(_false(catch("ReadStatus.Runtime(54)  illegal order gridbase "+ NumberToStr(gridBase, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   // pendingTime
+   string sPendingTime = StrTrim(values[4]);
+   if (!StrIsDigit(sPendingTime))                                        return(!catch("ReadStatus.ParseOrder(11)  illegal pending order time "+ DoubleQuoteStr(sPendingTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   datetime pendingTime = StrToInteger(sPendingTime);
+   if (pendingType==OP_UNDEFINED && pendingTime!=0)                      return(!catch("ReadStatus.ParseOrder(12)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/'"+ TimeToStr(pendingTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
+   if (pendingType!=OP_UNDEFINED && !pendingTime)                        return(!catch("ReadStatus.ParseOrder(13)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/"+ pendingTime +" in order record", ERR_INVALID_FILE_FORMAT));
 
-      // pendingType
-      string sPendingType = StrTrim(values[3]);
-      if (!StrIsInteger(sPendingType))                                      return(_false(catch("ReadStatus.Runtime(55)  illegal pending order type \""+ sPendingType +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int pendingType = StrToInteger(sPendingType);
-      if (pendingType!=OP_UNDEFINED && !IsPendingOrderType(pendingType))    return(_false(catch("ReadStatus.Runtime(56)  illegal pending order type \""+ sPendingType +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // pendingTime
-      string sPendingTime = StrTrim(values[4]);
-      if (!StrIsDigit(sPendingTime))                                        return(_false(catch("ReadStatus.Runtime(57)  illegal pending order time \""+ sPendingTime +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      datetime pendingTime = StrToInteger(sPendingTime);
-      if (pendingType==OP_UNDEFINED && pendingTime!=0)                      return(_false(catch("ReadStatus.Runtime(58)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/'"+ TimeToStr(pendingTime, TIME_FULL) +"' in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (pendingType!=OP_UNDEFINED && !pendingTime)                        return(_false(catch("ReadStatus.Runtime(59)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/"+ pendingTime +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // pendingPrice
-      string sPendingPrice = StrTrim(values[5]);
-      if (!StrIsNumeric(sPendingPrice))                                     return(_false(catch("ReadStatus.Runtime(60)  illegal pending order price \""+ sPendingPrice +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double pendingPrice = StrToDouble(sPendingPrice);
-      if (LT(pendingPrice, 0))                                              return(_false(catch("ReadStatus.Runtime(61)  illegal pending order price "+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                 return(_false(catch("ReadStatus.Runtime(62)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (pendingType!=OP_UNDEFINED) {
-         if (EQ(pendingPrice, 0))                                           return(_false(catch("ReadStatus.Runtime(63)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (NE(pendingPrice, gridBase+level*GridSize*Pips, Digits))        return(_false(catch("ReadStatus.Runtime(64)  gridbase/pending order price mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      }
-
-      // type
-      string sType = StrTrim(values[6]);
-      if (!StrIsInteger(sType))                                             return(_false(catch("ReadStatus.Runtime(65)  illegal order type \""+ sType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int type = StrToInteger(sType);
-      if (type!=OP_UNDEFINED && !IsOrderType(type))                         return(_false(catch("ReadStatus.Runtime(66)  illegal order type \""+ sType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (pendingType == OP_UNDEFINED) {
-         if (type == OP_UNDEFINED)                                          return(_false(catch("ReadStatus.Runtime(67)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      }
-      else if (type != OP_UNDEFINED) {
-         if (IsLongOrderType(pendingType)!=IsLongOrderType(type))           return(_false(catch("ReadStatus.Runtime(68)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      }
-
-      // openEvent
-      string sOpenEvent = StrTrim(values[7]);
-      if (!StrIsDigit(sOpenEvent))                                          return(_false(catch("ReadStatus.Runtime(69)  illegal order open event \""+ sOpenEvent +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int openEvent = StrToInteger(sOpenEvent);
-      if (type!=OP_UNDEFINED && !openEvent)                                 return(_false(catch("ReadStatus.Runtime(70)  illegal order open event "+ openEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // openTime
-      string sOpenTime = StrTrim(values[8]);
-      if (!StrIsDigit(sOpenTime))                                           return(_false(catch("ReadStatus.Runtime(71)  illegal order open time \""+ sOpenTime +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      datetime openTime = StrToInteger(sOpenTime);
-      if (type==OP_UNDEFINED && openTime!=0)                                return(_false(catch("ReadStatus.Runtime(72)  order type/time mis-match "+ OperationTypeToStr(type) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (type!=OP_UNDEFINED && !openTime)                                  return(_false(catch("ReadStatus.Runtime(73)  order type/time mis-match "+ OperationTypeToStr(type) +"/"+ openTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // openPrice
-      string sOpenPrice = StrTrim(values[9]);
-      if (!StrIsNumeric(sOpenPrice))                                        return(_false(catch("ReadStatus.Runtime(74)  illegal order open price \""+ sOpenPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double openPrice = StrToDouble(sOpenPrice);
-      if (LT(openPrice, 0))                                                 return(_false(catch("ReadStatus.Runtime(75)  illegal order open price "+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (type==OP_UNDEFINED && NE(openPrice, 0))                           return(_false(catch("ReadStatus.Runtime(76)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (type!=OP_UNDEFINED && EQ(openPrice, 0))                           return(_false(catch("ReadStatus.Runtime(77)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // closeEvent
-      string sCloseEvent = StrTrim(values[10]);
-      if (!StrIsDigit(sCloseEvent))                                         return(_false(catch("ReadStatus.Runtime(78)  illegal order close event \""+ sCloseEvent +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      int closeEvent = StrToInteger(sCloseEvent);
-
-      // closeTime
-      string sCloseTime = StrTrim(values[11]);
-      if (!StrIsDigit(sCloseTime))                                          return(_false(catch("ReadStatus.Runtime(79)  illegal order close time \""+ sCloseTime +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      datetime closeTime = StrToInteger(sCloseTime);
-      if (closeTime != 0) {
-         if (closeTime < pendingTime)                                       return(_false(catch("ReadStatus.Runtime(80)  pending order time/delete time mis-match '"+ TimeToStr(pendingTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (closeTime < openTime)                                          return(_false(catch("ReadStatus.Runtime(81)  order open/close time mis-match '"+ TimeToStr(openTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      }
-      if (closeTime!=0 && !closeEvent)                                      return(_false(catch("ReadStatus.Runtime(82)  illegal order close event "+ closeEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // closePrice
-      string sClosePrice = StrTrim(values[12]);
-      if (!StrIsNumeric(sClosePrice))                                       return(_false(catch("ReadStatus.Runtime(83)  illegal order close price \""+ sClosePrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double closePrice = StrToDouble(sClosePrice);
-      if (LT(closePrice, 0))                                                return(_false(catch("ReadStatus.Runtime(84)  illegal order close price "+ NumberToStr(closePrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // stopLoss
-      string sStopLoss = StrTrim(values[13]);
-      if (!StrIsNumeric(sStopLoss))                                         return(_false(catch("ReadStatus.Runtime(85)  illegal order stoploss \""+ sStopLoss +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double stopLoss = StrToDouble(sStopLoss);
-      if (LE(stopLoss, 0))                                                  return(_false(catch("ReadStatus.Runtime(86)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      if (NE(stopLoss, gridBase+(level-Sign(level))*GridSize*Pips, Digits)) return(_false(catch("ReadStatus.Runtime(87)  gridbase/stoploss mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // clientLimit
-      string sClientLimit = StrTrim(values[14]);
-      if (!StrIsDigit(sClientLimit))                                        return(_false(catch("ReadStatus.Runtime(88)  illegal clientLimit value \""+ sClientLimit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      bool clientLimit = _bool(StrToInteger(sClientLimit));
-
-      // closedBySL
-      string sClosedBySL = StrTrim(values[15]);
-      if (!StrIsDigit(sClosedBySL))                                         return(_false(catch("ReadStatus.Runtime(89)  illegal closedBySL value \""+ sClosedBySL +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      bool closedBySL = _bool(StrToInteger(sClosedBySL));
-
-      // swap
-      string sSwap = StrTrim(values[16]);
-      if (!StrIsNumeric(sSwap))                                             return(_false(catch("ReadStatus.Runtime(90)  illegal order swap \""+ sSwap +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double swap = StrToDouble(sSwap);
-      if (type==OP_UNDEFINED && NE(swap, 0))                                return(_false(catch("ReadStatus.Runtime(91)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // commission
-      string sCommission = StrTrim(values[17]);
-      if (!StrIsNumeric(sCommission))                                       return(_false(catch("ReadStatus.Runtime(92)  illegal order commission \""+ sCommission +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double commission = StrToDouble(sCommission);
-      if (type==OP_UNDEFINED && NE(commission, 0))                          return(_false(catch("ReadStatus.Runtime(93)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // profit
-      string sProfit = StrTrim(values[18]);
-      if (!StrIsNumeric(sProfit))                                           return(_false(catch("ReadStatus.Runtime(94)  illegal order profit \""+ sProfit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      double profit = StrToDouble(sProfit);
-      if (type==OP_UNDEFINED && NE(profit, 0))                              return(_false(catch("ReadStatus.Runtime(95)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-
-      // Daten speichern
-      Grid.SetData(i, ticket, level, gridBase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit);
-      lastEventId = Max(lastEventId, Max(openEvent, closeEvent));
-      // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
+   // pendingPrice
+   string sPendingPrice = StrTrim(values[5]);
+   if (!StrIsNumeric(sPendingPrice))                                     return(!catch("ReadStatus.ParseOrder(14)  illegal pending order price "+ DoubleQuoteStr(sPendingPrice) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double pendingPrice = StrToDouble(sPendingPrice);
+   if (LT(pendingPrice, 0))                                              return(!catch("ReadStatus.ParseOrder(15)  illegal pending order price "+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                 return(!catch("ReadStatus.ParseOrder(16)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (pendingType!=OP_UNDEFINED) {
+      if (EQ(pendingPrice, 0))                                           return(!catch("ReadStatus.ParseOrder(17)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+      if (NE(pendingPrice, gridbase+level*GridSize*Pips, Digits))        return(!catch("ReadStatus.ParseOrder(18)  gridbase/pending order price mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
    }
 
+   // type
+   string sType = StrTrim(values[6]);
+   if (!StrIsInteger(sType))                                             return(!catch("ReadStatus.ParseOrder(19)  illegal order type "+ DoubleQuoteStr(sType) +" in order record", ERR_INVALID_FILE_FORMAT));
+   int type = StrToInteger(sType);
+   if (type!=OP_UNDEFINED && !IsOrderType(type))                         return(!catch("ReadStatus.ParseOrder(20)  illegal order type "+ DoubleQuoteStr(sType) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (pendingType == OP_UNDEFINED) {
+      if (type == OP_UNDEFINED)                                          return(!catch("ReadStatus.ParseOrder(21)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in order record", ERR_INVALID_FILE_FORMAT));
+   }
+   else if (type != OP_UNDEFINED) {
+      if (IsLongOrderType(pendingType)!=IsLongOrderType(type))           return(!catch("ReadStatus.ParseOrder(22)  pending order type/open order type mis-match "+ OperationTypeToStr(pendingType) +"/"+ OperationTypeToStr(type) +" in order record", ERR_INVALID_FILE_FORMAT));
+   }
+
+   // openEvent
+   string sOpenEvent = StrTrim(values[7]);
+   if (!StrIsDigit(sOpenEvent))                                          return(!catch("ReadStatus.ParseOrder(23)  illegal order open event "+ DoubleQuoteStr(sOpenEvent) +" in order record", ERR_INVALID_FILE_FORMAT));
+   int openEvent = StrToInteger(sOpenEvent);
+   if (type!=OP_UNDEFINED && !openEvent)                                 return(!catch("ReadStatus.ParseOrder(24)  illegal order open event "+ openEvent +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // openTime
+   string sOpenTime = StrTrim(values[8]);
+   if (!StrIsDigit(sOpenTime))                                           return(!catch("ReadStatus.ParseOrder(25)  illegal order open time "+ DoubleQuoteStr(sOpenTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   datetime openTime = StrToInteger(sOpenTime);
+   if (type==OP_UNDEFINED && openTime!=0)                                return(!catch("ReadStatus.ParseOrder(26)  order type/time mis-match "+ OperationTypeToStr(type) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
+   if (type!=OP_UNDEFINED && !openTime)                                  return(!catch("ReadStatus.ParseOrder(27)  order type/time mis-match "+ OperationTypeToStr(type) +"/"+ openTime +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // openPrice
+   string sOpenPrice = StrTrim(values[9]);
+   if (!StrIsNumeric(sOpenPrice))                                        return(!catch("ReadStatus.ParseOrder(28)  illegal order open price "+ DoubleQuoteStr(sOpenPrice) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double openPrice = StrToDouble(sOpenPrice);
+   if (LT(openPrice, 0))                                                 return(!catch("ReadStatus.ParseOrder(29)  illegal order open price "+ NumberToStr(openPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (type==OP_UNDEFINED && NE(openPrice, 0))                           return(!catch("ReadStatus.ParseOrder(30)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (type!=OP_UNDEFINED && EQ(openPrice, 0))                           return(!catch("ReadStatus.ParseOrder(31)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // closeEvent
+   string sCloseEvent = StrTrim(values[10]);
+   if (!StrIsDigit(sCloseEvent))                                         return(!catch("ReadStatus.ParseOrder(32)  illegal order close event "+ DoubleQuoteStr(sCloseEvent) +" in order record", ERR_INVALID_FILE_FORMAT));
+   int closeEvent = StrToInteger(sCloseEvent);
+
+   // closeTime
+   string sCloseTime = StrTrim(values[11]);
+   if (!StrIsDigit(sCloseTime))                                          return(!catch("ReadStatus.ParseOrder(33)  illegal order close time "+ DoubleQuoteStr(sCloseTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   datetime closeTime = StrToInteger(sCloseTime);
+   if (closeTime != 0) {
+      if (closeTime < pendingTime)                                       return(!catch("ReadStatus.ParseOrder(34)  pending order time/delete time mis-match '"+ TimeToStr(pendingTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
+      if (closeTime < openTime)                                          return(!catch("ReadStatus.ParseOrder(35)  order open/close time mis-match '"+ TimeToStr(openTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
+   }
+   if (closeTime!=0 && !closeEvent)                                      return(!catch("ReadStatus.ParseOrder(36)  illegal order close event "+ closeEvent +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // closePrice
+   string sClosePrice = StrTrim(values[12]);
+   if (!StrIsNumeric(sClosePrice))                                       return(!catch("ReadStatus.ParseOrder(37)  illegal order close price "+ DoubleQuoteStr(sClosePrice) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double closePrice = StrToDouble(sClosePrice);
+   if (LT(closePrice, 0))                                                return(!catch("ReadStatus.ParseOrder(38)  illegal order close price "+ NumberToStr(closePrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // stopLoss
+   string sStopLoss = StrTrim(values[13]);
+   if (!StrIsNumeric(sStopLoss))                                         return(!catch("ReadStatus.ParseOrder(39)  illegal order stoploss "+ DoubleQuoteStr(sStopLoss) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double stopLoss = StrToDouble(sStopLoss);
+   if (LE(stopLoss, 0))                                                  return(!catch("ReadStatus.ParseOrder(40)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (NE(stopLoss, gridbase+(level-Sign(level))*GridSize*Pips, Digits)) return(!catch("ReadStatus.ParseOrder(41)  gridbase/stoploss mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
+
+   // clientLimit
+   string sClientLimit = StrTrim(values[14]);
+   if (!StrIsDigit(sClientLimit))                                        return(!catch("ReadStatus.ParseOrder(42)  illegal clientLimit value "+ DoubleQuoteStr(sClientLimit) +" in order record", ERR_INVALID_FILE_FORMAT));
+   bool clientLimit = StrToBool(sClientLimit);
+
+   // closedBySL
+   string sClosedBySL = StrTrim(values[15]);
+   if (!StrIsDigit(sClosedBySL))                                         return(!catch("ReadStatus.ParseOrder(43)  illegal closedBySL value "+ DoubleQuoteStr(sClosedBySL) +" in order record", ERR_INVALID_FILE_FORMAT));
+   bool closedBySL = StrToBool(sClosedBySL);
+
+   // swap
+   string sSwap = StrTrim(values[16]);
+   if (!StrIsNumeric(sSwap))                                             return(!catch("ReadStatus.ParseOrder(44)  illegal order swap "+ DoubleQuoteStr(sSwap) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double swap = StrToDouble(sSwap);
+   if (type==OP_UNDEFINED && NE(swap, 0))                                return(!catch("ReadStatus.ParseOrder(45)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // commission
+   string sCommission = StrTrim(values[17]);
+   if (!StrIsNumeric(sCommission))                                       return(!catch("ReadStatus.ParseOrder(46)  illegal order commission "+ DoubleQuoteStr(sCommission) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double commission = StrToDouble(sCommission);
+   if (type==OP_UNDEFINED && NE(commission, 0))                          return(!catch("ReadStatus.ParseOrder(47)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // profit
+   string sProfit = StrTrim(values[18]);
+   if (!StrIsNumeric(sProfit))                                           return(!catch("ReadStatus.ParseOrder(48)  illegal order profit "+ DoubleQuoteStr(sProfit) +" in order record", ERR_INVALID_FILE_FORMAT));
+   double profit = StrToDouble(sProfit);
+   if (type==OP_UNDEFINED && NE(profit, 0))                              return(!catch("ReadStatus.ParseOrder(49)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
+
+   // store all data in the order arrays
+   Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit);
+   lastEventId = Max(lastEventId, openEvent, closeEvent);
+
    ArrayResize(values, 0);
-   ArrayResize(data,   0);
-   return(!catch("ReadStatus.Runtime(96)"));
+   return(!catch("ReadStatus.ParseOrder(50)"));
 }
 
 
