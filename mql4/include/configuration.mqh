@@ -680,3 +680,33 @@ bool DeleteIniKey(string fileName, string section, string key) {
       return(!catch("DeleteIniKey(1)->kernel32::WritePrivateProfileStringA(section="+ DoubleQuoteStr(section) +", key="+ DoubleQuoteStr(key) +", value=NULL, fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR));
    return(true);
 }
+
+
+/**
+ * Write a configuration value to an .ini file. If the file does not exist an attempt is made to create it.
+ *
+ * @param  string fileName - name of the file (with any extension)
+ * @param  string section  - case-insensitive configuration section name
+ * @param  string key      - case-insensitive configuration key
+ * @param  string value    - configuration value
+ *
+ * @return bool - success status
+ */
+bool WriteIniString(string fileName, string section, string key, string value) {
+   if (!WritePrivateProfileStringA(section, key, value, fileName)) {
+      int error = GetLastWin32Error();
+
+      if (error == ERROR_PATH_NOT_FOUND) {
+         string name = StrReplace(fileName, "\\", "/");
+         string directory = StrLeftTo(name, "/", -1);
+
+         if (directory!=name) /*&&*/ if (!IsDirectoryA(directory)) {
+            error = CreateDirectoryRecursive(directory);
+            if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
+            return(WriteIniString(fileName, section, key, value));
+         }
+      }
+      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR+error));
+   }
+   return(true);
+}
