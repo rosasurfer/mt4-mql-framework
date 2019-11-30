@@ -159,7 +159,7 @@ double   gridbase.price[];
 // --- order data --------------------------
 int      orders.ticket         [];
 int      orders.level          [];                 // order grid level: -n...-1 | 1...+n
-double   orders.gridBase       [];                 // gridbase when the order was active
+double   orders.gridbase       [];                 // gridbase at the time the order was active
 int      orders.pendingType    [];                 // pending order type (if applicable)        or -1
 datetime orders.pendingTime    [];                 // time of OrderOpen() or last OrderModify() or  0
 double   orders.pendingPrice   [];                 // pending entry limit                       or  0
@@ -801,25 +801,7 @@ bool ResetSequence() {
       ArrayResize(gridbase.price, 0);
 
       // --- order data ---------------------
-      ArrayResize(orders.ticket,          0);
-      ArrayResize(orders.level,           0);
-      ArrayResize(orders.gridBase,        0);
-      ArrayResize(orders.pendingType,     0);
-      ArrayResize(orders.pendingTime,     0);
-      ArrayResize(orders.pendingPrice,    0);
-      ArrayResize(orders.type,            0);
-      ArrayResize(orders.openEvent,       0);
-      ArrayResize(orders.openTime,        0);
-      ArrayResize(orders.openPrice,       0);
-      ArrayResize(orders.closeEvent,      0);
-      ArrayResize(orders.closeTime,       0);
-      ArrayResize(orders.closePrice,      0);
-      ArrayResize(orders.stopLoss,        0);
-      ArrayResize(orders.clientsideLimit, 0);
-      ArrayResize(orders.closedBySL,      0);
-      ArrayResize(orders.swap,            0);
-      ArrayResize(orders.commission,      0);
-      ArrayResize(orders.profit,          0);
+      ResizeOrderArrays(0);
 
       // --- other --------------------------
       ArrayResize(ignorePendingOrders,   0);
@@ -933,7 +915,7 @@ bool ResumeSequence(int signal) {
       for (int level=1; level <= sequence.level; level++) {
          int i = Grid.FindOpenPosition(level);
          if (i != -1) {
-            gridBase = orders.gridBase[i];                     // get the previously used gridbase
+            gridBase = orders.gridbase[i];                     // get the previously used gridbase
             break;
          }
       }
@@ -942,7 +924,7 @@ bool ResumeSequence(int signal) {
       for (level=-1; level >= sequence.level; level--) {
          i = Grid.FindOpenPosition(level);
          if (i != -1) {
-            gridBase = orders.gridBase[i];
+            gridBase = orders.gridbase[i];
             break;
          }
       }
@@ -1221,7 +1203,7 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
             GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), gridbase);
             gridChanged = true;
          }
-         else if (NE(orders.gridBase[sizeOfTickets-1], gridbase, Digits)) {   // Gridbasis des letzten Tickets inspizieren, da Trailing online
+         else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // Gridbasis des letzten Tickets inspizieren, da Trailing online
             gridChanged = true;                                               // u.U. verzögert wird
          }
       }
@@ -1757,7 +1739,7 @@ bool UpdatePendingOrders() {
    // trail a first level stop order (always an existing next level order, thus at the last index)
    if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
-      if (NE(gridbase, orders.gridBase[i], Digits)) {
+      if (NE(gridbase, orders.gridbase[i], Digits)) {
          static double lastTrailed = INT_MIN;                           // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
          if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // at each tick. Wait 3 seconds between consecutive trailings.
             type = Grid.TrailPendingOrder(i); if (!type) return(false); //
@@ -2088,7 +2070,7 @@ int Grid.TrailPendingOrder(int i) {
    }
 
    // update changed data (ignore current ticket state which may be different)
-   orders.gridBase    [i] = gridbase;
+   orders.gridbase    [i] = gridbase;
    orders.pendingTime [i] = pendingTime;
    orders.pendingPrice[i] = pendingPrice;
    orders.stopLoss    [i] = stopLoss;
@@ -2233,12 +2215,12 @@ bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendin
 
    int i=offset, size=ArraySize(orders.ticket);
 
-   if      (offset ==    -1) i = ResizeArrays(  size+1)-1;
-   else if (offset > size-1) i = ResizeArrays(offset+1)-1;
+   if      (offset ==    -1) i = ResizeOrderArrays(  size+1)-1;
+   else if (offset > size-1) i = ResizeOrderArrays(offset+1)-1;
 
    orders.ticket         [i] = ticket;
    orders.level          [i] = level;
-   orders.gridBase       [i] = NormalizeDouble(gridBase, Digits);
+   orders.gridbase       [i] = NormalizeDouble(gridBase, Digits);
 
    orders.pendingType    [i] = pendingType;
    orders.pendingTime    [i] = pendingTime;
@@ -2275,7 +2257,7 @@ bool Grid.DropData(int i) {
 
    ArraySpliceInts   (orders.ticket,          i, 1);
    ArraySpliceInts   (orders.level,           i, 1);
-   ArraySpliceDoubles(orders.gridBase,        i, 1);
+   ArraySpliceDoubles(orders.gridbase,        i, 1);
 
    ArraySpliceInts   (orders.pendingType,     i, 1);
    ArraySpliceInts   (orders.pendingTime,     i, 1);
@@ -3538,7 +3520,7 @@ string SaveSequence.GridBaseToStr() {
 string SaveSequence.OrderToStr(int index) {
    int      ticket       = orders.ticket         [index];
    int      level        = orders.level          [index];
-   double   gridBase     = orders.gridBase       [index];
+   double   gridbase     = orders.gridbase       [index];
    int      pendingType  = orders.pendingType    [index];
    datetime pendingTime  = orders.pendingTime    [index];
    double   pendingPrice = orders.pendingPrice   [index];
@@ -3555,7 +3537,7 @@ string SaveSequence.OrderToStr(int index) {
    double   swap         = orders.swap           [index];
    double   commission   = orders.commission     [index];
    double   profit       = orders.profit         [index];
-   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridBase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", clientLimit, ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", clientLimit, ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -3671,72 +3653,37 @@ bool ReadStatus() {
    success = ReadStatus.ParseStartStop(sStops, sequence.stop.event, sequence.stop.time, sequence.stop.price, sequence.stop.profit);
    if (!success)                            return(!catch("ReadStatus(17)  invalid or missing sequence.stops "+ DoubleQuoteStr(sStops) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))
-                                            return(!catch("ReadStatus(18)  sequence.starts["+ ArraySize(sequence.start.event) +"]/sequence.stops["+ ArraySize(sequence.stop.event) +"] mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+                                            return(!catch("ReadStatus(18)  sizeOf(sequence.starts)="+ ArraySize(sequence.start.event) +"/sizeOf(sequence.stops)="+ ArraySize(sequence.stop.event) +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!sequence.start.event[0]) {
+      if (sequence.stop.event[0] != 0)      return(!catch("ReadStatus(19)  sequence.start.event[0]="+ sequence.start.event[0] +"/sequence.stop.event[0]="+ sequence.stop.event[0] +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+      ArrayResize(sequence.start.event,  0); ArrayResize(sequence.stop.event,  0);
+      ArrayResize(sequence.start.time,   0); ArrayResize(sequence.stop.time,   0);
+      ArrayResize(sequence.start.price,  0); ArrayResize(sequence.stop.price,  0);
+      ArrayResize(sequence.start.profit, 0); ArrayResize(sequence.stop.profit, 0);
+   }
    success = ReadStatus.ParseGridBase(sGridBase);
-   if (!success)                            return(!catch("ReadStatus(19)  invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(20)  invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (_bool(ArraySize(gridbase.event)) != _bool(ArraySize(sequence.start.event)))
+                                            return(!catch("ReadStatus(21)  sizeOf(gridbase)="+ ArraySize(gridbase.event) +"/sizeOf(sequence.starts)="+ ArraySize(sequence.start.event) +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseMissedLevels(sMissedLevels);
-   if (!success)                            return(!catch("ReadStatus(20)  invalid missed gridlevels "+ DoubleQuoteStr(sMissedLevels) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(22)  invalid missed gridlevels "+ DoubleQuoteStr(sMissedLevels) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sPendingOrders, ignorePendingOrders);
-   if (!success)                            return(!catch("ReadStatus(21)  invalid ignored pending orders "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(23)  invalid ignored pending orders "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sOpenPositions, ignoreOpenPositions);
-   if (!success)                            return(!catch("ReadStatus(22)  invalid ignored open positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(24)  invalid ignored open positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sOpenPositions, ignoreClosedPositions);
-   if (!success)                            return(!catch("ReadStatus(23)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(25)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
-   ArrayResize(orders.ticket,          0);
-   ArrayResize(orders.level,           0);
-   ArrayResize(orders.gridBase,        0);
-   ArrayResize(orders.pendingType,     0);
-   ArrayResize(orders.pendingTime,     0);
-   ArrayResize(orders.pendingPrice,    0);
-   ArrayResize(orders.type,            0);
-   ArrayResize(orders.openEvent,       0);
-   ArrayResize(orders.openTime,        0);
-   ArrayResize(orders.openPrice,       0);
-   ArrayResize(orders.closeEvent,      0);
-   ArrayResize(orders.closeTime,       0);
-   ArrayResize(orders.closePrice,      0);
-   ArrayResize(orders.stopLoss,        0);
-   ArrayResize(orders.clientsideLimit, 0);
-   ArrayResize(orders.closedBySL,      0);
-   ArrayResize(orders.swap,            0);
-   ArrayResize(orders.commission,      0);
-   ArrayResize(orders.profit,          0);
-
+   ResizeOrderArrays(0);
    string orderKeys[], sOrder;
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
+
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
       success = ReadStatus.ParseOrder(sOrder);
-      if (!success) return(!catch("ReadStatus(24)  invalid order record "+ DoubleQuoteStr(orderKeys[i]) +" = "+ DoubleQuoteStr(sOrder) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+      if (!success) return(!catch("ReadStatus(26)  invalid order record "+ DoubleQuoteStr(orderKeys[i]) +" = "+ DoubleQuoteStr(sOrder) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    }
-
-   debug("ReadStatus(0.1)  orders="+ StringsToStr(orderKeys, NULL));
-
-   catch("ReadStatus(25)");
-   SetLastError(ERR_CANCELLED_BY_USER);
-   if (IsLastError()) return(false);
-
-
-   // --- old version -------------------------------------------------------------------------------------------------------
-   // check start events for "0|0|0|0" values (allowed only before first start)
-   // check order of start/stop events
-   // check order of start/stop times
-
-   // check:  gridbaseEvent[0] && !starts
-   // check: !gridbaseEvent[0] &&  starts
-
-   //// GridBase-Event
-   //int gridBaseEvent = StrToInteger(value);
-   //int starts = ArraySize(sequence.start.event);
-   //if (!gridBaseEvent) {
-   //   if (sizeOfRecords==1 && record=="0|0|0") {
-   //      if (starts > 0)
-   //         return(!catch("ReadStatus.Runtime(38)  sequence.start/gridbase["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   //      break;
-   //   }
-   //}
-   //else if (!starts) return(!catch("ReadStatus.Runtime(40)  sequence.start/gridbase["+ i +"] mis-match "+ starts +"/\""+ records[i] +"\" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   return(!catch("ReadStatus(27)"));
 }
 
 
@@ -3902,10 +3849,13 @@ bool ReadStatus.ParseGridBase(string value) {
       if (event < lastEvent)                     return(!catch("ReadStatus.ParseGridBase(10)  invalid gridbase event order in "+ DoubleQuoteStr(value), ERR_INVALID_FILE_FORMAT));
       lastEvent = event;
 
-      ArrayPushInt   (gridbase.event, event);
-      ArrayPushInt   (gridbase.time,  time );
-      ArrayPushDouble(gridbase.price, price);
-      lastEventId = Max(lastEventId, event);
+      // store data but skip empty records ("0|0|0")
+      if (event != 0) {
+         ArrayPushInt   (gridbase.event, event);
+         ArrayPushInt   (gridbase.time,  time );
+         ArrayPushDouble(gridbase.price, price);
+         lastEventId = Max(lastEventId, event);
+      }
    }
    return(!catch("ReadStatus.ParseGridBase(11)"));
 }
@@ -3983,11 +3933,11 @@ bool ReadStatus.ParseOrder(string value) {
    if (IsLastError()) return(false);
    /*
    rt.order.0=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
-   rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
+   rt.order.{i}={ticket},{level},{gridbase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
    --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
    int      ticket       = values[ 0];
    int      level        = values[ 1];
-   double   gridBase     = values[ 2];
+   double   gridbase     = values[ 2];
    int      pendingType  = values[ 3];
    datetime pendingTime  = values[ 4];
    double   pendingPrice = values[ 5];
@@ -4946,13 +4896,13 @@ bool IsTestSequence() {
 /**
  * Setzt die Größe der Datenarrays auf den angegebenen Wert.
  *
- * @param  int  size  - neue Größe
- * @param  bool reset - ob die Arrays komplett zurückgesetzt werden sollen
- *                      (default: nur neu hinzugefügte Felder werden initialisiert)
+ * @param  int  size             - neue Größe
+ * @param  bool reset [optional] - ob die Arrays komplett zurückgesetzt werden sollen
+ *                                 (default: nur neu hinzugefügte Felder werden initialisiert)
  *
  * @return int - neue Größe der Arrays
  */
-int ResizeArrays(int size, bool reset=false) {
+int ResizeOrderArrays(int size, bool reset = false) {
    reset = reset!=0;
 
    int oldSize = ArraySize(orders.ticket);
@@ -4960,7 +4910,7 @@ int ResizeArrays(int size, bool reset=false) {
    if (size != oldSize) {
       ArrayResize(orders.ticket,          size);
       ArrayResize(orders.level,           size);
-      ArrayResize(orders.gridBase,        size);
+      ArrayResize(orders.gridbase,        size);
       ArrayResize(orders.pendingType,     size);
       ArrayResize(orders.pendingTime,     size);
       ArrayResize(orders.pendingPrice,    size);
@@ -4983,7 +4933,7 @@ int ResizeArrays(int size, bool reset=false) {
       if (size != 0) {
          ArrayInitialize(orders.ticket,                 0);
          ArrayInitialize(orders.level,                  0);
-         ArrayInitialize(orders.gridBase,               0);
+         ArrayInitialize(orders.gridbase,               0);
          ArrayInitialize(orders.pendingType, OP_UNDEFINED);
          ArrayInitialize(orders.pendingTime,            0);
          ArrayInitialize(orders.pendingPrice,           0);
