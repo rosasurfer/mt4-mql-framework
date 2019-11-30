@@ -6725,6 +6725,7 @@ void __DummyCalls() {
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);
+   WriteIniString(NULL, NULL, NULL, NULL);
 }
 
 
