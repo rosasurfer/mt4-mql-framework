@@ -210,6 +210,7 @@ bool     tester.onSessionBreakPause = false;       // whether to pause the teste
 bool     tester.onTrendChangePause  = false;       // whether to pause the tester when a trend condition changes
 bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when the profit target is reached
 bool     tester.reduceStatusWrites  = true;        // whether to skip redundant status file writing in tester
+bool     tester.showBreakeven       = true;        // whether to show breakeven markers in tester
 
 
 #include <app/SnowRoller/init.mqh>
@@ -5227,8 +5228,9 @@ bool UpdateProfitTargets() {
  * @return bool - success status
  */
 bool ShowProfitTargets() {
-   if (IsLastError())       return(false);
-   if (!sequence.breakeven) return(true);
+   if (IsLastError())                        return(false);
+   if (IsTesting() && !tester.showBreakeven) return(true);
+   if (!sequence.breakeven)                  return(true);
 
    datetime time = TimeCurrent(); time -= time % MINUTES;
    string label = "arrow_"+ time;

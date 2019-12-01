@@ -15,7 +15,7 @@ int onInitUser() {
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                   // Falscheingabe
+      return(last_error);                                // input error (invalid sequence id)
    }
 
    // ...dann laufende Sequenzen suchen und ggf. eine davon restaurieren...
@@ -57,7 +57,7 @@ int onInitUser() {
       string logFile = StrLeft(GetStatusFileName(), -3) +"log";
       SetCustomLog(sequence.id, logFile);
 
-      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves the sequence
+      if (start.conditions) {                            // without start conditions StartSequence() is called immediately and saves the sequence
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
          SaveSequence();
       }
@@ -87,7 +87,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameters()
+   BackupInputStatus();                                  // input itself has been backed-up in onDeinitParameters()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
@@ -101,10 +101,10 @@ int onInitParameters() {
       }
    }
    else if (sequence.status == STATUS_WAITING) {
-      if (!start.conditions) {                              // TODO: evaluate sessionbreak.waiting
+      if (!start.conditions) {                           // TODO: evaluate sessionbreak.waiting
       }
    }
-   if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
+   if (sequence.status != STATUS_UNDEFINED)              // parameter change of a valid sequence
       SaveSequence();
    return(last_error);
 }
@@ -137,7 +137,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitRecompile() {
-   return(onInitTemplate());                                // Funktionalität entspricht onInitTemplate()
+   return(onInitTemplate());                             // same requirements as for onInitTemplate()
 }
 
 
@@ -157,10 +157,11 @@ int afterInit() {
       tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
       tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
       tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
+      tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       true);
    }
    else if (IsTestSequence() && sequence.status!=STATUS_STOPPED) {
-      sequence.status = STATUS_STOPPED;                     // a finished test loaded into an online chart
-   }
+      sequence.status = STATUS_STOPPED;                  // a finished test loaded into an online chart
+   }                                                     // TODO: move to SynchronizeStatus()
    return(last_error);
 }
 
@@ -174,7 +175,7 @@ int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
    int x[]={2, 101, 160}, y=51, fontSize=74, rectangles=ArraySize(x);
-   color  bgColor = C'248,248,248';                         // that's chart background color
+   color  bgColor = C'248,248,248';                      // that's chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
