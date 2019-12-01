@@ -3566,7 +3566,7 @@ bool RestoreSequence(bool interactive) {
 
 
 /**
- * Read the current sequence's status file and restore internal variables. Always part of RestoreSequence().
+ * Read the current sequence's status file and restore internal variables. Part of RestoreSequence().
  *
  * @return bool - success status
  */
@@ -4104,10 +4104,9 @@ bool ReadStatus.ParseOrder(string value) {
 
 
 /**
- * Gleicht den in der Instanz gespeicherten Laufzeitstatus mit den Online-Daten der Sequenz ab.
- * Aufruf nur direkt nach ValidateInputs()
+ * Synchronize restored internal state with the trade server. Part of RestoreSequence().
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SynchronizeStatus() {
    if (IsLastError()) return(false);
@@ -4165,7 +4164,7 @@ bool SynchronizeStatus() {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("SynchronizeStatus(2)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+            return(!catch("SynchronizeStatus(2)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -4200,26 +4199,20 @@ bool SynchronizeStatus() {
    // (1.4) Vorgehensweise für verwaiste Tickets erfragen
    int size = ArraySize(orphanedPendingOrders);                            // TODO: Ignorieren nicht möglich; wenn die Tickets übernommen werden sollen,
    if (size > 0) {                                                         //       müssen sie richtig einsortiert werden.
-      return(_false(catch("SynchronizeStatus(3)  unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR)));
+      return(!catch("SynchronizeStatus(3)  unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR));
       //ArraySort(orphanedPendingOrders);
       //PlaySoundEx("Windows Notify.wav");
       //int button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
-      //if (button != IDOK) {
-      //   SetLastError(ERR_CANCELLED_BY_USER);
-      //   return(_false(catch("SynchronizeStatus(4)")));
-      //}
+      //if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
       ArrayResize(orphanedPendingOrders, 0);
    }
    size = ArraySize(orphanedOpenPositions);                                // TODO: Ignorieren nicht möglich; wenn die Tickets übernommen werden sollen,
    if (size > 0) {                                                         //       müssen sie richtig einsortiert werden.
-      return(_false(catch("SynchronizeStatus(5)  unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR)));
+      return(!catch("SynchronizeStatus(5)  unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR));
       //ArraySort(orphanedOpenPositions);
       //PlaySoundEx("Windows Notify.wav");
       //button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
-      //if (button != IDOK) {
-      //   SetLastError(ERR_CANCELLED_BY_USER);
-      //   return(_false(catch("SynchronizeStatus(6)")));
-      //}
+      //if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
       ArrayResize(orphanedOpenPositions, 0);
    }
    size = ArraySize(orphanedClosedPositions);
@@ -4227,10 +4220,8 @@ bool SynchronizeStatus() {
       ArraySort(orphanedClosedPositions);
       PlaySoundEx("Windows Notify.wav");
       button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
-      if (button != IDOK) {
-         SetLastError(ERR_CANCELLED_BY_USER);
-         return(_false(catch("SynchronizeStatus(7)")));
-      }
+      if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
+
       MergeIntArrays(ignoreClosedPositions, orphanedClosedPositions, ignoreClosedPositions);
       ArraySort(ignoreClosedPositions);
       permanentStatusChange = true;
@@ -4238,8 +4229,7 @@ bool SynchronizeStatus() {
    }
 
    if (ArraySize(sequence.start.event) > 0) /*&&*/ if (ArraySize(gridbase.event)==0)
-      return(_false(catch("SynchronizeStatus(8)  illegal number of gridbase events = "+ 0, ERR_RUNTIME_ERROR)));
-
+      return(!catch("SynchronizeStatus(8)  illegal number of gridbase events = "+ 0, ERR_RUNTIME_ERROR));
 
    // Status und Variablen synchronisieren
    /*int   */ lastEventId         = 0;
@@ -4262,7 +4252,7 @@ bool SynchronizeStatus() {
    if (sequence.status == STATUS_STOPPING) {
       i = ArraySize(sequence.stop.event) - 1;
       if (sequence.stop.time[i] != 0)
-         return(_false(catch("SynchronizeStatus(9)  unexpected sequence.stop.time = "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR)));
+         return(!catch("SynchronizeStatus(9)  unexpected sequence.stop.time = "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
 
       sequence.stop.event [i] = CreateEventId();
       sequence.stop.time  [i] = stopTime;
@@ -4279,7 +4269,7 @@ bool SynchronizeStatus() {
    }
    if (sessionbreak.waiting) {
       if (sequence.status == STATUS_STOPPED) sequence.status = STATUS_WAITING;
-      if (sequence.status != STATUS_WAITING) return(_false(catch("SynchronizeStatus(10)  sessionbreak.waiting="+ sessionbreak.waiting +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR)));
+      if (sequence.status != STATUS_WAITING) return(!catch("SynchronizeStatus(10)  sessionbreak.waiting="+ sessionbreak.waiting +" / sequence.status="+ StatusToStr(sequence.status)+ " mis-match", ERR_RUNTIME_ERROR));
    }
 
    // store status changes
@@ -4295,7 +4285,7 @@ bool SynchronizeStatus() {
 
 
 /**
- * Aktualisiert die Daten des lokal als offen markierten Tickets mit dem Online-Status. Wird nur in SynchronizeStatus() verwendet.
+ * Aktualisiert die Daten des lokal als offen markierten Tickets mit dem Online-Status. Part of SynchronizeStatus().
  *
  * @param  int   i                 - Ticketindex
  * @param  bool &lpPermanentChange - Zeiger auf Variable, die anzeigt, ob dauerhafte Ticketänderungen vorliegen
