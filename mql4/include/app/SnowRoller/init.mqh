@@ -49,7 +49,7 @@ int onInitUser() {
       sequence.id      = CreateSequenceId();
       Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
       sequence.cycle   = 1;
-      sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
+      sequence.created = TimeServer();
       sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
@@ -222,7 +222,7 @@ void CopyInputStatus(bool store) {
    static int      _sequence.id;
    static int      _sequence.cycle;
    static string   _sequence.name;
-   static string   _sequence.created;
+   static datetime _sequence.created;
    static bool     _sequence.isTest;
    static int      _sequence.direction;
    static int      _sequence.status;
