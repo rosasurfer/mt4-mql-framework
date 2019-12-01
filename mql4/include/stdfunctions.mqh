@@ -2995,14 +2995,38 @@ string StrToUpper(string value) {
 
 
 /**
- * Trimmt einen String beidseitig.
+ * Trim white space characters from both sides of a string.
  *
  * @param  string value
  *
- * @return string
+ * @return string - trimmed string
  */
 string StrTrim(string value) {
    return(StringTrimLeft(StringTrimRight(value)));
+}
+
+
+/**
+ * Trim white space characters from the left side of a string. Alias of the built-in function StringTrimLeft().
+ *
+ * @param  string value
+ *
+ * @return string - trimmed string
+ */
+string StrTrimLeft(string value) {
+   return(StringTrimLeft(value));
+}
+
+
+/**
+ * Trim white space characters from the right side of a string. Alias of the built-in function StringTrimRight().
+ *
+ * @param  string value
+ *
+ * @return string - trimmed string
+ */
+string StrTrimRight(string value) {
+   return(StringTrimRight(value));
 }
 
 
@@ -6701,6 +6725,8 @@ void __DummyCalls() {
    StrToTradeDirection(NULL);
    StrToUpper(NULL);
    StrTrim(NULL);
+   StrTrimLeft(NULL);
+   StrTrimRight(NULL);
    SumInts(iNulls);
    SwapCalculationModeToStr(NULL);
    Tester.GetBarModel();
