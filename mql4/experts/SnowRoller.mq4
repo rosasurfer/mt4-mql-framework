@@ -200,6 +200,7 @@ string   sSequenceProfitPerLevel = "";
 string   sSequencePlStats        = "";
 string   sStartConditions        = "";
 string   sStopConditions         = "";
+string   sStartStopStats         = "";
 string   sAutoResume             = "";
 string   sAutoRestart            = "";
 string   sRestartStats           = "";
@@ -432,6 +433,7 @@ bool StartSequence(int signal) {
    ArrayPushInt   (sequence.stop.time,    0);
    ArrayPushDouble(sequence.stop.price,   0);
    ArrayPushDouble(sequence.stop.profit,  0);
+   SS.StartStopStats();
 
    // set the gridbase (event after sequence.start.time in time)
    double gridBase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
@@ -718,7 +720,7 @@ bool ResetSequence() {
    StartLevel = 0;
 
    // reset global vars
-   if (true) {                                           // a block to just separate the code
+   if (true) {                                           // a block just to separate the code
       // --- sequence data ------------------
       //sequence.id           = ...                      // unchanged
       sequence.cycle++;                                  // increase restart cycle
@@ -831,9 +833,11 @@ bool ResetSequence() {
       sSequencePlStats             = "";
       sStartConditions             = "";
       sStopConditions              = "";
+      sStartStopStats              = "";
       sAutoResume                  = "";
-      sRestartStats                = NL +" "+ iCycle +":  "+ sPL + sPlStats + sRestartStats;
-
+      sAutoRestart                 = "";
+      sRestartStats                = " ------------------------------------------"+ NL
+                                    +" "+ iCycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
       // --- debug settings -----------------
       //tester.onTrendChangePause  = ...                 // unchanged
       //tester.onSessionBreakPause = ...                 // unchanged
@@ -960,6 +964,7 @@ bool ResumeSequence(int signal) {
    ArrayPushInt   (sequence.stop.time,   0);
    ArrayPushDouble(sequence.stop.price,  0);
    ArrayPushDouble(sequence.stop.profit, 0);
+   SS.StartStopStats();
 
    sequence.status = STATUS_PROGRESSING;                       // TODO: correct the resulting gridbase and adjust the previously set stoplosses
 
@@ -2511,35 +2516,34 @@ int CreateMagicNumber(int level) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__CHART()) return(error);
 
-   string msg, sAtLevel, sError;
+   string msg, sError;
 
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
 
    switch (sequence.status) {
       case STATUS_UNDEFINED:   msg = " not initialized"; break;
-      case STATUS_WAITING:           if (sequence.maxLevel != 0) sAtLevel = StringConcatenate(" at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")");
-                               msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " waiting", sAtLevel); break;
-      case STATUS_STARTING:    msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STOPPING:    msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STOPPED:     msg = StringConcatenate("     ", sSequenceDirection, Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_WAITING:     msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " waiting at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STARTING:    msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPING:    msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
       default:
-         return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_RUNTIME_ERROR));
+         return(catch("ShowStatus(1)  illegal sequence status = "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-
    msg = StringConcatenate(__NAME(), msg, sError,                                    NL,
                                                                                      NL,
                            "Grid:              ", GridSize, " pip", sGridBase,       NL,
                            "LotSize:          ",  sLotSize, sSequenceProfitPerLevel, NL,
                            "Start:             ", sStartConditions,                  NL,
                            "Stop:              ", sStopConditions,                   NL,
-                           sAutoResume,                       // if set it ends with NL,
-                           sAutoRestart,                      // if set it ends with NL,
+                           sAutoResume,                  // if set the var ends with NL,
+                           sAutoRestart,                 // if set the var ends with NL,
                            "Stops:             ", sSequenceStops, sSequenceStopsPL,  NL,
                            "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats, NL,
+                           sStartStopStats,              // if set the var ends with NL,
                            sRestartStats
-                           );
+   );
 
    // 3 lines margin-top for instrument and indicator legend
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -2563,7 +2567,7 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
- * ShowStatus(): Aktualisiert alle in ShowStatus() verwendeten String-Repräsentationen.
+ * Update all string representations used by ShowStatus().
  */
 void SS.All() {
    if (!__CHART()) return;
@@ -2581,6 +2585,7 @@ void SS.All() {
    SS.TotalPL();
    SS.MaxProfit();
    SS.MaxDrawdown();
+   SS.StartStopStats();
 }
 
 
@@ -2803,6 +2808,34 @@ void SS.PLStats() {
    if (sequence.maxLevel != 0) {    // no display until a position was opened
       sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
    }
+}
+
+
+/**
+ * Update the string representation of the start/stop statistics displayed by ShowStatus().
+ */
+void SS.StartStopStats() {
+   if (!__CHART()) return;
+
+   sStartStopStats = "";
+
+   int size = ArraySize(sequence.start.event);
+   string sStartPL, sStopPL;
+
+   for (int i=0; i < size-1; i++) {
+      if (ShowProfitInPercent) {
+         sStartPL = NumberToStr(MathDiv(sequence.start.profit[i], sequence.startEquity) * 100, "+.2") +"%";
+         sStopPL  = NumberToStr(MathDiv(sequence.stop.profit [i], sequence.startEquity) * 100, "+.2") +"%";
+      }
+      else {
+         sStartPL = NumberToStr(sequence.start.profit[i], "+.2");
+         sStopPL  = NumberToStr(sequence.stop.profit [i], "+.2");
+      }
+      sStartStopStats = " ------------------------------------------"+ NL
+                       +" "+ (i+1) +":   Start: "+ sStartPL +"   Stop: "+ sStopPL + StrRightFrom(sStartStopStats, "--", -1);
+   }
+   if (StringLen(sStartStopStats) > 0)
+      sStartStopStats = sStartStopStats + NL;
 }
 
 
