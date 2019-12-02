@@ -371,7 +371,7 @@ bool onCommand(string commands[]) {
 /**
  * Start a new trade sequence.
  *
- * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (explicit start)
+ * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
  *
  * @return bool - success status
  */
@@ -393,21 +393,21 @@ bool StartSequence(int signal) {
 
       case SIGNAL_TREND:
          start.trend.condition = AutoResume;
-         start.conditions      = false;
+         start.conditions      = AutoResume;
          break;
 
       case SIGNAL_PRICETIME:
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = false;
+         start.conditions      = (AutoResume && start.trend.condition);
          break;
 
       case NULL:                                            // manual start
          sessionbreak.waiting  = false;
-         start.trend.condition = (start.trend.description!="" && AutoResume);
+         start.trend.condition = (AutoResume && start.trend.description!="");
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = false;
+         start.conditions      = (AutoResume && start.trend.condition);
          break;
 
       default: return(!catch("StartSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -639,7 +639,7 @@ bool StopSequence(int signal) {
          break;
 
       case SIGNAL_TREND:
-         if (start.trend.description!="" && AutoResume) {   // auto-resume if enabled and StartCondition is @trend
+         if (AutoResume && start.trend.description!="") {   // auto-resume if enabled and StartCondition is @trend
             start.conditions      = true;
             start.trend.condition = true;
             stop.trend.condition  = true;                   // stop condition is @trend
@@ -653,7 +653,7 @@ bool StopSequence(int signal) {
       case SIGNAL_PRICETIME:
          stop.price.condition = false;
          stop.time.condition  = false;
-         if (start.trend.description!="" && AutoResume) {   // auto-resume if enabled, StartCondition is @trend and another
+         if (AutoResume && start.trend.description!="") {   // auto-resume if enabled, StartCondition is @trend and another
             start.conditions      = true;                   // stop condition is defined
             start.trend.condition = true;
             sequence.status       = STATUS_WAITING;
@@ -661,8 +661,8 @@ bool StopSequence(int signal) {
          break;
 
       case SIGNAL_TP:
-         stop.profitAbs.condition = false;
-         stop.profitPct.condition = false;
+         stop.profitAbs.condition = (AutoRestart && start.trend.description!="" && stop.profitAbs.description!="");
+         stop.profitPct.condition = (AutoRestart && start.trend.description!="" && stop.profitPct.description!="");
          break;
 
       case NULL:                                            // explicit stop (manual or at end of test)
@@ -681,7 +681,7 @@ bool StopSequence(int signal) {
    SaveSequence();
 
    // reset the sequence and start a new cycle (using the same sequence id)
-   if (signal==SIGNAL_TP && AutoRestart) {
+   if (AutoRestart && signal==SIGNAL_TP) {
       ResetSequence();
    }
 
@@ -873,7 +873,7 @@ bool ArrayAddInt(int &array[], int value) {
 /**
  * Resume a waiting or stopped trade sequence.
  *
- * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (explicit resume)
+ * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (manual resume)
  *
  * @return bool - success status
  */
@@ -898,21 +898,21 @@ bool ResumeSequence(int signal) {
 
       case SIGNAL_TREND:
          start.trend.condition = AutoResume;
-         start.conditions      = false;
+         start.conditions      = AutoResume;
          break;
 
       case SIGNAL_PRICETIME:
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = false;
+         start.conditions      = (AutoResume && start.trend.condition);
          break;
 
       case NULL:                                               // manual resume
          sessionbreak.waiting  = false;
-         start.trend.condition = (start.trend.description!="" && AutoResume);
+         start.trend.condition = (AutoResume && start.trend.description!="");
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = false;
+         start.conditions      = (AutoResume && start.trend.condition);
          break;
 
       default: return(!catch("ResumeSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
