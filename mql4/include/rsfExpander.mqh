@@ -6,7 +6,7 @@
  */
 #import "rsfExpander.dll"
 
-   // terminal runtime status and/or interaction
+   // terminal status/interaction
    int      FindInputDialog(int programType, string programName);
    string   GetMqlDirectoryA();
    int      GetTerminalBuild();
@@ -30,7 +30,7 @@
    bool     TerminalIsPortableMode();
    int      WM_MT4();
 
-   // Strategy Tester
+   // strategy tester
    int      FindTesterWindow();
    int      Tester_GetBarModel();
    datetime Tester_GetStartDate();
@@ -41,20 +41,21 @@
    //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
-   // Chart-Status/Interaktion
+   // chart status/interaction
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
    // configuration
    string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
-   string   GetIniString(string fileName, string section, string key, string defaultValue);
-   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
+   //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
+   string   GetIniStringA(string fileName, string section, string key, string defaultValue);
+   string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);
    string   GetLocalConfigPathA();
-   bool     IsGlobalConfigKey(string section, string key);
-   bool     IsIniKey(string fileName, string section, string key);
-   bool     IsIniSection(string fileName, string section);
-   bool     IsLocalConfigKey(string section, string key);
+   bool     IsGlobalConfigKeyA(string section, string key);
+   bool     IsIniKeyA(string fileName, string section, string key);
+   bool     IsIniSectionA(string fileName, string section);
+   bool     IsLocalConfigKeyA(string section, string key);
 
    // date/time
    datetime GetGmtTime();
@@ -71,13 +72,12 @@
    bool     IsJunctionA(string name);
    bool     IsSymlinkA(string name);
 
-   // Pointer-Handling (Speicheradressen von Arrays und Strings)
+   // pointer utlities
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
-   int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
-   int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
-   //int    GetPointedAddress(void  &value);          //          Adresse ist ungültig und kann einen Crash auslösen.
+   int      GetDoublesAddress(double values[]);       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
+   int      GetStringAddress (string value   );       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
+   int      GetStringsAddress(string values[]);       //          Adresse ist ungültig und kann einen Crash auslösen.
 
    string   GetStringA(int address);
    //string GetStringW(int address);
@@ -87,6 +87,8 @@
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
+   //bool   SortMqlStringsA(string values[], int size);
+   //bool   SortMqlStringsW(string values[], int size);
    bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
    bool     StrIsNull(string str);

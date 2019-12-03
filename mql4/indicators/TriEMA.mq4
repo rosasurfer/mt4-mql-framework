@@ -325,8 +325,8 @@ void SetIndicatorOptions() {
    int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
    int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,   CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,   CLR_NONE       );
    SetIndexStyle(MODE_UPTREND1,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
    SetIndexStyle(MODE_DOWNTREND, drType,    EMPTY, drWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
    SetIndexStyle(MODE_UPTREND2,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);

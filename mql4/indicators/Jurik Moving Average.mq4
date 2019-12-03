@@ -470,8 +470,8 @@ int onTick() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   SetIndexStyle(MODE_MA,        DRAW_NONE,             EMPTY, EMPTY);
-   SetIndexStyle(MODE_TREND,     DRAW_NONE,             EMPTY, EMPTY);
+   SetIndexStyle(MODE_MA,        DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(MODE_UPTREND1,  indicator_drawingType, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(MODE_DOWNTREND, indicator_drawingType, EMPTY, EMPTY, Color.DownTrend);
    SetIndexStyle(MODE_UPTREND2,  indicator_drawingType, EMPTY, EMPTY, Color.UpTrend  );
