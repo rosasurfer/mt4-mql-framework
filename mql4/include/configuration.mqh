@@ -34,8 +34,8 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
  * @return bool
  */
 bool IsConfigKey(string section, string key) {
-   if (IsGlobalConfigKey (section, key)) return(true);
-   if (IsLocalConfigKey  (section, key)) return(true);
+   if (IsGlobalConfigKeyA(section, key)) return(true);
+   if (IsLocalConfigKeyA (section, key)) return(true);
    if (IsAccountConfigKey(section, key)) return(true);
    return(false);
 }
@@ -53,7 +53,7 @@ bool IsAccountConfigKey(string section, string key) {
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
       return(false);
-   return(IsIniKey(accountConfig, section, key));
+   return(IsIniKeyA(accountConfig, section, key));
 }
 
 
@@ -440,7 +440,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
    string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
-   return(GetIniString(globalConfig, section, key, defaultValue));
+   return(GetIniStringA(globalConfig, section, key, defaultValue));
 }
 
 
@@ -459,7 +459,7 @@ string GetLocalConfigString(string section, string key, string defaultValue = ""
    string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
-   return(GetIniString(localConfig, section, key, defaultValue));
+   return(GetIniStringA(localConfig, section, key, defaultValue));
 }
 
 
@@ -478,7 +478,7 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
       return(defaultValue);
-   return(GetIniString(accountConfig, section, key, defaultValue));
+   return(GetIniStringA(accountConfig, section, key, defaultValue));
 }
 
 
@@ -516,7 +516,7 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
    string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
-   return(GetIniStringRaw(globalConfig, section, key, defaultValue));
+   return(GetIniStringRawA(globalConfig, section, key, defaultValue));
 }
 
 
@@ -535,7 +535,7 @@ string GetLocalConfigStringRaw(string section, string key, string defaultValue =
    string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
-   return(GetIniStringRaw(localConfig, section, key, defaultValue));
+   return(GetIniStringRawA(localConfig, section, key, defaultValue));
 }
 
 
@@ -554,7 +554,7 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
       return(defaultValue);
-   return(GetIniStringRaw(accountConfig, section, key, defaultValue));
+   return(GetIniStringRawA(accountConfig, section, key, defaultValue));
 }
 
 
@@ -575,12 +575,12 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
 bool GetIniBool(string fileName, string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   string value = GetIniString(fileName, section, key, defaultValue);   // (string)(bool) defaultValue
+   string value = GetIniStringA(fileName, section, key, defaultValue);   // (string)(bool) defaultValue
 
    if (value == "")       return(defaultValue);
 
-   if (value == "0")      return(false);     // numeric zero
-   if (value == "1")      return(true);      // numeric one
+   if (value == "0")      return(false);
+   if (value == "1")      return(true);
 
    string lValue = StrToLower(value);
    if (lValue == "on")    return(true);
@@ -612,7 +612,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
  * @return color - configuration value
  */
 color GetIniColor(string fileName, string section, string key, color defaultValue = CLR_NONE) {
-   string value = GetIniString(fileName, section, key, "");
+   string value = GetIniStringA(fileName, section, key, "");
 
    if (value == "") return(defaultValue);
 
@@ -658,7 +658,7 @@ int GetIniInt(string fileName, string section, string key, int defaultValue = 0)
  * @return double - configuration value
  */
 double GetIniDouble(string fileName, string section, string key, double defaultValue = 0) {
-   string value = GetIniString(fileName, section, key, "");
+   string value = GetIniStringA(fileName, section, key, "");
    if (value == "")
       return(defaultValue);
    return(StrToDouble(value));
@@ -678,5 +678,35 @@ bool DeleteIniKey(string fileName, string section, string key) {
    string sNull;
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
       return(!catch("DeleteIniKey(1)->kernel32::WritePrivateProfileStringA(section="+ DoubleQuoteStr(section) +", key="+ DoubleQuoteStr(key) +", value=NULL, fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR));
+   return(true);
+}
+
+
+/**
+ * Write a configuration value to an .ini file. If the file does not exist an attempt is made to create it.
+ *
+ * @param  string fileName - name of the file (with any extension)
+ * @param  string section  - case-insensitive configuration section name
+ * @param  string key      - case-insensitive configuration key
+ * @param  string value    - configuration value
+ *
+ * @return bool - success status
+ */
+bool WriteIniString(string fileName, string section, string key, string value) {
+   if (!WritePrivateProfileStringA(section, key, value, fileName)) {
+      int error = GetLastWin32Error();
+
+      if (error == ERROR_PATH_NOT_FOUND) {
+         string name = StrReplace(fileName, "\\", "/");
+         string directory = StrLeftTo(name, "/", -1);
+
+         if (directory!=name) /*&&*/ if (!IsDirectoryA(directory)) {
+            error = CreateDirectoryRecursive(directory);
+            if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
+            return(WriteIniString(fileName, section, key, value));
+         }
+      }
+      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR+error));
+   }
    return(true);
 }

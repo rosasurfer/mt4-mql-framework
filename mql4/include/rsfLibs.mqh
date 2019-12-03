@@ -1,5 +1,5 @@
 /**
- * letzte Version mit vollständigem Funktions-Listing: git commit deaf9a4 (2015.06.14 10:29:29 GMT)
+ * Letzte Version mit vollständigem Funktions-Listing: git commit deaf9a4 (2015.06.14 10:29:29 GMT)
  */
 #import "rsfLib1.ex4"
 
@@ -100,6 +100,10 @@
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
 
 
+   // configuration
+   int      GetIniSections(string fileName, string &names[]);
+
+
    // Date/Time
    datetime FxtToGmtTime   (datetime fxtTime);
    datetime FxtToServerTime(datetime fxtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
@@ -176,6 +180,7 @@
 
 
    // Strings
+   bool     SortStrings(string &values[]);
    string   StringPad(string input, int length, string pad_string, int pad_type);
 
 
