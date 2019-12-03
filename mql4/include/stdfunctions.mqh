@@ -484,25 +484,27 @@ string ErrorDescription(int error) {
       case ERR_WEBREQUEST_REQUEST_FAILED  : return("HTTP request failed"                                       );    //   5203
 
       // user defined errors: 65536-99999 (0x10000-0x1869F)
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65536
-      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   );    //  65537
-      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      );    //  65538
-      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65539   status
-      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65540
-      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                   );    //  65541
-      case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                               );    //  65542
-      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 );    //  65543
-      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       );    //  65544
-      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 );    //  65545
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         );    //  65546
-      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                );    //  65547   status
-      case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65548
-      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      );    //  65549
-      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65550
-      case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65551
-      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65552
-      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65553
-      case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65554
+      case ERR_USER_ERROR_FIRST           : return("first user error"                                          );    //  65536
+      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         );    //  65537
+      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65538
+      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                );    //  65539   status
+      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      );    //  65540
+      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      );    //  65541
+      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65542
+      case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65543
+      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 );    //  65544
+      case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                               );    //  65545
+      case ERR_INVALID_FILE_FORMAT        : return("invalid file format"                                       );    //  65546
+      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                   );    //  65547
+      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       );    //  65548
+      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 );    //  65549
+      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65550
+      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   );    //  65551
+      case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65552
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65553
+      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
+      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
+      case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -511,29 +513,29 @@ string ErrorDescription(int error) {
 /**
  * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
  *
- * @param  string object  - Ausgangsstring
+ * @param  string value   - Ausgangsstring
  * @param  string search  - Suchstring
  * @param  string replace - Ersatzstring
  *
  * @return string - modifizierter String
  */
-string StrReplace(string object, string search, string replace) {
-   if (!StringLen(object)) return(object);
-   if (!StringLen(search)) return(object);
-   if (search == replace)  return(object);
+string StrReplace(string value, string search, string replace) {
+   if (!StringLen(value))  return(value);
+   if (!StringLen(search)) return(value);
+   if (search == replace)  return(value);
 
-   int from=0, found=StringFind(object, search);
+   int from=0, found=StringFind(value, search);
    if (found == -1)
-      return(object);
+      return(value);
 
    string result = "";
 
    while (found > -1) {
-      result = StringConcatenate(result, StrSubstr(object, from, found-from), replace);
+      result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
       from   = found + StringLen(search);
-      found  = StringFind(object, search, from);
+      found  = StringFind(value, search, from);
    }
-   result = StringConcatenate(result, StringSubstr(object, from));
+   result = StringConcatenate(result, StringSubstr(value, from));
 
    return(result);
 }
@@ -543,16 +545,16 @@ string StrReplace(string object, string search, string replace) {
  * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
  * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
  *
- * @param  string object  - Ausgangsstring
+ * @param  string value   - Ausgangsstring
  * @param  string search  - Suchstring
  * @param  string replace - Ersatzstring
  *
  * @return string - rekursiv modifizierter String
  */
-string StrReplaceR(string object, string search, string replace) {
-   if (!StringLen(object)) return(object);
+string StrReplaceR(string value, string search, string replace) {
+   if (!StringLen(value)) return(value);
 
-   string lastResult="", result=object;
+   string lastResult="", result=value;
 
    while (result != lastResult) {
       lastResult = result;
@@ -1125,9 +1127,9 @@ double GetCommission(double lots = 1.0) {
          string section = "Commissions";
          string key     = company +"."+ currency +"."+ account;
 
-         if (!IsGlobalConfigKey(section, key)) {
+         if (!IsGlobalConfigKeyA(section, key)) {
             key = company +"."+ currency;
-            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
+            if (!IsGlobalConfigKeyA(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
          }
          rate = GetGlobalConfigDouble(section, key);
          if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_VALUE)));
@@ -2038,21 +2040,20 @@ string StrRight(string value, int n) {
  * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
  * Teilstring nicht.
  *
- * @param  string value     - Ausgangsstring
- * @param  string substring - der das Ergebnis begrenzende Teilstring
- * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                            Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
- *                            zurückgegeben.
- *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
- *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings, wird
- *                            der gesamte String zurückgegeben.
+ * @param  string value            - Ausgangsstring
+ * @param  string substring        - der das Ergebnis begrenzende Teilstring
+ * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
+ *                                   Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
+ *                                   zurückgegeben.
+ *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ *                                   Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings,
+ *                                   wird der gesamte String zurückgegeben.
  * @return string
  */
-string StrRightFrom(string value, string substring, int count=1) {
+string StrRightFrom(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-
-   // (1) positive Anzahl: von vorn zählen
+   // positive Anzahl: von vorn zählen
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2063,8 +2064,7 @@ string StrRightFrom(string value, string substring, int count=1) {
       return(StrSubstr(value, pos+StringLen(substring)));
    }
 
-
-   // (2) negative Anzahl: von hinten zählen
+   // negative Anzahl: von hinten zählen
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2099,60 +2099,60 @@ string StrRightFrom(string value, string substring, int count=1) {
 /**
  * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object - zu prüfender String
+ * @param  string value  - zu prüfender String
  * @param  string prefix - Substring
  *
  * @return bool
  */
-bool StrStartsWithI(string object, string prefix) {
+bool StrStartsWithI(string value, string prefix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(object)) return(false);
+         if (StrIsNull(value))  return(false);
          if (StrIsNull(prefix)) return(!catch("StrStartsWithI(1)  invalid parameter prefix: (NULL)", error));
       }
       catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))         return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
-   return(StringFind(StrToUpper(object), StrToUpper(prefix)) == 0);
+   return(StringFind(StrToUpper(value), StrToUpper(prefix)) == 0);
 }
 
 
 /**
  * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object - zu prüfender String
+ * @param  string value  - zu prüfender String
  * @param  string suffix - Substring
  *
  * @return bool
  */
-bool StrEndsWithI(string object, string suffix) {
+bool StrEndsWithI(string value, string suffix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(object)) return(false);
+         if (StrIsNull(value))  return(false);
          if (StrIsNull(suffix)) return(!catch("StrEndsWithI(1)  invalid parameter suffix: (NULL)", error));
       }
       catch("StrEndsWithI(2)", error);
    }
 
-   int lenObject = StringLen(object);
+   int lenValue = StringLen(value);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)             return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)          return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
 
-   if (lenObject < lenSuffix)
+   if (lenValue < lenSuffix)
       return(false);
 
-   object = StrToUpper(object);
+   value = StrToUpper(value);
    suffix = StrToUpper(suffix);
 
-   if (lenObject == lenSuffix)
-      return(object == suffix);
+   if (lenValue == lenSuffix)
+      return(value == suffix);
 
-   int start = lenObject-lenSuffix;
-   return(StringFind(object, suffix, start) == start);
+   int start = lenValue-lenSuffix;
+   return(StringFind(value, suffix, start) == start);
 }
 
 
@@ -2875,39 +2875,47 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
 
 
 /**
- * Konvertiert einen String in einen Boolean. Die Strings "1", "on", "true" und "yes" sowie numerische String ungleich 0
- * (zero) werden als TRUE, alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden, leading/
- * trailing White-Space wird ignoriert. Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0
- * statt großem Buchstaben O und umgekehrt).
+ * Konvertiert einen String in einen Boolean.
  *
- * @param  string value - der zu konvertierende String
+ * Ist der Parameter strict = TRUE, werden die Strings "1" und "0", "on" und "off", "true" und "false", "yes" and "no" ohne
+ * Beachtung von Groß-/Kleinschreibung konvertiert und alle anderen Werte lösen einen Fehler aus.
+ *
+ * Ist der Parameter strict = FALSE (default), werden unscharfe Rechtschreibfehler automatisch korrigiert (z.B. Ziffer 0 statt
+ * großem Buchstaben O und umgekehrt), numerische Werte ungleich "1" und "0" entsprechend interpretiert und alle Werte, die
+ * nicht als TRUE interpretiert werden können, als FALSE interpretiert.
+ *
+ * Leading/trailing White-Space wird in allen Fällen ignoriert.
+ *
+ * @param  string value             - der zu konvertierende String
+ * @param  bool   strict [optional] - default: inaktiv
  *
  * @return bool
  */
-bool StrToBool(string value) {
+bool StrToBool(string value, bool strict = false) {
+   strict = strict!=0;
+
    value = StrTrim(value);
-
-   if (value == "" )      return( false);
-   if (value == "0")      return( false);                // zero
-   if (value == "1")      return( true );                // one
-   if (value == "O")      return(_false(log("StrToBool(1)  value "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
-
    string lValue = StrToLower(value);
-   if (lValue == "on"   ) return( true );
-   if (lValue == "off"  ) return( false);
-   if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
-   if (lValue == "0ff"  ) return(_false(log("StrToBool(3)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
 
-   if (lValue == "true" ) return( true );
-   if (lValue == "false") return( false);
+   if (value  == "1"    ) return(true );
+   if (value  == "0"    ) return(false);
+   if (lValue == "on"   ) return(true );
+   if (lValue == "off"  ) return(false);
+   if (lValue == "true" ) return(true );
+   if (lValue == "false") return(false);
+   if (lValue == "yes"  ) return(true );
+   if (lValue == "no"   ) return(false);
 
-   if (lValue == "yes"  ) return( true );
-   if (lValue == "no"   ) return( false);
-   if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
+   if (strict) return(!catch("StrToBool(1)  cannot convert string "+ DoubleQuoteStr(value) +" to boolean (strict mode enabled)", ERR_INVALID_PARAMETER));
+
+   if (value  == ""   ) return( false);
+   if (value  == "O"  ) return(_false(log("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
+   if (lValue == "0n" ) return(_true (log("StrToBool(3)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
+   if (lValue == "0ff") return(_false(log("StrToBool(4)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
+   if (lValue == "n0" ) return(_false(log("StrToBool(5)  string "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
 
    if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
-
    return(false);
 }
 
@@ -2987,14 +2995,38 @@ string StrToUpper(string value) {
 
 
 /**
- * Trimmt einen String beidseitig.
+ * Trim white space characters from both sides of a string.
  *
  * @param  string value
  *
- * @return string
+ * @return string - trimmed string
  */
 string StrTrim(string value) {
    return(StringTrimLeft(StringTrimRight(value)));
+}
+
+
+/**
+ * Trim white space characters from the left side of a string. Alias of the built-in function StringTrimLeft().
+ *
+ * @param  string value
+ *
+ * @return string - trimmed string
+ */
+string StrTrimLeft(string value) {
+   return(StringTrimLeft(value));
+}
+
+
+/**
+ * Trim white space characters from the right side of a string. Alias of the built-in function StringTrimRight().
+ *
+ * @param  string value
+ *
+ * @return string - trimmed string
+ */
+string StrTrimRight(string value) {
+   return(StringTrimRight(value));
 }
 
 
@@ -3036,7 +3068,7 @@ string UrlEncode(string value) {
 bool MQL.IsDirectory(string dirname) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
-   string filesDirectory = GetFullMqlFilesPath();
+   string filesDirectory = GetMqlFilesPath();
    if (!StringLen(filesDirectory))
       return(false);
    return(IsDirectoryA(StringConcatenate(filesDirectory, "\\", dirname)));
@@ -3053,7 +3085,7 @@ bool MQL.IsDirectory(string dirname) {
 bool MQL.IsFile(string filename) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
-   string filesDirectory = GetFullMqlFilesPath();
+   string filesDirectory = GetMqlFilesPath();
    if (!StringLen(filesDirectory))
       return(false);
    return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
@@ -3065,7 +3097,7 @@ bool MQL.IsFile(string filename) {
  *
  * @return string - directory path not ending with a slash or an empty string in case of errors
  */
-string GetFullMqlFilesPath() {
+string GetMqlFilesPath() {
    static string filesDir;
 
    if (!StringLen(filesDir)) {
@@ -4272,48 +4304,48 @@ bool StrCompareI(string string1, string string2) {
 /**
  * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird beachtet.
  *
- * @param  string object    - zu durchsuchender String
+ * @param  string value     - zu durchsuchender String
  * @param  string substring - zu suchender Substring
  *
  * @return bool
  */
-bool StrContains(string object, string substring) {
+bool StrContains(string value, string substring) {
    if (!StringLen(substring))
       return(!catch("StrContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
-   return(StringFind(object, substring) != -1);
+   return(StringFind(value, substring) != -1);
 }
 
 
 /**
  * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object    - zu durchsuchender String
+ * @param  string value     - zu durchsuchender String
  * @param  string substring - zu suchender Substring
  *
  * @return bool
  */
-bool StrContainsI(string object, string substring) {
+bool StrContainsI(string value, string substring) {
    if (!StringLen(substring))
       return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
-   return(StringFind(StrToUpper(object), StrToUpper(substring)) != -1);
+   return(StringFind(StrToUpper(value), StrToUpper(substring)) != -1);
 }
 
 
 /**
  * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
- * @param  string object - zu durchsuchender String
+ * @param  string value  - zu durchsuchender String
  * @param  string search - zu suchender Substring
  *
  * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
  */
-int StrFindR(string object, string search) {
-   int lenObject = StringLen(object),
+int StrFindR(string value, string search) {
+   int lenValue  = StringLen(value),
        lastFound = -1,
        result    =  0;
 
-   for (int i=0; i < lenObject; i++) {
-      result = StringFind(object, search, i);
+   for (int i=0; i < lenValue; i++) {
+      result = StringFind(value, search, i);
       if (result == -1)
          break;
       lastFound = result;
@@ -5674,7 +5706,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string filesDir = GetFullMqlFilesPath() +"\\";
+   string filesDir = GetMqlFilesPath() +"\\";
 
 
    // (1) Validierung
@@ -5813,7 +5845,7 @@ bool SendSMS(string receiver, string message) {
 
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
-   string filesDir     = GetFullMqlFilesPath();
+   string filesDir     = GetMqlFilesPath();
    string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
@@ -6549,12 +6581,12 @@ void __DummyCalls() {
    GetCurrency(NULL);
    GetCurrencyId(NULL);
    GetExternalAssets(NULL, NULL);
-   GetFullMqlFilesPath();
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
+   GetMqlFilesPath();
    GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
@@ -6693,6 +6725,8 @@ void __DummyCalls() {
    StrToTradeDirection(NULL);
    StrToUpper(NULL);
    StrTrim(NULL);
+   StrTrimLeft(NULL);
+   StrTrimRight(NULL);
    SumInts(iNulls);
    SwapCalculationModeToStr(NULL);
    Tester.GetBarModel();
@@ -6715,6 +6749,7 @@ void __DummyCalls() {
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);
+   WriteIniString(NULL, NULL, NULL, NULL);
 }
 
 

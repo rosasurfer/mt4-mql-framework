@@ -76,11 +76,11 @@ bool EditFile(string filename) {
 /**
  * Öffnet eine oder mehrere Dateien im Texteditor.
  *
- * @param  string filenames[] - Dateinamen
+ * @param  string &filenames[] - Dateinamen
  *
  * @return bool - Erfolgsstatus
  */
-bool EditFiles(string& filenames[]) {
+bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
    if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames = {}", ERR_INVALID_PARAMETER));
 
@@ -578,9 +578,9 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
 /**
  * Return all keys of an .ini file section.
  *
- * @param  __In__  string fileName - .ini filename
- * @param  __In__  string section  - .ini file section
- * @param  __Out__ string keys[]   - array receiving the found keys
+ * @param  _In_  string fileName - initialization filename
+ * @param  _In_  string section  - initialization file section
+ * @param  _Out_ string keys[]   - array receiving the found keys
  *
  * @return int - number of found keys or EMPTY (-1) in case of errors
  */
@@ -606,6 +606,39 @@ int GetIniKeys(string fileName, string section, string &keys[]) {
       return(size);
    return(EMPTY);
 }
+
+
+/**
+ * Return all section names of an .ini file.
+ *
+ * @param  _In_  string fileName - initialization filename
+ * @param  _Out_ string names[]  - array receiving the found section names
+ *
+ * @return int - number of found section names or EMPTY (-1) in case of errors
+ */
+int GetIniSections(string fileName, string &names[]) {
+   int bufferSize = 512;
+   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
+
+   int chars = GetIniSectionsA(fileName, buffer, bufferSize);
+
+   // handle a too small buffer
+   while (chars == bufferSize-2) {
+      bufferSize <<= 1;
+      InitializeByteBuffer(buffer, bufferSize);
+      chars = GetIniSectionsA(fileName, buffer, bufferSize);
+   }
+
+   if (!chars) int size = ArrayResize(names, 0);            // file not found or no sections
+   else            size = ExplodeStrings(buffer, names);
+
+   ArrayResize(buffer, 0);
+
+   if (!catch("GetIniSections(1)"))
+      return(size);
+   return(EMPTY);
+}
+
 
 
 /**
@@ -722,6 +755,19 @@ int InitializeStringBuffer(string &buffer[], int length) {
    buffer[0] = CreateString(length);
 
    return(catch("InitializeStringBuffer(3)"));
+}
+
+
+/**
+ * Sort an array of strings.
+ *
+ * @param  string values[]
+ *
+ * @return bool - success status
+ */
+bool SortStrings(string &values[]) {
+   if (ArrayDimension(values) > 1) return(catch("SortStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   return(SortMqlStringsA(values, ArraySize(values)));
 }
 
 
@@ -2365,8 +2411,7 @@ int BufferGetChar(int buffer[], int pos) {
 
 
 /**
- * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-
- * Characters) zurück.
+ * Konvertiert den in einem Buffer gespeicherten Unicode-String in einen ANSI-String und gibt ihn zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int from     - Index des ersten Integers der Zeichensequenz
@@ -2397,7 +2442,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
          int byte2 = word >> 8 & 0xFF;
 
          if (byte1 && !byte2) sChar = CharToStr(byte1);
-         else                 sChar = "¿";                           // multi-byte character
+         else                 sChar = "¿";                           // multibyte character
          result = StringConcatenate(result, sChar);
          shift += 16;
       }
@@ -3964,16 +4009,16 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string input     - zu zerlegender String
- * @param  string separator - Trennstring
- * @param  string results[] - Zielarray für die Teilstrings
- * @param  int    limit     - maximale Anzahl von Teilstrings (default: kein Limit)
+ * @param  _In_  string input            - zu zerlegender String
+ * @param  _In_  string separator        - Trennstring
+ * @param  _Out_ string results[]        - Zielarray für die Teilstrings
+ * @param  _In_  int    limit [optional] - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder -1 (EMPTY), wennn ein Fehler auftrat
  */
 int Explode(string input, string separator, string &results[], int limit = NULL) {
-   // Der Parameter input *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
-   // vor Modifikation von results[] eine Kopie von input und verwenden diese.
+   // Der Parameter input *könnte* eine Referenz auf ein Element des Ergebnisarrays results[] sein, daher erstellen wir
+   // vor Modifikation von results[] eine Kopie von input und verarbeiten diese.
    string _input = StringConcatenate(input, "");
 
    int lenInput     = StringLen(input),
@@ -7372,11 +7417,13 @@ void Library.ResetGlobalVars() {
 
 #import "rsfExpander.dll"
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
+   int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
    int    pi_hProcess(int pi[]);
    int    pi_hThread(int pi[]);
    int    si_setFlags(int si[], int flags);
    int    si_setShowWindow(int si[], int cmdShow);
    int    si_setSize(int si[], int size);
+   bool   SortMqlStringsA(string values[], int size);
    bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
    int    tzi_Bias(int tzi[]);

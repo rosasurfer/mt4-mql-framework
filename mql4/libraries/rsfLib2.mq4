@@ -856,10 +856,10 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
  *
  * @param  _In_     bool   store    - Richtung: TRUE  = kopiert aus den Parametern in die Library;
  *                                              FALSE = kopiert aus der Library in die Parameter
- * @param  _In_Out_ int    orders[] - LFX-Orders
- * @param  _In_Out_ int    iData [] - Integer-Daten
- * @param  _In_Out_ bool   bData [] - Boolean-Daten
- * @param  _In_Out_ double dData [] - Double-Daten
+ * @param  _InOut_ int    orders[] - LFX-Orders
+ * @param  _InOut_ int    iData [] - Integer-Daten
+ * @param  _InOut_ bool   bData [] - Boolean-Daten
+ * @param  _InOut_ double dData [] - Double-Daten
  *
  * @return int - Anzahl der kopierten Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */

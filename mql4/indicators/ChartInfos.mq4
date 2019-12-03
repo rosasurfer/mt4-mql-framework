@@ -2232,7 +2232,7 @@ bool CustomPositions.ReadConfig() {
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {               // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
-            iniValue = GetIniStringRaw(file, section, keys[i], "");
+            iniValue = GetIniStringRawA(file, section, keys[i], "");
             iniValue = StrReplace(iniValue, TAB, " ");
 
             // Kommentar auswerten
@@ -4248,7 +4248,7 @@ bool RestoreRuntimeStatus() {
  */
 int ReadExternalPositions(string provider, string signal) {
    // (1.1) offene Positionen: alle Schlüssel einlesen
-   string file = GetFullMqlFilesPath() +"\\"+ provider +"\\"+ signal +"_open.ini";
+   string file = GetMqlFilesPath() +"\\"+ provider +"\\"+ signal +"_open.ini";
       if (!IsFileA(file)) return(_EMPTY(catch("ReadExternalPositions(1)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    string section = provider +"."+ signal;
    string keys[], symbol = StdSymbol();
@@ -4271,7 +4271,7 @@ int ReadExternalPositions(string provider, string signal) {
       if (StrStartsWith(key, symbol +".")) {
 
          // (1.2.1) Zeile lesen
-         string value = GetIniString(file, section, key, "");
+         string value = GetIniStringA(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(2)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (1.2.2) Positionsdaten validieren
@@ -4378,7 +4378,7 @@ int ReadExternalPositions(string provider, string signal) {
 
 
    // (2.1) geschlossene Positionen: alle Schlüssel einlesen
-   file = GetFullMqlFilesPath() +"\\"+ provider +"\\"+ signal +"_closed.ini";
+   file = GetMqlFilesPath() +"\\"+ provider +"\\"+ signal +"_closed.ini";
       if (!IsFileA(file)) return(_EMPTY(catch("ReadExternalPositions(19)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    section  = provider +"."+ signal;
    keysSize = GetIniKeys(file, section, keys);
@@ -4401,7 +4401,7 @@ int ReadExternalPositions(string provider, string signal) {
       key = keys[i];
       if (StrStartsWith(key, symbol +".")) {
          // (2.2.1) Zeile lesen
-         value = GetIniString(file, section, key, "");
+         value = GetIniStringA(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(20)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (2.2.2) Positionsdaten validieren
@@ -4811,8 +4811,8 @@ bool EditAccountConfig() {
       ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
    }
    else if (mode.extern.notrading) {
-      ArrayPushString(files, GetFullMqlFilesPath() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
-      ArrayPushString(files, GetFullMqlFilesPath() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
+      ArrayPushString(files, GetMqlFilesPath() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
+      ArrayPushString(files, GetMqlFilesPath() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
       ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.alias));
    }
    else if (mode.remote.trading) {
