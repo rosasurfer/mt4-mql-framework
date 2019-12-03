@@ -11,14 +11,11 @@ int onInitUser() {
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
       sequence.status = STATUS_WAITING;
-      if (LoadSequence()) {
-         if (ValidateInputs(interactive))
-            SynchronizeStatus();
-      }
+      RestoreSequence(interactive);
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                   // Falscheingabe
+      return(last_error);                                // input error (invalid sequence id)
    }
 
    // ...dann laufende Sequenzen suchen und ggf. eine davon restaurieren...
@@ -30,15 +27,13 @@ int onInitUser() {
          PlaySoundEx("Windows Notify.wav");
          button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids) +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
          if (button == IDYES) {
-            sequence.isTest = false;
             sequence.id     = ids[i];
             Sequence.ID     = sequence.id; SS.SequenceId();
             sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+            sequence.isTest = false;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            if (LoadSequence())                             // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
-               if (ValidateInputs(false))                   //       sofort nach neuer Sequenz fragen.
-                  SynchronizeStatus();
+            RestoreSequence(false);
             return(last_error);
          }
          if (button == IDCANCEL)
@@ -51,16 +46,18 @@ int onInitUser() {
 
    // ...zum Schluﬂ neue Sequenz anlegen
    if (ValidateInputs(interactive)) {
-      sequence.isTest  = IsTesting();
       sequence.id      = CreateSequenceId();
       Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
-      sequence.created = GmtTimeFormat(TimeServer(), "%a, %Y.%m.%d %H:%M:%S");
+      sequence.cycle   = 1;
+      sequence.created = TimeServer();
       sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+      sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
-      InitStatusLocation();
-      SetCustomLog(sequence.id, statusDirectory + statusFile);
 
-      if (start.conditions) {                               // without start conditions StartSequence() is called immediately and saves
+      string logFile = StrLeft(GetStatusFileName(), -3) +"log";
+      SetCustomLog(sequence.id, logFile);
+
+      if (start.conditions) {                            // without start conditions StartSequence() is called immediately and will save the sequence
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
          SaveSequence();
       }
@@ -75,13 +72,9 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitTemplate() {
-   bool interactive = false;
-
    // im Chart gespeicherte Sequenz restaurieren
    if (RestoreChartStatus()) {
-      if (LoadSequence())
-         if (ValidateInputs(interactive))
-            SynchronizeStatus();
+      RestoreSequence(false);
    }
    DeleteChartStatus();
    return(last_error);
@@ -94,7 +87,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameters()
+   BackupInputStatus();                                  // input itself has been backed-up in onDeinitParameters()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
@@ -108,10 +101,10 @@ int onInitParameters() {
       }
    }
    else if (sequence.status == STATUS_WAITING) {
-      if (!start.conditions) {                              // TODO: evaluate sessionbreak.waiting
+      if (!start.conditions) {                           // TODO: evaluate sessionbreak.waiting
       }
    }
-   if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
+   if (sequence.status != STATUS_UNDEFINED)              // parameter change of a valid sequence
       SaveSequence();
    return(last_error);
 }
@@ -144,24 +137,31 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitRecompile() {
-   return(onInitTemplate());                                // Funktionalit‰t entspricht onInitTemplate()
+   return(onInitTemplate());                             // same requirements as for onInitTemplate()
 }
 
 
 /**
- * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
- * returned with -1 (which signals a hard stop as opposite to a regular error).
+ * Initialization post-processing hook. Not called if the reason-specific event handler returned with an error.
  *
  * @return int - error status
  */
 int afterInit() {
-   if (IsTesting()) {
-      test.onTrendChangePause  = GetConfigBool(__NAME() +".Tester", "OnTrendChangePause");
-      test.onSessionBreakPause = GetConfigBool(__NAME() +".Tester", "OnSessionBreakPause");
-      test.onStopPause         = GetConfigBool(__NAME() +".Tester", "OnStopPause");
-   }
    CreateStatusBox();
    SS.All();
+
+   if (IsTesting()) {
+      string section = __NAME() +".Tester";
+      tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
+      tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
+      tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
+      tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
+      tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
+      tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       true);
+   }
+   else if (IsTestSequence() && sequence.status!=STATUS_STOPPED) {
+      sequence.status = STATUS_STOPPED;                  // a finished test loaded into an online chart
+   }                                                     // TODO: move to SynchronizeStatus()
    return(last_error);
 }
 
@@ -174,8 +174,8 @@ int afterInit() {
 int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
-   int x[]={2, 101, 160}, y=51, fontSize=74, rectangles=ArraySize(x);
-   color  bgColor = C'248,248,248';                         // that's chart background color
+   int x[]={2, 101, 165}, y=50, fontSize=75, rectangles=ArraySize(x);
+   color  bgColor = C'248,248,248';                      // that's chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
@@ -194,8 +194,8 @@ int CreateStatusBox() {
 
 
 /**
- * Backup status variables depending on input parameters before parameter changes. In case of input errors the variables can
- * be restored afterwards. Called only from onInitParameters().
+ * Backup status variables which may change by modifying input parameters. This way status can be restored in case of input
+ * errors. Called only from onInitParameters().
  */
 void BackupInputStatus() {
    CopyInputStatus(true);
@@ -203,7 +203,7 @@ void BackupInputStatus() {
 
 
 /**
- * Restore status variables depending on input parameters. Called only from onInitParameters().
+ * Restore status variables from the backup. Called only from onInitParameters().
  */
 void RestoreInputStatus() {
    CopyInputStatus(false);
@@ -211,21 +211,21 @@ void RestoreInputStatus() {
 
 
 /**
- * Backup or restore status variables depending on input parameters. These are all variables which change if an input
- * parameter changes.
+ * Backup or restore status variables related to input parameter changes.
  *
- * @param  bool store - TRUE:  copy global values to internal storage (backup)
- *                      FALSE: copy internal values to global storage (restore)
+ * @param  bool store - TRUE:  copy status to internal storage (backup)
+ *                      FALSE: copy internal storage to status (restore)
  */
 void CopyInputStatus(bool store) {
    store = store!=0;
 
    static int      _sequence.id;
+   static int      _sequence.cycle;
    static string   _sequence.name;
-   static string   _sequence.created;
-   static int      _sequence.status;
+   static datetime _sequence.created;
    static bool     _sequence.isTest;
    static int      _sequence.direction;
+   static int      _sequence.status;
 
    static bool     _start.conditions;
    static bool     _start.trend.condition;
@@ -266,11 +266,12 @@ void CopyInputStatus(bool store) {
 
    if (store) {
       _sequence.id                = sequence.id;
+      _sequence.cycle             = sequence.cycle;
       _sequence.name              = sequence.name;
       _sequence.created           = sequence.created;
-      _sequence.status            = sequence.status;
       _sequence.isTest            = sequence.isTest;
       _sequence.direction         = sequence.direction;
+      _sequence.status            = sequence.status;
 
       _start.conditions           = start.conditions;
       _start.trend.condition      = start.trend.condition;
@@ -311,11 +312,12 @@ void CopyInputStatus(bool store) {
    }
    else {
       sequence.id                = _sequence.id;
+      sequence.cycle             = _sequence.cycle;
       sequence.name              = _sequence.name;
       sequence.created           = _sequence.created;
-      sequence.status            = _sequence.status;
       sequence.isTest            = _sequence.isTest;
       sequence.direction         = _sequence.direction;
+      sequence.status            = _sequence.status;
 
       start.conditions           = _start.conditions;
       start.trend.condition      = _start.trend.condition;
