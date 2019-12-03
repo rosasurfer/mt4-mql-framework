@@ -3414,6 +3414,7 @@ bool SaveSequence() {
    WriteIniString(file, section, "Symbol",                   Symbol());
    WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
    WriteIniString(file, section, "GridDirection",            sGridDirection);
+   WriteIniString(file, section, "ShowProfitInPercent",      ShowProfitInPercent);
 
    section = "SnowRoller-"+ sCycle;
    WriteIniString(file, section, "Created",                  sequence.created +" ("+ GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") +")");
@@ -3424,7 +3425,6 @@ bool SaveSequence() {
    WriteIniString(file, section, "StopConditions",           sActiveStopConditions);
    WriteIniString(file, section, "AutoResume",               AutoResume);
    WriteIniString(file, section, "AutoRestart",              AutoRestart);
-   WriteIniString(file, section, "ShowProfitInPercent",      ShowProfitInPercent);
    WriteIniString(file, section, "Sessionbreak.StartTime",   Sessionbreak.StartTime);
    WriteIniString(file, section, "Sessionbreak.EndTime",     Sessionbreak.EndTime);
 
@@ -3611,10 +3611,11 @@ bool ReadStatus() {
 
    // [Common]
    string section = "Common";
-   string sAccount       = GetIniStringA(file, section, "Account",       "");
-   string sSymbol        = GetIniStringA(file, section, "Symbol",        "");
-   string sSequenceId    = GetIniStringA(file, section, "Sequence.ID",   "");
-   string sGridDirection = GetIniStringA(file, section, "GridDirection", "");
+   string sAccount             = GetIniStringA(file, section, "Account",             "");
+   string sSymbol              = GetIniStringA(file, section, "Symbol",              "");
+   string sSequenceId          = GetIniStringA(file, section, "Sequence.ID",         "");
+   string sGridDirection       = GetIniStringA(file, section, "GridDirection",       "");
+   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");
 
    string sAccountRequired = ShortAccountCompany() +":"+ GetAccountNumber();
    if (sAccount != sAccountRequired) return(!catch("ReadStatus(3)  account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3628,6 +3629,7 @@ bool ReadStatus() {
    Sequence.ID = sSequenceId;
    if (sGridDirection == "")         return(!catch("ReadStatus(6)  invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    GridDirection = sGridDirection;
+   ShowProfitInPercent = StrToBool(sShowProfitInPercent);
 
    string sections[];
    int size = ReadStatusSections(file, sections); if (!size) return(false);
@@ -3636,20 +3638,19 @@ bool ReadStatus() {
    for (int i=0; i < size-1; i++) {
       section = sections[i];
       sequence.cycle++;
-      bool   bInPercent   = StrToBool(GetIniStringA(file, section, "ShowProfitInPercent", ""));
       double dStartEquity = StrToDouble(GetIniStringA(file, section, "rt.sequence.startEquity", ""));
 
       string sPL = GetIniStringA(file, section, "rt.sequence.stops", "");
       double dPL = StrToDouble(StrTrim(StrRightFrom(sPL, "|", -1)));
-      if (bInPercent) sPL = NumberToStr(MathDiv(dPL, dStartEquity) * 100, "+.2") +"%";
-      else            sPL = NumberToStr(dPL, "+.2");
+      if (ShowProfitInPercent) sPL = NumberToStr(MathDiv(dPL, dStartEquity) * 100, "+.2") +"%";
+      else                     sPL = NumberToStr(dPL, "+.2");
 
       double dMaxPL = StrToDouble(GetIniStringA(file, section, "rt.sequence.maxProfit", ""));
       double dMinPL = StrToDouble(GetIniStringA(file, section, "rt.sequence.maxDrawdown", ""));
-      if (bInPercent) string sMaxPL = NumberToStr(MathDiv(dMaxPL, dStartEquity) * 100, "+.2") +"%";
-      else                   sMaxPL = NumberToStr(dMaxPL, "+.2");
-      if (bInPercent) string sMinPL = NumberToStr(MathDiv(dMinPL, dStartEquity) * 100, "+.2") +"%";
-      else                   sMinPL = NumberToStr(dMinPL, "+.2");
+      if (ShowProfitInPercent) string sMaxPL = NumberToStr(MathDiv(dMaxPL, dStartEquity) * 100, "+.2") +"%";
+      else                            sMaxPL = NumberToStr(dMaxPL, "+.2");
+      if (ShowProfitInPercent) string sMinPL = NumberToStr(MathDiv(dMinPL, dStartEquity) * 100, "+.2") +"%";
+      else                            sMinPL = NumberToStr(dMinPL, "+.2");
       string sPlStats = "  ("+ sMaxPL +"/"+ sMinPL +")";
 
       sRestartStats = " ------------------------------------------"+ NL
@@ -3666,7 +3667,6 @@ bool ReadStatus() {
    string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");     // string   StopConditions=@trend(HalfTrend:H1:3) || @profit(2%)
    string sAutoResume            = GetIniStringA(file, section, "AutoResume",             "");     // bool     AutoResume=1
    string sAutoRestart           = GetIniStringA(file, section, "AutoRestart",            "");     // bool     AutoRestart=1
-   string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");     // bool     ShowProfitInPercent=1
    string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");     // datetime Sessionbreak.StartTime=86160
    string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");     // datetime Sessionbreak.EndTime=3730
 
@@ -3680,12 +3680,11 @@ bool ReadStatus() {
    if (!StrIsNumeric(sLotSize))             return(!catch("ReadStatus(10)  invalid or missing LotSize "+ DoubleQuoteStr(sLotSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    LotSize = StrToDouble(sLotSize);
    if (!StrIsDigit(sStartLevel))            return(!catch("ReadStatus(11)  invalid or missing StartLevel "+ DoubleQuoteStr(sStartLevel) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   StartLevel          = StrToInteger(sStartLevel);
-   StartConditions     = sStartConditions;
-   StopConditions      = sStopConditions;
-   AutoResume          = StrToBool(sAutoResume);
-   AutoRestart         = StrToBool(sAutoRestart);
-   ShowProfitInPercent = StrToBool(sShowProfitInPercent);
+   StartLevel      = StrToInteger(sStartLevel);
+   StartConditions = sStartConditions;
+   StopConditions  = sStopConditions;
+   AutoResume      = StrToBool(sAutoResume);
+   AutoRestart     = StrToBool(sAutoRestart);
    if (!StrIsDigit(sSessionbreakStartTime)) return(!catch("ReadStatus(12)  invalid or missing Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
    if (!StrIsDigit(sSessionbreakEndTime))   return(!catch("ReadStatus(13)  invalid or missing Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
