@@ -92,12 +92,12 @@ double   sequence.commission;                      // commission value per grid 
 
 int      sequence.start.event [];                  // sequence starts (the moment status changes to STATUS_PROGRESSING)
 datetime sequence.start.time  [];
-double   sequence.start.price [];
+double   sequence.start.price [];                  // average open price of all opened positions
 double   sequence.start.profit[];
 
 int      sequence.stop.event  [];                  // sequence stops (the moment status changes to STATUS_STOPPED)
 datetime sequence.stop.time   [];
-double   sequence.stop.price  [];                  // average realized close price of all closed positions
+double   sequence.stop.price  [];                  // average close price of all closed positions
 double   sequence.stop.profit [];
 
 // --- start conditions (AND combined) -----
@@ -2720,7 +2720,7 @@ void SS.AutoResume() {
 void SS.AutoRestart() {
    if (!__CHART()) return;
 
-   if (AutoRestart) sAutoRestart = "AutoRestart: On ("+ sequence.cycle +")" + NL;
+   if (AutoRestart) sAutoRestart = "AutoRestart: On ("+ (sequence.cycle-1) +")" + NL;
    else             sAutoRestart = "AutoRestart: Off"+ NL;
 }
 
@@ -3629,11 +3629,35 @@ bool ReadStatus() {
    if (sGridDirection == "")         return(!catch("ReadStatus(6)  invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    GridDirection = sGridDirection;
 
-   // [SnowRoller-xxx] last cycle
    string sections[];
    int size = ReadStatusSections(file, sections); if (!size) return(false);
-   section = sections[size-1];
 
+   // [SnowRoller-xxx]           // read profits of finished cycles
+   for (int i=0; i < size-1; i++) {
+      section = sections[i];
+      sequence.cycle++;
+      bool   bInPercent   = StrToBool(GetIniStringA(file, section, "ShowProfitInPercent", ""));
+      double dStartEquity = StrToDouble(GetIniStringA(file, section, "rt.sequence.startEquity", ""));
+
+      string sPL = GetIniStringA(file, section, "rt.sequence.stops", "");
+      double dPL = StrToDouble(StrTrim(StrRightFrom(sPL, "|", -1)));
+      if (bInPercent) sPL = NumberToStr(MathDiv(dPL, dStartEquity) * 100, "+.2") +"%";
+      else            sPL = NumberToStr(dPL, "+.2");
+
+      double dMaxPL = StrToDouble(GetIniStringA(file, section, "rt.sequence.maxProfit", ""));
+      double dMinPL = StrToDouble(GetIniStringA(file, section, "rt.sequence.maxDrawdown", ""));
+      if (bInPercent) string sMaxPL = NumberToStr(MathDiv(dMaxPL, dStartEquity) * 100, "+.2") +"%";
+      else                   sMaxPL = NumberToStr(dMaxPL, "+.2");
+      if (bInPercent) string sMinPL = NumberToStr(MathDiv(dMinPL, dStartEquity) * 100, "+.2") +"%";
+      else                   sMinPL = NumberToStr(dMinPL, "+.2");
+      string sPlStats = "  ("+ sMaxPL +"/"+ sMinPL +")";
+
+      sRestartStats = " ------------------------------------------"+ NL
+                     +" "+ sequence.cycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
+   }
+
+   // [SnowRoller-xxx]           // read full last cycle
+   section = sections[size-1];
    string sCreated               = GetIniStringA(file, section, "Created",                "");     // string   Created=Tue, 2019.09.24 01:00:00
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");     // int      GridSize=20
    string sLotSize               = GetIniStringA(file, section, "LotSize",                "");     // double   LotSize=0.01
@@ -3646,6 +3670,7 @@ bool ReadStatus() {
    string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");     // datetime Sessionbreak.StartTime=86160
    string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");     // datetime Sessionbreak.EndTime=3730
 
+   sequence.cycle++;
    sValue = StrTrim(StrLeftTo(sCreated, "("));
    if (!StrIsDigit(sValue))                 return(!catch("ReadStatus(7)  invalid or missing creation timestamp "+ DoubleQuoteStr(sCreated) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    sequence.created = StrToInteger(sValue);
@@ -3715,7 +3740,7 @@ bool ReadStatus() {
    string orderKeys[], sOrder;
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
    ResizeOrderArrays(0);
-   for (int i=0; i < size; i++) {
+   for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
       success = ReadStatus.ParseOrder(sOrder);
       if (!success) return(!catch("ReadStatus(28)  invalid order record "+ DoubleQuoteStr(orderKeys[i]) +" = "+ DoubleQuoteStr(sOrder) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
