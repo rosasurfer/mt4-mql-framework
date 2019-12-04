@@ -3770,8 +3770,8 @@ int ReadStatusSections(string file, string &names[]) {
       ArraySpliceStrings(names, i, 1);                // drop all sections not matching '/SnowRoller-[0-9]+/i'
       size--;
    }
-   if (!SortStrings(names)) return(NULL);             // TODO: implement natural sorting
    if (!size)               return(!catch("ReadStatusSections(1)  invalid status file "+ DoubleQuoteStr(file) +" (no \"SnowRoller\" sections found)", ERR_INVALID_FILE_FORMAT));
+   if (!SortStrings(names)) return(NULL);             // TODO: implement natural sorting
 
    return(size);
 }

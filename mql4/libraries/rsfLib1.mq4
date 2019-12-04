@@ -767,6 +767,8 @@ int InitializeStringBuffer(string &buffer[], int length) {
  */
 bool SortStrings(string &values[]) {
    if (ArrayDimension(values) > 1) return(catch("SortStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArraySize(values) < 2)             // nothing to do
+      return(true);
    return(SortMqlStringsA(values, ArraySize(values)));
 }
 
