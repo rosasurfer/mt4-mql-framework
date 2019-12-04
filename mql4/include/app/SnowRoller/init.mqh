@@ -29,11 +29,12 @@ int onInitUser() {
          if (button == IDYES) {
             sequence.id     = ids[i];
             Sequence.ID     = sequence.id; SS.SequenceId();
-            sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
             sequence.isTest = false;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
-            RestoreSequence(false);
+            if (RestoreSequence(false)) {
+               sequence.name = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+            }
             return(last_error);
          }
          if (button == IDCANCEL)

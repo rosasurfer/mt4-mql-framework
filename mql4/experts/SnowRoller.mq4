@@ -2720,8 +2720,8 @@ void SS.AutoResume() {
 void SS.AutoRestart() {
    if (!__CHART()) return;
 
-   if (AutoRestart) sAutoRestart = "AutoRestart: On ("+ (sequence.cycle-1) +")" + NL;
-   else             sAutoRestart = "AutoRestart: Off"+ NL;
+   if (AutoRestart) sAutoRestart = "AutoRestart:  On ("+ (sequence.cycle-1) +")" + NL;
+   else             sAutoRestart = "AutoRestart:  Off"+ NL;
 }
 
 
@@ -2859,8 +2859,7 @@ int StoreChartStatus() {
  * @return bool - whether a sequence id was found and restored
  */
 bool RestoreChartStatus() {
-   string name = __NAME();
-   string key  = name +".runtime.Sequence.ID", sValue = "";
+   string name=__NAME(), key=name +".runtime.Sequence.ID", sValue="";
 
    if (ObjectFind(key) == 0) {
       Chart.RestoreString(key, sValue);
@@ -2876,7 +2875,6 @@ bool RestoreChartStatus() {
       else {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
-         sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
          sequence.status = STATUS_WAITING;
          SetCustomLog(sequence.id, NULL);
       }
@@ -5312,7 +5310,7 @@ bool ShowProfitTargets() {
 
 /**
  * Calculate the theoretically possible maximum profit at the specified distance away from the gridbase. The calculation
- * assumes a perfect grid. It considers commissions but ignores missed grid levels and slippage.
+ * assumes a perfect grid. It considers commissions but disregards missed grid levels and slippage.
  *
  * @param  double distance - distance from the gridbase in pip
  *
@@ -5323,10 +5321,8 @@ double PotentialProfit(double distance) {
    distance = NormalizeDouble(distance, 1);
    int    level = distance/GridSize;
    double partialLevel = MathModFix(distance/GridSize, 1);
-
    double units = (level-1)/2.*level + partialLevel*level;
    double unitSize = GridSize * PipValue(LotSize) + sequence.commission;
-
    double maxProfit = units * unitSize;
    if (partialLevel > 0) {
       maxProfit += (1-partialLevel)*level*sequence.commission;    // a partial level pays full commission
@@ -5337,7 +5333,7 @@ double PotentialProfit(double distance) {
 
 /**
  * Calculate the minimum distance price has to move away from the gridbase to theoretically generate the specified floating
- * profit. The calculation assumes a perfect grid. It considers commissions but ignores missed grid levels and slippage.
+ * profit. The calculation assumes a perfect grid. It considers commissions but disregards missed grid levels and slippage.
  *
  * @param  double profit
  *

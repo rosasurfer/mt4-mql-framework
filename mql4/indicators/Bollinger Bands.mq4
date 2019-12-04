@@ -162,17 +162,15 @@ int onInit() {
       else signals = false;
    }
 
-
    // setup buffer management
    SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
-
    // data display configuration, names and labels
    string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
    ind.shortName = __NAME() +"("+ MA.Periods +")";
-   ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") * "+ NumberToStr(Bands.StdDevs, ".1+") +")";
+   ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
    if (!IsSuperContext()) {
        ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
        ObjectRegister(ind.legendLabel);
@@ -184,7 +182,6 @@ int onInit() {
    SetIndexLabel(MODE_LOWER, "LowerBand("+ MA.Periods +")");
    IndicatorDigits(SubPipDigits);
 
-
    // drawing options and styles
    int startDraw = MA.Periods;
    if (Max.Values >= 0)
@@ -193,7 +190,6 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPPER, startDraw);
    SetIndexDrawBegin(MODE_LOWER, startDraw);
    SetIndicatorOptions();
-
 
    // initialize indicator calculation
    if (ma.method==MODE_ALMA && MA.Periods > 1) {
