@@ -2859,8 +2859,7 @@ int StoreChartStatus() {
  * @return bool - whether a sequence id was found and restored
  */
 bool RestoreChartStatus() {
-   string name = __NAME();
-   string key  = name +".runtime.Sequence.ID", sValue = "";
+   string name=__NAME(), key=name +".runtime.Sequence.ID", sValue="";
 
    if (ObjectFind(key) == 0) {
       Chart.RestoreString(key, sValue);
@@ -2876,7 +2875,6 @@ bool RestoreChartStatus() {
       else {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
-         sequence.name   = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
          sequence.status = STATUS_WAITING;
          SetCustomLog(sequence.id, NULL);
       }
