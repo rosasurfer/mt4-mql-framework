@@ -2720,8 +2720,8 @@ void SS.AutoResume() {
 void SS.AutoRestart() {
    if (!__CHART()) return;
 
-   if (AutoRestart) sAutoRestart = "AutoRestart: On ("+ (sequence.cycle-1) +")" + NL;
-   else             sAutoRestart = "AutoRestart: Off"+ NL;
+   if (AutoRestart) sAutoRestart = "AutoRestart:  On ("+ (sequence.cycle-1) +")" + NL;
+   else             sAutoRestart = "AutoRestart:  Off"+ NL;
 }
 
 
