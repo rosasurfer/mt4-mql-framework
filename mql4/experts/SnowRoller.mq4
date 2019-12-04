@@ -4240,43 +4240,31 @@ bool SynchronizeStatus() {
             if (openPosition) /*&&*/ if (!IntInArray(ignoreOpenPositions, OrderTicket())) ArrayPushInt(orphanedOpenPositions, OrderTicket());
          }
       }
-
       for (i=OrdersHistoryTotal()-1; i >= 0; i--) {                        // geschlossene Tickets
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))                 // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
             continue;
-         if (IsPendingOrderType(OrderType()))                              // gestrichene PendingOrders ignorieren
+         if (OrderCloseTime() <= sequence.created)                         // skip tickets not belonging to the current cycle
+            continue;
+         if (IsPendingOrderType(OrderType()))                              // skip deleted pending orders
             continue;
          if (IsMyOrder(sequence.id)) /*&&*/ if (!IntInArray(orders.ticket, OrderTicket())) {
-            if (!IntInArray(ignoreClosedPositions, OrderTicket()))         // kann nur geschlossene Position sein
+            if (!IntInArray(ignoreClosedPositions, OrderTicket())) {
                ArrayPushInt(orphanedClosedPositions, OrderTicket());
+            }
          }
       }
    }
 
    // (1.4) Vorgehensweise für verwaiste Tickets erfragen
-   int size = ArraySize(orphanedPendingOrders);                            // TODO: Ignorieren nicht möglich; wenn die Tickets übernommen werden sollen,
-   if (size > 0) {                                                         //       müssen sie richtig einsortiert werden.
-      return(!catch("SynchronizeStatus(3)  unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR));
-      //ArraySort(orphanedPendingOrders);
-      //PlaySoundEx("Windows Notify.wav");
-      //int button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
-      //if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
-      ArrayResize(orphanedPendingOrders, 0);
-   }
-   size = ArraySize(orphanedOpenPositions);                                // TODO: Ignorieren nicht möglich; wenn die Tickets übernommen werden sollen,
-   if (size > 0) {                                                         //       müssen sie richtig einsortiert werden.
-      return(!catch("SynchronizeStatus(5)  unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR));
-      //ArraySort(orphanedOpenPositions);
-      //PlaySoundEx("Windows Notify.wav");
-      //button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
-      //if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
-      ArrayResize(orphanedOpenPositions, 0);
-   }
+   int size = ArraySize(orphanedPendingOrders);                            // Ignorieren nicht möglich. Wenn die Tickets übernommen werden sollen, müßten sie korrekt einsortiert werden.
+   if (size > 0) return(!catch("SynchronizeStatus(3)  sequence "+ sequence.name +" unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR));
+   size = ArraySize(orphanedOpenPositions);                                // Ignorieren nicht möglich. Wenn die Tickets übernommen werden sollen, müßten sie korrekt einsortiert werden.
+   if (size > 0) return(!catch("SynchronizeStatus(5)  sequence "+ sequence.name +" unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR));
    size = ArraySize(orphanedClosedPositions);
    if (size > 0) {
       ArraySort(orphanedClosedPositions);
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Sequence "+ sequence.name +" orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       MergeIntArrays(ignoreClosedPositions, orphanedClosedPositions, ignoreClosedPositions);
