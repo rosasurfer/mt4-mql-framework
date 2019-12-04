@@ -3698,7 +3698,7 @@ bool ReadStatus() {
    string sMissedLevels        = GetIniStringA(file, section, "rt.sequence.missedLevels", "");     // int[]   rt.sequence.missedLevels=-6,-7,-8,-14
    string sPendingOrders       = GetIniStringA(file, section, "rt.ignorePendingOrders",   "");     // int[]   rt.ignorePendingOrders=66064890,66064891,66064892
    string sOpenPositions       = GetIniStringA(file, section, "rt.ignoreOpenPositions",   "");     // int[]   rt.ignoreOpenPositions=66064890,66064891,66064892
-   string sClosedOrders        = GetIniStringA(file, section, "rt.ignoreClosedPositions", "");     // int[]   rt.ignoreClosedPositions=66064890,66064891,66064892
+   string sClosedPositions     = GetIniStringA(file, section, "rt.ignoreClosedPositions", "");     // int[]   rt.ignoreClosedPositions=66064890,66064891,66064892
 
    sessionbreak.waiting = StrToBool(sSessionbreakWaiting);
    if (!StrIsNumeric(sStartEquity))         return(!catch("ReadStatus(14)  invalid or missing sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3730,9 +3730,9 @@ bool ReadStatus() {
    success = ReadStatus.ParseTickets(sPendingOrders, ignorePendingOrders);
    if (!success)                            return(!catch("ReadStatus(25)  invalid ignored pending orders "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sOpenPositions, ignoreOpenPositions);
-   if (!success)                            return(!catch("ReadStatus(26)  invalid ignored open positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   success = ReadStatus.ParseTickets(sOpenPositions, ignoreClosedPositions);
-   if (!success)                            return(!catch("ReadStatus(27)  invalid ignored closed positions "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(26)  invalid ignored open positions "+ DoubleQuoteStr(sOpenPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   success = ReadStatus.ParseTickets(sClosedPositions, ignoreClosedPositions);
+   if (!success)                            return(!catch("ReadStatus(27)  invalid ignored closed positions "+ DoubleQuoteStr(sClosedPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    string orderKeys[], sOrder;
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
