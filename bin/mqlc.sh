@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+# TODO: The script needs to create a link or junction to "experts/include" for the compiler to find include files.
+#
 
 
 # find the MQL compiler
