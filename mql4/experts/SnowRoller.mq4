@@ -709,7 +709,7 @@ bool ResetSequence() {
    if (IsLastError())                   return(false);
    if (sequence.status!=STATUS_STOPPED) return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
    if (!AutoRestart)                    return(!catch("ResetSequence(2)  cannot restart sequence "+ sequence.name +" (AutoRestart not enabled)", ERR_ILLEGAL_STATE));
-   if (start.trend.description == "")   return(!catch("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_ILLEGAL_STATE));
+   if (start.trend.description == "")   return(!warn("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_ILLEGAL_STATE));
 
    // memorize needed vars
    int    iCycle   = sequence.cycle;
@@ -1349,16 +1349,16 @@ bool EventListener_ChartCommand(string &commands[]) {
 
 
 /**
- * Ob die aktuell selektierte Order durch den StopLoss geschlossen wurde (client- oder server-seitig).
+ * Whether the currently selected order was closed by stoploss (client or server side).
  *
  * @return bool
  */
 bool IsOrderClosedBySL() {
-   bool position   = OrderType()==OP_BUY || OrderType()==OP_SELL;
-   bool closed     = OrderCloseTime() != 0;                          // geschlossene Position
+   bool isPosition = OrderType()==OP_BUY || OrderType()==OP_SELL;
+   bool isClosed   = OrderCloseTime() != 0;                          // geschlossene Position
    bool closedBySL = false;
 
-   if (closed) /*&&*/ if (position) {
+   if (isPosition) /*&&*/ if (isClosed) {
       if (StrEndsWithI(OrderComment(), "[sl]")) {
          closedBySL = true;
       }

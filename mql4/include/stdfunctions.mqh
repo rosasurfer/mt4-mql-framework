@@ -141,14 +141,14 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
 /**
- * Gibt optisch und akustisch eine Warnung aus.
+ * Show a warning with an optional error (visual and audible) but don't set the error.
  *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
+ * @param  string message          - message to display
+ * @param  int    error [optional] - error to display
  *
- * @return int - derselbe Fehlercode
+ * @return int - the same error
  */
-int warn(string message, int error=NO_ERROR) {
+int warn(string message, int error = NO_ERROR) {
    // Warnung zusätzlich an Debug-Ausgabe schicken
    debug("WARN: "+ message, error);
 
