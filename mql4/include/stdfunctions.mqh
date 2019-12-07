@@ -141,14 +141,14 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
 /**
- * Gibt optisch und akustisch eine Warnung aus.
+ * Show a warning with an optional error (visual and audible) but don't set the error.
  *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
+ * @param  string message          - message to display
+ * @param  int    error [optional] - error to display
  *
- * @return int - derselbe Fehlercode
+ * @return int - the same error
  */
-int warn(string message, int error=NO_ERROR) {
+int warn(string message, int error = NO_ERROR) {
    // Warnung zusätzlich an Debug-Ausgabe schicken
    debug("WARN: "+ message, error);
 
@@ -3510,13 +3510,13 @@ bool Chart.DeleteValue(string key) {
 
 
 /**
- * Get the bar model currently selected in the Strategy Tester. If the tester window wasn't yet opened by the user the
- * function returns EMPTY (-1).
+ * Get the bar model currently selected in the tester.
  *
- * @return int
+ * @return int - bar model id or EMPTY (-1) if not called from within the tester
  */
 int Tester.GetBarModel() {
-   if (!This.IsTesting()) return(_EMPTY(catch("Tester.GetBarModel(1)  Tester only function", ERR_FUNC_NOT_ALLOWED)));
+   if (!This.IsTesting())
+      return(_EMPTY(catch("Tester.GetBarModel(1)  Tester only function", ERR_FUNC_NOT_ALLOWED)));
    return(Tester_GetBarModel());
 }
 
@@ -3524,26 +3524,24 @@ int Tester.GetBarModel() {
 /**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Tester.Pause() {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!IsVisualModeFix())
-      return(NO_ERROR);                                              // skipping
+      return(NO_ERROR);                                        // skipping
 
    if (!IsScript() && __ExecutionContext[EC.programCoreFunction]==CF_DEINIT)
-      return(NO_ERROR);                                              // SendMessage() darf in deinit() nicht mehr benutzt werden
+      return(NO_ERROR);                                        // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    if (Tester.IsPaused())
-      return(NO_ERROR);                                              // skipping
+      return(NO_ERROR);                                        // skipping
 
    int hWnd = GetTerminalMainWindow();
-   if (!hWnd)
-      return(last_error);
+   if (!hWnd) return(last_error);
 
-   int result = SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
-
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
    return(NO_ERROR);
 }
 
