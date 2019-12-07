@@ -1061,128 +1061,126 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 
 
 /**
- * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
+ * Update internal order and PL state according to current runtime data.
  *
- * @param  _Out_ bool &gridChanged       - variable indicating whether the current gridbase or level changed
- * @param  _Out_ int   activatedOrders[] - array receiving the order indexes of activated client-side stops/limits
+ * @param  _Out_ bool gridChanged       - variable indicating whether gridbase or gridlevel changed
+ * @param  _Out_ int  activatedOrders[] - array receiving order indexes of activated client-side limits (if any)
  *
  * @return bool - success status
  */
-bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
+bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
    gridChanged = gridChanged!=0;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  cannot update order status of "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
    ArrayResize(activatedOrders, 0);
-   bool wasPending, isClosed, openPositions;
-   int  closed[][2], close[2], sizeOfTickets=ArraySize(orders.ticket); ArrayResize(closed, 0);
+   bool wasPending, isClosed;
+   int sizeOfTickets=ArraySize(orders.ticket), closed[][2]; ArrayResize(closed, 0);
    sequence.floatingPL = 0;
 
-   // Tickets aktualisieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!orders.closeTime[i]) {                                                   // Ticket prüfen, wenn es beim letzten Aufruf offen war
-         wasPending = (orders.type[i] == OP_UNDEFINED);
+      if (orders.closeTime[i] > 0)                                               // process all tickets locally marked as open
+         continue;
 
-         // client-seitige PendingOrders prüfen
-         if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
-            if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {   // handles stop and limit orders
-               if (__LOG()) log("UpdateStatus(2)  "+ UpdateStatus.StopTriggerMsg(i));
-               ArrayPushInt(activatedOrders, i);
-            }
-            continue;
+      // check client-side managed entry limits (ticket #-1)
+      wasPending = (orders.type[i] == OP_UNDEFINED);
+      if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
+         if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {   // detects both triggered stops and limits
+            if (__LOG()) log("UpdateStatus(2)  "+ UpdateStatus.StopTriggerMsg(i));
+            ArrayPushInt(activatedOrders, i);                                    // queue the triggered limit
          }
+         continue;
+      }
 
-         // Magic-Ticket #-2 prüfen (wird sofort hier "geschlossen")
-         if (orders.ticket[i] == -2) {
-            orders.closeEvent[i] = CreateEventId();                                 // Event-ID kann sofort vergeben werden.
-            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(3)");
-            orders.closePrice[i] = orders.openPrice[i];
-            orders.closedBySL[i] = true;
-            Chart.MarkPositionClosed(i);
-            if (__LOG()) log("UpdateStatus(4)  "+ UpdateStatus.StopLossMsg(i));
+      // check for ticket #-2 (on resume virtually triggered SL: an open position being immediately stopped-out if restored)
+      if (orders.ticket[i] == -2) {
+         orders.closeEvent[i] = CreateEventId();
+         orders.closeTime [i] = TimeCurrentEx("UpdateStatus(3)");
+         orders.closePrice[i] = orders.openPrice[i];
+         orders.closedBySL[i] = true;
+         if (__LOG()) log("UpdateStatus(4)  "+ UpdateStatus.StopLossMsg(i));
+         sequence.level  -= Sign(orders.level[i]);
+         sequence.stops++; SS.Stops();
+       //sequence.stopsPL = ...                                                  // PL(#-2) is 0.00 => stopsPL is unchanged
+         gridChanged      = true;
+         continue;
+      }
 
-            sequence.level  -= Sign(orders.level[i]);
-            sequence.stops++; SS.Stops();
-          //sequence.stopsPL = ...                                                  // unverändert, da P/L des Magic-Tickets #-2 immer 0.00 ist
-            gridChanged      = true;
-            continue;
-         }
+      // processing of regular tickets
+      if (!SelectTicket(orders.ticket[i], "UpdateStatus(5)")) return(false);
 
-         // reguläre server-seitige Tickets
-         if (!SelectTicket(orders.ticket[i], "UpdateStatus(5)")) return(false);
-
-         if (wasPending) {
-            // beim letzten Aufruf Pending-Order
-            if (OrderType() != orders.pendingType[i]) {                             // order limit was executed
-               orders.type      [i] = OrderType();
-               orders.openEvent [i] = CreateEventId();
-               orders.openTime  [i] = OrderOpenTime();
-               orders.openPrice [i] = OrderOpenPrice();
-               orders.swap      [i] = OrderSwap();
-               orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
-               orders.profit    [i] = OrderProfit();
-               Chart.MarkOrderFilled(i);
-               if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.OrderFillMsg(i));
-
-               if (IsStopOrderType(orders.pendingType[i])) {
-                  sequence.level   += Sign(orders.level[i]);
-                  sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
-                  gridChanged       = true;
-               }
-               else {
-                  ArrayDropInt(sequence.missedLevels, orders.level[i]);             // update missed grid levels
-                  SS.MissedLevels();
-               }
-            }
-         }
-         else {
-            // beim letzten Aufruf offene Position
+      if (wasPending) {
+         // last time a pending order
+         if (OrderType() != orders.pendingType[i]) {                             // entry limit was executed
+            orders.type      [i] = OrderType();
+            orders.openEvent [i] = CreateEventId();
+            orders.openTime  [i] = OrderOpenTime();
+            orders.openPrice [i] = OrderOpenPrice();
             orders.swap      [i] = OrderSwap();
-            orders.commission[i] = OrderCommission();
+            orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
             orders.profit    [i] = OrderProfit();
-         }
+            Chart.MarkOrderFilled(i);
+            if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.OrderFillMsg(i));
 
-         isClosed = OrderCloseTime() != 0;                                          // Bei Spikes kann eine Pending-Order ausgeführt *und* bereits geschlossen sein.
-         if (!isClosed) {                                                           // weiterhin offenes Ticket
-            if (orders.type[i] != OP_UNDEFINED) {
-               openPositions = true;
-               if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopTriggerMsg(i));
-                  ArrayPushInt(activatedOrders, i);
-               }
+            if (IsStopOrderType(orders.pendingType[i])) {                        // a regular stop order
+               sequence.level   += Sign(orders.level[i]);
+               sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               gridChanged       = true;
+            }
+            else {
+               ArrayDropInt(sequence.missedLevels, orders.level[i]);             // a limit order => update missed grid levels
+               SS.MissedLevels();
+            }
+         }
+      }
+      else {
+         // last time an open position
+         orders.swap      [i] = OrderSwap();
+         orders.commission[i] = OrderCommission();
+         orders.profit    [i] = OrderProfit();
+      }
+
+      isClosed = OrderCloseTime() != 0;                                          // Terminal bug: In a fast market a pending order can be filled *and* closed.
+      if (!isClosed) {                                                           // Tester and demo servers will wrongly report such an immediately closed order
+         if (orders.type[i] != OP_UNDEFINED) {                                   // as still "open", and report the "close" event at the next tick.
+            // check client-side managed exit limits
+            if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
+               if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopTriggerMsg(i));
+               ArrayPushInt(activatedOrders, i);                                 // queue the triggered limit
             }
             sequence.floatingPL = NormalizeDouble(sequence.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
-         else if (orders.type[i] == OP_UNDEFINED) {                                 // jetzt geschlossenes Ticket: gestrichene Pending-Order
-            Grid.DropData(i);
-            sizeOfTickets--; i--;
-         }
-         else {
-            orders.closeTime [i] = OrderCloseTime();                                // jetzt geschlossenes Ticket: geschlossene Position
-            orders.closePrice[i] = OrderClosePrice();
-            orders.closedBySL[i] = IsOrderClosedBySL();
-            Chart.MarkPositionClosed(i);
+      }
+      else if (orders.type[i] == OP_UNDEFINED) {                                 // now closed => a cancelled pending order
+         Grid.DropData(i);
+         sizeOfTickets--; i--;
+      }
+      else {
+         orders.closeTime [i] = OrderCloseTime();                                // now closed => a closed position
+         orders.closePrice[i] = OrderClosePrice();
+         orders.closedBySL[i] = IsOrderClosedBySL();
+         Chart.MarkPositionClosed(i);
 
-            if (orders.closedBySL[i]) {                                             // ausgestoppt
-               orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-               if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
-               sequence.level  -= Sign(orders.level[i]);
-               sequence.stops++;
-               sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
-               gridChanged      = true;
-            }
-            else {                                                                  // manually closed or automatically closed at test end
-               close[0] = OrderCloseTime();
-               close[1] = OrderTicket();                                            // Geschlossene Positionen werden zwischengespeichert, um ihnen Event-IDs
-               ArrayPushInts(closed, close);                                        // zeitlich *nach* den ausgestoppten Positionen zuweisen zu können.
-               if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
-               sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
-            }
+         if (orders.closedBySL[i]) {                                             // stopped-out
+            orders.closeEvent[i] = CreateEventId();
+            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
+            sequence.level  -= Sign(orders.level[i]);
+            sequence.stops++;
+            sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
+            gridChanged      = true;
+         }
+         else {                                                                  // manually closed or automatically closed at test end
+            int close[2];
+            close[0] = OrderCloseTime();
+            close[1] = OrderTicket();                                            // memorize non-SL closes to assign event ids after SL closes
+            ArrayPushInts(closed, close);
+            if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
+            sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
    }
 
-   // Event-IDs geschlossener Positionen setzen (zeitlich nach allen ausgestoppten Positionen)
+   // assign event ids to closed positions (after stopped-out positions)
    int sizeOfClosed = ArrayRange(closed, 0);
    if (sizeOfClosed > 0) {
       ArraySort(closed);
@@ -1213,8 +1211,8 @@ bool UpdateStatus(bool &gridChanged, int activatedOrders[]) {
             GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), gridbase);
             gridChanged = true;
          }
-         else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // Gridbasis des letzten Tickets inspizieren, da Trailing online
-            gridChanged = true;                                               // u.U. verzögert wird
+         else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
+            gridChanged = true;                                               // online trailing enforces pauses between events
          }
       }
    }
@@ -1707,7 +1705,7 @@ bool UpdatePendingOrders() {
    bool nextStopExists, ordersChanged;
    string sMissedLevels = "";
 
-   // check if the stop order for the next level exists (always at the last index)
+   // check if the stop order for the next level exists (always at the last order index)
    int i = sizeOfTickets - 1;
    if (sizeOfTickets > 0) {
       if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) { // a pending stop or limit order
@@ -1715,7 +1713,7 @@ bool UpdatePendingOrders() {
             nextStopExists = true;
          }
          else if (IsStopOrderType(orders.pendingType[i])) {
-            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order (always at the last index)
+            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order (always at the last order index)
             if (!error) {
                sizeOfTickets--;
                ordersChanged = true;
@@ -1741,9 +1739,8 @@ bool UpdatePendingOrders() {
          }
          if (level == 1) break;
       }
-      if (lastExistingLevel != sequence.level) {
-         return(!catch("UpdatePendingOrders(4)  lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
-      }
+      if (lastExistingLevel != sequence.level)
+         return(!catch("UpdatePendingOrders(4)  sequence.level("+ sequence.level +") != lastExistingOrder("+ lastExistingLevel +")", ERR_ILLEGAL_STATE));
    }
 
    // trail a first level stop order (always an existing next level order, thus at the last index)
@@ -1794,7 +1791,7 @@ bool UpdatePendingOrders() {
 
    if (limitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" ["+ sMissedLevels +"]");
+      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" "+ sMissedLevels +" (all missed: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
@@ -5246,7 +5243,8 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
  * @return bool - success status
  */
 bool UpdateProfitTargets() {
-   if (IsLastError()) return(false);
+   if (IsLastError())                        return(false);
+   if (IsTesting() && !tester.showBreakeven) return(true);
    // 7bit:
    // double loss = currentPL - PotentialProfit(gridbaseDistance);
    // double be   = gridbase + RequiredDistance(loss);
@@ -5272,9 +5270,8 @@ bool UpdateProfitTargets() {
  * @return bool - success status
  */
 bool ShowProfitTargets() {
-   if (IsLastError())                        return(false);
-   if (IsTesting() && !tester.showBreakeven) return(true);
-   if (!sequence.breakeven)                  return(true);
+   if (IsLastError())       return(false);
+   if (!sequence.breakeven) return(true);       // BE is not calculated if tester.showBreakeven = Off
 
    datetime time = TimeCurrent(); time -= time % MINUTES;
    string label = "arrow_"+ time;
