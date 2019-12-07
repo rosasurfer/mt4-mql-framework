@@ -276,8 +276,9 @@ int onTick() {
    if (!HandleEvent(EVENT_CHART_CMD))
       return(last_error);
 
-   int  signal, stops[];                                    // indexes of client-side triggered stoplosses
-   bool gridChanged;                                        // whether the current gridbase or level changed
+   int signal, stops[];                                     // client-side triggered stoplosses
+   bool success = true;                                     // whether the tick was successfully processed
+   static bool gridChanged = false;                         // whether the current gridbase or gridlevel changed
 
    // sequence either waits for start/resume signal...
    if (sequence.status == STATUS_WAITING) {
@@ -292,32 +293,27 @@ int onTick() {
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      if (UpdateStatus(gridChanged, stops)) {
+      success = UpdateStatus(gridChanged, stops);
+      if (success) {
          signal = IsStopSignal();
          if (!signal) {
             if (ArraySize(stops) > 0)   ExecuteStopLosses(stops);
             if (Tick==1 || gridChanged) UpdatePendingOrders();
          }
          else StopSequence(signal);
+         gridChanged = false;                               // reset static var after the tick was successfully processed
       }
    }
 
    // ...or sequence is stopped
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
-   // update current equity value for equity recorder
-   if (EA.RecordEquity)
-      tester.equityValue = sequence.startEquity + sequence.totalPL;
+   if (success) {
+      // update current equity value for equity recorder
+      if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
 
-   // update profit targets
-   if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
-
-
-   static bool done = false;
-
-   if (IsVisualMode() && Tick.Time >= D'2019.10.04 15:30:00') {
-      debug("onTick(0.1)  time: "+ TimeToStr(Tick.Time, TIME_FULL));
-      if (!done) done = _true(Tester.Pause());
+      // update profit targets
+      if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
    }
    return(last_error);
 }
@@ -978,9 +974,9 @@ bool ResumeSequence(int signal) {
 
    // update and store status
    bool changes;
-   int  iNull[];                                               // If RestorePositions() encountered a magic ticket #-2 (spread violation)
-   if (!UpdateStatus(changes, iNull)) return(false);           // UpdateStatus() closes it with PL=0.00 and decreases the grid level.
-   if (changes) UpdatePendingOrders();                         // In this case pending orders need to be updated again.
+   int  iNull[];                                               // If RestorePositions() found a virtuall triggered SL (#-2)
+   if (!UpdateStatus(changes, iNull)) return(false);    // UpdateStatus() "closes" the ticket and decreases the gridlevel.
+   if (changes) UpdatePendingOrders();                         // Only in this case pending orders need to be updated again.
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
@@ -1070,24 +1066,24 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 /**
  * Update internal order and PL state according to current runtime data.
  *
- * @param  _Out_ bool gridChanged      - variable indicating whether gridbase or gridlevel changed
- * @param  _Out_ int  activatedStops[] - array receiving order indexes of client-side triggered stops (if any)
+ * @param  _InOut_ bool gridChanged      - whether the current gridbase or gridlevel changed
+ * @param  _Out_   int  triggeredStops[] - array receiving tickets of client-side triggered stops (if any)
  *
  * @return bool - success status
  */
-bool UpdateStatus(bool &gridChanged, int &activatedStops[]) {
+bool UpdateStatus(bool &gridChanged, int &triggeredStops[]) {
    gridChanged = gridChanged!=0;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  cannot update order status of "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
-   ArrayResize(activatedStops, 0);
+   ArrayResize(triggeredStops, 0);
    int sizeOfTickets=ArraySize(orders.ticket);
-   sequence.floatingPL = 0;
+   double floatingPL = 0;
 
    for (int level, i=sizeOfTickets-1; i >= 0; i--) {
       if (level == 1) break;                                                  // limit inspected tickets
       level = Abs(orders.level[i]);
-      if (orders.closeTime[i] > 0)                                            // process only tickets known as open
+      if (orders.closeTime[i] > 0)                                            // process all tickets known as open
          continue;
 
       // check for ticket #-2 (an on resume virtually triggered SL: a position immediately stopped-out if restored)
@@ -1130,6 +1126,16 @@ bool UpdateStatus(bool &gridChanged, int &activatedStops[]) {
             else {
                ArrayDropInt(sequence.missedLevels, orders.level[i]);          // a limit order => update missed grid levels
                SS.MissedLevels();
+               if (!isClosed) {
+                  // Terminal bug:
+                  // In a fast market a pending order with stoploss can be filled *and* immediately closed. Tester and demo
+                  // servers will wrongly report such an order as still open, and report the close event at the next tick.
+                  // Manual price checking for a triggered SL is not reliable and may cause more errors. To work-around it we
+                  // interrupt processing of the current tick and wait for the next one which is equivalent to flow logic of
+                  // a missed tick. However current state of sequence level, stop data and grid-change status must be kept.
+                  if (__LOG()) log("UpdateStatus(6)  interrupt processing of the current tick at level "+ sequence.level +" due to a filled limit order with SL (gridChanged="+ gridChanged +")");
+                  return(false);
+               }
             }
          }
       }
@@ -1139,45 +1145,45 @@ bool UpdateStatus(bool &gridChanged, int &activatedStops[]) {
          orders.commission[i] = OrderCommission();
          orders.profit    [i] = OrderProfit();
       }
-                                                                              // Terminal bug: In a fast market a pending order can be filled *and* closed.
-      if (!isClosed) {                                                        // Tester and demo servers will wrongly report such an immediately closed order
-         if (orders.type[i] != OP_UNDEFINED) {                                // as still "open", and report the "close" event at the next tick.
+
+      if (!isClosed) {
+         if (orders.type[i] != OP_UNDEFINED) {
             // check client-side managed exit limits
             if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-               if (__LOG()) log("UpdateStatus(6)  "+ UpdateStatus.StopTriggerMsg(i));
-               ArrayPushInt(activatedStops, i);                               // queue the triggered limit
+               if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopTriggerMsg(i));
+               ArrayPushInt(triggeredStops, orders.ticket[i]);                // queue the triggered limit
             }
-            sequence.floatingPL = NormalizeDouble(sequence.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
+            floatingPL = NormalizeDouble(floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
-      else if (orders.type[i] == OP_UNDEFINED) {                              // now closed => a cancelled pending order
-         Grid.DropData(i);
+      else if (orders.type[i] == OP_UNDEFINED) {                              // now closed => a cancelled pending order is
+         Grid.DropData(i);                                                    // immediately removed from the order arrays
          sizeOfTickets--;
       }
       else {
+         orders.closeEvent[i] = CreateEventId();
          orders.closeTime [i] = OrderCloseTime();                             // now closed => a closed position
          orders.closePrice[i] = OrderClosePrice();
          orders.closedBySL[i] = IsOrderClosedBySL();
          Chart.MarkPositionClosed(i);
 
          if (orders.closedBySL[i]) {                                          // stopped-out
-            orders.closeEvent[i] = CreateEventId();
-            if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
+            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++;
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
          else {                                                               // manually closed or closed at end of test
-            orders.closeEvent[i] = CreateEventId();
-            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
    }
 
    // update PL numbers
-   sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.TotalPL();
+   sequence.floatingPL = floatingPL;
+   sequence.totalPL    = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.TotalPL();
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
    else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
@@ -1192,7 +1198,7 @@ bool UpdateStatus(bool &gridChanged, int &activatedStops[]) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(9)"), gridbase);
+            GridBase.Change(TimeCurrentEx("UpdateStatus(10)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1201,7 +1207,7 @@ bool UpdateStatus(bool &gridChanged, int &activatedStops[]) {
       }
    }
 
-   return(!catch("UpdateStatus(10)"));
+   return(!catch("UpdateStatus(11)"));
 }
 
 
@@ -1590,22 +1596,22 @@ bool IsSessionBreak() {
 /**
  * Execute client-side triggered stoplosses. Called only from onTick().
  *
- * @param  int orders[] - indexes of orders with triggered stoplosses
+ * @param  int tickets[] - tickets with triggered stoplosses
  *
  * @return bool - success status
  */
-bool ExecuteStopLosses(int orders[]) {
+bool ExecuteStopLosses(int tickets[]) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("ExecuteStopLosses(1)  cannot execute triggered stoplosses of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int sizeOfOrders = ArraySize(orders);
+   int sizeOfOrders = ArraySize(tickets);
    if (!sizeOfOrders) return(true);
 
    int button, ticket, oe[];
 
-   for (int i, n=0; n < sizeOfOrders; n++) {
-      i = orders[n];
-      if (i >= ArraySize(orders.ticket))  return(!catch("ExecuteStopLosses(2)  illegal order index "+ i +" in parameter orders = "+ IntsToStr(orders, NULL), ERR_INVALID_PARAMETER));
+   for (int n=0; n < sizeOfOrders; n++) {
+      int i = SearchIntArray(orders.ticket, tickets[n]);
+      if (i < 0)                          return(!catch("ExecuteStopLosses(2)  invalid ticket #"+ tickets[n] +" (not found in order arrays)", ERR_INVALID_PARAMETER));
       if (!orders.clientsideLimit[i])     return(!catch("ExecuteStopLosses(3)  #"+ orders.ticket[i] +" is not marked as client-side managed", ERR_ILLEGAL_STATE));
       if (orders.type[i] == OP_UNDEFINED) return(!catch("ExecuteStopLosses(4)  #"+ orders.ticket[i] +" is still marked as pending", ERR_ILLEGAL_STATE));
       if (orders.closeTime[i] != 0)       return(!catch("ExecuteStopLosses(5)  #"+ orders.ticket[i] +" is already marked as closed", ERR_ILLEGAL_STATE));
