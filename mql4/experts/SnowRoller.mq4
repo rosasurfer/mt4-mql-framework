@@ -312,6 +312,13 @@ int onTick() {
    // update profit targets
    if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
 
+
+   static bool done = false;
+
+   if (IsVisualMode() && Tick.Time >= D'2019.10.04 15:30:00') {
+      debug("onTick(0.1)  time: "+ TimeToStr(Tick.Time, TIME_FULL));
+      if (!done) done = _true(Tester.Pause());
+   }
    return(last_error);
 }
 
@@ -1075,11 +1082,13 @@ bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
 
    ArrayResize(activatedOrders, 0);
    bool wasPending, isClosed;
-   int sizeOfTickets=ArraySize(orders.ticket), closed[][2]; ArrayResize(closed, 0);
+   int sizeOfTickets=ArraySize(orders.ticket);
    sequence.floatingPL = 0;
 
-   for (int i=0; i < sizeOfTickets; i++) {
-      if (orders.closeTime[i] > 0)                                               // process all tickets locally marked as open
+   for (int level, i=sizeOfTickets-1; i >= 0; i--) {
+      if (level == 1) break;                                                     // limit inspected tickets
+      level = Abs(orders.level[i]);
+      if (orders.closeTime[i] > 0)                                               // process only tickets known as open
          continue;
 
       // check client-side managed entry limits (ticket #-1)
@@ -1106,7 +1115,7 @@ bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
          continue;
       }
 
-      // processing of regular tickets
+      // regular tickets
       if (!SelectTicket(orders.ticket[i], "UpdateStatus(5)")) return(false);
 
       if (wasPending) {
@@ -1153,7 +1162,7 @@ bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
       }
       else if (orders.type[i] == OP_UNDEFINED) {                                 // now closed => a cancelled pending order
          Grid.DropData(i);
-         sizeOfTickets--; i--;
+         sizeOfTickets--;
       }
       else {
          orders.closeTime [i] = OrderCloseTime();                                // now closed => a closed position
@@ -1169,27 +1178,12 @@ bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
-         else {                                                                  // manually closed or automatically closed at test end
-            int close[2];
-            close[0] = OrderCloseTime();
-            close[1] = OrderTicket();                                            // memorize non-SL closes to assign event ids after SL closes
-            ArrayPushInts(closed, close);
+         else {                                                                  // manually closed or closed at end of test
+            orders.closeEvent[i] = CreateEventId();
             if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
-   }
-
-   // assign event ids to closed positions (after stopped-out positions)
-   int sizeOfClosed = ArrayRange(closed, 0);
-   if (sizeOfClosed > 0) {
-      ArraySort(closed);
-      for (i=0; i < sizeOfClosed; i++) {
-         int n = SearchIntArray(orders.ticket, closed[i][1]);
-         if (n == -1) return(!catch("UpdateStatus(10)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_ILLEGAL_STATE));
-         orders.closeEvent[n] = CreateEventId();
-      }
-      ArrayResize(closed, 0);
    }
 
    // update PL numbers
@@ -1208,7 +1202,7 @@ bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(11)"), gridbase);
+            GridBase.Change(TimeCurrentEx("UpdateStatus(10)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1217,7 +1211,7 @@ bool UpdateStatus(bool &gridChanged, int &activatedOrders[]) {
       }
    }
 
-   return(!catch("UpdateStatus(12)"));
+   return(!catch("UpdateStatus(11)"));
 }
 
 
