@@ -213,7 +213,7 @@ bool     tester.onTrendChangePause  = false;       // whether to pause the teste
 bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when the profit target is reached
 
 bool     tester.reduceStatusWrites  = true;        // whether to minimize status file writing in tester
-bool     tester.showBreakeven       = true;        // whether to show breakeven markers in tester
+bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
 #include <app/SnowRoller/init.mqh>
