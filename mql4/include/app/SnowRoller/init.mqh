@@ -153,12 +153,13 @@ int afterInit() {
 
    if (IsTesting()) {
       string section = __NAME() +".Tester";
+      tester.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
       tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
       tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
       tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
-      tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
-      tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       true);
+      tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
+      tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       false);
    }
    else if (IsTestSequence() && sequence.status!=STATUS_STOPPED) {
       sequence.status = STATUS_STOPPED;                  // a finished test loaded into an online chart
