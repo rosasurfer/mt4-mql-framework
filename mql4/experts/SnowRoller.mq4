@@ -206,11 +206,13 @@ string   sAutoRestart            = "";
 string   sRestartStats           = "";
 
 // --- debug settings ----------------------       // configurable via framework config, @see SnowRoller::afterInit()
-bool     tester.onStopPause         = false;       // whether to pause the tester on any fulfilled stop condition
+bool     tester.onStartPause        = false;       // whether to pause the tester on a fulfilled start/resume condition
+bool     tester.onStopPause         = false;       // whether to pause the tester on a fulfilled stop condition
 bool     tester.onSessionBreakPause = false;       // whether to pause the tester on a sessionbreak stop/resume
-bool     tester.onTrendChangePause  = false;       // whether to pause the tester when a trend condition changes
+bool     tester.onTrendChangePause  = false;       // whether to pause the tester on a fulfilled trend change condition
 bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when the profit target is reached
-bool     tester.reduceStatusWrites  = true;        // whether to skip redundant status file writing in tester
+
+bool     tester.reduceStatusWrites  = true;        // whether to minimize status file writing in tester
 bool     tester.showBreakeven       = true;        // whether to show breakeven markers in tester
 
 
@@ -458,8 +460,9 @@ bool StartSequence(int signal) {
    if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
 
    // pause the tester according to the configuration
-   if (IsTesting() && IsVisualMode()) {
-      if      (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+   if (IsTesting()) /*&&*/ if (IsVisualMode()) {
+      if      (tester.onStartPause)                                       Tester.Pause();
+      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
       else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
    }
    return(!catch("StartSequence(6)"));
@@ -975,7 +978,7 @@ bool ResumeSequence(int signal) {
    // update and store status
    bool changes;
    int  iNull[];                                               // If RestorePositions() found a virtuall triggered SL (#-2)
-   if (!UpdateStatus(changes, iNull)) return(false);    // UpdateStatus() "closes" the ticket and decreases the gridlevel.
+   if (!UpdateStatus(changes, iNull)) return(false);           // UpdateStatus() "closes" the ticket and decreases the gridlevel.
    if (changes) UpdatePendingOrders();                         // Only in this case pending orders need to be updated again.
    if (!SaveSequence()) return(false);
    RedrawStartStop();
@@ -983,8 +986,9 @@ bool ResumeSequence(int signal) {
    if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
-   if (IsTesting() && IsVisualMode()) {
-      if      (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
+   if (IsTesting()) /*&&*/ if (IsVisualMode()) {
+      if      (tester.onStartPause)                                       Tester.Pause();
+      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
       else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
    }
    return(!catch("ResumeSequence(6)"));

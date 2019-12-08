@@ -153,6 +153,7 @@ int afterInit() {
 
    if (IsTesting()) {
       string section = __NAME() +".Tester";
+      tester.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
       tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
       tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
