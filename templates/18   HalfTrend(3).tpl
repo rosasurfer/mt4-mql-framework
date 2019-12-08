@@ -8781,6 +8781,7 @@ name=HalfTrend
 flags=339
 window_num=0
 <inputs>
+Periods=3
 </inputs>
 </expert>
 </indicator>
