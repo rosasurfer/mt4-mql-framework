@@ -2743,15 +2743,15 @@ M15::TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 
 
 /**
- * Erweitert einen String mit einem anderen String linksseitig auf eine gewünschte Mindestlänge.
+ * Pad a string left-side to a minimum length using another substring.
  *
- * @param  string input     - Ausgangsstring
- * @param  int    padLength - gewünschte Mindestlänge
- * @param  string padString - zum Erweitern zu verwendender String (default: Leerzeichen)
+ * @param  string input                - source string
+ * @param  int    padLength            - minimum length of the resulting string
+ * @param  string padString [optional] - substring used for padding (default: space chars)
  *
  * @return string
  */
-string StrPadLeft(string input, int padLength, string padString=" ") {
+string StrPadLeft(string input, int padLength, string padString = " ") {
    while (StringLen(input) < padLength) {
       input = StringConcatenate(padString, input);
    }
@@ -2760,23 +2760,31 @@ string StrPadLeft(string input, int padLength, string padString=" ") {
 
 
 /**
- * Alias
+ * Alias of StrPadLeft()
+ *
+ * Pad a string left-side to a minimum length using another substring.
+ *
+ * @param  string input                - source string
+ * @param  int    padLength            - minimum length of the resulting string
+ * @param  string padString [optional] - substring used for padding (default: space chars)
+ *
+ * @return string
  */
-string StrLeftPad(string input, int padLength, string padString=" ") {
+string StrLeftPad(string input, int padLength, string padString = " ") {
    return(StrPadLeft(input, padLength, padString));
 }
 
 
 /**
- * Erweitert einen String mit einem anderen String rechtsseitig auf eine gewünschte Mindestlänge.
+ * Pad a string right-side to a minimum length using another substring.
  *
- * @param  string input     - Ausgangsstring
- * @param  int    padLength - gewünschte Mindestlänge
- * @param  string padString - zum Erweitern zu verwendender String (default: Leerzeichen)
+ * @param  string input                - source string
+ * @param  int    padLength            - minimum length of the resulting string
+ * @param  string padString [optional] - substring used for padding (default: space chars)
  *
  * @return string
  */
-string StrPadRight(string input, int padLength, string padString=" ") {
+string StrPadRight(string input, int padLength, string padString = " ") {
    while (StringLen(input) < padLength) {
       input = StringConcatenate(input, padString);
    }
@@ -2785,15 +2793,23 @@ string StrPadRight(string input, int padLength, string padString=" ") {
 
 
 /**
- * Alias
+ * Alias of StrPadRight()
+ *
+ * Pad a string right-side to a minimum length using another substring.
+ *
+ * @param  string input                - source string
+ * @param  int    padLength            - minimum length of the resulting string
+ * @param  string padString [optional] - substring used for padding (default: space chars)
+ *
+ * @return string
  */
-string StrRightPad(string input, int padLength, string padString=" ") {
+string StrRightPad(string input, int padLength, string padString = " ") {
    return(StrPadRight(input, padLength, padString));
 }
 
 
 /**
- * Whether the current program is executed in the Tester or on a Tester chart.
+ * Whether the current program is executed in the tester or on a tester chart.
  *
  * @return bool
  */
@@ -2809,8 +2825,8 @@ bool This.IsTesting() {
 
 
 /**
- * Whether the current program runs on a demo account. Works around a bug in builds <= 509 where IsDemo() returns
- * FALSE in Tester.
+ * Whether the current program runs on a demo account. Workaround for a bug in terminal builds <= 509 where the built-in
+ * function IsDemo() returns FALSE in the tester.
  *
  * @return bool
  */

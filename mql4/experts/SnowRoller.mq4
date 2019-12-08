@@ -100,7 +100,7 @@ datetime sequence.stop.time   [];
 double   sequence.stop.price  [];                  // average close price of all closed positions
 double   sequence.stop.profit [];
 
-// --- start conditions (AND combined) -----
+// --- start conditions ("AND" combined) ---
 bool     start.conditions;                         // whether any start condition is active
 
 bool     start.trend.condition;
@@ -119,7 +119,7 @@ bool     start.time.condition;
 datetime start.time.value;
 string   start.time.description = "";
 
-// --- stop conditions (OR combined) -------
+// --- stop conditions ("OR" combined) -----
 bool     stop.trend.condition;                     // whether a stop trend condition is active
 string   stop.trend.indicator   = "";
 int      stop.trend.timeframe;
@@ -1126,14 +1126,19 @@ bool UpdateStatus(bool &gridChanged, int &triggeredStops[]) {
             else {
                ArrayDropInt(sequence.missedLevels, orders.level[i]);          // a limit order => update missed grid levels
                SS.MissedLevels();
-               if (!isClosed) {
-                  // Terminal bug:
-                  // In a fast market a pending order with stoploss can be filled *and* immediately closed. Tester and demo
-                  // servers will wrongly report such an order as still open, and report the close event at the next tick.
-                  // Manual price checking for a triggered SL is not reliable and may cause more errors. To work-around it we
-                  // interrupt processing of the current tick and wait for the next one which is equivalent to flow logic of
-                  // a missed tick. However current state of sequence level, stop data and grid-change status must be kept.
-                  if (__LOG()) log("UpdateStatus(6)  interrupt processing of the current tick at level "+ sequence.level +" due to a filled limit order with SL (gridChanged="+ gridChanged +")");
+               //
+               // Terminal bug
+               // ------------
+               // In a fast market a pending order with stoploss can be filled *and* immediately closed. Tester and demo
+               // servers will wrongly report such an order as still open, and report the close event at the next tick.
+               // Manual price checking for a triggered SL is not reliable and may cause more errors. To work-around it we
+               // interrupt processing of the current tick and wait for the next one which is equivalent to flow logic of
+               // a missed tick. However current values of sequence level, stop data and grid-change flag must be kept.
+               //
+               // @see  https://github.com/rosasurfer/mt4-mql/issues/10
+               //
+               if (IsDemoFix() && !isClosed) {
+                  if (__LOG()) log("UpdateStatus(6)  sequence "+ sequence.name +" skipping current tick due to a filled limit order with SL (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +", level="+ sequence.level +", gridChanged="+ gridChanged +")");
                   return(false);
                }
             }
@@ -1337,13 +1342,13 @@ bool EventListener_ChartCommand(string &commands[]) {
 
 
 /**
- * Whether the currently selected order was closed by stoploss (client or server side).
+ * Whether the currently selected order was closed by a stoploss (client or server side).
  *
  * @return bool
  */
 bool IsOrderClosedBySL() {
    bool isPosition = OrderType()==OP_BUY || OrderType()==OP_SELL;
-   bool isClosed   = OrderCloseTime() != 0;                          // geschlossene Position
+   bool isClosed   = OrderCloseTime() != 0;
    bool closedBySL = false;
 
    if (isPosition) /*&&*/ if (isClosed) {
@@ -1351,7 +1356,7 @@ bool IsOrderClosedBySL() {
          closedBySL = true;
       }
       else {
-         // StopLoss aus Orderdaten verwenden (ist bei client-seitiger Verwaltung nur dort gespeichert)
+         // check for a client-side SL in the order arrays
          int i = SearchIntArray(orders.ticket, OrderTicket());
 
          if (i == -1)             return(!catch("IsOrderClosedBySL(1)  closed position #"+ OrderTicket() +" not found in order arrays", ERR_ILLEGAL_STATE));
@@ -1367,7 +1372,7 @@ bool IsOrderClosedBySL() {
 
 
 /**
- * Whether a start or resume condition is satisfied for a waiting sequence. Price and time conditions are AND combined.
+ * Whether a start or resume condition is satisfied for a waiting sequence. Price and time conditions are "AND" combined.
  *
  * @return int - the signal identifier of the fulfilled start condition or NULL if no start condition is satisfied
  */
@@ -1389,7 +1394,7 @@ int IsStartSignal() {
    }
 
    if (start.conditions) {
-      // -- start.trend: bei Trendwechsel in Richtung der Sequenz erfüllt ---------------------------------------------------
+      // -- start.trend: fulfilled on trend change in direction of the sequence ---------------------------------------------
       if (start.trend.condition) {
          if (IsBarOpenEvent(start.trend.timeframe)) {
             int trend = GetStartTrendValue(1);
@@ -1404,7 +1409,7 @@ int IsStartSignal() {
          return(NULL);
       }
 
-      // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt --------------------------------------
+      // -- start.price: fulfilled when current price touches or crosses the limit ------------------------------------------
       if (start.price.condition) {
          triggered = false;
          switch (start.price.type) {
@@ -1424,7 +1429,7 @@ int IsStartSignal() {
          else if (__LOG()) log(message);
       }
 
-      // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt -------------------------------------------------------
+      // -- start.time: fulfilled at the specified time and after -----------------------------------------------------------
       if (start.time.condition) {
          if (TimeCurrentEx("IsStartSignal(4)") < start.time.value)
             return(NULL);
@@ -1434,7 +1439,7 @@ int IsStartSignal() {
          else if (__LOG()) log(message);
       }
 
-      // -- both price and time conditions are fullfilled (AND combined) ----------------------------------------------------
+      // -- both price and time conditions are fulfilled ("AND" combined) ---------------------------------------------------
       return(SIGNAL_PRICETIME);
    }
 
@@ -1448,7 +1453,7 @@ int IsStartSignal() {
 
 
 /**
- * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are OR combined.
+ * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are "OR" combined.
  *
  * @return int - the signal identifier of the fulfilled stop condition or NULL if no stop condition is satisfied
  */
@@ -1456,7 +1461,7 @@ int IsStopSignal() {
    if (last_error || sequence.status!=STATUS_PROGRESSING) return(NULL);
    string message;
 
-   // -- stop.trend: bei Trendwechsel entgegen der Richtung der Sequenz erfüllt ---------------------------------------------
+   // -- stop.trend: fulfilled on trend change against the direction of the sequence ----------------------------------------
    if (stop.trend.condition) {
       if (IsBarOpenEvent(stop.trend.timeframe)) {
          int trend = GetStopTrendValue(1);
@@ -1470,7 +1475,7 @@ int IsStopSignal() {
       }
    }
 
-   // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------------------
+   // -- stop.price: fulfilled when current price touches or crossses the limit----------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
       double price;
@@ -1494,7 +1499,7 @@ int IsStopSignal() {
       }
    }
 
-   // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
+   // -- stop.time: fulfilled at the specified time and after ---------------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(3)") >= stop.time.value) {
          message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
@@ -3065,8 +3070,8 @@ bool ValidateInputs(bool interactive) {
    string trendIndicators[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "SuperSmoother", "HalfTrend", "SuperTrend"};
 
 
-   // StartConditions, AND combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
-   // ---------------------------------------------------------------------------------------------------------------------------
+   // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
+   // -----------------------------------------------------------------------------------------------------------------------------
    // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
    if (!isParameterChange || StartConditions!=last.StartConditions) {
       start.conditions      = false;
@@ -3148,8 +3153,8 @@ bool ValidateInputs(bool interactive) {
       }
    }
 
-   // StopConditions, OR combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
-   // ---------------------------------------------------------------------------------------------------------------------------------------
+   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
+   // -----------------------------------------------------------------------------------------------------------------------------------------
    // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
    if (!isParameterChange || StopConditions!=last.StopConditions) {
       stop.trend.condition     = false;
