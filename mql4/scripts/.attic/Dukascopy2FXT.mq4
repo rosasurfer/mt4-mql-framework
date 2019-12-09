@@ -17,7 +17,7 @@ extern int    Leverage       = 100;
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <structs/mt4/FXTHeader.mqh>
+#include <structs/mt4/FxtHeader.mqh>
 
 
 /**

@@ -84,8 +84,8 @@ string CreateReport() {
    FileReadArray(hHstFile, hh, 0, HISTORY_HEADER.intSize);
    int hstFormat=hh_BarFormat(hh), hstDigits=hh_Digits(hh);
 
-   if      (hstFormat == 400) barSize = PRICE_BAR_400.size;
-   else if (hstFormat == 401) barSize = PRICE_BAR_400.size;
+   if      (hstFormat == 400) barSize = HISTORY_BAR_400.size;
+   else if (hstFormat == 401) barSize = HISTORY_BAR_400.size;
    else {
       catch("CreateReport(3)  unknown history file format \""+ hstFileName +"\" (format = "+ hstFormat +")", ERR_RUNTIME_ERROR);
       FileClose(hHstFile);

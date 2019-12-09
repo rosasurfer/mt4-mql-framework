@@ -522,7 +522,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
       // (3.2) ggf. Bar-Statistik auslesen
       if (fileSize > HISTORY_HEADER.size) {
-         int barSize = ifInt(hh_BarFormat(hh)==400, PRICE_BAR_400.size, PRICE_BAR_401.size);
+         int barSize = ifInt(hh_BarFormat(hh)==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
          bars        = (fileSize-HISTORY_HEADER.size) / barSize;
          if (bars > 0) {
             from.offset   = 0;
@@ -558,7 +558,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
    ArraySetInts(hf.header,        hFile,          hh);               // entspricht: hf.header[hFile] = hh;
    hf.format                     [hFile]        = hh_BarFormat(hh);
-   hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, PRICE_BAR_400.size, PRICE_BAR_401.size);
+   hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
    hf.symbol                     [hFile]        = hh_Symbol(hh);
    hf.symbolUpper                [hFile]        = symbolUpper;
    hf.period                     [hFile]        = timeframe;
