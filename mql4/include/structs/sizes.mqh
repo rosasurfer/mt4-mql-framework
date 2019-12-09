@@ -13,11 +13,11 @@
 #define HISTORY_HEADER.size                148
 #define HISTORY_HEADER.intSize              37
 
-#define PRICE_BAR_400.size                  44
-#define PRICE_BAR_400.intSize               11
+#define HISTORY_BAR_400.size                44
+#define HISTORY_BAR_400.intSize             11
 
-#define PRICE_BAR_401.size                  60
-#define PRICE_BAR_401.intSize               15
+#define HISTORY_BAR_401.size                60
+#define HISTORY_BAR_401.intSize             15
 
 #define SYMBOL.size                       1936
 #define SYMBOL.intSize                     484
