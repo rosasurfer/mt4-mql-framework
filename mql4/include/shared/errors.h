@@ -54,8 +54,7 @@
 //      The order was accepted for execution. This is an interaction code between client terminal and trade server. It can
 //      appear for the same reason as ERR_ORDER_QUEUED and should be processed similar to ERR_TRADE_TIMEOUT.
 #define ERR_ORDER_DISCARDED                                         144
-//      The order was discarded by the broker during manual confirmation. This is an interaction code between client terminal
-//      and trade server.
+//      The order was discarded by the broker during manual confirmation. Interaction code between client terminal and trade server.
 #define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market (MODE_FREEZELEVEL)
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147    // trade expirations are not supported
@@ -221,5 +220,5 @@
 #define ERS_TERMINAL_NOT_YET_READY                                65555    // terminal not yet ready                       (status; in scripts treated like an error)
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 
-// user defined errors: >=100000 (0x186A0) Mapping von Windows- zu MQL-Fehlern: alle Fehler kodieren einen entsprechenden Windows-Fehler
+// All user defined errors >=100000 are mapped Win32 errors: win32-error + 100000 = mql-error
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS
