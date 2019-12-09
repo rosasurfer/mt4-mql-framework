@@ -1,5 +1,5 @@
 /**
- * Custom constants shared between MQL and C++
+ * Framework constants shared between MQL and C++
  */
 
 
@@ -17,14 +17,14 @@
 
 
 // log level
-#define L_OFF                    0x80000000              // explizit, da INT_MIN in C++ intern definiert ist, in MQL jedoch nicht
+#define L_OFF                    0x80000000              // explicitly defined as C++ INT_MIN is internally defined (not so in MQL)
 #define L_FATAL                       10000              //
-#define L_ERROR                       20000              // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= msg_level) log  (...);
-#define L_WARN                        30000              // oder einfacher:               if (__LOG_DEBUG)              debug(...);
+#define L_ERROR                       20000              // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
+#define L_WARN                        30000              // or more simple:          if (__LOG_DEBUG)              debug(...);
 #define L_INFO                        40000              //
 #define L_NOTICE                      50000              //
 #define L_DEBUG                       60000              //
-#define L_ALL                    0x7FFFFFFF              // explizit, da INT_MAX in C++ intern definiert ist, in MQL jedoch nicht
+#define L_ALL                    0x7FFFFFFF              // explicitly defined as C++ INT_MAX is internally defined (not so in MQL)
 
 
 // MQL module type flags
@@ -52,7 +52,7 @@
 #define COREFUNCTION_DEINIT               3
                                                          // +--------------------------------------+----------------------------------+
                                                          // | builds <= 509                        | builds > 509                     |
-// MetaQuotes UninitializeReason() return values         // +--------------------------------------+----------------------------------+
+// built-in UninitializeReason() return values           // +--------------------------------------+----------------------------------+
 #define REASON_UNDEFINED                  0              // | no reason                            | -                                |
 #define REASON_PROGRAM     REASON_UNDEFINED              // | -                                    | expert removed by ExpertRemove() |
                                                          // +--------------------------------------+----------------------------------+
@@ -82,7 +82,7 @@
 #define INITREASON_TERMINAL_FAILURE       9              // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
                                                          // +-----------------------------------------------+-----------------+-------------+
 
-// UninitializeReason codes (these match the MetaQuotes REASON_* codes)
+// UninitializeReason codes (matching the MetaQuotes REASON_* codes)
 #define UNINITREASON_UNDEFINED            0
 #define UNINITREASON_REMOVE               1
 #define UNINITREASON_RECOMPILE            2
@@ -95,21 +95,21 @@
 #define UNINITREASON_CLOSE                9
 
 
-// Timeframe-Identifier
-#define PERIOD_M1                         1              // 1 Minute
-#define PERIOD_M5                         5              // 5 Minuten
-#define PERIOD_M15                       15              // 15 Minuten
-#define PERIOD_M30                       30              // 30 Minuten
-#define PERIOD_H1                        60              // 1 Stunde
-#define PERIOD_H4                       240              // 4 Stunden
+// timeframe identifiers
+#define PERIOD_M1                         1              // 1 minute
+#define PERIOD_M5                         5              // 5 minutes
+#define PERIOD_M15                       15              // 15 minutes
+#define PERIOD_M30                       30              // 30 minutes
+#define PERIOD_H1                        60              // 1 hour
+#define PERIOD_H4                       240              // 4 hours
 #define PERIOD_D1                      1440              // 1 Tag
-#define PERIOD_W1                     10080              // 1 Woche (7 Tage)
-#define PERIOD_MN1                    43200              // 1 Monat (30 Tage)
-#define PERIOD_Q1                    129600              // 1 Quartal (3 Monate)
+#define PERIOD_W1                     10080              // 1 week (7 days)
+#define PERIOD_MN1                    43200              // 1 month (30 days)
+#define PERIOD_Q1                    129600              // 1 quarter (3 months)
 
 
-// Order- und Operation-Types
-#define OP_UNDEFINED                     -1              // custom: Default-Wert für nicht initialisierte Variable
+// order and operation types
+#define OP_UNDEFINED                     -1              // custom: default value of a non-initialized type var
 #define OP_BUY                            0              // long position
 #define OP_LONG                      OP_BUY
 #define OP_SELL                           1              // short position
@@ -127,7 +127,7 @@
 #define OA_STOP                           2
 
 
-// trade directions, can be used as flags
+// trade directions, may be used as flags
 #define TRADE_DIRECTION_LONG              1
 #define TRADE_DIRECTION_SHORT             2
 #define TRADE_DIRECTION_BOTH              3
@@ -139,9 +139,9 @@
 #define HOUR                           3600              //  60 minutes
 #define DAY                           86400              //  24 hours
 #define WEEK                         604800              //   7 days
-#define MONTH                       2678400              //  31 days                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
-#define QUARTER                     8035200              //   3 months (3 x 31 days)   // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
-#define YEAR                       31622400              // 366 days                   // Periode garantiert ist.
+#define MONTH                       2678400              //  31 days                   // Values cover the maximum possible range, so
+#define QUARTER                     8035200              //   3 months (3 x 31 days)   // results of date/time calculations are garantied
+#define YEAR                       31622400              // 366 days                   // to be in the next period.
 
 #define SECONDS                      SECOND
 #define MINUTES                      MINUTE
@@ -153,7 +153,7 @@
 #define YEARS                          YEAR
 
 
-// auf Sonntag=0 basierende Wochentagskonstanten und ihre Abkürzungen (wie von DayOfWeek() und TimeDayOfWeek() zurückgegeben)
+// weekday constants based on Sunday=0; same behaviour as DayOfWeek() and TimeDayOfWeek()
 #define SUNDAY                            0
 #define MONDAY                            1
 #define TUESDAY                           2
@@ -171,7 +171,7 @@
 #define SAT                        SATURDAY
 
 
-// auf Januar=0 basierende Monatskonstanten und ihre Abkürzungen
+// month constants based on January=0
 #define zJANUARY                          0
 #define zFEBRUARY                         1
 #define zMARCH                            2
@@ -189,7 +189,7 @@
 #define zFEB                      zFEBRUARY
 #define zMAR                         zMARCH
 #define zAPR                         zAPRIL
-//efine zMAY                           zMAY              // short equals long form
+//efine zMAY                           zMAY              // short form equals long form
 #define zJUN                          zJUNE
 #define zJUL                          zJULY
 #define zAUG                        zAUGUST
@@ -199,7 +199,7 @@
 #define zDEC                      zDECEMBER
 
 
-// auf Januar=1 basierende Monatskonstanten und ihre Abkürzungen (wie von Month() und TimeMonth() zurückgegeben)
+// month constants based on January=1; same behaviour as Month() and TimeMonth()
 #define JANUARY                           1
 #define FEBRUARY                          2
 #define MARCH                             3
@@ -217,7 +217,7 @@
 #define FEB                        FEBRUARY
 #define MAR                           MARCH
 #define APR                           APRIL
-//efine MAY                             MAY              // short equals long form
+//efine MAY                             MAY              // short form equals long form
 #define JUN                            JUNE
 #define JUL                            JULY
 #define AUG                          AUGUST
@@ -227,28 +227,28 @@
 #define DEC                        DECEMBER
 
 
-// init()-Flags
-#define INIT_TIMEZONE                     1              // stellt eine korrekte Timezone-Konfiguration sicher
-#define INIT_PIPVALUE                     2              // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
+// init() flags
+#define INIT_TIMEZONE                     1              // initialize/check the timezone configuration
+#define INIT_PIPVALUE                     2              // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE          4              //
-#define INIT_CUSTOMLOG                    8              // das Programm verwendet ein eigenes Logfile
-#define INIT_NO_BARS_REQUIRED            16              // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
+#define INIT_CUSTOMLOG                    8              // use a custom logfile
+#define INIT_NO_BARS_REQUIRED            16              // scripts only: executable without existing bars (no history)
 
 
-// Timezones
-#define TIMEZONE_ALPARI                   "Alpari"             // bis 03/2012 "Europe/Berlin", ab 04/2012 "Europe/Kiev"
+// known timezones
+#define TIMEZONE_ALPARI                   "Alpari"             // until 03/2012 "Europe/Berlin", after 04/2012 "Europe/Kiev"
 #define TIMEZONE_AMERICA_NEW_YORK         "America/New_York"
 #define TIMEZONE_EUROPE_BERLIN            "Europe/Berlin"
 #define TIMEZONE_EUROPE_KIEV              "Europe/Kiev"
 #define TIMEZONE_EUROPE_LONDON            "Europe/London"
 #define TIMEZONE_EUROPE_MINSK             "Europe/Minsk"
-#define TIMEZONE_FXT                      "FXT"                // "Europe/Kiev"   mit DST-Wechseln von "America/New_York"
-#define TIMEZONE_FXT_MINUS_0200           "FXT-0200"           // "Europe/London" mit DST-Wechseln von "America/New_York"
-#define TIMEZONE_GLOBALPRIME              "GlobalPrime"        // bis 24.10.2015 "FXT", dann durch Fehler "Europe/Kiev" (einmalig?)
+#define TIMEZONE_FXT                      "FXT"                // "Europe/Kiev"   with DST changes of "America/New_York"
+#define TIMEZONE_FXT_MINUS_0200           "FXT-0200"           // "Europe/London" with DST changes of "America/New_York"
+#define TIMEZONE_GLOBALPRIME              "GlobalPrime"        // until 24.10.2015 "FXT", then a single time "Europe/Kiev"
 #define TIMEZONE_GMT                      "GMT"
 
 
-// Timezone-IDs
+// known timezone ids
 #define TIMEZONE_ID_ALPARI                1
 #define TIMEZONE_ID_AMERICA_NEW_YORK      2
 #define TIMEZONE_ID_EUROPE_BERLIN         3
@@ -276,13 +276,13 @@
 #define MT4_MQL_REFRESH               12349              // rescan und reload modified .ex4 files
 
 
-// Bar model types in the Tester
+// bar model types in tester
 #define BARMODEL_EVERYTICK                0
 #define BARMODEL_CONTROLPOINTS            1
 #define BARMODEL_BAROPEN                  2
 
 
-// Konfiguration-Flags für synthetische Ticks
+// configuration flags for synthetic ticks
 #define TICK_OFFLINE_EA                   1              // Default-Tick, Expert::start() wird in Offline-Charts getriggert (nur bei bestehender Server-Connection)
 #define TICK_CHART_REFRESH                2              // statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
 #define TICK_TESTER                       4              // statt eines regulären Ticks wird das Command ID_CHART_STEPFORWARD an den Chart geschickt (für Tester)
