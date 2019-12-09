@@ -1,7 +1,7 @@
 /**
- * FXTHeader.mqh
+ * FxtHeader.mqh
  *
- * @author  MetaQuotes Software Corp.
+ * @origin  MetaQuotes
  */
 
 #define FXT_VERSION     405
@@ -70,7 +70,7 @@ int      i_reserved[61];                              // unused                 
 
 
 /**
- * FXT file header
+ *
  */
 void WriteHeader(int hFile, string symbol, int period, int start_bar, int spread, double commission=0, int leverage=100) {
    s_server              = AccountServer();
