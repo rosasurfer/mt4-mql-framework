@@ -1,5 +1,5 @@
 
-# MetaTrader 4 development framework
+# MetaTrader 4 MQL development framework
 
 
 ### Where can I download MetaTrader 4?
@@ -250,7 +250,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> first build supporting a subset of MQL5 dubbed MQL4.5 </td>
+    <td> first build supporting a subset of MQL5 (dubbed MQL4.5) </td>
 </tr>
 
 <tr>

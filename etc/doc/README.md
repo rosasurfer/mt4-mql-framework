@@ -11,4 +11,3 @@ Start `metaeditor.exe`. In the main menu under `View` enable `Toolbox` and `Navi
 
 ### Advanced setup
 Advanced users may symlink the language reference file in this directory to `<metaeditor-dir>\languages\metaeditor.xml`. This way the file used by MetaEditor is always in sync with the version in the repository.
-- - -
