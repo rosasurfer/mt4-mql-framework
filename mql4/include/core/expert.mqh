@@ -29,15 +29,11 @@ int    tester.hEquitySet        = 0;                                 // handle o
  * Global init() function for experts.
  *
  * @return int - error status
- *
- * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
    if (__STATUS_OFF) {                                               // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
-      if (__STATUS_OFF.reason == ERR_TERMINAL_INIT_FAILURE) {
-         //ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
-      }
-      else ShowStatus(__STATUS_OFF.reason);
+      if (__STATUS_OFF.reason != ERR_TERMINAL_INIT_FAILURE)
+         ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
 
@@ -62,9 +58,8 @@ int init() {
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
-
-   // (1) initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+   // initialize the execution context
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER in tester
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
@@ -78,12 +73,10 @@ int init() {
       return(last_error);
    }
 
-
-   // (2) finish initialization
+   // finish initialization
    if (!init.UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
 
-
-   // (3) execute custom init tasks
+   // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
@@ -107,16 +100,14 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
    if (initFlags & INIT_CUSTOMLOG           && 1) {}                 // not yet implemented
 
-
-   // (4) enable experts if disabled
+   // enable experts if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                 // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
+      error = Toolbar.Experts(true);                                 // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
-
-   // (5) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
+   // we must explicitely reset the order context after the expert was reloaded
    int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
@@ -124,16 +115,14 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-
-   // (6) reset the window title in the Tester (might have been modified by the previous test)
+   // reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                // TODO: wait until done
       if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
       if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
    }
 
-
-   // (7) before onInit(): log original input parameters
+   // before onInit(): log original input parameters
    string initialInput;
    if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
       //initialInput = InputsToStr();                                // un-comment for debugging only
@@ -147,9 +136,7 @@ int init() {
       }
    }
 
-
-   // (8) Execute init() event handlers. Following event handlers are only executed if none of the already executed handlers
-   //     returned with an error.
+   // Execute init() event handlers. The reason-specific handlers are executed only if onInit() returns without errors.
    //
    // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
@@ -187,8 +174,7 @@ int init() {
       afterInit();                                                            // post-processing hook
    if (CheckErrors("init(16)")) return(last_error);
 
-
-   // (9) after onInit(): log modified input parameters
+   // after onInit(): log modified input parameters
    if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
       string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
@@ -203,8 +189,7 @@ int init() {
       }
    }
 
-
-   // (10) in Tester: log MarketInfo() data
+   // log MarketInfo() data if in tester
    if (IsTesting()) {
       Tester.LogMarketInfo();
       tester.starttime   = ifString(!Tester.StartTime, "", TimeToStr(Tester.StartTime, TIME_FULL));
@@ -216,11 +201,10 @@ int init() {
       return(last_error);
    ShowStatus(last_error);
 
-
-   // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
-   if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the tick might get
-      Chart.SendTick();                                                    // lost if the Windows message queue was processed
-   return(last_error);                                                     // before init() is left.
+   // don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
+   if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the Windows message
+      Chart.SendTick();                                                    // queue may be processed before this function is
+   return(last_error);                                                     // left and the tick gets lost.
 }
 
 
@@ -230,7 +214,7 @@ int init() {
  * @return bool - success status
  */
 bool init.UpdateGlobalVars() {
-   ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: move to Expander
+   ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: move to MT4Expander
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -253,71 +237,65 @@ bool init.UpdateGlobalVars() {
 
 
 /**
- * Globale start()-Funktion für Expert Adviser.
+ * Global main function. If called after an init() cycle and init() returned with ERS_TERMINAL_NOT_YET_READY, init() is
+ * called again until the terminal is "ready".
  *
- * Erfolgt der Aufruf nach einem init()-Cycle und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_YET_READY zurück,
- * wird init() solange erneut ausgeführt, bis das Terminal bereit ist
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
-         if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
-            Tester.Stop();                                                          // oder das Ende von start() evt. nicht mehr ausgeführt wird.
+         if (IsTesting() && !tester.stopped) {                                      // Stop the tester in case of errors.
+            Tester.Stop();                                                          // Covers errors in init(), too.
             tester.stopped = true;
          }
       }
       return(last_error);
    }
 
-   Tick++;                                                                          // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++;                                                                          // simple counter, the value is meaningless
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
    Tick.isVirtual = true;
    ChangedBars    = -1;                                                             // in experts not available
    UnchangedBars  = -1;                                                             // ...
    ShiftedBars    = -1;                                                             // ...
 
-
-   // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
+   // if called after init() check it's return value
    if (__WHEREAMI__ == CF_INIT) {
-      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF is FALSE here, but an error may be set
 
-      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
+      if (last_error == ERS_TERMINAL_NOT_YET_READY) {
          log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
-         int error = init();                                                        // init() erneut aufrufen
+         int error = init();                                                        // call init() again
          if (__STATUS_OFF) return(last_error);
 
-         if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // again an error may be set
+            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // reset __WHEREAMI__ and wait for the next tick
             return(ShowStatus(error));
          }
       }
-      last_error = NO_ERROR;                                                        // init() war erfolgreich, ein vorhandener Status wird überschrieben
+      last_error = NO_ERROR;                                                        // init() was successful => reset error
    }
    else {
-      prev_error = last_error;                                                      // weiterer Tick: last_error sichern und zurücksetzen
+      prev_error = last_error;                                                      // a regular tick: backup last_error and reset it
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
-
-   // (2) bei Bedarf Input-Dialog aufrufen
+   // relaunch input dialog if requested
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
       return(_last_error(CheckErrors("start(2)")));
    }
 
-
-   // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
+   // check a finished chart initialisation (may fail on terminal start)
    if (!Bars) return(ShowStatus(SetLastError(log("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
-
-   // (4) Im Tester StartTime/StartPrice abwarten
+   // in tester wait until the configured starttime/price is met
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
          if (Tick.Time < Tester.StartTime) {
@@ -352,8 +330,7 @@ int start() {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
-
-   // (5) ggf. Test initialisieren
+   // initialize test reporting if configured
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
          if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)")));
@@ -361,18 +338,15 @@ int start() {
       }
    }
 
-
-   // (6) Main-Funktion aufrufen
+   // call the userland main function
    onTick();
 
-
-   // (7) ggf. Equity aufzeichnen
+   // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
       if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(6)")));
    }
 
-
-   // (8) check errors
+   // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
@@ -382,23 +356,18 @@ int start() {
 
 
 /**
- * Globale deinit()-Funktion für Experts.
+ * Expert deinitialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere deinit()-Funktionen
- *       verfrüht ab. Expert::afterDeinit() wird u.U. schon nicht mehr ausgeführt.
- *
- *       Workaround: (1) Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick
- *                       per Tester.Stop() beenden.
- *                   (2) Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
- *
- *       29.12.2016: Beides ist Nonsense. Tester.Stop() schickt eine Message in die Message-Loop des UI-Threads, der Tester
- *                   (in einem anderen Thread) fährt jedoch für etliche Ticks fort. Statt dessen prüfen, ob der Fehler nur
- *                   auftritt, wenn die Historydatei das Ende erreicht oder auch, wenn das Testende nicht mit dem Dateiende
- *                   übereinstimmt. Je nach Ergebnis können kritische Endarbeiten im letzten Tick oder in deinit() in den
- *                   Expander (der vom Terminal nicht vorzeitig abgebrochen werden kann) delegiert werden.
+ * Terminal bug
+ * ------------
+ * At a regular end of test (testing period ended) with VisualMode=Off the terminal may interrupt more complex deinit()
+ * functions "at will", without finishing them. This must not be confused with the regular execution time check of max. 3 sec.
+ * in init cycles. The interruption may occur already after a few 100 millisec. and Expert::afterDeinit() may not get executed
+ * at all. The only workaround is to no put consuming tasks into deinit(), or to move such tasks to the MT4Expander (possibly
+ * to its own thread). Writing status changes to disk as they happen avoids this issue in the first place.
  */
 int deinit() {
    __WHEREAMI__ = CF_DEINIT;
@@ -420,16 +389,12 @@ int deinit() {
       }
    }
 
-
-   // (1) User-spezifische deinit()-Routinen können, müssen aber nicht implementiert werden.
-   //
-   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
-   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
-   // (falls implementiert) -1 zurückgeben.
-   error = onDeinit();                                                     // Preprocessing-Hook
+   // Execute user-specific deinit() handlers (if implemented). Handlers are executed as long as the previous handler doesn't
+   // return with an error.
+   error = onDeinit();                                                     // preprocessing hook
    if (!error) {                                                           //
       switch (UninitializeReason()) {                                      //
-         case UR_PARAMETERS : error = onDeinitParameters();    break;      //
+         case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
          case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
          case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
          case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
@@ -446,25 +411,18 @@ int deinit() {
             return(last_error|LeaveContext(__ExecutionContext));           //
       }                                                                    //
    }                                                                       //
-   if (error != -1)                                                        //
-      error = afterDeinit();                                               // Postprocessing-Hook
-
-
-   // (2) User-spezifische Deinit-Tasks ausführen
-   if (!error) {
-      // ...
-   }
-
+   if (!error)                                                             //
+      error = afterDeinit();                                               // postprocessing hook
 
    CheckErrors("deinit(3)");
-   return(last_error|LeaveContext(__ExecutionContext));                    // must be the very last statement
+   return(last_error|LeaveContext(__ExecutionContext));
 }
 
 
 /**
- * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ * Return the current deinitialize reason code. Must be called only from deinit().
  *
- * @return int - ID oder NULL, falls ein Fehler auftrat
+ * @return int - id or NULL in case of errors
  */
 int DeinitReason() {
    return(!catch("DeinitReason(1)", ERR_NOT_IMPLEMENTED));
@@ -515,8 +473,8 @@ bool IsLibrary() {
  * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
  * activated.
  *
- * @param  string location - location of the check
- * @param  int    setError - error to enforce
+ * @param  string location            - location of the check
+ * @param  int    setError [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
@@ -572,15 +530,15 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 /**
- * Stoppt den Tester. Der Aufruf ist nur im Tester möglich.
+ * Stop the tester. Must be called only from an active test.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Tester.Stop() {
    if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
-   if (__WHEREAMI__ == CF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
+   if (__WHEREAMI__ == CF_DEINIT) return(NO_ERROR);                  // SendMessage() can't be used in deinit() => UI thread lock
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -599,8 +557,7 @@ bool Tester.InitReporting() {
    if (!IsTesting())
       return(false);
 
-
-   // (1) prepare environment to record the equity curve
+   // prepare environment to record the equity curve
    if (EA.RecordEquity) /*&&*/ if (!IsOptimization()) {
       // create a new report symbol
       int    id             = 0;
@@ -611,7 +568,7 @@ bool Tester.InitReporting() {
       string baseCurrency   = AccountCurrency();
       string marginCurrency = AccountCurrency();
 
-      // (1.1) open "symbols.raw" and read the existing symbols
+      // open "symbols.raw" and read the existing symbols
       string mqlFileName = "history\\"+ tester.reportServer +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
@@ -621,16 +578,16 @@ bool Tester.InitReporting() {
       if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Tester.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
       int symbolsSize = fileSize/SYMBOL.size;
 
-      /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
+      int symbols[]; InitializeByteBuffer(symbols, fileSize);
       if (fileSize > 0) {
          // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Tester.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Tester.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
       }
       FileClose(hFile);
 
-      // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+      // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
       string suffix, name = StrLeft(StrReplace(__NAME(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
@@ -645,11 +602,11 @@ bool Tester.InitReporting() {
       id     = maxId + 1;
       symbol = name + StrPadLeft(id, 3, "0");
 
-      // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
+      // create a symbol description                                                      // sizeof(SYMBOL.description) = 64
       description = StrLeft(__NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
-      // (1.4) create symbol
+      // create symbol
       if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reportServer) < 0)
          return(false);
 
@@ -658,8 +615,7 @@ bool Tester.InitReporting() {
       tester.reportDescription = description;
    }
 
-
-   // (2) prepare environment to collect data for reporting
+   // prepare environment to collect data for reporting
    if (EA.CreateReport) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
       Test_StartReporting(__ExecutionContext, time, Bars, tester.reportId, tester.reportSymbol);
@@ -715,11 +671,12 @@ bool Tester.LogMarketInfo() {
  * @return bool - success status
  */
 bool Tester.RecordEquity() {
-   /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+   /*
+   Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
+   | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - ohne RecordEquity()  | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v419 - w/o RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
    | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
    | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
@@ -727,8 +684,7 @@ bool Tester.RecordEquity() {
    */
    int flags = HST_BUFFER_TICKS;
 
-
-   // (1) HistorySet öffnen
+   // open HistorySet
    if (!tester.hEquitySet) {
       string symbol      = tester.reportSymbol;
       string description = tester.reportDescription;
@@ -736,14 +692,12 @@ bool Tester.RecordEquity() {
       int    format      = 400;
       string server      = tester.reportServer;
 
-      // HistorySet erzeugen
+      // create HistorySet
       tester.hEquitySet = HistorySet.Create(symbol, description, digits, format, server);
       if (!tester.hEquitySet) return(false);
-      //debug("RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
    }
 
-
-   // (2) Equity-Value bestimmen und aufzeichnen
+   // resolve current equity value and store it
    if (!tester.equityValue) double value = AccountEquity()-AccountCredit();
    else                            value = tester.equityValue;
    if (!HistorySet.AddTick(tester.hEquitySet, Tick.Time, value, flags))
@@ -792,7 +746,7 @@ bool Tester.RecordEquity() {
 /**
  * Initialization pre-processing hook.
  *
- * @return int - error status; in case of errors reason-specific event handlers are not executed
+ * @return int - error status
  *
 int onInit()
    return(NO_ERROR);
@@ -861,8 +815,7 @@ int onInitRecompile()
 
 
 /**
- * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
- * returned with -1 (which signals a hard stop as opposite to a regular error).
+ * Initialization post-processing hook.
  *
  * @return int - error status
  *

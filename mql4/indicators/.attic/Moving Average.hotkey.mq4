@@ -189,8 +189,6 @@ int onDeinit() {
  * Main-Funktion
  *
  * @return int - Fehlerstatus
- *
- * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
