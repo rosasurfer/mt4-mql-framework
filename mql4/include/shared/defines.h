@@ -283,18 +283,18 @@
 
 
 // configuration flags for synthetic ticks
-#define TICK_OFFLINE_EA                   1              // Default-Tick, Expert::start() wird in Offline-Charts getriggert (nur bei bestehender Server-Connection)
-#define TICK_CHART_REFRESH                2              // statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
-#define TICK_TESTER                       4              // statt eines regulären Ticks wird das Command ID_CHART_STEPFORWARD an den Chart geschickt (für Tester)
-#define TICK_IF_VISIBLE                   8              // Ticks werden nur verschickt, wenn der Chart mindestens teilweise sichtbar ist (default: off)
-#define TICK_PAUSE_ON_WEEKEND            16              // Ticks werden nur zu regulären Forex-Handelszeiten verschickt (default: off)
+#define TICK_OFFLINE_EA                   1              // send a standard tick, triggers Expert::start() in offline charts if a server connection is established
+#define TICK_CHART_REFRESH                2              // send command ID_CHART_REFRESH instead of a standard tick (for offline charts and custom symbols)
+#define TICK_TESTER                       4              // send command ID_CHART_STEPFORWARD instead of a standard tick (for tester)
+#define TICK_IF_VISIBLE                   8              // send ticks only if the chart is at least partially visible (default: off)
+#define TICK_PAUSE_ON_WEEKEND            16              // send ticks only at regular session times (default: off)
 
 
 /**
- * MT4 command ids (Menüs, Toolbars, Hotkeys)
+ * MT4 command ids (menu, toolbar and hotkey ids). ID naming and numbering conventions for resources, commands, strings,
+ * controls and child windows as defined by MFC 2.0:
  *
- * ID naming and numbering conventions used by MFC 2.0 for resources, commands, strings, controls and child windows:
- * @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
+ *  @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
  */
 #define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
 
@@ -316,14 +316,14 @@
 #define ID_TESTER_TICK       ID_CHART_STEPFORWARD        // Tester:  Next Tick                            F12
 
 
-// MT4 control ids (Controls, Fenster)
+// MT4 control ids (controls, windows)
 #define IDC_TOOLBAR                         59419        // Toolbar
 #define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 button (builds <= 509)
-#define IDC_TOOLBAR_SEARCHBOX               38213        // search box       (builds  > 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213        // search box       (builds >  509)
 #define IDC_STATUSBAR                       59393        // status bar
-#define IDC_MDI_CLIENT                      59648        // MDI container (holds all charts)
+#define IDC_MDI_CLIENT                      59648        // MDI container (holding all charts)
 #define IDC_DOCKABLES_CONTAINER             59422        // window containing all child windows docked to the main application window
-#define IDC_UNDOCKED_CONTAINER              59423        // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
+#define IDC_UNDOCKED_CONTAINER              59423        // window containing a single undocked/floating dockable child window (possibly more than one, not a toplevel window)
 
 #define IDC_MARKETWATCH                        80        // Market Watch
 #define IDC_MARKETWATCH_SYMBOLS             35441        // Market Watch - Symbols
@@ -348,28 +348,28 @@
 
 #define IDC_TESTER                             83        // Tester
 #define IDC_TESTER_SETTINGS                 33215        // Tester - Settings
-#define IDC_TESTER_SETTINGS_EXPERT           1128        // Tester - Settings - Expert selection
-#define IDC_TESTER_SETTINGS_SYMBOL           1347        // Tester - Settings - Symbol selection
-#define IDC_TESTER_SETTINGS_BARMODEL         4027        // Tester - Settings - Bar model selection
-#define IDC_TESTER_SETTINGS_OPTIMIZATION     1029        // Tester - Settings - Optimization checkbox
-#define IDC_TESTER_SETTINGS_PERIOD           1228        // Tester - Settings - Period selection
-#define IDC_TESTER_SETTINGS_USEDATE          1023        // Tester - Settings - Use date checkbox
-#define IDC_TESTER_SETTINGS_VISUALMODE       1400        // Tester - Settings - Visual mode checkbox
-#define IDC_TESTER_SETTINGS_TRACKBAR         1401        // Tester - Settings - Speed slider
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402        // Tester - Settings - Pause/Resume button
-#define IDC_TESTER_SETTINGS_SKIPTO           1403        // Tester - Settings - Skip to button
-#define IDC_TESTER_SETTINGS_EXPERTPROPS      1025        // Tester - Settings - Expert properties button
-#define IDC_TESTER_SETTINGS_SYMBOLPROPS      1030        // Tester - Settings - Symbol properties button
-#define IDC_TESTER_SETTINGS_OPENCHART        1028        // Tester - Settings - Open chart button
-#define IDC_TESTER_SETTINGS_MODIFYEXPERT     1399        // Tester - Settings - Modify expert button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034        // Tester - Settings - Start/Stop button
+#define IDC_TESTER_SETTINGS_EXPERT           1128        // Tester - Settings - expert selection
+#define IDC_TESTER_SETTINGS_SYMBOL           1347        // Tester - Settings - symbol selection
+#define IDC_TESTER_SETTINGS_BARMODEL         4027        // Tester - Settings - bar model selection
+#define IDC_TESTER_SETTINGS_OPTIMIZATION     1029        // Tester - Settings - optimization checkbox
+#define IDC_TESTER_SETTINGS_PERIOD           1228        // Tester - Settings - period selection
+#define IDC_TESTER_SETTINGS_USEDATE          1023        // Tester - Settings - "Use date" checkbox
+#define IDC_TESTER_SETTINGS_VISUALMODE       1400        // Tester - Settings - visual mode checkbox
+#define IDC_TESTER_SETTINGS_TRACKBAR         1401        // Tester - Settings - speed slider
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402        // Tester - Settings - "Pause/Resume" button
+#define IDC_TESTER_SETTINGS_SKIPTO           1403        // Tester - Settings - "Skip to" button
+#define IDC_TESTER_SETTINGS_EXPERTPROPS      1025        // Tester - Settings - expert properties button
+#define IDC_TESTER_SETTINGS_SYMBOLPROPS      1030        // Tester - Settings - symbol properties button
+#define IDC_TESTER_SETTINGS_OPENCHART        1028        // Tester - Settings - "Open chart" button
+#define IDC_TESTER_SETTINGS_MODIFYEXPERT     1399        // Tester - Settings - "Modify expert" button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034        // Tester - Settings - "Start/Stop" button
 #define IDC_TESTER_RESULTS                  33214        // Tester - Results
 #define IDC_TESTER_GRAPH                    33207        // Tester - Graph
 #define IDC_TESTER_REPORT                   33213        // Tester - Report
 #define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (same as Terminal - Experts)
 
 
-// Farben
+// colors
 #define AliceBlue                        0xFFF8F0
 #define AntiqueWhite                     0xD7EBFA
 #define Aqua                             0xFFFF00
@@ -638,7 +638,7 @@
 #define clrYellowGreen                   YellowGreen
 
 
-// LFX-TradeCommands
+// LFX trade commands
 #define TC_LFX_ORDER_CREATE              1
 #define TC_LFX_ORDER_OPEN                2
 #define TC_LFX_ORDER_CLOSE               3
