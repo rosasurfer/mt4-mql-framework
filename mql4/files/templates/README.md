@@ -1,4 +1,4 @@
 
-More example symbols can be found in ```config/symbols/```.
+More example symbols can be found in `etc/symbols`.
 
-@see ```int rsfHistory::CreateSymbol(string name, ...)```
+@see `int rsfHistory::CreateSymbol(string name, ...)`
