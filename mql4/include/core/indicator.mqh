@@ -12,8 +12,6 @@ double rates[][6];
  * Global init() function for indicators.
  *
  * @return int - error status
- *
- * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
    if (__STATUS_OFF)
@@ -227,8 +225,6 @@ bool init.UpdateGlobalVars() {
  * - Der letzte Errorcode 'last_error' wird in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
  *
  * @return int - Fehlerstatus
- *
- * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int start() {
    if (__STATUS_OFF) {
