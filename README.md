@@ -241,6 +241,48 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <tr>
     <td>
+        <a href="http://www.rosasurfer.com/.mt4/600/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+            Terminal build 600
+        </a>
+    </td>
+    <td>
+        <a href="http://www.rosasurfer.com/.mt5/metaeditor/883/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> first build supporting a subset of MQL5 (dubbed MQL4.5) </td>
+</tr>
+
+<tr>
+    <td>
+        <a href="http://www.rosasurfer.com/.mt4/509%20last%20MQL4%20only/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+            Terminal build 509
+        </a>
+    </td>
+    <td>
+        <a href="http://www.rosasurfer.com/.mt4/509%20last%20MQL4%20only/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> last build supporting MQL4 only </td>
+</tr>
+
+<tr>
+    <td>
+        <a href="http://www.rosasurfer.com/.mt4/500/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+            Terminal build 500
+        </a>
+    </td>
+    <td>
+        <a href="http://www.rosasurfer.com/.mt4/500/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td>
         <a href="http://www.rosasurfer.com/.mt4/225/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
             Terminal build 225
         </a>
