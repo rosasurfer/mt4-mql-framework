@@ -1,13 +1,13 @@
 /**
- * Management of single history files (single timeframe) and full history sets (alltimeframes).
+ * Management of history files (one timeframe) and history sets (all 9 timeframes).
  *
  *
- * Anwendungsbeispiele
- * -------------------
- *  1. Öffnen einer existierenden History mit vorhandenen Daten:
+ * Usage examples
+ * --------------
+ *  - Open an existing history (all timeframes) with existing data (e.g. for appending data):
  *     int hSet = HistorySet.Get(symbol);
  *
- *  2. Erzeugen einer neuen History (vorhandene Daten werden gelöscht):
+ *  - Create a new history and delete all existing data (e.g. for writing a new history):
  *     int hSet = HistorySet.Create(symbol, description, digits, format);
  */
 #property library
