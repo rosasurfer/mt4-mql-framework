@@ -4083,9 +4083,6 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
  * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Server-Verbindung).
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
- *
- * @throws ERS_TERMINAL_NOT_YET_READY - falls die Account-Nummer während des Terminal-Starts noch nicht verfügbar ist (Titel des
- *                                      Hauptfensters noch nicht gesetzt)
  */
 int GetAccountNumber() {
 
