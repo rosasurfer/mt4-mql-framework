@@ -1,5 +1,5 @@
 /**
- * Framework constants shared between MQL and C++
+ * Constants shared by framework (MQL) and MT4Expander (C++)
  */
 
 
@@ -12,19 +12,19 @@
 #define MAX_SYMBOL_GROUP_LENGTH          15
 #define MAX_SYMBOL_LENGTH                11
 
-#define NL                             "\n"              // new line (MQL file functions always write Windows line endings: 0x0D0A)
-#define TAB                            "\t"              // tab
+#define NL                             "\n"              // new line: 0x0A (MQL file functions auto-convert 0x0A to 0x0D0A)
+#define TAB                            "\t"              // tab: 0x09
 
 
 // log level
-#define L_OFF                    0x80000000              // explicitly defined as C++ INT_MIN is internally defined (not so in MQL)
+#define L_OFF                    0x80000000              // same as INT_MIN which in C++ is internally defined
 #define L_FATAL                       10000              //
 #define L_ERROR                       20000              // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
 #define L_WARN                        30000              // or more simple:          if (__LOG_DEBUG)              debug(...);
 #define L_INFO                        40000              //
 #define L_NOTICE                      50000              //
 #define L_DEBUG                       60000              //
-#define L_ALL                    0x7FFFFFFF              // explicitly defined as C++ INT_MAX is internally defined (not so in MQL)
+#define L_ALL                    0x7FFFFFFF              // same as INT_MAX which in C++ is internally defined
 
 
 // MQL module type flags
