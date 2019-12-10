@@ -1,8 +1,8 @@
 
 ### How do I use the compiler to compile MQL programs without using MetaEditor?
-For maximum backward compatibility the framework comes with the compiler distributed with MetaTrader 4 build 225. The reliability of the generated EX4 files outweights the minor restrictions that compiler has, compared to current compiler versions.
+For maximum backward compatibility the framework comes with the compiler distributed with MetaTrader 4 build 225. The reliability of the generated EX4 files outweights the minor restrictions that compiler has, compared to current compiler versions. The compiler may be replaced by any other version of builds <= 509 without changes to the code base.
 
-The compiler may be integrated in any modern development environment (e.g. by registering custom CLI tools) or may be called manually using the provided script `bin/mqlc`:
+The compiler can be integrated in any modern development environment (e.g. by registering custom CLI tools). It may also be called manually using the provided script `bin/mqlc`:
 
 ```bash
 $ mqlc -?
@@ -21,4 +21,4 @@ Options:
 - - -
 
 ### What to do if the compiler cannot find required include files?
-To make the compiler find the framework's include files the directory a symbolic link pointing to `mql4/experts/include` must be created in `bin/experts`. There is no reliable way for the script to create that symlink in all different Windows versions, therefore the user has to do it manually. A comfortable way to manage Windows symlinks and junction is the free [Link Shell Extension](http://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html) by Hermann Schinagl.
+To make the compiler find the framework's include files a symbolic link pointing to `mql4/experts/include` must be created in `bin/experts`. There is no reliable way for the script to create the symlink in the different Windows versions, therefore the user has to do it manually. A comfortable way to manage Windows symlinks and junctions is the free [Link Shell Extension](http://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html) by Hermann Schinagl.
