@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# The user must make sure "experts/include" exists and points to the framework's "include" directory.
+#
+set -e
+
+
+# print a message to STDERR
+function error() {
+    echo "$@" 1>&2
+}
+
+
+# find the compiler
+SCRIPT_DIR=$(dirname "$(readlink -e "$0")")
+mqlc=
+[ -z "$mqlc" ] &&   command -v metalang >/dev/null      && mqlc="metalang"                      `# search the system PATH   `
+[ -z "$mqlc" ] && [ -f "$SCRIPT_DIR/metalang.exe"     ] && mqlc="$SCRIPT_DIR/metalang.exe"      `# lookup a default one     `
+[ -z "$mqlc" ] && [ -f "$SCRIPT_DIR/metalang-224.exe" ] && mqlc="$SCRIPT_DIR/metalang-224.exe"  `# take the distributed one `
+[ -z "$mqlc" ] && { error "ERROR: MQL compiler not found."; exit 1; }
+
+# call it
+$mqlc "$@"

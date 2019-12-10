@@ -1,8 +1,8 @@
 /**
  * MQL constant definitions
  */
-#include <shared/defines.h>            // constants shared between MQL and C++
-#include <shared/errors.h>             // error codes shared between MQL and C++
+#include <shared/defines.h>            // constants shared by framework (MQL) and MT4Expander (C++)
+#include <shared/errors.h>             // error codes shared by framework (MQL) and MT4Expander (C++)
 
 
 // separately defined constants to prevent C++ warning "C4005: macro redefinition"

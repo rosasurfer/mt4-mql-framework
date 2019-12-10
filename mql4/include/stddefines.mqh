@@ -1,12 +1,12 @@
 /**
  * Global constants and variables
  */
-#property stacksize 32768                                   // According to different MetaQuotes sources the default stacksize per MQL module is 2019
-                                                            // at least 256KB (some even claim 1-8MB). In build 225 the default size was 16KB which at
-#include <mqldefines.mqh>                                   // some point had to be increased. Using 32KB never caused any issues.
+#property stacksize 32768                                   // According to differing MetaQuotes sources the default stacksize per MQL module in 2019 is
+                                                            // at least 256KB (some claim even 1-8MB). In build 225 the default stacksize was 16KB which
+#include <mqldefines.mqh>                                   // at some point had to be increased. Using 32KB never caused any issues.
 #include <win32defines.mqh>                                 //
-#include <structs/sizes.mqh>                                // @see https://docs.mql4.com/basis/variables/local#stack
-                                                            // @see https://docs.mql4.com/basis/preprosessor/compilation
+#include <structs/sizes.mqh>                                //  @see https://docs.mql4.com/basis/variables/local#stack
+                                                            //  @see https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
