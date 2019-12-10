@@ -10,10 +10,6 @@
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für Datenreihe);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  *
- *
- * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags F_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
- *
- *
  * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergeleitet.
  *       Er ist nicht relevant für die momentan vorhandenen Daten.
  */
