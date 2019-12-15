@@ -342,8 +342,8 @@ bool onCommand(string commands[]) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
             bool neverStarted = !ArraySize(sequence.start.event);
-            if (neverStarted) StartSequence(NULL);
-            else              ResumeSequence(NULL);
+            if (neverStarted) return(StartSequence(NULL));
+            else              return(ResumeSequence(NULL));
 
       }
       return(true);
