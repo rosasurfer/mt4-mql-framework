@@ -50,7 +50,7 @@ int onInitUser() {
       sequence.id      = CreateSequenceId();
       Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
       sequence.cycle   = 1;
-      sequence.created = TimeServer();
+      sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;

@@ -731,7 +731,7 @@ bool ResetSequence() {
       //sequence.id           = ...                      // unchanged
       sequence.cycle++;                                  // increase restart cycle
       //sequence.name         = ...                      // unchanged
-      sequence.created        = TimeServer();
+      sequence.created        = Max(TimeCurrentEx(), TimeServer());
       //sequence.isTest       = ...                      // unchanged
       //sequence.direction    = ...                      // unchanged
       sequence.status         = STATUS_WAITING;
