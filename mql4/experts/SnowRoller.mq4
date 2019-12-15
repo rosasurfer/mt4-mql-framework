@@ -731,7 +731,7 @@ bool ResetSequence() {
       //sequence.id           = ...                      // unchanged
       sequence.cycle++;                                  // increase restart cycle
       //sequence.name         = ...                      // unchanged
-      sequence.created        = TimeServer();
+      sequence.created        = Max(TimeCurrentEx(), TimeServer());
       //sequence.isTest       = ...                      // unchanged
       //sequence.direction    = ...                      // unchanged
       sequence.status         = STATUS_WAITING;
@@ -1559,8 +1559,7 @@ int IsStopSignal() {
 bool IsSessionBreak() {
    if (IsLastError()) return(false);
 
-   datetime serverTime = TimeServer();
-   if (!serverTime) return(false);
+   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {
