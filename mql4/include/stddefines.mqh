@@ -660,17 +660,17 @@ double  N_INF;                                              // -1.#INF: negative
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
 #define SYMBOL_ORDEROPEN                     1  // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
-//                                           2  // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
+//                                           2  // same as SYMBOL_ORDEROPEN                                       // docs MetaQuotes: right pointing down arrow
 #define SYMBOL_ORDERCLOSE                    3  // left pointing arrow  (default closed order marker)
 #define SYMBOL_DASH                          4  // dash symbol          (default takeprofit and stoploss marker)
-#define SYMBOL_LEFTPRICE                     5  // left sided price label
-#define SYMBOL_RIGHTPRICE                    6  // right sided price label
+#define SYMBOL_LEFTPRICE                     5  // left-side price label
+#define SYMBOL_RIGHTPRICE                    6  // right-side price label
 #define SYMBOL_THUMBSUP                     67  // thumb up symbol
 #define SYMBOL_THUMBSDOWN                   68  // thumb down symbol
 #define SYMBOL_ARROWUP                     241  // arrow up symbol
 #define SYMBOL_ARROWDOWN                   242  // arrow down symbol
 #define SYMBOL_STOPSIGN                    251  // stop sign symbol
-#define SYMBOL_CHECKSIGN                   252  // check sign symbol
+#define SYMBOL_CHECKSIGN                   252  // checkmark symbol
 
 
 // flags marking specific errors to be handled by custom error handlers (if used the errors don't trigger a terminating ERROR alert)
@@ -684,8 +684,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_ERR_OFF_QUOTES                0x0080  //    128
 #define F_ERR_ORDER_CHANGED             0x0100  //    256
 #define F_ERR_SERIES_NOT_AVAILABLE      0x0200  //    512
-#define F_ERR_SERVER_ERROR              0x0800  //   1024
-#define F_ERR_TRADE_MODIFY_DENIED       0x0400  //   2048
+#define F_ERR_TRADE_MODIFY_DENIED       0x0400  //   1024
+#define F_ERR_UNKNOWN_TRADE_ERROR       0x0800  //   2048
 #define F_ERS_HISTORY_UPDATE            0x1000  //   4096 (temporary status)
 #define F_ERS_EXECUTION_STOPPING        0x2000  //   8192 (temporary status)
 #define F_ERS_TERMINAL_NOT_YET_READY    0x4000  //  16384 (temporary status)
