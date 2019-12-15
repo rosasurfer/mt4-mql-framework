@@ -939,13 +939,13 @@ bool IsTemporaryTradeError(int error) {
          return(true);
 
       // permanent errors
-      case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: ist temporär
-      case ERR_SERVER_ERROR:                 //        2   trade server error                                        // TODO: kann temporär sein (z.B. bei Serverwechsel)
+      case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: temporary
+      case ERR_UNKNOWN_TRADE_ERROR:          //        2   unspecified trade error                                   // TODO: temporary, e.g. on trade server change
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
-      case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: ist temporär
+      case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: temporary
       case ERR_NOT_ENOUGH_RIGHTS:            //        7   not enough rights
-      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests                                     // TODO: ist temporär
+      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests                                     // TODO: temporary
       case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
@@ -957,8 +957,8 @@ bool IsTemporaryTradeError(int error) {
       case ERR_BROKER_BUSY:                  //      137   automated trading disabled (manual trading still enabled)
       case ERR_ORDER_LOCKED:                 //      139   order is locked
       case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
-      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                         // TODO: ist temporär
-      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market           // TODO: ist temporär
+      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                         // TODO: temporary
+      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market
       case ERR_TRADE_EXPIRATION_DENIED:      //      147   expiration settings denied by broker
       case ERR_TRADE_TOO_MANY_ORDERS:        //      148   number of open and pending orders has reached the broker limit
       case ERR_TRADE_HEDGE_PROHIBITED:       //      149   hedging prohibited
@@ -4900,8 +4900,8 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
    if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(log(message, error));
    if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(log(message, error));
    if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error));
-   if (error==ERR_SERVER_ERROR             && filter & F_ERR_SERVER_ERROR            ) return(log(message, error));
    if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error));
+   if (error==ERR_UNKNOWN_TRADE_ERROR      && filter & F_ERR_UNKNOWN_TRADE_ERROR     ) return(log(message, error));
 
    // trigger a runtime error for everything else
    return(catch(message, error));
