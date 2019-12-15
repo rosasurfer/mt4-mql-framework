@@ -1559,8 +1559,7 @@ int IsStopSignal() {
 bool IsSessionBreak() {
    if (IsLastError()) return(false);
 
-   datetime serverTime = TimeServer();
-   if (!serverTime) return(false);
+   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {
