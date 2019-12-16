@@ -42,7 +42,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                      // sequence to load from a status file
+extern string   Sequence.ID            = "";                      // instance id, affects magic number and status/log filenames
 extern string   GridDirection          = "Long | Short";          // no bi-directional mode
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
@@ -419,8 +419,8 @@ bool StartSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
-   sequence.maxLevel    = sequence.level;
+   sequence.level    = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
+   sequence.maxLevel = sequence.level;
 
    bool compoundProfits = false;
    if (IsTesting() && !compoundProfits) sequence.startEquity = tester.startEquity;
