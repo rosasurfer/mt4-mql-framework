@@ -5242,7 +5242,7 @@ int init() {
       caption=Day()
       type=int
       <content>
-      Returns the day of the month of the last known server time. In the Tester server time is modelled.
+      Returns the day of the month (1-31) of the time returned by TimeCurrent().
       </content>
       <example>
 <span class="keyword">if</span> (Day() &lt; <span class="number">5</span>)
@@ -5255,7 +5255,7 @@ int init() {
       caption=DayOfWeek()
       type=int
       <content>
-      Returns the zero-based day of the week (0 = Sunday) of the last known server time. In the Tester server time is modelled.
+      Returns the zero-based day of the week (0 = Sunday) of the time returned by TimeCurrent().
       </content>
       <example>
   // does not work on holidays.
@@ -5268,7 +5268,7 @@ int init() {
       caption=DayOfYear()
       type=int
       <content>
-      Returns the day of the year (1-365) of the last known server time. In the Tester server time is modelled.
+      Returns the day of the year (1-365) of the time returned by TimeCurrent().
       </content>
       <example>
   if(DayOfYear()==245)
@@ -5281,8 +5281,7 @@ int init() {
       caption=Hour()
       type=int
       <content>
-      Returns the hour (0-23) of the last known server time at the moment of program start (this value will not change during program execution).
-      In the Tester server time is modelled.
+      Returns the hour (0-23) of the time returned by TimeCurrent().
       </content>
       <example>
   bool is_siesta=false;
@@ -5296,7 +5295,7 @@ int init() {
       caption=Minute()
       type=int
       <content>
-      Returns the minute (0-59) of the last known server time at the moment of program start (this value will not change during program execution).
+      Returns the minute (0-59) of the time returned by TimeCurrent().
       </content>
       <example>
   if(Minute()&lt;=15)
@@ -5309,7 +5308,7 @@ int init() {
       caption=Month()
       type=int
       <content>
-      Returns the month (1-12) of the last known server time. In the Tester server time is modelled.
+      Returns the month (1-12) of the time returned by TimeCurrent().
       </content>
       <example>
   if(Month()&lt;=5)
@@ -5322,8 +5321,7 @@ int init() {
       caption=Seconds()
       type=int
       <content>
-      Returns the seconds of the minute of the last known server time at the moment of program start (this value will not change during program execution).
-      In the Tester server time is modelled.
+      Returns the seconds (0-59) of the minute of the time returned by TimeCurrent().
       </content>
       <example>
   if(Seconds()&lt;=15)
@@ -5551,7 +5549,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=Year()
       type=int
       <content>
-      Returns the year of the last known server time. In the Tester server time is modelled.
+      Returns the year of the time returned by TimeCurrent().
       </content>
       <example>
   // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
