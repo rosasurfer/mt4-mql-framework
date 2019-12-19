@@ -3,11 +3,11 @@
  *
  * @param  _In_  double  values[]                  - Trend line values (a timeseries).
  * @param  _In_  int     bar                       - Bar offset to update.
- * @param  _Out_ double &trend[]                   - Buffer for trend direction and trend length: -n...-1 ... +1...+n.
+ * @param  _Out_ double &trend[]                   - Buffer for trend direction and length: -n...-1 ... +1...+n.
  * @param  _Out_ double &uptrend[]                 - Buffer for rising trend line values.
  * @param  _Out_ double &downtrend[]               - Buffer for falling trend line values.
  * @param  _Out_ double &uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
- *                                                   downtrend[] to become visible.
+ *                                                   downtrend[] to be visible.
  * @param  _In_  int     lineStyle                 - Trend line drawing style: If set to DRAW_LINE a line is drawn immediately
  *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
  *                                                   points to draw a line.
@@ -44,8 +44,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
       prevValue = NormalizeDouble(prevValue, digits);
    }
 
-
-   // (1) trend direction
+   // trend direction
    if (prevValue == EMPTY_VALUE) {
       trend[bar] = 0;
    }
@@ -65,10 +64,9 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
       else   /*curValue== prevValue*/trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
    }
 
+   // trend coloring
    if (!enableColoring) return;
 
-
-   // (2) trend coloring
    if (trend[bar] > 0) {                                                // now uptrend
       uptrend  [bar] = values[bar];
       downtrend[bar] = EMPTY_VALUE;
@@ -132,7 +130,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
  * Update a trend line's chart legend.
  *
  * @param  string   label          - chart label of the legend object
- * @param  string   name           - the trend line's name (usually the indicator name)
+ * @param  string   name           - the trend line's name (indicator name)
  * @param  string   status         - additional status info (if any)
  * @param  color    uptrendColor   - the trend line's uptrend color
  * @param  color    downtrendColor - the trend line's downtrend color
@@ -145,7 +143,7 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
    static double   lastValue;
    static int      lastTrend;
    static datetime lastBarOpenTime;
-   string sValue="", sOnTrendChange="";
+   string sValue="", sTrend="", sOnTrendChange="";
 
    value = NormalizeDouble(value, digits);
 
@@ -155,19 +153,21 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       else if (digits == SubPipDigits) sValue = NumberToStr(value, SubPipPriceFormat);
       else                             sValue = DoubleToStr(value, digits);
 
+      sTrend = StringConcatenate("(", trend, ")");
+
       if (uptrendColor != downtrendColor) {
          if      (trend ==  1) sOnTrendChange = "turns up";             // intra-bar trend change
          else if (trend == -1) sOnTrendChange = "turns down";           // ...
       }
 
-      string text      = StringConcatenate(name, "    ", sValue, "    ", status, "    ", sOnTrendChange);
-      color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
-      if      (textColor == Aqua  ) textColor = DeepSkyBlue;
-      else if (textColor == Gold  ) textColor = Orange;
-      else if (textColor == Lime  ) textColor = LimeGreen;
-      else if (textColor == Yellow) textColor = Orange;
+      string text = StringConcatenate(name, "    ", sValue, "  ", sTrend, "    ", status, "    ", sOnTrendChange);
+      color  cColor = ifInt(trend > 0, uptrendColor, downtrendColor);
+      if      (cColor == Aqua  ) cColor = DeepSkyBlue;
+      else if (cColor == Gold  ) cColor = Orange;
+      else if (cColor == Lime  ) cColor = LimeGreen;
+      else if (cColor == Yellow) cColor = Orange;
 
-      ObjectSetText(label, text, 9, "Arial Fett", textColor);
+      ObjectSetText(label, text, 9, "Arial Fett", cColor);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on open "Properties" dialog or on Object::onDrag()
          return(catch("@Trend.UpdateLegend(1)", error));

@@ -72,7 +72,7 @@ int      sequence.id;
 int      sequence.cycle;                           // counter of restarted sequences if AutoRestart=On: 1...+n
 string   sequence.name = "";                       // "L.1234" | "S.5678"
 datetime sequence.created;
-bool     sequence.isTest;                          // whether the sequence is/was a test (a finished test can be loaded into a live chart)
+bool     sequence.isTest;                          // whether the sequence is/was a test (a finished test can be loaded into an online chart)
 int      sequence.direction;
 int      sequence.status;
 int      sequence.level;                           // current grid level:      -n...0...+n

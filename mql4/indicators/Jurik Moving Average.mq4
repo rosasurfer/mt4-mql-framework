@@ -457,7 +457,7 @@ int onTick() {
 
    // (5) Legende aktualisieren
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], Digits, bufferTrend[0], Time[0]);
    }
    return(last_error);
 }
