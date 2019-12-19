@@ -4851,9 +4851,9 @@ string DoubleToStrEx(double value, int digits) {
 
 
 /**
- * Handler for order related errors which occurred in the library's order functions. The execution flags passed to the calling
- * order function determine whether an error is filtered and silently set or causes a terminating ERROR alert. Filtered errors
- * must be handled by a custom error handler.
+ * Handler for order related errors which occurred in one of the library's order functions. The execution flags passed to the
+ * calling order function determine whether an error is filtered and silently set or whether the error causes a terminating
+ * ERROR alert. Filtered errors must be handled by a custom error handler.
  *
  * @param  string message                  - error message
  * @param  int    error                    - the occurred error
@@ -4866,7 +4866,7 @@ string DoubleToStrEx(double value, int digits) {
 int Order.HandleError(string message, int error, int filter, int oe[], bool refreshPrices = false) {
    refreshPrices = refreshPrices!=0;
 
-   bool singleOE = ArrayDimension(oe)==1;       // whether a single struct or an array of structs ORDER_EXECUTION was passed
+   bool singleOE = ArrayDimension(oe)==1;       // whether a single or an array of ORDER_EXECUTIONs was passed
    if (singleOE) oe.setError(oe, error);
    else          oes.setError(oe, -1, error);
 
@@ -4885,11 +4885,11 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
       }
    }
 
-   // in Strategy Tester always add ERS_EXECUTION_STOPPING to the filter
+   // in tester always add ERS_EXECUTION_STOPPING to the filter
    if (This.IsTesting() && IsStopped())
       filter |= F_ERS_EXECUTION_STOPPING;
 
-   // filter the specified errors but log them
+   // filter the specified errors and only log them
    if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(log(message, error));
    if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return(log(message, error));
    if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(log(message, error));
@@ -4898,9 +4898,13 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
    if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return(log(message, error));
    if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return(log(message, error));
    if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(log(message, error));
+   if (error==ERR_NO_CONNECTION            && filter & F_ERR_NO_CONNECTION           ) return(log(message, error));
+   if (error==ERR_NO_RESULT                && filter & F_ERR_NO_RESULT               ) return(log(message, error));
+   if (error==ERR_OFF_QUOTES               && filter & F_ERR_OFF_QUOTES              ) return(log(message, error));
    if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(log(message, error));
    if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error));
    if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error));
+   if (error==ERR_TRADE_MODIFY_DENIED      && filter & F_ERR_TRADE_MODIFY_DENIED     ) return(log(message, error));
    if (error==ERR_TRADE_SERVER_GONE        && filter & F_ERR_TRADE_SERVER_GONE       ) return(log(message, error));
 
    // trigger a runtime error for everything else
@@ -4940,8 +4944,8 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * @param  _In_  double   lots        - trade volume in lots
  * @param  _In_  double   price       - limit price for pending orders (ignored for market orders)
  * @param  _In_  double   slippage    - acceptable slippage in pip (not in point)
- * @param  _In_  double   stopLoss    - StopLoss price
- * @param  _In_  double   takeProfit  - TakeProfit price
+ * @param  _In_  double   stopLoss    - stoploss price
+ * @param  _In_  double   takeProfit  - takeprofit price
  * @param  _In_  string   comment     - order comment (max. 27 chars)
  * @param  _In_  int      magicNumber - magic order number
  * @param  _In_  datetime expires     - a pending order's expiration date (if supported by the broker)
@@ -4954,15 +4958,13 @@ string Order.TempErrorMsg(int oe[], int errors) {
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
    // oe[]
-   if (ArrayDimension(oe) > 1) return(!catch("OrderSendEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(oe) > 1)                                 return(!catch("OrderSendEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(oe) != ORDER_EXECUTION.intSize)
       ArrayResize(oe, ORDER_EXECUTION.intSize);
    ArrayInitialize(oe, 0);
-   int error = GetLastError(); if (IsError(error))             return(!oe.setError(oe, catch("OrderSendEx(2)", error)));
-
    // symbol
-   if (symbol == "0") symbol = Symbol();                       // (string) NULL
-   if (IsTesting() && !StrCompareI(symbol, Symbol()))          return(!oe.setError(oe, catch("OrderSendEx(3)  cannot trade \""+ symbol +"\" in a \""+ Symbol() +"\" test", ERR_SYMBOL_NOT_AVAILABLE)));
+   if (symbol == "0") symbol = Symbol();  // (string) NULL
+   if (IsTesting() && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
    double maxLot         = MarketInfo(symbol, MODE_MAXLOT);
@@ -4974,37 +4976,37 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL  )/pipPoints;
    double freezeDistance = MarketInfo(symbol, MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   error = GetLastError();
-   if (IsError(error))                                         return(!oe.setError(oe, catch("OrderSendEx(4)  symbol=\""+ symbol +"\"", error)));
+   int error = GetLastError();
+   if (IsError(error))                                         return(!Order.HandleError("OrderSendEx(3)  symbol="+ symbol, error, oeFlags, oe));
    // type
-   if (!IsOrderType(type))                                     return(!oe.setError(oe, catch("OrderSendEx(5)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   if (!IsOrderType(type))                                     return(!Order.HandleError("OrderSendEx(4)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER, oeFlags, oe));
    bool isPendingType = IsPendingOrderType(type);
    // lots
-   if (LT(lots, minLot))                                       return(!oe.setError(oe, catch("OrderSendEx(6)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
-   if (GT(lots, maxLot))                                       return(!oe.setError(oe, catch("OrderSendEx(7)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
-   if (MathModFix(lots, lotStep) != 0)                         return(!oe.setError(oe, catch("OrderSendEx(8)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (LT(lots, minLot))                                       return(!Order.HandleError("OrderSendEx(5)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME, oeFlags, oe));
+   if (GT(lots, maxLot))                                       return(!Order.HandleError("OrderSendEx(6)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME, oeFlags, oe));
+   if (MathModFix(lots, lotStep) != 0)                         return(!Order.HandleError("OrderSendEx(7)  illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME, oeFlags, oe));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                           return(!oe.setError(oe, catch("OrderSendEx(9)  illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER)));
-   if (isPendingType) /*&&*/ if (EQ(price, 0))                 return(!oe.setError(oe, catch("OrderSendEx(10)  illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER)));
+   if (LT(price, 0))                                           return(!Order.HandleError("OrderSendEx(8)  illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (isPendingType) /*&&*/ if (EQ(price, 0))                 return(!Order.HandleError("OrderSendEx(9)  illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    price = NormalizeDouble(price, digits);
    // slippage
-   if (LT(slippage, 0))                                        return(!oe.setError(oe, catch("OrderSendEx(11)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER)));
+   if (LT(slippage, 0))                                        return(!Order.HandleError("OrderSendEx(10)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oe));
    // stopLoss
-   if (LT(stopLoss, 0))                                        return(!oe.setError(oe, catch("OrderSendEx(12)  illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER)));
+   if (LT(stopLoss, 0))                                        return(!Order.HandleError("OrderSendEx(11)  illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    stopLoss = NormalizeDouble(stopLoss, digits);
    // takeProfit
-   if (LT(takeProfit, 0))                                      return(!oe.setError(oe, catch("OrderSendEx(13)  illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER)));
+   if (LT(takeProfit, 0))                                      return(!Order.HandleError("OrderSendEx(12)  illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
    if (comment == "0") comment = "";   // (string) NULL
-   else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!oe.setError(oe, catch("OrderSendEx(14)  illegal parameter comment = \""+ comment +"\" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!Order.HandleError("OrderSendEx(13)  illegal parameter comment = \""+ comment +"\" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER, oeFlags, oe));
    if (!StringLen(comment)) string msgComment = "";
    else                            msgComment = " \""+ comment +"\"";
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrentEx("OrderSendEx(15)")) return(!oe.setError(oe, catch("OrderSendEx(16)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER)));
+   if (expires && expires <= TimeCurrentEx("OrderSendEx(14)")) return(!Order.HandleError("OrderSendEx(15)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oe.setError(oe, catch("OrderSendEx(17)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(16)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
 
    // initialize oe[]
    oe.setSymbol        (oe, symbol        );
@@ -5020,13 +5022,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    int ticket, time, time1 = GetTickCount(), requotes, tempErrors;
 
-   // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
+   // loop until the trade request succeeded or a non-fixable error occurred
    while (true) {
-      // terminal bug: After recompiling and reloading an EA the function IsStopped() continues to return TRUE.
-      if (IsStopped()) return(!Order.HandleError("OrderSendEx(18)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
+      // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
+      if (IsStopped()) return(!Order.HandleError("OrderSendEx(17)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
 
       if (IsTradeContextBusy()) {
-         if (__LOG()) log("OrderSendEx(19)  trade context busy, retrying...");
+         if (__LOG()) log("OrderSendEx(18)  trade context busy, retrying...");
          Sleep(300);
          continue;
       }
@@ -5042,17 +5044,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       price = NormalizeDouble(price, digits);
       oe.setOpenPrice(oe, price);
 
+      // submit the trade request
       time   = GetTickCount();
       ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
 
       oe.setDuration(oe, GetTickCount()-time1);                                  // total time in milliseconds
 
       if (ticket > 0) {
-         OrderPush("OrderSendEx(20)");
+         OrderPush("OrderSendEx(19)");
          WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-            return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(21)")));
+            return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(20)")));
 
          // On slow OrderSend() or in a fast market limits/stops may have already been executed, or the order may have been
          // modified or closed. The returned values must describe the original order, not the current order status.
@@ -5070,7 +5073,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             else                      slippage = 0;
          oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));         // total slippage after requotes in pip
 
-         if (__LOG()) log("OrderSendEx(22)  "+ OrderSendEx.SuccessMsg(oe));
+         if (__LOG()) log("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
@@ -5079,41 +5082,46 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
-         if (IsError(catch("OrderSendEx(23)", NULL, O_POP)))
-            ticket = -1;
-         oe.setError(oe, last_error);
+         OrderPop("OrderSendEx(22)");
+         if (IsError(Order.HandleError("OrderSendEx(23)", GetLastError(), oeFlags, oe)))
+            return(NULL);
          return(ticket);                                                         // regular exit (NO_ERROR)
       }
 
       error = GetLastError();
-      oe.setError     (oe, error     );
-      oe.setOpenPrice (oe, price     );                                          // Soll-Daten für Error-Messages
+      oe.setError     (oe, error     );                                          // store needed data for potential error messages
+      oe.setOpenPrice (oe, price     );
       oe.setStopLoss  (oe, stopLoss  );
       oe.setTakeProfit(oe, takeProfit);
 
-      if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG()) log("OrderSendEx(24)  trade context busy, retrying...");
-         Sleep(300);
-         continue;
-      }
-      if (error == ERR_REQUOTE) {
-         requotes++;
-         oe.setRequotes(oe, requotes);
-         if (IsTesting())  break;
-         if (requotes > 5) break;
-         continue;                                                               // nach ERR_REQUOTE Order sofort wiederholen
-      }
-      if (!error) {
-         if (__LOG()) log("OrderSendEx(25)  no error returned => ERR_RUNTIME_ERROR");
-         error = oe.setError(oe, ERR_RUNTIME_ERROR);
-      }
+      switch (error) {
+         case ERR_TRADE_CONTEXT_BUSY:
+            if (__LOG()) log("OrderSendEx(24)  trade context busy, retrying...");
+            Sleep(300);
+            continue;
 
-      if (!IsTemporaryTradeError(error))
-         break;
-      tempErrors++;
-      if (tempErrors > 5)
-         break;
-      warn("OrderSendEx(26)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
+         case ERR_SERVER_BUSY:
+         case ERR_TRADE_TIMEOUT:
+         case ERR_INVALID_PRICE:
+         case ERR_PRICE_CHANGED:
+         case ERR_OFF_QUOTES:
+            tempErrors++;
+            if (tempErrors > 5) break;
+            warn("OrderSendEx(25)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
+            continue;
+
+         case ERR_REQUOTE:
+            requotes++;
+            oe.setRequotes(oe, requotes);
+            if (IsTesting())  break;
+            if (requotes > 5) break;
+            continue;                                                            // no delay after ERR_REQUOTE
+
+         case NO_ERROR:
+            if (__LOG()) log("OrderSendEx(26)  no error returned => ERR_RUNTIME_ERROR");
+            error = oe.setError(oe, ERR_RUNTIME_ERROR);
+            break;
+      }
    }
    return(!Order.HandleError("OrderSendEx(27)  "+ OrderSendEx.ErrorMsg(oe), error, oeFlags, oe, true));
 }
@@ -5326,6 +5334,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    // loop until the order was modified or a permanent error occurred
    while (true) {
+      // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
       if (IsStopped()) return(_false(Order.HandleError("OrderModifyEx(27)  "+ OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderModifyEx(28)")));
 
       if (IsTradeContextBusy()) {
@@ -5483,7 +5492,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
  *
  * @return bool - success status
  *
- * Notes: (1) On partial close the final values for swap, commission and profit may be divided by the trade server over both
+ * Notes: (1) On partial close the final values for swap, commission and profit may be spread by the trade server over both
  *            the partially closed and the remaining ticket.
  *
  *        (2) Typical trade operation errors returned in oe.Error are:
@@ -5507,7 +5516,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
    double lotStep  = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    double openLots = OrderLots();
    int error = GetLastError();
-   if (IsError(error))                                         return(_false(Order.HandleError("OrderCloseEx(7)  symbol=\""+ OrderSymbol() +"\"", error, oeFlags, oe), OrderPop("OrderCloseEx(8)")));
+   if (IsError(error))                                         return(_false(Order.HandleError("OrderCloseEx(7)  symbol="+ OrderSymbol(), error, oeFlags, oe), OrderPop("OrderCloseEx(8)")));
    if (EQ(lots, 0, 2)) {
       lots = openLots;
    }
@@ -5573,6 +5582,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
 
    // loop until the order is closed or a non-fixable error occurred
    while (true) {
+      // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
       if (IsStopped()) return(_false(Order.HandleError("OrderCloseEx(19)  "+ OrderCloseEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderCloseEx(20)")));
 
       if (IsTradeContextBusy()) {
@@ -5791,7 +5801,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position or the tickets can't be closed by
  *                                            each other (anymore)
  *
- *        (2) On partial close the total values for swap, commission and profit may be divided by the trade server over both
+ *        (2) On partial close the total values for swap, commission and profit may be spread by the trade server over both
  *            tickets. The values returned in oe[] are summed-up values of both tickets.
  */
 bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]) {
@@ -5918,6 +5928,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
 
    // loop until the positions have been closed or a non-fixable error occurred
    while (true) {
+      // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
       if (IsStopped()) return(_false(Order.HandleError("OrderCloseByEx(16)  "+ OrderCloseByEx.ErrorMsg(first, second, oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderCloseByEx(17)")));
 
       if (IsTradeContextBusy()) {
@@ -6006,7 +6017,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
          return(!oe.setError(oe, catch("OrderCloseByEx(27)", NULL, O_POP)));     // regular exit (NO_ERROR)
       }
 
-      error = GetLastError();
+      error = oe.setError(oe, GetLastError());
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
@@ -6037,7 +6048,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
 
          case NO_ERROR:
             if (__LOG()) log("OrderCloseByEx(32)  no error returned => ERR_RUNTIME_ERROR");
-            error = ERR_RUNTIME_ERROR;
+            error = oe.setError(oe, ERR_RUNTIME_ERROR);
             break;
       }
       break;                                      // fail for all other errors
@@ -6729,6 +6740,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
 
    // loop until the order was deleted or a non-fixable error occurred
    while (true) {
+      // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
       if (IsStopped()) return(_false(Order.HandleError("OrderDeleteEx(9)  "+ OrderDeleteEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderDeleteEx(10)")));
 
       if (IsTradeContextBusy()) {

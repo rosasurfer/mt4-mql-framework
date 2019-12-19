@@ -673,27 +673,27 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // checkmark symbol
 
 
-// flags marking specific errors to be handled by custom error handlers (if used the errors don't trigger a terminating ERROR alert)
+// flags marking errors handled by custom error handlers (the errors don't trigger a terminating ERROR alert)
 #define F_ERR_CONCURRENT_MODIFICATION   0x0001  //      1
-#define F_ERR_INVALID_PARAMETER         0x0002  //      2
-#define F_ERR_INVALID_STOP              0x0004  //      4
-#define F_ERR_INVALID_TICKET            0x0008  //      8
-#define F_ERR_INVALID_TRADE_PARAMETERS  0x0010  //     16
-#define F_ERR_MARKET_CLOSED             0x0020  //     32
-#define F_ERR_NO_RESULT                 0x0040  //     64
-#define F_ERR_OFF_QUOTES                0x0080  //    128
-#define F_ERR_ORDER_CHANGED             0x0100  //    256
-#define F_ERR_SERIES_NOT_AVAILABLE      0x0200  //    512
-#define F_ERR_TRADE_MODIFY_DENIED       0x0400  //   1024
-#define F_ERR_TRADE_SERVER_GONE         0x0800  //   2048
-#define F_ERS_HISTORY_UPDATE            0x1000  //   4096 (temporary status)
-#define F_ERS_EXECUTION_STOPPING        0x2000  //   8192 (temporary status)
-#define F_ERS_TERMINAL_NOT_YET_READY    0x4000  //  16384 (temporary status)
-
-
-// flags controlling order execution
+#define F_ERS_EXECUTION_STOPPING        0x0002  //      2   temporary state
+#define F_ERS_HISTORY_UPDATE            0x0004  //      4   temporary state
+#define F_ERR_INVALID_PARAMETER         0x0008  //      8
+#define F_ERR_INVALID_STOP              0x0010  //     16
+#define F_ERR_INVALID_TICKET            0x0020  //     32
+#define F_ERR_INVALID_TRADE_PARAMETERS  0x0040  //     64
+#define F_ERR_MARKET_CLOSED             0x0080  //    128
+#define F_ERR_NO_CONNECTION             0x0100  //    256
+#define F_ERR_NO_RESULT                 0x0200  //    512
+#define F_ERR_OFF_QUOTES                0x0400  //   1024
+#define F_ERR_ORDER_CHANGED             0x0800  //   2048
+#define F_ERR_SERIES_NOT_AVAILABLE      0x1000  //   4096
+#define F_ERS_TERMINAL_NOT_YET_READY    0x2000  //   8192   temporary state
+#define F_ERR_TRADE_MODIFY_DENIED       0x4000  //  16384
+#define F_ERR_TRADE_SERVER_GONE         0x8000  //  32768
+                                                //
+// flags controlling order execution            //
 #define F_OE_DONT_HEDGE             0x00010000  //  65536 (don't hedge multiple positions on close)
-#define F_OE_DONT_CHECK_STATUS      0x00020000  // 131072 (don't check the order status before proceeding)
+#define F_OE_DONT_CHECK_STATUS      0x00020000  // 131072 (don't check order status before proceeding)
 
 
 // String padding types, siehe StringPad()
