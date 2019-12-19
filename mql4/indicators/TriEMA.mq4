@@ -266,7 +266,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, thirdEma[0], SubPipDigits, trend[0], Time[0]);
+       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, thirdEma[0], Digits, trend[0], Time[0]);
 
       // detect trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
