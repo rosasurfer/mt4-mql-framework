@@ -685,7 +685,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_ERR_ORDER_CHANGED             0x0100  //    256
 #define F_ERR_SERIES_NOT_AVAILABLE      0x0200  //    512
 #define F_ERR_TRADE_MODIFY_DENIED       0x0400  //   1024
-#define F_ERR_UNKNOWN_TRADE_ERROR       0x0800  //   2048
+#define F_ERR_TRADE_SERVER_GONE         0x0800  //   2048
 #define F_ERS_HISTORY_UPDATE            0x1000  //   4096 (temporary status)
 #define F_ERS_EXECUTION_STOPPING        0x2000  //   8192 (temporary status)
 #define F_ERS_TERMINAL_NOT_YET_READY    0x4000  //  16384 (temporary status)
