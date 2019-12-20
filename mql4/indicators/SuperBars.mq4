@@ -109,7 +109,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   HandleEvent(EVENT_CHART_CMD);                               // process chart commands
+   HandleCommands();                                           // process chart commands
    UpdateSuperBars();                                          // update superbars
    return(last_error);
 }

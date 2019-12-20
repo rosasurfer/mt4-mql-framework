@@ -422,10 +422,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define PRICE_ASK                      8        // Ask
 
 
-// Event-Flags
-#define EVENT_CHART_CMD                1
-
-
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
 
@@ -689,7 +685,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_ERR_SERIES_NOT_AVAILABLE      0x1000  //   4096
 #define F_ERS_TERMINAL_NOT_YET_READY    0x2000  //   8192   temporary state
 #define F_ERR_TRADE_MODIFY_DENIED       0x4000  //  16384
-#define F_ERR_TRADE_SERVER_GONE         0x8000  //  32768
+#define F_ERR_TRADESERVER_GONE          0x8000  //  32768
                                                 //
 // flags controlling order execution            //
 #define F_OE_DONT_HEDGE             0x00010000  //  65536 (don't hedge multiple positions on close)

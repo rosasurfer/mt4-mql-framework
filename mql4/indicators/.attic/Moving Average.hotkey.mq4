@@ -218,7 +218,7 @@ int onTick() {
 
    // (2) Änderungen der MA-Periode zur Laufzeit (per Hotkey) erkennen und übernehmen
    if (MA.Periods.Hotkeys.Enabled)
-      HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
+      HandleCommands();                                                 // ChartCommands verarbeiten
 
    if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
