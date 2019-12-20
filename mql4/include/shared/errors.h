@@ -12,8 +12,8 @@
 //      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
 //      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
 //      OrderModify().
-#define ERR_TRADE_SERVER_GONE                                         2
-#define ERR_COMMON_ERROR                          ERR_TRADE_SERVER_GONE    // MetaQuotes alias
+#define ERR_TRADESERVER_GONE                                          2
+#define ERR_COMMON_ERROR                           ERR_TRADESERVER_GONE    // MetaQuotes alias
 //      The trade request failed. A trade server or trade server related execution error.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 //      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.

@@ -124,7 +124,7 @@ datetime GetFxtTime();;
 string   GetMqlFilesPath();;
 datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
-bool     HandleEvent(int event);;
+bool     HandleCommands();;
 string   HistoryFlagsToStr(int flags);;
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;

@@ -294,7 +294,7 @@ int start() {
    // check a finished chart initialisation (may fail on terminal start)
    if (!Bars) return(ShowStatus(SetLastError(log("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
-   // in tester wait until the configured starttime/price is met
+   // in tester wait until the configured start time/price is reached
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
          if (Tick.Time < Tester.StartTime) {

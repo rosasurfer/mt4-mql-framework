@@ -179,6 +179,7 @@ double   orders.profit         [];
 
 // --- other -------------------------------
 int      lastEventId;
+int      lastNetworkError;                         // the last trade server network error (if any)
 
 int      ignorePendingOrders  [];                  // orphaned tickets to ignore
 int      ignoreOpenPositions  [];                  // ...
@@ -274,8 +275,10 @@ int onTick() {
    if (sequence.status == STATUS_UNDEFINED)
       return(NO_ERROR);
 
-   // process chart commands
-   if (!HandleEvent(EVENT_CHART_CMD))
+   if (!HandleCommands())                                   // process incoming commands
+      return(last_error);
+
+   if (!HandleNetworkErrors())                              // process any occurred network errors
       return(last_error);
 
    int signal, stops[];                                     // client-side triggered stoplosses
@@ -295,15 +298,15 @@ int onTick() {
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      success = UpdateStatus(gridChanged, stops);
+      success = UpdateStatus(gridChanged, stops);           // FALSE on error or if the tick should be skipped
       if (success) {
          signal = IsStopSignal();
          if (!signal) {
-            if (ArraySize(stops) > 0)   ExecuteStopLosses(stops);
-            if (Tick==1 || gridChanged) UpdatePendingOrders();
+            if (ArraySize(stops) > 0)   success = ExecuteStopLosses(stops) && success;
+            if (Tick==1 || gridChanged) success = UpdatePendingOrders()    && success;
          }
-         else StopSequence(signal);
-         gridChanged = false;                               // reset static var after the tick was successfully processed
+         else                           success = StopSequence(signal) && success;
+         if (success) gridChanged = false;                  // reset static var only if the tick was successfully processed
       }
    }
 
@@ -311,11 +314,19 @@ int onTick() {
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
    if (success) {
-      // update current equity value for equity recorder
+      // update equity for equity recorder
       if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
 
-      // update profit targets
+      // update and show profit targets
       if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
+   }
+
+
+
+
+   if (IsTesting() && TimeCurrent()>=D'2019.10.01 04:58:00') {
+      debug("onTick(0.1)  Tick.Time="+ TimeToStr(Tick.Time, TIME_FULL));
+      if (!Tester.IsPaused()) Tester.Pause();
    }
    return(last_error);
 }
@@ -1726,7 +1737,9 @@ bool UpdatePendingOrders() {
             sMissedLevels = sMissedLevels +", "+ lastExistingLevel;
          }
          level = lastExistingLevel + Sign(nextLevel);
+
          type = Grid.AddPendingOrder(level); if (!type) return(false);
+
          if (level == nextLevel) {
             if (IsLimitOrderType(type)) {                         // a limit order was opened
                sequence.level    = nextLevel;
@@ -1849,20 +1862,21 @@ int Grid.AddPendingOrder(int level) {
       if (IsStopOrderType(pendingType)) ticket = SubmitStopOrder(pendingType, level, oe);
       else                              ticket = SubmitLimitOrder(pendingType, level, oe);
       if (ticket > 0) break;
-      if (oe.Error(oe) != ERR_INVALID_STOP) return(NULL);
+
+      int error = oe.Error(oe);
+      if (error != ERR_INVALID_STOP)
+         return(NULL);
       counter++;
-      if (counter > 9) return(!catch("Grid.AddPendingOrder(2)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", oe.Error(oe)));
-                                                               // market violated: Switch order type and ignore price, thus preventing
-      if (ticket == -1) {                                      // the same pending order type again and again caused by a stalled price feed.
-         if (__LOG()) log("Grid.AddPendingOrder(3)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", oe.Error(oe));
+      if (counter > 9)  return(!catch("Grid.AddPendingOrder(2)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
+                                                   // market violated: Switch order type and ignore price, thus preventing
+      if (ticket == -1) {                          // the same pending order type again and again caused by a stalled price feed.
+         if (__LOG()) log("Grid.AddPendingOrder(3)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", error);
          pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
+         continue;
       }
-      else if (ticket == -2) {
-         return(!catch("Grid.AddPendingOrder(4)  unsupported bucketshop account (stop distance violation detected)", oe.Error(oe)));
-      }
-      else {
-         return(!catch("Grid.AddPendingOrder(5)  unknown "+ ifString(IsStopOrderType(pendingType), "SubmitStopOrder", "SubmitLimitOrder") +" return value "+ ticket, oe.Error(oe)));
-      }
+      if (ticket == -2) return(!catch("Grid.AddPendingOrder(4)  unsupported bucketshop account (stop distance violation detected)", error));
+
+      return(!catch("Grid.AddPendingOrder(5)  unknown "+ ifString(IsStopOrderType(pendingType), "SubmitStopOrder", "SubmitLimitOrder") +" return value "+ ticket, error));
    }
 
    // prepare order dataset
@@ -2337,18 +2351,26 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
-   int      oeFlags     = F_ERR_INVALID_STOP;      // accept ERR_INVALID_STOP
+   int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
+            oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
+            oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
 
+   SetLastNetworkError(NO_ERROR);
    int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
-   if (error == ERR_INVALID_STOP) {                // either the entry limit violates the market (-1) or the broker's stop distance (-2)
-      bool violatedMarket;
-      if (!oe.StopDistance(oe))    violatedMarket = true;
-      else if (type == OP_BUYSTOP) violatedMarket = LE(oe.OpenPrice(oe), oe.Ask(oe));
-      else                         violatedMarket = GE(oe.OpenPrice(oe), oe.Bid(oe));
-      return(ifInt(violatedMarket, -1, -2));
+   switch (error) {
+      case ERR_INVALID_STOP:                          // either the entry limit violates the market (-1) or the broker's stop distance (-2)
+         bool violatedMarket;
+         if (!oe.StopDistance(oe))    violatedMarket = true;
+         else if (type == OP_BUYSTOP) violatedMarket = LE(oe.OpenPrice(oe), oe.Ask(oe));
+         else                         violatedMarket = GE(oe.OpenPrice(oe), oe.Bid(oe));
+         return(ifInt(violatedMarket, -1, -2));
+
+      case ERR_NO_CONNECTION:
+      case ERR_TRADESERVER_GONE:
+         return(_NULL(SetLastNetworkError(error)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -2380,18 +2402,26 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
-   int      oeFlags     = F_ERR_INVALID_STOP;      // accept ERR_INVALID_STOP
+   int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
+            oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
+            oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
 
+   SetLastNetworkError(NO_ERROR);
    int ticket = OrderSendEx(Symbol(), type, LotSize, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
-   if (error == ERR_INVALID_STOP) {                // either the entry limit violates the market (-1) or the broker's stop distance (-2)
-      bool violatedMarket;
-      if (!oe.StopDistance(oe))     violatedMarket = true;
-      else if (type == OP_BUYLIMIT) violatedMarket = GE(oe.OpenPrice(oe), oe.Ask(oe));
-      else                          violatedMarket = LE(oe.OpenPrice(oe), oe.Bid(oe));
-      return(ifInt(violatedMarket, -1, -2));
+   switch (error) {
+      case ERR_INVALID_STOP:                          // either the entry limit violates the market (-1) or the broker's stop distance (-2)
+         bool violatedMarket;
+         if (!oe.StopDistance(oe))     violatedMarket = true;
+         else if (type == OP_BUYLIMIT) violatedMarket = GE(oe.OpenPrice(oe), oe.Ask(oe));
+         else                          violatedMarket = LE(oe.OpenPrice(oe), oe.Bid(oe));
+         return(ifInt(violatedMarket, -1, -2));
+
+      case ERR_NO_CONNECTION:
+      case ERR_TRADESERVER_GONE:
+         return(_NULL(SetLastNetworkError(error)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -2413,7 +2443,7 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
    if (IsLastError())                         return(last_error);
    if (sequence.status != STATUS_PROGRESSING) return(catch("ModifyStopOrder(1)  cannot modify order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int oeFlags = F_ERR_INVALID_STOP;            // accept ERR_INVALID_STOP
+   int oeFlags = F_ERR_INVALID_STOP;            // custom handling of ERR_INVALID_STOP
    bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_PENDING, oeFlags, oe);
    if (success) return(NO_ERROR);
 
@@ -5537,6 +5567,32 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
       lastParams   = params;
    }
    return(icTriEMA(timeframe, periods, appliedPrice, iBuffer, iBar));
+}
+
+
+/**
+ *
+ * @param  int error - the occurred network error (if any)
+ *
+ * @return int - the same error
+ */
+int SetLastNetworkError(int error) {
+   lastNetworkError = error;
+   return(error);
+}
+
+
+/**
+ * Handle occurred network errors.
+ *
+ * @return bool - success status
+ */
+bool HandleNetworkErrors() {
+   if (IsError(lastNetworkError)) {
+      debug("HandleNetworkErrors(1)  lastNetworkError="+ ErrorToStr(lastNetworkError) +"  status="+ StatusToStr(sequence.status));
+      return(false);
+   }
+   return(true);
 }
 
 
