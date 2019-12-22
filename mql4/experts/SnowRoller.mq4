@@ -179,7 +179,10 @@ double   orders.profit         [];
 
 // --- other -------------------------------
 int      lastEventId;
+
 int      lastNetworkError;                         // the last trade server network error (if any)
+datetime nextRetry;                                // time of the next trade retry after a network error
+int      retries;                                  // number of retries so far
 
 int      ignorePendingOrders  [];                  // orphaned tickets to ignore
 int      ignoreOpenPositions  [];                  // ...
@@ -275,11 +278,8 @@ int onTick() {
    if (sequence.status == STATUS_UNDEFINED)
       return(NO_ERROR);
 
-   if (!HandleCommands())                                   // process incoming commands
-      return(last_error);
-
-   if (!HandleNetworkErrors())                              // process any occurred network errors
-      return(last_error);
+   if (!HandleCommands())      return(last_error);          // process incoming commands
+   if (!HandleNetworkErrors()) return(last_error);          // process occurred network errors
 
    int signal, stops[];                                     // client-side triggered stoplosses
    bool success = true;                                     // whether the tick was successfully processed
@@ -306,28 +306,19 @@ int onTick() {
             if (Tick==1 || gridChanged) success = UpdatePendingOrders()    && success;
          }
          else                           success = StopSequence(signal) && success;
-         if (success) gridChanged = false;                  // reset static var only if the tick was successfully processed
+         if (success) gridChanged = false;                  // if the tick was not successfully processed status is kept to the next tick
       }
    }
 
    // ...or sequence is stopped
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
-   if (success) {
-      // update equity for equity recorder
-      if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
+   // update equity for equity recorder
+   if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
 
-      // update and show profit targets
-      if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
-   }
+   // update/show profit targets
+   if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
 
-
-
-
-   if (IsTesting() && TimeCurrent()>=D'2019.10.01 04:58:00') {
-      debug("onTick(0.1)  Tick.Time="+ TimeToStr(Tick.Time, TIME_FULL));
-      if (!Tester.IsPaused()) Tester.Pause();
-   }
    return(last_error);
 }
 
@@ -381,6 +372,38 @@ bool onCommand(string commands[]) {
 
    // log unknown commands and let the EA continue
    return(_true(warn("onCommand(2)  unknown command \""+ cmd +"\"")));
+}
+
+
+/**
+ * Handle occurred network errors. Disables regular processing of the EA until the retry condition for the next trade request
+ * is fulfilled.
+ *
+ * @return bool - success status
+ */
+bool HandleNetworkErrors() {
+   // TODO: Regular processing must continue, only trade requests must be disabled.
+   switch (lastNetworkError) {
+      case NO_ERROR: return(true);
+
+      case ERR_NO_CONNECTION:
+      case ERR_TRADESERVER_GONE:
+         if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
+            return(!catch("HandleNetworkErrors(1)  in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
+
+         if (sequence.status == STATUS_PROGRESSING) {
+            if (Tick.Time >= nextRetry) {
+               retries++;
+               return(true);
+            }
+            else {
+               return(false);
+            }
+         }
+
+         return(!catch("HandleNetworkErrors(2)  unsupported sequence status "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
+   }
+   return(!catch("HandleNetworkErrors(3)  unsupported error ", lastNetworkError));
 }
 
 
@@ -1683,7 +1706,7 @@ bool UpdatePendingOrders() {
                sizeOfTickets--;
                ordersChanged = true;
             }
-            else if (error == -1) {                               // TODO: handle the already opened pending order
+            else if (error == -1) {                               // TODO: handle the just filled pending order
                if (__LOG()) log("UpdatePendingOrders(2)  sequence "+ sequence.name +"."+ NumberToStr(orders.level[i], "+.") +" pending #"+ orders.ticket[i] +" was already executed");
                return(!catch("UpdatePendingOrders(3)", ERR_INVALID_TRADE_PARAMETERS));
             }
@@ -2355,9 +2378,11 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
             oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
 
-   SetLastNetworkError(NO_ERROR);
    int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (ticket > 0) return(ticket);
+   if (ticket > 0) {
+      SetLastNetworkError(oe);
+      return(ticket);
+   }
 
    int error = oe.Error(oe);
    switch (error) {
@@ -2370,7 +2395,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
 
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
-         return(_NULL(SetLastNetworkError(error)));
+         return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -2406,9 +2431,11 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
             oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
 
-   SetLastNetworkError(NO_ERROR);
    int ticket = OrderSendEx(Symbol(), type, LotSize, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (ticket > 0) return(ticket);
+   if (ticket > 0) {
+      SetLastNetworkError(oe);
+      return(ticket);
+   }
 
    int error = oe.Error(oe);
    switch (error) {
@@ -2421,7 +2448,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
 
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
-         return(_NULL(SetLastNetworkError(error)));
+         return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -5571,28 +5598,38 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
 
 
 /**
+ * Store the last occurred network error and update the time of the next retry.
  *
- * @param  int error - the occurred network error (if any)
+ * @param  int oe[] - execution details of the failed trade request (struct ORDER_EXECUTION)
  *
  * @return int - the same error
  */
-int SetLastNetworkError(int error) {
-   lastNetworkError = error;
-   return(error);
-}
+int SetLastNetworkError(int oe[]) {
+   int error = oe.Error(oe);
 
-
-/**
- * Handle occurred network errors.
- *
- * @return bool - success status
- */
-bool HandleNetworkErrors() {
-   if (IsError(lastNetworkError)) {
-      debug("HandleNetworkErrors(1)  lastNetworkError="+ ErrorToStr(lastNetworkError) +"  status="+ StatusToStr(sequence.status));
-      return(false);
+   if (lastNetworkError && !error) {
+      warn("HandleNetworkErrors(1)  network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
    }
-   return(true);
+   lastNetworkError = error;
+
+   if (!error) {
+      nextRetry = 0;
+      retries = 0;
+   }
+   else {
+      datetime now = Tick.Time + Ceil(oe.Duration(oe)/1000.0);    // assumed current server time (may lag to real time)
+      int pauses[6]; if (!pauses[0]) {
+         pauses[0] =  5*SECONDS;
+         pauses[1] = 30*SECONDS;
+         pauses[2] =  1*MINUTE;
+         pauses[3] =  2*MINUTES;
+         pauses[4] =  5*MINUTES;
+         pauses[5] = 10*MINUTES;
+      }
+      nextRetry = now + pauses[Min(retries, 5)];
+      if (__LOG()) log("HandleNetworkErrors(2)  networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
+   }
+   return(error);
 }
 
 
