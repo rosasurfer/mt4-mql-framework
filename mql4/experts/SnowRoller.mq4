@@ -157,25 +157,24 @@ datetime gridbase.time [];
 double   gridbase.price[];
 
 // --- order data --------------------------
-int      orders.ticket         [];
-int      orders.level          [];                 // order grid level: -n...-1 | 1...+n
-double   orders.gridbase       [];                 // gridbase at the time the order was active
-int      orders.pendingType    [];                 // pending order type (if applicable)        or -1
-datetime orders.pendingTime    [];                 // time of OrderOpen() or last OrderModify() or  0
-double   orders.pendingPrice   [];                 // pending entry limit                       or  0
-int      orders.type           [];
-int      orders.openEvent      [];
-datetime orders.openTime       [];
-double   orders.openPrice      [];
-int      orders.closeEvent     [];
-datetime orders.closeTime      [];
-double   orders.closePrice     [];
-double   orders.stopLoss       [];
-bool     orders.clientsideLimit[];                 // whether a limit is managed client-side
-bool     orders.closedBySL     [];
-double   orders.swap           [];
-double   orders.commission     [];
-double   orders.profit         [];
+int      orders.ticket      [];
+int      orders.level       [];                    // order grid level: -n...-1 | 1...+n
+double   orders.gridbase    [];                    // gridbase at the time the order was active
+int      orders.pendingType [];                    // pending order type (if applicable)        or -1
+datetime orders.pendingTime [];                    // time of OrderOpen() or last OrderModify() or  0
+double   orders.pendingPrice[];                    // pending entry limit                       or  0
+int      orders.type        [];
+int      orders.openEvent   [];
+datetime orders.openTime    [];
+double   orders.openPrice   [];
+int      orders.closeEvent  [];
+datetime orders.closeTime   [];
+double   orders.closePrice  [];
+double   orders.stopLoss    [];
+bool     orders.closedBySL  [];
+double   orders.swap        [];
+double   orders.commission  [];
+double   orders.profit      [];
 
 // --- other -------------------------------
 int      lastEventId;
@@ -281,7 +280,7 @@ int onTick() {
    if (!HandleCommands())      return(last_error);          // process incoming commands
    if (!HandleNetworkErrors()) return(last_error);          // process occurred network errors
 
-   int signal, stops[];                                     // client-side triggered stoplosses
+   int signal;
    bool success = true;                                     // whether the tick was successfully processed
    static bool gridChanged = false;                         // whether the current gridbase or gridlevel changed
 
@@ -298,12 +297,11 @@ int onTick() {
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      success = UpdateStatus(gridChanged, stops);           // FALSE on error or if the tick should be skipped
+      success = UpdateStatus(gridChanged);                  // FALSE on error or if the tick should be skipped
       if (success) {
          signal = IsStopSignal();
          if (!signal) {
-            if (ArraySize(stops) > 0)   success = ExecuteStopLosses(stops) && success;
-            if (Tick==1 || gridChanged) success = UpdatePendingOrders()    && success;
+            if (Tick==1 || gridChanged) success = UpdatePendingOrders() && success;
          }
          else                           success = StopSequence(signal) && success;
          if (success) gridChanged = false;                  // if the tick was not successfully processed status is kept to the next tick
@@ -358,8 +356,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_PROGRESSING:
             bool bNull;
-            int  iNull[];
-            if (!UpdateStatus(bNull, iNull))
+            if (!UpdateStatus(bNull))
                return(false);                   // fall-through to STATUS_WAITING
          case STATUS_WAITING:
             return(StopSequence(NULL));
@@ -533,7 +530,7 @@ bool StopSequence(int signal) {
       if (__LOG()) log("StopSequence(3)  stopping sequence "+ sequence.name +" at level "+ sequence.level);
 
       // close open orders
-      double stopPrice, slippage = 2;                                         // 2 pip
+      double stopPrice, slippage = 2;
       int level, oeFlags, oes[][ORDER_EXECUTION.intSize];
       int pendingLimits[], openPositions[], sizeOfTickets = ArraySize(orders.ticket);
       ArrayResize(pendingLimits, 0);
@@ -543,16 +540,9 @@ bool StopSequence(int signal) {
       for (int i=sizeOfTickets-1; i >= 0; i--) {
          if (!orders.closeTime[i]) {                                          // local: if (isOpen)
             level = orders.level[i];
-            if (orders.ticket[i] < 0) {                                       // drop client-side managed pending orders
-               if (!Grid.DropData(i)) return(false);
-               sizeOfTickets--;
-               ArrayAddInt(pendingLimits, -1);                                // decrease indexes of already stored limits
-            }
-            else {
-               ArrayPushInt(pendingLimits, i);                                // pending entry or stop limit
-               if (orders.type[i] != OP_UNDEFINED)
-                  ArrayPushInt(openPositions, orders.ticket[i]);              // open position
-            }
+            ArrayPushInt(pendingLimits, i);                                   // pending entry or exit limit
+            if (orders.type[i] != OP_UNDEFINED)
+               ArrayPushInt(openPositions, orders.ticket[i]);                 // open position
             if (Abs(level) == 1) break;
          }
       }
@@ -1010,9 +1000,8 @@ bool ResumeSequence(int signal) {
    if (!UpdatePendingOrders()) return(false);
 
    // update and store status
-   bool changes;
-   int  iNull[];                                               // If RestorePositions() found a virtuall triggered SL (#-2)
-   if (!UpdateStatus(changes, iNull)) return(false);           // UpdateStatus() "closes" the ticket and decreases the gridlevel.
+   bool changes;                                               // If RestorePositions() found a virtuall triggered SL (#-2)
+   if (!UpdateStatus(changes)) return(false);                  // UpdateStatus() "closes" the ticket and decreases the gridlevel.
    if (changes) UpdatePendingOrders();                         // Only in this case pending orders need to be updated again.
    if (!SaveSequence()) return(false);
    RedrawStartStop();
@@ -1102,19 +1091,17 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 
 
 /**
- * Update internal order and PL state according to current runtime data.
+ * Update internal order and PL state according to current market data.
  *
- * @param  _InOut_ bool gridChanged      - whether the current gridbase or gridlevel changed
- * @param  _Out_   int  triggeredStops[] - array receiving tickets of client-side triggered stops (if any)
+ * @param  _InOut_ bool gridChanged - whether the current gridbase or the gridlevel changed
  *
  * @return bool - success status
  */
-bool UpdateStatus(bool &gridChanged, int &triggeredStops[]) {
+bool UpdateStatus(bool &gridChanged) {
    gridChanged = gridChanged!=0;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  cannot update order status of "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
-   ArrayResize(triggeredStops, 0);
    int sizeOfTickets=ArraySize(orders.ticket);
    double floatingPL = 0;
 
@@ -1164,7 +1151,6 @@ bool UpdateStatus(bool &gridChanged, int &triggeredStops[]) {
             else {
                ArrayDropInt(sequence.missedLevels, orders.level[i]);          // a limit order => update missed grid levels
                SS.MissedLevels();
-               //
                // Terminal bug
                // ------------
                // In a fast market a pending order with stoploss can be filled *and* immediately closed. Tester and demo
@@ -1191,11 +1177,6 @@ bool UpdateStatus(bool &gridChanged, int &triggeredStops[]) {
 
       if (!isClosed) {
          if (orders.type[i] != OP_UNDEFINED) {
-            // check client-side managed exit limits
-            if (orders.clientsideLimit[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-               if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopTriggerMsg(i));
-               ArrayPushInt(triggeredStops, orders.ticket[i]);                // queue the triggered limit
-            }
             floatingPL = NormalizeDouble(floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1308,14 +1289,13 @@ string UpdateStatus.PositionCloseMsg(int i) {
  * @return string
  */
 string UpdateStatus.StopLossMsg(int i) {
-   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), [client-side ]stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
    string sMagic     = ifString(orders.ticket[i]==-2, "magic ticket ", "");
    string sType      = OperationTypeDescription(orders.type[i]);
    string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
-   string sStopSide  = ifString(orders.clientsideLimit[i], "client-side ", "");
    string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
    string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), "+ sStopSide +"stoploss "+ sStopLoss +" was executed";
+   string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), stoploss "+ sStopLoss +" was executed";
 
    if (NE(orders.closePrice[i], orders.stopLoss[i])) {
       double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
@@ -1327,27 +1307,6 @@ string UpdateStatus.StopLossMsg(int i) {
       message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
    return(message);
-}
-
-
-/**
- * Compose a log message for a client-side triggered stop or limit.
- *
- * @param  int i - order index
- *
- * @return string
- */
-string UpdateStatus.StopTriggerMsg(int i) {
-   string sSequence = sequence.name +"."+ NumberToStr(orders.level[i], "+.");
-
-   if (orders.type[i] == OP_UNDEFINED) {
-      // sequence L.8692.+17 client-side Stop Buy at 1.5457'2 was triggered
-      return("sequence "+ sSequence +" client-side "+ OperationTypeDescription(orders.pendingType[i]) +" at "+ NumberToStr(orders.pendingPrice[i], PriceFormat) +" was triggered");
-   }
-   else {
-      // sequence L.8692.+17 #1 client-side stoploss at 1.5457'2 was triggered
-      return("sequence "+ sSequence +" #"+ orders.ticket[i] +" client-side stoploss at "+ NumberToStr(orders.stopLoss[i], PriceFormat) +" was triggered");
-   }
 }
 
 
@@ -1380,7 +1339,7 @@ bool EventListener_ChartCommand(string &commands[]) {
 
 
 /**
- * Whether the currently selected order was closed by a stoploss (client or server side).
+ * Whether the currently selected order was closed by a stoploss.
  *
  * @return bool
  */
@@ -1394,11 +1353,9 @@ bool IsOrderClosedBySL() {
          closedBySL = true;
       }
       else {
-         // check for a client-side SL in the order arrays
+         // manually check the close price against the SL
          int i = SearchIntArray(orders.ticket, OrderTicket());
-
-         if (i == -1)             return(!catch("IsOrderClosedBySL(1)  closed position #"+ OrderTicket() +" not found in order arrays", ERR_ILLEGAL_STATE));
-         if (!orders.stopLoss[i]) return(!catch("IsOrderClosedBySL(2)  cannot resolve status of position #"+ OrderTicket() +" (closed but has neither local nor remote SL attached)", ERR_ILLEGAL_STATE));
+         if (i == -1) return(!catch("IsOrderClosedBySL(1)  closed position #"+ OrderTicket() +" not found in order arrays", ERR_ILLEGAL_STATE));
 
          if      (orders.closedBySL[i])   closedBySL = true;
          else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i]);
@@ -1636,51 +1593,6 @@ bool IsSessionBreak() {
 
 
 /**
- * Execute client-side triggered stoplosses. Called only from onTick().
- *
- * @param  int tickets[] - tickets with triggered stoplosses
- *
- * @return bool - success status
- */
-bool ExecuteStopLosses(int tickets[]) {
-   if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("ExecuteStopLosses(1)  cannot execute triggered stoplosses of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
-   int sizeOfOrders = ArraySize(tickets);
-   if (!sizeOfOrders) return(true);
-
-   int button, ticket, oe[];
-
-   for (int n=0; n < sizeOfOrders; n++) {
-      int i = SearchIntArray(orders.ticket, tickets[n]);
-      if (i < 0)                          return(!catch("ExecuteStopLosses(2)  invalid ticket #"+ tickets[n] +" (not found in order arrays)", ERR_INVALID_PARAMETER));
-      if (!orders.clientsideLimit[i])     return(!catch("ExecuteStopLosses(3)  #"+ orders.ticket[i] +" is not marked as client-side managed", ERR_ILLEGAL_STATE));
-      if (orders.type[i] == OP_UNDEFINED) return(!catch("ExecuteStopLosses(4)  #"+ orders.ticket[i] +" is still marked as pending", ERR_ILLEGAL_STATE));
-      if (orders.closeTime[i] != 0)       return(!catch("ExecuteStopLosses(5)  #"+ orders.ticket[i] +" is already marked as closed", ERR_ILLEGAL_STATE));
-
-      if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ExecuteStopLosses()", "Do you really want to execute a client-side triggered stoploss now?"))
-         return(!SetLastError(ERR_CANCELLED_BY_USER));
-
-      double lots        = NULL;
-      double slippage    = 0.1;
-      color  markerColor = CLR_NONE;
-      int    oeFlags     = NULL;
-      if (!OrderCloseEx(orders.ticket[i], lots, slippage, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-
-      orders.closedBySL[i] = true;
-   }
-   ArrayResize(oe, 0);
-
-   // update status again
-   bool bNull;
-   int  iNull[];
-   if (UpdateStatus(bNull, iNull))
-      SaveSequence();
-   return(!(last_error|catch("ExecuteStopLosses(6)")));
-}
-
-
-/**
  * Trail existing, open missing and delete obsolete pending orders.
  *
  * @return bool - success status
@@ -1887,8 +1799,7 @@ int Grid.AddPendingOrder(int level) {
       if (ticket > 0) break;
 
       int error = oe.Error(oe);
-      if (error != ERR_INVALID_STOP)
-         return(NULL);
+      if (error != ERR_INVALID_STOP) return(NULL);
       counter++;
       if (counter > 9)  return(!catch("Grid.AddPendingOrder(2)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
                                                    // market violated: Switch order type and ignore price, thus preventing
@@ -1903,31 +1814,30 @@ int Grid.AddPendingOrder(int level) {
    }
 
    // prepare order dataset
-   //int    ticket          = ...                  // use as is
-   //int    level           = ...                  // ...
-   //double gridbase        = ...                  // ...
+   //int    ticket       = ...                     // use as is
+   //int    level        = ...                     // ...
+   //double gridbase     = ...                     // ...
 
-   //int    pendingType     = ...                  // ...
-   datetime pendingTime     = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(6)");
-   double   pendingPrice    = oe.OpenPrice(oe);
+   //int    pendingType  = ...                     // ...
+   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(6)");
+   double   pendingPrice = oe.OpenPrice(oe);
 
-   int      openType        = OP_UNDEFINED;
-   int      openEvent       = NULL;
-   datetime openTime        = NULL;
-   double   openPrice       = NULL;
-   int      closeEvent      = NULL;
-   datetime closeTime       = NULL;
-   double   closePrice      = NULL;
-   double   stopLoss        = oe.StopLoss(oe);
-   bool     clientsideLimit = (ticket <= 0);
-   bool     closedBySL      = false;
+   int      openType     = OP_UNDEFINED;
+   int      openEvent    = NULL;
+   datetime openTime     = NULL;
+   double   openPrice    = NULL;
+   int      closeEvent   = NULL;
+   datetime closeTime    = NULL;
+   double   closePrice   = NULL;
+   double   stopLoss     = oe.StopLoss(oe);
+   bool     closedBySL   = false;
 
-   double   swap            = NULL;
-   double   commission      = NULL;
-   double   profit          = NULL;
+   double   swap         = NULL;
+   double   commission   = NULL;
+   double   profit       = NULL;
 
    // store dataset
-   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideLimit, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
       return(NULL);
 
    if (last_error || catch("Grid.AddPendingOrder(7)"))
@@ -1954,16 +1864,14 @@ bool Grid.AddPosition(int level) {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    // Position öffnen
-   bool clientsideSL = false;
    int oe[];
-   int ticket = SubmitMarketOrder(orderType, level, clientsideSL, oe);     // zuerst server-seitigen StopLoss setzen (clientsideSL=FALSE)
+   int ticket = SubmitMarketOrder(orderType, level, oe);
 
    if (ticket <= 0) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       if (ticket == -1) {
          // market violated
          ticket = -2;                                                      // assign ticket #-2 for decreased grid level, UpdateStatus() will "close" it with PL=0.00
-         clientsideSL = true;
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
          if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
       }
@@ -1992,14 +1900,13 @@ bool Grid.AddPosition(int level) {
    datetime closeTime    = NULL;
    double   closePrice   = NULL;
    double   stopLoss     = oe.StopLoss(oe);
-   //bool   clientsideSL = ...                     // unverändert
    bool     closedBySL   = false;
 
    double   swap         = oe.Swap      (oe);      // falls Swap bereits bei OrderOpen gesetzt sein sollte
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
-   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientsideSL, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
       return(false);
 
    ArrayResize(oe, 0);
@@ -2150,7 +2057,6 @@ int Grid.DeleteLimit(int i) {
  * @param  datetime closeTime
  * @param  double   closePrice
  * @param  double   stopLoss
- * @param  bool     clientLimit
  * @param  bool     closedBySL
  *
  * @param  double   swap
@@ -2159,10 +2065,9 @@ int Grid.DeleteLimit(int i) {
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientLimit, bool closedBySL, double swap, double commission, double profit) {
-   clientLimit = clientLimit!=0;
-   closedBySL  = closedBySL!=0;
-   return(Grid.SetData(-1, ticket, level, gridBase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit));
+bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
+   closedBySL = closedBySL!=0;
+   return(Grid.SetData(-1, ticket, level, gridBase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit));
 }
 
 
@@ -2187,7 +2092,6 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
  * @param  datetime closeTime
  * @param  double   closePrice
  * @param  double   stopLoss
- * @param  bool     clientLimit
  * @param  bool     closedBySL
  *
  * @param  double   swap
@@ -2196,40 +2100,36 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientLimit, bool closedBySL, double swap, double commission, double profit) {
-   clientLimit = clientLimit!=0;
-   closedBySL  = closedBySL!=0;
-
-   if (offset < -1)
-      return(_false(catch("Grid.SetData(1)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
+bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
+   closedBySL = closedBySL!=0;
+   if (offset < -1) return(_false(catch("Grid.SetData(1)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
 
    int i=offset, size=ArraySize(orders.ticket);
 
    if      (offset ==    -1) i = ResizeOrderArrays(  size+1)-1;
    else if (offset > size-1) i = ResizeOrderArrays(offset+1)-1;
 
-   orders.ticket         [i] = ticket;
-   orders.level          [i] = level;
-   orders.gridbase       [i] = NormalizeDouble(gridBase, Digits);
+   orders.ticket      [i] = ticket;
+   orders.level       [i] = level;
+   orders.gridbase    [i] = NormalizeDouble(gridBase, Digits);
 
-   orders.pendingType    [i] = pendingType;
-   orders.pendingTime    [i] = pendingTime;
-   orders.pendingPrice   [i] = NormalizeDouble(pendingPrice, Digits);
+   orders.pendingType [i] = pendingType;
+   orders.pendingTime [i] = pendingTime;
+   orders.pendingPrice[i] = NormalizeDouble(pendingPrice, Digits);
 
-   orders.type           [i] = type;
-   orders.openEvent      [i] = openEvent;
-   orders.openTime       [i] = openTime;
-   orders.openPrice      [i] = NormalizeDouble(openPrice, Digits);
-   orders.closeEvent     [i] = closeEvent;
-   orders.closeTime      [i] = closeTime;
-   orders.closePrice     [i] = NormalizeDouble(closePrice, Digits);
-   orders.stopLoss       [i] = NormalizeDouble(stopLoss, Digits);
-   orders.clientsideLimit[i] = clientLimit;
-   orders.closedBySL     [i] = closedBySL;
+   orders.type        [i] = type;
+   orders.openEvent   [i] = openEvent;
+   orders.openTime    [i] = openTime;
+   orders.openPrice   [i] = NormalizeDouble(openPrice, Digits);
+   orders.closeEvent  [i] = closeEvent;
+   orders.closeTime   [i] = closeTime;
+   orders.closePrice  [i] = NormalizeDouble(closePrice, Digits);
+   orders.stopLoss    [i] = NormalizeDouble(stopLoss, Digits);
+   orders.closedBySL  [i] = closedBySL;
 
-   orders.swap           [i] = NormalizeDouble(swap,       2);
-   orders.commission     [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.LotSize(); }
-   orders.profit         [i] = NormalizeDouble(profit,     2);
+   orders.swap        [i] = NormalizeDouble(swap,       2);
+   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.LotSize(); }
+   orders.profit      [i] = NormalizeDouble(profit,     2);
 
    return(!catch("Grid.SetData(2)"));
 }
@@ -2245,28 +2145,27 @@ bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendin
 bool Grid.DropData(int i) {
    if (i < 0 || i >= ArraySize(orders.ticket)) return(!catch("Grid.DropData(1)  illegal parameter i = "+ i, ERR_INVALID_PARAMETER));
 
-   ArraySpliceInts   (orders.ticket,          i, 1);
-   ArraySpliceInts   (orders.level,           i, 1);
-   ArraySpliceDoubles(orders.gridbase,        i, 1);
+   ArraySpliceInts   (orders.ticket,       i, 1);
+   ArraySpliceInts   (orders.level,        i, 1);
+   ArraySpliceDoubles(orders.gridbase,     i, 1);
 
-   ArraySpliceInts   (orders.pendingType,     i, 1);
-   ArraySpliceInts   (orders.pendingTime,     i, 1);
-   ArraySpliceDoubles(orders.pendingPrice,    i, 1);
+   ArraySpliceInts   (orders.pendingType,  i, 1);
+   ArraySpliceInts   (orders.pendingTime,  i, 1);
+   ArraySpliceDoubles(orders.pendingPrice, i, 1);
 
-   ArraySpliceInts   (orders.type,            i, 1);
-   ArraySpliceInts   (orders.openEvent,       i, 1);
-   ArraySpliceInts   (orders.openTime,        i, 1);
-   ArraySpliceDoubles(orders.openPrice,       i, 1);
-   ArraySpliceInts   (orders.closeEvent,      i, 1);
-   ArraySpliceInts   (orders.closeTime,       i, 1);
-   ArraySpliceDoubles(orders.closePrice,      i, 1);
-   ArraySpliceDoubles(orders.stopLoss,        i, 1);
-   ArraySpliceBools  (orders.clientsideLimit, i, 1);
-   ArraySpliceBools  (orders.closedBySL,      i, 1);
+   ArraySpliceInts   (orders.type,         i, 1);
+   ArraySpliceInts   (orders.openEvent,    i, 1);
+   ArraySpliceInts   (orders.openTime,     i, 1);
+   ArraySpliceDoubles(orders.openPrice,    i, 1);
+   ArraySpliceInts   (orders.closeEvent,   i, 1);
+   ArraySpliceInts   (orders.closeTime,    i, 1);
+   ArraySpliceDoubles(orders.closePrice,   i, 1);
+   ArraySpliceDoubles(orders.stopLoss,     i, 1);
+   ArraySpliceBools  (orders.closedBySL,   i, 1);
 
-   ArraySpliceDoubles(orders.swap,            i, 1);
-   ArraySpliceDoubles(orders.commission,      i, 1);
-   ArraySpliceDoubles(orders.profit,          i, 1);
+   ArraySpliceDoubles(orders.swap,         i, 1);
+   ArraySpliceDoubles(orders.commission,   i, 1);
+   ArraySpliceDoubles(orders.profit,       i, 1);
 
    return(!catch("Grid.DropData(2)"));
 }
@@ -2297,10 +2196,9 @@ int Grid.FindOpenPosition(int level) {
 /**
  * Öffnet eine Position zum aktuellen Preis.
  *
- * @param  _In_  int  type         - Ordertyp: OP_BUY | OP_SELL
- * @param  _In_  int  level        - Gridlevel der Order
- * @param  _In_  bool clientsideSL - ob der StopLoss client-seitig verwaltet wird
- * @param  _Out_ int  oe[]         - execution details (struct ORDER_EXECUTION)
+ * @param  _In_  int  type  - Ordertyp: OP_BUY | OP_SELL
+ * @param  _In_  int  level - Gridlevel der Order
+ * @param  _Out_ int  oe[]  - execution details (struct ORDER_EXECUTION)
  *
  * @return int - Orderticket (positiver Wert) oder ein anderer Wert, falls ein Fehler auftrat
  *
@@ -2309,8 +2207,7 @@ int Grid.FindOpenPosition(int level) {
  * -1: der StopLoss verletzt den aktuellen Spread
  * -2: der StopLoss verletzt die StopDistance des Brokers
  */
-int SubmitMarketOrder(int type, int level, bool clientsideSL, int oe[]) {
-   clientsideSL = clientsideSL!=0;
+int SubmitMarketOrder(int type, int level, int oe[]) {
    if (IsLastError())                                                           return(0);
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(1)  cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
    if (type!=OP_BUY  && type!=OP_SELL)                                          return(_NULL(catch("SubmitMarketOrder(2)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
@@ -2319,7 +2216,7 @@ int SubmitMarketOrder(int type, int level, bool clientsideSL, int oe[]) {
 
    double   price       = NULL;
    double   slippage    = 0.1;
-   double   stopLoss    = ifDouble(clientsideSL, NULL, gridbase + (level-Sign(level))*GridSize*Pips);
+   double   stopLoss    = gridbase + (level-Sign(level))*GridSize*Pips;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
@@ -2327,8 +2224,8 @@ int SubmitMarketOrder(int type, int level, bool clientsideSL, int oe[]) {
    color    markerColor = ifInt(level > 0, CLR_LONG, CLR_SHORT); if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = NULL;
 
-   if (!clientsideSL) /*&&*/ if (Abs(level) >= Abs(sequence.level))
-      oeFlags |= F_ERR_INVALID_STOP;            // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
+   if (Abs(level) >= Abs(sequence.level))
+      oeFlags |= F_ERR_INVALID_STOP;            // ab dem letzten Level ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) return(ticket);
@@ -3557,26 +3454,25 @@ string SaveSequence.GridBaseToStr() {
  * @return string
  */
 string SaveSequence.OrderToStr(int index) {
-   int      ticket       = orders.ticket         [index];
-   int      level        = orders.level          [index];
-   double   gridbase     = orders.gridbase       [index];
-   int      pendingType  = orders.pendingType    [index];
-   datetime pendingTime  = orders.pendingTime    [index];
-   double   pendingPrice = orders.pendingPrice   [index];
-   int      orderType    = orders.type           [index];
-   int      openEvent    = orders.openEvent      [index];
-   datetime openTime     = orders.openTime       [index];
-   double   openPrice    = orders.openPrice      [index];
-   int      closeEvent   = orders.closeEvent     [index];
-   datetime closeTime    = orders.closeTime      [index];
-   double   closePrice   = orders.closePrice     [index];
-   double   stopLoss     = orders.stopLoss       [index];
-   bool     clientLimit  = orders.clientsideLimit[index];
-   bool     closedBySL   = orders.closedBySL     [index];
-   double   swap         = orders.swap           [index];
-   double   commission   = orders.commission     [index];
-   double   profit       = orders.profit         [index];
-   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", clientLimit, ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+   int      ticket       = orders.ticket      [index];
+   int      level        = orders.level       [index];
+   double   gridbase     = orders.gridbase    [index];
+   int      pendingType  = orders.pendingType [index];
+   datetime pendingTime  = orders.pendingTime [index];
+   double   pendingPrice = orders.pendingPrice[index];
+   int      orderType    = orders.type        [index];
+   int      openEvent    = orders.openEvent   [index];
+   datetime openTime     = orders.openTime    [index];
+   double   openPrice    = orders.openPrice   [index];
+   int      closeEvent   = orders.closeEvent  [index];
+   datetime closeTime    = orders.closeTime   [index];
+   double   closePrice   = orders.closePrice  [index];
+   double   stopLoss     = orders.stopLoss    [index];
+   bool     closedBySL   = orders.closedBySL  [index];
+   double   swap         = orders.swap        [index];
+   double   commission   = orders.commission  [index];
+   double   profit       = orders.profit      [index];
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -3995,8 +3891,8 @@ bool ReadStatus.ParseOrder(string value) {
    if (IsLastError()) return(false);
    /*
    rt.order.0=62544847,1,1.32067,4,1330932525,1.32067,1,100,1330936196,1.32067,0,101,1330938698,1.31897,1.31897,0,1,0,0,-17
-   rt.order.{i}={ticket},{level},{gridbase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientLimit},{closedBySL},{swap},{commission},{profit}
-   --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   rt.order.{i}={ticket},{level},{gridbase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},[{clientLimit},]{closedBySL},{swap},{commission},{profit}
+   ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
    int      ticket       = values[ 0];
    int      level        = values[ 1];
    double   gridbase     = values[ 2];
@@ -4011,17 +3907,19 @@ bool ReadStatus.ParseOrder(string value) {
    datetime closeTime    = values[11];
    double   closePrice   = values[12];
    double   stopLoss     = values[13];
-   bool     clientLimit  = values[14];
+   bool     clientLimit  = values[14];       // possibly removed
    bool     closedBySL   = values[15];
    double   swap         = values[16];
    double   commission   = values[17];
    double   profit       = values[18];
    */
    string values[];
-   if (Explode(value, ",", values, NULL) != 19)                          return(!catch("ReadStatus.ParseOrder(1)  illegal number of order details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
+   int sizeOfValues = Explode(value, ",", values, NULL);
+   if (sizeOfValues!=18 && sizeOfValues!=19)                             return(!catch("ReadStatus.ParseOrder(1)  illegal number of order details ("+ sizeOfValues +") in order record", ERR_INVALID_FILE_FORMAT));
 
    // ticket
-   string sTicket = StrTrim(values[0]);
+   int field = 0;
+   string sTicket = StrTrim(values[field]);
    if (!StrIsInteger(sTicket))                                           return(!catch("ReadStatus.ParseOrder(2)  illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
    int ticket = StrToInteger(sTicket);
    if (ticket > 0) {
@@ -4030,32 +3928,37 @@ bool ReadStatus.ParseOrder(string value) {
    else if (ticket!=-1 && ticket!=-2)                                    return(!catch("ReadStatus.ParseOrder(4)  illegal ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // level
-   string sLevel = StrTrim(values[1]);
+   field++;
+   string sLevel = StrTrim(values[field]);
    if (!StrIsInteger(sLevel))                                            return(!catch("ReadStatus.ParseOrder(5)  illegal grid level "+ DoubleQuoteStr(sLevel) +" in order record", ERR_INVALID_FILE_FORMAT));
    int level = StrToInteger(sLevel);
    if (!level)                                                           return(!catch("ReadStatus.ParseOrder(6)  illegal grid level "+ level +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // gridbase
-   string sGridbase = StrTrim(values[2]);
+   field++;
+   string sGridbase = StrTrim(values[field]);
    if (!StrIsNumeric(sGridbase))                                         return(!catch("ReadStatus.ParseOrder(7)  illegal order gridbase "+ DoubleQuoteStr(sGridbase) +" in order record", ERR_INVALID_FILE_FORMAT));
    double gridbase = StrToDouble(sGridbase);
    if (LE(gridbase, 0))                                                  return(!catch("ReadStatus.ParseOrder(8)  illegal order gridbase "+ NumberToStr(gridbase, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // pendingType
-   string sPendingType = StrTrim(values[3]);
+   field++;
+   string sPendingType = StrTrim(values[field]);
    if (!StrIsInteger(sPendingType))                                      return(!catch("ReadStatus.ParseOrder(9)  illegal pending order type "+ DoubleQuoteStr(sPendingType) +" in order record", ERR_INVALID_FILE_FORMAT));
    int pendingType = StrToInteger(sPendingType);
    if (pendingType!=OP_UNDEFINED && !IsPendingOrderType(pendingType))    return(!catch("ReadStatus.ParseOrder(10)  illegal pending order type "+ DoubleQuoteStr(sPendingType) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // pendingTime
-   string sPendingTime = StrTrim(values[4]);
+   field++;
+   string sPendingTime = StrTrim(values[field]);
    if (!StrIsDigit(sPendingTime))                                        return(!catch("ReadStatus.ParseOrder(11)  illegal pending order time "+ DoubleQuoteStr(sPendingTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime pendingTime = StrToInteger(sPendingTime);
    if (pendingType==OP_UNDEFINED && pendingTime!=0)                      return(!catch("ReadStatus.ParseOrder(12)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/'"+ TimeToStr(pendingTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
    if (pendingType!=OP_UNDEFINED && !pendingTime)                        return(!catch("ReadStatus.ParseOrder(13)  pending order type/time mis-match "+ OperationTypeToStr(pendingType) +"/"+ pendingTime +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // pendingPrice
-   string sPendingPrice = StrTrim(values[5]);
+   field++;
+   string sPendingPrice = StrTrim(values[field]);
    if (!StrIsNumeric(sPendingPrice))                                     return(!catch("ReadStatus.ParseOrder(14)  illegal pending order price "+ DoubleQuoteStr(sPendingPrice) +" in order record", ERR_INVALID_FILE_FORMAT));
    double pendingPrice = StrToDouble(sPendingPrice);
    if (LT(pendingPrice, 0))                                              return(!catch("ReadStatus.ParseOrder(15)  illegal pending order price "+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
@@ -4066,7 +3969,8 @@ bool ReadStatus.ParseOrder(string value) {
    }
 
    // type
-   string sType = StrTrim(values[6]);
+   field++;
+   string sType = StrTrim(values[field]);
    if (!StrIsInteger(sType))                                             return(!catch("ReadStatus.ParseOrder(19)  illegal order type "+ DoubleQuoteStr(sType) +" in order record", ERR_INVALID_FILE_FORMAT));
    int type = StrToInteger(sType);
    if (type!=OP_UNDEFINED && !IsOrderType(type))                         return(!catch("ReadStatus.ParseOrder(20)  illegal order type "+ DoubleQuoteStr(sType) +" in order record", ERR_INVALID_FILE_FORMAT));
@@ -4078,20 +3982,23 @@ bool ReadStatus.ParseOrder(string value) {
    }
 
    // openEvent
-   string sOpenEvent = StrTrim(values[7]);
+   field++;
+   string sOpenEvent = StrTrim(values[field]);
    if (!StrIsDigit(sOpenEvent))                                          return(!catch("ReadStatus.ParseOrder(23)  illegal order open event "+ DoubleQuoteStr(sOpenEvent) +" in order record", ERR_INVALID_FILE_FORMAT));
    int openEvent = StrToInteger(sOpenEvent);
    if (type!=OP_UNDEFINED && !openEvent)                                 return(!catch("ReadStatus.ParseOrder(24)  illegal order open event "+ openEvent +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // openTime
-   string sOpenTime = StrTrim(values[8]);
+   field++;
+   string sOpenTime = StrTrim(values[field]);
    if (!StrIsDigit(sOpenTime))                                           return(!catch("ReadStatus.ParseOrder(25)  illegal order open time "+ DoubleQuoteStr(sOpenTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime openTime = StrToInteger(sOpenTime);
    if (type==OP_UNDEFINED && openTime!=0)                                return(!catch("ReadStatus.ParseOrder(26)  order type/time mis-match "+ OperationTypeToStr(type) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
    if (type!=OP_UNDEFINED && !openTime)                                  return(!catch("ReadStatus.ParseOrder(27)  order type/time mis-match "+ OperationTypeToStr(type) +"/"+ openTime +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // openPrice
-   string sOpenPrice = StrTrim(values[9]);
+   field++;
+   string sOpenPrice = StrTrim(values[field]);
    if (!StrIsNumeric(sOpenPrice))                                        return(!catch("ReadStatus.ParseOrder(28)  illegal order open price "+ DoubleQuoteStr(sOpenPrice) +" in order record", ERR_INVALID_FILE_FORMAT));
    double openPrice = StrToDouble(sOpenPrice);
    if (LT(openPrice, 0))                                                 return(!catch("ReadStatus.ParseOrder(29)  illegal order open price "+ NumberToStr(openPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
@@ -4099,12 +4006,14 @@ bool ReadStatus.ParseOrder(string value) {
    if (type!=OP_UNDEFINED && EQ(openPrice, 0))                           return(!catch("ReadStatus.ParseOrder(31)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // closeEvent
-   string sCloseEvent = StrTrim(values[10]);
+   field++;
+   string sCloseEvent = StrTrim(values[field]);
    if (!StrIsDigit(sCloseEvent))                                         return(!catch("ReadStatus.ParseOrder(32)  illegal order close event "+ DoubleQuoteStr(sCloseEvent) +" in order record", ERR_INVALID_FILE_FORMAT));
    int closeEvent = StrToInteger(sCloseEvent);
 
    // closeTime
-   string sCloseTime = StrTrim(values[11]);
+   field++;
+   string sCloseTime = StrTrim(values[field]);
    if (!StrIsDigit(sCloseTime))                                          return(!catch("ReadStatus.ParseOrder(33)  illegal order close time "+ DoubleQuoteStr(sCloseTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime closeTime = StrToInteger(sCloseTime);
    if (closeTime != 0) {
@@ -4114,52 +4023,56 @@ bool ReadStatus.ParseOrder(string value) {
    if (closeTime!=0 && !closeEvent)                                      return(!catch("ReadStatus.ParseOrder(36)  illegal order close event "+ closeEvent +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // closePrice
-   string sClosePrice = StrTrim(values[12]);
+   field++;
+   string sClosePrice = StrTrim(values[field]);
    if (!StrIsNumeric(sClosePrice))                                       return(!catch("ReadStatus.ParseOrder(37)  illegal order close price "+ DoubleQuoteStr(sClosePrice) +" in order record", ERR_INVALID_FILE_FORMAT));
    double closePrice = StrToDouble(sClosePrice);
    if (LT(closePrice, 0))                                                return(!catch("ReadStatus.ParseOrder(38)  illegal order close price "+ NumberToStr(closePrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // stopLoss
-   string sStopLoss = StrTrim(values[13]);
+   field++;
+   string sStopLoss = StrTrim(values[field]);
    if (!StrIsNumeric(sStopLoss))                                         return(!catch("ReadStatus.ParseOrder(39)  illegal order stoploss "+ DoubleQuoteStr(sStopLoss) +" in order record", ERR_INVALID_FILE_FORMAT));
    double stopLoss = StrToDouble(sStopLoss);
    if (LE(stopLoss, 0))                                                  return(!catch("ReadStatus.ParseOrder(40)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
    if (NE(stopLoss, gridbase+(level-Sign(level))*GridSize*Pips, Digits)) return(!catch("ReadStatus.ParseOrder(41)  gridbase/stoploss mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
 
-   // clientLimit
-   string sClientLimit = StrTrim(values[14]);
-   if (!StrIsDigit(sClientLimit))                                        return(!catch("ReadStatus.ParseOrder(42)  illegal clientLimit value "+ DoubleQuoteStr(sClientLimit) +" in order record", ERR_INVALID_FILE_FORMAT));
-   bool clientLimit = StrToBool(sClientLimit);
+   // skip an existing "clientLimit" field
+   if (sizeOfValues == 19) field++;
 
    // closedBySL
-   string sClosedBySL = StrTrim(values[15]);
-   if (!StrIsDigit(sClosedBySL))                                         return(!catch("ReadStatus.ParseOrder(43)  illegal closedBySL value "+ DoubleQuoteStr(sClosedBySL) +" in order record", ERR_INVALID_FILE_FORMAT));
+   field++;
+   string sClosedBySL = StrTrim(values[field]);
+   if (!StrIsDigit(sClosedBySL))                                         return(!catch("ReadStatus.ParseOrder(42)  illegal closedBySL value "+ DoubleQuoteStr(sClosedBySL) +" in order record", ERR_INVALID_FILE_FORMAT));
    bool closedBySL = StrToBool(sClosedBySL);
 
    // swap
-   string sSwap = StrTrim(values[16]);
-   if (!StrIsNumeric(sSwap))                                             return(!catch("ReadStatus.ParseOrder(44)  illegal order swap "+ DoubleQuoteStr(sSwap) +" in order record", ERR_INVALID_FILE_FORMAT));
+   field++;
+   string sSwap = StrTrim(values[field]);
+   if (!StrIsNumeric(sSwap))                                             return(!catch("ReadStatus.ParseOrder(43)  illegal order swap "+ DoubleQuoteStr(sSwap) +" in order record", ERR_INVALID_FILE_FORMAT));
    double swap = StrToDouble(sSwap);
-   if (type==OP_UNDEFINED && NE(swap, 0))                                return(!catch("ReadStatus.ParseOrder(45)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (type==OP_UNDEFINED && NE(swap, 0))                                return(!catch("ReadStatus.ParseOrder(44)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // commission
-   string sCommission = StrTrim(values[17]);
-   if (!StrIsNumeric(sCommission))                                       return(!catch("ReadStatus.ParseOrder(46)  illegal order commission "+ DoubleQuoteStr(sCommission) +" in order record", ERR_INVALID_FILE_FORMAT));
+   field++;
+   string sCommission = StrTrim(values[field]);
+   if (!StrIsNumeric(sCommission))                                       return(!catch("ReadStatus.ParseOrder(45)  illegal order commission "+ DoubleQuoteStr(sCommission) +" in order record", ERR_INVALID_FILE_FORMAT));
    double commission = StrToDouble(sCommission);
-   if (type==OP_UNDEFINED && NE(commission, 0))                          return(!catch("ReadStatus.ParseOrder(47)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (type==OP_UNDEFINED && NE(commission, 0))                          return(!catch("ReadStatus.ParseOrder(46)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // profit
-   string sProfit = StrTrim(values[18]);
-   if (!StrIsNumeric(sProfit))                                           return(!catch("ReadStatus.ParseOrder(48)  illegal order profit "+ DoubleQuoteStr(sProfit) +" in order record", ERR_INVALID_FILE_FORMAT));
+   field++;
+   string sProfit = StrTrim(values[field]);
+   if (!StrIsNumeric(sProfit))                                           return(!catch("ReadStatus.ParseOrder(47)  illegal order profit "+ DoubleQuoteStr(sProfit) +" in order record", ERR_INVALID_FILE_FORMAT));
    double profit = StrToDouble(sProfit);
-   if (type==OP_UNDEFINED && NE(profit, 0))                              return(!catch("ReadStatus.ParseOrder(49)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (type==OP_UNDEFINED && NE(profit, 0))                              return(!catch("ReadStatus.ParseOrder(48)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // store all data in the order arrays
-   Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientLimit, closedBySL, swap, commission, profit);
+   Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit);
    lastEventId = Max(lastEventId, openEvent, closeEvent);
 
    ArrayResize(values, 0);
-   return(!catch("ReadStatus.ParseOrder(50)"));
+   return(!catch("ReadStatus.ParseOrder(49)"));
 }
 
 
@@ -4182,9 +4095,6 @@ bool SynchronizeStatus() {
 
    // (1.1) alle offenen Tickets in Datenarrays synchronisieren, gestrichene PendingOrders löschen
    for (int i=0; i < sizeOfTickets; i++) {
-      if (orders.ticket[i] < 0)                                            // client-seitige PendingOrders überspringen
-         continue;
-
       if (!IsTestSequence() || !IsTesting()) {                             // keine Synchronization für abgeschlossene Tests
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
@@ -4371,20 +4281,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
       orders.openPrice   [i] = OrderOpenPrice();
    }
 
-   if (EQ(OrderStopLoss(), 0)) {
-      if (!orders.clientsideLimit[i]) {
-         orders.stopLoss       [i] = NormalizeDouble(gridbase + (orders.level[i]-Sign(orders.level[i]))*GridSize*Pips, Digits);
-         orders.clientsideLimit[i] = true;
-         lpPermanentChange         = true;
-      }
-   }
-   else {
-      orders.stopLoss[i] = OrderStopLoss();
-      if (orders.clientsideLimit[i]) {
-         orders.clientsideLimit[i] = false;
-         lpPermanentChange         = true;
-      }
-   }
+   //orders.stopLoss     [i]                                         // unverändert
 
    if (isClosed) {
       orders.closeTime   [i] = OrderCloseTime();
@@ -4948,25 +4845,24 @@ int ResizeOrderArrays(int size, bool reset = false) {
    int oldSize = ArraySize(orders.ticket);
 
    if (size != oldSize) {
-      ArrayResize(orders.ticket,          size);
-      ArrayResize(orders.level,           size);
-      ArrayResize(orders.gridbase,        size);
-      ArrayResize(orders.pendingType,     size);
-      ArrayResize(orders.pendingTime,     size);
-      ArrayResize(orders.pendingPrice,    size);
-      ArrayResize(orders.type,            size);
-      ArrayResize(orders.openEvent,       size);
-      ArrayResize(orders.openTime,        size);
-      ArrayResize(orders.openPrice,       size);
-      ArrayResize(orders.closeEvent,      size);
-      ArrayResize(orders.closeTime,       size);
-      ArrayResize(orders.closePrice,      size);
-      ArrayResize(orders.stopLoss,        size);
-      ArrayResize(orders.clientsideLimit, size);
-      ArrayResize(orders.closedBySL,      size);
-      ArrayResize(orders.swap,            size);
-      ArrayResize(orders.commission,      size);
-      ArrayResize(orders.profit,          size);
+      ArrayResize(orders.ticket,       size);
+      ArrayResize(orders.level,        size);
+      ArrayResize(orders.gridbase,     size);
+      ArrayResize(orders.pendingType,  size);
+      ArrayResize(orders.pendingTime,  size);
+      ArrayResize(orders.pendingPrice, size);
+      ArrayResize(orders.type,         size);
+      ArrayResize(orders.openEvent,    size);
+      ArrayResize(orders.openTime,     size);
+      ArrayResize(orders.openPrice,    size);
+      ArrayResize(orders.closeEvent,   size);
+      ArrayResize(orders.closeTime,    size);
+      ArrayResize(orders.closePrice,   size);
+      ArrayResize(orders.stopLoss,     size);
+      ArrayResize(orders.closedBySL,   size);
+      ArrayResize(orders.swap,         size);
+      ArrayResize(orders.commission,   size);
+      ArrayResize(orders.profit,       size);
    }
 
    if (reset) {                                                      // alle Felder zurücksetzen
@@ -4985,7 +4881,6 @@ int ResizeOrderArrays(int size, bool reset = false) {
          ArrayInitialize(orders.closeTime,              0);
          ArrayInitialize(orders.closePrice,             0);
          ArrayInitialize(orders.stopLoss,               0);
-         ArrayInitialize(orders.clientsideLimit,    false);
          ArrayInitialize(orders.closedBySL,         false);
          ArrayInitialize(orders.swap,                   0);
          ArrayInitialize(orders.commission,             0);
@@ -5099,33 +4994,6 @@ string StatusDescription(int status) {
       case STATUS_STOPPED    : return("stopped"    );
    }
    return(_EMPTY_STR(catch("StatusDescription(1)  invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Ob der angegebene StopPrice erreicht wurde.
- *
- * @param  int    type  - stop or limit type: OP_BUY | OP_SELL | OP_BUYSTOP | OP_SELLSTOP | OP_BUYLIMIT | OP_SELLLIMIT
- * @param  double price - price
- *
- * @return bool
- */
-bool IsStopTriggered(int type, double price) {
-   if (type == OP_BUYSTOP )  return(Ask >= price);       // pending Buy Stop
-   if (type == OP_SELLSTOP)  return(Bid <= price);       // pending Sell Stop
-
-   if (type == OP_BUYLIMIT)  return(Ask <= price);       // pending Buy Limit
-   if (type == OP_SELLLIMIT) return(Bid >= price);       // pending Sell Limit
-
-   if (type == OP_BUY )      return(Bid <= price);       // stoploss Long
-   if (type == OP_SELL)      return(Ask >= price);       // stoploss Short
-
-   return(!catch("IsStopTriggered(1)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
-
-   // prevent compiler warnings
-   datetime dNulls[];
-   ReadTradeSessions(NULL, dNulls);
-   ReadSessionBreaks(NULL, dNulls);
 }
 
 
@@ -5652,4 +5520,10 @@ string InputsToStr() {
                             "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
                             "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
    );
+
+   // prevent compiler warnings
+   int iNulls[];
+   ArrayAddInt(iNulls, NULL);
+   ReadTradeSessions(NULL, iNulls);
+   ReadSessionBreaks(NULL, iNulls);
 }
