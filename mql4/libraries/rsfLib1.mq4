@@ -4890,22 +4890,22 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
       filter |= F_ERS_EXECUTION_STOPPING;
 
    // filter the specified errors and only log them
-   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(log(message, error));
-   if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return(log(message, error));
-   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(log(message, error));
-   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return(log(message, error));
-   if (error==ERR_INVALID_STOP             && filter & F_ERR_INVALID_STOP            ) return(log(message, error));
-   if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return(log(message, error));
-   if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return(log(message, error));
-   if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(log(message, error));
-   if (error==ERR_NO_CONNECTION            && filter & F_ERR_NO_CONNECTION           ) return(log(message, error));
-   if (error==ERR_NO_RESULT                && filter & F_ERR_NO_RESULT               ) return(log(message, error));
-   if (error==ERR_OFF_QUOTES               && filter & F_ERR_OFF_QUOTES              ) return(log(message, error));
-   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(log(message, error));
-   if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error));
-   if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error));
-   if (error==ERR_TRADE_MODIFY_DENIED      && filter & F_ERR_TRADE_MODIFY_DENIED     ) return(log(message, error));
-   if (error==ERR_TRADESERVER_GONE         && filter & F_ERR_TRADESERVER_GONE        ) return(log(message, error));
+   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return( log(message, error));
+   if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return( log(message, error));
+   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return( log(message, error));
+   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return( log(message, error));
+   if (error==ERR_INVALID_STOP             && filter & F_ERR_INVALID_STOP            ) return( log(message, error));
+   if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return( log(message, error));
+   if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return( log(message, error));
+   if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return( log(message, error));
+   if (error==ERR_NO_CONNECTION            && filter & F_ERR_NO_CONNECTION           ) return(warn(message, error));
+   if (error==ERR_NO_RESULT                && filter & F_ERR_NO_RESULT               ) return( log(message, error));
+   if (error==ERR_OFF_QUOTES               && filter & F_ERR_OFF_QUOTES              ) return( log(message, error));
+   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return( log(message, error));
+   if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return( log(message, error));
+   if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return( log(message, error));
+   if (error==ERR_TRADE_MODIFY_DENIED      && filter & F_ERR_TRADE_MODIFY_DENIED     ) return( log(message, error));
+   if (error==ERR_TRADESERVER_GONE         && filter & F_ERR_TRADESERVER_GONE        ) return(warn(message, error));
 
    // trigger a runtime error for everything else
    return(catch(message, error));
@@ -5008,6 +5008,19 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(16)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
 
+
+   static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
+   static bool done = false;
+   if (!done) {
+      if (IsTesting() && IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
+         testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
+         testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
+      }
+      done = true;
+   }
+   bool testCase = (TimeCurrent() >= testCase.from && TimeCurrent() <= testCase.to);
+
+
    // initialize oe[]
    oe.setSymbol        (oe, symbol        );
    oe.setDigits        (oe, digits        );
@@ -5046,12 +5059,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       // submit the trade request
       time = GetTickCount();
-
-      bool isTestCase = (IsTesting() && TimeCurrent()==D'2019.10.01 05:08:20');
-      if (!isTestCase) {
-         ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
-      }
-
+      if (!testCase) ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
       oe.setDuration(oe, GetTickCount()-time1);                                  // total time in milliseconds
 
       if (ticket > 0) {
@@ -5093,7 +5101,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       }
 
       error = GetLastError();
-      if (isTestCase) error = ERR_TRADESERVER_GONE;
+      if (testCase) error = ERR_TRADESERVER_GONE;
 
       oe.setError     (oe, error     );                                          // store needed data for potential error messages
       oe.setOpenPrice (oe, price     );
