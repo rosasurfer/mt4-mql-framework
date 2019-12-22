@@ -2855,13 +2855,13 @@ bool IsMyOrder(int sequenceId = NULL) {
 }
 
 
-string   last.Sequence.ID;
-string   last.GridDirection;
+string   last.Sequence.ID = "";
+string   last.GridDirection = "";
 int      last.GridSize;
 double   last.LotSize;
 int      last.StartLevel;
-string   last.StartConditions;
-string   last.StopConditions;
+string   last.StartConditions = "";
+string   last.StopConditions = "";
 bool     last.AutoResume;
 bool     last.AutoRestart;
 bool     last.ShowProfitInPercent;
@@ -3025,7 +3025,6 @@ bool ValidateInputs(bool interactive) {
    StartLevel = Abs(StartLevel);
 
    string trendIndicators[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "SuperSmoother", "HalfTrend", "SuperTrend"};
-
 
    // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
    // -----------------------------------------------------------------------------------------------------------------------------
