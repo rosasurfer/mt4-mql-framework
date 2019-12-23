@@ -1948,22 +1948,24 @@ int Grid.TrailPendingOrder(int i) {
    pendingTime = oe.OpenTime(oe);
 
    if (IsError(error)) {
-      if (oe.Error(oe) != ERR_INVALID_STOP) return(!SetLastError(oe.Error(oe)));
+      if (oe.Error(oe) != ERR_INVALID_STOP) return(NULL);
       if (error == -1) {                                 // market violated: delete stop order and open a limit order instead
          error = Grid.DeleteOrder(i);
          if (!error) return(Grid.AddPendingOrder(level));
+
          if (error == -1) {                              // the order was already executed
             pendingTime  = prevPendingTime;              // restore the original values
             pendingPrice = prevPendingPrice;
             stopLoss     = prevStoploss;                 // TODO: modify StopLoss of the now open position
             if (__LOG()) log("Grid.TrailPendingOrder(6)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" pending #"+ orders.ticket[i] +" was already executed");
+            return(!catch("Grid.TrailPendingOrder(7)  unimplemented feature", ERR_NOT_IMPLEMENTED));
          }
-         else return(NULL);
+         return(NULL);                                   // covers network errors
       }
-      if (error == -2) {
-         return(!catch("Grid.TrailPendingOrder(7)  unsupported bucketshop account (stop distance violation detected)", oe.Error(oe)));
+      else if (error == -2) {
+         return(!catch("Grid.TrailPendingOrder(8)  unsupported bucketshop account (stop distance violation detected)", oe.Error(oe)));
       }
-      return(!catch("Grid.TrailPendingOrder(8)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
+      else return(!catch("Grid.TrailPendingOrder(9)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
    }
 
    // update changed data (ignore current ticket state which may be different)
@@ -1972,7 +1974,7 @@ int Grid.TrailPendingOrder(int i) {
    orders.pendingPrice[i] = pendingPrice;
    orders.stopLoss    [i] = stopLoss;
 
-   if (!catch("Grid.TrailPendingOrder(9)"))
+   if (!catch("Grid.TrailPendingOrder(10)"))
       return(orders.pendingType[i]);
    return(NULL);
 }
@@ -1995,11 +1997,21 @@ int Grid.DeleteOrder(int i) {
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {
-      int oe[], oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;            // accept the order already being executed
-      if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe)) {
+      int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the order already being executed
+                oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of ERR_NO_CONNECTION
+                oeFlags |= F_ERR_TRADESERVER_GONE;             // custom handling of ERR_TRADESERVER_GONE
+
+      bool success = OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe);
+      if (success) {
+         SetLastNetworkError(oe);
+      }
+      else {
          int error = oe.Error(oe);
-         if (error == ERR_INVALID_TRADE_PARAMETERS)
-            return(-1);
+         switch (error) {
+            case ERR_INVALID_TRADE_PARAMETERS: return(-1);
+            case ERR_NO_CONNECTION:
+            case ERR_TRADESERVER_GONE:         return(SetLastNetworkError(oe));
+         }
          return(SetLastError(error));
       }
    }
@@ -2026,15 +2038,20 @@ int Grid.DeleteLimit(int i) {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteLimit()", "Do you really want to delete the limit of the position at level "+ orders.level[i] +" now?"))
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
-   int oe[], oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;         // accept the limit already being executed
-   if (!OrderModifyEx(orders.ticket[i], orders.openPrice[i], NULL, NULL, NULL, CLR_NONE, oeFlags, oe)) {
-      int error = oe.Error(oe);
-      if (error == ERR_INVALID_TRADE_PARAMETERS)
-         return(-1);
-      return(SetLastError(error));
+   int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the limit already being executed
+             oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of ERR_NO_CONNECTION
+             oeFlags |= F_ERR_TRADESERVER_GONE;             // custom handling of ERR_TRADESERVER_GONE
+
+   if (OrderModifyEx(orders.ticket[i], orders.openPrice[i], NULL, NULL, NULL, CLR_NONE, oeFlags, oe))
+      return(_NULL(SetLastNetworkError(oe)));
+
+   int error = oe.Error(oe);
+   switch (error) {
+      case ERR_INVALID_TRADE_PARAMETERS: return(-1);
+      case ERR_NO_CONNECTION:
+      case ERR_TRADESERVER_GONE:         return(SetLastNetworkError(oe));
    }
-   ArrayResize(oe, 0);
-   return(catch("Grid.DeleteLimit(3)"));
+   return(SetLastError(error));
 }
 
 
@@ -2367,17 +2384,28 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
    if (IsLastError())                         return(last_error);
    if (sequence.status != STATUS_PROGRESSING) return(catch("ModifyStopOrder(1)  cannot modify order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int oeFlags = F_ERR_INVALID_STOP;            // custom handling of ERR_INVALID_STOP
+   int oeFlags  = F_ERR_INVALID_STOP;           // custom handling of ERR_INVALID_STOP
+       oeFlags |= F_ERR_NO_CONNECTION;          // custom handling of ERR_NO_CONNECTION
+       oeFlags |= F_ERR_TRADESERVER_GONE;       // custom handling of ERR_TRADESERVER_GONE
+
    bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_PENDING, oeFlags, oe);
-   if (success) return(NO_ERROR);
+   if (success) {
+      SetLastNetworkError(oe);
+      return(NO_ERROR);
+   }
 
    int error = oe.Error(oe);
-   if (error == ERR_INVALID_STOP) {             // either the entry price violates the market (-1) or it violates the broker's stop distance (-2)
-      bool violatedMarket;
-      if (!oe.StopDistance(oe))           violatedMarket = true;
-      else if (oe.Type(oe) == OP_BUYSTOP) violatedMarket = GE(oe.Ask(oe), price);
-      else                                violatedMarket = LE(oe.Bid(oe), price);
-      return(ifInt(violatedMarket, -1, -2));
+   switch (error) {
+      case ERR_INVALID_STOP:                    // either the entry price violates the market (-1) or it violates the broker's stop distance (-2)
+         bool violatedMarket;
+         if (!oe.StopDistance(oe))           violatedMarket = true;
+         else if (oe.Type(oe) == OP_BUYSTOP) violatedMarket = GE(oe.Ask(oe), price);
+         else                                violatedMarket = LE(oe.Bid(oe), price);
+         return(ifInt(violatedMarket, -1, -2));
+
+      case ERR_NO_CONNECTION:
+      case ERR_TRADESERVER_GONE:
+         return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
 }
