@@ -4866,7 +4866,7 @@ string DoubleToStrEx(double value, int digits) {
 int Order.HandleError(string message, int error, int filter, int oe[], bool refreshPrices = false) {
    refreshPrices = refreshPrices!=0;
 
-   bool singleOE = ArrayDimension(oe)==1;       // whether a single or an array of ORDER_EXECUTIONs was passed
+   bool singleOE = ArrayDimension(oe)==1;       // whether a single struct or an array of ORDER_EXECUTIONs was passed
    if (singleOE) oe.setError(oe, error);
    else          oes.setError(oe, -1, error);
 
