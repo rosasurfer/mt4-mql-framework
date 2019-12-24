@@ -2,7 +2,7 @@
  * SnowRoller - a pyramiding trade manager
  *
  *
- * For background and proof-of-concept see the links to "Snowballs and the anti-grid" by Bernd Kreuß aka 7bit.
+ * For background and proof-of-concept see the links below to "Snowballs and the anti-grid" by Bernd Kreuß (aka 7bit).
  *
  * This EA is a re-implementation of the above concept. It can be used as a trade manager or as a complete trading system.
  * Once started the EA waits until one of the defined start conditions is fulfilled. It then manages the resulting trades in
@@ -22,8 +22,8 @@
  * The EA can automatically interrupt and resume trading during configurable session breaks, e.g. Midnight or weekends.
  * During session breaks all pending orders and open positions are closed. Session break configuration supports holidays.
  *
- * In "/mql4/scripts" are two accompanying scripts "SnowRoller.Start" and "SnowRoller.Stop" to manually control the EA.
- * The EA can be tested and the scripts work in tester, too. The EA can't be optimized in tester (doesn't make much sense).
+ * In "/mql4/scripts" are some accompanying scripts named "SnowRoller.***" to manually control the EA (start, stop, wait).
+ * The EA can be tested and the scripts work in tester, too. The EA can't be optimized in tester.
  *
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
  * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not set to 0 (zero).
@@ -1726,12 +1726,12 @@ bool UpdatePendingOrders() {
 
 
 /**
- * Löscht alle gespeicherten Änderungen der Gridbasis und initialisiert sie mit dem angegebenen Wert.
+ * Drop all stored gridbase changes and re-intialize the gridbase with the specified values.
  *
- * @param  datetime time  - Zeitpunkt
- * @param  double   value - neue Gridbasis
+ * @param  datetime time  - time of gridbase change
+ * @param  double   value - new gridbase value
  *
- * @return double - neue Gridbasis oder 0, falls ein Fehler auftrat
+ * @return double - new gridbase or NULL in case of errors
  */
 double GridBase.Reset(datetime time, double value) {
    if (IsLastError()) return(0);
@@ -1745,23 +1745,23 @@ double GridBase.Reset(datetime time, double value) {
 
 
 /**
- * Speichert eine Änderung der Gridbasis.
+ * Set the gridbase to the specified values. All Previous gridbase changes are stored in a gridbase history.
  *
- * @param  datetime time  - Zeitpunkt der Änderung
- * @param  double   value - neue Gridbasis
+ * @param  datetime time  - time of gridbase change
+ * @param  double   value - new gridbase value
  *
- * @return double - die neue Gridbasis
+ * @return double - new gridbase
  */
 double GridBase.Change(datetime time, double value) {
    value = NormalizeDouble(value, Digits);
 
-   if (sequence.maxLevel == 0) {                            // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
+   if (sequence.maxLevel == 0) {                            // overwrite existing values as long no trade was executed
       ArrayResize(gridbase.event, 0);
       ArrayResize(gridbase.time,  0);
       ArrayResize(gridbase.price, 0);
    }
 
-   int size = ArraySize(gridbase.event);                    // ab dem ersten ausgeführten Trade werden neue Werte angefügt
+   int size = ArraySize(gridbase.event);                    // append new values to history as soon as a trade was executed
    if (size == 0) {
       ArrayPushInt   (gridbase.event, CreateEventId());
       ArrayPushInt   (gridbase.time,  time           );
@@ -1778,7 +1778,7 @@ double GridBase.Change(datetime time, double value) {
          ArrayPushDouble(gridbase.price, value          );
          size++;
       }
-      else {                                                // compact redundant events, store only the last one per minute
+      else {                                                // compact redundant events, store only the last change per minute
          gridbase.event[size-1] = CreateEventId();
          gridbase.time [size-1] = time;
          gridbase.price[size-1] = value;
@@ -1822,8 +1822,8 @@ int Grid.AddPendingOrder(int level) {
       if (error != ERR_INVALID_STOP) return(NULL);
       counter++;
       if (counter > 9)  return(!catch("Grid.AddPendingOrder(2)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
-                                                   // market violated: Switch order type and ignore price, thus preventing
-      if (ticket == -1) {                          // the same pending order type again and again caused by a stalled price feed.
+                                                   // market violated: switch order type and ignore price, thus preventing
+      if (ticket == -1) {                          // the same pending order type again and again caused by a stalled price feed
          if (__LOG()) log("Grid.AddPendingOrder(3)  sequence "+ sequence.name +"."+ NumberToStr(level, "+.") +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", error);
          pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
          continue;
@@ -1833,7 +1833,7 @@ int Grid.AddPendingOrder(int level) {
       return(!catch("Grid.AddPendingOrder(5)  unknown "+ ifString(IsStopOrderType(pendingType), "SubmitStopOrder", "SubmitLimitOrder") +" return value "+ ticket, error));
    }
 
-   // prepare order dataset
+   // prepare dataset
    //int    ticket       = ...                     // use as is
    //int    level        = ...                     // ...
    //double gridbase     = ...                     // ...
@@ -1867,9 +1867,10 @@ int Grid.AddPendingOrder(int level) {
 
 
 /**
- * Legt die angegebene Position in den Markt und fügt den Gridarrays deren Daten hinzu. Aufruf nur in RestorePositions().
+ * Open a market position for the specified gridlevel and add the order data to the order arrays.
+ * Called only in RestorePositions().
  *
- * @param  int level - Gridlevel der Position
+ * @param  int level - gridlevel of the position to open: -n...1 | 1...+n
  *
  * @return bool - success status
  */
@@ -1878,20 +1879,18 @@ bool Grid.AddPosition(int level) {
    if (sequence.status != STATUS_STARTING) return(_false(catch("Grid.AddPosition(1)  cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
    if (!level)                             return(_false(catch("Grid.AddPosition(2)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
 
-   int orderType = ifInt(sequence.direction==D_LONG, OP_BUY, OP_SELL);
+   int oe[], orderType = ifInt(sequence.direction==D_LONG, OP_BUY, OP_SELL);
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(orderType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   // Position öffnen
-   int oe[];
    int ticket = SubmitMarketOrder(orderType, level, oe);
 
    if (ticket <= 0) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       if (ticket == -1) {
          // market violated
-         ticket = -2;                                                      // assign ticket #-2 for decreased grid level, UpdateStatus() will "close" it with PL=0.00
+         ticket = -2;                              // assign ticket #-2 for decreased grid level, UpdateStatus() will "close" it with PL=0.00
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
          if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
       }
@@ -1903,10 +1902,10 @@ bool Grid.AddPosition(int level) {
       }
    }
 
-   // Daten speichern
-   //int    ticket       = ...                     // unverändert
-   //int    level        = ...                     // unverändert
-   //double gridbase     = ...                     // unverändert
+   // prepare dataset
+   //int    ticket       = ...                     // use as is
+   //int    level        = ...                     // ...
+   //double gridbase     = ...                     // ...
 
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
@@ -1922,10 +1921,11 @@ bool Grid.AddPosition(int level) {
    double   stopLoss     = oe.StopLoss(oe);
    bool     closedBySL   = false;
 
-   double   swap         = oe.Swap      (oe);      // falls Swap bereits bei OrderOpen gesetzt sein sollte
+   double   swap         = oe.Swap      (oe);      // for the theoretical case swap is already set on OrderOpen
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
+   // store dataset
    if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
       return(false);
    return(!catch("Grid.AddPosition(7)"));
@@ -1934,7 +1934,7 @@ bool Grid.AddPosition(int level) {
 
 /**
  * Trail pending open price and stoploss of the specified pending order. If modification of the order is not possible (due to
- * market constraints) it may be replaced by a new stop or limit order.
+ * market constraints) it is replaced by a new limit order.
  *
  * @param  int i - order index
  *
