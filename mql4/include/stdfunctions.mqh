@@ -319,7 +319,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                 );    //      1
-      case ERR_SERVER_ERROR               : return("trade server error"                                        );    //      2
+      case ERR_TRADESERVER_GONE           : return("trade server gone"                                         );    //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                  );    //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                         );    //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                      );    //      5
@@ -784,20 +784,14 @@ int ResetLastError() {
 
 
 /**
- * Prüft, ob ein Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
- *
- * @param  int event - einzelnes Event-Flag
+ * Check for and call handlers for incoming commands.
  *
  * @return bool - success status
  */
-bool HandleEvent(int event) {
-   if (event != EVENT_CHART_CMD)
-      return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
-
-   string sResults[]; ArrayResize(sResults, 0);
-
-   if (EventListener_ChartCommand(sResults))
-      return(onCommand(sResults));
+bool HandleCommands() {
+   string commands[]; ArrayResize(commands, 0);
+   if (EventListener_ChartCommand(commands))
+      return(onCommand(commands));
    return(true);
 }
 
@@ -6603,7 +6597,7 @@ void __DummyCalls() {
    GetMqlFilesPath();
    GetServerTime();
    GT(NULL, NULL);
-   HandleEvent(NULL);
+   HandleCommands();
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);

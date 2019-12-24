@@ -422,10 +422,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define PRICE_ASK                      8        // Ask
 
 
-// Event-Flags
-#define EVENT_CHART_CMD                1
-
-
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
 
@@ -660,40 +656,40 @@ double  N_INF;                                              // -1.#INF: negative
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
 #define SYMBOL_ORDEROPEN                     1  // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
-//                                           2  // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
+//                                           2  // same as SYMBOL_ORDEROPEN                                       // docs MetaQuotes: right pointing down arrow
 #define SYMBOL_ORDERCLOSE                    3  // left pointing arrow  (default closed order marker)
 #define SYMBOL_DASH                          4  // dash symbol          (default takeprofit and stoploss marker)
-#define SYMBOL_LEFTPRICE                     5  // left sided price label
-#define SYMBOL_RIGHTPRICE                    6  // right sided price label
+#define SYMBOL_LEFTPRICE                     5  // left-side price label
+#define SYMBOL_RIGHTPRICE                    6  // right-side price label
 #define SYMBOL_THUMBSUP                     67  // thumb up symbol
 #define SYMBOL_THUMBSDOWN                   68  // thumb down symbol
 #define SYMBOL_ARROWUP                     241  // arrow up symbol
 #define SYMBOL_ARROWDOWN                   242  // arrow down symbol
 #define SYMBOL_STOPSIGN                    251  // stop sign symbol
-#define SYMBOL_CHECKSIGN                   252  // check sign symbol
+#define SYMBOL_CHECKSIGN                   252  // checkmark symbol
 
 
-// flags marking specific errors to be handled by custom error handlers (if used the errors don't trigger a terminating ERROR alert)
+// flags marking errors handled by custom error handlers (the errors don't trigger a terminating ERROR alert)
 #define F_ERR_CONCURRENT_MODIFICATION   0x0001  //      1
-#define F_ERR_INVALID_PARAMETER         0x0002  //      2
-#define F_ERR_INVALID_STOP              0x0004  //      4
-#define F_ERR_INVALID_TICKET            0x0008  //      8
-#define F_ERR_INVALID_TRADE_PARAMETERS  0x0010  //     16
-#define F_ERR_MARKET_CLOSED             0x0020  //     32
-#define F_ERR_NO_RESULT                 0x0040  //     64
-#define F_ERR_OFF_QUOTES                0x0080  //    128
-#define F_ERR_ORDER_CHANGED             0x0100  //    256
-#define F_ERR_SERIES_NOT_AVAILABLE      0x0200  //    512
-#define F_ERR_SERVER_ERROR              0x0800  //   1024
-#define F_ERR_TRADE_MODIFY_DENIED       0x0400  //   2048
-#define F_ERS_HISTORY_UPDATE            0x1000  //   4096 (temporary status)
-#define F_ERS_EXECUTION_STOPPING        0x2000  //   8192 (temporary status)
-#define F_ERS_TERMINAL_NOT_YET_READY    0x4000  //  16384 (temporary status)
-
-
-// flags controlling order execution
+#define F_ERS_EXECUTION_STOPPING        0x0002  //      2   temporary state
+#define F_ERS_HISTORY_UPDATE            0x0004  //      4   temporary state
+#define F_ERR_INVALID_PARAMETER         0x0008  //      8
+#define F_ERR_INVALID_STOP              0x0010  //     16
+#define F_ERR_INVALID_TICKET            0x0020  //     32
+#define F_ERR_INVALID_TRADE_PARAMETERS  0x0040  //     64
+#define F_ERR_MARKET_CLOSED             0x0080  //    128
+#define F_ERR_NO_CONNECTION             0x0100  //    256
+#define F_ERR_NO_RESULT                 0x0200  //    512
+#define F_ERR_OFF_QUOTES                0x0400  //   1024
+#define F_ERR_ORDER_CHANGED             0x0800  //   2048
+#define F_ERR_SERIES_NOT_AVAILABLE      0x1000  //   4096
+#define F_ERS_TERMINAL_NOT_YET_READY    0x2000  //   8192   temporary state
+#define F_ERR_TRADE_MODIFY_DENIED       0x4000  //  16384
+#define F_ERR_TRADESERVER_GONE          0x8000  //  32768
+                                                //
+// flags controlling order execution            //
 #define F_OE_DONT_HEDGE             0x00010000  //  65536 (don't hedge multiple positions on close)
-#define F_OE_DONT_CHECK_STATUS      0x00020000  // 131072 (don't check the order status before proceeding)
+#define F_OE_DONT_CHECK_STATUS      0x00020000  // 131072 (don't check order status before proceeding)
 
 
 // String padding types, siehe StringPad()
