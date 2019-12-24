@@ -349,7 +349,7 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   else if (cmd == "stop") {
+   if (cmd == "stop") {
       if (IsTestSequence() && !IsTesting())
          return(true);
 
@@ -364,8 +364,8 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   else if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode()    );
-   else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
+   if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode());
+   if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
 
    // log unknown commands and let the EA continue
    return(_true(warn("onCommand(2)  unknown command \""+ cmd +"\"")));
@@ -416,7 +416,7 @@ bool StartSequence(int signal) {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new \""+ StrToLower(TradeDirectionDescription(sequence.direction)) +"\" sequence now?"))
-      return(!SetLastError(ERR_CANCELLED_BY_USER));
+      return(_false(StopSequence(NULL)));
 
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name + ifString(sequence.level, " at level "+ Abs(sequence.level), ""));
@@ -513,11 +513,6 @@ bool StopSequence(int signal) {
    if (IsLastError())                                                          return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  cannot stop "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
-      return(!SetLastError(ERR_CANCELLED_BY_USER));
-
-   bool entryStatus = sequence.status;
-
    // a waiting sequence has no open orders (before first start or after stop)
    if (sequence.status == STATUS_WAITING) {
       sequence.status = STATUS_STOPPED;
@@ -526,6 +521,9 @@ bool StopSequence(int signal) {
 
    // a progressing sequence has open orders to close
    else if (sequence.status == STATUS_PROGRESSING) {
+      if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
+         return(!SetLastError(ERR_CANCELLED_BY_USER));
+
       sequence.status = STATUS_STOPPING;
       if (__LOG()) log("StopSequence(3)  stopping sequence "+ sequence.name +" at level "+ sequence.level);
 
@@ -716,13 +714,7 @@ bool StopSequence(int signal) {
          break;
 
       case NULL:                                            // explicit stop (manual or at end of test)
-         if (entryStatus == STATUS_WAITING) {
-            start.trend.condition = false;
-            start.price.condition = false;
-            start.time.condition  = false;
-            start.conditions      = false;
-            sessionbreak.waiting  = false;
-         }
+         sessionbreak.waiting = false;
          break;
 
       default: return(!catch("StopSequence(11)  unsupported stop signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -4980,27 +4972,29 @@ int CreateSequenceId() {
 
 
 /**
- * Holt eine Bestätigung für einen Trade-Request beim ersten Tick ein (um Programmfehlern vorzubeugen).
+ * Get a user confirmation for a trade request at the first tick. This function is a safety measure against runtime errors.
  *
- * @param  string location - Ort der Bestätigung
- * @param  string message  - Meldung
+ * @param  string location - location identifier of the confirmation
+ * @param  string message  - confirmation message
  *
- * @return bool - Ergebnis
+ * @return bool - confirmation result
  */
 bool ConfirmFirstTickTrade(string location, string message) {
-   static bool done, confirmed;
-   if (!done) {
-      if (Tick > 1 || IsTesting()) {
-         confirmed = true;
-      }
-      else {
-         PlaySoundEx("Windows Notify.wav");
-         confirmed = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
-         if (Tick > 0) RefreshRates();                   // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
-      }
-      done = true;
+   static bool confirmed;
+   if (confirmed)                         // Behave like a no-op on nested calls, don't return the former result. Trade requests
+      return(true);                       // will differ and the calling logic must correctly interprete the first result.
+
+   bool result;
+   if (Tick > 1 || IsTesting()) {
+      result = true;
    }
-   return(confirmed);
+   else {
+      PlaySoundEx("Windows Notify.wav");
+      result = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      if (Tick > 0) RefreshRates();       // no need for RefreshRates() on Tick=0, which is in init()
+   }
+   confirmed = true;
+   return(result);
 }
 
 
