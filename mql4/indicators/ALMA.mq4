@@ -268,7 +268,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], SubPipDigits, trend[0], Time[0]);
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // detect trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
@@ -284,7 +284,7 @@ int onTick() {
    // M30::ALMA(7xD1)::onTick()   weights(  336)=0.000 sec   buffer(2000)=0.250 sec   loops=   672,000
    // M15::ALMA(7xD1)::onTick()   weights(  672)=0.000 sec   buffer(2000)=0.453 sec   loops= 1,344,000
    // M5 ::ALMA(7xD1)::onTick()   weights( 2016)=0.016 sec   buffer(2000)=1.547 sec   loops= 4,032,000
-   // M1 ::ALMA(7xD1)::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20,160,000 (20 million passes)
+   // M1 ::ALMA(7xD1)::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20,160,000
    //
    // Speed benchmark on Toshiba Portege
    // ----------------------------------

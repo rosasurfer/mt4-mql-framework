@@ -271,7 +271,7 @@ int onTick() {
    mm.isDone          = false;
    positions.analyzed = false;
 
-   HandleEvent(EVENT_CHART_CMD);                                                                   // ChartCommands verarbeiten
+   HandleCommands();                                                                               // ChartCommands verarbeiten
 
    if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
    if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig

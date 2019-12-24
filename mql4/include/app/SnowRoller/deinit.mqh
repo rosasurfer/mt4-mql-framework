@@ -63,8 +63,7 @@ int onDeinitUndefined() {
 
       if (sequence.status == STATUS_PROGRESSING) {
          bool bNull;
-         int  iNull[];
-         if (UpdateStatus(bNull, iNull))
+         if (UpdateStatus(bNull))
             StopSequence(NULL);
          ShowStatus();
       }

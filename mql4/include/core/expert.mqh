@@ -73,12 +73,11 @@ int init() {
       return(last_error);
    }
 
-   // finish initialization
+   // finish initialization of global vars
    if (!init.UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
-
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
@@ -115,24 +114,24 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-   // reset the window title in the Tester (might have been modified by the previous test)
+   // reset the window title in tester (might have been modified by the previous test)
    if (IsTesting()) {                                                // TODO: wait until done
       if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
-      // get account number on start as a later call may block the UI thread if in deinit()
+      // resolve the account number (optimistic: if called in deinit() it will deadlock the UI thread)
       if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
    }
 
-   // before onInit(): log original input parameters
-   string initialInput;
+   // log original input parameters
+   string input1="", input2="", inputDiff="";
    if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
-      //initialInput = InputsToStr();                                // un-comment for debugging only
-      if (StringLen(initialInput) > 0) {
-         initialInput = StringConcatenate(initialInput,
+      input1 = InputsToStr();
+      if (StringLen(input1) > 0) {
+         input1 = StringConcatenate(input1,
             ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         log("init()  input: "+ initialInput);
+         log("init()  input: "+ input1);
       }
    }
 
@@ -174,18 +173,18 @@ int init() {
       afterInit();                                                            // post-processing hook
    if (CheckErrors("init(16)")) return(last_error);
 
-   // after onInit(): log modified input parameters
+   // log modified input parameters
    if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
-      string modifiedInput = InputsToStr();
-      if (StringLen(modifiedInput) > 0) {
-         modifiedInput = StringConcatenate(modifiedInput,
+      input2 = InputsToStr();
+      if (StringLen(input2) > 0) {
+         input2 = StringConcatenate(input2,
             ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0)
-            log("init()  input: "+ modifiedInput);
+         inputDiff = InputParamsDiff(input1, input2);
+         if (StringLen(inputDiff) > 0)
+            log("init()  input: "+ inputDiff);
       }
    }
 
@@ -295,7 +294,7 @@ int start() {
    // check a finished chart initialisation (may fail on terminal start)
    if (!Bars) return(ShowStatus(SetLastError(log("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
-   // in tester wait until the configured starttime/price is met
+   // in tester wait until the configured start time/price is reached
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
          if (Tick.Time < Tester.StartTime) {

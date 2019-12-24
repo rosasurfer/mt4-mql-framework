@@ -245,7 +245,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   HandleEvent(EVENT_CHART_CMD);                                     // process chart commands
+   HandleCommands();                                                 // process chart commands
 
    staleLimit = GetServerTime() - 10*MINUTES;                        // SGD|ZAR may need a few minutes for the first tick
 

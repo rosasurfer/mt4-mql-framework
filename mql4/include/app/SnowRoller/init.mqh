@@ -223,7 +223,7 @@ void CopyInputStatus(bool store) {
 
    static int      _sequence.id;
    static int      _sequence.cycle;
-   static string   _sequence.name;
+   static string   _sequence.name = "";
    static datetime _sequence.created;
    static bool     _sequence.isTest;
    static int      _sequence.direction;
@@ -231,37 +231,37 @@ void CopyInputStatus(bool store) {
 
    static bool     _start.conditions;
    static bool     _start.trend.condition;
-   static string   _start.trend.indicator;
+   static string   _start.trend.indicator = "";
    static int      _start.trend.timeframe;
-   static string   _start.trend.params;
-   static string   _start.trend.description;
+   static string   _start.trend.params = "";
+   static string   _start.trend.description = "";
    static bool     _start.price.condition;
    static int      _start.price.type;
    static double   _start.price.value;
-   static string   _start.price.description;
+   static string   _start.price.description = "";
    static bool     _start.time.condition;
    static datetime _start.time.value;
-   static string   _start.time.description;
+   static string   _start.time.description = "";
 
    static bool     _stop.trend.condition;
-   static string   _stop.trend.indicator;
+   static string   _stop.trend.indicator = "";
    static int      _stop.trend.timeframe;
-   static string   _stop.trend.params;
-   static string   _stop.trend.description;
+   static string   _stop.trend.params = "";
+   static string   _stop.trend.description = "";
    static bool     _stop.price.condition;
    static int      _stop.price.type;
    static double   _stop.price.value;
-   static string   _stop.price.description;
+   static string   _stop.price.description = "";
    static bool     _stop.time.condition;
    static datetime _stop.time.value;
-   static string   _stop.time.description;
+   static string   _stop.time.description = "";
    static bool     _stop.profitAbs.condition;
    static double   _stop.profitAbs.value;
-   static string   _stop.profitAbs.description;
+   static string   _stop.profitAbs.description = "";
    static bool     _stop.profitPct.condition;
    static double   _stop.profitPct.value;
    static double   _stop.profitPct.absValue;
-   static string   _stop.profitPct.description;
+   static string   _stop.profitPct.description = "";
 
    static datetime _sessionbreak.starttime;
    static datetime _sessionbreak.endtime;
