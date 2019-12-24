@@ -5008,19 +5008,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(16)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
 
-
-   static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
-   static bool done = false;
-   if (!done) {
-      if (IsTesting() && IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
-         testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
-         testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
-      }
-      done = true;
-   }
-   bool testCase = (TimeCurrent() >= testCase.from && TimeCurrent() <= testCase.to);
-
-
    // initialize oe[]
    oe.setSymbol        (oe, symbol        );
    oe.setDigits        (oe, digits        );
@@ -5059,7 +5046,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       // submit the trade request
       time = GetTickCount();
-      if (!testCase) ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+      ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
       oe.setDuration(oe, GetTickCount()-time1);                                  // total time in milliseconds
 
       if (ticket > 0) {
@@ -5101,8 +5088,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       }
 
       error = GetLastError();
-      if (testCase) error = ERR_TRADESERVER_GONE;
-
       oe.setError     (oe, error     );                                          // store needed data for potential error messages
       oe.setOpenPrice (oe, price     );
       oe.setStopLoss  (oe, stopLoss  );
