@@ -326,7 +326,7 @@ int onTick() {
  *
  * @param  string commands[] - received commands
  *
- * @return bool - success status
+ * @return bool - success status of the executed command
  */
 bool onCommand(string commands[]) {
    if (!ArraySize(commands))
@@ -334,6 +334,21 @@ bool onCommand(string commands[]) {
 
    string cmd = commands[0];
 
+   // --- switch to STATUS_WAITING ------------------------------
+   if (cmd == "wait") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_STOPPED:
+            if (!start.conditions)                       // whether any start condition is active
+               return(_true(warn("onCommand(2)  cannot execute \"wait\" command for sequence "+ sequence.name +" (no active start conditions found)")));
+            sequence.status = STATUS_WAITING;
+      }
+      return(true);
+   }
+
+   // --- switch to STATUS_PROGRESSING --------------------------
    if (cmd == "start") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -349,6 +364,7 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
+   // --- switch to STATUS_STOPPED ------------------------------
    if (cmd == "stop") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -356,8 +372,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_PROGRESSING:
             bool bNull;
-            if (!UpdateStatus(bNull))
-               return(false);                   // fall-through to STATUS_WAITING
+            if (!UpdateStatus(bNull)) return(false);     // fall-through to STATUS_WAITING
          case STATUS_WAITING:
             return(StopSequence(NULL));
       }
@@ -368,7 +383,7 @@ bool onCommand(string commands[]) {
    if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
 
    // log unknown commands and let the EA continue
-   return(_true(warn("onCommand(2)  unknown command \""+ cmd +"\"")));
+   return(_true(warn("onCommand(3)  unknown command "+ DoubleQuoteStr(cmd))));
 }
 
 
