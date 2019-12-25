@@ -599,6 +599,7 @@ bool     ec_VisualMode            (int &ec[]);;
 int      ec_hChart                (int &ec[]);;
 int      ec_hChartWindow          (int &ec[]);;
 int      ec_lpSuperContext        (int &ec[]);;
+bool     EmptyIniSectionA(string fileName, string section);;
 string   ErrorToStr(int error);;
 bool     EventListener_ChartCommand(string &commands[]);;
 string   EXECUTION_CONTEXT_toStr(int &ec[], int outputDebug);;
