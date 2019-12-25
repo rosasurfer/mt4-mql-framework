@@ -655,13 +655,13 @@ bool PlaySoundOrFail(string soundfile) {
 /**
  * Dropin replacement for Alert().
  *
- * Display an alert even if not supported by the terminal in the current context (e.g. in the tester).
+ * Display an alert even if not supported by the terminal in the current context (e.g. in tester).
  *
  * @param  string message
  */
 void ForceAlert(string message) {
    // ForceAlert() is used when Kansas is going bye-bye. To be as robust as possible it must have little/no dependencies.
-   // Especially it must NOT call any MQL library functions. DLL helper functions are OK.
+   // Especially it must NOT call any MQL library functions. DLL functions are OK.
 
    Alert(message);                                             // make sure the message shows up in the terminal log
 
@@ -6566,7 +6566,6 @@ void __DummyCalls() {
    debug(NULL);
    DebugMarketInfo(NULL);
    DeinitReason();
-   DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();

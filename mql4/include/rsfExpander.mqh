@@ -46,6 +46,9 @@
    bool     RemoveTickTimer(int timerId);
 
    // configuration
+   bool     DeleteIniKeyA(string fileName, string section, string key);
+   bool     DeleteIniSectionA(string fileName, string section);
+   bool     EmptyIniSectionA(string fileName, string section);
    string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
