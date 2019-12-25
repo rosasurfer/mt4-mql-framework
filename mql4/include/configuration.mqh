@@ -666,23 +666,6 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
 
 
 /**
- * Delete a configuration key from an .ini file.
- *
- * @param  string fileName - name of the .ini file
- * @param  string section  - case-insensitive configuration section name
- * @param  string key      - case-insensitive configuration key to delete
- *
- * @return bool - success status
- */
-bool DeleteIniKey(string fileName, string section, string key) {
-   string sNull;
-   if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(!catch("DeleteIniKey(1)->kernel32::WritePrivateProfileStringA(section="+ DoubleQuoteStr(section) +", key="+ DoubleQuoteStr(key) +", value=NULL, fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR));
-   return(true);
-}
-
-
-/**
  * Write a configuration value to an .ini file. If the file does not exist an attempt is made to create it.
  *
  * @param  string fileName - name of the file (with any extension)

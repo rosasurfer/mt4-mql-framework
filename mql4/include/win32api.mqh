@@ -55,7 +55,7 @@
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);
-   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);               // @see  configuration.mqh::DeleteIniKey()
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
    bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]);
 
 #import "ntdll.dll"
