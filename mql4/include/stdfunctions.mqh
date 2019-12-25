@@ -6566,7 +6566,6 @@ void __DummyCalls() {
    debug(NULL);
    DebugMarketInfo(NULL);
    DeinitReason();
-   DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();

@@ -49,7 +49,7 @@ color    GetIniColor (string fileName, string section, string key, color  defaul
 int      GetIniInt   (string fileName, string section, string key, int    defaultValue = 0);;
 double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
 
-bool     DeleteIniKey(string fileName, string section, string key);;
+bool     WriteIniString(string fileName, string section, string key, string value);;
 
 
 // include/scriptrunner.mqh
@@ -535,6 +535,7 @@ string   CoreFunctionDescription(int func);;
 string   CoreFunctionToStr(int func);;
 int      CreateDirectoryRecursive(string path);;
 string   DeinitFlagsToStr(int flags);;
+bool     DeleteIniKeyA(string fileName, string section, string key);;
 string   DoubleQuoteStr(string value);;
 double   ec_Ask                   (int &ec[]);;
 int      ec_Bars                  (int &ec[]);;
