@@ -1106,7 +1106,7 @@ bool QC.StartTradeCmdSender() {
             if (result == QC_CHECK_RECEIVER_OK)                   // Receiver ist da, Channel ist ok
                break;
             if (result == QC_CHECK_CHANNEL_NONE) {                // orphaned Channeleintrag aus .ini-Datei löschen
-               if (!DeleteIniKey(file, section, keys[i]))         // kann auftreten, wenn das TradeTerminal oder der dortige Indikator crashte (z.B. bei Recompile)
+               if (!DeleteIniKeyA(file, section, keys[i]))        // kann auftreten, wenn das TradeTerminal oder der dortige Indikator crashte (z.B. bei Recompile)
                   return(false);
                continue;
             }
@@ -1193,7 +1193,7 @@ bool QC.StopTradeCmdReceiver() {
       string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
-      if (!DeleteIniKey(file, section, key)) return(false);
+      if (!DeleteIniKeyA(file, section, key)) return(false);
 
       // Receiver stoppen
       int hTmp = hQC.TradeCmdReceiver;
