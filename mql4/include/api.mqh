@@ -536,6 +536,7 @@ string   CoreFunctionToStr(int func);;
 int      CreateDirectoryRecursive(string path);;
 string   DeinitFlagsToStr(int flags);;
 bool     DeleteIniKeyA(string fileName, string section, string key);;
+bool     DeleteIniSectionA(string fileName, string section);;
 string   DoubleQuoteStr(string value);;
 double   ec_Ask                   (int &ec[]);;
 int      ec_Bars                  (int &ec[]);;
