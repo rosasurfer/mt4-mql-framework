@@ -286,24 +286,21 @@ int onTick() {
 
    // sequence either waits for start/resume signal...
    if (sequence.status == STATUS_WAITING) {
-      if (!IsSessionBreak()) {                              // pause during sessionbreaks
-         signal = IsStartSignal();
-         if (signal != 0) {
-            if (!ArraySize(sequence.start.event)) StartSequence(signal);
-            else                                  ResumeSequence(signal);
-         }
+      if (IsSessionBreak()) {                               // pause during sessionbreaks
+      }
+      else if (IsStopSignal(signal))           StopSequence(signal);
+      else if (IsStartSignal(signal)) {
+         if (!ArraySize(sequence.start.event)) StartSequence(signal);
+         else                                  ResumeSequence(signal);
       }
    }
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      success = UpdateStatus(gridChanged);                  // FALSE on error or if the tick should be skipped
+      success = UpdateStatus(gridChanged);                  // success=FALSE on error or if the tick should be skipped
       if (success) {
-         signal = IsStopSignal();
-         if (!signal) {
-            if (Tick==1 || gridChanged) success = UpdatePendingOrders() && success;
-         }
-         else                           success = StopSequence(signal) && success;
+         if (IsStopSignal(signal))        success = StopSequence(signal)  && success;
+         else if (Tick==1 || gridChanged) success = UpdatePendingOrders() && success;
          if (success) gridChanged = false;                  // if the tick was not successfully processed status is kept to the next tick
       }
    }
@@ -439,7 +436,6 @@ bool StartSequence(int signal) {
    // update start/stop conditions
    switch (signal) {
       case SIGNAL_SESSIONBREAK:
-         sessionbreak.waiting = false;
          break;
 
       case SIGNAL_TREND:
@@ -454,7 +450,6 @@ bool StartSequence(int signal) {
          break;
 
       case NULL:                                            // manual start
-         sessionbreak.waiting  = false;
          start.trend.condition = (AutoResume && start.trend.description!="");
          start.price.condition = false;
          start.time.condition  = false;
@@ -463,6 +458,7 @@ bool StartSequence(int signal) {
 
       default: return(!catch("StartSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
    }
+   sessionbreak.waiting = false;
    SS.StartStopConditions();
 
    sequence.level    = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
@@ -694,6 +690,8 @@ bool StopSequence(int signal) {
       SS.ProfitPerLevel();
    }
 
+   sessionbreak.waiting = false;
+
    // update start/stop conditions (sequence.status is STATUS_STOPPED)
    switch (signal) {
       case SIGNAL_SESSIONBREAK:
@@ -729,7 +727,6 @@ bool StopSequence(int signal) {
          break;
 
       case NULL:                                            // explicit stop (manual or at end of test)
-         sessionbreak.waiting = false;
          break;
 
       default: return(!catch("StopSequence(11)  unsupported stop signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -745,7 +742,7 @@ bool StopSequence(int signal) {
    // pause/stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (tester.onStopPause)                                        Tester.Pause();    // pause on any stop
+         if      (tester.onStopPause)                                        Tester.Pause();
          else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
          else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
          else if (tester.onTakeProfitPause   && signal==SIGNAL_TP)           Tester.Pause();
@@ -1396,10 +1393,13 @@ bool IsOrderClosedBySL() {
 /**
  * Whether a start or resume condition is satisfied for a waiting sequence. Price and time conditions are "AND" combined.
  *
- * @return int - the signal identifier of the fulfilled start condition or NULL if no start condition is satisfied
+ * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled start condition
+ *
+ * @return bool
  */
-int IsStartSignal() {
-   if (last_error || sequence.status!=STATUS_WAITING) return(NULL);
+bool IsStartSignal(int &signal) {
+   signal = NULL;
+   if (last_error || sequence.status!=STATUS_WAITING) return(false);
    string message;
    bool triggered, resuming = (sequence.maxLevel != 0);
 
@@ -1407,16 +1407,18 @@ int IsStartSignal() {
    if (sessionbreak.waiting) {
       if (!sequence.level) {
          if (__LOG()) log("IsStartSignal(1)  sequence "+ sequence.name +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
-         return(SIGNAL_SESSIONBREAK);
+         signal = SIGNAL_SESSIONBREAK;
+         return(true);
       }
       double price = sequence.stop.price[ArraySize(sequence.stop.price)-1];
       if (sequence.direction == D_LONG) triggered = (Ask <= price);
       else                              triggered = (Bid >= price);
       if (triggered) {
          if (__LOG()) log("IsStartSignal(2)  sequence "+ sequence.name +" resume condition \"@sessionbreak price "+ NumberToStr(price, PriceFormat) +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
-         return(SIGNAL_SESSIONBREAK);
+         signal = SIGNAL_SESSIONBREAK;
+         return(true);
       }
-      return(NULL);                       // temporarily ignore all other conditions
+      return(false);                               // ignore all other conditions for the time of the sessionbreak
    }
 
    if (start.conditions) {
@@ -1429,10 +1431,11 @@ int IsStartSignal() {
                message = "IsStartSignal(3)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
                if (!IsTesting()) warn(message);
                else if (__LOG()) log(message);
-               return(SIGNAL_TREND);
+               signal = SIGNAL_TREND;
+               return(true);
             }
          }
-         return(NULL);
+         return(false);
       }
 
       // -- start.price: fulfilled when current price touches or crosses the limit ------------------------------------------
@@ -1448,7 +1451,7 @@ int IsStartSignal() {
             else                                           triggered = (price <= start.price.value);  // price crossed downwards
          }
          start.price.lastValue = price;
-         if (!triggered) return(NULL);
+         if (!triggered) return(false);
 
          message = "IsStartSignal(4)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.price.description +"\" fulfilled";
          if (!IsTesting()) warn(message);
@@ -1458,7 +1461,7 @@ int IsStartSignal() {
       // -- start.time: fulfilled at the specified time and after -----------------------------------------------------------
       if (start.time.condition) {
          if (TimeCurrentEx("IsStartSignal(5)") < start.time.value)
-            return(NULL);
+            return(false);
 
          message = "IsStartSignal(6)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
@@ -1466,25 +1469,30 @@ int IsStartSignal() {
       }
 
       // -- both price and time conditions are fulfilled ("AND" combined) ---------------------------------------------------
-      return(SIGNAL_PRICETIME);
+      signal = SIGNAL_PRICETIME;
+      return(true);
    }
 
    // no start condition is a valid start signal before first sequence start only
    if (!ArraySize(sequence.start.event)) {
-      return(SIGNAL_PRICETIME);                    // a manual start implies a fulfilled price/time condition
+      signal = SIGNAL_PRICETIME;
+      return(true);                                // a manual start implies a fulfilled price/time condition
    }
 
-   return(NULL);
+   return(false);
 }
 
 
 /**
  * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are "OR" combined.
  *
- * @return int - the signal identifier of the fulfilled stop condition or NULL if no stop condition is satisfied
+ * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled stop condition
+ *
+ * @return bool
  */
-int IsStopSignal() {
-   if (last_error || sequence.status!=STATUS_PROGRESSING) return(NULL);
+bool IsStopSignal(int &signal) {
+   signal = NULL;
+   if (last_error || (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING)) return(false);
    string message;
 
    // -- stop.trend: fulfilled on trend change against the direction of the sequence ----------------------------------------
@@ -1496,7 +1504,8 @@ int IsStopSignal() {
             message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
-            return(SIGNAL_TREND);
+            signal = SIGNAL_TREND;
+            return(true);
          }
       }
    }
@@ -1521,7 +1530,8 @@ int IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.price.condition = false;
-         return(SIGNAL_PRICETIME);
+         signal = SIGNAL_PRICETIME;
+         return(true);
       }
    }
 
@@ -1532,7 +1542,8 @@ int IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.time.condition = false;
-         return(SIGNAL_PRICETIME);
+         signal = SIGNAL_PRICETIME;
+         return(true);
       }
    }
 
@@ -1543,7 +1554,8 @@ int IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitAbs.condition = false;
-         return(SIGNAL_TP);
+         signal = SIGNAL_TP;
+         return(true);
       }
    }
 
@@ -1557,7 +1569,8 @@ int IsStopSignal() {
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.profitPct.condition = false;
-         return(SIGNAL_TP);
+         signal = SIGNAL_TP;
+         return(true);
       }
    }
 
@@ -1565,10 +1578,11 @@ int IsStopSignal() {
    if (IsSessionBreak()) {
       message = "IsStopSignal(7)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
       if (__LOG()) log(message);
-      return(SIGNAL_SESSIONBREAK);
+      signal = SIGNAL_SESSIONBREAK;
+      return(true);
    }
 
-   return(NULL);
+   return(false);
 }
 
 
@@ -2610,7 +2624,7 @@ void SS.LotSize() {
 void SS.StartStopConditions() {
    if (!__CHART()) return;
 
-   // start conditions, order: [sessionbreak+] trend, time, price
+   // start conditions, order: [sessionbreak >>] trend, time, price
    string sValue = "";
    if (start.time.description!="" || start.price.description!="") {
       if (start.time.description != "") {
@@ -2634,7 +2648,7 @@ void SS.StartStopConditions() {
       }
    }
    if (sessionbreak.waiting) {
-      if (sValue != "") sValue = " + "+ sValue;
+      if (sValue != "") sValue = " >> "+ sValue;
       sValue = "sessionbreak"+ sValue;
    }
    if (sValue == "") sStartConditions = "-";
