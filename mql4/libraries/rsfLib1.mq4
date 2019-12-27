@@ -59,6 +59,23 @@ int onDeinit() {
 
 
 /**
+ * Add a value to all elements of an integer array.
+ *
+ * @param  _InOut_ int &array[]
+ * @param  _In_    int  value
+ *
+ * @return bool - success status
+ */
+bool ArrayAddInt(int &array[], int value) {
+   int size = ArraySize(array);
+   for (int i=0; i < size; i++) {
+      array[i] += value;
+   }
+   return(!catch("ArrayAddInt(1)"));
+}
+
+
+/**
  * Öffnet eine einzelne Datei im Texteditor.
  *
  * @param  string filename - Dateiname

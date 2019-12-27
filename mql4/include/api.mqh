@@ -342,6 +342,7 @@ string   BAR.toStr     (/*BAR*/double bar[], bool outputDebug = false);;
 
 // libraries/rsfLib1.ex4
 bool     AquireLock(string mutexName, bool wait);;
+bool     ArrayAddInt(int &array[], int value);;
 int      ArrayDropBool(bool &array[], bool value);;
 int      ArrayDropDouble(double &array[], double value);;
 int      ArrayDropInt(int &array[], int value);;
