@@ -908,23 +908,6 @@ bool ResetSequence() {
 
 
 /**
- * Add a value to all elements of an integer array.
- *
- * @param  _InOut_ int &array[]
- * @param  _In_    int  value
- *
- * @return bool - success status
- */
-bool ArrayAddInt(int &array[], int value) {
-   int size = ArraySize(array);
-   for (int i=0; i < size; i++) {
-      array[i] += value;
-   }
-   return(!catch("ArrayAddInt(1)"));
-}
-
-
-/**
  * Resume a waiting or stopped trade sequence.
  *
  * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (manual resume)
@@ -2122,7 +2105,7 @@ int Grid.DeleteLimit(int i) {
 
 
 /**
- * Fügt den Datenarrays der Sequenz die angegebenen Daten hinzu.
+ * Add a set with order data to the internal order arrays.
  *
  * @param  int      ticket
  * @param  int      level
@@ -2146,7 +2129,7 @@ int Grid.DeleteLimit(int i) {
  * @param  double   commission
  * @param  double   profit
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
    closedBySL = closedBySL!=0;
@@ -2155,9 +2138,9 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
 
 
 /**
- * Schreibt die angegebenen Daten an die angegebene Position der Gridarrays.
+ * Store a set with order data at the specified position of the internal order arrays.
  *
- * @param  int      offset - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
+ * @param  int      offset - order array position; if -1 or out-of-bounds the order array size is increased accordingly
  *
  * @param  int      ticket
  * @param  int      level
@@ -2181,7 +2164,7 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
  * @param  double   commission
  * @param  double   profit
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
    closedBySL = closedBySL!=0;
@@ -2219,9 +2202,9 @@ bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendin
 
 
 /**
- * Remove order data at the speciefied index from the order arrays.
+ * Remove the order dataset at the specified position from the internal order arrays.
  *
- * @param  int i - order index
+ * @param  int i - order array index
  *
  * @return bool - success status
  */
@@ -2255,21 +2238,21 @@ bool Grid.DropData(int i) {
 
 
 /**
- * Sucht eine als offene markierte Position des angegebenen Levels und gibt ihren Index zurück. Je Level kann es maximal nur
- * eine offene Position geben.
+ * Find an open position of the specified level and return it's index in the order arrays. There can only be one open position
+ * per level.
  *
- * @param  int level - Level der zu suchenden Position
+ * @param  int level - gridlevel of the position to find
  *
- * @return int - Index der gefundenen Position oder -1 (EMPTY), wenn keine offene Position des angegebenen Levels gefunden wurde
+ * @return int - order array index of the found position or EMPTY (-1) if no open position was found
  */
 int Grid.FindOpenPosition(int level) {
    if (!level) return(_EMPTY(catch("Grid.FindOpenPosition(1)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
 
    int size = ArraySize(orders.ticket);
-   for (int i=size-1; i >= 0; i--) {                                 // rückwärts iterieren, um Zeit zu sparen
-      if (orders.level[i] != level)       continue;                  // Orderlevel muß übereinstimmen
-      if (orders.type[i] == OP_UNDEFINED) continue;                  // Order darf nicht pending sein (also Position)
-      if (orders.closeTime[i] != 0)       continue;                  // Position darf nicht geschlossen sein
+   for (int i=size-1; i >= 0; i--) {                                 // iterate backwards for performance
+      if (orders.level[i] != level)       continue;                  // the gridlevel must match
+      if (orders.type[i] == OP_UNDEFINED) continue;                  // the order must have been opened
+      if (orders.closeTime[i] != 0)       continue;                  // the order must not have been closed
       return(i);
    }
    return(EMPTY);
@@ -5597,7 +5580,6 @@ string InputsToStr() {
 
    // prevent compiler warnings
    int iNulls[];
-   ArrayAddInt(iNulls, NULL);
    ReadTradeSessions(NULL, iNulls);
    ReadSessionBreaks(NULL, iNulls);
 }
