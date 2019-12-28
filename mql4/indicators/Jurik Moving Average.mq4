@@ -2,8 +2,8 @@
  * Multi-Color Jurik Moving Average (adaptiv)
  *
  *
- * @link  http://www.jurikres.com/catalog1/ms_ama.htm
- * @link  http://www.forex-tsd.com/digital-filters/198-jurik.html
+ * @see  http://www.jurikres.com/catalog1/ms_ama.htm
+ * @see  http://web.archive.org/web/20150929062448/http://www.forex-tsd.com/digital-filters/198-jurik.html
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
