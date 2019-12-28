@@ -986,7 +986,7 @@ bool ResumeSequence(int signal) {
       gridbase = NormalizeDouble(gridBase, Digits);            // re-use the previously used gridbase
    }
 
-   // open the previously active Positionen and receive last(OrderOpenTime) and avg(OrderOpenPrice)
+   // open the previously active positions and receive last(OrderOpenTime) and avg(OrderOpenPrice)
    if (!RestorePositions(startTime, startPrice)) return(false);
 
    // store new sequence start
@@ -1007,7 +1007,7 @@ bool ResumeSequence(int signal) {
    if (!UpdatePendingOrders()) return(false);
 
    // update and store status
-   bool changes;                                               // If RestorePositions() found a virtuall triggered SL (#-2)
+   bool changes;                                               // If RestorePositions() found a virtually triggered SL (#-1)
    if (!UpdateStatus(changes))              return(false);     // UpdateStatus() "closes" the ticket and decreases the gridlevel.
    if (changes) if (!UpdatePendingOrders()) return(false);     // Only in this case pending orders need to be updated again.
    if (!SaveSequence())                     return(false);
@@ -1118,8 +1118,8 @@ bool UpdateStatus(bool &gridChanged) {
       if (orders.closeTime[i] > 0)                                            // process all tickets known as open
          continue;
 
-      // check for ticket #-2 (an on resume virtually triggered SL: a position immediately stopped-out if restored)
-      if (orders.ticket[i] == -2) {
+      // check for ticket #-1 (an on resume virtually triggered SL: a position immediately stopped-out if restored)
+      if (orders.ticket[i] == -1) {
          orders.closeEvent[i] = CreateEventId();
          orders.closeTime [i] = TimeCurrentEx("UpdateStatus(2)");
          orders.closePrice[i] = orders.openPrice[i];
@@ -1127,7 +1127,7 @@ bool UpdateStatus(bool &gridChanged) {
          if (__LOG()) log("UpdateStatus(3)  "+ UpdateStatus.StopLossMsg(i));
          sequence.level  -= Sign(orders.level[i]);
          sequence.stops++; SS.Stops();
-       //sequence.stopsPL = ...                                               // PL(#-2) is 0.00 => stopsPL is unchanged
+       //sequence.stopsPL = ...                                               // PL(#-1) is 0.00 => stopsPL is unchanged
          gridChanged      = true;
          continue;
       }
@@ -1297,7 +1297,7 @@ string UpdateStatus.PositionCloseMsg(int i) {
  */
 string UpdateStatus.StopLossMsg(int i) {
    // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
-   string sMagic     = ifString(orders.ticket[i]==-2, "magic ticket ", "");
+   string sMagic     = ifString(orders.ticket[i]==-1, "magic ticket ", "");
    string sType      = OperationTypeDescription(orders.type[i]);
    string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
    string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
@@ -1859,7 +1859,7 @@ int Grid.AddPendingOrder(int level) {
          pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
          continue;
       }
-      if (ticket == -2) return(!catch("Grid.AddPendingOrder(4)  unsupported bucketshop account (stop distance is set)", error));
+      if (ticket == -2) return(!catch("Grid.AddPendingOrder(4)  unsupported bucketshop account (stop distance is not zero)", error));
 
       return(!catch("Grid.AddPendingOrder(5)  unknown "+ ifString(IsStopOrderType(pendingType), "SubmitStopOrder", "SubmitLimitOrder") +" return value "+ ticket, error));
    }
@@ -1920,13 +1920,12 @@ bool Grid.AddPosition(int level) {
    if (ticket <= 0) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       if (ticket == -1) {
-         // market violated
-         ticket = -2;                              // assign ticket #-2 for decreased grid level, UpdateStatus() will "close" it with PL=0.00
+         // market violated                        // use #-1 as marker for a virtually triggered SL, UpdateStatus() will decrease the gridlevel and "close" it with PL=0.00
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
          if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
       }
       else if (ticket == -2) {
-         return(!catch("Grid.AddPosition(5)  unsupported bucketshop account (stop distance is set)", oe.Error(oe)));
+         return(!catch("Grid.AddPosition(5)  unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
       }
       else {
          return(!catch("Grid.AddPosition(6)  unexpected return value "+ ticket +" of SubmitMarketOrder()", oe.Error(oe)));
@@ -2012,7 +2011,7 @@ int Grid.TrailPendingOrder(int i) {
          return(NULL);                                   // covers network errors
       }
       else if (error == -2) {
-         return(!catch("Grid.TrailPendingOrder(8)  unsupported bucketshop account (stop distance is set)", oe.Error(oe)));
+         return(!catch("Grid.TrailPendingOrder(8)  unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
       }
       else return(!catch("Grid.TrailPendingOrder(9)  unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
    }
@@ -3995,12 +3994,10 @@ bool ReadStatus.ParseOrder(string value) {
 
    // ticket
    string sTicket = StrTrim(values[0]);
-   if (!StrIsInteger(sTicket))                                           return(!catch("ReadStatus.ParseOrder(2)  illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sTicket))                                             return(!catch("ReadStatus.ParseOrder(2)  illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
    int ticket = StrToInteger(sTicket);
-   if (ticket > 0) {
-      if (IntInArray(orders.ticket, ticket))                             return(!catch("ReadStatus.ParseOrder(3)  duplicate ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
-   }
-   else if (ticket!=-1 && ticket!=-2)                                    return(!catch("ReadStatus.ParseOrder(4)  illegal ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!ticket)                                                          return(!catch("ReadStatus.ParseOrder(3)  illegal ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (IntInArray(orders.ticket, ticket))                                return(!catch("ReadStatus.ParseOrder(4)  duplicate ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // level
    string sLevel = StrTrim(values[1]);
