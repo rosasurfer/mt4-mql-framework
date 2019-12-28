@@ -1988,7 +1988,7 @@ int SearchStringArrayI(string haystack[], string needle) {
  * @return bool - TRUE,  wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
- * @see IsReverseIndexedBoolArray()
+ * @see  IsReverseIndexedBoolArray()
  */
 bool ReverseBoolArray(bool array[]) {
    if (ArraySetAsSeries(array, true))
@@ -2005,7 +2005,7 @@ bool ReverseBoolArray(bool array[]) {
  * @return bool - TRUE,  wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
- * @see IsReverseIndexedIntArray()
+ * @see  IsReverseIndexedIntArray()
  */
 bool ReverseIntArray(int array[]) {
    if (ArraySetAsSeries(array, true))
@@ -2022,7 +2022,7 @@ bool ReverseIntArray(int array[]) {
  * @return bool - TRUE,  wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
- * @see IsReverseIndexedDoubleArray()
+ * @see  IsReverseIndexedDoubleArray()
  */
 bool ReverseDoubleArray(double array[]) {
    if (ArraySetAsSeries(array, true))
@@ -2039,7 +2039,7 @@ bool ReverseDoubleArray(double array[]) {
  * @return bool - TRUE,  wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
- * @see IsReverseIndexedStringArray()
+ * @see  IsReverseIndexedStringArray()
  */
 bool ReverseStringArray(string array[]) {
    if (ArraySetAsSeries(array, true))
@@ -2526,7 +2526,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    //  |               ... | 0x00                                                          |
    //  +-------------------+---------------------------------------------------------------+
    //
-   // @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
+   // @see  http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StrRight(lnkFilename, 4)!=".lnk")
@@ -2953,7 +2953,7 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  * @return string - Standardsymbol oder Leerstring, falls kein Standardsymbol gefunden wurde.
  *
  *
- * @see GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
+ * @see  GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
  */
 string GetStandardSymbolStrict(string symbol) {
    if (!StringLen(symbol))
@@ -3201,7 +3201,7 @@ string GetSymbolName(string symbol) {
  *
  * @return string - Ergebnis
  *
- * @see GetSymbolNameStrict()
+ * @see  GetSymbolNameStrict()
  */
 string GetSymbolNameOrAlt(string symbol, string altValue="") {
    if (!StringLen(symbol))
@@ -4327,7 +4327,7 @@ int GetLocalToGmtTimeOffset() {
  *
  * @return string - Zeitzonen-Identifier oder Leerstring, falls ein Fehler auftrat
  *
- * @see http://en.wikipedia.org/wiki/Tz_database
+ * @see  http://en.wikipedia.org/wiki/Tz_database
  */
 string GetServerTimezone() {
    // Die Timezone-ID wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
@@ -6921,7 +6921,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
    if (!__CHART()) return(true);
@@ -6953,7 +6953,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
    if (!__CHART()) return(true);
@@ -7006,7 +7006,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit) {
    if (!__CHART()) return(true);
@@ -7042,7 +7042,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment) {
    if (!__CHART()) return(true);
@@ -7129,7 +7129,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
    if (!__CHART()) return(true);
@@ -7160,7 +7160,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
    if (!__CHART()) return(true);
@@ -7293,7 +7293,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
    if (!__CHART()) return(true);
@@ -7324,7 +7324,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (!__CHART()) return(true);

@@ -5,8 +5,8 @@
                                                             // at least 256KB (some claim even 1-8MB). In build 225 the default stacksize was 16KB which
 #include <mqldefines.mqh>                                   // at some point had to be increased. Using 32KB never caused any issues.
 #include <win32defines.mqh>                                 //
-#include <structs/sizes.mqh>                                //  @see https://docs.mql4.com/basis/variables/local#stack
-                                                            //  @see https://docs.mql4.com/basis/preprosessor/compilation
+#include <structs/sizes.mqh>                                //  @see  https://docs.mql4.com/basis/variables/local#stack
+                                                            //  @see  https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
@@ -93,7 +93,7 @@ string   __Timezones[] = {
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
 double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
 double  P_INF;                                              //  1.#INF: positive infinity
-double  N_INF;                                              // -1.#INF: negative infinity (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
+double  N_INF;                                              // -1.#INF: negative infinity (@see http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
 
 
 // Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
@@ -425,7 +425,7 @@ double  N_INF;                                              // -1.#INF: negative
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
 
- @see https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode
+ @see  https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode
 +------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
 | SYMBOL_CALC_MODE_FOREX       | Forex mode                                                   | Margin: Lots*ContractSize/Leverage                          |
 |                              | calculation of profit and margin for Forex                   | Profit: (Close-Open)*ContractSize*Lots                      |

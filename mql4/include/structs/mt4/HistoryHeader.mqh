@@ -3,7 +3,7 @@
  *
  * HistoryFile Header
  *
- * @see  MT4Expander::header/struct/mt4/HistoryHeader.h
+ * @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  */
 #import "rsfExpander.dll"
    // Getter
