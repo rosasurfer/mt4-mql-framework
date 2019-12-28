@@ -11,9 +11,8 @@
  *    - section: positive values (+1...+n) denote an oscillator above zero, negative ones (-1...-n) an oscillator below zero
  *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
- *
- * @see  [Ehlers](etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures.pdf)
- * @see  [Ehlers](etc/doc/ehlers/Using The Fisher Transform [Stocks & Commodities].pdf)
+ * @see  "/etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures [Ehlers, 2004].pdf"
+ * @see  "/etc/doc/ehlers/Using The Fisher Transform [Stocks & Commodities].pdf"
  *
  *
  * TODO:

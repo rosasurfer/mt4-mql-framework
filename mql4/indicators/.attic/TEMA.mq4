@@ -21,7 +21,7 @@ extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical |
 
 extern color  MA.Color        = OrangeRed;
 extern string Draw.Type       = "Line* | Dot";
-extern int    Draw.LineWidth  = 2;
+extern int    Draw.Width      = 2;
 
 extern int    Max.Values      = 5000;                    // max. amount of values to calculate (-1: all)
 
@@ -48,8 +48,8 @@ double secondEma[];                                      // second EMA(EMA): inv
 int    ma.appliedPrice;
 string ma.name;                                          // name for chart legend, "Data" window and context menues
 
-int    draw.type      = DRAW_LINE;                       // DRAW_LINE | DRAW_ARROW
-int    draw.arrowSize = 1;                               // default symbol size for Draw.Type="dot"
+int    drawType      = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
+int    drawArrowSize = 1;                                // default symbol size for Draw.Type="dot"
 string legendLabel;
 
 
@@ -65,7 +65,7 @@ int onInit() {
 
    // (1) validate inputs
    // MA.Periods
-   if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)  return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
    string values[], sValue = StrToLower(MA.AppliedPrice);
@@ -84,7 +84,7 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                 return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else              return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
@@ -98,16 +98,16 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
+   else                 return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
-   // Draw.LineWidth
-   if (Draw.LineWidth < 0) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5) return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   // Draw.Width
+   if (Draw.Width < 0)  return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5)  return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1) return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
@@ -223,10 +223,10 @@ int onTick() {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
-   int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
+   int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
+   int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
 
-   SetIndexStyle(MODE_TEMA, drawType, EMPTY, drawWidth, MA.Color); SetIndexArrow(MODE_TEMA, 159);
+   SetIndexStyle(MODE_TEMA, draw_type, EMPTY, draw_width, MA.Color); SetIndexArrow(MODE_TEMA, 159);
 }
 
 
@@ -241,7 +241,7 @@ bool StoreInputParameters() {
    Chart.StoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
    Chart.StoreColor (name +".input.MA.Color",        MA.Color       );
    Chart.StoreString(name +".input.Draw.Type",       Draw.Type      );
-   Chart.StoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
+   Chart.StoreInt   (name +".input.Draw.Width",      Draw.Width     );
    Chart.StoreInt   (name +".input.Max.Values",      Max.Values     );
    return(!catch("StoreInputParameters(1)"));
 }
@@ -258,7 +258,7 @@ bool RestoreInputParameters() {
    Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
    Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
    Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
-   Chart.RestoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
+   Chart.RestoreInt   (name +".input.Draw.Width",      Draw.Width     );
    Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
    return(!catch("RestoreInputParameters(1)"));
 }
@@ -273,10 +273,8 @@ string InputsToStr() {
    return(StringConcatenate("MA.Periods=",      MA.Periods,                      ";", NL,
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
                             "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
-
                             "Draw.Type=",       DoubleQuoteStr(Draw.Type),       ";", NL,
-                            "Draw.LineWidth=",  Draw.LineWidth,                  ";", NL,
-
+                            "Draw.Width=",      Draw.Width,                      ";", NL,
                             "Max.Values=",      Max.Values,                      ";")
    );
 }

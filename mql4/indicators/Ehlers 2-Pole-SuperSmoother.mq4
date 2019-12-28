@@ -23,13 +23,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Filter.Periods      = 38;
-extern string Filter.AppliedPrice = "Open | High | Low | Close | Median* | Typical | Weighted";
+extern int    Filter.Periods       = 38;
+extern string Filter.AppliedPrice  = "Open | High | Low | Close | Median* | Typical | Weighted";
 
-extern color  Color.UpTrend       = RoyalBlue;
-extern color  Color.DownTrend     = Gold;
-extern string Draw.Type           = "Line* | Dot";
-extern int    Draw.LineWidth      = 3;
+extern color  Color.UpTrend        = RoyalBlue;
+extern color  Color.DownTrend      = Gold;
+extern string Draw.Type            = "Line* | Dot";
+extern int    Draw.Width           = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
 extern string __________________________;
 
@@ -150,9 +150,9 @@ int onInit() {
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
-   // Draw.LineWidth
-   if (Draw.LineWidth < 0) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5) return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   // Draw.Width
+   if (Draw.Width < 0)     return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5)     return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
    if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
@@ -337,14 +337,14 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
 
-   int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
-   int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
+   int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
+   int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
 
-   SetIndexStyle(MODE_MAIN,      DRAW_NONE, EMPTY, EMPTY,   CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,   CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, drType,    EMPTY, drWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  drType,    EMPTY, drWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_MAIN,      DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, draw_width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 
@@ -360,7 +360,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
    Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
    Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth       );
+   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width           );
    Chart.StoreInt   (name +".input.Max.Values",           Max.Values           );
    Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
    Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
@@ -382,7 +382,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
    Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
    Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.RestoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth       );
+   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width           );
    Chart.RestoreInt   (name +".input.Max.Values",           Max.Values           );
    Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
    Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound         );
@@ -403,7 +403,7 @@ string InputsToStr() {
                             "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
                             "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
-                            "Draw.LineWidth=",       Draw.LineWidth,                       ";", NL,
+                            "Draw.Width=",           Draw.Width,                           ";", NL,
                             "Max.Values=",           Max.Values,                           ";", NL,
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,

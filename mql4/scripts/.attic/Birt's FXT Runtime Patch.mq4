@@ -4,7 +4,7 @@
  * Überarbeitete Version seiner Originalversion vom 11.09.2011. Die Funktionalität ist unverändert.
  *
  * @author  Cristi Dumitrescu <birt@eareview.net>
- * @see     http://eareview.net/tickdata
+ * @link    http://eareview.net/tickdata
  *
  *
  * Limitations:
