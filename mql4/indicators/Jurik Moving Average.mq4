@@ -1,9 +1,9 @@
 /**
- * Multi-Color Jurik Moving Average (adaptiv)
+ * JMA - Adaptive multi-color Jurik Moving Average
  *
  *
  * @see  http://www.jurikres.com/catalog1/ms_ama.htm
- * @see  http://web.archive.org/web/20150929062448/http://www.forex-tsd.com/digital-filters/198-jurik.html
+ *
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -39,9 +39,9 @@ extern int    Max.Values      = 5000;                                // max. amo
 
 #property indicator_width1    0
 #property indicator_width2    0
-#property indicator_width3    2
-#property indicator_width4    2
-#property indicator_width5    2
+#property indicator_width3    3
+#property indicator_width4    3
+#property indicator_width5    3
 int       indicator_drawingType = DRAW_LINE;
 
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im Data window)
