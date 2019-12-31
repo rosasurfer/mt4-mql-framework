@@ -2,7 +2,7 @@
  * JMA - Adaptive Jurik Moving Average
  *
  *
- * The original MQL4 version as provided by Weld, Jurik Research (see first two links below) is broken and repaints heavily
+ * The original MQL4 version authored by Weld, Jurik Research (see first two links below) is broken and repaints heavily
  * which is caused by a faulty code conversion from EasyLanguage to MQL4. This is a fixed, rewritten and optimized version.
  *
  * Indicator buffers for iCustom():
@@ -39,22 +39,22 @@ extern int Phase  = 0;
 
 
 // buffers
-double JMAValueBuffer[];
-double fC0Buffer[];
-double fA8Buffer[];
-double fC8Buffer[];
+double jmaBuffer[];
+double iBuffer1 [];
+double iBuffer2 [];
+double iBuffer3 [];
 
 // temporary buffers
 double dList[128], dRing1[128], dRing2[11], dBuffer[62];
 
-bool   initFlag;
-int    limitValue, startValue, loopParam, loopCriteria;
-int    cycleLimit, highLimit, counterA, counterB;
-double cycleDelta, lowDValue, highDValue, absValue, paramA, paramB;
-double phaseParam, logParam, JMAValue, series, sValue, sqrtParam, lengthDivider;
+bool   bInitFlag;
+int    iLimitValue, iStartValue, iLoopParam, iLoopCriteria;
+int    iCycleLimit, iHighLimit, iCounterA, iCounterB;
+double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB;
+double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA;
 
 // temporary vars
-int s58, s60, s40, s38, s68;
+int iS1, iS2, iS3, iS4, iS5;
 
 
 /**
@@ -63,7 +63,7 @@ int s58, s60, s40, s38, s68;
  * @return int - error status
  */
 int onInit() {
-   double lengthParam;
+   double dLengthParam;
    // 3 additional buffers are used for counting
    IndicatorBuffers(4);
 
@@ -72,10 +72,10 @@ int onInit() {
    SetIndexDrawBegin(0, 30);
 
    // 4 indicator buffers mapping
-   SetIndexBuffer(0, JMAValueBuffer);
-   SetIndexBuffer(1, fC0Buffer);
-   SetIndexBuffer(2, fA8Buffer);
-   SetIndexBuffer(3, fC8Buffer);
+   SetIndexBuffer(0, jmaBuffer);
+   SetIndexBuffer(1, iBuffer1);
+   SetIndexBuffer(2, iBuffer2);
+   SetIndexBuffer(3, iBuffer3);
 
    // initialize one buffer (neccessary)
    ArrayInitialize(dRing2,  0);
@@ -83,31 +83,31 @@ int onInit() {
    ArrayInitialize(dBuffer, 0);
 
    // name for DataWindow and indicator subwindow label
-   IndicatorShortName("JMAValue("+ Length +","+ Phase +")");
-   SetIndexLabel(0, "JMAValue");
+   IndicatorShortName("JMA("+ Length +", "+ Phase +")");
+   SetIndexLabel(0, "JMA");
 
    // initial part
-   limitValue = 63;
-   startValue = 64;
+   iLimitValue = 63;
+   iStartValue = 64;
 
-   for (int i=0; i <= limitValue; i++) dList[i] = -1000000;
-   for (i=startValue; i <= 127; i++)   dList[i] = +1000000;
+   for (int i=0; i <= iLimitValue; i++) dList[i] = -1000000;
+   for (i=iStartValue; i <= 127; i++)   dList[i] = +1000000;
 
-   initFlag = true;
-   if (Length < 1.0000000002) lengthParam = 0.0000000001;
-   else                       lengthParam = (Length - 1) / 2.0;
+   bInitFlag = true;
+   if (Length < 1.0000000002) dLengthParam = 0.0000000001;
+   else                       dLengthParam = (Length - 1) / 2.0;
 
-   if      (Phase < -100) phaseParam = 0.5;
-   else if (Phase > +100) phaseParam = 2.5;
-   else                   phaseParam = Phase / 100.0 + 1.5;
+   if      (Phase < -100) dPhaseParam = 0.5;
+   else if (Phase > +100) dPhaseParam = 2.5;
+   else                   dPhaseParam = Phase / 100.0 + 1.5;
 
-   logParam = MathLog(MathSqrt(lengthParam)) / MathLog(2.0);
-   if (logParam + 2.0 < 0) logParam = 0;
-   else                    logParam = logParam + 2.0;
+   dLogParam = MathLog(MathSqrt(dLengthParam)) / MathLog(2.0);
+   if (dLogParam + 2.0 < 0) dLogParam = 0;
+   else                     dLogParam = dLogParam + 2.0;
 
-   sqrtParam     = MathSqrt(lengthParam) * logParam;
-   lengthParam   = lengthParam * 0.9;
-   lengthDivider = lengthParam / (lengthParam + 2.0);
+   dSqrtParam     = MathSqrt(dLengthParam) * dLogParam;
+   dLengthParam   = dLengthParam * 0.9;
+   dLengthDivider = dLengthParam / (dLengthParam + 2.0);
 
    return(catch("onInit(1)"));
 }
@@ -134,222 +134,223 @@ int onTick() {
 
    // main cycle
    for (int shift=limit; shift >= 0; shift--) {
-      series = Close[shift];
+      dPrice = Close[shift];
 
-      if (loopParam < 61) {
-         loopParam++;
-         dBuffer[loopParam] = series;
+      if (iLoopParam < 61) {
+         iLoopParam++;
+         dBuffer[iLoopParam] = dPrice;
       }
-      if (loopParam > 30) {
-         if (initFlag) {
-            initFlag = false;
+      if (iLoopParam > 30) {
+         if (bInitFlag) {
+            bInitFlag = false;
 
-            int diffFlag = 0;
+            int iDiffFlag = 0;
             for (int i=1; i <= 29; i++) {
-               if (dBuffer[i+1] != dBuffer[i]) diffFlag = 1;        // double comparison error
+               if (dBuffer[i+1] != dBuffer[i]) iDiffFlag = 1;        // double comparison error
             }
-            highLimit = diffFlag * 30;
+            iHighLimit = iDiffFlag * 30;
 
-            if (highLimit == 0) paramB = series;
-            else                paramB = dBuffer[1];
+            if (iHighLimit == 0) dParamB = dPrice;
+            else                 dParamB = dBuffer[1];
 
-            paramA = paramB;
-            if (highLimit > 29) highLimit = 29;
+            dParamA = dParamB;
+            if (iHighLimit > 29) iHighLimit = 29;
          }
-         else highLimit = 0;
+         else iHighLimit = 0;
 
          // big cycle
-         for (i=highLimit; i >= 0; i--) {
-            if (i == 0) sValue = series;
-            else        sValue = dBuffer[31-i];
+         for (i=iHighLimit; i >= 0; i--) {
+            if (i == 0) dSValue = dPrice;
+            else        dSValue = dBuffer[31-i];
 
-            if (MathAbs(sValue-paramA) > MathAbs(sValue-paramB)) absValue = MathAbs(sValue-paramA);
-            else                                                 absValue = MathAbs(sValue-paramB);
-            double dValue = absValue + 0.0000000001;           //1.0e-10;
+            if (MathAbs(dSValue-dParamA) > MathAbs(dSValue-dParamB)) dAbsValue = MathAbs(dSValue-dParamA);
+            else                                                     dAbsValue = MathAbs(dSValue-dParamB);
+            double dValue = dAbsValue + 0.0000000001;       //1.0e-10;
 
-            if (counterA <= 1) counterA = 127;
-            else               counterA--;
-            if (counterB <= 1) counterB = 10;
-            else               counterB--;
+            if (iCounterA <= 1) iCounterA = 127;
+            else                iCounterA--;
+            if (iCounterB <= 1) iCounterB = 10;
+            else                iCounterB--;
 
-            if (cycleLimit < 128) cycleLimit++;
+            if (iCycleLimit < 128) iCycleLimit++;
 
-            cycleDelta     += (dValue - dRing2[counterB]);
-            dRing2[counterB] = dValue;
+            dCycleDelta      += (dValue - dRing2[iCounterB]);
+            dRing2[iCounterB] = dValue;
 
-            if (cycleLimit > 10) highDValue = cycleDelta / 10.0;
-            else                 highDValue = cycleDelta / cycleLimit;
+            if (iCycleLimit > 10) dHighValue = dCycleDelta / 10.0;
+            else                  dHighValue = dCycleDelta / iCycleLimit;
 
-            if (cycleLimit > 127) {
-               dValue           = dRing1[counterA];
-               dRing1[counterA] = highDValue;
-               s68 = 64;
-               s58 = s68;
+            if (iCycleLimit > 127) {
+               dValue            = dRing1[iCounterA];
+               dRing1[iCounterA] = dHighValue;
+               iS5 = 64;
+               iS1 = iS5;
 
-               while (s68 > 1) {
-                  if (dList[s58] < dValue) {
-                     s68  = s68 / 2.0;
-                     s58 += s68;
+               while (iS5 > 1) {
+                  if (dList[iS1] < dValue) {
+                     iS5  = iS5 / 2.0;
+                     iS1 += iS5;
                   }
-                  else if (dList[s58] <= dValue) {
-                     s68 = 1;
+                  else if (dList[iS1] <= dValue) {
+                     iS5 = 1;
                   }
                   else {
-                     s68  = s68 / 2.0;
-                     s58 -= s68;
+                     iS5  = iS5 / 2.0;
+                     iS1 -= iS5;
                   }
                }
             }
             else {
-               dRing1[counterA] = highDValue;
-               if (limitValue + startValue > 127) {
-                  startValue--;
-                  s58 = startValue;
+               dRing1[iCounterA] = dHighValue;
+               if (iLimitValue + iStartValue > 127) {
+                  iStartValue--;
+                  iS1 = iStartValue;
                }
                else {
-                  limitValue++;
-                  s58 = limitValue;
+                  iLimitValue++;
+                  iS1 = iLimitValue;
                }
-               if (limitValue > 96) s38 = 96;
-               else                 s38 = limitValue;
-               if (startValue < 32) s40 = 32;
-               else                 s40 = startValue;
+               if (iLimitValue > 96) iS4 = 96;
+               else                  iS4 = iLimitValue;
+               if (iStartValue < 32) iS3 = 32;
+               else                  iS3 = iStartValue;
             }
 
-            s68 = 64;
-            s60 = s68;
-            while (s68 > 1) {
-               if (dList[s60] >= highDValue) {
-                  if (dList[s60-1] <= highDValue) {
-                     s68 = 1;
+            iS5 = 64;
+            iS2 = iS5;
+
+            while (iS5 > 1) {
+               if (dList[iS2] >= dHighValue) {
+                  if (dList[iS2-1] <= dHighValue) {
+                     iS5 = 1;
                   }
                   else {
-                     s68  = s68 / 2.0;
-                     s60 -= s68;
+                     iS5  = iS5 / 2.0;
+                     iS2 -= iS5;
                   }
                }
                else {
-                  s68  = s68 / 2.0;
-                  s60 += s68;
+                  iS5  = iS5 / 2.0;
+                  iS2 += iS5;
                }
-               if (s60==127 && highDValue > dList[127]) s60 = 128;
+               if (iS2==127 && dHighValue > dList[127]) iS2 = 128;
             }
 
-            if (cycleLimit > 127) {
-               if (s58 >= s60) {
-                  if      (s38+1 > s60 && s40-1 < s60) lowDValue += highDValue;
-                  else if (s40   > s60 && s40-1 < s58) lowDValue += dList[s40-1];
+            if (iCycleLimit > 127) {
+               if (iS1 >= iS2) {
+                  if      (iS4+1 > iS2 && iS3-1 < iS2) dLowValue += dHighValue;
+                  else if (iS3   > iS2 && iS3-1 < iS1) dLowValue += dList[iS3-1];
                }
-               else if (s40 >= s60) {
-                  if (s38+1 < s60 && s38+1 > s58)      lowDValue += dList[s38+1];
+               else if (iS3 >= iS2) {
+                  if (iS4+1 < iS2 && iS4+1 > iS1)      dLowValue += dList[iS4+1];
                }
-               else if (s38+2 > s60)                   lowDValue += highDValue;
-               else if (s38+1 < s60 && s38+1 > s58)    lowDValue += dList[s38+1];
+               else if (iS4+2 > iS2)                   dLowValue += dHighValue;
+               else if (iS4+1 < iS2 && iS4+1 > iS1)    dLowValue += dList[iS4+1];
 
-               if (s58 > s60) {
-                  if      (s40-1 < s58 && s38+1 > s58) lowDValue -= dList[s58];
-                  else if (s38   < s58 && s38+1 > s60) lowDValue -= dList[s38];
+               if (iS1 > iS2) {
+                  if      (iS3-1 < iS1 && iS4+1 > iS1) dLowValue -= dList[iS1];
+                  else if (iS4   < iS1 && iS4+1 > iS2) dLowValue -= dList[iS4];
                }
                else {
-                  if      (s38+1 > s58 && s40-1 < s58) lowDValue -= dList[s58];
-                  else if (s40   > s58 && s40   < s60) lowDValue -= dList[s40];
+                  if      (iS4+1 > iS1 && iS3-1 < iS1) dLowValue -= dList[iS1];
+                  else if (iS3   > iS1 && iS3   < iS2) dLowValue -= dList[iS3];
                }
             }
-            if (s58 <= s60) {
-               if (s58 >= s60) {
-                  dList[s60] = highDValue;
+            if (iS1 <= iS2) {
+               if (iS1 >= iS2) {
+                  dList[iS2] = dHighValue;
                }
                else {
-                  for (int j=s58+1; j <= s60-1; j++) {
+                  for (int j=iS1+1; j <= iS2-1; j++) {
                      dList[j-1] = dList[j];
                   }
-                  dList[s60-1] = highDValue;
+                  dList[iS2-1] = dHighValue;
                }
             }
             else {
-               for (j=s58-1; j >= s60; j--) {
+               for (j=iS1-1; j >= iS2; j--) {
                   dList[j+1] = dList[j];
                }
-               dList[s60] = highDValue;
+               dList[iS2] = dHighValue;
             }
 
-            if (cycleLimit <= 127) {
-               lowDValue = 0;
-               for (j=s40; j <= s38; j++) {
-                  lowDValue += dList[j];
+            if (iCycleLimit <= 127) {
+               dLowValue = 0;
+               for (j=iS3; j <= iS4; j++) {
+                  dLowValue += dList[j];
                }
             }
 
-            if (loopCriteria+1 > 31) loopCriteria = 31;
-            else                     loopCriteria++;
+            if (iLoopCriteria+1 > 31) iLoopCriteria = 31;
+            else                      iLoopCriteria++;
 
-            double JMATempValue, sqrtDivider=sqrtParam / (sqrtParam+1.0);
+            double dJMATemp, dSqrtDivider=dSqrtParam / (dSqrtParam+1.0);
 
-            if (loopCriteria <= 30) {
-               if (sValue-paramA > 0) paramA = sValue;
-               else                   paramA = sValue - (sValue-paramA) * sqrtDivider;
-               if (sValue-paramB < 0) paramB = sValue;
-               else                   paramB = sValue - (sValue-paramB) * sqrtDivider;
+            if (iLoopCriteria <= 30) {
+               if (dSValue-dParamA > 0) dParamA = dSValue;
+               else                     dParamA = dSValue - (dSValue-dParamA) * dSqrtDivider;
+               if (dSValue-dParamB < 0) dParamB = dSValue;
+               else                     dParamB = dSValue - (dSValue-dParamB) * dSqrtDivider;
 
-               JMATempValue = series;
+               dJMATemp = dPrice;
 
-               if (loopCriteria == 30) {
-                 fC0Buffer[shift] = series;
-                 if (MathCeil(sqrtParam) >= 1) int intPart = MathCeil(sqrtParam);
-                 else                              intPart = 1;
+               if (iLoopCriteria == 30) {
+                 iBuffer1[shift] = dPrice;
+                 if (MathCeil(dSqrtParam) >= 1) int iIntPart = MathCeil(dSqrtParam);
+                 else                               iIntPart = 1;
 
-                 int leftInt = IntPortion(intPart);
-                 if (MathFloor(sqrtParam) >= 1) intPart = MathFloor(sqrtParam);
-                 else                           intPart = 1;
+                 int iLeftInt = IntPortion(iIntPart);
+                 if (MathFloor(dSqrtParam) >= 1) iIntPart = MathFloor(dSqrtParam);
+                 else                            iIntPart = 1;
 
-                 int rightPart = IntPortion(intPart);
+                 int iRightPart = IntPortion(iIntPart);
 
-                 if (leftInt == rightPart) dValue = 1.0;
-                 else                      dValue = (sqrtParam-rightPart) / (leftInt-rightPart);
+                 if (iLeftInt == iRightPart) dValue = 1.0;
+                 else                        dValue = (dSqrtParam-iRightPart) / (iLeftInt-iRightPart);
 
-                 if (rightPart <= 29) int upShift = rightPart;
-                 else                     upShift = 29;
-                 if (leftInt <= 29)   int dnShift = leftInt;
-                 else                     dnShift = 29;
+                 if (iRightPart <= 29) int iUpShift = iRightPart;
+                 else                      iUpShift = 29;
+                 if (iLeftInt <= 29)   int iDnShift = iLeftInt;
+                 else                      iDnShift = 29;
 
-                 fA8Buffer[shift] = (series-dBuffer[loopParam-upShift]) * (1-dValue) / rightPart + (series-dBuffer[loopParam-dnShift]) * dValue / leftInt;
+                 iBuffer2[shift] = (dPrice-dBuffer[iLoopParam-iUpShift]) * (1-dValue) / iRightPart + (dPrice-dBuffer[iLoopParam-iDnShift]) * dValue / iLeftInt;
                }
             }
             else {
-               double powerValue, squareValue;
+               double dPowerValue, dSquareValue;
 
-               dValue = lowDValue / (s38 - s40 + 1);
-               if (0.5 <= logParam-2.0) powerValue = logParam - 2.0;
-               else                     powerValue = 0.5;
+               dValue = dLowValue / (iS4 - iS3 + 1);
+               if (0.5 <= dLogParam-2.0) dPowerValue = dLogParam - 2.0;
+               else                      dPowerValue = 0.5;
 
-               if (logParam >= MathPow(absValue/dValue, powerValue)) dValue = MathPow(absValue/dValue, powerValue);
-               else                                                  dValue = logParam;
-               if (dValue < 1)                                       dValue = 1;
+               if (dLogParam >= MathPow(dAbsValue/dValue, dPowerValue)) dValue = MathPow(dAbsValue/dValue, dPowerValue);
+               else                                                     dValue = dLogParam;
+               if (dValue < 1)                                          dValue = 1;
 
-               powerValue = MathPow(sqrtDivider, MathSqrt(dValue));
-               if (sValue-paramA > 0) paramA = sValue;
-               else                   paramA = sValue - (sValue-paramA) * powerValue;
-               if (sValue-paramB < 0) paramB = sValue;
-               else                   paramB = sValue - (sValue-paramB) * powerValue;
+               dPowerValue = MathPow(dSqrtDivider, MathSqrt(dValue));
+               if (dSValue-dParamA > 0) dParamA = dSValue;
+               else                     dParamA = dSValue - (dSValue-dParamA) * dPowerValue;
+               if (dSValue-dParamB < 0) dParamB = dSValue;
+               else                     dParamB = dSValue - (dSValue-dParamB) * dPowerValue;
             }
          }
          // end of big cycle
 
-         if (loopCriteria > 30) {
-            JMATempValue = JMAValueBuffer[shift+1];
-            powerValue   = MathPow(lengthDivider, dValue);
-            squareValue  = MathPow(powerValue, 2);
+         if (iLoopCriteria > 30) {
+            dJMATemp     = jmaBuffer[shift+1];
+            dPowerValue  = MathPow(dLengthDivider, dValue);
+            dSquareValue = MathPow(dPowerValue, 2);
 
-            fC0Buffer[shift] = (1-powerValue) * series + powerValue * fC0Buffer[shift+1];
-            fC8Buffer[shift] = (series-fC0Buffer[shift]) * (1-lengthDivider) + lengthDivider * fC8Buffer[shift+1];
+            iBuffer1[shift] = (1-dPowerValue) * dPrice + dPowerValue * iBuffer1[shift+1];
+            iBuffer3[shift] = (dPrice-iBuffer1[shift]) * (1-dLengthDivider) + dLengthDivider * iBuffer3[shift+1];
 
-            fA8Buffer[shift] = (phaseParam * fC8Buffer[shift] + fC0Buffer[shift] - JMATempValue) * (-2.0 * powerValue + squareValue + 1) + squareValue * fA8Buffer[shift+1];
-            JMATempValue += fA8Buffer[shift];
+            iBuffer2[shift] = (dPhaseParam * iBuffer3[shift] + iBuffer1[shift] - dJMATemp) * (-2.0 * dPowerValue + dSquareValue + 1) + dSquareValue * iBuffer2[shift+1];
+            dJMATemp += iBuffer2[shift];
          }
-         JMAValue = JMATempValue;
+         dJMA = dJMATemp;
       }
-      if (loopParam <= 30) JMAValue = 0;
-      JMAValueBuffer[shift] = JMAValue;
+      if (iLoopParam <= 30) dJMA = 0;
+      jmaBuffer[shift] = dJMA;
    }
 
 
