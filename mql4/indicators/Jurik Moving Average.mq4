@@ -201,19 +201,19 @@ int onTick() {
 
 
    // (3) JMA-Initialisierung
-   int    i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, i11, i12, i13, j;
+   int    i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, iLoopParam, i12, i13, j;
    double d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35;
    double jma, price;
 
-   double list127 [127];
-   double ring127 [127];
-   double ring10  [ 10];
-   double prices61[ 61];
+   double list127  [127];
+   double ring127  [127];
+   double ring10   [ 10];
+   double dPrices61[ 61];
 
    ArrayInitialize(list127, -1000000);
    ArrayInitialize(ring127,        0);
    ArrayInitialize(ring10,         0);
-   ArrayInitialize(prices61,       0);
+   ArrayInitialize(dPrices61,      0);
 
    int i14 = 63;
    int i15 = 64;
@@ -224,19 +224,20 @@ int onTick() {
 
    double d25 = (ma.periods-1) / 2.;
    double d11 = Phase/100. + 1.5;
-   bool bInit = true;
+   bool bInitFlag = true;
 
 
    // (4) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar);
-      if (i11 < 61) {
-         prices61[i11] = price;
-         i11++;
+
+      if (iLoopParam < 61) {
+         dPrices61[iLoopParam] = price;
+         iLoopParam++;
       }
 
-      if (i11 > 30) {
+      if (iLoopParam > 30) {
          d02 = MathLog(MathSqrt(d25));
          d03 = d02;
          d04 = d02/MathLog(2) + 2;
@@ -251,16 +252,16 @@ int onTick() {
          d27  = d24/(d24 + 1);
          d19  = d25*0.9/(d25*0.9 + 2);
 
-         if (bInit) {
-            bInit = false;
+         if (bInitFlag) {
+            bInitFlag = false;
             i01 = 0;
             i12 = 0;
             d16 = price;
             for (i=0; i < 30; i++) {
-               if (!EQ(prices61[i], prices61[i+1], Digits)) {
+               if (!EQ(dPrices61[i], dPrices61[i+1], Digits)) {
                   i01 = 1;
                   i12 = 29;
-                  d16 = prices61[0];
+                  d16 = dPrices61[0];
                   break;
                }
             }
@@ -272,7 +273,7 @@ int onTick() {
 
          for (i=i12; i >= 0; i--) {
             if (i == 0) d10 = price;
-            else        d10 = prices61[30-i];
+            else        d10 = dPrices61[30-i];
 
             d14 = d10 - d12;
             d18 = d10 - d16;
@@ -405,7 +406,7 @@ int onTick() {
                   if (d05 <= 29) i02 = d05;
                   else           i02 = 29;
 
-                  d30 = (price-prices61[i11-i01-1]) * (1-d22)/d03 + (price-prices61[i11-i02-1]) * d22/d05;
+                  d30 = (price-dPrices61[iLoopParam-i01-1]) * (1-d22)/d03 + (price-dPrices61[iLoopParam-i02-1]) * d22/d05;
                }
             }
             else {
