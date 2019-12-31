@@ -30,12 +30,13 @@ extern int Phase  = 0;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/@Trend.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1
 
 #property indicator_color1    Magenta
-#property indicator_width1    3
+#property indicator_width1    2
 
 
 // buffers
@@ -55,6 +56,9 @@ double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA
 
 // temporary vars
 int iS1, iS2, iS3, iS4, iS5;
+
+string indicatorName;
+string chartLegendLabel;
 
 
 /**
@@ -109,7 +113,26 @@ int onInit() {
    dLengthParam   = dLengthParam * 0.9;
    dLengthDivider = dLengthParam / (dLengthParam + 2.0);
 
+
+   // chart legend
+   indicatorName = "JMA.weld("+ Length +")";
+   if (!IsSuperContext()) {
+      chartLegendLabel = CreateLegendLabel(indicatorName);
+      ObjectRegister(chartLegendLabel);
+   }
    return(catch("onInit(1)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   DeleteRegisteredObjects(NULL);
+   RepositionLegend();
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -124,12 +147,6 @@ int onTick() {
    // check for possible errors
    if (counted_bars < 0) return(catch("onTick(1)"));
    int limit = Bars - counted_bars - 1;
-
-
-   int startTime;
-   if (limit == Bars-1) {
-      startTime = GetTickCount();
-   }
 
 
    // main cycle
@@ -348,10 +365,8 @@ int onTick() {
    }
 
 
-   if (startTime > 0) {
-      int endTime = GetTickCount();
-      //debug("onTick()  Bars="+ (limit+1) +"  time: "+DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   if (!IsSuperContext()) {
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", indicator_color1, indicator_color1, jmaBuffer[0], SubPipDigits, NULL, NULL);
    }
-
    return(catch("onTick(2)"));
 }
