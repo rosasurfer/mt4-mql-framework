@@ -51,7 +51,7 @@ bool   bInitFlag;
 int    iLimitValue, iStartValue, iLoopParam, iLoopCriteria;
 int    iCycleLimit, iHighLimit, iCounterA, iCounterB;
 double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB;
-double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA;
+double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA, dJMATemp;
 
 // temporary vars
 int iS1, iS2, iS3, iS4, iS5;
@@ -77,7 +77,7 @@ int onInit() {
    SetIndexBuffer(2, iBuffer2);
    SetIndexBuffer(3, iBuffer3);
 
-   // initialize one buffer (neccessary)
+   // initialize arrays
    ArrayInitialize(dRing2,  0);
    ArrayInitialize(dRing1,  0);
    ArrayInitialize(dBuffer, 0);
@@ -102,8 +102,8 @@ int onInit() {
    else                   dPhaseParam = Phase / 100.0 + 1.5;
 
    dLogParam = MathLog(MathSqrt(dLengthParam)) / MathLog(2.0);
-   if (dLogParam + 2.0 < 0) dLogParam = 0;
-   else                     dLogParam = dLogParam + 2.0;
+   if (dLogParam+2 < 0) dLogParam = 0;
+   else                 dLogParam = dLogParam + 2;
 
    dSqrtParam     = MathSqrt(dLengthParam) * dLogParam;
    dLengthParam   = dLengthParam * 0.9;
@@ -281,10 +281,10 @@ int onTick() {
                }
             }
 
-            if (iLoopCriteria+1 > 31) iLoopCriteria = 31;
-            else                      iLoopCriteria++;
+            iLoopCriteria++;
+            if (iLoopCriteria > 31) iLoopCriteria = 31;
 
-            double dJMATemp, dSqrtDivider=dSqrtParam / (dSqrtParam+1.0);
+            double dSqrtDivider = dSqrtParam / (dSqrtParam+1);
 
             if (iLoopCriteria <= 30) {
                if (dSValue-dParamA > 0) dParamA = dSValue;
@@ -296,24 +296,18 @@ int onTick() {
 
                if (iLoopCriteria == 30) {
                  iBuffer1[shift] = dPrice;
-                 if (MathCeil(dSqrtParam) >= 1) int iIntPart = MathCeil(dSqrtParam);
-                 else                               iIntPart = 1;
 
-                 int iLeftInt = IntPortion(iIntPart);
-                 if (MathFloor(dSqrtParam) >= 1) iIntPart = MathFloor(dSqrtParam);
-                 else                            iIntPart = 1;
+                 int iLeftInt=1, iRightPart=1;
+                 if (dSqrtParam >  0) iLeftInt   = dSqrtParam + 1;
+                 if (dSqrtParam >= 1) iRightPart = dSqrtParam;
 
-                 int iRightPart = IntPortion(iIntPart);
+                 dValue = MathDiv(dSqrtParam-iRightPart, iLeftInt-iRightPart, 1);
 
-                 if (iLeftInt == iRightPart) dValue = 1.0;
-                 else                        dValue = (dSqrtParam-iRightPart) / (iLeftInt-iRightPart);
+                 int iUpShift=29, iDnShift=29;
+                 if (iRightPart <= 29) iUpShift = iRightPart;
+                 if (iLeftInt <= 29)   iDnShift = iLeftInt;
 
-                 if (iRightPart <= 29) int iUpShift = iRightPart;
-                 else                      iUpShift = 29;
-                 if (iLeftInt <= 29)   int iDnShift = iLeftInt;
-                 else                      iDnShift = 29;
-
-                 iBuffer2[shift] = (dPrice-dBuffer[iLoopParam-iUpShift]) * (1-dValue) / iRightPart + (dPrice-dBuffer[iLoopParam-iDnShift]) * dValue / iLeftInt;
+                 iBuffer3[shift] = (dPrice-dBuffer[iLoopParam-iUpShift]) * (1-dValue) / iRightPart + (dPrice-dBuffer[iLoopParam-iDnShift]) * dValue / iLeftInt;
                }
             }
             else {
@@ -342,10 +336,10 @@ int onTick() {
             dSquareValue = MathPow(dPowerValue, 2);
 
             iBuffer1[shift] = (1-dPowerValue) * dPrice + dPowerValue * iBuffer1[shift+1];
-            iBuffer3[shift] = (dPrice-iBuffer1[shift]) * (1-dLengthDivider) + dLengthDivider * iBuffer3[shift+1];
+            iBuffer2[shift] = (dPrice-iBuffer1[shift]) * (1-dLengthDivider) + dLengthDivider * iBuffer2[shift+1];
 
-            iBuffer2[shift] = (dPhaseParam * iBuffer3[shift] + iBuffer1[shift] - dJMATemp) * (-2.0 * dPowerValue + dSquareValue + 1) + dSquareValue * iBuffer2[shift+1];
-            dJMATemp += iBuffer2[shift];
+            iBuffer3[shift] = (dPhaseParam * iBuffer2[shift] + iBuffer1[shift] - dJMATemp) * (-2.0 * dPowerValue + dSquareValue + 1) + dSquareValue * iBuffer3[shift+1];
+            dJMATemp += iBuffer3[shift];
          }
          dJMA = dJMATemp;
       }
@@ -360,14 +354,4 @@ int onTick() {
    }
 
    return(catch("onTick(2)"));
-}
-
-
-/**
- *
- */
-int IntPortion(double param) {
-   if (param > 0) return(MathFloor(param));
-   if (param < 0) return(MathCeil(param));
-   return(0);
 }
