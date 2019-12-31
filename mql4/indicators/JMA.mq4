@@ -82,11 +82,6 @@ int onInit() {
    SetIndexBuffer(2, iBuffer2);
    SetIndexBuffer(3, iBuffer3);
 
-   // initialize arrays
-   ArrayInitialize(dRing128,  0);
-   ArrayInitialize(dRing11,   0);
-   ArrayInitialize(dPrices62, 0);
-
    // name for DataWindow and indicator subwindow label
    IndicatorShortName("JMA("+ Length +", "+ Phase +")");
    SetIndexLabel(0, "JMA");
@@ -100,19 +95,19 @@ int onInit() {
 
    bInitFlag = true;
    if (Length < 1.0000000002) dLengthParam = 0.0000000001;
-   else                       dLengthParam = (Length - 1) / 2.0;
+   else                       dLengthParam = (Length-1) / 2.;
 
    if      (Phase < -100) dPhaseParam = 0.5;
    else if (Phase > +100) dPhaseParam = 2.5;
-   else                   dPhaseParam = Phase / 100.0 + 1.5;
+   else                   dPhaseParam = Phase/100. + 1.5;
 
-   dLogParam = MathLog(MathSqrt(dLengthParam)) / MathLog(2.0);
+   dLogParam = MathLog(MathSqrt(dLengthParam)) / MathLog(2);
    if (dLogParam+2 < 0) dLogParam = 0;
    else                 dLogParam = dLogParam + 2;
 
    dSqrtParam     = MathSqrt(dLengthParam) * dLogParam;
    dLengthParam   = dLengthParam * 0.9;
-   dLengthDivider = dLengthParam / (dLengthParam + 2.0);
+   dLengthDivider = dLengthParam / (dLengthParam+2);
 
 
    // chart legend
@@ -198,7 +193,7 @@ int onTick() {
             dCycleDelta       += (dValue - dRing11[iCounterB]);
             dRing11[iCounterB] = dValue;
 
-            if (iCycleLimit > 10) dHighValue = dCycleDelta / 10.0;
+            if (iCycleLimit > 10) dHighValue = dCycleDelta / 10;
             else                  dHighValue = dCycleDelta / iCycleLimit;
 
             int i1 = 0;
@@ -211,14 +206,14 @@ int onTick() {
 
                while (iS5 > 1) {
                   if (dList128[i1] < dValue) {
-                     iS5 = iS5 / 2.0;
+                     iS5 >>= 1;
                      i1 += iS5;
                   }
                   else if (dList128[i1] <= dValue) {
                      iS5 = 1;
                   }
                   else {
-                     iS5 = iS5 / 2.0;
+                     iS5 >>= 1;
                      i1 -= iS5;
                   }
                }
@@ -248,12 +243,12 @@ int onTick() {
                      iS5 = 1;
                   }
                   else {
-                     iS5 = iS5 / 2.0;
+                     iS5 >>= 1;
                      i2 -= iS5;
                   }
                }
                else {
-                  iS5 = iS5 / 2.0;
+                  iS5 >>= 1;
                   i2 += iS5;
                }
                if (i2==127 && dHighValue > dList128[127]) i2 = 128;
