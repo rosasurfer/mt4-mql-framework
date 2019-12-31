@@ -55,7 +55,7 @@ double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB;
 double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA, dJMATemp;
 
 // temporary vars
-int iS1, iS2, iS3, iS4, iS5;
+int i3, iS4, iS5;
 
 string indicatorName;
 string chartLegendLabel;
@@ -157,6 +157,9 @@ int onTick() {
          iLoopParam++;
          dBuffer[iLoopParam] = dPrice;
       }
+
+      int i3;
+
       if (iLoopParam > 30) {
          if (bInitFlag) {
             bInitFlag = false;
@@ -197,23 +200,25 @@ int onTick() {
             if (iCycleLimit > 10) dHighValue = dCycleDelta / 10.0;
             else                  dHighValue = dCycleDelta / iCycleLimit;
 
+            int i1 = 0;
+
             if (iCycleLimit > 127) {
                dValue            = dRing1[iCounterA];
                dRing1[iCounterA] = dHighValue;
                iS5 = 64;
-               iS1 = iS5;
+               i1  = iS5;
 
                while (iS5 > 1) {
-                  if (dList[iS1] < dValue) {
-                     iS5  = iS5 / 2.0;
-                     iS1 += iS5;
+                  if (dList[i1] < dValue) {
+                     iS5 = iS5 / 2.0;
+                     i1 += iS5;
                   }
-                  else if (dList[iS1] <= dValue) {
+                  else if (dList[i1] <= dValue) {
                      iS5 = 1;
                   }
                   else {
-                     iS5  = iS5 / 2.0;
-                     iS1 -= iS5;
+                     iS5 = iS5 / 2.0;
+                     i1 -= iS5;
                   }
                }
             }
@@ -221,79 +226,80 @@ int onTick() {
                dRing1[iCounterA] = dHighValue;
                if (iLimitValue + iStartValue > 127) {
                   iStartValue--;
-                  iS1 = iStartValue;
+                  i1 = iStartValue;
                }
                else {
                   iLimitValue++;
-                  iS1 = iLimitValue;
+                  i1 = iLimitValue;
                }
                if (iLimitValue > 96) iS4 = 96;
                else                  iS4 = iLimitValue;
-               if (iStartValue < 32) iS3 = 32;
-               else                  iS3 = iStartValue;
+               if (iStartValue < 32) i3  = 32;
+               else                  i3  = iStartValue;
             }
 
-            iS5 = 64;
-            iS2 = iS5;
+            iS5    = 64;
+            int i2 = iS5;
 
             while (iS5 > 1) {
-               if (dList[iS2] >= dHighValue) {
-                  if (dList[iS2-1] <= dHighValue) {
+               if (dList[i2] >= dHighValue) {
+                  if (dList[i2-1] <= dHighValue) {
                      iS5 = 1;
                   }
                   else {
-                     iS5  = iS5 / 2.0;
-                     iS2 -= iS5;
+                     iS5 = iS5 / 2.0;
+                     i2 -= iS5;
                   }
                }
                else {
-                  iS5  = iS5 / 2.0;
-                  iS2 += iS5;
+                  iS5 = iS5 / 2.0;
+                  i2 += iS5;
                }
-               if (iS2==127 && dHighValue > dList[127]) iS2 = 128;
+               if (i2==127 && dHighValue > dList[127]) i2 = 128;
             }
 
             if (iCycleLimit > 127) {
-               if (iS1 >= iS2) {
-                  if      (iS4+1 > iS2 && iS3-1 < iS2) dLowValue += dHighValue;
-                  else if (iS3   > iS2 && iS3-1 < iS1) dLowValue += dList[iS3-1];
+               if (i1 >= i2) {
+                  if      (iS4+1 > i2 && i3-1 < i2) dLowValue += dHighValue;
+                  else if (i3    > i2 && i3-1 < i1) dLowValue += dList[i3-1];
                }
-               else if (iS3 >= iS2) {
-                  if (iS4+1 < iS2 && iS4+1 > iS1)      dLowValue += dList[iS4+1];
+               else if (i3 >= i2) {
+                  if (iS4+1 < i2 && iS4+1 > i1)     dLowValue += dList[iS4+1];
                }
-               else if (iS4+2 > iS2)                   dLowValue += dHighValue;
-               else if (iS4+1 < iS2 && iS4+1 > iS1)    dLowValue += dList[iS4+1];
+               else if (iS4+2 > i2)                 dLowValue += dHighValue;
+               else if (iS4+1 < i2 && iS4+1 > i1)   dLowValue += dList[iS4+1];
 
-               if (iS1 > iS2) {
-                  if      (iS3-1 < iS1 && iS4+1 > iS1) dLowValue -= dList[iS1];
-                  else if (iS4   < iS1 && iS4+1 > iS2) dLowValue -= dList[iS4];
+               if (i1 > i2) {
+                  if      (i3-1 < i1 && iS4+1 > i1) dLowValue -= dList[i1];
+                  else if (iS4  < i1 && iS4+1 > i2) dLowValue -= dList[iS4];
                }
                else {
-                  if      (iS4+1 > iS1 && iS3-1 < iS1) dLowValue -= dList[iS1];
-                  else if (iS3   > iS1 && iS3   < iS2) dLowValue -= dList[iS3];
+                  if      (iS4+1 > i1 && i3-1 < i1) dLowValue -= dList[i1];
+                  else if (i3    > i1 && i3   < i2) dLowValue -= dList[i3];
                }
             }
-            if (iS1 <= iS2) {
-               if (iS1 >= iS2) {
-                  dList[iS2] = dHighValue;
+
+            if (i1 <= i2) {
+               if (i1 >= i2) {
+                  dList[i2] = dHighValue;
                }
                else {
-                  for (int j=iS1+1; j <= iS2-1; j++) {
+                  for (int j=i1+1; j <= i2-1; j++) {
                      dList[j-1] = dList[j];
                   }
-                  dList[iS2-1] = dHighValue;
+                  dList[i2-1] = dHighValue;
                }
             }
             else {
-               for (j=iS1-1; j >= iS2; j--) {
+               for (j=i1-1; j >= i2; j--) {
                   dList[j+1] = dList[j];
                }
-               dList[iS2] = dHighValue;
+               dList[i2] = dHighValue;
             }
 
             if (iCycleLimit <= 127) {
                dLowValue = 0;
-               for (j=iS3; j <= iS4; j++) {
+               for (j=i3; j <= iS4; j++) {
                   dLowValue += dList[j];
                }
             }
@@ -330,7 +336,7 @@ int onTick() {
             else {
                double dPowerValue, dSquareValue;
 
-               dValue = dLowValue / (iS4 - iS3 + 1);
+               dValue = dLowValue / (iS4 - i3 + 1);
                if (0.5 <= dLogParam-2.0) dPowerValue = dLogParam - 2.0;
                else                      dPowerValue = 0.5;
 
