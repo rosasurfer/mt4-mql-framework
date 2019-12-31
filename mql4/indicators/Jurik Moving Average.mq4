@@ -16,8 +16,8 @@ extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical |
 
 extern int    Phase           = 0;                                   // -100..+100
 
-extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend = Orange;
+extern color  Color.UpTrend   = Orange;  //DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend = Orange; //Orange;
 
 extern int    Max.Values      = 5000;                                // max. amount of values to calculate (-1: all)
 
@@ -39,9 +39,9 @@ extern int    Max.Values      = 5000;                                // max. amo
 
 #property indicator_width1    0
 #property indicator_width2    0
-#property indicator_width3    3
-#property indicator_width4    3
-#property indicator_width5    3
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 int       indicator_drawingType = DRAW_LINE;
 
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im Data window)
@@ -104,7 +104,7 @@ int onInit() {
    // (2) Chart-Legende erzeugen
    string strAppliedPrice = "";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   legendName  = "JMA("+ MA.Periods + strAppliedPrice +")";
+   legendName  = "JMA.spiggy("+ MA.Periods + strAppliedPrice +")";
    if (!IsSuperContext()) {
        legendLabel = CreateLegendLabel(legendName);
        ObjectRegister(legendLabel);
@@ -455,7 +455,7 @@ int onTick() {
 
    // (5) Legende aktualisieren
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], Digits, bufferTrend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], SubPipDigits, bufferTrend[0], Time[0]);
    }
    return(last_error);
 }
