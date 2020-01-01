@@ -1,7 +1,6 @@
 /**
  * Installiert einen Timer, der einem synthetischen Chart fortwährend Chart-Refresh-Ticks schickt.
  */
-#property indicator_chart_window
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -9,6 +8,8 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <win32api.mqh>
+
+#property indicator_chart_window
 
 
 int tickTimerId;

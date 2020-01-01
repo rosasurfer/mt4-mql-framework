@@ -61,10 +61,13 @@ int onDeinitUndefined() {
       if (IsLastError())
          return(onDeinitChartClose());                            // entspricht gewaltsamen Ende
 
+      bool success = true;
       if (sequence.status == STATUS_PROGRESSING) {
          bool bNull;
-         if (UpdateStatus(bNull))
-            StopSequence(NULL);
+         success = UpdateStatus(bNull);
+      }
+      if (sequence.status==STATUS_WAITING || sequence.status==STATUS_PROGRESSING) {
+         if (success) StopSequence(NULL);
          ShowStatus();
       }
       return(last_error);

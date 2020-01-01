@@ -8786,7 +8786,7 @@ window_num=0
 MA.Periods=9
 Color.UpTrend=14772545
 Color.DownTrend=55295
-Draw.LineWidth=3
+Draw.Width=3
 </inputs>
 </expert>
 period_flags=0
@@ -8803,7 +8803,7 @@ window_num=0
 MA.Periods=38
 Color.UpTrend=3329330
 Color.DownTrend=255
-Draw.LineWidth=3
+Draw.Width=3
 </inputs>
 </expert>
 period_flags=0

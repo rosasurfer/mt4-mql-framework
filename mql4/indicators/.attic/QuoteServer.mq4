@@ -1,7 +1,6 @@
 /**
  *
  */
-#property indicator_chart_window
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -18,6 +17,8 @@ extern string Offered.Symbols = "LFX";                // die anzubietenden Symbo
 
 #include <MT4iQuickChannel.mqh>
 #include <etc/offline/QuoteServer.mqh>
+
+#property indicator_chart_window
 
 
 // Serverdaten

@@ -6047,7 +6047,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
@@ -6094,7 +6094,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           CLR_NONE,                                        // color  Color.Channel
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
@@ -6202,7 +6202,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           Blue,                                            // color  Color.UpTrend
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
@@ -6248,7 +6248,7 @@ double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
                           RoyalBlue,                                       // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
@@ -6340,7 +6340,7 @@ double icSuperSmoother(int timeframe, int filterPeriods, string filterAppliedPri
                           Blue,                                            // color  Color.UpTrend
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
@@ -6390,7 +6390,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           CLR_NONE,                                        // color  Color.Channel
                           CLR_NONE,                                        // color  Color.MovingAverage
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
@@ -6438,7 +6438,7 @@ double icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer
                           Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.LineWidth
+                          1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Values
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange

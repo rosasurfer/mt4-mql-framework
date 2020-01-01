@@ -46,8 +46,6 @@
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
  *  - Konfiguration während eines init-Cycles im Chart speichern und Recompilation überleben
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -75,6 +73,8 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
+
+#property indicator_chart_window
 
 
 // Order-Events

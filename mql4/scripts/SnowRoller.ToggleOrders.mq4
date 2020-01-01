@@ -3,7 +3,7 @@
  *
  * Send a chart command to SnowRoller to toggle the order display.
  *
- * @see SnowRoller::ToggleOrderDisplayMode()
+ * @see  SnowRoller::ToggleOrderDisplayMode()
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];

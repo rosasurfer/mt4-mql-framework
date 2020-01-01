@@ -1,8 +1,6 @@
 /**
  * Pivot levels
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
@@ -33,6 +31,7 @@ extern color  Color.Support    = Red;
 #define MODE_S2               5
 #define MODE_S3               6
 
+#property indicator_chart_window
 #property indicator_buffers   7
 
 #property indicator_width1    1
@@ -105,7 +104,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (needed on terminal start)
+   // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(R3))
       return(log("onTick(1)  size(R3) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 

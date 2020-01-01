@@ -69,7 +69,7 @@
    int  FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
-   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see rsfLib1::GetClassName()
+   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
    int  GetDC(int hWnd);
    int  GetDesktopWindow();
    int  GetDlgCtrlID(int hWndCtl);
@@ -77,7 +77,7 @@
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
-   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see rsfLib1::GetWindowText()
+   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool IsIconic(int hWnd);
    bool IsWindow(int hWnd);

@@ -8802,7 +8802,7 @@ MA.Periods=22
 MA.Method=TMA
 Color.UpTrend=16711680
 Color.DownTrend=255
-Draw.LineWidth=1
+Draw.Width=1
 </inputs>
 </expert>
 period_flags=0

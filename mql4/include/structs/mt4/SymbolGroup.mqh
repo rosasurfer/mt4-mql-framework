@@ -3,7 +3,7 @@
  *
  * Die Größe der Datei ist fix und enthält Platz für exakt 32 Gruppen. Einzelne Gruppen können undefiniert sein.
  *
- * @see  MT4Expander::header/struct/mt4/SymbolGroup.h
+ * @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/SymbolGroup.h
  */
 #import "rsfExpander.dll"
    // Getter

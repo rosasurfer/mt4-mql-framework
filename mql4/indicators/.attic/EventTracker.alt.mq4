@@ -10,8 +10,6 @@
  *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
  *  - Anzeige der überwachten Kriterien
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -20,6 +18,8 @@ int __DEINIT_FLAGS__[];
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 #include <rsfLibs.mqh>
+
+#property indicator_chart_window
 
 
 // Konfiguration
