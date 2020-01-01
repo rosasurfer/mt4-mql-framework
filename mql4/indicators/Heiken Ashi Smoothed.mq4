@@ -9,6 +9,7 @@
 
 #property indicator_chart_window
 #property indicator_buffers 4
+
 #property indicator_color1 Red
 #property indicator_color2 RoyalBlue
 #property indicator_color3 Red
