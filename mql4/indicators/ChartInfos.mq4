@@ -29,8 +29,6 @@
  *   - Order tracking must monitor all symbols, not just the current one.
  *   - Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
@@ -61,6 +59,8 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
 #include <structs/rsf/LFXOrder.mqh>
+
+#property indicator_chart_window
 
 
 // chart infos

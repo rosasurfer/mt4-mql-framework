@@ -1,8 +1,6 @@
 /**
  * Pivot levels
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
@@ -33,6 +31,7 @@ extern color  Color.Support    = Red;
 #define MODE_S2               5
 #define MODE_S3               6
 
+#property indicator_chart_window
 #property indicator_buffers   7
 
 #property indicator_width1    1

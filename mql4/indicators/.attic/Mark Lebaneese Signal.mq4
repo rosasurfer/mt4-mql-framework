@@ -13,8 +13,6 @@
  *    EURUSD,H4 ::Signal Lebaneese::onTick()  bars=10000   min=-2857.4   max=1660.5   profit= -892.4   (800 trades)
  *    EURUSD,D1 ::Signal Lebaneese::onTick()  bars=6969    min=-3548.0   max=1254.0   profit=-2057.5
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -29,6 +27,8 @@ extern bool Alerts   = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+
+#property indicator_chart_window
 
 
 // Zugriff auf NonLagMA-Buffer

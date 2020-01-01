@@ -44,10 +44,6 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 
-#property indicator_chart_window
-#property indicator_buffers   5                          // visible in input dialog
-int       allocated_buffers = 7;
-
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
@@ -57,6 +53,10 @@ int       allocated_buffers = 7;
 #define MODE_EMA_1            5
 #define MODE_EMA_2            6
 #define MODE_EMA_3            MODE_MA
+
+#property indicator_chart_window
+#property indicator_buffers   5                          // visible in input dialog
+int       allocated_buffers = 7;
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE

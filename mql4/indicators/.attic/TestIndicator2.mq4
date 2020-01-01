@@ -1,8 +1,6 @@
 /**
  * TestIndicator
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -12,6 +10,8 @@ int __DEINIT_FLAGS__[];
 
 #include <MT4iQuickChannel.mqh>
 #include <win32api.mqh>
+
+#property indicator_chart_window
 
 
 /**

@@ -1,13 +1,14 @@
 /**
  * TestIndicator
  */
-#property indicator_chart_window
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+
+#property indicator_chart_window
 
 
 #import "test/testlibrary.ex4"

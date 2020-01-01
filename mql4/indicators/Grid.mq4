@@ -4,8 +4,6 @@
  * Die vertikalen Separatoren sind auf der ersten Bar der Session positioniert und tragen im Label das Datum der begonnenen
  * Session.
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
@@ -21,6 +19,8 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
+
+#property indicator_chart_window
 
 
 /**

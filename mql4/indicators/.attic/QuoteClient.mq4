@@ -1,7 +1,6 @@
 /**
  *
  */
-#property indicator_chart_window
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -11,6 +10,8 @@ int __DEINIT_FLAGS__[];
 
 #include <MT4iQuickChannel.mqh>
 #include <etc/offline/QuoteClient.mqh>
+
+#property indicator_chart_window
 
 
 string qc.quotes.SubscribeChannel;     // Subscribe-Channel: "MetaTrader::QuoteServer::{Symbol}"             (Chart -> QuoteServer)

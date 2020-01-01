@@ -8,8 +8,8 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-
 #property indicator_chart_window
+
 
 string text            = "jagt im komplett verwahrl. Taxi 1234,567.80 | ";
 color  backgroundColor = C'212,208,200';

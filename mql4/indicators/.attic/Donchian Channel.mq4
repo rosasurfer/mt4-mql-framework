@@ -16,7 +16,6 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 #include <rsfLibs.mqh>
 
 #property indicator_chart_window
-
 #property indicator_buffers   2
 
 #property indicator_color1    Blue

@@ -52,7 +52,6 @@ extern int    Max.Values                 = 5000;                     // max. amo
 #define MA_PERIODS_DOWN      -1
 
 #property indicator_chart_window
-
 #property indicator_buffers   5
 
 #property indicator_width1    0
