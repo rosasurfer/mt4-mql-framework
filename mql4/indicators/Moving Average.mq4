@@ -65,11 +65,11 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 
-double main     [];                                      // MA main values:   invisible, displayed in legend and "Data" window
-double trend    [];                                      // trend direction:  invisible, displayed in "Data" window
-double upTrend1 [];                                      // uptrend values:   visible
-double downTrend[];                                      // downtrend values: visible
-double upTrend2 [];                                      // on-bar uptrends:  visible
+double main     [];                                      // MA main values:      invisible, displayed in legend and "Data" window
+double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
+double upTrend1 [];                                      // uptrend values:      visible
+double downTrend[];                                      // downtrend values:    visible
+double upTrend2 [];                                      // single-bar uptrends: visible
 
 int    maMethod;
 int    maAppliedPrice;
@@ -283,7 +283,7 @@ int onTick() {
       else {                                 // built-in moving average
          main[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
       }
-      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, SubPipDigits);
+      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {
