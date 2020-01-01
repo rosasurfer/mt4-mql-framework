@@ -16,7 +16,6 @@ extern int CountBars = 1000;
 #include <rsfLibs.mqh>
 
 #property indicator_chart_window
-
 #property indicator_buffers  2
 int       allocatedBuffers = 2;
 

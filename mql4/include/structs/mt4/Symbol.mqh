@@ -3,7 +3,7 @@
  *
  * Die Symbole einer Datei sind alphabetisch nach Namen sortiert.
  *
- * @see  MT4Expander::header/struct/mt4/Symbol.h
+ * @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/Symbol.h
  */
 #import "rsfExpander.dll"
    // Getter

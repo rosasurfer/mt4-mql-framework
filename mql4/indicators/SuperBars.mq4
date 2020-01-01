@@ -4,8 +4,6 @@
  * Draws bars of a higher timeframe on the chart. The active timeframe can be changed via chart commands sent by two
  * accompanied scripts. To improve usability the scripts may be assigned to keyboard hotkeys.
  */
-#property indicator_chart_window
-
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
@@ -33,6 +31,8 @@ extern string ETH.Symbols                 = "";                // symbols with E
 #include <functions/iChangedBars.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
 #include <win32api.mqh>
+
+#property indicator_chart_window
 
 
 int    superBars.timeframe;                                    // the currently active superbar period

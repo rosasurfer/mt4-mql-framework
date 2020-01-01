@@ -52,7 +52,6 @@ extern int    Max.Values                 = 5000;                     // max. amo
 #define MA_PERIODS_DOWN      -1
 
 #property indicator_chart_window
-
 #property indicator_buffers   5
 
 #property indicator_width1    0
@@ -246,7 +245,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, indicator_drawingType, true, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, indicator_drawingType, true, true, Digits);
    }
 
 

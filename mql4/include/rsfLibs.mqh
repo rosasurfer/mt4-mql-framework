@@ -13,7 +13,8 @@
 
 
    // Arrays
-   int      ArraySetInts        (int array[][], int i, int values[]);
+   bool     ArrayAddInt         (int    array[],   int value);
+   int      ArraySetInts        (int    array[][], int i, int values[]);
 
    int      ArrayPushBool       (bool   array[],   bool   value   );
    int      ArrayPushInt        (int    array[],   int    value   );

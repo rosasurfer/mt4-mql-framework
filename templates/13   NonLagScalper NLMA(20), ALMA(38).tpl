@@ -8806,7 +8806,7 @@ MA.Periods=38
 Color.UpTrend=3329330
 Color.DownTrend=255
 Draw.Type=Dot
-Draw.LineWidth=3
+Draw.Width=3
 </inputs>
 </expert>
 period_flags=0

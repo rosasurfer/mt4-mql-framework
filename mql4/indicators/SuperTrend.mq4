@@ -39,7 +39,7 @@ extern color  Color.DownTrend      = Red;
 extern color  Color.Channel        = CLR_NONE;
 extern color  Color.MovingAverage  = CLR_NONE;
 extern string Draw.Type            = "Line* | Dot";
-extern int    Draw.LineWidth       = 3;
+extern int    Draw.Width           = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
 extern string __________________________;
 
@@ -60,9 +60,6 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 
-#property indicator_chart_window
-#property indicator_buffers   7
-
 #define MODE_MAIN             SuperTrend.MODE_MAIN       // indicator buffer ids
 #define MODE_TREND            SuperTrend.MODE_TREND
 #define MODE_UPTREND          2
@@ -70,6 +67,9 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #define MODE_UPPER_BAND       4
 #define MODE_LOWER_BAND       5
 #define MODE_MA               6
+
+#property indicator_chart_window
+#property indicator_buffers   7
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -122,10 +122,10 @@ int onInit() {
 
    // validate inputs
    // ATR.Periods
-   if (ATR.Periods < 1)    return(catch("onInit(1)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1) return(catch("onInit(1)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // SMA.Periods
-   if (SMA.Periods < 2)    return(catch("onInit(2)  Invalid input parameter SMA.Periods = "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.Periods < 2) return(catch("onInit(2)  Invalid input parameter SMA.Periods = "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend       == 0xFF000000) Color.UpTrend       = CLR_NONE;
@@ -142,14 +142,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                 return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
-   // Draw.LineWidth
-   if (Draw.LineWidth < 0) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5) return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   // Draw.Width
+   if (Draw.Width < 0)  return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5)  return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1) return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
@@ -222,7 +222,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (needed on terminal start)
+   // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(main))
       return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -310,7 +310,7 @@ int onTick() {
       else /*(trend[i] < 0)*/{
          upLine  [i] = EMPTY_VALUE;
          downLine[i] = main[i];
-         if (drawType == DRAW_LINE) {                       // make sure reversals becomes visible
+         if (drawType == DRAW_LINE) {                       // make sure reversals become visible
             if (trend[i+1] < 0)
                upLine[i+1] = EMPTY_VALUE;
             downLine[i+1] = main[i+1];
@@ -375,16 +375,16 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
 
-   int drType  = ifInt(drawType==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
-   int drWidth = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.LineWidth);
+   int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
+   int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
 
-   SetIndexStyle(MODE_MAIN,       DRAW_NONE, EMPTY, EMPTY,   CLR_NONE           );
-   SetIndexStyle(MODE_TREND,      DRAW_NONE, EMPTY, EMPTY,   CLR_NONE           );
-   SetIndexStyle(MODE_UPTREND,    drType,    EMPTY, drWidth, Color.UpTrend      ); SetIndexArrow(MODE_UPTREND,   159);
-   SetIndexStyle(MODE_DOWNTREND,  drType,    EMPTY, drWidth, Color.DownTrend    ); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,   Color.Channel      );
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,   Color.Channel      );
-   SetIndexStyle(MODE_MA,         DRAW_LINE, EMPTY, EMPTY,   Color.MovingAverage);
+   SetIndexStyle(MODE_MAIN,       DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
+   SetIndexStyle(MODE_TREND,      DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
+   SetIndexStyle(MODE_UPTREND,    draw_type, EMPTY, draw_width, Color.UpTrend      ); SetIndexArrow(MODE_UPTREND,   159);
+   SetIndexStyle(MODE_DOWNTREND,  draw_type, EMPTY, draw_width, Color.DownTrend    ); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY,      Color.Channel      );
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY,      Color.Channel      );
+   SetIndexStyle(MODE_MA,         DRAW_LINE, EMPTY, EMPTY,      Color.MovingAverage);
 
    if (Color.Channel == CLR_NONE) {
       SetIndexLabel(MODE_UPPER_BAND, NULL);
@@ -414,7 +414,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Color.Channel",        Color.Channel       );
    Chart.StoreColor (name +".input.Color.MovingAverage",  Color.MovingAverage );
    Chart.StoreString(name +".input.Draw.Type",            Draw.Type           );
-   Chart.StoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth      );
+   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width          );
    Chart.StoreInt   (name +".input.Max.Values",           Max.Values          );
    Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
    Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound        );
@@ -438,7 +438,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Color.Channel",        Color.Channel       );
    Chart.RestoreColor (name +".input.Color.MovingAverage",  Color.MovingAverage );
    Chart.RestoreString(name +".input.Draw.Type",            Draw.Type           );
-   Chart.RestoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth      );
+   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width          );
    Chart.RestoreInt   (name +".input.Max.Values",           Max.Values          );
    Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
    Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound        );
@@ -461,7 +461,7 @@ string InputsToStr() {
                             "Color.Channel=",        ColorToStr(Color.Channel),            ";", NL,
                             "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
-                            "Draw.LineWidth=",       Draw.LineWidth,                       ";", NL,
+                            "Draw.Width=",           Draw.Width,                           ";", NL,
                             "Max.Values=",           Max.Values,                           ";", NL,
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
