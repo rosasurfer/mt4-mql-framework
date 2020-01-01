@@ -70,7 +70,7 @@ double thirdEma [];                                      // TriEMA main value:  
 double trend    [];                                      // trend direction:                invisible, displayed in "Data" window
 double upTrend1 [];                                      // uptrend values:                 visible
 double downTrend[];                                      // downtrend values:               visible
-double upTrend2 [];                                      // on-bar uptrends:                visible
+double upTrend2 [];                                      // single-bar uptrends:            visible
 
 int    maAppliedPrice;
 int    maxValues;
@@ -262,7 +262,7 @@ int onTick() {
    for (i=ChangedBars-1; i >= 0; i--)   firstEma [i] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, maAppliedPrice, i);
    for (i=ChangedBars-1; i >= 0; i--)   secondEma[i] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
    for (i=startBar;      i >= 0; i--) { thirdEma [i] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
-      @Trend.UpdateDirection(thirdEma, i, trend, upTrend1, downTrend, upTrend2, drawType, true, true, SubPipDigits);
+      @Trend.UpdateDirection(thirdEma, i, trend, upTrend1, downTrend, upTrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {

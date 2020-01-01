@@ -310,7 +310,7 @@ int onTick() {
       else /*(trend[i] < 0)*/{
          upLine  [i] = EMPTY_VALUE;
          downLine[i] = main[i];
-         if (drawType == DRAW_LINE) {                       // make sure reversals becomes visible
+         if (drawType == DRAW_LINE) {                       // make sure reversals become visible
             if (trend[i+1] < 0)
                upLine[i+1] = EMPTY_VALUE;
             downLine[i+1] = main[i+1];

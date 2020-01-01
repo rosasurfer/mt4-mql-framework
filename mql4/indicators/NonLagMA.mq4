@@ -67,11 +67,11 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 
-double main     [];                                      // MA main values:   invisible, displayed in legend and "Data" window
-double trend    [];                                      // trend direction:  invisible, displayed in "Data" window
-double upTrend1 [];                                      // uptrend values:   visible
-double downTrend[];                                      // downtrend values: visible
-double upTrend2 [];                                      // on-bar uptrends:  visible
+double main     [];                                      // MA main values:      invisible, displayed in legend and "Data" window
+double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
+double upTrend1 [];                                      // uptrend values:      visible
+double downTrend[];                                      // downtrend values:    visible
+double upTrend2 [];                                      // single-bar uptrends: visible
 
 int    cycles = 4;
 int    cycleLength;
@@ -246,7 +246,7 @@ int onTick() {
       for (int i=0; i < cycleWindowSize; i++) {
          main[bar] += maWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
       }
-      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, SubPipDigits);
+      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {
