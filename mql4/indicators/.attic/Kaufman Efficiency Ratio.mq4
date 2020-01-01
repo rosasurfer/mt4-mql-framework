@@ -90,7 +90,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (needed on terminal start)
+   // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferKER))
       return(log("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
