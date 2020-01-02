@@ -53,8 +53,7 @@ int    iCycleLimit, iHighLimit, iCounterA, iCounterB;
 double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB, dPowerValue, dSquareValue;
 double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA, dJMATemp;
 bool   bInitFlag = true;
-
-int i3, i4, i5;
+int    i3, i4, i5;
 
 string indicatorName;
 string chartLegendLabel;
@@ -152,19 +151,17 @@ int onTick() {
 
       if (iLoopParam > 30) {
          if (bInitFlag) {
-            bInitFlag = false;
-
-            int iDiffFlag = 0;
-            for (int i=1; i <= 29; i++) {
-               if (dPrices62[i+1] != dPrices62[i]) iDiffFlag = 1;    // double comparison error
+            bInitFlag  = false;
+            iHighLimit = 0;
+            dParamB    = dPrice;
+            for (int i=1; i < 30; i++) {
+               if (NE(dPrices62[i], dPrices62[i+1], Digits)) {
+                  iHighLimit = 29;
+                  dParamB    = dPrices62[1];
+                  break;
+               }
             }
-            iHighLimit = iDiffFlag * 30;
-
-            if (iHighLimit == 0) dParamB = dPrice;
-            else                 dParamB = dPrices62[1];
-
             dParamA = dParamB;
-            if (iHighLimit > 29) iHighLimit = 29;
          }
          else iHighLimit = 0;
 
@@ -203,12 +200,12 @@ int onTick() {
                      i5 >>= 1;
                      i1 += i5;
                   }
-                  else if (dList128[i1] <= dValue) {
-                     i5 = 1;
-                  }
-                  else {
+                  else if (dList128[i1] > dValue) {
                      i5 >>= 1;
                      i1 -= i5;
+                  }
+                  else {
+                     i5 = 1;
                   }
                }
             }
@@ -222,74 +219,59 @@ int onTick() {
                   iLimitValue++;
                   i1 = iLimitValue;
                }
-               if (iLimitValue > 96) i4 = 96;
-               else                  i4 = iLimitValue;
-               if (iStartValue < 32) i3 = 32;
-               else                  i3 = iStartValue;
+               if (iLimitValue > 96) i3 = 96;
+               else                  i3 = iLimitValue;
+               if (iStartValue < 32) i4 = 32;
+               else                  i4 = iStartValue;
             }
 
             i5 = 64;
             int i2 = i5;
 
             while (i5 > 1) {
-               if (dList128[i2] >= dHighValue) {
-                  if (dList128[i2-1] <= dHighValue) {
-                     i5 = 1;
-                  }
-                  else {
-                     i5 >>= 1;
-                     i2 -= i5;
-                  }
-               }
-               else {
+               if (dList128[i2] < dHighValue) {
                   i5 >>= 1;
                   i2 += i5;
                }
-               if (i2==127 && dHighValue > dList128[127]) i2 = 128;
+               else if (dList128[i2-1] > dHighValue) {
+                  i5 >>= 1;
+                  i2 -= i5;
+               }
+               else {
+                  i5 = 1;
+               }
+               if (i2==127 && dHighValue > dList128[127])
+                  i2 = 128;
             }
 
             if (iCycleLimit > 127) {
                if (i1 >= i2) {
-                  if      (i4+1 > i2 && i3-1 < i2) dLowValue += dHighValue;
-                  else if (i3   > i2 && i3-1 < i1) dLowValue += dList128[i3-1];
+                  if      (i3+1 > i2 && i4-1 < i2) dLowValue += dHighValue;
+                  else if (i4   > i2 && i4-1 < i1) dLowValue += dList128[i4-1];
                }
-               else if (i3 >= i2) {
-                  if (i4+1 < i2 && i4+1 > i1)      dLowValue += dList128[i4+1];
+               else if (i4 >= i2) {
+                  if (i3+1 < i2 && i3+1 > i1)      dLowValue += dList128[i3+1];
                }
-               else if (i4+2 > i2)                 dLowValue += dHighValue;
-               else if (i4+1 < i2 && i4+1 > i1)    dLowValue += dList128[i4+1];
+               else if (i3+2 > i2)                 dLowValue += dHighValue;
+               else if (i3+1 < i2 && i3+1 > i1)    dLowValue += dList128[i3+1];
 
                if (i1 > i2) {
-                  if      (i3-1 < i1 && i4+1 > i1) dLowValue -= dList128[i1];
-                  else if (i4   < i1 && i4+1 > i2) dLowValue -= dList128[i4];
+                  if      (i4-1 < i1 && i3+1 > i1) dLowValue -= dList128[i1];
+                  else if (i3   < i1 && i3+1 > i2) dLowValue -= dList128[i3];
                }
                else {
-                  if      (i4+1 > i1 && i3-1 < i1) dLowValue -= dList128[i1];
-                  else if (i3   > i1 && i3   < i2) dLowValue -= dList128[i3];
+                  if      (i3+1 > i1 && i4-1 < i1) dLowValue -= dList128[i1];
+                  else if (i4   > i1 && i4   < i2) dLowValue -= dList128[i4];
                }
             }
 
-            if (i1 <= i2) {
-               if (i1 >= i2) {
-                  dList128[i2] = dHighValue;
-               }
-               else {
-                  for (int j=i1+1; j <= i2-1; j++) {
-                     dList128[j-1] = dList128[j];
-                  }
-                  dList128[i2-1] = dHighValue;
-               }
-            }
-            else {
-               for (j=i1-1; j >= i2; j--) {
-                  dList128[j+1] = dList128[j];
-               }
-               dList128[i2] = dHighValue;
-            }
+            if      (i1 > i2) { for (int j=i1-1; j >= i2;   j--) dList128[j+1] = dList128[j]; dList128[i2]   = dHighValue; }
+            else if (i1 < i2) { for (    j=i1+1; j <= i2-1; j++) dList128[j-1] = dList128[j]; dList128[i2-1] = dHighValue; }
+            else              {                                                               dList128[i2]   = dHighValue; }
 
             if (iCycleLimit <= 127) {
                dLowValue = 0;
-               for (j=i3; j <= i4; j++) {
+               for (j=i4; j <= i3; j++) {
                   dLowValue += dList128[j];
                }
             }
@@ -324,7 +306,7 @@ int onTick() {
                }
             }
             else {
-               dValue = dLowValue / (i4 - i3 + 1);
+               dValue = dLowValue / (i3 - i4 + 1);
 
                dPowerValue = dLogParam - 2.0;
                if (dPowerValue < 0.5) dPowerValue = 0.5;
