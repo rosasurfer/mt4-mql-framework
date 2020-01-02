@@ -277,25 +277,25 @@ int onTick() {
 
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
    // JMA initialization
-   int    i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, iLoopParam, iHighLimit, iLoopCriteria;
-   double d02, d03, d04, d05, d06, d07, d08, dHighValue, dSValue, dParamA, dParamB, d13, d14, d15, d17, d18, dLengthDivider, d20, d21, d22, d24, d26, dSqrtDivider, d28, dAbsValue, d30, d31, d32, d33, d34;
+   int    i01, i03, i04, i05, i06, i07, i08, i09, i10, iLoopParam, iHighLimit, iLoopCriteria;
+   double d02, d03, d04, d06, d07, d08, dHighValue, dSValue, dParamA, dParamB, d13, d14, d15, d17, d18, dLengthDivider, d21, dValue1, dValue2, d24, d26, dSqrtDivider, d28, dAbsValue, d30, d31, dJMATemp, iBuffer1, d34;
    double dJMA, dPrice;
 
-   double dList127 [127];
-   double dRing127 [127];
-   double dRing10  [ 10];
-   double dPrices61[ 61];
+   double dList128 [128];
+   double dRing128 [128];
+   double dRing11  [ 11];
+   double dPrices62[ 62];
 
-   ArrayInitialize(dList127, -1000000);
-   ArrayInitialize(dRing127,        0);
-   ArrayInitialize(dRing10,         0);
-   ArrayInitialize(dPrices61,       0);
+   ArrayInitialize(dList128, -1000000);
+   ArrayInitialize(dRing128,        0);
+   ArrayInitialize(dRing11,         0);
+   ArrayInitialize(dPrices62,       0);
 
    int iLimitValue = 63;
    int iStartValue = 64;
 
-   for (int i=iLimitValue; i < 127; i++) {
-      dList127[i] = 1000000;
+   for (int i=iStartValue; i < 127; i++) {
+      dList128[i] = 1000000;
    }
 
    double dLengthParam = (Periods-1) / 2.;
@@ -311,13 +311,12 @@ int onTick() {
       dPrice = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
 
       if (iLoopParam < 61) {
-         dPrices61[iLoopParam] = dPrice;
+         dPrices62[iLoopParam] = dPrice;
          iLoopParam++;
       }
 
       if (iLoopParam > 30) {
          d02 = MathLog(MathSqrt(dLengthParam));
-         d03 = d02;
          d04 = d02/MathLog(2) + 2;
          if (d04 < 0)
             d04 = 0;
@@ -334,12 +333,12 @@ int onTick() {
             bInitFlag = false;
             i01        = 0;
             iHighLimit = 0;
-            dParamB = dPrice;
+            dParamB    = dPrice;
             for (i=0; i < 30; i++) {
-               if (!EQ(dPrices61[i], dPrices61[i+1], Digits)) {
+               if (!EQ(dPrices62[i], dPrices62[i+1], Digits)) {
                   i01        = 1;
                   iHighLimit = 29;
-                  dParamB = dPrices61[0];
+                  dParamB    = dPrices62[1];
                   break;
                }
             }
@@ -352,13 +351,12 @@ int onTick() {
          // big cycle
          for (i=iHighLimit; i >= 0; i--) {
             if (i == 0) dSValue = dPrice;
-            else        dSValue = dPrices61[30-i];
+            else        dSValue = dPrices62[31-i];
 
             d14 = dSValue - dParamA;
             d18 = dSValue - dParamB;
-            if (MathAbs(d14) > MathAbs(d18)) d03 = MathAbs(d14);
-            else                             d03 = MathAbs(d18);
-            dAbsValue     = d03;
+            if (MathAbs(d14) > MathAbs(d18)) dAbsValue = MathAbs(d14);
+            else                             dAbsValue = MathAbs(d18);
             double dValue = dAbsValue + 0.0000000001;
 
             if (i05 <= 1) i05 = 127;
@@ -368,23 +366,23 @@ int onTick() {
             if (i10 < 128)
                i10++;
 
-            d06           += dValue - dRing10[i06-1];
-            dRing10[i06-1] = dValue;
+            d06         += dValue - dRing11[i06];
+            dRing11[i06] = dValue;
 
             if (i10 > 10) dHighValue = d06/10;
             else          dHighValue = d06/i10;
 
             if (i10 > 127) {
-               d07             = dRing127[i05-1];
-               dRing127[i05-1] = dHighValue;
+               d07           = dRing128[i05];
+               dRing128[i05] = dHighValue;
                i09 = 64;
                i07 = i09;
                while (i09 > 1) {
-                  if (dList127[i07-1] < d07) {
+                  if (dList128[i07] < d07) {
                      i09 >>= 1;
                      i07  += i09;
                   }
-                  else if (dList127[i07-1] > d07) {
+                  else if (dList128[i07] > d07) {
                      i09 >>= 1;
                      i07  -= i09;
                   }
@@ -394,7 +392,7 @@ int onTick() {
                }
             }
             else {
-               dRing127[i05-1] = dHighValue;
+               dRing128[i05] = dHighValue;
                if (iLimitValue + iStartValue > 127) {
                   iStartValue--;
                   i07 = iStartValue;
@@ -413,48 +411,48 @@ int onTick() {
             i08 = i09;
 
             while (i09 > 1) {
-               if (dList127[i08-1] < dHighValue) {
+               if (dList128[i08] < dHighValue) {
                   i09 >>= 1;
                   i08  += i09;
                }
-               else if (dList127[i08-2] > dHighValue) {
+               else if (dList128[i08-1] > dHighValue) {
                   i09 >>= 1;
                   i08  -= i09;
                }
                else {
                   i09 = 1;
                }
-               if (i08==127 && dHighValue > dList127[126])
+               if (i08==127 && dHighValue > dList128[127])
                   i08 = 128;
             }
 
             if (i10 > 127) {
                if (i07 >= i08) {
                   if      (i03+1 > i08 && i04-1 < i08) d08 += dHighValue;
-                  else if (i04   > i08 && i04-1 < i07) d08 += dList127[i04-2];
+                  else if (i04   > i08 && i04-1 < i07) d08 += dList128[i04-1];
                }
                else if (i04 >= i08) {
-                  if      (i03+1 < i08 && i03+1 > i07) d08 += dList127[i03];
+                  if      (i03+1 < i08 && i03+1 > i07) d08 += dList128[i03+1];
                }
                else if    (i03+2 > i08               ) d08 += dHighValue;
-               else if    (i03+1 < i08 && i03+1 > i07) d08 += dList127[i03];
+               else if    (i03+1 < i08 && i03+1 > i07) d08 += dList128[i03+1];
 
                if (i07 > i08) {
-                  if      (i04-1 < i07 && i03+1 > i07) d08 -= dList127[i07-1];
-                  else if (i03   < i07 && i03+1 > i08) d08 -= dList127[i03-1];
+                  if      (i04-1 < i07 && i03+1 > i07) d08 -= dList128[i07];
+                  else if (i03   < i07 && i03+1 > i08) d08 -= dList128[i03];
                }
-               else if    (i03+1 > i07 && i04-1 < i07) d08 -= dList127[i07-1];
-               else if    (i04   > i07 && i04   < i08) d08 -= dList127[i04-1];
+               else if    (i03+1 > i07 && i04-1 < i07) d08 -= dList128[i07];
+               else if    (i04   > i07 && i04   < i08) d08 -= dList128[i04];
             }
 
-            if      (i07 > i08) { for (int j=i07-1; j >= i08;   j--) dList127[j  ] = dList127[j-1]; dList127[i08-1] = dHighValue; }
-            else if (i07 < i08) { for (    j=i07+1; j <= i08-1; j++) dList127[j-2] = dList127[j-1]; dList127[i08-2] = dHighValue; }
-            else                {                                                                   dList127[i08-1] = dHighValue; }
+            if      (i07 > i08) { for (int j=i07-1; j >= i08;   j--) dList128[j+1] = dList128[j]; dList128[i08]   = dHighValue; }
+            else if (i07 < i08) { for (    j=i07+1; j <= i08-1; j++) dList128[j-1] = dList128[j]; dList128[i08-1] = dHighValue; }
+            else                {                                                                 dList128[i08]   = dHighValue; }
 
             if (i10 <= 127) {
                d08 = 0;
                for (j=i04; j <= i03; j++) {
-                  d08 += dList127[j-1];
+                  d08 += dList128[j];
                }
             }
             d21 = d08/(i03 - i04 + 1);
@@ -468,25 +466,26 @@ int onTick() {
                if (d18 < 0) dParamB = dSValue;
                else         dParamB = dSValue - d18 * dSqrtDivider;
 
-               d32 = dPrice;
+               dJMATemp = dPrice;
+               if (iLoopCriteria != 30)
+                  continue;
 
-               if (iLoopCriteria == 30) {
-                  d33 = dPrice;
-                  if (d24 > 0)  d05 = MathCeil(d24);
-                  else          d05 = 1;
-                  if (d24 >= 1) d03 = MathFloor(d24);
-                  else          d03 = 1;
+               iBuffer1 = dPrice;
+               int i51, i52;
+               if (d24 > 0)  i51 = MathCeil(d24);
+               else          i51 = 1;
+               if (d24 >= 1) i52 = MathFloor(d24);
+               else          i52 = 1;
 
-                  if (d03 == d05) d22 = 1;
-                  else            d22 = (d24-d03) / (d05-d03);
+               dValue1 = MathDiv(d24-i52, i51-i52, 1);
 
-                  if (d03 <= 29) i01 = d03;
-                  else           i01 = 29;
-                  if (d05 <= 29) i02 = d05;
-                  else           i02 = 29;
+               int iUpShift=29, iDnShift=29;
+               if (i52 <= 29) iUpShift = i52;
+               else           iUpShift = 29;
+               if (i51 <= 29) iDnShift = i51;
+               else           iDnShift = 29;
 
-                  d30 = (dPrice-dPrices61[iLoopParam-i01-1]) * (1-d22)/d03 + (dPrice-dPrices61[iLoopParam-i02-1]) * d22/d05;
-               }
+               d30 = (dPrice-dPrices62[iLoopParam-iUpShift]) * (1-dValue1)/i52 + (dPrice-dPrices62[iLoopParam-iDnShift]) * dValue1/i51;
             }
             else {
                d02 = MathPow(dAbsValue/d21, d26);
@@ -500,8 +499,8 @@ int onTick() {
                   d03 = d02;
                   d04 = d02;
                }
-               d20 = d03;
-               double dPowerValue1 = MathPow(dSqrtDivider, MathSqrt(d20));
+               dValue2 = d03;
+               double dPowerValue1 = MathPow(dSqrtDivider, MathSqrt(dValue2));
 
                if (d14 > 0) dParamA = dSValue;
                else         dParamA = dSValue - d14 * dPowerValue1;
@@ -511,16 +510,16 @@ int onTick() {
          }
 
          if (iLoopCriteria > 30) {
-            d15  = MathPow(dLengthDivider, d20);
-            d33  = (1-d15) * dPrice + d15 * d33;
-            d34  = (dPrice-d33) * (1-dLengthDivider) + dLengthDivider * d34;
-            d13  = -d15 * 2;
-            d17  = d15 * d15;
-            d31  = d13 + d17 + 1;
-            d30  = (dPhaseParam * d34 + d33 - d32) * d31 + d17 * d30;
-            d32 += d30;
+            d15       = MathPow(dLengthDivider, dValue2);
+            iBuffer1  = (1-d15) * dPrice + d15 * iBuffer1;
+            d34       = (dPrice-iBuffer1) * (1-dLengthDivider) + dLengthDivider * d34;
+            d13       = -d15 * 2;
+            d17       = d15 * d15;
+            d31       = d13 + d17 + 1;
+            d30       = (dPhaseParam * d34 + iBuffer1 - dJMATemp) * d31 + d17 * d30;
+            dJMATemp += d30;
          }
-         dJMA = d32;
+         dJMA = dJMATemp;
       }
       else {
          dJMA = EMPTY_VALUE;
