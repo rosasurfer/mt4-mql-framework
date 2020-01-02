@@ -313,6 +313,11 @@ int onTick() {
    // update/show profit targets
    if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
 
+   static bool done;
+   if (!done && IsTesting() && Tick.Time >= D'2019.12.31 12:45') {
+      Tester.Pause();
+      done = true;
+   }
    return(last_error);
 }
 
@@ -1401,7 +1406,7 @@ bool IsStartSignal(int &signal) {
    }
 
    if (sessionbreak.waiting) {
-      // -- after sessionbreak: wait for the stop price to be reached (if not in level 0) -----------------------------------
+      // -- after sessionbreak: wait for the stop price to be reached if not in level 0 -------------------------------------
       if (!sequence.level) {
          if (__LOG()) log("IsStartSignal(2)  sequence "+ sequence.name +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
          signal = SIGNAL_SESSIONBREAK;
@@ -1488,7 +1493,7 @@ bool IsStartSignal(int &signal) {
 
 
 /**
- * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are "OR" combined.
+ * Whether a stop condition is satisfied for a waiting or progressing sequence. All stop conditions are "OR" combined.
  *
  * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled stop condition
  *
@@ -1502,15 +1507,17 @@ bool IsStopSignal(int &signal) {
 
    // -- stop.trend: fulfilled on trend change against the direction of the sequence ----------------------------------------
    if (stop.trend.condition) {
-      if (IsBarOpenEvent(stop.trend.timeframe)) {
-         int trend = GetStopTrendValue(1);
+      if (sequence.status==STATUS_PROGRESSING || sessionbreak.waiting) {
+         if (IsBarOpenEvent(stop.trend.timeframe)) {
+            int trend = GetStopTrendValue(1);
 
-         if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-            message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-            if (!IsTesting()) warn(message);
-            else if (__LOG()) log(message);
-            signal = SIGNAL_TREND;
-            return(true);
+            if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
+               message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+               if (!IsTesting()) warn(message);
+               else if (__LOG()) log(message);
+               signal = SIGNAL_TREND;
+               return(true);
+            }
          }
       }
    }
