@@ -50,7 +50,7 @@ double dList128[128], dRing128[128], dRing11[11], dPrices62[62];
 
 int    iLimitValue, iStartValue, iLoopParam, iLoopCriteria;
 int    iCycleLimit, iHighLimit, iCounterA, iCounterB;
-double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB;
+double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB, dPowerValue, dSquareValue;
 double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA, dJMATemp;
 bool   bInitFlag = true;
 
@@ -324,33 +324,32 @@ int onTick() {
                }
             }
             else {
-               double dPowerValue1;
-
                dValue = dLowValue / (i4 - i3 + 1);
-               if (0.5 <= dLogParam-2.0) dPowerValue1 = dLogParam - 2.0;
-               else                      dPowerValue1 = 0.5;
 
-               if (dLogParam >= MathPow(dAbsValue/dValue, dPowerValue1)) dValue = MathPow(dAbsValue/dValue, dPowerValue1);
-               else                                                      dValue = dLogParam;
-               if (dValue < 1)                                           dValue = 1;
+               dPowerValue = dLogParam - 2.0;
+               if (dPowerValue < 0.5) dPowerValue = 0.5;
 
-               dPowerValue1 = MathPow(dSqrtDivider, MathSqrt(dValue));
+               dValue = MathPow(dAbsValue/dValue, dPowerValue);
+               if (dValue > dLogParam) dValue = dLogParam;
+               if (dValue < 1)         dValue = 1;
+
+               dPowerValue = MathPow(dSqrtDivider, MathSqrt(dValue));
                if (dSValue-dParamA > 0) dParamA = dSValue;
-               else                     dParamA = dSValue - (dSValue-dParamA) * dPowerValue1;
+               else                     dParamA = dSValue - (dSValue-dParamA) * dPowerValue;
                if (dSValue-dParamB < 0) dParamB = dSValue;
-               else                     dParamB = dSValue - (dSValue-dParamB) * dPowerValue1;
+               else                     dParamB = dSValue - (dSValue-dParamB) * dPowerValue;
             }
          }
          // end of big cycle
 
          if (iLoopCriteria > 30) {
-            dJMATemp            = jmaBuffer[shift+1];
-            double dPowerValue2 = MathPow(dLengthDivider, dValue);
-            double dSquareValue = MathPow(dPowerValue2, 2);
+            dJMATemp     = jmaBuffer[shift+1];
+            dPowerValue  = MathPow(dLengthDivider, dValue);
+            dSquareValue = MathPow(dPowerValue, 2);
 
-            iBuffer1[shift] = (1-dPowerValue2) * dPrice + dPowerValue2 * iBuffer1[shift+1];
+            iBuffer1[shift] = (1-dPowerValue) * dPrice + dPowerValue * iBuffer1[shift+1];
             iBuffer2[shift] = (dPrice-iBuffer1[shift]) * (1-dLengthDivider) + dLengthDivider * iBuffer2[shift+1];
-            iBuffer3[shift] = (dPhaseParam * iBuffer2[shift] + iBuffer1[shift] - dJMATemp) * (-2. * dPowerValue2 + dSquareValue + 1) + dSquareValue * iBuffer3[shift+1];
+            iBuffer3[shift] = (dPhaseParam * iBuffer2[shift] + iBuffer1[shift] - dJMATemp) * (-2 * dPowerValue + dSquareValue + 1) + dSquareValue * iBuffer3[shift+1];
             dJMATemp += iBuffer3[shift];
          }
          dJMA = dJMATemp;
