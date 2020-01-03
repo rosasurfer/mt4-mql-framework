@@ -3,7 +3,7 @@
  *
  *
  * Opposite to its name this indicator is an adaptive filter and not a moving average. Source is an MQL4 port of the JMA as
- * found in TradeStation of 1998, authored under the synonym "Spiggy". It did not account for the lack of tick support in
+ * found in TradeStation of 1998, authored under the pseudonym "Spiggy". It did not account for the lack of tick support in
  * that TradeStation version which made the resulting indicator repaint. This implementation uses the original algorythm but
  * fixes the code conversion issues. It does not repaint.
  *
