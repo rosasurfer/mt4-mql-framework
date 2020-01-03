@@ -127,7 +127,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
 
 
 /**
- * Update a trend line's chart legend.
+ * Update a trendline's chart legend.
  *
  * @param  string   label          - chart label of the legend object
  * @param  string   name           - the trend line's name (indicator name)
