@@ -27,8 +27,8 @@ extern int    Periods              = 14;
 extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern int    Phase                = 0;                  // indicator overshooting: -100 (none)...+100 (max)
 
-extern color  Color.UpTrend        = DodgerBlue;
-extern color  Color.DownTrend      = Orange;
+extern color  Color.UpTrend        = Blue;
+extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
