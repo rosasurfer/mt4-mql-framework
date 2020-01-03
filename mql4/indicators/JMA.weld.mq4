@@ -51,7 +51,7 @@ double dList128[128], dRing128[128], dRing11[11], dPrices62[62];
 int    iLimitValue, iStartValue, iLoopParam, iLoopCriteria;
 int    iCycleLimit, iHighLimit, iCounterA, iCounterB;
 double dCycleDelta, dLowValue, dHighValue, dAbsValue, dParamA, dParamB, dPowerValue, dSquareValue;
-double dPhaseParam, dLogParam, dSqrtParam, dLengthDivider, dPrice, dSValue, dJMA, dJMATemp;
+double dPhaseParam, dLogParam, dSqrtParam, dSqrtDivider, dLengthDivider, dPrice, dSValue, dJMA, dJMATemp;
 bool   bInitFlag = true;
 int    i3, i4, i5;
 
@@ -90,19 +90,18 @@ int onInit() {
    for (i=iStartValue; i <= 127; i++)   dList128[i] = +1000000;
 
    double dLengthParam = 0.0000000001;
-   if (Length >= 1.0000000002) dLengthParam = (Length-1) / 2.;
+   if (Length > 1) dLengthParam = (Length-1) / 2.;
 
    if      (Phase < -100) dPhaseParam = 0.5;
    else if (Phase > +100) dPhaseParam = 2.5;
    else                   dPhaseParam = Phase/100. + 1.5;
 
-   dLogParam = MathLog(MathSqrt(dLengthParam)) / MathLog(2);
-   if (dLogParam+2 < 0) dLogParam = 0;
-   else                 dLogParam = dLogParam + 2;
+   dLogParam = MathLog(MathSqrt(dLengthParam))/MathLog(2) + 2;
+   if (dLogParam < 0) dLogParam = 0;
 
    dSqrtParam     = MathSqrt(dLengthParam) * dLogParam;
-   dLengthParam   = dLengthParam * 0.9;
-   dLengthDivider = dLengthParam / (dLengthParam+2);
+   dSqrtDivider   = dSqrtParam / (dSqrtParam+1);
+   dLengthDivider = dLengthParam*0.9 / (dLengthParam*0.9 + 2);
 
 
    // chart legend
@@ -279,8 +278,6 @@ int onTick() {
             iLoopCriteria++;
             if (iLoopCriteria > 31) iLoopCriteria = 31;
 
-            double dSqrtDivider = dSqrtParam / (dSqrtParam+1);
-
             if (iLoopCriteria <= 30) {
                if (dSValue-dParamA > 0) dParamA = dSValue;
                else                     dParamA = dSValue - (dSValue-dParamA) * dSqrtDivider;
@@ -316,6 +313,7 @@ int onTick() {
                if (dValue < 1)         dValue = 1;
 
                dPowerValue = MathPow(dSqrtDivider, MathSqrt(dValue));
+
                if (dSValue-dParamA > 0) dParamA = dSValue;
                else                     dParamA = dSValue - (dSValue-dParamA) * dPowerValue;
                if (dSValue-dParamB < 0) dParamB = dSValue;

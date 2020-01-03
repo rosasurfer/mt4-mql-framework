@@ -73,6 +73,8 @@ double uptrend1 [];                                      // uptrend values:     
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
 
+double dLengthDivider, dPhaseParam, dLogParam, dSqrtParam, dSqrtDivider;
+
 int    appliedPrice;
 
 int    maxValues;
@@ -200,6 +202,14 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
+   // initialize JMA calculation
+   double dLengthParam = MathMax(0.0000000001, (Periods-1)/2.);
+   dLengthDivider = dLengthParam*0.9 / (dLengthParam*0.9 + 2);
+   dPhaseParam    = Phase/100. + 1.5;
+   dLogParam      = MathMax(0, MathLog(MathSqrt(dLengthParam))/MathLog(2) + 2);
+   dSqrtParam     = MathSqrt(dLengthParam) * dLogParam;
+   dSqrtDivider   = dSqrtParam/(dSqrtParam + 1);
+
    return(catch("onInit(9)"));
 }
 
@@ -277,31 +287,25 @@ int onTick() {
 
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
    // JMA initialization
-   double d02, d03, d04, dCycleDelta, dLowValue, dHighValue, dSValue, dParamA, dParamB, dSDiffParamA, dSDiffParamB, dLengthDivider, d21, dSqrtParam, d26, dSqrtDivider, d28, dAbsValue, dPowerValue, dSquareValue;
+   double dValue, dCycleDelta, dLowValue, dHighValue, dSValue, dParamA, dParamB, dSDiffParamA, dSDiffParamB, dAbsValue, dPowerValue, dSquareValue;
    int    iCounterA, iCounterB, iCycleLimit, iLoopParam, iHighLimit, iLoopCriteria;
-   int    i3, i4, i5;
-   double dPrice, iBuffer1, iBuffer2, iBuffer3, dJMATemp, dJMA;
+   int    i1, i2, i3, i4, i5;
+   double dPrice, dJMATmp1, dJMATmp2, dJMATmp3, dJMATmp4, dJMA;
 
    double dList128 [128];
    double dRing128 [128];
    double dRing11  [ 11];
    double dPrices62[ 62];
 
-   ArrayInitialize(dList128, -1000000);
+   int iLimitValue = 63;
+   int iStartValue = 64;
+
+   ArrayInitialize(dList128, -1000000); for (int i=iStartValue; i < 127; i++) dList128[i] = 1000000;
    ArrayInitialize(dRing128,        0);
    ArrayInitialize(dRing11,         0);
    ArrayInitialize(dPrices62,       0);
 
-   int iLimitValue = 63;
-   int iStartValue = 64;
-
-   for (int i=iStartValue; i < 127; i++) {
-      dList128[i] = 1000000;
-   }
-
-   double dLengthParam = (Periods-1) / 2.;
-   double dPhaseParam  = Phase/100. + 1.5;
-   bool   bInitFlag    = true;
+   bool bInitFlag = true;
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
 
 
@@ -316,33 +320,21 @@ int onTick() {
       }
 
       if (iLoopParam > 30) {
-         d02 = MathLog(MathSqrt(dLengthParam));
-         d04 = d02/MathLog(2) + 2;
-         if (d04 < 0)
-            d04 = 0;
-         d28 = d04;
-         d26 = d28 - 2;
-         if (d26 < 0.5)
-            d26 = 0.5;
-
-         dSqrtParam     = MathSqrt(dLengthParam) * d28;
-         dSqrtDivider   = dSqrtParam/(dSqrtParam + 1);
-         dLengthDivider = dLengthParam*0.9 / (dLengthParam*0.9 + 2);
+         iHighLimit = 0;
 
          if (bInitFlag) {
-            bInitFlag  = false;
-            iHighLimit = 0;
-            dParamB    = dPrice;
+            dParamB = dPrice;
+
             for (i=0; i < 30; i++) {
                if (NE(dPrices62[i], dPrices62[i+1], Digits)) {
                   iHighLimit = 29;
-                  dParamB    = dPrices62[1];
+                  dParamB = dPrices62[1];
                   break;
                }
             }
             dParamA = dParamB;
+            bInitFlag = false;
          }
-         else iHighLimit = 0;
 
          // big cycle
          for (i=iHighLimit; i >= 0; i--) {
@@ -353,7 +345,7 @@ int onTick() {
             dSDiffParamB = dSValue - dParamB;
             if (MathAbs(dSDiffParamA) > MathAbs(dSDiffParamB)) dAbsValue = MathAbs(dSDiffParamA);
             else                                               dAbsValue = MathAbs(dSDiffParamB);
-            double dValue = dAbsValue + 0.0000000001;
+            dValue = dAbsValue + 0.0000000001;
 
             if (iCounterA <= 1) iCounterA = 127;
             else                iCounterA--;
@@ -368,25 +360,23 @@ int onTick() {
             if (iCycleLimit > 10) dHighValue = dCycleDelta / 10;
             else                  dHighValue = dCycleDelta / iCycleLimit;
 
-            int i1 = 0;
-
             if (iCycleLimit > 127) {
                dValue              = dRing128[iCounterA];
                dRing128[iCounterA] = dHighValue;
-               i5 = 64;
-               i1 = i5;
+               i1 = 64;
+               i2 = 64;
 
-               while (i5 > 1) {
-                  if (dList128[i1] < dValue) {
-                     i5 >>= 1;
-                     i1 += i5;
+               while (i1 > 1) {
+                  if (dList128[i2] < dValue) {
+                     i1 >>= 1;
+                     i2 += i1;
                   }
-                  else if (dList128[i1] > dValue) {
-                     i5 >>= 1;
-                     i1 -= i5;
+                  else if (dList128[i2] > dValue) {
+                     i1 >>= 1;
+                     i2 -= i1;
                   }
                   else {
-                     i5 = 1;
+                     i1 = 1;
                   }
                }
             }
@@ -394,67 +384,66 @@ int onTick() {
                dRing128[iCounterA] = dHighValue;
                if (iLimitValue + iStartValue > 127) {
                   iStartValue--;
-                  i1 = iStartValue;
+                  i2 = iStartValue;
                }
                else {
                   iLimitValue++;
-                  i1 = iLimitValue;
+                  i2 = iLimitValue;
                }
-               if (iLimitValue > 96) i3 = 96;
-               else                  i3 = iLimitValue;
-               if (iStartValue < 32) i4 = 32;
-               else                  i4 = iStartValue;
+               if (iLimitValue > 96) i4 = 96;
+               else                  i4 = iLimitValue;
+               if (iStartValue < 32) i5 = 32;
+               else                  i5 = iStartValue;
             }
 
-            i5 = 64;
-            int i2 = i5;
+            i1 = 64;
+            i3 = 64;
 
-            while (i5 > 1) {
-               if (dList128[i2] < dHighValue) {
-                  i5 >>= 1;
-                  i2 += i5;
+            while (i1 > 1) {
+               if (dList128[i3] < dHighValue) {
+                  i1 >>= 1;
+                  i3 += i1;
                }
-               else if (dList128[i2-1] > dHighValue) {
-                  i5 >>= 1;
-                  i2 -= i5;
+               else if (dList128[i3-1] > dHighValue) {
+                  i1 >>= 1;
+                  i3 -= i1;
                }
                else {
-                  i5 = 1;
+                  i1 = 1;
                }
-               if (i2==127 && dHighValue > dList128[127])
-                  i2 = 128;
+               if (i3==127 && dHighValue > dList128[127])
+                  i3 = 128;
             }
 
             if (iCycleLimit > 127) {
-               if (i1 >= i2) {
-                  if      (i3+1 > i2 && i4-1 < i2) dLowValue += dHighValue;
-                  else if (i4   > i2 && i4-1 < i1) dLowValue += dList128[i4-1];
+               if (i2 >= i3) {
+                  if      (i4+1 > i3 && i5-1 < i3) dLowValue += dHighValue;
+                  else if (i5   > i3 && i5-1 < i2) dLowValue += dList128[i5-1];
                }
-               else if (i4 >= i2) {
-                  if      (i3+1 < i2 && i3+1 > i1) dLowValue += dList128[i3+1];
+               else if (i5 >= i3) {
+                  if      (i4+1 < i3 && i4+1 > i2) dLowValue += dList128[i4+1];
                }
-               else if    (i3+2 > i2             ) dLowValue += dHighValue;
-               else if    (i3+1 < i2 && i3+1 > i1) dLowValue += dList128[i3+1];
+               else if    (i4+2 > i3             ) dLowValue += dHighValue;
+               else if    (i4+1 < i3 && i4+1 > i2) dLowValue += dList128[i4+1];
 
-               if (i1 > i2) {
-                  if      (i4-1 < i1 && i3+1 > i1) dLowValue -= dList128[i1];
-                  else if (i3   < i1 && i3+1 > i2) dLowValue -= dList128[i3];
+               if (i2 > i3) {
+                  if      (i5-1 < i2 && i4+1 > i2) dLowValue -= dList128[i2];
+                  else if (i4   < i2 && i4+1 > i3) dLowValue -= dList128[i4];
                }
-               else if    (i3+1 > i1 && i4-1 < i1) dLowValue -= dList128[i1];
-               else if    (i4   > i1 && i4   < i2) dLowValue -= dList128[i4];
+               else if    (i4+1 > i2 && i5-1 < i2) dLowValue -= dList128[i2];
+               else if    (i5   > i2 && i5   < i3) dLowValue -= dList128[i5];
             }
 
-            if      (i1 > i2) { for (int j=i1-1; j >= i2;   j--) dList128[j+1] = dList128[j]; dList128[i2]   = dHighValue; }
-            else if (i1 < i2) { for (    j=i1+1; j <= i2-1; j++) dList128[j-1] = dList128[j]; dList128[i2-1] = dHighValue; }
-            else              {                                                               dList128[i2]   = dHighValue; }
+            if      (i2 > i3) { for (int j=i2-1; j >= i3;   j--) dList128[j+1] = dList128[j]; dList128[i3]   = dHighValue; }
+            else if (i2 < i3) { for (    j=i2+1; j <= i3-1; j++) dList128[j-1] = dList128[j]; dList128[i3-1] = dHighValue; }
+            else              {                                                               dList128[i3]   = dHighValue; }
 
             if (iCycleLimit <= 127) {
                dLowValue = 0;
-               for (j=i4; j <= i3; j++) {
+               for (j=i5; j <= i4; j++) {
                   dLowValue += dList128[j];
                }
             }
-            d21 = dLowValue/(i3 - i4 + 1);
 
             iLoopCriteria++;
             if (iLoopCriteria > 31) iLoopCriteria = 31;
@@ -465,11 +454,11 @@ int onTick() {
                if (dSDiffParamB < 0) dParamB = dSValue;
                else                  dParamB = dSValue - dSDiffParamB * dSqrtDivider;
 
-               dJMATemp = dPrice;
+               dJMATmp4 = dPrice;
                if (iLoopCriteria != 30)
                   continue;
 
-               iBuffer1 = dPrice;
+               dJMATmp1 = dPrice;
 
                int iLeftInt=1, iRightPart=1;
                if (dSqrtParam >  0) iLeftInt   = dSqrtParam + 1;
@@ -481,21 +470,18 @@ int onTick() {
                if (iRightPart <= 29) iUpShift = iRightPart;
                if (iLeftInt   <= 29) iDnShift = iLeftInt;
 
-               iBuffer3 = (dPrice-dPrices62[iLoopParam-iUpShift]) * (1-dValue)/iRightPart + (dPrice-dPrices62[iLoopParam-iDnShift]) * dValue/iLeftInt;
+               dJMATmp3 = (dPrice-dPrices62[iLoopParam-iUpShift]) * (1-dValue)/iRightPart + (dPrice-dPrices62[iLoopParam-iDnShift]) * dValue/iLeftInt;
             }
             else {
-               d02 = MathPow(dAbsValue/d21, d26);
-               if (d02 > d28)
-                  d02 = d28;
+               dValue = dLowValue/(i4 - i5 + 1);
 
-               if (d02 < 1) {
-                  d03 = 1;
-               }
-               else {
-                  d03 = d02;
-                  d04 = d02;
-               }
-               dValue      = d03;
+               dPowerValue = dLogParam - 2;
+               if (dPowerValue < 0.5) dPowerValue = 0.5;
+
+               dValue = MathPow(dAbsValue/dValue, dPowerValue);
+               if (dValue > dLogParam) dValue = dLogParam;
+               if (dValue < 1)         dValue = 1;
+
                dPowerValue = MathPow(dSqrtDivider, MathSqrt(dValue));
 
                if (dSDiffParamA > 0) dParamA = dSValue;
@@ -509,12 +495,12 @@ int onTick() {
             dPowerValue  = MathPow(dLengthDivider, dValue);
             dSquareValue = MathPow(dPowerValue, 2);
 
-            iBuffer1  = (1-dPowerValue) * dPrice + dPowerValue * iBuffer1;
-            iBuffer2  = (dPrice-iBuffer1) * (1-dLengthDivider) + dLengthDivider * iBuffer2;
-            iBuffer3  = (dPhaseParam * iBuffer2 + iBuffer1 - dJMATemp) * (-dPowerValue * 2 + dSquareValue + 1) + dSquareValue * iBuffer3;
-            dJMATemp += iBuffer3;
+            dJMATmp1  = (1-dPowerValue) * dPrice + dPowerValue * dJMATmp1;
+            dJMATmp2  = (dPrice-dJMATmp1) * (1-dLengthDivider) + dLengthDivider * dJMATmp2;
+            dJMATmp3  = (dPhaseParam * dJMATmp2 + dJMATmp1 - dJMATmp4) * (-dPowerValue * 2 + dSquareValue + 1) + dSquareValue * dJMATmp3;
+            dJMATmp4 += dJMATmp3;
          }
-         dJMA = dJMATemp;
+         dJMA = dJMATmp4;
       }
       else {
          dJMA = EMPTY_VALUE;
