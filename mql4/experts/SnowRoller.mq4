@@ -3109,7 +3109,7 @@ bool ValidateInputs(bool interactive) {
    }
    StartLevel = Abs(StartLevel);
 
-   string trendIndicators[] = {"ALMA", "MovingAverage", "NonLagMA", "TriEMA", "SuperSmoother", "HalfTrend", "SuperTrend"};
+   string trendIndicators[] = {"ALMA", "HalfTrend", "JMA", "MovingAverage", "NonLagMA", "SuperSmoother", "SuperTrend", "TriEMA"};
 
    // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
    // -----------------------------------------------------------------------------------------------------------------------------
@@ -5373,13 +5373,6 @@ double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
    }
    return(icHalfTrend(timeframe, periods, iBuffer, iBar));
 }
-
-
-
-
-
-
-
 
 
 /**
