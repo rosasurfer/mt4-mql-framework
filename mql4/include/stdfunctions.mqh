@@ -6121,6 +6121,56 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
 
 
 /**
+ * Load the "Jurik Moving Average" indicator and return an indicator value.
+ *
+ * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    periods      - indicator parameter
+ * @param  int    phase        - indicator parameter
+ * @param  string appliedPrice - indicator parameter
+ * @param  int    iBuffer      - indicator buffer index of the value to return
+ * @param  int    iBar         - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "Jurik Moving Average",
+                          periods,                                         // int    Periods
+                          phase,                                           // int    Phase
+                          appliedPrice,                                    // string AppliedPrice
+
+                          DodgerBlue,                                      // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.Width
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icJMA(1)", error));
+      warn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }                                                                       // TODO: check number of loaded bars
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
+}
+
+
+/**
  * Load the "MACD" indicator and return an indicator value.
  *
  * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
@@ -6277,21 +6327,21 @@ double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
 /**
  * Load the "RSI" indicator and return an indicator value.
  *
- * @param  int    timeframe       - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    rsiPeriods      - indicator parameter
- * @param  string rsiAppliedPrice - indicator parameter
- * @param  int    iBuffer         - indicator buffer index of the value to return
- * @param  int    iBar            - bar index of the value to return
+ * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    periods      - indicator parameter
+ * @param  string appliedPrice - indicator parameter
+ * @param  int    iBuffer      - indicator buffer index of the value to return
+ * @param  int    iBar         - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer, int iBar) {
+double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "RSI ",
-                          rsiPeriods,                                      // int    RSI.Periods
-                          rsiAppliedPrice,                                 // string RSI.AppliedPrice
+                          periods,                                         // int    RSI.Periods
+                          appliedPrice,                                    // string RSI.AppliedPrice
 
                           Blue,                                            // color  MainLine.Color
                           1,                                               // int    MainLine.Width
@@ -6321,21 +6371,21 @@ double icRSI(int timeframe, int rsiPeriods, string rsiAppliedPrice, int iBuffer,
 /**
  * Load the "Ehler's 2-Pole-SuperSmoother" indicator and return an indicator value.
  *
- * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    filterPeriods      - indicator parameter
- * @param  string filterAppliedPrice - indicator parameter
- * @param  int    iBuffer            - indicator buffer index of the value to return
- * @param  int    iBar               - bar index of the value to return
+ * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    periods      - indicator parameter
+ * @param  string appliedPrice - indicator parameter
+ * @param  int    iBuffer      - indicator buffer index of the value to return
+ * @param  int    iBar         - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icSuperSmoother(int timeframe, int filterPeriods, string filterAppliedPrice, int iBuffer, int iBar) {
+double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Ehlers 2-Pole-SuperSmoother",
-                          filterPeriods,                                   // int    Filter.Periods
-                          filterAppliedPrice,                              // string Filter.AppliedPrice
+                          periods,                                         // int    Filter.Periods
+                          appliedPrice,                                    // string Filter.AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
                           Orange,                                          // color  Color.DownTrend
@@ -6419,21 +6469,21 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 /**
  * Load the "TriEMA" indicator and return an indicator value.
  *
- * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    maPeriods      - indicator parameter
- * @param  string maAppliedPrice - indicator parameter
- * @param  int    iBuffer        - indicator buffer index of the value to return
- * @param  int    iBar           - bar index of the value to return
+ * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    periods      - indicator parameter
+ * @param  string appliedPrice - indicator parameter
+ * @param  int    iBuffer      - indicator buffer index of the value to return
+ * @param  int    iBar         - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer, int iBar) {
+double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "TriEMA",
-                          maPeriods,                                       // int    MA.Periods
-                          maAppliedPrice,                                  // string MA.AppliedPrice
+                          periods,                                         // int    MA.Periods
+                          appliedPrice,                                    // string MA.AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
@@ -6467,21 +6517,21 @@ double icTriEMA(int timeframe, int maPeriods, string maAppliedPrice, int iBuffer
 /**
  * Load the "Trix" indicator and return an indicator value.
  *
- * @param  int    timeframe       - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    emaPeriods      - indicator parameter
- * @param  string emaAppliedPrice - indicator parameter
- * @param  int    iBuffer         - indicator buffer index of the value to return
- * @param  int    iBar            - bar index of the value to return
+ * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    periods      - indicator parameter
+ * @param  string appliedPrice - indicator parameter
+ * @param  int    iBuffer      - indicator buffer index of the value to return
+ * @param  int    iBar         - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar) {
+double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Trix",
-                          emaPeriods,                                      // int    EMA.Periods
-                          emaAppliedPrice,                                 // string EMA.AppliedPrice
+                          periods,                                         // int    EMA.Periods
+                          appliedPrice,                                    // string EMA.AppliedPrice
 
                           DodgerBlue,                                      // color  MainLine.Color
                           1,                                               // int    MainLine.Width
@@ -6600,6 +6650,7 @@ void __DummyCalls() {
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
+   icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    icNonLagMA(NULL, NULL, NULL, NULL);
