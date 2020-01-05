@@ -285,7 +285,7 @@ int onTick() {
 
    // update chart legend
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(ind.legendLabel, ind.longName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Time[0]);
+      @Bands.UpdateLegend(ind.legendLabel, ind.longName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);
 }

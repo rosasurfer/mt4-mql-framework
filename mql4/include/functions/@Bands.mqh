@@ -7,19 +7,34 @@
  * @param  color    bandsColor     - the band color
  * @param  double   upperValue     - current upper band value
  * @param  double   lowerValue     - current lower band value
+ * @param  int      digits         - digits of the values to display
  * @param  datetime barOpenTime    - current bar opentime
  */
-void @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, datetime barOpenTime) {
+void @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime) {
    static double   lastUpperValue;
    static double   lastLowerValue;
    static datetime lastBarOpenTime;
 
-   upperValue = NormalizeDouble(upperValue, SubPipDigits);
-   lowerValue = NormalizeDouble(lowerValue, SubPipDigits);
+   upperValue = NormalizeDouble(upperValue, digits);
+   lowerValue = NormalizeDouble(lowerValue, digits);
 
    // update if values or bar changed
    if (upperValue!=lastUpperValue || lowerValue!=lastLowerValue || barOpenTime!=lastBarOpenTime) {
-      string text = StringConcatenate(name, "    ", NumberToStr(upperValue, SubPipPriceFormat), " / ", NumberToStr(lowerValue, SubPipPriceFormat), "    ", status);
+      string sUpperValue, sLowerValue;
+
+      if (digits == PipDigits) {
+         sUpperValue = NumberToStr(upperValue, PipPriceFormat);
+         sLowerValue = NumberToStr(lowerValue, PipPriceFormat);
+      }
+      else if (digits == SubPipDigits) {
+         sUpperValue = NumberToStr(upperValue, SubPipPriceFormat);
+         sLowerValue = NumberToStr(lowerValue, SubPipPriceFormat);
+      }
+      else {
+         sUpperValue = DoubleToStr(upperValue, digits);
+         sLowerValue = DoubleToStr(lowerValue, digits);
+      }
+      string text = StringConcatenate(name, "    ", sUpperValue, " / ", sLowerValue, "    ", status);
       color  textColor = bandsColor;
       if      (textColor == Yellow) textColor = Orange;
       else if (textColor == Gold  ) textColor = Orange;
