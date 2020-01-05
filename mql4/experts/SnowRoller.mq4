@@ -5279,6 +5279,7 @@ double RequiredDistance(double profit) {
 int GetStartTrendValue(int bar) {
    if (start.trend.indicator == "alma"         ) return(GetALMA         (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
    if (start.trend.indicator == "halftrend"    ) return(GetHalfTrend    (start.trend.timeframe, start.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (start.trend.indicator == "jma"          ) return(GetJMA          (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
    if (start.trend.indicator == "movingaverage") return(GetMovingAverage(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
    if (start.trend.indicator == "nonlagma"     ) return(GetNonLagMA     (start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
    if (start.trend.indicator == "supersmoother") return(GetSuperSmoother(start.trend.timeframe, start.trend.params, MovingAverage.MODE_TREND, bar));
@@ -5299,6 +5300,7 @@ int GetStartTrendValue(int bar) {
 int GetStopTrendValue(int bar) {
    if (stop.trend.indicator == "alma"         ) return(GetALMA         (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
    if (stop.trend.indicator == "halftrend"    ) return(GetHalfTrend    (stop.trend.timeframe, stop.trend.params, HalfTrend.MODE_TREND,     bar));
+   if (stop.trend.indicator == "jma"          ) return(GetJMA          (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
    if (stop.trend.indicator == "movingaverage") return(GetMovingAverage(stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
    if (stop.trend.indicator == "nonlagma"     ) return(GetNonLagMA     (stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
    if (stop.trend.indicator == "supersmoother") return(GetSuperSmoother(stop.trend.timeframe, stop.trend.params, MovingAverage.MODE_TREND, bar));
@@ -5370,6 +5372,48 @@ double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
       lastParams = params;
    }
    return(icHalfTrend(timeframe, periods, iBuffer, iBar));
+}
+
+
+
+
+
+
+
+
+
+/**
+ * Return an JMA indicator value.
+ *
+ * @param  int    timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string params    - additional comma-separated indicator parameters
+ * @param  int    iBuffer   - buffer index of the value to return
+ * @param  int    iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetJMA(int timeframe, string params, int iBuffer, int iBar) {
+   if (!StringLen(params)) return(!catch("GetJMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+   static int    periods;
+   static int    phase;
+   static string appliedPrice;
+
+   static string lastParams = "", elems[], sValue;
+   if (params != lastParams) {
+      if (Explode(params, ",", elems, NULL) != 3) return(!catch("GetJMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))                    return(!catch("GetJMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      periods = StrToInteger(sValue);
+      sValue = StrTrim(elems[1]);
+      if (!StrIsInteger(sValue))                  return(!catch("GetJMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      phase = StrToInteger(sValue);
+      sValue = StrTrim(elems[2]);
+      if (!StringLen(sValue))                     return(!catch("GetJMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      appliedPrice = sValue;
+      lastParams = params;
+   }
+   return(icJMA(timeframe, periods, phase, appliedPrice, iBuffer, iBar));
 }
 
 
