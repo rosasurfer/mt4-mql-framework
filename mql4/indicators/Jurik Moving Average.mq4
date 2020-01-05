@@ -2,10 +2,8 @@
  * JMA - Jurik Moving Average
  *
  *
- * Opposite to its name this indicator is a filter and not a moving average. Source is an MQL4 port of the JMA as found in
- * TradeStation of 1998, authored under the pseudonym "Spiggy". It did not account for the lack of tick support in that
- * TradeStation version which made the resulting indicator repaint. This implementation uses the original algorythm but fixes
- * the code conversion issues. It does not repaint.
+ * Opposite to its name this indicator is a filter and not a moving average. Source is an MQL4 port of the JMA in TradeStation
+ * of 1998 by Nikolay Kositsin. This implementation fixes some code conversion issues and does not repaint like the original.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -13,9 +11,9 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @source  Spiggy: https://www.mql5.com/ru/code/7307
  * @see     http://www.jurikres.com/catalog1/ms_ama.htm
  * @see     "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
+ * @source  https://www.mql5.com/en/articles/1450
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -24,8 +22,8 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Periods              = 14;
-extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern int    Phase                = 0;                  // indicator overshooting: -100 (none)...+100 (max)
+extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
@@ -115,6 +113,10 @@ int onInit() {
    // Periods
    if (Periods < 1)     return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
+   // Phase
+   if (Phase < -100)    return(catch("onInit(2)  Invalid input parameter Phase = "+ Phase +" (-100..+100)", ERR_INVALID_INPUT_PARAMETER));
+   if (Phase > +100)    return(catch("onInit(3)  Invalid input parameter Phase = "+ Phase +" (-100..+100)", ERR_INVALID_INPUT_PARAMETER));
+
    // AppliedPrice
    string sValues[], sValue = StrToLower(AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -132,13 +134,9 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) appliedPrice = PRICE_WEIGHTED;
-      else              return(catch("onInit(2)  Invalid input parameter AppliedPrice = "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else              return(catch("onInit(4)  Invalid input parameter AppliedPrice = "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    AppliedPrice = PriceTypeDescription(appliedPrice);
-
-   // Phase
-   if (Phase < -100)    return(catch("onInit(3)  Invalid input parameter Phase = "+ Phase +" (-100..+100)", ERR_INVALID_INPUT_PARAMETER));
-   if (Phase > +100)    return(catch("onInit(4)  Invalid input parameter Phase = "+ Phase +" (-100..+100)", ERR_INVALID_INPUT_PARAMETER));
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -591,8 +589,8 @@ void SetIndicatorOptions() {
 bool StoreInputParameters() {
    string name = __NAME();
    Chart.StoreInt   (name +".input.Periods",              Periods              );
-   Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice         );
    Chart.StoreInt   (name +".input.Phase",                Phase                );
+   Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice         );
    Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
    Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
    Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
@@ -614,8 +612,8 @@ bool StoreInputParameters() {
 bool RestoreInputParameters() {
    string name = __NAME();
    Chart.RestoreInt   (name +".input.Periods",              Periods              );
-   Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice         );
    Chart.RestoreInt   (name +".input.Phase",                Phase                );
+   Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice         );
    Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
    Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
    Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
@@ -636,8 +634,8 @@ bool RestoreInputParameters() {
  */
 string InputsToStr() {
    return(StringConcatenate("Periods=",              Periods,                              ";", NL,
-                            "AppliedPrice=",         DoubleQuoteStr(AppliedPrice),         ";", NL,
                             "Phase=",                Phase,                                ";", NL,
+                            "AppliedPrice=",         DoubleQuoteStr(AppliedPrice),         ";", NL,
                             "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
                             "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
