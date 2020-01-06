@@ -2,7 +2,7 @@
  * JMA - Jurik Moving Average
  *
  *
- * Opposite to its name this indicator is a filter and not a moving average. Source is an MQL4 port of the JMA in TradeStation
+ * Opposite to its name this indicator is a filter and not a moving average. Source is an MQL4 port of the TradeStation JMA
  * of 1998 by Nikolay Kositsin. This implementation fixes some code conversion issues and does not repaint like the original.
  *
  * Indicator buffers for iCustom():
@@ -266,18 +266,14 @@ int onTick() {
 
 
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
-   if (Periods < 2)              // MTF: Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
-      return(NO_ERROR);
    if (ChangedBars < 2)          // !!! repainting bug: vorübergehender Workaround bei Realtime-Update,
       return(NO_ERROR);          //                     JMA wird jetzt nur bei onBarOpen aktualisiert
-   if (ChangedBars == 2)
-      ChangedBars = Bars;        // !!! WE MUST NOT MODIFY var ChangedBars !!!
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
 
 
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
+   int bars     = Min(Bars, maxValues);               // TODO: Fix me => ChangedBars
    int startBar = Min(bars-1, Bars-Periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 

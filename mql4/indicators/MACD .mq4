@@ -5,9 +5,8 @@
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function;       SMMA(n) = EMA(2*n-1)
+ *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
- *
  *
  * Indicator buffers for iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
@@ -15,8 +14,9 @@
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
- *
- * Note: The file is intentionally named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
+ * Notes:
+ *  (1) There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
+ *  (2) The file is named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -67,6 +67,12 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 
 #property indicator_separate_window
 #property indicator_buffers   4
+
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+#property indicator_color4    CLR_NONE
+
 #property indicator_level1    0
 
 double bufferMACD   [];                                     // MACD main value:           visible, displayed in "Data" window
@@ -84,7 +90,8 @@ int    slow.ma.method;
 int    slow.ma.appliedPrice;
 double slow.alma.weights[];                                 // slow ALMA weights
 
-string ind.shortName;                                       // "Data" window and signal notification name
+int    maxValues;
+string indicatorName;                                       // "Data" window and signal notification name
 
 bool   signals;
 
@@ -110,7 +117,7 @@ int onInit() {
       if (!RestoreInputParameters()) return(last_error);
    }
 
-   // (1) validate inputs
+   // validate inputs
    // Fast.MA.Periods
    if (Fast.MA.Periods < 1)               return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods: "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fast.ma.periods = Fast.MA.Periods;
@@ -128,7 +135,6 @@ int onInit() {
    }
    else {
       sValue = StrTrim(Fast.MA.Method);
-      if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (fast.ma.method == -1)              return(catch("onInit(4)  Invalid input parameter Fast.MA.Method: "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -141,7 +147,6 @@ int onInit() {
    }
    else {
       sValue = StrTrim(Slow.MA.Method);
-      if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (slow.ma.method == -1)              return(catch("onInit(5)  Invalid input parameter Slow.MA.Method: "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -197,12 +202,12 @@ int onInit() {
       }
    }
 
-   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
-   // Styles
+   // styles
    if (MainLine.Width < 0)                return(catch("onInit(9)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
    if (MainLine.Width > 5)                return(catch("onInit(10)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width < 0)         return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
@@ -210,8 +215,9 @@ int onInit() {
 
    // Max.Values
    if (Max.Values < -1)                   return(catch("onInit(13)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // Signals
+   // signals
    if (!Configure.Signal("MACD", Signal.onCross, signals))                                                      return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
@@ -221,49 +227,35 @@ int onInit() {
          signals = false;
    }
 
-
-   // (2) setup buffer management
+   // buffer management
    SetIndexBuffer(MODE_MAIN,          bufferMACD   );                   // MACD main value:         visible, displayed in "Data" window
    SetIndexBuffer(MODE_SECTION,       bufferSection);                   // MACD section and length: invisible
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper  );                   // positive values:         visible
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
-
-   // (3) data display configuration and names
-   string ind.dataName, strAppliedPrice="";
+   // names, labels and display options
+   string dataName, strAppliedPrice="";
    if (fast.ma.appliedPrice!=slow.ma.appliedPrice || fast.ma.appliedPrice!=PRICE_CLOSE) strAppliedPrice = ","+ PriceTypeDescription(fast.ma.appliedPrice);
    string fast.ma.name = Fast.MA.Method +"("+ fast.ma.periods + strAppliedPrice +")";
    strAppliedPrice = "";
    if (fast.ma.appliedPrice!=slow.ma.appliedPrice || slow.ma.appliedPrice!=PRICE_CLOSE) strAppliedPrice = ","+ PriceTypeDescription(slow.ma.appliedPrice);
    string slow.ma.name = Slow.MA.Method +"("+ slow.ma.periods + strAppliedPrice +")";
 
-   if (Fast.MA.Method==Slow.MA.Method && fast.ma.appliedPrice==slow.ma.appliedPrice) ind.shortName = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods + strAppliedPrice +")";
-   else                                                                              ind.shortName = "MACD "+ fast.ma.name +", "+ slow.ma.name;
-   if (Fast.MA.Method==Slow.MA.Method)                                               ind.dataName  = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods +")";
-   else                                                                              ind.dataName  = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +"), "+ Slow.MA.Method +"("+ slow.ma.periods +")";
+   if (Fast.MA.Method==Slow.MA.Method && fast.ma.appliedPrice==slow.ma.appliedPrice) indicatorName = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods + strAppliedPrice +")";
+   else                                                                              indicatorName = "MACD "+ fast.ma.name +", "+ slow.ma.name;
+   if (Fast.MA.Method==Slow.MA.Method)                                               dataName      = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods +")";
+   else                                                                              dataName      = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +"), "+ Slow.MA.Method +"("+ slow.ma.periods +")";
    string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
-   // names and labels
-   IndicatorShortName(ind.shortName + signalInfo +"  ");                // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          ind.dataName);                     // "Data" window and tooltips
+   IndicatorShortName(indicatorName + signalInfo +"  ");                // indicator subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          dataName);                         // "Data" window and tooltips
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(2);
-
-
-   // (4) drawing options and styles
-   int startDraw = 0;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexDrawBegin(MODE_MAIN,          startDraw);
-   SetIndexDrawBegin(MODE_SECTION,       INT_MAX  );                    // work around scaling bug in terminals <=509
-   SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
-   SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
 
-
-   // (5) initialize indicator calculations where applicable
+   // pre-calculate ALMA bar weights
    if (fast.ma.method == MODE_ALMA) @ALMA.CalculateWeights(fast.alma.weights, fast.ma.periods);
    if (slow.ma.method == MODE_ALMA) @ALMA.CalculateWeights(slow.alma.weights, slow.ma.periods);
 
@@ -294,10 +286,10 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(bufferMACD,    EMPTY_VALUE);
-      ArrayInitialize(bufferSection,           0);
-      ArrayInitialize(bufferUpper,   EMPTY_VALUE);
-      ArrayInitialize(bufferLower,   EMPTY_VALUE);
+      ArrayInitialize(bufferMACD,  EMPTY_VALUE);
+      ArrayInitialize(bufferSection,         0);
+      ArrayInitialize(bufferUpper, EMPTY_VALUE);
+      ArrayInitialize(bufferLower, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -309,19 +301,14 @@ int onTick() {
       ShiftIndicatorBuffer(bufferLower,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-
-   // (1) calculate start bar
-   int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (ChangedBars > Max.Values)
-      changedBars = Max.Values;
-   int startBar = Min(changedBars-1, Bars-slow.ma.periods);
+   // calculate start bar
+   int bars     = Min(ChangedBars, maxValues);
+   int startBar = Min(bars-1, Bars-slow.ma.periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-
+   // recalculate changed bars
    double fast.ma, slow.ma;
 
-
-   // (2) recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       // fast MA
       if (fast.ma.method == MODE_ALMA) {
@@ -363,8 +350,8 @@ int onTick() {
       else                                                       bufferSection[bar] = Sign(bufferMACD[bar]);
    }
 
-   // signal zero line crossing
    if (!IsSuperContext()) {
+      // detect zero line crossing
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
          else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
@@ -386,7 +373,7 @@ bool onCross(int section) {
    int error = 0;
 
    if (section == MODE_UPPER_SECTION) {
-      message = ind.shortName +" turned positive";
+      message = indicatorName +" turned positive";
       log("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -397,7 +384,7 @@ bool onCross(int section) {
    }
 
    if (section == MODE_LOWER_SECTION) {
-      message = ind.shortName +" turned negative";
+      message = indicatorName +" turned negative";
       log("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -491,20 +478,15 @@ string InputsToStr() {
    return(StringConcatenate("Fast.MA.Periods=",       Fast.MA.Periods,                      ";"+ NL,
                             "Fast.MA.Method=",        DoubleQuoteStr(Fast.MA.Method),       ";"+ NL,
                             "Fast.MA.AppliedPrice=",  DoubleQuoteStr(Fast.MA.AppliedPrice), ";"+ NL,
-
                             "Slow.MA.Periods=",       Slow.MA.Periods,                      ";"+ NL,
                             "Slow.MA.Method=",        DoubleQuoteStr(Slow.MA.Method),       ";"+ NL,
                             "Slow.MA.AppliedPrice=",  DoubleQuoteStr(Slow.MA.AppliedPrice), ";"+ NL,
-
                             "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
                             "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
-
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
-
                             "Max.Values=",            Max.Values,                           ";"+ NL,
-
                             "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       ";"+ NL,
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";"+ NL,
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";"+ NL,
