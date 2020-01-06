@@ -1,11 +1,11 @@
 /**
- * Multi-color Moving Average
+ * Multicolor Moving Average
  *
  *
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function;       SMMA(n) = EMA(2*n-1)
+ *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * Indicator buffers for iCustom():
@@ -13,6 +13,9 @@
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *
+ * Notes:
+ *  - There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -21,7 +24,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods           = 38;
-extern string MA.Method            = "SMA* | LWMA | EMA | ALMA";
+extern string MA.Method            = "SMA | LWMA | EMA | ALMA*";
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend        = Blue;
@@ -120,7 +123,6 @@ int onInit() {
    }
    else {
       sValue = StrTrim(MA.Method);
-      if (sValue == "") sValue = "SMA";                  // default MA method
    }
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)  return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -197,7 +199,7 @@ int onInit() {
        ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    string shortName = __NAME() +"("+ MA.Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
