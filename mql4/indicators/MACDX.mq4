@@ -1,5 +1,5 @@
 /**
- * MACD (Moving Average Convergence-Divergence)
+ * Extended MACD (Moving Average Convergence-Divergence) with support for non-standard moving averages.
  *
  *
  * Available Moving Average types:
@@ -15,8 +15,8 @@
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
  * Notes:
- *  (1) There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
- *  (2) The file is named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
+ *  - There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
+ *  - A user's custom indicator having the same name as a distributed custom indicator would be deleted by the terminal.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -24,20 +24,20 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Fast.MA.Periods       = 12;
-extern string Fast.MA.Method        = "SMA | LWMA | EMA | ALMA*";
-extern string Fast.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    FastMA.Periods        = 12;
+extern string FastMA.Method         = "SMA | LWMA | EMA | ALMA*";
+extern string FastMA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern int    Slow.MA.Periods       = 38;
-extern string Slow.MA.Method        = "SMA | LWMA | EMA | ALMA*";
-extern string Slow.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
-
-extern color  MainLine.Color        = DodgerBlue;
-extern int    MainLine.Width        = 1;
+extern int    SlowMA.Periods        = 38;
+extern string SlowMA.Method         = "SMA | LWMA | EMA | ALMA*";
+extern string SlowMA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
+
+extern color  MainLine.Color        = DodgerBlue;
+extern int    MainLine.Width        = 1;
 
 extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
 
@@ -80,15 +80,15 @@ double bufferSection[];                                     // MACD section and 
 double bufferUpper  [];                                     // positive histogram values: visible
 double bufferLower  [];                                     // negative histogram values: visible
 
-int    fast.ma.periods;
-int    fast.ma.method;
-int    fast.ma.appliedPrice;
-double fast.alma.weights[];                                 // fast ALMA weights
+int    fastMA.periods;
+int    fastMA.method;
+int    fastMA.appliedPrice;
+double fastALMA.weights[];                                  // fast ALMA weights
 
-int    slow.ma.periods;
-int    slow.ma.method;
-int    slow.ma.appliedPrice;
-double slow.alma.weights[];                                 // slow ALMA weights
+int    slowMA.periods;
+int    slowMA.method;
+int    slowMA.appliedPrice;
+double slowALMA.weights[];                                  // slow ALMA weights
 
 int    maxValues;
 string indicatorName;                                       // "Data" window and signal notification name
@@ -118,103 +118,102 @@ int onInit() {
    }
 
    // validate inputs
-   // Fast.MA.Periods
-   if (Fast.MA.Periods < 1)               return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods: "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   fast.ma.periods = Fast.MA.Periods;
+   // FastMA.Periods
+   if (FastMA.Periods < 1)              return(catch("onInit(1)  Invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   fastMA.periods = FastMA.Periods;
 
-   // Slow.MA.Periods
-   if (Slow.MA.Periods < 1)               return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods: "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   slow.ma.periods = Slow.MA.Periods;
-   if (Fast.MA.Periods > Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
-
-   // Fast.MA.Method
+   // FastMA.Method
    string sValue, values[];
-   if (Explode(Fast.MA.Method, "*", values, 2) > 1) {
+   if (Explode(FastMA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    else {
-      sValue = StrTrim(Fast.MA.Method);
+      sValue = StrTrim(FastMA.Method);
    }
-   fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (fast.ma.method == -1)              return(catch("onInit(4)  Invalid input parameter Fast.MA.Method: "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Fast.MA.Method = MaMethodDescription(fast.ma.method);
+   fastMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (fastMA.method == -1)             return(catch("onInit(2)  Invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   FastMA.Method = MaMethodDescription(fastMA.method);
 
-   // Slow.MA.Method
-   if (Explode(Slow.MA.Method, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
-   }
-   else {
-      sValue = StrTrim(Slow.MA.Method);
-   }
-   slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (slow.ma.method == -1)              return(catch("onInit(5)  Invalid input parameter Slow.MA.Method: "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Slow.MA.Method = MaMethodDescription(slow.ma.method);
-
-   // Fast.MA.AppliedPrice
-   sValue = StrToLower(Fast.MA.AppliedPrice);
+   // FastMA.AppliedPrice
+   sValue = StrToLower(FastMA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
-   fast.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(fast.ma.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) fast.ma.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) fast.ma.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) fast.ma.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) fast.ma.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
-      else                                return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice: "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   fastMA.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(fastMA.appliedPrice)) {
+      if      (StrStartsWith("open",     sValue)) fastMA.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) fastMA.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) fastMA.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) fastMA.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) fastMA.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) fastMA.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) fastMA.appliedPrice = PRICE_WEIGHTED;
+      else                              return(catch("onInit(3)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
-   Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
+   FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
 
-   // Slow.MA.AppliedPrice
-   sValue = StrToLower(Slow.MA.AppliedPrice);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
-   }
-   sValue = StrTrim(sValue);
-   if (sValue == "") sValue = "close";                                  // default price type
-   slow.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(slow.ma.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) slow.ma.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) slow.ma.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) slow.ma.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) slow.ma.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
-      else                                return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice: "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
-   Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
-
-   if (fast.ma.periods == slow.ma.periods) {
-      if (fast.ma.method == slow.ma.method) {
-         if (fast.ma.appliedPrice == slow.ma.appliedPrice) {
-            return(catch("onInit(8)  Parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
+   // SlowMA.Periods
+   if (SlowMA.Periods < 1)              return(catch("onInit(4)  Invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   slowMA.periods = SlowMA.Periods;
+   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(5)  Parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.periods == slowMA.periods) {
+      if (fastMA.method == slowMA.method) {
+         if (fastMA.appliedPrice == slowMA.appliedPrice) {
+            return(catch("onInit(6)  Parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
          }
       }
    }
 
+   // SlowMA.Method
+   if (Explode(SlowMA.Method, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
+   }
+   else {
+      sValue = StrTrim(SlowMA.Method);
+   }
+   slowMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (slowMA.method == -1)             return(catch("onInit(7)  Invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   SlowMA.Method = MaMethodDescription(slowMA.method);
+
+   // SlowMA.AppliedPrice
+   sValue = StrToLower(SlowMA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if (sValue == "") sValue = "close";                                  // default price type
+   slowMA.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(slowMA.appliedPrice)) {
+      if      (StrStartsWith("open",     sValue)) slowMA.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) slowMA.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) slowMA.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) slowMA.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) slowMA.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) slowMA.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) slowMA.appliedPrice = PRICE_WEIGHTED;
+      else                              return(catch("onInit(8)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   }
+   SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
+
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
 
    // styles
-   if (MainLine.Width < 0)                return(catch("onInit(9)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)                return(catch("onInit(10)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width < 0)         return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)         return(catch("onInit(12)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)       return(catch("onInit(9)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)              return(catch("onInit(11)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)              return(catch("onInit(12)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)                   return(catch("onInit(13)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)                 return(catch("onInit(13)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
@@ -234,18 +233,18 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
    // names, labels and display options
-   string dataName, strAppliedPrice="";
-   if (fast.ma.appliedPrice!=slow.ma.appliedPrice || fast.ma.appliedPrice!=PRICE_CLOSE) strAppliedPrice = ","+ PriceTypeDescription(fast.ma.appliedPrice);
-   string fast.ma.name = Fast.MA.Method +"("+ fast.ma.periods + strAppliedPrice +")";
-   strAppliedPrice = "";
-   if (fast.ma.appliedPrice!=slow.ma.appliedPrice || slow.ma.appliedPrice!=PRICE_CLOSE) strAppliedPrice = ","+ PriceTypeDescription(slow.ma.appliedPrice);
-   string slow.ma.name = Slow.MA.Method +"("+ slow.ma.periods + strAppliedPrice +")";
+   string dataName, sAppliedPrice="";
+   if (fastMA.appliedPrice!=slowMA.appliedPrice || fastMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(fastMA.appliedPrice);
+   string fastMA.name = FastMA.Method +"("+ fastMA.periods + sAppliedPrice +")";
+   sAppliedPrice = "";
+   if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
+   string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
 
-   if (Fast.MA.Method==Slow.MA.Method && fast.ma.appliedPrice==slow.ma.appliedPrice) indicatorName = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods + strAppliedPrice +")";
-   else                                                                              indicatorName = "MACD "+ fast.ma.name +", "+ slow.ma.name;
-   if (Fast.MA.Method==Slow.MA.Method)                                               dataName      = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods +")";
-   else                                                                              dataName      = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +"), "+ Slow.MA.Method +"("+ slow.ma.periods +")";
-   string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
+   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD  "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
+   else                                                                          indicatorName = "MACD  "+ fastMA.name +", "+ slowMA.name;
+   if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
+   else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
+   string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
    IndicatorShortName(indicatorName + signalInfo +"  ");                // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // "Data" window and tooltips
@@ -255,9 +254,9 @@ int onInit() {
    IndicatorDigits(2);
    SetIndicatorOptions();
 
-   // pre-calculate ALMA bar weights
-   if (fast.ma.method == MODE_ALMA) @ALMA.CalculateWeights(fast.alma.weights, fast.ma.periods);
-   if (slow.ma.method == MODE_ALMA) @ALMA.CalculateWeights(slow.alma.weights, slow.ma.periods);
+   // precalculate ALMA bar weights
+   if (fastMA.method == MODE_ALMA) @ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
+   if (slowMA.method == MODE_ALMA) @ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
 
    return(catch("onInit(14)"));
 }
@@ -303,37 +302,37 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-slow.ma.periods);
+   int startBar = Min(bars-1, Bars-slowMA.periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   double fast.ma, slow.ma;
+   double fastMA, slowMA;
 
    for (int bar=startBar; bar >= 0; bar--) {
       // fast MA
-      if (fast.ma.method == MODE_ALMA) {
-         fast.ma = 0;
-         for (int i=0; i < fast.ma.periods; i++) {
-            fast.ma += fast.alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, fast.ma.appliedPrice, bar+i);
+      if (fastMA.method == MODE_ALMA) {
+         fastMA = 0;
+         for (int i=0; i < fastMA.periods; i++) {
+            fastMA += fastALMA.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, fastMA.appliedPrice, bar+i);
          }
       }
       else {
-         fast.ma = iMA(NULL, NULL, fast.ma.periods, 0, fast.ma.method, fast.ma.appliedPrice, bar);
+         fastMA = iMA(NULL, NULL, fastMA.periods, 0, fastMA.method, fastMA.appliedPrice, bar);
       }
 
       // slow MA
-      if (slow.ma.method == MODE_ALMA) {
-         slow.ma = 0;
-         for (i=0; i < slow.ma.periods; i++) {
-            slow.ma += slow.alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, slow.ma.appliedPrice, bar+i);
+      if (slowMA.method == MODE_ALMA) {
+         slowMA = 0;
+         for (i=0; i < slowMA.periods; i++) {
+            slowMA += slowALMA.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, slowMA.appliedPrice, bar+i);
          }
       }
       else {
-         slow.ma = iMA(NULL, NULL, slow.ma.periods, 0, slow.ma.method, slow.ma.appliedPrice, bar);
+         slowMA = iMA(NULL, NULL, slowMA.periods, 0, slowMA.method, slowMA.appliedPrice, bar);
       }
 
       // final MACD
-      bufferMACD[bar] = (fast.ma - slow.ma)/Pips;
+      bufferMACD[bar] = (fastMA - slowMA)/Pips;
 
       if (bufferMACD[bar] > 0) {
          bufferUpper[bar] = bufferMACD[bar];
@@ -422,17 +421,17 @@ void SetIndicatorOptions() {
  */
 bool StoreInputParameters() {
    string name = __NAME();
-   Chart.StoreInt   (name +".input.Fast.MA.Periods",       Fast.MA.Periods      );
-   Chart.StoreString(name +".input.Fast.MA.Method",        Fast.MA.Method       );
-   Chart.StoreString(name +".input.Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
-   Chart.StoreInt   (name +".input.Slow.MA.Periods",       Slow.MA.Periods      );
-   Chart.StoreString(name +".input.Slow.MA.Method",        Slow.MA.Method       );
-   Chart.StoreString(name +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
-   Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
-   Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
+   Chart.StoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
+   Chart.StoreString(name +".input.FastMA.Method",         FastMA.Method        );
+   Chart.StoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
+   Chart.StoreInt   (name +".input.SlowMA.Periods",        SlowMA.Periods       );
+   Chart.StoreString(name +".input.SlowMA.Method",         SlowMA.Method        );
+   Chart.StoreString(name +".input.SlowMA.AppliedPrice",   SlowMA.AppliedPrice  );
    Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
    Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
    Chart.StoreString(name +".input.Signal.onCross",        Signal.onCross       );
    Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
@@ -449,17 +448,17 @@ bool StoreInputParameters() {
  */
 bool RestoreInputParameters() {
    string name = __NAME();
-   Chart.RestoreInt   (name +".input.Fast.MA.Periods",       Fast.MA.Periods      );
-   Chart.RestoreString(name +".input.Fast.MA.Method",        Fast.MA.Method       );
-   Chart.RestoreString(name +".input.Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
-   Chart.RestoreInt   (name +".input.Slow.MA.Periods",       Slow.MA.Periods      );
-   Chart.RestoreString(name +".input.Slow.MA.Method",        Slow.MA.Method       );
-   Chart.RestoreString(name +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
-   Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
-   Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
+   Chart.RestoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
+   Chart.RestoreString(name +".input.FastMA.Method",         FastMA.Method        );
+   Chart.RestoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
+   Chart.RestoreInt   (name +".input.SlowMA.Periods",        SlowMA.Periods       );
+   Chart.RestoreString(name +".input.SlowMA.Method",         SlowMA.Method        );
+   Chart.RestoreString(name +".input.SlowMA.AppliedPrice",   SlowMA.AppliedPrice  );
    Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
+   Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
    Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
    Chart.RestoreString(name +".input.Signal.onCross",        Signal.onCross       );
    Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
@@ -475,17 +474,17 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Fast.MA.Periods=",       Fast.MA.Periods,                      ";"+ NL,
-                            "Fast.MA.Method=",        DoubleQuoteStr(Fast.MA.Method),       ";"+ NL,
-                            "Fast.MA.AppliedPrice=",  DoubleQuoteStr(Fast.MA.AppliedPrice), ";"+ NL,
-                            "Slow.MA.Periods=",       Slow.MA.Periods,                      ";"+ NL,
-                            "Slow.MA.Method=",        DoubleQuoteStr(Slow.MA.Method),       ";"+ NL,
-                            "Slow.MA.AppliedPrice=",  DoubleQuoteStr(Slow.MA.AppliedPrice), ";"+ NL,
-                            "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
-                            "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
+   return(StringConcatenate("FastMA.Periods=",        FastMA.Periods,                       ";"+ NL,
+                            "FastMA.Method=",         DoubleQuoteStr(FastMA.Method),        ";"+ NL,
+                            "FastMA.AppliedPrice=",   DoubleQuoteStr(FastMA.AppliedPrice),  ";"+ NL,
+                            "SlowMA.Periods=",        SlowMA.Periods,                       ";"+ NL,
+                            "SlowMA.Method=",         DoubleQuoteStr(SlowMA.Method),        ";"+ NL,
+                            "SlowMA.AppliedPrice=",   DoubleQuoteStr(SlowMA.AppliedPrice),  ";"+ NL,
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
+                            "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
                             "Max.Values=",            Max.Values,                           ";"+ NL,
                             "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       ";"+ NL,
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";"+ NL,

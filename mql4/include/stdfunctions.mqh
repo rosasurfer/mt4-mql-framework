@@ -6171,7 +6171,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
 
 
 /**
- * Load the "MACD" indicator and return an indicator value.
+ * Load the framework'a "MACD" indicator and return an indicator value.
  *
  * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    fastMaPeriods      - indicator parameter
@@ -6189,7 +6189,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD ",
+   double value = iCustom(NULL, timeframe, "MACDX",
                           fastMaPeriods,                                   // int    Fast.MA.Periods
                           fastMaMethod,                                    // string Fast.MA.Method
                           fastMaAppliedPrice,                              // string Fast.MA.AppliedPrice
