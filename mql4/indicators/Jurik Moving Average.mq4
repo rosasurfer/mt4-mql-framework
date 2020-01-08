@@ -182,11 +182,11 @@ int onInit() {
 
    // chart legend
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName = "JMA"+ ifString(StrEndsWithI(__NAME(), "spiggy"), ".spiggy", "") +"("+ Periods + sAppliedPrice +")";
+   indicatorName = "JMA("+ Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
        chartLegendLabel = CreateLegendLabel(indicatorName);
        ObjectRegister(chartLegendLabel);
-      chartLegendDigits = ifInt(StrEndsWithI(__NAME(), "spiggy"), SubPipDigits+1, Digits);
+      chartLegendDigits = ifInt(Color.UpTrend==Color.DownTrend, 4, Digits);
    }
 
    // names, labels, styles and display options
@@ -267,7 +267,7 @@ int onTick() {
 
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
    if (ChangedBars < 2)          // !!! repainting bug: vorübergehender Workaround bei Realtime-Update,
-      return(NO_ERROR);          //                     JMA wird jetzt nur bei onBarOpen aktualisiert
+      return(NO_ERROR);          //                     JMA wird zur Zeit nur bei onBarOpen aktualisiert
    // TODO: Fix me ----------------------------------------------------------------------------------------------------------
 
 
@@ -562,12 +562,6 @@ void SetIndicatorOptions() {
 
    int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
    int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
-
-   if (StrEndsWithI(__NAME(), "spiggy")) {
-      draw_width      = 2;
-      Color.UpTrend   = Gold;
-      Color.DownTrend = Gold;
-   }
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
