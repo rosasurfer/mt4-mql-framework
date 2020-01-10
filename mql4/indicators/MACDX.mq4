@@ -94,15 +94,12 @@ int    maxValues;
 string indicatorName;                                       // "Data" window and signal notification name
 
 bool   signals;
-
 bool   signal.sound;
 string signal.sound.crossUp   = "Signal-Up.wav";
 string signal.sound.crossDown = "Signal-Down.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
 

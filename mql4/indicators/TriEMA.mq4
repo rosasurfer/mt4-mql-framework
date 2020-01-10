@@ -68,9 +68,9 @@ double firstEma [];                                      // first intermediate E
 double secondEma[];                                      // second intermediate EMA buffer: invisible
 double thirdEma [];                                      // TriEMA main value:              invisible, displayed in legend and "Data" window
 double trend    [];                                      // trend direction:                invisible, displayed in "Data" window
-double upTrend1 [];                                      // uptrend values:                 visible
-double downTrend[];                                      // downtrend values:               visible
-double upTrend2 [];                                      // single-bar uptrends:            visible
+double uptrend1 [];                                      // uptrend values:                 visible
+double downtrend[];                                      // downtrend values:               visible
+double uptrend2 [];                                      // single-bar uptrends:            visible
 
 int    maAppliedPrice;
 int    maxValues;
@@ -81,18 +81,14 @@ string indicatorName;
 string chartLegendLabel;
 
 bool   signals;
-
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
 string signal.sound.trendChange_down = "Signal-Down.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
-
 string signal.info = "";                                 // additional chart legend info
 
 
@@ -168,9 +164,9 @@ int onInit() {
    SetIndexBuffer(MODE_EMA_2,     secondEma);            // second intermediate EMA buffer: invisible
    SetIndexBuffer(MODE_EMA_3,     thirdEma );            // TriEMA main value:              invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:                invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  upTrend1 );            // uptrend values:                 visible
-   SetIndexBuffer(MODE_UPTREND2,  upTrend2 );            // downtrend values:               visible
-   SetIndexBuffer(MODE_DOWNTREND, downTrend);            // on-bar uptrends:                visible
+   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:                 visible
+   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // downtrend values:               visible
+   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // on-bar uptrends:                visible
 
    // chart legend
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
@@ -236,9 +232,9 @@ int onTick() {
       ArrayInitialize(secondEma, EMPTY_VALUE);
       ArrayInitialize(thirdEma,  EMPTY_VALUE);
       ArrayInitialize(trend,               0);
-      ArrayInitialize(upTrend1,  EMPTY_VALUE);
-      ArrayInitialize(upTrend2,  EMPTY_VALUE);
-      ArrayInitialize(downTrend, EMPTY_VALUE);
+      ArrayInitialize(uptrend1,  EMPTY_VALUE);
+      ArrayInitialize(uptrend2,  EMPTY_VALUE);
+      ArrayInitialize(downtrend, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -248,9 +244,9 @@ int onTick() {
       ShiftIndicatorBuffer(secondEma, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(thirdEma,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(upTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(upTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(downTrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -262,7 +258,7 @@ int onTick() {
    for (i=ChangedBars-1; i >= 0; i--)   firstEma [i] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, maAppliedPrice, i);
    for (i=ChangedBars-1; i >= 0; i--)   secondEma[i] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
    for (i=startBar;      i >= 0; i--) { thirdEma [i] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
-      @Trend.UpdateDirection(thirdEma, i, trend, upTrend1, downTrend, upTrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(thirdEma, i, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {
