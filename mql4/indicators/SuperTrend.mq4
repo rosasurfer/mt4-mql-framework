@@ -95,18 +95,14 @@ string indicatorName;
 string chartLegendLabel;
 
 bool   signals;
-
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
 string signal.sound.trendChange_down = "Signal-Down.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
-
 string signal.info = "";                                 // additional chart legend info
 
 
