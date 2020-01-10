@@ -390,12 +390,15 @@ return(dJma[iN]);
 /**
  * Resize JMA buffers to allow parallel calculation of multiple JMA series. Must be called before the first call of
  * JJMASeries().
+ *
+ * @param  int size - amount of timeseries to calculate in parallel
+ *
+ * @return bool - success status
  */
-int JJMASeriesResize(int size) {
+bool JJMASeriesResize(int size) {
    if (size < 1) {
-      catch("JJMASeriesResize(1)  invalid parameter size = "+ size +" (must be positive)", ERR_INVALID_PARAMETER);
       iResize = -1;
-      return(0);
+      return(!catch("JJMASeriesResize(1)  invalid parameter size = "+ size +" (must be positive)", ERR_INVALID_PARAMETER));
    }
 
    ArrayResize(dList128A, size);
@@ -449,10 +452,11 @@ int JJMASeriesResize(int size) {
 
    if (IsError(catch("JJMASeriesResize(2)"))) {
       iResize = -2;
-      return(0);
+      return(false);
    }
+
    iResize = size;
-   return(size);
+   return(true);
 }
 
 
