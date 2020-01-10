@@ -74,7 +74,6 @@ int    drawArrowSize = 1;                                // default symbol size 
 
 string indicatorName;
 string chartLegendLabel;
-int    chartLegendDigits;
 
 bool   signals;                                          // whether any signal is enabled
 bool   signal.sound;
@@ -176,7 +175,6 @@ int onInit() {
    if (!IsSuperContext()) {
        chartLegendLabel = CreateLegendLabel(indicatorName);
        ObjectRegister(chartLegendLabel);
-      chartLegendDigits = ifInt(Color.UpTrend==Color.DownTrend, 4, Digits);
    }
 
    // names, labels, styles and display options
@@ -231,7 +229,7 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(main,                0);
+      ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
       ArrayInitialize(uptrend1,  EMPTY_VALUE);
       ArrayInitialize(downtrend, EMPTY_VALUE);
@@ -241,7 +239,7 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(main,      Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
       ShiftIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
@@ -257,12 +255,14 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
-       main[bar] = JJMASeries(0, 0, oldestBar, startBar, Phase, Periods, Close[bar], bar, error);
-       if (IsError(error)) return(catch("onTick(2)", error));
+      double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
+      main[bar] = JJMASeries(0, 0, oldestBar, startBar, Phase, Periods, price, bar, error); if (error != NO_ERROR) return(error);
+
+      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], 4, NULL, Time[0]);
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], 4, trend[0], Time[0]);
    }
    return(last_error);
 }
@@ -278,7 +278,7 @@ void SetIndicatorOptions() {
    int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
    int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
 
-   SetIndexStyle(MODE_MA,        DRAW_LINE, EMPTY, 2,          Blue           );
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
    SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, draw_width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
