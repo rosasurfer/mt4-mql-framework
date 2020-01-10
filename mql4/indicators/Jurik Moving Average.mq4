@@ -2,17 +2,14 @@
  * JMA - Jurik Moving Average
  *
  *
- * This indicator is a rewritten version of the MQL4 port of the TradeStation JMA of 1998 by Nikolay Kositsin.
- *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend iN bars since the last reversal
  *
- * @see     http://www.jurikres.com/catalog1/ms_ama.htm
- * @see     "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
- * @source  https://www.mql5.com/en/articles/1450
+ * @see  http://www.jurikres.com/catalog1/ms_ama.htm
+ * @see  "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -173,8 +170,9 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // on-bar uptrends:  visible
 
    // chart legend
+   string sPhase = ifString(!Phase, "", ", Phase="+ Phase);
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName = "JMA("+ Periods + sAppliedPrice +")";
+   indicatorName = "JMA("+ Periods + sPhase + sAppliedPrice +")";
    if (!IsSuperContext()) {
        chartLegendLabel = CreateLegendLabel(indicatorName);
        ObjectRegister(chartLegendLabel);
@@ -193,10 +191,9 @@ int onInit() {
    SetIndicatorOptions();
 
    // initialize JMA calculation
-   if (JJMASeriesResize(1) != 1)
-      return(catch("onInit(9)", ERR_RUNTIME_ERROR));
-
-   return(catch("onInit(10)"));
+   if (!JJMASeriesResize(1))
+      return(last_error);
+   return(catch("onInit(9)"));
 }
 
 
