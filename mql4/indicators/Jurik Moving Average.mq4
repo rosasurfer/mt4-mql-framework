@@ -46,7 +46,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <.nk/JJMASeries.mqh>
+#include <nk/JJMASeries.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
