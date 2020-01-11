@@ -195,8 +195,6 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // initialize JMA calculation
-   //if (!JJMASeriesResize(2)) return(last_error);
    return(catch("onInit(9)"));
 }
 
