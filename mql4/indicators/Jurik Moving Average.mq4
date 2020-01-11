@@ -18,6 +18,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Periods              = 14;
+extern int    Periods2             = 0;
 extern int    Phase                = 0;                  // indicator overshooting: -100 (none)...+100 (max)
 extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
 
@@ -53,19 +54,21 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #define MODE_UPTREND2         4
 
 #property indicator_chart_window
-#property indicator_buffers   5
+#property indicator_buffers   6
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
+#property indicator_color6    CLR_NONE
 
 double main     [];                                      // MA main values:      invisible, displayed iN legend and "Data" window
 double trend    [];                                      // trend direction:     invisible, displayed iN "Data" window
 double uptrend1 [];                                      // uptrend values:      visible
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
+double jma2     [];
 
 int    appliedPrice;
 int    maxValues;
@@ -99,7 +102,8 @@ int onInit() {
 
    // validate inputs
    // Periods
-   if (Periods < 1)     return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Periods  < 1)    return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Periods2 < 0)    return(catch("onInit(1)  Invalid input parameter Periods2 = "+ Periods2, ERR_INVALID_INPUT_PARAMETER));
 
    // Phase
    if (Phase < -100)    return(catch("onInit(2)  Invalid input parameter Phase = "+ Phase +" (-100..+100)", ERR_INVALID_INPUT_PARAMETER));
@@ -167,6 +171,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:   visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values: visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // on-bar uptrends:  visible
+   SetIndexBuffer(5,              jma2     );
 
    // chart legend
    string sPhase = ifString(!Phase, "", ", Phase="+ Phase);
@@ -185,12 +190,13 @@ int onInit() {
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
+   if (!Periods2) SetIndexLabel(5, NULL);
+   else           SetIndexLabel(5, "JMA("+ Periods2 +")");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
    // initialize JMA calculation
-   if (!JJMASeriesResize(1))
-      return(last_error);
+   //if (!JJMASeriesResize(2)) return(last_error);
    return(catch("onInit(9)"));
 }
 
@@ -234,6 +240,7 @@ int onTick() {
       ArrayInitialize(uptrend1,  EMPTY_VALUE);
       ArrayInitialize(downtrend, EMPTY_VALUE);
       ArrayInitialize(uptrend2,  EMPTY_VALUE);
+      ArrayInitialize(jma2,      EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -244,6 +251,7 @@ int onTick() {
       ShiftIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(jma2,      Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -257,9 +265,10 @@ int onTick() {
    for (int bar=startBar; bar >= 0; bar--) {
       double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
 
-      main[bar] = JJMASeries(0, 0, oldestBar, startBar, Phase, Periods, price, bar);
-      if (IsLastError()) return(last_error);
-
+      main[bar] = JJMASeries(0, 0, oldestBar, startBar, Phase, Periods, price, bar); if (last_error||0) return(last_error);
+      if (Periods2 != 0) {
+         jma2[bar] = JJMASeries(1, 0, oldestBar, startBar, Phase, Periods2, price, bar); if (last_error||0) return(last_error);
+      }
       @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
 
@@ -280,11 +289,23 @@ void SetIndicatorOptions() {
    int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
    int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, draw_width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   if (!Periods2) {
+      SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+      SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+      SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+      SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, draw_width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+      SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+      SetIndexStyle(5,              DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+   }
+   else {
+      //Color.DownTrend = Color.UpTrend;
+      SetIndexStyle(MODE_MA,        DRAW_LINE, EMPTY, draw_width, Color.UpTrend  );
+      SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+      SetIndexStyle(MODE_UPTREND1,  DRAW_NONE, EMPTY, draw_width, CLR_NONE       );
+      SetIndexStyle(MODE_DOWNTREND, DRAW_NONE, EMPTY, draw_width, CLR_NONE       );
+      SetIndexStyle(MODE_UPTREND2,  DRAW_NONE, EMPTY, draw_width, CLR_NONE       );
+      SetIndexStyle(5,              DRAW_LINE, EMPTY, draw_width, Color.DownTrend);
+   }
 }
 
 
