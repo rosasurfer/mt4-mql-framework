@@ -1,10 +1,10 @@
 /**
  * Calculate the JMA (Jurik Moving Average) of one or more timeseries.
  *
- * This function is a rewrite of the JMA algorithm provided by Nikolay Kositsin (see link below). It fixes bugs and various
+ * This function is a rewrite of the public JMA algorithm of Nikolay Kositsin (see link below). It fixes bugs and various
  * usage and design issues. Global variables and the need of additional initializers are removed. Error handling is improved.
  *
- * @param  int    h       - a non-negative value (a pseudo handle) to separately address multiple parallel JMA calculations
+ * @param  int    h       - non-negative value (a pseudo handle) to separately address multiple parallel JMA calculations
  * ---
  *
  *
@@ -26,13 +26,9 @@
  * @source  NK-Library by Nikolay Kositsin: https://www.mql5.com/en/articles/1450
  */
 double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
-   double   dJMA[], dList128A[][128], dList128B[][128], dList128C[][128], dList128D[][128], dList128E[][128];
-   double   dRing11A[][11], dRing11B[][11];
-   double   dMem8[][8];
-   double   dPrices62[][62];
-   double   dKg[], dPf[], dF18[], dF38[], dFa8[], dFc0[], dFc8[], dS8[], dS18[], dV1[], dV2[], dV3[], dF90[], dF78[], dF88[], dF98[];
-   int      iMem7[][7], iMem11[][11];
-   int      iS28[], iS30[], iS48[], iS38[], iS40[], iS50[], iS70[], iLp1[], iLp2[], iF0[];
+   double   dJMA[], dList128A[][128], dList128B[][128], dList128C[][128], dList128D[][128], dList128E[][128], dRing11A[][11], dRing11B[][11];
+   double   dMem8[][8], dPrices62[][62], dKg[], dPf[], dF18[], dF38[], dFa8[], dFc0[], dFc8[], dS8[], dS18[], dV1[], dV2[], dV3[], dF90[], dF78[], dF88[], dF98[];
+   int      iMem7[][7], iMem11[][11], iS28[], iS30[], iS48[], iS38[], iS40[], iS50[], iS70[], iLp1[], iLp2[], iF0[];
    datetime iDatetime[];
    double   dFa0, dVv, dV4, dF70, dS20, dS10, dFb0, dFd0, dSValue, dF60, dF20, dSDiffParamA, dF30, dF40, dSDiffParamB, dF58, dF68;
    int      iV5, iV6, iFe0, iHighLimit, iFe8, iS58, iS60, iS68;
@@ -349,9 +345,9 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
 /**
  * Initialize the specified number of JMA calculation buffers.
  *
- * @param  int    size   - number of timeseries to initialize buffers for; if 0 (zero) all buffers are released
- * @param  double dJMA[] - buffer arrays
- * @param  ...
+ * @param  _In_  int    size   - number of timeseries to initialize buffers for; if 0 (zero) all buffers are released
+ * @param  _Out_ double dJMA[] - buffer arrays
+ * @param  _Out_ ...
  *
  * @return bool - success status
  */
