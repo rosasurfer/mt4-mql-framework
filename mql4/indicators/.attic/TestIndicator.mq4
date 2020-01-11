@@ -17,19 +17,19 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
    static bool done = false;
-   if (true || !done) {
-      //debug("onTick()  calling rsfLib1");
-      //DecreasePeriod(PERIOD_H1);
+   if (!done) {
 
-      //debug("onTick()  calling testlibrary");
-      //ex4_GetIntValue(1);
+      int bar = 1;
+      double price = iMA(NULL, -1, -1, 0, MODE_SMA, -1, bar); // result: on invalid parameters iMA doesn't set any errors
+
+      debug("onTick()  price = "+ price);
       done = true;
    }
-   return(last_error);
+   return(catch("onTick(1)"));
 }

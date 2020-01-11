@@ -3,10 +3,10 @@
  *
  *
  * This function is a rewrite of the MQL4 port of the TradeStation JMA of 1998 by Nikolay Kositsin. This version fixes some
- * bugs and the most disturbing design and usage issues. Especially it removes all global variables and the need of additional
+ * bugs and the most annoying design and usage issues. Especially it removes all global variables and the need of additional
  * helper functions.
  *
- * @see     http://www.jurikres.com/catalog1/ms_ama.htm                    [Jurik Moving Average, Jurik Research]
+ * @see     http://www.jurikres.com/catalog1/ms_ama.htm                    [JMA, Jurik Research]
  * @see     "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
  * @source  https://www.mql5.com/en/articles/1450                          [NK_library, Nikolay Kositsin]
  */
@@ -24,12 +24,12 @@ int    iMem7[1][7], iMem11[1][11];
 
 int    iS28[1], iS30[1], iS38[1], iS40[1], iS48[1], iF0[1], iS50[1], iS70[1], iLp1[1], iLp2[1], iDatetime[1];
 
-int    iV5, iV6, iFe0, iFd8, iFe8, iVal, iS58, iS60, iS68, iAa, iSize, iIi, iJj, iM, iN, iTnew, iTold, iError, iResize;
+int    iV5, iV6, iFe0, iFd8, iFe8, iVal, iS58, iS60, iS68, iAa, iIi, iJj, iM, iN, iTnew, iTold;
 
 
 /**
- * Before the first call of the function (when the number of calculated bars is still 0) you must resize the internal buffer
- * variables according to the number of JMA price series you intend to calculate by calling JJMASeriesResize().
+ * Before the first call of the function you must resize the internal buffer variables according to the number of JMA
+ * timeseries you intend to calculate by calling JJMASeriesResize().
  * ---
  *
  *
@@ -51,51 +51,26 @@ int    iV5, iV6, iFe0, iFd8, iFe8, iVal, iS58, iS60, iS68, iAa, iSize, iIi, iJj,
  * @param  _In_  double dPrice  - price for which the indicator value is calculated
  * @param  _In_  int    iBar    - Number of the bar to calculate counting downwards to zero. Its maximum value should always be
  *                                equal to the value of the parameter limit.
- * @param  _Out_ int    error   - variable receiving any errors occurred during the calculation
  *
- * @return double - JMA value or NULL if iBar is greater than nJMA.MaxBar-30
+ * @return double - JMA value or NULL in case of errors;
+ *                  or if iBar is greater than nJMA.MaxBar-30
  */
-double JJMASeries(int iNumber, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar, int &error) {
+double JJMASeries(int iNumber, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
    iN = iNumber;
-   error = 1;
 
-   // Проверки на ошибки
+   // initialization checks
    if (iBar == iStartBar) {
-      // проверка на инициализацию функции JJMASeries()
-      if (iResize < 1) {
-         Print("JJMASeries number ="+ iN +". Не было сделано изменение размеров буферных переменных функцией JJMASeriesResize()");
-         if (iResize == 0) Print("JJMASeries number ="+ iN +". Следует дописать обращение к функции JJMASeriesResize() в блок инициализации");
-         return(0);
-      }
-
-      // проверка на ошибку в исполнении программного кода, предшествовавшего функции JJMASeries()
-      iError = GetLastError();
-      if (iError > 4000) {
-         Print("JJMASeries number ="+ iN +". В коде, предшествующем обращению к функции JJMASeries() number = "+ iN +" ошибка!!!");
-         Print("JJMASeries number ="+ iN + ". ", ErrorToStr(iError));
-      }
-
-      // проверка на ошибку в задании переменных iNumber и nJMAResize.Number
-      iSize = ArraySize(dJma);
-      if (iSize < iN) {
-         Print("JJMASeries number ="+ iN +". Ошибка!!! Неправильно задано значение переменной iNumber="+ iN +" функции JJMASeries()");
-         Print("JJMASeries number ="+ iN +". Или неправильно задано значение  переменной nJJMAResize.Size="+ iSize +" функции JJMASeriesResize()");
-         return(0);
-      }
+      if (ArraySize(dJma) < iNumber+1) return(!catch("JJMASeries("+ iN +")  JMA calculation buffer "+ iNumber +" not initialized", ERR_NOT_INITIALIZED_ARRAY));
    }
 
-   // проверка на ошибку в последовательности изменения переменной iBar
-   if (iStartBar>=iOldestBar && !iBar && iOldestBar>30 && !iDatetime[iN]) {
-      Print("JJMASeries number ="+ iN +". Ошибка!!! Нарушена правильная последовательность изменения параметра iBar внешним оператором цикла!!!");
-   }
-
-   if (iBar > iOldestBar) {
-      error = NO_ERROR;
+   // validate bar parameters
+   if (iStartBar>=iOldestBar && !iBar && iOldestBar>30 && !iDatetime[iN])
+      warn("JJMASeries("+ iN +")  invalid bar parameters", ERR_INVALID_PARAMETER);
+   if (iBar > iOldestBar)
       return(0);
-   }
 
+   // coefficient calculation
    if (iBar==iOldestBar || iDin) {
-      // Расчёт коэффициентов
       double dS, dL;
 
       if (iPeriods < 1.0000000002) double dR = 0.0000000001;
@@ -126,7 +101,7 @@ double JJMASeries(int iNumber, int iDin, int iOldestBar, int iStartBar, int iPha
    }
 
    if (iBar==iStartBar && iStartBar < iOldestBar) {
-      // Восстановление значений переменных
+      // recovery of variable values
       iTnew = Time[iStartBar+1];
       iTold = iDatetime[iN];
 
@@ -142,25 +117,17 @@ double JJMASeries(int iNumber, int iDin, int iOldestBar, int iStartBar, int iPha
          iLp2[iN] = iMem7[iN][4]; iS40[iN] = iMem7[iN][5]; iS70[iN] = iMem7[iN][6];
       }
 
-      // проверка на ошибки
+      // error checking
       if (iTnew != iTold) {
-         error=-1;
-         // индикация ошибки в расчёте входного параметра iStartBar функции JJMASeries()
-         if (iTnew > iTold) {
-            Print("JJMASeries number ="+ iN +". Ошибка!!! Параметр iStartBar функции JJMASeries() меньше, чем необходимо");
-         }
-         else {
-            int iLimitERROR = iStartBar +1 -iBarShift(NULL, 0, iTold, true);
-            Print("JMASerries number ="+ iN +". Ошибка!!! Параметр iStartBar функции JJMASeries() больше, чем необходимо на "+ iLimitERROR);
-         }
-         // Возврат через error=-1; ошибки в расчёте функции JJMASeries
+         if (iTnew > iTold) catch("JJMASeries("+ iN +")  invalid parameter iStartBar = "+ iStartBar +" (too small)", ERR_INVALID_PARAMETER);
+         else               catch("JMASerries("+ iN +")  invalid parameter iStartBar = "+ iStartBar +" (too large by "+ (iStartBar+1-iBarShift(NULL, 0, iTold, true)) +")", ERR_INVALID_PARAMETER);
          return(0);
       }
    }
 
    if (iBar == 1) {
       if (iStartBar!=1 || Time[iStartBar+2]==iDatetime[iN]) {
-         // Сохранение значений переменных
+         // saving variable values
          for (iAa=127; iAa >= 0; iAa--) dList128E[iN][iAa] = dList128A[iN][iAa];
          for (iAa=127; iAa >= 0; iAa--) dList128D[iN][iAa] = dList128B[iN][iAa];
          for (iAa=10;  iAa >= 0; iAa--) dRing11B [iN][iAa] = dRing11A [iN][iAa];
@@ -369,17 +336,9 @@ dJma[iN] = dJma[iN] + dFa8[iN];
 
 if (iLp1[iN] <=30)dJma[iN]=0.0;
 
-//----++ проверка на ошибку в исполнении программного кода функции JJMASeries()
-iError=GetLastError();
-if(iError>4000)
-  {
-    Print("JJMASeries number ="+iN+". При исполнении функции JJMASeries() произошла ошибка!!!");
-    Print("JJMASeries number ="+iN+ ". ", ErrorToStr(iError));
-    return(0.0);
-  }
-
-error=0;
-return(dJma[iN]);
+   if (!catch("JJMASeries(" +iN +")"))
+      return(dJma[iN]);
+   return(0);
 
    // suppress compiler warnings
    JJMASeriesAlert(NULL, NULL, NULL);
@@ -396,10 +355,7 @@ return(dJma[iN]);
  * @return bool - success status
  */
 bool JJMASeriesResize(int size) {
-   if (size < 1) {
-      iResize = -1;
-      return(!catch("JJMASeriesResize(1)  invalid parameter size = "+ size +" (must be positive)", ERR_INVALID_PARAMETER));
-   }
+   if (size < 1) return(!catch("JJMASeriesResize(1)  invalid parameter size = "+ size +" (must be positive)", ERR_INVALID_PARAMETER));
 
    ArrayResize(dList128A, size);
    ArrayResize(dList128B, size);
@@ -450,22 +406,16 @@ bool JJMASeriesResize(int size) {
       for (int j=64; j <= 127; j++) dList128A[i][j] = +1000000;
    }
 
-   if (IsError(catch("JJMASeriesResize(2)"))) {
-      iResize = -2;
-      return(false);
-   }
-
-   iResize = size;
-   return(true);
+   return(!catch("JJMASeriesResize(2)"));
 }
 
 
 /**
- *
+ * For backward-compatibility with unredacted NK_library files.
  */
 void JJMASeriesAlert(int id, string name, int value) {
    switch (id) {
-      case 0: if (value < 1)                   Alert("Параметр "+ name +" должен быть не менее 1 Вы ввели недопустимое "+ value +" будет использовано 1");         break;
-      case 1: if (value < -100 || value > 100) Alert("Параметр "+ name +" должен быть от -100 до +100 Вы ввели недопустимое "+ value +" будет использовано -100"); break;
+      case 0: if (value < 1)                   Alert("Invalid parameter "+ name +" = "+ value +" (must be positive)");            break;
+      case 1: if (value < -100 || value > 100) Alert("Invalid parameter "+ name +" = "+ value +" (must be between -100...+100)"); break;
    }
 }
