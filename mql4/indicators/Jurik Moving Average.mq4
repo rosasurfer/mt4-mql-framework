@@ -38,12 +38,12 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/@JMA.mqh>
 #include <functions/@Trend.mqh>
 #include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <nk/JJMASeries.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
