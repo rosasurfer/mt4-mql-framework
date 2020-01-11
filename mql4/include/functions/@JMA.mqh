@@ -1,15 +1,3 @@
-
-double dList128A[][128], dList128B[][128], dList128C[][128], dList128D[][128], dList128E[][128];
-double dRing11A[][11], dRing11B[][11];
-double dMem8[][8];
-double dPrices62[][62];
-
-double dJMA[], dKg[], dPf[], dF18[], dF38[], dFa8[], dFc0[], dFc8[], dS8[], dS18[], dV1[], dV2[], dV3[], dF90[], dF78[], dF88[], dF98[];
-
-int    iMem7[][7], iMem11[][11];
-int    iS28[], iS30[], iS48[], iS38[], iS40[], iS50[], iS70[], iLp1[], iLp2[], iF0[], iDatetime[];
-
-
 /**
  * Calculate the JMA (Jurik Moving Average) of one or more timeseries.
  *
@@ -38,15 +26,24 @@ int    iS28[], iS30[], iS48[], iS38[], iS40[], iS50[], iS70[], iLp1[], iLp2[], i
  * @source  NK-Library by Nikolay Kositsin: https://www.mql5.com/en/articles/1450
  */
 double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
-   double dFa0, dVv, dV4, dF70, dS20, dS10, dFb0, dFd0, dSValue, dF60, dF20, dSDiffParamA, dF30, dF40, dSDiffParamB, dF58, dF68;
-   int    iV5, iV6, iFe0, iHighLimit, iFe8, iS58, iS60, iS68;
+   double   dJMA[], dList128A[][128], dList128B[][128], dList128C[][128], dList128D[][128], dList128E[][128];
+   double   dRing11A[][11], dRing11B[][11];
+   double   dMem8[][8];
+   double   dPrices62[][62];
+   double   dKg[], dPf[], dF18[], dF38[], dFa8[], dFc0[], dFc8[], dS8[], dS18[], dV1[], dV2[], dV3[], dF90[], dF78[], dF88[], dF98[];
+   int      iMem7[][7], iMem11[][11];
+   int      iS28[], iS30[], iS48[], iS38[], iS40[], iS50[], iS70[], iLp1[], iLp2[], iF0[];
+   datetime iDatetime[];
+   double   dFa0, dVv, dV4, dF70, dS20, dS10, dFb0, dFd0, dSValue, dF60, dF20, dSDiffParamA, dF30, dF40, dSDiffParamB, dF58, dF68;
+   int      iV5, iV6, iFe0, iHighLimit, iFe8, iS58, iS60, iS68;
 
    // validation
    if (h < 0) return(!catch("JJMASeries(1)  invalid parameter h: "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
 
    // buffer initialization
    if (h > ArrayRange(dJMA, 0)-1) {
-      if (!JJMASeries.InitBuffers(h+1)) return(0);
+      if (!JJMASeries.InitBuffers(h+1, dJMA, dList128A, dList128B, dList128C, dList128D, dList128E, dRing11A, dRing11B, dMem8, dPrices62, dKg, dPf, dF18, dF38, dFa8, dFc0, dFc8, dS8, dS18, dV1, dV2, dV3, dF90, dF78, dF88, dF98, iMem7, iMem11, iS28, iS30, iS48, iS38, iS40, iS50, iS70, iLp1, iLp2, iF0, iDatetime))
+         return(0);
    }
 
 
@@ -352,11 +349,17 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
 /**
  * Initialize the specified number of JMA calculation buffers.
  *
- * @param  int size - number of timeseries to initialize buffers for; if 0 (zero) all buffers are released
+ * @param  int    size   - number of timeseries to initialize buffers for; if 0 (zero) all buffers are released
+ * @param  double dJMA[] - buffer arrays
+ * @param  ...
  *
  * @return bool - success status
  */
-bool JJMASeries.InitBuffers(int size) {
+bool JJMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], double dList128B[][], double dList128C[][], double dList128D[][], double dList128E[][], double dRing11A[][],
+                                      double dRing11B[][], double dMem8[][], double dPrices62[][], double dKg[], double dPf[], double dF18[], double dF38[], double dFa8[], double dFc0[],
+                                      double dFc8[], double dS8[], double dS18[], double dV1[], double dV2[], double dV3[], double dF90[], double dF78[], double dF88[], double dF98[],
+                                      int iMem7[][], int iMem11[][], int &iS28[], int &iS30[], int iS48[], int iS38[], int iS40[], int iS50[], int iS70[], int iLp1[], int iLp2[], int &iF0[],
+                                      datetime iDatetime[]) {
    if (size < 0) return(!catch("JJMASeries.InitBuffers(1)  invalid parameter size: "+ size +" (must be non-negative)", ERR_INVALID_PARAMETER));
 
    int oldSize = ArrayRange(dJMA, 0);
