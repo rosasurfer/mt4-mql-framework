@@ -41,6 +41,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@JMA.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/BarOpenEvent.mqh>
 #include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
@@ -275,8 +276,51 @@ int onTick() {
 
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], 4, trend[0], Time[0]);
+
+      // signal trend changes
+      if (signals) /*&&*/ if (IsBarOpenEvent()) {
+         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
+         else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
+      }
    }
    return(last_error);
+}
+
+
+/**
+ * Event handler for trend changes.
+ *
+ * @param  int trend - direction
+ *
+ * @return bool - success status
+ */
+bool onTrendChange(int trend) {
+   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+   int error = 0;
+
+   if (trend == MODE_UPTREND) {
+      message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      if (__LOG()) log("onTrendChange(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
+      return(!error);
+   }
+
+   if (trend == MODE_DOWNTREND) {
+      message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      if (__LOG()) log("onTrendChange(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
+      return(!error);
+   }
+
+   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
