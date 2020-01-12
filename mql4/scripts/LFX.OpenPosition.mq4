@@ -169,7 +169,7 @@ int onStart() {
       exactLots  [i]  = Units * unitSize;                                              // exactLots zunächst auf Vielfaches von MODE_LOTSTEP runden
       roundedLots[i]  = NormalizeDouble(MathRound(exactLots[i]/lotStep) * lotStep, CountDecimals(lotStep));
 
-      // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
+      // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorithmus in ChartInfos-Indikator)
       if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung maximal 6.7% je Schritt
       else if (roundedLots[i] <=    0.75) { if (lotStep <   0.02) roundedLots[i] = NormalizeDouble(MathRound(roundedLots[i]/  0.02) *   0.02, 2); }   // 0.3-0.75: Vielfaches von   0.02
       else if (roundedLots[i] <=    1.2 ) { if (lotStep <   0.05) roundedLots[i] = NormalizeDouble(MathRound(roundedLots[i]/  0.05) *   0.05, 2); }   // 0.75-1.2: Vielfaches von   0.05

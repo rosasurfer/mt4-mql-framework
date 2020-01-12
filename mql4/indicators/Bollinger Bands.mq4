@@ -72,14 +72,11 @@ string ind.legendLabel;
 
 bool   signals;
 string signal.info = "";                              // info text in chart legend
-
 bool   signal.sound;
 string signal.sound.touchBand = "Signal-Up.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
 

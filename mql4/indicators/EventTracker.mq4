@@ -119,7 +119,6 @@ string signal.sound.priceSignal_down = "Signal-Down.wav";
 
 bool   signal.sms;
 string signal.sms.receiver = "";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";

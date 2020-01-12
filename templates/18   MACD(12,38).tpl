@@ -8799,14 +8799,14 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD
+name=MACDX
 flags=339
 window_num=1
 <inputs>
-Fast.MA.Periods=12
-Fast.MA.Method=ALMA
-Slow.MA.Periods=38
-Slow.MA.Method=ALMA
+FastMA.Periods=12
+FastMA.Method=ALMA
+SlowMA.Periods=38
+SlowMA.Method=ALMA
 MainLine.Width=2
 </inputs>
 </expert>
