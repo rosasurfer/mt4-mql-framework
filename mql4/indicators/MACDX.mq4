@@ -347,7 +347,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      // detect zero line crossing
+      // signal zero line crossings
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
          else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
