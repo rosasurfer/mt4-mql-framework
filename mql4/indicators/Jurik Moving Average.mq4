@@ -18,7 +18,6 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Periods              = 14;
-extern int    Periods2             = 0;
 extern int    Phase                = 0;                  // indicator overshooting: -100 (none)...+100 (max)
 extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
 
@@ -27,7 +26,8 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
 extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
-extern string __________________________;
+
+extern string ____________Periods2 = "0";                // testing (temporary)
 
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
@@ -68,7 +68,9 @@ double trend    [];                                      // trend direction:    
 double uptrend1 [];                                      // uptrend values:      visible
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
-double jma2     [];
+
+double jma2[];
+int    periods2;
 
 int    appliedPrice;
 int    maxValues;
@@ -103,7 +105,8 @@ int onInit() {
    // validate inputs
    // Periods
    if (Periods  < 1)    return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Periods2 < 0)    return(catch("onInit(1)  Invalid input parameter Periods2 = "+ Periods2, ERR_INVALID_INPUT_PARAMETER));
+   periods2 = StrToInteger(____________Periods2);
+   if (periods2 < 0)    return(catch("onInit(1)  Invalid input parameter Periods2 = "+ periods2, ERR_INVALID_INPUT_PARAMETER));
 
    // Phase
    if (Phase < -100)    return(catch("onInit(2)  Invalid input parameter Phase = "+ Phase +" (-100..+100)", ERR_INVALID_INPUT_PARAMETER));
@@ -190,8 +193,8 @@ int onInit() {
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
-   if (!Periods2) SetIndexLabel(5, NULL);
-   else           SetIndexLabel(5, "JMA("+ Periods2 +")");
+   if (!periods2) SetIndexLabel(5, NULL);
+   else           SetIndexLabel(5, "JMA("+ periods2 +")");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -264,8 +267,8 @@ int onTick() {
       double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
 
       main[bar] = JJMASeries(0, 0, oldestBar, startBar, Phase, Periods, price, bar); if (last_error||0) return(last_error);
-      if (Periods2 != 0) {
-         jma2[bar] = JJMASeries(1, 0, oldestBar, startBar, Phase, Periods2, price, bar); if (last_error||0) return(last_error);
+      if (periods2 != 0) {
+         jma2[bar] = JJMASeries(1, 0, oldestBar, startBar, Phase, periods2, price, bar); if (last_error||0) return(last_error);
       }
       @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
@@ -287,7 +290,7 @@ void SetIndicatorOptions() {
    int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
    int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
 
-   if (!Periods2) {
+   if (!periods2) {
       SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
       SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
       SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);

@@ -1,15 +1,16 @@
 /**
  * Calculate the JMA (Jurik Moving Average) of one or more timeseries.
  *
- * This function is a rewrite of the public JMA algorithm of Nikolay Kositsin (see link below). It fixes bugs and various
- * usage and design issues. Global variables and the need of additional initializers are removed. Error handling is improved.
+ * This function is a modified version of the JMA algorithm published by Nikolay Kositsin (see link below) with fixed bugs
+ * and solved usage and design issues.
  *
- * @param  int    h       - non-negative value (a pseudo handle) to separately address multiple parallel JMA calculations
- * ---
+ * @param  int    h       - non-negative value (pseudo handle) to separately address multiple simultaneous JMA calculations
  *
  *
+ * TODO:
+ * -----
  * @param  int    iDin    - allows to change the iPeriods and iPhase parameters on each bar. 0 - change prohibition parameters,
- *                          any other value is resolution (see indicators "Lines/AMAJ.mq4" and "Lines/AMAJ2.mq4")
+ *                          any other value is resolution (see indicators "nk/Lines/AMAJ.mq4" and "nk/Lines/AMAJ2.mq4")
  * @param  int    MaxBar  - The maximum value that the calculated bar number (iBar) can take. Usually equals Bars-1-periods
  *                          where "period" is the number of bars on which the dJMA.series is not calculated.
  * @param  int    limit   - The number of bars not yet counted plus one or the number of the last uncounted bar. Must be
@@ -22,8 +23,8 @@
  *
  * @return double - JMA value or NULL in case of errors                    TODO: or if iBar is greater than nJMA.MaxBar-30
  *
- * @see     "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
- * @source  NK-Library by Nikolay Kositsin: https://www.mql5.com/en/articles/1450
+ * @see  "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
+ * @see  NK-Library, Nikolay Kositsin: https://www.mql5.com/en/articles/1450
  */
 double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
    double   dJMA[], dList128A[][128], dList128B[][128], dList128C[][128], dList128D[][128], dList128E[][128], dRing11A[][11], dRing11B[][11];
@@ -33,21 +34,15 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
    double   dFa0, dVv, dV4, dF70, dS20, dS10, dFb0, dFd0, dSValue, dF60, dF20, dSDiffParamA, dF30, dF40, dSDiffParamB, dF58, dF68;
    int      iV5, iV6, iFe0, iHighLimit, iFe8, iS58, iS60, iS68;
 
-   // validation
    if (h < 0) return(!catch("JJMASeries(1)  invalid parameter h: "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
 
    // buffer initialization
-   if (h > ArrayRange(dJMA, 0)-1) {
+   if (h > ArraySize(dJMA)-1) {
       if (!JJMASeries.InitBuffers(h+1, dJMA, dList128A, dList128B, dList128C, dList128D, dList128E, dRing11A, dRing11B, dMem8, dPrices62, dKg, dPf, dF18, dF38, dFa8, dFc0, dFc8, dS8, dS18, dV1, dV2, dV3, dF90, dF78, dF88, dF98, iMem7, iMem11, iS28, iS30, iS48, iS38, iS40, iS50, iS70, iLp1, iLp2, iF0, iDatetime))
          return(0);
    }
 
 
-
-
-   if (iBar == iStartBar) {
-      if (ArraySize(dJMA) < h+1) return(!catch("JJMASeries(1)  JMA calculation handle "+ h +" not initialized", ERR_NOT_INITIALIZED_ARRAY));
-   }
 
    // validate bar parameters
    if (iStartBar>=iOldestBar && !iBar && iOldestBar>30 && !iDatetime[h])
@@ -55,7 +50,7 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
    if (iBar > iOldestBar)
       return(0);
 
-   // coefficient calculation
+   // calculate coefficients
    if (iBar==iOldestBar || iDin) {
       double dS, dL, dR;
       if (iPeriods < 1.0000000002) dR = 0.0000000001;
