@@ -287,7 +287,7 @@ int onTick() {
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
-      // detect trend changes
+      // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
          else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
