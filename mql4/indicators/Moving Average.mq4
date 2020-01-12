@@ -1,11 +1,11 @@
 /**
- * Multi-color Moving Average
+ * Multicolor Moving Average
  *
  *
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function;       SMMA(n) = EMA(2*n-1)
+ *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * Indicator buffers for iCustom():
@@ -13,6 +13,9 @@
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *
+ * Notes:
+ *  - There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -21,7 +24,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods           = 38;
-extern string MA.Method            = "SMA* | LWMA | EMA | ALMA";
+extern string MA.Method            = "SMA | LWMA | EMA | ALMA*";
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend        = Blue;
@@ -67,9 +70,9 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 double main     [];                                      // MA main values:      invisible, displayed in legend and "Data" window
 double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double upTrend1 [];                                      // uptrend values:      visible
-double downTrend[];                                      // downtrend values:    visible
-double upTrend2 [];                                      // single-bar uptrends: visible
+double uptrend1 [];                                      // uptrend values:      visible
+double downtrend[];                                      // downtrend values:    visible
+double uptrend2 [];                                      // single-bar uptrends: visible
 
 int    maMethod;
 int    maAppliedPrice;
@@ -83,18 +86,14 @@ string indicatorName;
 string chartLegendLabel;
 
 bool   signals;
-
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
 string signal.sound.trendChange_down = "Signal-Down.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
-
 string signal.info = "";                                 // additional chart legend info
 
 
@@ -120,7 +119,6 @@ int onInit() {
    }
    else {
       sValue = StrTrim(MA.Method);
-      if (sValue == "") sValue = "SMA";                  // default MA method
    }
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)  return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -185,9 +183,9 @@ int onInit() {
    // buffer management
    SetIndexBuffer(MODE_MA,        main     );            // MA main values:   invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:  invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  upTrend1 );            // uptrend values:   visible
-   SetIndexBuffer(MODE_DOWNTREND, downTrend);            // downtrend values: visible
-   SetIndexBuffer(MODE_UPTREND2,  upTrend2 );            // on-bar uptrends:  visible
+   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:   visible
+   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values: visible
+   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // on-bar uptrends:  visible
 
    // chart legend
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
@@ -197,7 +195,7 @@ int onInit() {
        ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    string shortName = __NAME() +"("+ MA.Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
@@ -252,9 +250,9 @@ int onTick() {
    if (!UnchangedBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
-      ArrayInitialize(upTrend1,  EMPTY_VALUE);
-      ArrayInitialize(downTrend, EMPTY_VALUE);
-      ArrayInitialize(upTrend2,  EMPTY_VALUE);
+      ArrayInitialize(uptrend1,  EMPTY_VALUE);
+      ArrayInitialize(downtrend, EMPTY_VALUE);
+      ArrayInitialize(uptrend2,  EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -262,9 +260,9 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(upTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(downTrend, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(upTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -283,13 +281,13 @@ int onTick() {
       else {                                 // built-in moving average
          main[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
       }
-      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
-      // detect trend changes
+      // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
          else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);

@@ -1,47 +1,47 @@
 # default: self-detect the content type (text vs. binary)
-*   text=auto
+*                 text=auto
 
 
 # enforce content type "text" to fix mixed line-endings in the repo
-*.conf       text
-*.cpp        text
-*.css        text
-*.dtd        text
-*.h          text
-*.htm        text
-*.html       text
-*.ini        text
-*.js         text
-*.json       text
-*.md         text
-*.mq4        text
-*.mq5        text
-*.mqh        text
-*.mql        text
-*.php        text
-*.phtml      text
-*.properties text
-*.sh         text
-*.sql        text
-*.txt        text
-*.xml        text
-*.yml        text
+*.conf            text
+*.cpp             text
+*.css             text
+*.dtd             text
+*.h               text
+*.htm             text
+*.html            text
+*.ini             text
+*.js              text
+*.json            text
+*.md              text
+*.mq4             text
+*.mq5             text
+*.mqh             text
+*.mql             text
+*.php             text
+*.phtml           text
+*.properties      text
+*.sh              text
+*.sql             text
+*.txt             text
+*.xml             text
+*.yml             text
 
 
 # set content encodings
-*            encoding=UTF-8
-/mql4/       encoding=CP1252
-/mql5/       encoding=CP1251
-*.md         encoding=UTF-8
+*                 encoding=UTF-8
+/mql4/            encoding=CP1252
+/mql5/            encoding=CP1251
+*.md              encoding=UTF-8
 
 
 # checkout with Windows line-endings (not yet supported by EGit)
-*.dsp        text eol=crlf
-*.dsw        text eol=crlf
-*.tpl        text eol=crlf
-*.vcproj*    text eol=crlf
-*.vcxproj*   text eol=crlf
-hotkeys.ini  text eol=crlf
+*.dsp             text eol=crlf
+*.dsw             text eol=crlf
+*.tpl             text eol=crlf
+*.vcproj*         text eol=crlf
+*.vcxproj*        text eol=crlf
+hotkeys.ini       text eol=crlf
 
 
 # Gitgub Linguist overrides

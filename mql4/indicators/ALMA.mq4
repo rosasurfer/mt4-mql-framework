@@ -68,9 +68,9 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 double main     [];                                      // ALMA main values:    invisible, displayed in legend and "Data" window
 double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double upTrend1 [];                                      // uptrend values:      visible
-double downTrend[];                                      // downtrend values:    visible
-double upTrend2 [];                                      // single-bar uptrends: visible
+double uptrend1 [];                                      // uptrend values:      visible
+double downtrend[];                                      // downtrend values:    visible
+double uptrend2 [];                                      // single-bar uptrends: visible
 
 int    maAppliedPrice;
 double almaWeights[];                                    // bar weights
@@ -83,18 +83,14 @@ string indicatorName;
 string chartLegendLabel;
 
 bool   signals;
-
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
 string signal.sound.trendChange_down = "Signal-Down.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
-
 string signal.info = "";                                 // additional chart legend info
 
 
@@ -171,9 +167,9 @@ int onInit() {
    // buffer management
    SetIndexBuffer(MODE_MA,        main     );            // MA main values:   invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:  invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  upTrend1 );            // uptrend values:   visible
-   SetIndexBuffer(MODE_DOWNTREND, downTrend);            // downtrend values: visible
-   SetIndexBuffer(MODE_UPTREND2,  upTrend2 );            // on-bar uptrends:  visible
+   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:   visible
+   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values: visible
+   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // on-bar uptrends:  visible
 
    // chart legend
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
@@ -238,9 +234,9 @@ int onTick() {
    if (!UnchangedBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
-      ArrayInitialize(upTrend1,  EMPTY_VALUE);
-      ArrayInitialize(downTrend, EMPTY_VALUE);
-      ArrayInitialize(upTrend2,  EMPTY_VALUE);
+      ArrayInitialize(uptrend1,  EMPTY_VALUE);
+      ArrayInitialize(downtrend, EMPTY_VALUE);
+      ArrayInitialize(uptrend2,  EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -248,9 +244,9 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(upTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(downTrend, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(upTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -264,13 +260,13 @@ int onTick() {
       for (int i=0; i < MA.Periods; i++) {
          main[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
       }
-      @Trend.UpdateDirection(main, bar, trend, upTrend1, downTrend, upTrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
 
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
-      // detect trend changes
+      // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
          else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
