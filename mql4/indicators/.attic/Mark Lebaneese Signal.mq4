@@ -154,7 +154,7 @@ int onTick() {
          if (short.position) {                                          // Short-Position schließen
             short.position = false;
             MarkClose(OP_SHORT, short.position.time, short.position.price, Time[bar], Close[bar]);
-            //debug("onTick(4)  bar="+ StrPadRight(bar, 2) +"  upTrend  ="+ StrPadLeft(trend, 3) +"  short.position.close");
+            //debug("onTick(4)  bar="+ StrPadRight(bar, 2) +"  uptrend  ="+ StrPadLeft(trend, 3) +"  short.position.close");
          }
          short.retracement      = 0;                                    // DownTrend-Status zurücksetzen
          short.retracement.high = INT_MIN;
@@ -164,7 +164,7 @@ int onTick() {
                long.retracement++;
                long.retracement.high = High[bar];
                long.retracement.low  = Low [bar];
-               //debug("onTick(5)  bar="+ StrPadRight(bar, 2) +"  upTrend  ="+ StrPadLeft(trend, 3) +"  long.retracement ="+ StrPadRight(long.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
+               //debug("onTick(5)  bar="+ StrPadRight(bar, 2) +"  uptrend  ="+ StrPadLeft(trend, 3) +"  long.retracement ="+ StrPadRight(long.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
             }
          }
       }
@@ -174,7 +174,7 @@ int onTick() {
          if (long.position) {                                           // Long-Position schließen
             long.position = false;
             MarkClose(OP_LONG, long.position.time, long.position.price, Time[bar], Close[bar]);
-            //debug("onTick(6)  bar="+ StrPadRight(bar, 2) +"  downTrend="+ StrPadLeft(trend, 3) +"  long.position.close");
+            //debug("onTick(6)  bar="+ StrPadRight(bar, 2) +"  downtrend="+ StrPadLeft(trend, 3) +"  long.position.close");
          }
          long.retracement     = 0;                                      // UpTrend-Status zurücksetzen
          long.retracement.low = INT_MAX;
@@ -184,7 +184,7 @@ int onTick() {
                short.retracement++;
                short.retracement.high = High[bar];
                short.retracement.low  = Low [bar];
-               //debug("onTick(7)  bar="+ StrPadRight(bar, 2) +"  downTrend="+ StrPadLeft(trend, 3) +"  short.retracement="+ StrPadRight(short.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
+               //debug("onTick(7)  bar="+ StrPadRight(bar, 2) +"  downtrend="+ StrPadLeft(trend, 3) +"  short.retracement="+ StrPadRight(short.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
             }
          }
       }

@@ -94,15 +94,12 @@ int    maxValues;
 string indicatorName;                                       // "Data" window and signal notification name
 
 bool   signals;
-
 bool   signal.sound;
 string signal.sound.crossUp   = "Signal-Up.wav";
 string signal.sound.crossDown = "Signal-Down.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
 
@@ -350,7 +347,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      // detect zero line crossing
+      // signal zero line crossings
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
          if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
          else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
