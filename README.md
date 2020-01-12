@@ -8,7 +8,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 <table>
 <tr>
     <td>
-        <a href="http://www.rosasurfer.com/.mt4/mt4setup.metaquotes.2018.10.16.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
+        <a href="http://www.rosasurfer.com/.mt4/mt4setup-metaquotes-2018.10.04.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" alt="download" border="0">
             Web installer
         </a>
     </td>
