@@ -240,11 +240,9 @@ bool   signal.sound;
 string signal.sound.orderFailed    = "speech/OrderCancelled.wav";
 string signal.sound.positionOpened = "speech/OrderFilled.wav";
 string signal.sound.positionClosed = "speech/PositionClosed.wav";
-
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
-
 bool   signal.sms;
 string signal.sms.receiver = "";
 

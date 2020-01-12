@@ -296,6 +296,7 @@ int      iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
 int      InitializeByteBuffer(int &buffer[], int bytes);;
 bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 bool     IsBarOpenEvent(int timeframe = NULL);;
+double   JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar);;
 string   JoinBools(bool &values[], string separator = ", ");;
 string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
