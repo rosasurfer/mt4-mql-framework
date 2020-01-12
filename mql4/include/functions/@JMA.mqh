@@ -1,8 +1,9 @@
 /**
  * Calculate the JMA (Jurik Moving Average) of one or more timeseries.
  *
- * This function is a modified version of the JMA algorithm published by Nikolay Kositsin (see link below) with fixed bugs
- * and solved usage and design issues.
+ * This function is a rewritten and improved version of JJMASeries(), the JMA algorithm published by Nikolay Kositsin (see
+ * link below). Most significant changes for the user are the new function signature, the removal of manual initialization
+ * with JJMASeriesResize() and improved error handling.
  *
  * @param  int    h       - non-negative value (pseudo handle) to separately address multiple simultaneous JMA calculations
  *
@@ -21,12 +22,12 @@
  * @param  int    iBar    - Number of the bar to calculate counting downwards to zero. Its maximum value should always be
  *                          equal to the value of the parameter limit.
  *
- * @return double - JMA value or NULL in case of errors                    TODO: or if iBar is greater than nJMA.MaxBar-30
+ * @return double - JMA value or NULL in case of errors (see last_error)      TODO: or if iBar is greater than nJMA.MaxBar-30
  *
  *
  * @see  NK-Library, Nikolay Kositsin: https://www.mql5.com/en/articles/1450
  */
-double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
+double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
 
    double   dJMA[], dList128A[][128], dList128B[][128], dList128C[][128], dList128D[][128], dList128E[][128], dRing11A[][11], dRing11B[][11];
    double   dMem8[][8], dPrices62[][62], dKg[], dPf[], dParamA[], dParamB[], dFa8[], dFc0[], dFc8[], dCycleDelta[], dS18[], dV1[], dV2[], dV3[], dF90[], dF78[], dF88[], dF98[];
@@ -36,11 +37,11 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
    int      iV5, iV6, iFe0, iHighLimit, iFe8, iS58, iS60, iS68;
 
    // parameter validation
-   if (h < 0) return(!catch("JJMASeries(1)  invalid parameter h: "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
+   if (h < 0) return(!catch("JMASeries(1)  invalid parameter h: "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
 
    // buffer initialization
    if (h > ArraySize(dJMA)-1) {
-      if (!JJMASeries.InitBuffers(h+1, dJMA, dList128A, dList128B, dList128C, dList128D, dList128E, dRing11A, dRing11B, dMem8, dPrices62, dKg, dPf, dParamA, dParamB, dFa8, dFc0, dFc8, dCycleDelta, dS18, dV1, dV2, dV3, dF90, dF78, dF88, dF98, iMem7, iMem11, iS28, iS30, iCounterA, iS38, iS40, iCounterB, iCycleLimit, iLoopParam, iLp2, iF0, iDatetime))
+      if (!JMASeries.InitBuffers(h+1, dJMA, dList128A, dList128B, dList128C, dList128D, dList128E, dRing11A, dRing11B, dMem8, dPrices62, dKg, dPf, dParamA, dParamB, dFa8, dFc0, dFc8, dCycleDelta, dS18, dV1, dV2, dV3, dF90, dF78, dF88, dF98, iMem7, iMem11, iS28, iS30, iCounterA, iS38, iS40, iCounterB, iCycleLimit, iLoopParam, iLp2, iF0, iDatetime))
          return(0);
    }
    //------------------------
@@ -49,7 +50,7 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
 
    // validate bar parameters
    if (iStartBar>=iOldestBar && !iBar && iOldestBar>30 && !iDatetime[h])
-      warn("JJMASeries(2)  h="+ h +": illegal bar parameters", ERR_INVALID_PARAMETER);
+      warn("JMASeries(2)  h="+ h +": illegal bar parameters", ERR_INVALID_PARAMETER);
    if (iBar > iOldestBar)
       return(0);
 
@@ -87,7 +88,7 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
       // restore values
       datetime dtNew = Time[iStartBar+1];
       datetime dTold = iDatetime[h];
-      if (dtNew != dTold) return(!catch("JJMASeries(3)  h="+ h +": invalid parameter iStartBar = "+ iStartBar +" (too "+ ifString(dtNew > dTold, "small", "large") +")", ERR_INVALID_PARAMETER));
+      if (dtNew != dTold) return(!catch("JMASeries(3)  h="+ h +": invalid parameter iStartBar = "+ iStartBar +" (too "+ ifString(dtNew > dTold, "small", "large") +")", ERR_INVALID_PARAMETER));
 
       for (int i=127; i >= 0; i--) dList128A[h][i] = dList128E[h][i];
       for (    i=127; i >= 0; i--) dList128B[h][i] = dList128D[h][i];
@@ -333,7 +334,7 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
    if (iLoopParam[h] <= 30)
       dJMA[h] = 0;
 
-   if (!catch("JJMASeries(4)  h="+ h))
+   if (!catch("JMASeries(4)  h="+ h))
       return(dJMA[h]);
    return(0);
 }
@@ -348,12 +349,12 @@ double JJMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, in
  *
  * @return bool - success status
  */
-bool JJMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], double dList128B[][], double dList128C[][], double dList128D[][], double dList128E[][], double dRing11A[][],
-                                      double dRing11B[][], double dMem8[][], double dPrices62[][], double dKg[], double dPf[], double dParamA[], double dParamB[], double dFa8[], double dFc0[],
-                                      double dFc8[], double dCycleDelta[], double dS18[], double dV1[], double dV2[], double dV3[], double dF90[], double dF78[], double dF88[], double dF98[],
-                                      int iMem7[][], int iMem11[][], int &iS28[], int &iS30[], int iCounterA[], int iS38[], int iS40[], int iCounterB[], int iCycleLimit[], int iLoopParam[], int iLp2[], int &iF0[],
-                                      datetime iDatetime[]) {
-   if (size < 0) return(!catch("JJMASeries.InitBuffers(1)  invalid parameter size: "+ size +" (must be non-negative)", ERR_INVALID_PARAMETER));
+bool JMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], double dList128B[][], double dList128C[][], double dList128D[][], double dList128E[][], double dRing11A[][],
+                                     double dRing11B[][], double dMem8[][], double dPrices62[][], double dKg[], double dPf[], double dParamA[], double dParamB[], double dFa8[], double dFc0[],
+                                     double dFc8[], double dCycleDelta[], double dS18[], double dV1[], double dV2[], double dV3[], double dF90[], double dF78[], double dF88[], double dF98[],
+                                     int iMem7[][], int iMem11[][], int &iS28[], int &iS30[], int iCounterA[], int iS38[], int iS40[], int iCounterB[], int iCycleLimit[], int iLoopParam[], int iLp2[], int &iF0[],
+                                     datetime iDatetime[]) {
+   if (size < 0) return(!catch("JMASeries.InitBuffers(1)  invalid parameter size: "+ size +" (must be non-negative)", ERR_INVALID_PARAMETER));
 
    int oldSize = ArrayRange(dJMA, 0);
 
@@ -398,7 +399,7 @@ bool JJMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], doub
       ArrayResize(iF0,         size);
       ArrayResize(iDatetime,   size);
    }
-   if (size <= oldSize) return(!catch("JJMASeries.InitBuffers(2)"));
+   if (size <= oldSize) return(!catch("JMASeries.InitBuffers(2)"));
 
    for (int i=oldSize; i < size; i++) {
       iF0 [i] =  1;
@@ -408,8 +409,5 @@ bool JJMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], doub
       for (int j=0; j <=  63; j++) dList128A[i][j] = -1000000;
       for (j=64;    j <= 127; j++) dList128A[i][j] = +1000000;
    }
-   return(!catch("JJMASeries.InitBuffers(3)"));
+   return(!catch("JMASeries.InitBuffers(3)"));
 }
-
-
-

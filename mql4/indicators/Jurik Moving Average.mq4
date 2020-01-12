@@ -267,9 +267,9 @@ int onTick() {
    for (int bar=startBar; bar >= 0; bar--) {
       double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
 
-      main[bar] = JJMASeries(0, 0, oldestBar, startBar, Phase, Periods, price, bar); if (last_error||0) return(last_error);
+      main[bar] = JMASeries(0, 0, oldestBar, startBar, Phase, Periods, price, bar); if (last_error||0) return(last_error);
       if (periods2 != 0) {
-         jma2[bar] = JJMASeries(1, 0, oldestBar, startBar, Phase, periods2, price, bar); if (last_error||0) return(last_error);
+         jma2[bar] = JMASeries(1, 0, oldestBar, startBar, Phase, periods2, price, bar); if (last_error||0) return(last_error);
       }
       @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
