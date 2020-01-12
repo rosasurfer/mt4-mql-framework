@@ -1,5 +1,5 @@
 # default: self-detect the content type (text vs. binary)
-*   text=auto
+*                 text=auto
 
 
 # enforce content type "text" to fix mixed line-endings in the repo
@@ -31,7 +31,6 @@
 # set content encodings
 *                 encoding=UTF-8
 /mql4/            encoding=CP1252
-/mql4/include/nk/ encoding=CP1251
 /mql5/            encoding=CP1251
 *.md              encoding=UTF-8
 
