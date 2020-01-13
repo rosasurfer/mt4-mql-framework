@@ -31,7 +31,7 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
 
    double   dJMA[], dList128A[][128], dList128B[][128], dList128ABak[][128], dList128BBak[][128], dRing11[][11], dRing11Bak[][11], dBak8[][8];
    double   dPrices62[][62], dLengthDivider[], dPhaseParam[], dParamA[], dParamB[], dCycleDelta[], dLowValue[], dJMATmp1[], dJMATmp2[], dJMATmp3[];
-   double   dSqrtDivider[], dV2[], dSqrtParam[], dLogParamA[], dLogParamB[], dPowerValue, dSquareValue, dHighValue, dSValue, dSDiffParamA, dSDiffParamB;
+   double   dSqrtDivider[], dV2[], dSqrtParam[], dLogParamA[], dLogParamB[], dPowerValue, dPowerParam, dSquareValue, dHighValue, dSValue, dSDiffParamA, dSDiffParamB;
    double   dF60, dF68, dFa0, dVv, dS10, dFd0;
    int      iLimitValue[], iStartValue[], iCounterA[], iCounterB[], iCycleLimit[], iLoopParamA[], iLoopParamB[], i3[], i4[], iBak7[][7], iF0[], iHighLimit;
    datetime iDatetime[];
@@ -136,9 +136,9 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
 
          dSDiffParamA = dSValue - dParamA[h];
          dSDiffParamB = dSValue - dParamB[h];
-         dV2[h] = MathMax(MathAbs(dSDiffParamA), MathAbs(dSDiffParamB));
+         dPowerParam  = MathMax(MathAbs(dSDiffParamA), MathAbs(dSDiffParamB));
 
-         dFa0 = dV2[h];
+         dFa0 = dPowerParam;
          dVv = dFa0 + 0.0000000001;
 
          if (iCounterA[h] <= 1) iCounterA[h] = 127;
@@ -241,15 +241,10 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
 
             dJMATmp1[h] = dPrice;
 
-            int iLeftInt=1, iRightPart;
-            if (dSqrtParam[h] > 0) iLeftInt = MathCeil(dSqrtParam[h]);
-
-            if (MathFloor(dSqrtParam[h]) >= 1) dV2[h] = MathFloor(dSqrtParam[h]);
-            else                               dV2[h] = 1;
-
-            if      (dV2[h] > 0) iRightPart = MathFloor(dV2[h]);
-            else if (dV2[h] < 0) iRightPart = MathCeil(dV2[h]);
-            else                 iRightPart = 0;
+            int iLeftInt=1, iRightPart=1;
+            if (dSqrtParam[h] >  0) iLeftInt   = MathCeil(dSqrtParam[h]);
+            if (dSqrtParam[h] >= 1) iRightPart = dSqrtParam[h];
+            dPowerParam = iRightPart;
 
             int iUpShift=29, iDnShift=29;
             if (iRightPart <= 29) iUpShift = iRightPart;
@@ -259,11 +254,11 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
             dJMATmp3[h] = (dPrice-dPrices62[h][iLoopParamA[h]-iUpShift]) * (1-dF68)/iRightPart + (dPrice-dPrices62[h][iLoopParamA[h]-iDnShift]) * dF68/iLeftInt;
          }
          else {
-            dV2[h] = MathPow(dFa0/dF60, dLogParamB[h]);
-            if (dV2[h] > dLogParamA[h]) dV2[h] = dLogParamA[h];
-            if (dV2[h] < 1)             dV2[h] = 1;
+            dPowerParam = MathPow(dFa0/dF60, dLogParamB[h]);
+            if (dPowerParam > dLogParamA[h]) dPowerParam = dLogParamA[h];
+            if (dPowerParam < 1)             dPowerParam = 1;
 
-            dPowerValue = MathPow(dSqrtDivider[h], MathSqrt(dV2[h]));
+            dPowerValue = MathPow(dSqrtDivider[h], MathSqrt(dPowerParam));
 
             if (dSDiffParamA > 0) dParamA[h] = dSValue;
             else                  dParamA[h] = dSValue - dSDiffParamA * dPowerValue;
@@ -274,7 +269,7 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
       // end of big for (i=iHighLimit; i >= 0; i--)
 
       if (iLoopParamB[h] > 30) {
-         dPowerValue  = MathPow(dLengthDivider[h], dV2[h]);
+         dPowerValue  = MathPow(dLengthDivider[h], dPowerParam);
          dSquareValue = MathPow(dPowerValue, 2);
 
          dJMATmp1[h] = (1-dPowerValue) * dPrice + dPowerValue * dJMATmp1[h];
