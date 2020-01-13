@@ -31,10 +31,11 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
 
    double   dJMA[], dList128A[][128], dList128B[][128], dList128ABak[][128], dList128BBak[][128], dRing11[][11], dRing11Bak[][11], dBak8[][8];
    double   dPrices62[][62], dLengthDivider[], dPhaseParam[], dParamA[], dParamB[], dCycleDelta[], dLowValue[], dJMATmp1[], dJMATmp2[], dJMATmp3[];
-   double   dSqrtDivider[], dV2[], dSqrtParam[], dLogParamA[], dLogParamB[], dPowerValue, dPowerParam, dSquareValue, dHighValue, dSValue, dSDiffParamA, dSDiffParamB;
-   double   dF60, dF68, dFa0, dVv, dS10, dFd0;
-   int      iLimitValue[], iStartValue[], iCounterA[], iCounterB[], iCycleLimit[], iLoopParamA[], iLoopParamB[], i3[], i4[], iBak7[][7], iF0[], iHighLimit;
+   double   dSqrtDivider[], dSqrtParam[], dLogParamA[], dLogParamB[], dLengthParam, dSqrtValue, dPowerValue, dPowerParam, dSquareValue, dHighValue;
+   double   dSeries, dSDiffParamA, dSDiffParamB, dAbsValue, dValue;
+   int      iLimitValue[], iStartValue[], iCounterA[], iCounterB[], iCycleLimit[], iLoopParamA[], iLoopParamB[], i3[], i4[], iBak7[][7], iHighLimit;
    datetime iDatetime[];
+   bool     bInitialized[];
 
    // parameter validation
    if (h < 0)                 return(!catch("JMASeries(1)  invalid parameter h = "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
@@ -44,12 +45,11 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
    // buffer initialization
    if (h > ArraySize(dJMA)-1) {
       if (!JMASeries.InitBuffers(h+1, dJMA, dList128A, dList128B, dList128ABak, dList128BBak, dRing11, dRing11Bak, dBak8, dPrices62, dLengthDivider, dPhaseParam,
-                                      dParamA, dParamB, dJMATmp1, dJMATmp2, dJMATmp3, dCycleDelta, dLowValue, dV2, dSqrtDivider, dSqrtParam, dLogParamA, dLogParamB,
-                                      iBak7, iLimitValue, iStartValue, iCounterA, i3, i4, iCounterB, iCycleLimit, iLoopParamA, iLoopParamB, iF0, iDatetime))
+                                      dParamA, dParamB, dJMATmp1, dJMATmp2, dJMATmp3, dCycleDelta, dLowValue, dSqrtDivider, dSqrtParam, dLogParamA, dLogParamB,
+                                      iBak7, iLimitValue, iStartValue, iCounterA, i3, i4, iCounterB, iCycleLimit, iLoopParamA, iLoopParamB, iDatetime, bInitialized))
          return(0);
    }
    //------------------------
-
 
 
    // validate bar parameters
@@ -60,19 +60,14 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
 
    // calculate coefficients
    if (iBar==iOldestBar || iDin) {
-      double dLengthParam = MathMax(0.0000000001, (iPeriods-1)/2.) * 0.9;
-      dLengthDivider[h]   = dLengthParam/(dLengthParam + 2);
-
-      double dS = MathSqrt(dLengthParam);
-      double dL = MathLog(dS);
-
-      dV2[h] = dL;
-      dLogParamA[h] = MathMax(0, dL/MathLog(2) + 2);
-      dLogParamB[h] = MathMax(dLogParamA[h] - 2, 0.5);
-
-      dSqrtParam[h]   = dS * dLogParamA[h];
-      dSqrtDivider[h] = dSqrtParam[h] / (dSqrtParam[h] + 1);
-      dPhaseParam[h]  = iPhase/100. + 1.5;
+      dLengthParam      = MathMax(0.0000000001, (iPeriods-1)/2.) * 0.9;
+      dLengthDivider[h] = dLengthParam/(dLengthParam + 2);
+      dSqrtValue        = MathSqrt(dLengthParam);
+      dLogParamA[h]     = MathMax(0, MathLog(dSqrtValue)/MathLog(2) + 2);
+      dLogParamB[h]     = MathMax(dLogParamA[h] - 2, 0.5);
+      dSqrtParam[h]     = dSqrtValue * dLogParamA[h];
+      dSqrtDivider[h]   = dSqrtParam[h] / (dSqrtParam[h] + 1);
+      dPhaseParam[h]    = iPhase/100. + 1.5;
    }
 
    if (iBar==iStartBar && iStartBar < iOldestBar) {
@@ -119,27 +114,24 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
    }
 
    if (iLoopParamA[h] > 30) {
-      if (iF0[h] != 0) {
-         iF0[h] = 0;
-         iHighLimit = 30;
-         if (iHighLimit == 0) dParamB[h] = dPrice;
-         else                 dParamB[h] = dPrices62[h][1];
-         dParamA[h] = dParamB[h];
-         if (iHighLimit > 29) iHighLimit = 29;
+      iHighLimit = 0;
+      if (!bInitialized[h]) {
+         dParamA[h]      = dPrices62[h][1];
+         dParamB[h]      = dPrices62[h][1];
+         iHighLimit      = 29;
+         bInitialized[h] = true;
       }
-      else iHighLimit = 0;
 
       // big for loop
       for (i=iHighLimit; i >= 0; i--) {
-         if (i == 0) dSValue = dPrice;
-         else        dSValue = dPrices62[h][31-i];
+         if (i == 0) dSeries = dPrice;
+         else        dSeries = dPrices62[h][31-i];
 
-         dSDiffParamA = dSValue - dParamA[h];
-         dSDiffParamB = dSValue - dParamB[h];
-         dPowerParam  = MathMax(MathAbs(dSDiffParamA), MathAbs(dSDiffParamB));
-
-         dFa0 = dPowerParam;
-         dVv = dFa0 + 0.0000000001;
+         dSDiffParamA = dSeries - dParamA[h];
+         dSDiffParamB = dSeries - dParamB[h];
+         dAbsValue    = MathMax(MathAbs(dSDiffParamA), MathAbs(dSDiffParamB));
+         dValue       = dAbsValue + 0.0000000001;
+         dPowerParam  = dAbsValue;
 
          if (iCounterA[h] <= 1) iCounterA[h] = 127;
          else                   iCounterA[h]--;
@@ -148,8 +140,8 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
          if (iCycleLimit[h] < 128)
             iCycleLimit[h]++;
 
-         dCycleDelta[h]          += dVv - dRing11[h][iCounterB[h]];
-         dRing11[h][iCounterB[h]] = dVv;
+         dCycleDelta[h]          += dValue - dRing11[h][iCounterB[h]];
+         dRing11[h][iCounterB[h]] = dValue;
 
          if (iCycleLimit[h] > 10) dHighValue = dCycleDelta[h] / 10;
          else                     dHighValue = dCycleDelta[h] / iCycleLimit[h];
@@ -157,17 +149,17 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
          int n, i1, i2;
 
          if (iCycleLimit[h] > 127) {
-            dS10 = dList128B[h][iCounterA[h]];
+            dValue = dList128B[h][iCounterA[h]];
             dList128B[h][iCounterA[h]] = dHighValue;
 
             i1 = 64;
             n  = 64;
             while (n > 1) {
-               if (dList128A[h][i1] == dS10)
+               if (dList128A[h][i1] == dValue)
                   break;
                n >>= 1;
-               if (dList128A[h][i1] < dS10) i1 += n;
-               else                         i1 -= n;
+               if (dList128A[h][i1] < dValue) i1 += n;
+               else                           i1 -= n;
             }
          }
          else {
@@ -224,16 +216,15 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
                dLowValue[h] += dList128A[h][j];
             }
          }
-         dF60 = dLowValue[h] / (i3[h] - i4[h] + 1);
 
          iLoopParamB[h]++;
          if (iLoopParamB[h] > 31) iLoopParamB[h] = 31;
 
          if (iLoopParamB[h] < 31) {
-            if (dSDiffParamA > 0) dParamA[h] = dSValue;
-            else                  dParamA[h] = dSValue - dSDiffParamA * dSqrtDivider[h];
-            if (dSDiffParamB < 0) dParamB[h] = dSValue;
-            else                  dParamB[h] = dSValue - dSDiffParamB * dSqrtDivider[h];
+            if (dSDiffParamA > 0) dParamA[h] = dSeries;
+            else                  dParamA[h] = dSeries - dSDiffParamA * dSqrtDivider[h];
+            if (dSDiffParamB < 0) dParamB[h] = dSeries;
+            else                  dParamB[h] = dSeries - dSDiffParamB * dSqrtDivider[h];
             dJMA[h] = dPrice;
 
             if (iLoopParamB[h] < 30)
@@ -250,20 +241,21 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
             if (iRightPart <= 29) iUpShift = iRightPart;
             if (iLeftInt   <= 29) iDnShift = iLeftInt;
 
-            dF68        = MathDiv(dSqrtParam[h]-iRightPart, iLeftInt-iRightPart, 1);
-            dJMATmp3[h] = (dPrice-dPrices62[h][iLoopParamA[h]-iUpShift]) * (1-dF68)/iRightPart + (dPrice-dPrices62[h][iLoopParamA[h]-iDnShift]) * dF68/iLeftInt;
+            dValue      = MathDiv(dSqrtParam[h]-iRightPart, iLeftInt-iRightPart, 1);
+            dJMATmp3[h] = (dPrice-dPrices62[h][iLoopParamA[h]-iUpShift]) * (1-dValue)/iRightPart + (dPrice-dPrices62[h][iLoopParamA[h]-iDnShift]) * dValue/iLeftInt;
          }
          else {
-            dPowerParam = MathPow(dFa0/dF60, dLogParamB[h]);
+            dValue      = dLowValue[h] / (i3[h] - i4[h] + 1);
+            dPowerParam = MathPow(dAbsValue/dValue, dLogParamB[h]);
             if (dPowerParam > dLogParamA[h]) dPowerParam = dLogParamA[h];
             if (dPowerParam < 1)             dPowerParam = 1;
 
             dPowerValue = MathPow(dSqrtDivider[h], MathSqrt(dPowerParam));
 
-            if (dSDiffParamA > 0) dParamA[h] = dSValue;
-            else                  dParamA[h] = dSValue - dSDiffParamA * dPowerValue;
-            if (dSDiffParamB < 0) dParamB[h] = dSValue;
-            else                  dParamB[h] = dSValue - dSDiffParamB * dPowerValue;
+            if (dSDiffParamA > 0) dParamA[h] = dSeries;
+            else                  dParamA[h] = dSeries - dSDiffParamA * dPowerValue;
+            if (dSDiffParamB < 0) dParamB[h] = dSeries;
+            else                  dParamB[h] = dSeries - dSDiffParamB * dPowerValue;
          }
       }
       // end of big for (i=iHighLimit; i >= 0; i--)
@@ -278,8 +270,9 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
          dJMA[h]    += dJMATmp3[h];
       }
    }
-   if (iLoopParamA[h] <= 30)
+   else /*iLoopParamA[h] <= 30*/ {
       dJMA[h] = 0;
+   }
 
    int error = GetLastError();
    if (!error)
@@ -299,11 +292,10 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
  */
 bool JMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], double dList128B[][], double dList128ABak[][], double dList128BBak[][],
                                      double dRing11[][], double dRing11Bak[][], double dBak8[][], double dPrices62[][], double dLengthDivider[], double dPhaseParam[], double dParamA[],
-                                     double dParamB[], double dJMATmp1[], double dJMATmp2[], double dJMATmp3[], double dCycleDelta[], double dLowValue[], double dV2[],
-                                     double dSqrtDivider[], double dF78[], double dLogParamA[], double dLogParamB[],
+                                     double dParamB[], double dJMATmp1[], double dJMATmp2[], double dJMATmp3[], double dCycleDelta[], double dLowValue[],
+                                     double dSqrtDivider[], double dSqrtParam[], double dLogParamA[], double dLogParamB[],
                                      int iBak7[][], int &iLimitValue[], int &iStartValue[], int iCounterA[], int i3[], int i4[], int iCounterB[], int iCycleLimit[],
-                                     int iLoopParamA[], int iLoopParamB[], int &iF0[],
-                                     datetime iDatetime[]) {
+                                     int iLoopParamA[], int iLoopParamB[], datetime iDatetime[], bool &bInitialized[]) {
    if (size < 0) return(!catch("JMASeries.InitBuffers(1)  invalid parameter size: "+ size +" (must be non-negative)", ERR_INVALID_PARAMETER));
 
    int oldSize = ArrayRange(dJMA, 0);
@@ -311,8 +303,8 @@ bool JMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], doubl
    if (!size || size > oldSize) {
       ArrayResize(dJMA,           size);
       ArrayResize(dList128A,      size);
-      ArrayResize(dList128B,      size);
       ArrayResize(dList128ABak,   size);
+      ArrayResize(dList128B,      size);
       ArrayResize(dList128BBak,   size);
       ArrayResize(dRing11,        size);
       ArrayResize(dRing11Bak,     size);
@@ -327,9 +319,8 @@ bool JMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], doubl
       ArrayResize(dJMATmp3,       size);
       ArrayResize(dCycleDelta,    size);
       ArrayResize(dLowValue,      size);
-      ArrayResize(dV2,            size);
       ArrayResize(dSqrtDivider,   size);
-      ArrayResize(dF78,           size);
+      ArrayResize(dSqrtParam,     size);
       ArrayResize(dLogParamA,     size);
       ArrayResize(dLogParamB,     size);
       ArrayResize(iBak7,          size);
@@ -342,13 +333,12 @@ bool JMASeries.InitBuffers(int size, double dJMA[], double &dList128A[][], doubl
       ArrayResize(iCycleLimit,    size);
       ArrayResize(iLoopParamA,    size);
       ArrayResize(iLoopParamB,    size);
-      ArrayResize(iF0,            size);
       ArrayResize(iDatetime,      size);
+      ArrayResize(bInitialized,   size);
    }
    if (size <= oldSize) return(!catch("JMASeries.InitBuffers(2)"));
 
    for (int i=oldSize; i < size; i++) {
-      iF0 [i] =  1;
       iLimitValue[i] = 63;
       iStartValue[i] = 64;
 
