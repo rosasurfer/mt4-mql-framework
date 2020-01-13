@@ -2,10 +2,10 @@
  * Calculate the JMA (Jurik Moving Average) of one or more timeseries.
  *
  * This function is a rewritten and improved version of JJMASeries() - the JMA algorithm published by Nikolay Kositsin (see
- * link below). Most significant changes for the user are the new function signature, the removal of manual initialization
+ * link below). Most significant changes for the user are a new function signature, the removal of manual initialization
  * with JJMASeriesResize() and improved error handling.
  *
- * @param  int    h       - non-negative value (pseudo handle) to separately address multiple simultaneous JMA calculations
+ * @param  int    h       - a handle (an array index >= 0) to separately address multiple simultaneous JMA calculations
  *
  *
  * TODO:
@@ -30,8 +30,8 @@
 double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar) {
 
    double   dJMA[], dJMASum1[], dJMASum2[], dJMASum3[], dList128A[][128], dList128ABak[][128], dList128B[][128], dList128BBak[][128], dRing11[][11], dRing11Bak[][11];
-   double   dPrices62[][62], dBak8[][8], dLengthDivider[], dPhaseParam[], dLogParamA[], dLogParamB[], dParamA[], dParamB[], dSqrtDivider[], dSqrtParam[], dCycleDelta[], dLowValue[];
-   double   dSeries, dLengthParam, dPowerValue, dPowerParam, dSquareValue, dSqrtValue, dSDiffParamA, dSDiffParamB, dAbsValue, dHighValue, dValue;
+   double   dPrices62[][62], dBak8[][8], dLengthDivider[], dPhaseParam[], dLogParamA[], dLogParamB[], dParamA[], dParamB[], dSqrtDivider[], dSqrtParam[], dCycleDelta[];
+   double   dLowValue[], dSeries, dLengthParam, dPowerValue, dPowerParam, dSquareValue, dSqrtValue, dSDiffParamA, dSDiffParamB, dAbsValue, dHighValue, dValue;
    int      iLimitValue[], iStartValue[], iCounterA[], iCounterB[], iLoopParamA[], iLoopParamB[], iCycleLimit[], i3[], i4[], iBak7[][7], iHighLimit;
    datetime dtTime[];
    bool     bInitialized[];
