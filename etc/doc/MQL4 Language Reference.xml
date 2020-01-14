@@ -3621,18 +3621,20 @@ else
         Note: Binary search processes only sorted arrays. To sort numeric arrays use the <a href="help://array_ArraySort">ArraySort()</a> function.
       </content>
       <example>
-   datetime daytimes[];
-   int      shift=10,dayshift;
-   // All the Time[] series are sorted in descendant mode
-   ArrayCopySeries(daytimes,MODE_TIME,Symbol(),PERIOD_D1);
-   if(Time[shift]&gt;=daytimes[0]) dayshift=0;
-   else
-     {
-      dayshift=ArrayBsearch(daytimes,Time[shift],WHOLE_ARRAY,0,MODE_DESCEND);
-      if(Period()&lt;PERIOD_D1) dayshift++;
-     }
-   Print(TimeToStr(Time[shift]),&quot; corresponds to &quot;,dayshift,&quot; day bar opened at &quot;,
-         TimeToStr(daytimes[dayshift]));
+datetime daytimes[];
+int      shift = 10, dayshift;
+
+// all Time[] series are sorted in descendant mode
+ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
+
+if (Time[shift] &gt;= daytimes[0]) {
+   dayshift = 0;
+} 
+else {
+   dayshift = ArrayBsearch(daytimes, Time[shift], WHOLE_ARRAY, 0, MODE_DESCEND);
+   if (Period() &lt; PERIOD_D1) dayshift++;
+}
+Print(TimeToStr(Time[shift]) +&quot; corresponds to &quot;+ dayshift +&quot; day bar opened at &quot;+ TimeToStr(daytimes[dayshift]));
       </example>
       <parameter>
         type=double
@@ -3673,53 +3675,47 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopy()
       type=int
       <content>
-         Copies an array to another one. Both arrays must either be <span class="type">string</span> arrays or numeric arrays (arrays of type <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>, <span class="type">color</span> and <span class="type">double</span> are treated as of the same type).<br/>
-         Returns the number of copied elements.<br/>
+         Copies elements of one array to another one and returns the number of copied elements.<br/>
          <br/>
-         <span style="color:red">Achtung:</span>
-         <br/>
-         Das Zielarray wird bei Bedarf automatisch vergrößert. Es wird jedoch nicht automatisch verkleinert, wenn es bereits existiert und größer als das Ausgangsarray ist.<br/>
-         <br/>
+         Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span> 
+         and <span class="type">color</span> are considered the same). Ranges of multidimensional arrays must match, the size of the first dimension 
+         (rows) may differ. If needed the size of the target array is automatically increased.<br/>
       </content>
       <example>
-   double array1[][6];
-   double array2[10][6];
-   // array1 is filled with some data
-   ArrayCopyRates(array1);
+double source[][6];
+double target[10][6];<br/>
 
-   ArrayCopy(array2, array1, 0, 0, 60);
-   // array2 now holds the oldest 10 bars from the history
-
-   ArrayCopy(array2, array1, 0, Bars*6-60, 60);
-   // array2 now holds the newest 10 bars from the history
+ArrayCopyRates(source);                        // source[] is filled with some data
+ArrayCopy(target, source, 0, 0, 60);           // target[] now holds the oldest 10 bars from history
+ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 10 bars from history
       </example>
       <parameter>
         type=object
-        name=<nobr>dest[]</nobr>
-        description=Destination array.
+        name=<nobr>target[]</nobr>
+        description=target array
       </parameter>
       <parameter>
         type=object
         name=<nobr>source[]</nobr>
-        description=Source array.
+        description=source array
       </parameter>
       <parameter>
         type=int
-        name=destFrom
+        name=to
         def_value=<span class="number">0</span>
-        description=Start index of the destination array (default = 0).
+        description=target start index to copy to (default: <span class="number">0</span>)
       </parameter>
       <parameter>
         type=int
-        name=sourceFrom
+        name=from
         def_value=<span class="number">0</span>
-        description=Start index of the source array (default = 0).
+        description=source start index to copy from (default: <span class="number">0</span>)
       </parameter>
       <parameter>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=The number of elements to be copied (default = <span class="const">WHOLE_ARRAY</span>).
+        description=number of elements to copy (default: <span class="const">WHOLE_ARRAY</span>)
       </parameter>
     </function>
 
