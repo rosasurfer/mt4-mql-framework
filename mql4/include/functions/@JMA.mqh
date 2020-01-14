@@ -71,6 +71,7 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
 
    if (iBar==iStartBar && iStartBar < iOldestBar) {
       // restore values
+      //debug("JMASeries(0.2)  Tick="+ Tick +"  bar="+ iBar +"  restore");
       datetime dtNew = Time[iStartBar+1];
       datetime dtOld = dtTime[h];
       if (dtNew != dtOld) return(!catch("JMASeries(5)  h="+ h +": invalid parameter iStartBar = "+ iStartBar +" (too "+ ifString(dtNew > dtOld, "small", "large") +")", ERR_INVALID_PARAMETER));
@@ -92,6 +93,7 @@ double JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int
    if (iBar == 1) {
       if (iStartBar!=1 || Time[iStartBar+2]==dtTime[h]) {
          // store values
+         //debug("JMASeries(0.1)  Tick="+ Tick +"  bar="+ iBar +"  backup");
          for (i=127; i >= 0; i--) dList128ABak[h][i] = dList128A[h][i];
          for (i=127; i >= 0; i--) dList128BBak[h][i] = dList128B[h][i];
          for (i=10;  i >= 0; i--) dRing11Bak  [h][i] = dRing11  [h][i];
@@ -337,12 +339,14 @@ bool JMASeries.InitBuffers(int size, double dJMA[], double dJMASum1[], double dJ
    }
    if (size <= oldSize) return(!catch("JMASeries.InitBuffers(2)"));
 
+   double dMinus[1][128]; ArrayInitialize(dMinus, -1000000);
+   double dPlus [1][128]; ArrayInitialize(dPlus,  +1000000);
+
    for (int i=oldSize; i < size; i++) {
       iLimitValue[i] = 63;
       iStartValue[i] = 64;
-
-      for (int j=0; j <=  63; j++) dList128A[i][j] = -1000000;
-      for (j=64;    j <= 127; j++) dList128A[i][j] = +1000000;
+      ArrayCopy(dList128A, dMinus, i*128,      0, 64);
+      ArrayCopy(dList128A, dPlus,  i*128 + 64, 0, 64);
    }
    return(!catch("JMASeries.InitBuffers(3)"));
 }
