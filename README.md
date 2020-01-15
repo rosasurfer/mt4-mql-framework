@@ -40,7 +40,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> most current build </td>
+    <td> </td>
 </tr>
 
 <tr>
