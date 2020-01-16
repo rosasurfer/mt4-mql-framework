@@ -1,4 +1,4 @@
-/**
+/**                                                                                                                              OK
  * Calculate the JMA (Jurik Moving Average) of one or more timeseries.                                                           OK
  *                                                                                                                               OK
  * This function is a rewritten and improved version of JJMASeries() - the JMA algorithm published by Nikolay Kositsin (see      OK
@@ -16,9 +16,9 @@
  * @param  int    phase      - indicator overshooting: -100 (none)...+100 (max); may be variable for adaptive indicators         OK
  * @param  double series     - value of the timeseries to calculate the JMA value for                                            OK
  * @param  int    bar        - bar index to calculate the JMA for starting at 'iMaxBar' counting downwards to zero               OK
- *
+ *                                                                                                                               OK
  * @return double - JMA value or NULL in case of errors (see var last_error)  TODO: or if bar is greater than iMaxBar-30
- *
+ *                                                                                                                               OK
  *                                                             OK
  * @see  NK-Library, Nikolay Kositsin: https://www.mql5.com/en/articles/1450                                                     OK
  */
