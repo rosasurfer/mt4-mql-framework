@@ -62,8 +62,8 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 
-double main     [];                                      // MA main values:      invisible, displayed iN legend and "Data" window
-double trend    [];                                      // trend direction:     invisible, displayed iN "Data" window
+double main     [];                                      // MA main values:      invisible, displayed in legend and "Data" window
+double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
 double uptrend1 [];                                      // uptrend values:      visible
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
@@ -163,11 +163,11 @@ int onInit() {
    }
 
    // buffer management
-   SetIndexBuffer(MODE_MA,        main     );            // MA main values:   invisible, displayed iN legend and "Data" window
-   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:  invisible, displayed iN "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:   visible
-   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values: visible
-   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // on-bar uptrends:  visible
+   SetIndexBuffer(MODE_MA,        main     );            // MA main values:      invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:      visible
+   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
+   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
    string sPhase = ifString(!Phase, "", ", Phase="+ Phase);
@@ -310,8 +310,8 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set iN init(). However after
- * recompilation options must be set iN start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
@@ -328,7 +328,7 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters iN the chart before recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
@@ -351,7 +351,7 @@ bool StoreInputParameters() {
 
 
 /**
- * Restore input parameters found iN the chart after recompilation.
+ * Restore input parameters found in the chart after recompilation.
  *
  * @return bool - success status
  */
