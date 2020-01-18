@@ -247,7 +247,7 @@ int start() {
          if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Stop the tester in case of errors.
-            Tester.Stop();                                                          // Covers errors in init(), too.
+            Tester.Stop("start(1)");                                                // Covers errors in init(), too.
             tester.stopped = true;
          }
       }
@@ -266,7 +266,7 @@ int start() {
       __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF is FALSE here, but an error may be set
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
-         log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         log("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          int error = init();                                                        // call init() again
@@ -288,11 +288,11 @@ int start() {
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      return(_last_error(CheckErrors("start(2)")));
+      return(_last_error(CheckErrors("start(3)")));
    }
 
    // check a finished chart initialisation (may fail on terminal start)
-   if (!Bars) return(ShowStatus(SetLastError(log("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
+   if (!Bars) return(ShowStatus(SetLastError(log("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
    // in tester wait until the configured start time/price is reached
    if (IsTesting()) {
@@ -326,13 +326,13 @@ int start() {
    ArrayCopyRates(rates);
 
    if (SyncMainContext_start(__ExecutionContext, rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(4)")) return(last_error);
+      if (CheckErrors("start(5)")) return(last_error);
    }
 
    // initialize test reporting if configured
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)")));
+         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(6)")));
          test.initialized = true;
       }
    }
@@ -342,13 +342,13 @@ int start() {
 
    // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(6)")));
+      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(7)")));
    }
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(7)", error)));
+      return(_last_error(CheckErrors("start(8)", error)));
 
    return(ShowStatus(NO_ERROR));
 }
@@ -529,11 +529,13 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 /**
- * Stop the tester. Must be called only from an active test.
+ * Stop the tester. Can be called only from an active test.
+ *
+ * @param  string location [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
-int Tester.Stop() {
+int Tester.Stop(string location = "") {
    if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
@@ -541,6 +543,8 @@ int Tester.Stop() {
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
+
+   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
    return(NO_ERROR);

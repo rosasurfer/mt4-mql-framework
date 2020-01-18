@@ -313,11 +313,6 @@ int onTick() {
    // update/show profit targets
    if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
 
-   static bool done;
-   if (!done && IsTesting() && Tick.Time >= D'2019.12.31 12:45') {
-      Tester.Pause();
-      done = true;
-   }
    return(last_error);
 }
 
@@ -507,11 +502,11 @@ bool StartSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (tester.onStartPause)                                       Tester.Pause();
-      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
-      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+      if      (tester.onStartPause)                                       Tester.Pause("StartSequence(6)");
+      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("StartSequence(7)");
+      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("StartSequence(8)");
    }
-   return(!catch("StartSequence(6)"));
+   return(!catch("StartSequence(9)"));
 }
 
 
@@ -747,14 +742,14 @@ bool StopSequence(int signal) {
    // pause/stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (tester.onStopPause)                                        Tester.Pause();
-         else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
-         else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
-         else if (tester.onTakeProfitPause   && signal==SIGNAL_TP)           Tester.Pause();
+         if      (tester.onStopPause)                                        Tester.Pause("StopSequence(12)");
+         else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("StopSequence(13)");
+         else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("StopSequence(14)");
+         else if (tester.onTakeProfitPause   && signal==SIGNAL_TP)           Tester.Pause("StopSequence(15)");
       }
-      else if (sequence.status == STATUS_STOPPED)                            Tester.Stop();
+      else if (sequence.status == STATUS_STOPPED)                            Tester.Stop("StopSequence(16)");
    }
-   return(!catch("StopSequence(12)"));
+   return(!catch("StopSequence(17)"));
 }
 
 
@@ -1022,11 +1017,11 @@ bool ResumeSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (tester.onStartPause)                                       Tester.Pause();
-      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause();
-      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause();
+      if      (tester.onStartPause)                                       Tester.Pause("ResumeSequence(6)");
+      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("ResumeSequence(7)");
+      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("ResumeSequence(8)");
    }
-   return(!catch("ResumeSequence(6)"));
+   return(!catch("ResumeSequence(9)"));
 }
 
 
