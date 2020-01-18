@@ -6,7 +6,7 @@
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend iN bars since the last reversal
+ *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
  * @see  http://www.jurikres.com/catalog1/ms_ama.htm
  * @see  "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
