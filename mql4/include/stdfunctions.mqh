@@ -1218,13 +1218,13 @@ string ifString(bool condition, string thenValue, string elseValue) {
 /**
  * Correct comparison of two doubles for "Lower-Than".
  *
- * @param  double double1 - first value
- * @param  double double2 - second value
- * @param  int    digits  - number of decimal digits to consider (default: 8)
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
-bool LT(double double1, double double2, int digits=8) {
+bool LT(double double1, double double2, int digits = 8) {
    if (EQ(double1, double2, digits))
       return(false);
    return(double1 < double2);
@@ -1234,13 +1234,13 @@ bool LT(double double1, double double2, int digits=8) {
 /**
  * Correct comparison of two doubles for "Lower-Or-Equal".
  *
- * @param  double double1 - first value
- * @param  double double2 - second value
- * @param  int    digits  - number of decimal digits to consider (default: 8)
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
-bool LE(double double1, double double2, int digits=8) {
+bool LE(double double1, double double2, int digits = 8) {
    if (double1 < double2)
       return(true);
    return(EQ(double1, double2, digits));
@@ -1250,13 +1250,13 @@ bool LE(double double1, double double2, int digits=8) {
 /**
  * Correct comparison of two doubles for "Equal".
  *
- * @param  double double1 - first value
- * @param  double double2 - second value
- * @param  int    digits  - number of decimal digits to consider (default: 8)
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
-bool EQ(double double1, double double2, int digits=8) {
+bool EQ(double double1, double double2, int digits = 8) {
    if (digits < 0 || digits > 8)
       return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
 
@@ -1293,13 +1293,13 @@ bool EQ(double double1, double double2, int digits=8) {
 /**
  * Correct comparison of two doubles for "Not-Equal".
  *
- * @param  double double1 - first value
- * @param  double double2 - second value
- * @param  int    digits  - number of decimal digits to consider (default: 8)
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
-bool NE(double double1, double double2, int digits=8) {
+bool NE(double double1, double double2, int digits = 8) {
    return(!EQ(double1, double2, digits));
 }
 
@@ -1307,13 +1307,13 @@ bool NE(double double1, double double2, int digits=8) {
 /**
  * Correct comparison of two doubles for "Greater-Or-Equal".
  *
- * @param  double double1 - first value
- * @param  double double2 - second value
- * @param  int    digits  - number of decimal digits to consider (default: 8)
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
-bool GE(double double1, double double2, int digits=8) {
+bool GE(double double1, double double2, int digits = 8) {
    if (double1 > double2)
       return(true);
    return(EQ(double1, double2, digits));
@@ -1323,13 +1323,13 @@ bool GE(double double1, double double2, int digits=8) {
 /**
  * Correct comparison of two doubles for "Greater-Than".
  *
- * @param  double double1 - first value
- * @param  double double2 - second value
- * @param  int    digits  - number of decimal digits to consider (default: 8)
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
  *
  * @return bool
  */
-bool GT(double double1, double double2, int digits=8) {
+bool GT(double double1, double double2, int digits = 8) {
    if (EQ(double1, double2, digits))
       return(false);
    return(double1 > double2);

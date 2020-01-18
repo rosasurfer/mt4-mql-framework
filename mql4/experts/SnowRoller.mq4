@@ -3209,7 +3209,7 @@ bool ValidateInputs(bool interactive) {
 
       // jeden Ausdruck parsen und validieren
       for (i=0; i < sizeOfExprs; i++) {
-         expr = StrToLower(StrTrim(exprs[i]));
+         expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) {
             if (sizeOfExprs > 1)                        return(_false(ValidateInputs.OnError("ValidateInputs(36)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             break;
