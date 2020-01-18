@@ -49,7 +49,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND1         MODE_UPTREND
-#define MODE_UPTREND2         4                          // MODE_UPTREND2 holds one-bar trend reversal which otherwise go unnoticed
+#define MODE_UPTREND2         4                          // MODE_UPTREND2 holds single-bar trend reversal which otherwise go unnoticed
 #define MODE_EMA_1            5
 #define MODE_EMA_2            6
 #define MODE_EMA_3            MODE_MA
@@ -166,7 +166,7 @@ int onInit() {
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:                invisible, displayed in "Data" window
    SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:                 visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // downtrend values:               visible
-   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // on-bar uptrends:                visible
+   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // single-bar uptrends:            visible
 
    // chart legend
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
