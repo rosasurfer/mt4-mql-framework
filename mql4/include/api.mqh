@@ -259,7 +259,7 @@ string   SwapCalculationModeToStr(int mode);;
 int      Tester.GetBarModel();;
 bool     Tester.IsPaused();;
 bool     Tester.IsStopped();;
-int      Tester.Pause();;
+int      Tester.Pause(string location = "");;
 bool     This.IsTesting();;
 datetime TimeCurrentEx(string location = "");;
 int      TimeDayFix(datetime time);;

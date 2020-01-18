@@ -3534,9 +3534,11 @@ int Tester.GetBarModel() {
 /**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
+ * @param  string location [optional] - location identifier of the caller (default: none)
+ *
  * @return int - error status
  */
-int Tester.Pause() {
+int Tester.Pause(string location = "") {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!IsVisualModeFix())
@@ -3550,6 +3552,8 @@ int Tester.Pause() {
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
+
+   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
    return(NO_ERROR);

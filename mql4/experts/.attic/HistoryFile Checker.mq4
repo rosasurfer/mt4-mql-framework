@@ -43,7 +43,7 @@ int onTick() {
       done = true;
 
       if (IsTesting())
-         Tester.Stop();
+         Tester.Stop("onTick(1)");
    }
    return(last_error);
 }
