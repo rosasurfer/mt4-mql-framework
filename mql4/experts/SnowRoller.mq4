@@ -296,7 +296,7 @@ int onTick() {
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      success = UpdateStatus(gridChanged);               // success=FALSE on error or if the tick should be skipped
+      success = UpdateStatus(gridChanged);               // success: FALSE on error or if the tick should be skipped
       if (success) {
          if (IsStopSignal(signal))        success = StopSequence(signal)  && success;
          else if (Tick==1 || gridChanged) success = UpdatePendingOrders() && success;
