@@ -296,7 +296,7 @@ int onTick() {
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      success = UpdateStatus(gridChanged);               // success=FALSE on error or if the tick should be skipped
+      success = UpdateStatus(gridChanged);               // success: FALSE on error or if the tick should be skipped
       if (success) {
          if (IsStopSignal(signal))        success = StopSequence(signal)  && success;
          else if (Tick==1 || gridChanged) success = UpdatePendingOrders() && success;
@@ -387,15 +387,17 @@ bool onCommand(string commands[]) {
  * Handle occurred network errors. Disables regular processing of the EA until the retry condition for the next trade request
  * is fulfilled.
  *
- * @return bool - success status
+ * @return bool - whether regular processing should continue (i.e. the trade request should be repeated)
  */
 bool HandleNetworkErrors() {
-   // TODO: Regular processing must continue, only trade requests must be disabled.
+   // TODO: Regular processing must always continue, only trade requests must be disabled.
    switch (lastNetworkError) {
       case NO_ERROR: return(true);
 
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
+
+
          if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
             return(!catch("HandleNetworkErrors(1)  in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
 
@@ -567,7 +569,8 @@ bool StopSequence(int signal) {
             int error = oes.Error(oes, 0);
             switch (error) {
                case ERR_NO_CONNECTION:
-               case ERR_TRADESERVER_GONE: return(!SetLastNetworkError(oes));
+               case ERR_TRADESERVER_GONE:
+                  return(!SetLastNetworkError(oes));
             }
             return(!SetLastError(error));
          }
@@ -1220,8 +1223,8 @@ bool UpdateStatus(bool &gridChanged) {
 
    // trail gridbase
    if (!sequence.level) {
-      if (!sizeOfTickets) {                                                   // the pending order was manually cancelled
-         SetLastError(ERR_CANCELLED_BY_USER);
+      if (!sizeOfTickets) {                                                   // the pending order is missing =>
+         gridChanged = true;                                                  // enforce execution of UpdatePendingOrders()
       }
       else {
          double last = gridbase;
@@ -5566,10 +5569,14 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
  * @return int - the same error
  */
 int SetLastNetworkError(int oe[]) {
-   int error = oe.Error(oe);                                      // if multiple ORDER_EXECUTIONs are passed the first one is accessed
+   bool singleOE = ArrayDimension(oe)==1;                         // whether a single or multiple ORDER_EXECUTIONs were passed
+
+   int error, duration;
+   if (singleOE) { error = oe.Error(oe);     duration = oe.Duration(oe);     }
+   else          { error = oes.Error(oe, 0); duration = oes.Duration(oe, 0); }
 
    if (lastNetworkError && !error) {
-      warn("HandleNetworkErrors(1)  network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
+      warn("SetLastNetworkError(1)  network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
    }
    lastNetworkError = error;
 
@@ -5578,7 +5585,7 @@ int SetLastNetworkError(int oe[]) {
       retries = 0;
    }
    else {
-      datetime now = Tick.Time + Ceil(oe.Duration(oe)/1000.0);    // assumed current server time (may lag to real time)
+      datetime now = Tick.Time + Ceil(duration/1000.);            // assumed current server time (may lag to real time)
       int pauses[6]; if (!pauses[0]) {
          pauses[0] =  5*SECONDS;
          pauses[1] = 30*SECONDS;
@@ -5588,7 +5595,7 @@ int SetLastNetworkError(int oe[]) {
          pauses[5] = 10*MINUTES;
       }
       nextRetry = now + pauses[Min(retries, 5)];
-      if (__LOG()) log("HandleNetworkErrors(2)  networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
+      if (__LOG()) log("SetLastNetworkError(2)  networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
    }
    return(error);
 }
