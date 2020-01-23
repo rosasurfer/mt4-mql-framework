@@ -5029,7 +5029,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
    if (!done) {
-      if (IsTesting() /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
+      if (IsTesting()) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
          testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
          testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
       }
