@@ -6068,12 +6068,55 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icALMA(1)", error));
       warn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Load the "FATL" indicator and return an indicator value.
+ *
+ * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int iBuffer   - indicator buffer index of the value to return
+ * @param  int iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icFATL(int timeframe, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "FATL",
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.Width
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icFATL(1)", error));
+      warn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6115,12 +6158,12 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icHalfTrend(1)", error));
       warn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6165,12 +6208,12 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icJMA(1)", error));
       warn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6223,12 +6266,12 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMACD(1)", error));
       warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6273,12 +6316,12 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMovingAverage(1)", error));
       warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6319,12 +6362,12 @@ double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icNonLagMA(1)", error));
       warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6363,17 +6406,60 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icRSI(1)", error));
       warn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
 /**
- * Load the "Ehler's 2-Pole-SuperSmoother" indicator and return an indicator value.
+ * Load the "SATL" indicator and return an indicator value.
+ *
+ * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int iBuffer   - indicator buffer index of the value to return
+ * @param  int iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icSATL(int timeframe, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "SATL",
+                          Blue,                                            // color  Color.UpTrend
+                          Red,                                             // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.Width
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icSATL(1)", error));
+      warn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Load "Ehlers 2-Pole-SuperSmoother" indicator and return an indicator value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    periods      - indicator parameter
@@ -6411,12 +6497,12 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperSmoother(1)", error));
       warn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6461,12 +6547,12 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperTrend(1)", error));
       warn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6509,12 +6595,12 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTriEMA(1)", error));
       warn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6553,12 +6639,12 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTrix(1)", error));
       warn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: check number of loaded bars
+   }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (error != NO_ERROR)
-      return(!SetLastError(error));
-   return(value);
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 
@@ -6653,12 +6739,14 @@ void __DummyCalls() {
    HandleCommands();
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    icNonLagMA(NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
+   icSATL(NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
