@@ -5342,23 +5342,48 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
    static string maAppliedPrice;
    static double distributionOffset;
    static double distributionSigma;
+   static string lastParams = "";
 
-   static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
-      if (Explode(params, ",", elems, NULL) != 4) return(!catch("GetALMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      sValue = StrTrim(elems[0]);
-      if (!StrIsDigit(sValue))                    return(!catch("GetALMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maPeriods = StrToInteger(sValue);
-      sValue = StrTrim(elems[1]);
-      if (!StringLen(sValue))                     return(!catch("GetALMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      maAppliedPrice = sValue;
-      sValue = StrTrim(elems[2]);
-      if (!StrIsNumeric(sValue))                  return(!catch("GetALMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      distributionOffset = StrToDouble(sValue);
-      sValue = StrTrim(elems[3]);
-      if (!StrIsNumeric(sValue))                  return(!catch("GetALMA(6)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      distributionSigma = StrToDouble(sValue);
-      lastParams        = params;
+      maAppliedPrice     = "Close";
+      distributionOffset = 0.85;
+      distributionSigma  = 6.0;
+
+      // "<periods>,<price>,<offset>,<sigma>"
+      string sValue, elems[];
+      int size = Explode(params, ",", elems, NULL);
+      if (!size)                    return(!catch("GetALMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+      // "<periods>"
+      if (size > 0) {
+         sValue = StrTrim(elems[0]);
+         if (!StrIsDigit(sValue))   return(!catch("GetALMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         maPeriods = StrToInteger(sValue);
+      }
+
+      // "...,<price>"
+      if (size > 1) {
+         sValue = StrTrim(elems[1]);
+         if (!StringLen(sValue))    return(!catch("GetALMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         maAppliedPrice = sValue;
+      }
+
+      // "...,...,<offset>"
+      if (size > 2) {
+         sValue = StrTrim(elems[2]);
+         if (!StrIsNumeric(sValue)) return(!catch("GetALMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         distributionOffset = StrToDouble(sValue);
+      }
+
+      // "...,...,...,<sigma>"
+      if (size > 3) {
+         sValue = StrTrim(elems[3]);
+         if (!StrIsNumeric(sValue)) return(!catch("GetALMA(6)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         distributionSigma = StrToDouble(sValue);
+      }
+
+      if (size > 4)                 return(!catch("GetALMA(7)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      lastParams = params;
    }
    return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
 }
