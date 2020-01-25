@@ -132,7 +132,7 @@ double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
 double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
-double   icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar);;
+double   icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar);;
 double   icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSATL(NULL, NULL, NULL);;
 double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;

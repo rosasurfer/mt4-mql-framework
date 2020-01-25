@@ -6328,19 +6328,21 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
 /**
  * Load the "NonLagMA" indicator and return an indicator value.
  *
- * @param  int timeframe   - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int cycleLength - indicator parameter
- * @param  int iBuffer     - indicator buffer index of the value to return
- * @param  int iBar        - bar index of the value to return
+ * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    cycleLength  - indicator parameter
+ * @param  string appliedPrice - indicator parameter
+ * @param  int    iBuffer      - indicator buffer index of the value to return
+ * @param  int    iBar         - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icNonLagMA(int timeframe, int cycleLength, int iBuffer, int iBar) {
+double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
                           cycleLength,                                     // int    Cycle.Length
+                          appliedPrice,                                    // string AppliedPrice
 
                           RoyalBlue,                                       // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
@@ -6744,7 +6746,7 @@ void __DummyCalls() {
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
-   icNonLagMA(NULL, NULL, NULL, NULL);
+   icNonLagMA(NULL, NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
    icSATL(NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
