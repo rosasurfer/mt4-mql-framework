@@ -23,8 +23,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Filter.Periods       = 38;
-extern string Filter.AppliedPrice  = "Open | High | Low | Close | Median* | Typical | Weighted";
+extern int    Periods              = 38;
+extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend        = RoyalBlue;
 extern color  Color.DownTrend      = Gold;
@@ -107,17 +107,17 @@ int onInit() {
    }
 
    // validate inputs
-   // Filter.Periods
-   if (Filter.Periods < 1) return(catch("onInit(1)  Invalid input parameter Filter.Periods = "+ Filter.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // Periods
+   if (Periods < 1)     return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // Filter.AppliedPrice
-   string sValues[], sValue=StrToLower(Filter.AppliedPrice);
+   // AppliedPrice
+   string sValues[], sValue = StrToLower(AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if (sValue == "") sValue = "median";                  // default price type
+   if (sValue == "") sValue = "close";                   // default price type
    appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (appliedPrice == -1) {
       if      (StrStartsWith("open",     sValue)) appliedPrice = PRICE_OPEN;
@@ -127,9 +127,9 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) appliedPrice = PRICE_WEIGHTED;
-      else                 return(catch("onInit(2)  Invalid input parameter Filter.AppliedPrice = "+ DoubleQuoteStr(Filter.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else              return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
-   Filter.AppliedPrice = PriceTypeDescription(appliedPrice);
+   AppliedPrice = PriceTypeDescription(appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -144,14 +144,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                 return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.Width
-   if (Draw.Width < 0)     return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5)     return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)  return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5)  return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1) return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
@@ -176,15 +176,15 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
-   string sAppliedPrice = ", "+ PriceTypeDescription(appliedPrice);
-   indicatorName = "2-Pole-Filter("+ Filter.Periods + sAppliedPrice +")";
+   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
+   indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
        chartLegendLabel = CreateLegendLabel(indicatorName);
        ObjectRegister(chartLegendLabel);
    }
 
    // names, labels, styles and display options
-   string shortName = "2-Pole-Filter("+ Filter.Periods +")";
+   string shortName = "2-Pole-Filter("+ Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
@@ -195,11 +195,11 @@ int onInit() {
    SetIndicatorOptions();
 
    // initialize indicator calculation
-   double rad2Deg = 45.0 / MathArctan(1);
-   double deg2Rad =  1.0 / rad2Deg;
+   double rad2Deg = 45 / MathArctan(1);
+   double deg2Rad =  1 / rad2Deg;
 
-   double a1 = MathExp(-MathSqrt(2.0) * Math.PI / Filter.Periods);
-   double b1 = 2 * a1 * MathCos(deg2Rad * MathSqrt(2.0) * 180.0 / Filter.Periods);
+   double a1 = MathExp(-MathSqrt(2) * Math.PI / Periods);
+   double b1 = 2 * a1 * MathCos(deg2Rad * MathSqrt(2) * 180 / Periods);
 
    coef2 = b1;
    coef3 = -a1 * a1;
@@ -262,7 +262,7 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-Filter.Periods);      // TODO: fix the run-up period
+   int startBar = Min(bars-1, Bars-Periods);             // TODO: fix the run-up period
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -350,17 +350,17 @@ void SetIndicatorOptions() {
  */
 bool StoreInputParameters() {
    string name = __NAME();
-   Chart.StoreInt   (name +".input.Filter.Periods",       Filter.Periods       );
-   Chart.StoreString(name +".input.Filter.AppliedPrice",  Filter.AppliedPrice  );
-   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.StoreInt   (name +".input.Max.Values",           Max.Values           );
-   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
+   Chart.StoreInt   (name +".input.Periods",              Periods             );
+   Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice        );
+   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
+   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
+   Chart.StoreString(name +".input.Draw.Type",            Draw.Type           );
+   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width          );
+   Chart.StoreInt   (name +".input.Max.Values",           Max.Values          );
+   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
+   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound        );
+   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
+   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -372,17 +372,17 @@ bool StoreInputParameters() {
  */
 bool RestoreInputParameters() {
    string name = __NAME();
-   Chart.RestoreInt   (name +".input.Filter.Periods",       Filter.Periods       );
-   Chart.RestoreString(name +".input.Filter.AppliedPrice",  Filter.AppliedPrice  );
-   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.RestoreInt   (name +".input.Max.Values",           Max.Values           );
-   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
+   Chart.RestoreInt   (name +".input.Periods",              Periods             );
+   Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice        );
+   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
+   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
+   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type           );
+   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width          );
+   Chart.RestoreInt   (name +".input.Max.Values",           Max.Values          );
+   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
+   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound        );
+   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
+   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -393,8 +393,8 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Filter.Periods=",       Filter.Periods,                       ";", NL,
-                            "Filter.AppliedPrice=",  DoubleQuoteStr(Filter.AppliedPrice),  ";", NL,
+   return(StringConcatenate("Periods=",              Periods,                              ";", NL,
+                            "AppliedPrice=",         DoubleQuoteStr(AppliedPrice),         ";", NL,
                             "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
                             "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,

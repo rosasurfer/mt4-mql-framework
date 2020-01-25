@@ -5595,17 +5595,30 @@ double GetSuperSmoother(int timeframe, string params, int iBuffer, int iBar) {
 
    static int    periods;
    static string appliedPrice;
+   static string lastParams = "";
 
-   static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
-      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetSuperSmoother(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      appliedPrice = "Close";
+
+      // "<periods>,<price>"
+      string sValue, elems[];
+      int size = Explode(params, ",", elems, NULL);
+      if (size < 1)              return(!catch("GetSuperSmoother(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+      // "<periods>"
       sValue = StrTrim(elems[0]);
-      if (!StrIsDigit(sValue))                    return(!catch("GetSuperSmoother(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      if (!StrIsDigit(sValue))   return(!catch("GetSuperSmoother(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       periods = StrToInteger(sValue);
-      sValue = StrTrim(elems[2]);
-      if (!StringLen(sValue))                     return(!catch("GetSuperSmoother(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      appliedPrice = sValue;
-      lastParams   = params;
+
+      // "...,<price>"
+      if (size > 1) {
+         sValue = StrTrim(elems[1]);
+         if (!StringLen(sValue)) return(!catch("GetSuperSmoother(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         appliedPrice = sValue;
+      }
+
+      if (size > 2)              return(!catch("GetSuperSmoother(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      lastParams = params;
    }
    return(icSuperSmoother(timeframe, periods, appliedPrice, iBuffer, iBar));
 }

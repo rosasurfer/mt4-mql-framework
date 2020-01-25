@@ -6476,8 +6476,8 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Ehlers 2-Pole-SuperSmoother",
-                          periods,                                         // int    Filter.Periods
-                          appliedPrice,                                    // string Filter.AppliedPrice
+                          periods,                                         // int    Periods
+                          appliedPrice,                                    // string AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
                           Orange,                                          // color  Color.DownTrend
