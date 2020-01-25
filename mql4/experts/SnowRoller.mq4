@@ -5532,15 +5532,34 @@ double GetMovingAverage(int timeframe, string params, int iBuffer, int iBar) {
 double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetNonLagMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   static int cycleLength;
-
+   static int    cycleLength;
+   static string appliedPrice;
    static string lastParams = "";
+
    if (params != lastParams) {
-      if (!StrIsDigit(params)) return(!catch("GetNonLagMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      cycleLength = StrToInteger(params);
-      lastParams  = params;
+      appliedPrice = "Close";
+
+      // "<cycleLength>,<price>"
+      string sValue, elems[];
+      int size = Explode(params, ",", elems, NULL);
+      if (size < 1)              return(!catch("GetNonLagMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+      // "<cycleLength>"
+      sValue = StrTrim(elems[0]);
+      if (!StrIsDigit(sValue))   return(!catch("GetNonLagMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      cycleLength = StrToInteger(sValue);
+
+      // "...,<price>"
+      if (size > 1) {
+         sValue = StrTrim(elems[1]);
+         if (!StringLen(sValue)) return(!catch("GetNonLagMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         appliedPrice = sValue;
+      }
+
+      if (size > 2)              return(!catch("GetNonLagMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      lastParams = params;
    }
-   return(icNonLagMA(timeframe, cycleLength, iBuffer, iBar));
+   return(icNonLagMA(timeframe, cycleLength, appliedPrice, iBuffer, iBar));
 }
 
 
