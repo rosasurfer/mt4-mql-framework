@@ -168,8 +168,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
-   if (!ArraySize(dema))
-      return(log("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(dema)) return(log("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!UnchangedBars) {
