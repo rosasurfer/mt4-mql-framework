@@ -109,7 +109,7 @@ int onInit() {
    if (MA.Periods < 1)  return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string sValues[], sValue=StrToLower(MA.AppliedPrice);
+   string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
@@ -227,8 +227,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
-   if (!ArraySize(main))
-      return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!UnchangedBars) {
