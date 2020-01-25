@@ -5322,7 +5322,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    openPrice = NormalizeDouble(openPrice, digits);
    if (LE(openPrice, 0, digits))                               return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
    if (!isPendingType)
-      if (!EQ(openPrice, OrderOpenPrice(), digits))            return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify open price of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
+      if (!EQ(openPrice, OrderOpenPrice(), digits))            return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify entry limit of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
    // stopLoss
    stopLoss = NormalizeDouble(stopLoss, digits);
    if (LT(stopLoss, 0, digits))                                return(_false(Order.HandleError("OrderModifyEx(13)  illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
