@@ -24,7 +24,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods           = 38;
-extern string MA.Method            = "SMA | LWMA | EMA | ALMA*";
+extern string MA.Method            = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend        = Blue;
