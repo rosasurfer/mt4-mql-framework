@@ -5336,7 +5336,7 @@ int GetStopTrendValue(int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
-   if (!StringLen(params)) return(!catch("GetALMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+   if (!StringLen(params))          return(!catch("GetALMA(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    maPeriods;
    static string maAppliedPrice;
@@ -5400,11 +5400,11 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
-   if (!StringLen(params)) return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+   if (!StringLen(params))     return(!catch("GetHalfTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   static int periods;
-
+   static int    periods;
    static string lastParams = "";
+
    if (params != lastParams) {
       if (!StrIsDigit(params)) return(!catch("GetHalfTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       periods    = StrToInteger(params);
@@ -5430,19 +5430,39 @@ double GetJMA(int timeframe, string params, int iBuffer, int iBar) {
    static int    periods;
    static int    phase;
    static string appliedPrice;
+   static string lastParams = "";
 
-   static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
-      if (Explode(params, ",", elems, NULL) != 3) return(!catch("GetJMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      sValue = StrTrim(elems[0]);
-      if (!StrIsDigit(sValue))                    return(!catch("GetJMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      periods = StrToInteger(sValue);
-      sValue = StrTrim(elems[1]);
-      if (!StrIsInteger(sValue))                  return(!catch("GetJMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      phase = StrToInteger(sValue);
-      sValue = StrTrim(elems[2]);
-      if (!StringLen(sValue))                     return(!catch("GetJMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
-      appliedPrice = sValue;
+      phase        = 0;
+      appliedPrice = "Close";
+
+      // "<periods>,<phase>,<price>"
+      string sValue, elems[];
+      int size = Explode(params, ",", elems, NULL);
+      if (!size)                    return(!catch("GetJMA(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+      // "<periods>"
+      if (size > 0) {
+         sValue = StrTrim(elems[0]);
+         if (!StrIsDigit(sValue))   return(!catch("GetJMA(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         periods = StrToInteger(sValue);
+      }
+
+      // "...,<phase>"
+      if (size > 1) {
+         sValue = StrTrim(elems[1]);
+         if (!StrIsInteger(sValue)) return(!catch("GetJMA(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         phase = StrToInteger(sValue);
+      }
+
+      // "...,...,<price>"
+      if (size > 2) {
+         sValue = StrTrim(elems[2]);
+         if (!StringLen(sValue))    return(!catch("GetJMA(5)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+         appliedPrice = sValue;
+      }
+
+      if (size > 3)                 return(!catch("GetJMA(6)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
    return(icJMA(timeframe, periods, phase, appliedPrice, iBuffer, iBar));
