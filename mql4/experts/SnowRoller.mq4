@@ -5637,18 +5637,26 @@ double GetSuperSmoother(int timeframe, string params, int iBuffer, int iBar) {
 double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetSuperTrend(1)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   static int atrPeriods;
-   static int smaPeriods;
+   static int    atrPeriods;
+   static int    smaPeriods;
+   static string lastParams = "";
 
-   static string lastParams = "", elems[], sValue;
    if (params != lastParams) {
-      if (Explode(params, ",", elems, NULL) != 2) return(!catch("GetSuperTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      // "<atrPeriods>,<smaPeriods>"
+      string sValue, elems[];
+      int size = Explode(params, ",", elems, NULL);
+      if (size != 2)           return(!catch("GetSuperTrend(2)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+
+      // "<atrPeriods>"
       sValue = StrTrim(elems[0]);
-      if (!StrIsDigit(sValue))                    return(!catch("GetSuperTrend(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      if (!StrIsDigit(sValue)) return(!catch("GetSuperTrend(3)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       atrPeriods = StrToInteger(sValue);
+
+      // "<smaPeriods>"
       sValue = StrTrim(elems[1]);
-      if (!StrIsDigit(sValue))                    return(!catch("GetSuperTrend(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
+      if (!StrIsDigit(sValue)) return(!catch("GetSuperTrend(4)  invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       smaPeriods = StrToInteger(sValue);
+
       lastParams = params;
    }
    return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
