@@ -926,8 +926,8 @@ bool WaitForTicket(int ticket, bool select = false) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())       warn(StringConcatenate("WaitForTicket(3)  #", ticket, " not yet accessible"));
-      else if (i && !(i%10)) warn(StringConcatenate("WaitForTicket(4)  #", ticket, " not yet accessible after ", DoubleToStr(i*delay/1000., 1), " s"));
+      if (IsTesting())       warn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
+      else if (i && !(i%10)) warn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 1) +" s");
       Sleep(delay);
       i++;
    }

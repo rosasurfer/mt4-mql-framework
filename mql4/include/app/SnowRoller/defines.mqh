@@ -24,6 +24,7 @@
 #define SIGNAL_TP                   3
 #define SIGNAL_SL                   4
 #define SIGNAL_SESSIONBREAK         5
+#define SIGNAL_CONTINUE             6           // restart signal to continue trading after SIGNAL_TP
 
 
 // event types for SynchronizeStatus()

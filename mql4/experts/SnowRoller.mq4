@@ -280,12 +280,10 @@ int onTick() {
    if (sequence.status == STATUS_UNDEFINED)
       return(NO_ERROR);
 
-   if (!HandleCommands())      return(last_error);       // process incoming commands
-   if (!HandleNetworkErrors()) return(last_error);       // process occurred network errors
+   if (!HandleCommands())      return(last_error);                // process incoming commands
+   if (!HandleNetworkErrors()) return(last_error);                // process occurred network errors
 
    int signal;
-   bool success = true;                                  // whether the tick was successfully processed
-   static bool gridChanged = false;                      // whether the current gridbase or gridlevel changed
 
    // sequence either waits for start/stop/resume signal...
    if (sequence.status == STATUS_WAITING) {
@@ -298,11 +296,10 @@ int onTick() {
 
    // ...or sequence is running...
    else if (sequence.status == STATUS_PROGRESSING) {
-      success = UpdateStatus(gridChanged);               // success: FALSE on error or if the tick should be skipped
-      if (success) {
-         if (IsStopSignal(signal))        success = StopSequence(signal)  && success;
-         else if (Tick==1 || gridChanged) success = UpdatePendingOrders() && success;
-         if (success) gridChanged = false;               // if the tick was not successfully processed status is kept to the next tick
+      bool gridChanged = false;                                   // whether the current gridbase or gridlevel changed
+      if (UpdateStatus(gridChanged)) {
+         if (IsStopSignal(signal))        StopSequence(signal);
+         else if (Tick==1 || gridChanged) UpdatePendingOrders();
       }
    }
 
@@ -485,11 +482,11 @@ bool StartSequence(int signal) {
    ArrayPushDouble(sequence.stop.profit,  0);
    SS.StartStopStats();
 
-   // set the gridbase (event after sequence.start.time in time)
-   double gridBase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
-   GridBase.Reset(startTime, gridBase);
+   // set the gridbase (gridbase event after sequence.start.time)
+   double newGridbase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
+   GridBase.Reset(startTime, newGridbase);
 
-   // open start positions if configured (and update sequence start price)
+   // open start positions if configured, update sequence start price afterwards
    if (sequence.level != 0) {
       if (!RestorePositions(startTime, startPrice)) return(false);
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
@@ -502,7 +499,8 @@ bool StartSequence(int signal) {
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+   if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
+   //else       debug("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -688,7 +686,7 @@ bool StopSequence(int signal) {
       RedrawStartStop();
 
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(10)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level);
+      if (__LOG()) log("StopSequence(10)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
       UpdateProfitTargets();
       ShowProfitTargets();
       SS.ProfitPerLevel();
@@ -741,8 +739,12 @@ bool StopSequence(int signal) {
 
    // reset the sequence and start a new cycle using the same sequence id
    if (signal == SIGNAL_TP) {
-      if (AutoRestart != "Off")      ResetSequence();
-      if (AutoRestart == "Continue") StartSequence(NULL);
+      //debug("StopSequence(0.1)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+      if (AutoRestart != "Off") {
+         if (ResetSequence()) {
+            if (AutoRestart == "Continue") StartSequence(NULL);
+         }
+      }
    }
 
    // pause/stop the tester according to the configuration
@@ -766,10 +768,10 @@ bool StopSequence(int signal) {
  * @return bool - success status
  */
 bool ResetSequence() {
-   if (IsLastError())                   return(false);
-   if (sequence.status!=STATUS_STOPPED) return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
-   if (AutoRestart=="Off")              return(!catch("ResetSequence(2)  cannot restart sequence "+ sequence.name +" (AutoRestart not enabled)", ERR_ILLEGAL_STATE));
-   if (start.trend.description == "")   return(!warn("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_ILLEGAL_STATE));
+   if (IsLastError())                                         return(false);
+   if (sequence.status!=STATUS_STOPPED)                       return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
+   if (AutoRestart=="Off")                                    return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoRestart=="Restart" && start.trend.description=="") return(!warn("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
 
    // memorize needed vars
    int    iCycle   = sequence.cycle;
@@ -899,7 +901,6 @@ bool ResetSequence() {
                                  +" "+ iCycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
 
    // all debug settings stay unchanged
-
 
    // store the new status
    SS.All();
@@ -1101,7 +1102,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 
 
 /**
- * Update internal order and PL state according to current market data.
+ * Update internal order and PL status according to current market data.
  *
  * @param  _InOut_ bool gridChanged - whether the current gridbase or the gridlevel changed
  *
@@ -1112,16 +1113,17 @@ bool UpdateStatus(bool &gridChanged) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  cannot update order status of "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
 
-   int sizeOfTickets=ArraySize(orders.ticket);
+   int sizeOfTickets = ArraySize(orders.ticket);
    double floatingPL = 0;
 
    for (int level, i=sizeOfTickets-1; i >= 0; i--) {
-      if (level == 1) break;                                                  // limit inspected tickets
+      if (level == 1) break;                                                  // limit tickets to inspect
+
       level = Abs(orders.level[i]);
       if (orders.closeTime[i] > 0)                                            // process all tickets known as open
          continue;
 
-      // check for ticket #-1 (an on resume virtually triggered SL: a position immediately stopped-out if restored)
+      // check for ticket #-1 (on resume a virtually triggered SL: a position immediately stopped-out if restored)
       if (orders.ticket[i] == -1) {
          orders.closeEvent[i] = CreateEventId();
          orders.closeTime [i] = TimeCurrentEx("UpdateStatus(2)");
@@ -1142,7 +1144,7 @@ bool UpdateStatus(bool &gridChanged) {
 
       if (wasPending) {
          // last time a pending order
-         if (OrderType() != orders.pendingType[i]) {                          // the entry limit was executed
+         if (OrderType() != orders.pendingType[i]) {                          // a pending entry limit was executed
             orders.type      [i] = OrderType();
             orders.openEvent [i] = CreateEventId();
             orders.openTime  [i] = OrderOpenTime();
@@ -1153,27 +1155,22 @@ bool UpdateStatus(bool &gridChanged) {
             Chart.MarkOrderFilled(i);
             if (__LOG()) log("UpdateStatus(5)  "+ UpdateStatus.OrderFillMsg(i));
 
-            if (IsStopOrderType(orders.pendingType[i])) {                     // a regular stop order
+            if (IsStopOrderType(orders.pendingType[i])) {                     // an executed stop order
                sequence.level   += Sign(orders.level[i]);
                sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
                gridChanged       = true;
             }
             else {
-               ArrayDropInt(sequence.missedLevels, orders.level[i]);          // a limit order => update missed grid levels
+               ArrayDropInt(sequence.missedLevels, orders.level[i]);          // an executed limit order => clear missed gridlevels
                SS.MissedLevels();
-               // Terminal bug
-               // ------------
-               // In a fast market a pending order with stoploss can be filled *and* immediately closed. Tester and demo
-               // servers will wrongly report such an order as still open, and report the close event at the next tick.
-               // Manual price checking for a triggered SL is not reliable and may cause more errors. To work-around it we
-               // interrupt processing of the current tick and wait for the next one which is equivalent to flow logic of
-               // a missed tick. However current values of sequence level, stop data and grid-change flag must be kept.
-               //
-               // @see  https://github.com/rosasurfer/mt4-mql/issues/10
-               //
-               if (IsDemoFix() && !isClosed) {
-                  if (__LOG()) log("UpdateStatus(6)  sequence "+ sequence.name +" skipping current tick due to a filled limit order with SL (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +", level="+ sequence.level +", gridChanged="+ gridChanged +")");
-                  return(false);
+
+               if (IsDemoFix()) /*&&*/ if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
+                  if (__LOG()) log("UpdateStatus(6)  SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...");
+                  int oe[];
+                  if (!OrderCloseEx(orders.ticket[i], NULL, NULL, CLR_NONE, NULL, oe)) return(false);
+                  if (!SelectTicket(orders.ticket[i], "UpdateStatus(7)"))              return(false);
+                  isClosed             = true;                                // refresh order context as it changed during the tick
+                  orders.closedBySL[i] = true;
                }
             }
          }
@@ -1201,7 +1198,7 @@ bool UpdateStatus(bool &gridChanged) {
          orders.closedBySL[i] = IsOrderClosedBySL();
          Chart.MarkPositionClosed(i);
 
-         if (orders.closedBySL[i]) {                                          // stopped-out
+         if (orders.closedBySL[i]) {                                          // stopped out
             if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++;
@@ -1368,8 +1365,8 @@ bool IsOrderClosedBySL() {
          if (i == -1) return(!catch("IsOrderClosedBySL(1)  closed position #"+ OrderTicket() +" not found in order arrays", ERR_ILLEGAL_STATE));
 
          if      (orders.closedBySL[i])   closedBySL = true;
-         else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i]);
-         else if (OrderType() == OP_SELL) closedBySL = GE(OrderClosePrice(), orders.stopLoss[i]);
+         else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i], Digits);
+         else if (OrderType() == OP_SELL) closedBySL = GE(OrderClosePrice(), orders.stopLoss[i], Digits);
       }
    }
    return(closedBySL);
@@ -1749,7 +1746,7 @@ bool UpdatePendingOrders() {
 
    if (limitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for missed level", "s for missed levels") +" "+ sMissedLevels +" (all missed: "+ JoinInts(sequence.missedLevels) +")");
+      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ Pluralize(limitOrders) +" for missed level"+ Pluralize(limitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
@@ -3313,10 +3310,10 @@ bool ValidateInputs(bool interactive) {
       sValue = elems[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (sValue == ""        ) sValue = "off";
-   else if (sValue == "off"     ) {}
-   else if (sValue == "continue") {}
-   else if (sValue == "restart" ) {}
+   if      (sValue == "")                      sValue = "off";
+   else if (StrStartsWith("off"     , sValue)) sValue = "off";
+   else if (StrStartsWith("continue", sValue)) sValue = "continue";
+   else if (StrStartsWith("restart" , sValue)) sValue = "restart";
    else                                                 return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
    AutoRestart = StrCapitalize(sValue);
 
@@ -5759,6 +5756,22 @@ int SetLastNetworkError(int oe[]) {
       if (__LOG()) log("SetLastNetworkError(2)  networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
    }
    return(error);
+}
+
+
+/**
+ * Whether the current market triggers the specified stoploss price.
+ *
+ * @param  int    type  - order type: OP_BUY | OP_SELL
+ * @param  double price - stoploss price
+ *
+ * @return bool
+ */
+bool IsStopLossTriggered(int type, double price) {
+   if (type == OP_BUY ) return(LE(Bid, price, Digits));
+   if (type == OP_SELL) return(GE(Ask, price, Digits));
+
+   return(!catch("IsStopLossTriggered(1)  illegal parameter type: "+ type, ERR_INVALID_PARAMETER));
 }
 
 
