@@ -5029,13 +5029,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
    if (!done) {
-      if (IsTesting()) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
-         testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
-         testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
-      }
+      //if (IsTesting()) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
+      //   testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
+      //   testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
+      //}
       done = true;
    }
-   bool testCase = (TimeCurrent() >= testCase.from && TimeCurrent() <= testCase.to);
+   bool testCase = (testCase.from <= TimeCurrent() && TimeCurrent() <= testCase.to);
 
 
    // initialize oe[]
@@ -5528,7 +5528,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
  *            the partially closed and the remaining ticket.
  *
  *        (2) Typical trade operation errors returned in oe.Error are:
- *            - ERR_INVALID_TICKET:           the id is not a valid ticket id
+ *            - ERR_INVALID_TICKET:           the specified ticket is not an order ticket
  *            - ERR_INVALID_TRADE_PARAMETERS: the ticket is not an open position (anymore)
  */
 bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, int oeFlags, int oe[]) {
@@ -5614,7 +5614,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
 
    // loop until the order is closed or a non-fixable error occurred
    while (true) {
-      // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
+      // terminal bug: after recompiling and reloading an expert IsStopped() will continue to return TRUE
       if (IsStopped()) return(_false(Order.HandleError("OrderCloseEx(19)  "+ OrderCloseEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderCloseEx(20)")));
 
       if (IsTradeContextBusy()) {
@@ -5629,8 +5629,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
       if      (OrderType() == OP_BUY ) price = bid;
       else if (OrderType() == OP_SELL) price = ask;
       price = oe.setClosePrice(oe, NormalizeDouble(price, digits));
-      if (!time1)
-         firstPrice = price;                                                           // remember first close price (in case of ERR_REQUOTE)
+      if (!time1) firstPrice = price;                                               // remember first close price (in case of ERR_REQUOTE)
 
       time1   = GetTickCount();
       success = OrderClose(ticket, lots, price, slippagePoints, markerColor);
