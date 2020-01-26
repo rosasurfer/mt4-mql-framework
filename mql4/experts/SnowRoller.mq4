@@ -3602,7 +3602,7 @@ bool RestoreSequence(bool interactive) {
 
 
 /**
- * Read the current sequence's status file and restore internal variables. Part of RestoreSequence().
+ * Read the status file of the current sequence and restore all internal variables. Part of RestoreSequence().
  *
  * @return bool - success status
  */
