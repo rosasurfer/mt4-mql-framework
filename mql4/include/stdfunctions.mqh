@@ -653,6 +653,22 @@ bool PlaySoundOrFail(string soundfile) {
 
 
 /**
+ * Return a pluralized string according to the specified number of items.
+ *
+ * @param  int    count               - number of items to determine the result from
+ * @param  string singular [optional] - singular form of string
+ * @param  string plural   [optional] - plural form of string
+ *
+ * @return string
+ */
+string Pluralize(int count, string singular="", string plural="s") {
+    if (Abs(count) == 1)
+        return(singular);
+    return(plural);
+}
+
+
+/**
  * Dropin replacement for Alert().
  *
  * Display an alert even if not supported by the terminal in the current context (e.g. in tester).
@@ -6820,6 +6836,7 @@ void __DummyCalls() {
    PipValueEx(NULL);
    PlaySoundEx(NULL);
    PlaySoundOrFail(NULL);
+   Pluralize(NULL);
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    ProgramInitReason();
