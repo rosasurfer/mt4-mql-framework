@@ -1164,12 +1164,13 @@ bool UpdateStatus(bool &gridChanged) {
                ArrayDropInt(sequence.missedLevels, orders.level[i]);          // an executed limit order => clear missed gridlevels
                SS.MissedLevels();
 
+               // @see  https://github.com/rosasurfer/mt4-mql/issues/10
                if (IsDemoFix()) /*&&*/ if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
                   if (__LOG()) log("UpdateStatus(6)  SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...");
                   int oe[];
                   if (!OrderCloseEx(orders.ticket[i], NULL, NULL, CLR_NONE, NULL, oe)) return(false);
-                  if (!SelectTicket(orders.ticket[i], "UpdateStatus(7)"))              return(false);
-                  isClosed             = true;                                // refresh order context as it changed during the tick
+                  OrderSelect(orders.ticket[i], SELECT_BY_TICKET);            // refresh order context as it changed during the tick
+                  isClosed             = true;
                   orders.closedBySL[i] = true;
                }
             }
@@ -1199,14 +1200,14 @@ bool UpdateStatus(bool &gridChanged) {
          Chart.MarkPositionClosed(i);
 
          if (orders.closedBySL[i]) {                                          // stopped out
-            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
+            if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++;
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
          else {                                                               // manually closed or closed at end of test
-            if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1229,7 +1230,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(10)"), gridbase);
+            GridBase.Change(TimeCurrentEx("UpdateStatus(9)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1238,7 +1239,7 @@ bool UpdateStatus(bool &gridChanged) {
       }
    }
 
-   return(!catch("UpdateStatus(11)"));
+   return(!catch("UpdateStatus(10)"));
 }
 
 
