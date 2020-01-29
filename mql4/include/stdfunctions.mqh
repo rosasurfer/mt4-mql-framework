@@ -6054,7 +6054,7 @@ bool init.LogErrorsToSMS() {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
+double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6082,8 +6082,8 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icALMA(1)", error));
-      warn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iALMA(1)", error));
+      warn("iALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6102,7 +6102,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icFATL(int timeframe, int iBuffer, int iBar) {
+double iFATL(int timeframe, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6125,8 +6125,8 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icFATL(1)", error));
-      warn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iFATL(1)", error));
+      warn("iFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6146,7 +6146,7 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
+double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6172,8 +6172,8 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icHalfTrend(1)", error));
-      warn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iHalfTrend(1)", error));
+      warn("iHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6195,7 +6195,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar) {
+double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6222,8 +6222,8 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icJMA(1)", error));
-      warn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iJMA(1)", error));
+      warn("iJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6248,7 +6248,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
+double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6280,8 +6280,8 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icMACD(1)", error));
-      warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iMACDX(1)", error));
+      warn("iMACDX(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6303,7 +6303,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
+double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6330,8 +6330,8 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icMovingAverage(1)", error));
-      warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iMovingAverage(1)", error));
+      warn("iMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6352,7 +6352,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
+double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6378,8 +6378,8 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icNonLagMA(1)", error));
-      warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iNonLagMA(1)", error));
+      warn("iNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6400,7 +6400,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6422,8 +6422,8 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icRSI(1)", error));
-      warn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iRSIX(1)", error));
+      warn("iRSIX(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6442,7 +6442,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icSATL(int timeframe, int iBuffer, int iBar) {
+double iSATL(int timeframe, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6465,8 +6465,8 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icSATL(1)", error));
-      warn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iSATL(1)", error));
+      warn("iSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6487,7 +6487,7 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6513,8 +6513,8 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icSuperSmoother(1)", error));
-      warn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iSuperSmoother(1)", error));
+      warn("iSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6535,7 +6535,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar) {
+double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6563,8 +6563,8 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icSuperTrend(1)", error));
-      warn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iSuperTrend(1)", error));
+      warn("iSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6585,7 +6585,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6611,8 +6611,8 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icTriEMA(1)", error));
-      warn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iTriEMA(1)", error));
+      warn("iTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6633,7 +6633,7 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6655,8 +6655,8 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icTrix(1)", error));
-      warn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iTrix(1)", error));
+      warn("iTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6756,30 +6756,26 @@ void __DummyCalls() {
    GT(NULL, NULL);
    HandleCommands();
    HistoryFlagsToStr(NULL);
-   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-   icFATL(NULL, NULL, NULL);
-   icHalfTrend(NULL, NULL, NULL, NULL);
-   icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
-   icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-   icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
-   icNonLagMA(NULL, NULL, NULL, NULL, NULL);
-   icRSI(NULL, NULL, NULL, NULL, NULL);
-   icSATL(NULL, NULL, NULL);
-   icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
-   icSuperTrend(NULL, NULL, NULL, NULL, NULL);
-   icTriEMA(NULL, NULL, NULL, NULL, NULL);
-   icTrix(NULL, NULL, NULL, NULL, NULL);
+   iALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   iFATL(NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   iHalfTrend(NULL, NULL, NULL, NULL);
+   iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
+   iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   iMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    init.LogErrorsToMail();
    init.LogErrorsToSMS();
    init.LogWarningsToMail();
    init.LogWarningsToSMS();
    InitReasonDescription(NULL);
+   iNonLagMA(NULL, NULL, NULL, NULL, NULL);
    IntegerToHexString(NULL);
+   iRSIX(NULL, NULL, NULL, NULL, NULL);
    IsAccountConfigKey(NULL, NULL);
+   iSATL(NULL, NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();
@@ -6806,6 +6802,10 @@ void __DummyCalls() {
    IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);
+   iSuperSmoother(NULL, NULL, NULL, NULL, NULL);
+   iSuperTrend(NULL, NULL, NULL, NULL, NULL);
+   iTriEMA(NULL, NULL, NULL, NULL, NULL);
+   iTrix(NULL, NULL, NULL, NULL, NULL);
    LE(NULL, NULL);
    log(NULL);
    LogOrder(NULL);

@@ -245,7 +245,7 @@ bool Short.CheckClosePosition() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetMACD(int buffer, int bar) {
-   return(icMACD(NULL, macd.fast.periods, macd.fast.method, PRICE_CLOSE, macd.slow.periods, macd.slow.method, PRICE_CLOSE, buffer, bar));
+   return(iMACDX(NULL, macd.fast.periods, macd.fast.method, PRICE_CLOSE, macd.slow.periods, macd.slow.method, PRICE_CLOSE, buffer, bar));
 }
 
 
@@ -258,7 +258,7 @@ double GetMACD(int buffer, int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetRSI(int buffer, int bar) {
-   return(icRSI(NULL, rsi.periods, PRICE_CLOSE, buffer, bar));
+   return(iRSIX(NULL, rsi.periods, PRICE_CLOSE, buffer, bar));
 }
 
 

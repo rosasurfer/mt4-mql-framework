@@ -50,8 +50,8 @@ int onTick() {
 void OpenPosition() {
    double lots, tp, sl;
 
-   int slowTrixTrend = icTrix(NULL, Trix.Slow.Periods, PRICE_MEDIAN, Slope.MODE_TREND, 1);
-   int fastTrixTrend = icTrix(NULL, Trix.Fast.Periods, PRICE_MEDIAN, Slope.MODE_TREND, 1);
+   int slowTrixTrend = iTrix(NULL, Trix.Slow.Periods, PRICE_MEDIAN, Slope.MODE_TREND, 1);
+   int fastTrixTrend = iTrix(NULL, Trix.Fast.Periods, PRICE_MEDIAN, Slope.MODE_TREND, 1);
 
    if (slowTrixTrend > 0) {                        // if slowTrix[1] is rising
       if (fastTrixTrend == 1) {                    // and fastTrix[1] trend turned up
