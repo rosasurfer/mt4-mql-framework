@@ -449,7 +449,7 @@ bool StartSequence(int signal) {
          start.conditions      = (AutoResume && start.trend.condition);
          break;
 
-      case NULL:                                            // manual start
+      case NULL:                                                  // manual start
          start.trend.condition = (AutoResume && start.trend.description!="");
          start.price.condition = false;
          start.time.condition  = false;
@@ -461,13 +461,16 @@ bool StartSequence(int signal) {
    sessionbreak.waiting = false;
    SS.StartStopConditions();
 
-   sequence.level    = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
-   sequence.maxLevel = sequence.level;
-
    bool compoundProfits = false;
    if (IsTesting() && !compoundProfits) sequence.startEquity = tester.startEquity;
    else                                 sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
+   if (StartLevel != 0) {
+      sequence.level    = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
+      sequence.maxLevel = sequence.level;
+   }
+
+   // calculate new start price and store start/stop data before gridbase
    datetime startTime  = TimeCurrentEx("StartSequence(4)");
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
 
@@ -476,24 +479,26 @@ bool StartSequence(int signal) {
    ArrayPushDouble(sequence.start.price,  startPrice     );
    ArrayPushDouble(sequence.start.profit, 0              );
 
-   ArrayPushInt   (sequence.stop.event,   0);               // keep sizes of sequence.start/stop.* synchronous
+   ArrayPushInt   (sequence.stop.event,   0);                     // keep sizes of sequence.start/stop.* synchronous
    ArrayPushInt   (sequence.stop.time,    0);
    ArrayPushDouble(sequence.stop.price,   0);
    ArrayPushDouble(sequence.stop.profit,  0);
    SS.StartStopStats();
 
-   // set the gridbase (gridbase event after sequence.start.time)
-   double newGridbase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
+   // calculate new gridbase and store it after start/stop data
+   double newGridbase = gridbase;                                 // use an existing pre-set gridbase
+   if (!newGridbase)
+      newGridbase = startPrice - sequence.level*GridSize*Pips;
    GridBase.Reset(startTime, newGridbase);
 
-   // open start positions if configured, update sequence start price according to realized price
-   if (sequence.level != 0) {
-      if (!RestorePositions(startTime, startPrice)) return(false);
-      sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
-   }
-   sequence.status = STATUS_PROGRESSING;
+   // open start positions if configured, and update start price according to real gridbase or realized price
+   if (!StartLevel) startPrice = NormalizeDouble(newGridbase + sequence.level*GridSize*Pips, Digits);
+   else if (!RestorePositions(startTime, startPrice)) return(false);
 
-   // open the next stop orders
+   sequence.start.price[0] = startPrice;
+   sequence.status         = STATUS_PROGRESSING;
+
+   // open missing orders
    if (!UpdatePendingOrders()) return(false);
 
    if (!SaveSequence()) return(false);
@@ -739,9 +744,13 @@ bool StopSequence(int signal) {
    // reset the sequence and start a new cycle using the same sequence id
    if (signal == SIGNAL_TP) {
       if (AutoRestart != "Off") {
-         if (ResetSequence()) {
-            if (AutoRestart == "Continue") StartSequence(NULL);
+         double newGridbase = NULL;
+         if (AutoRestart == "Continue") {
+            int newSequenceLevel = ifInt(sequence.direction==D_LONG, 1, -1);
+            newGridbase = stopPrice - newSequenceLevel*GridSize*Pips;
          }
+         if (!ResetSequence(newGridbase)) return(false);
+         if (AutoRestart == "Continue") StartSequence(NULL);
       }
    }
 
@@ -763,9 +772,11 @@ bool StopSequence(int signal) {
  * Reset a sequence to its initial state. Called if AutoRestart is enabled and the sequence was stopped due to a reached
  * profit target.
  *
+ * @param  double newGridbase - the new gridbase to use if trading continues
+ *
  * @return bool - success status
  */
-bool ResetSequence() {
+bool ResetSequence(double newGridbase) {
    if (IsLastError())                                         return(false);
    if (sequence.status!=STATUS_STOPPED)                       return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
    if (AutoRestart=="Off")                                    return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
@@ -777,7 +788,7 @@ bool ResetSequence() {
    string sPlStats = sSequencePlStats;
 
    // reset input parameters
-   StartLevel = ifInt(AutoRestart=="Continue", 1, 0);    // all others stay unchanged
+   StartLevel = 0;
 
    // reset global vars
    // --- sequence data ------------------
@@ -788,8 +799,8 @@ bool ResetSequence() {
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
-   sequence.level          = 0;
-   sequence.maxLevel       = 0;
+   sequence.level          = ifInt(AutoRestart=="Continue", 1, 0);
+   sequence.maxLevel       = sequence.level;
    ArrayResize(sequence.missedLevels, 0);
    //sequence.startEquity  = ...                         // kept           TODO: really?
    sequence.stops          = 0;
@@ -863,7 +874,7 @@ bool ResetSequence() {
    sessionbreak.waiting       = false;
 
    // --- gridbase management ------------
-   gridbase                  = 0;
+   gridbase                   = newGridbase;
    ArrayResize(gridbase.event, 0);
    ArrayResize(gridbase.time,  0);
    ArrayResize(gridbase.price, 0);
@@ -1691,8 +1702,8 @@ bool UpdatePendingOrders() {
          }
          if (level == 1) break;
       }
-      if (lastExistingLevel != sequence.level)
-         return(!catch("UpdatePendingOrders(4)  sequence.level("+ sequence.level +") != lastExistingOrder("+ lastExistingLevel +")", ERR_ILLEGAL_STATE));
+      if (sizeOfTickets && lastExistingLevel!=sequence.level)
+         return(!catch("UpdatePendingOrders(4)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +"  sequence.level("+ sequence.level +") != lastExistingOrder("+ lastExistingLevel +")", ERR_ILLEGAL_STATE));
    }
 
    // trail a first level stop order (always an existing next level order, thus at the last index)
