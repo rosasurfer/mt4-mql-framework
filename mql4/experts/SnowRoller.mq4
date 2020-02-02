@@ -337,7 +337,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_STOPPED:
             if (!start.conditions)                       // whether any start condition is active
-               return(_true(warn("onCommand(2)  cannot execute \"wait\" command for sequence "+ sequence.name +" (no active start conditions found)")));
+               return(_true(warn("onCommand(2)  cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
             sequence.status = STATUS_WAITING;
       }
       return(true);
@@ -528,12 +528,12 @@ bool StopSequence(int signal) {
    // a waiting sequence has no open orders (before first start or after stop)
    if (sequence.status == STATUS_WAITING) {
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(2)  sequence "+ sequence.name +" stopped");
+      if (__LOG()) log("StopSequence(2)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stopped");
    }
 
    // a progressing sequence has open orders to close
    else if (sequence.status == STATUS_PROGRESSING) {
-      if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +" now?"))
+      if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
          return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       sequence.status = STATUS_STOPPING;
@@ -604,7 +604,7 @@ bool StopSequence(int signal) {
                ArrayDropInt(sequence.missedLevels, orders.level[pendingLimits[i]]);
                SS.MissedLevels();
             }
-            if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +" adding ticket #"+ OrderTicket() +" to open positions");
+            if (__LOG()) log("StopSequence(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" adding ticket #"+ OrderTicket() +" to open positions");
             ArrayPushInt(openPositions, OrderTicket());                    // add to open positions
             i--;                                                           // process the position's stoploss limit
          }
@@ -770,8 +770,8 @@ bool StopSequence(int signal) {
 bool ResetSequence() {
    if (IsLastError())                                         return(false);
    if (sequence.status!=STATUS_STOPPED)                       return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
-   if (AutoRestart=="Off")                                    return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
-   if (AutoRestart=="Restart" && start.trend.description=="") return(!warn("ResetSequence(3)  cannot restart sequence "+ sequence.name +" without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoRestart=="Off")                                    return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoRestart=="Restart" && start.trend.description=="") return(!warn("ResetSequence(3)  cannot restart sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
 
    // memorize needed vars
    int    iCycle   = sequence.cycle;
@@ -922,7 +922,7 @@ bool ResumeSequence(int signal) {
    if (IsLastError())                                                      return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED) return(!catch("ResumeSequence(1)  cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +" now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
@@ -1393,7 +1393,7 @@ bool IsStartSignal(int &signal) {
          if (IsBarOpenEvent(start.trend.timeframe)) {
             int trend = GetStartTrendValue(1);
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               if (__LOG()) log("IsStartSignal(1)  sequence "+ sequence.name +" queuing fulfilled "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\"");
+               if (__LOG()) log("IsStartSignal(1)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" queuing fulfilled "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\"");
                sessionbreak.startSignal = SIGNAL_TREND;        // checked after sessionbreak in the regular trend check
             }
          }
@@ -1404,7 +1404,7 @@ bool IsStartSignal(int &signal) {
    if (sessionbreak.waiting) {
       // -- after sessionbreak: wait for the stop price to be reached if not in level 0 -------------------------------------
       if (!sequence.level) {
-         if (__LOG()) log("IsStartSignal(2)  sequence "+ sequence.name +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
+         if (__LOG()) log("IsStartSignal(2)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
          signal = SIGNAL_SESSIONBREAK;
          return(true);
       }
@@ -1412,7 +1412,7 @@ bool IsStartSignal(int &signal) {
       if (sequence.direction == D_LONG) triggered = (Ask <= price);
       else                              triggered = (Bid >= price);
       if (triggered) {
-         if (__LOG()) log("IsStartSignal(3)  sequence "+ sequence.name +" resume condition \"@sessionbreak price "+ NumberToStr(price, PriceFormat) +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
+         if (__LOG()) log("IsStartSignal(3)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" resume condition \"@sessionbreak price "+ NumberToStr(price, PriceFormat) +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
          signal = SIGNAL_SESSIONBREAK;
          return(true);
       }
@@ -1426,7 +1426,7 @@ bool IsStartSignal(int &signal) {
             trend = GetStartTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               message = "IsStartSignal(4)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+               message = "IsStartSignal(4)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
                if (!IsTesting()) warn(message);
                else if (__LOG()) log(message);
                signal = SIGNAL_TREND;
@@ -1434,7 +1434,7 @@ bool IsStartSignal(int &signal) {
             }
          }
          if (sessionbreak.startSignal == SIGNAL_TREND) {
-            message = "IsStartSignal(5)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+            message = "IsStartSignal(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
             signal = sessionbreak.startSignal;
@@ -1458,7 +1458,7 @@ bool IsStartSignal(int &signal) {
          start.price.lastValue = price;
          if (!triggered) return(false);
 
-         message = "IsStartSignal(6)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.price.description +"\" fulfilled";
+         message = "IsStartSignal(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.price.description +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1468,7 +1468,7 @@ bool IsStartSignal(int &signal) {
          if (TimeCurrentEx("IsStartSignal(7)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(8)  sequence "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStartSignal(8)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1508,7 +1508,7 @@ bool IsStopSignal(int &signal) {
             int trend = GetStopTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-               message = "IsStopSignal(1)  sequence "+ sequence.name +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+               message = "IsStopSignal(1)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
                if (!IsTesting()) warn(message);
                else if (__LOG()) log(message);
                signal = SIGNAL_TREND;
@@ -1534,7 +1534,7 @@ bool IsStopSignal(int &signal) {
       stop.price.lastValue = price;
 
       if (triggered) {
-         message = "IsStopSignal(2)  sequence "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" fulfilled";
+         message = "IsStopSignal(2)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.price.description +"\" fulfilled";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.price.condition = false;
@@ -1546,7 +1546,7 @@ bool IsStopSignal(int &signal) {
    // -- stop.time: fulfilled at the specified time and after ---------------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(3)") >= stop.time.value) {
-         message = "IsStopSignal(4)  sequence "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStopSignal(4)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          stop.time.condition = false;
@@ -1559,7 +1559,7 @@ bool IsStopSignal(int &signal) {
       // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (sequence.totalPL >= stop.profitAbs.value) {
-            message = "IsStopSignal(5)  sequence "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+            message = "IsStopSignal(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
             stop.profitAbs.condition = false;
@@ -1574,7 +1574,7 @@ bool IsStopSignal(int &signal) {
             stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
          }
          if (sequence.totalPL >= stop.profitPct.absValue) {
-            message = "IsStopSignal(6)  sequence "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+            message = "IsStopSignal(6)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (!IsTesting()) warn(message);
             else if (__LOG()) log(message);
             stop.profitPct.condition = false;
@@ -1585,7 +1585,7 @@ bool IsStopSignal(int &signal) {
 
       // -- session break ------------------------------------------------------------------------------------------------------
       if (IsSessionBreak()) {
-         message = "IsStopSignal(7)  sequence "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+         message = "IsStopSignal(7)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (__LOG()) log(message);
          signal = SIGNAL_SESSIONBREAK;
          return(true);
@@ -1747,7 +1747,7 @@ bool UpdatePendingOrders() {
 
    if (limitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +" opened "+ limitOrders +" limit order"+ Pluralize(limitOrders) +" for missed level"+ Pluralize(limitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
+      if (__LOG()) log("UpdatePendingOrders(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" opened "+ limitOrders +" limit order"+ Pluralize(limitOrders) +" for missed level"+ Pluralize(limitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
@@ -1925,7 +1925,7 @@ bool Grid.AddPosition(int level) {
       if (ticket == -1) {
          // market violated                        // use #-1 as marker for a virtually triggered SL, UpdateStatus() will decrease the gridlevel and "close" it with PL=0.00
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
-         if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
+         if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
       }
       else if (ticket == -2) {
          return(!catch("Grid.AddPosition(5)  unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
