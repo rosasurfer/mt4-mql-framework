@@ -486,7 +486,7 @@ bool StartSequence(int signal) {
    double newGridbase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
    GridBase.Reset(startTime, newGridbase);
 
-   // open start positions if configured, update sequence start price afterwards
+   // open start positions if configured, update sequence start price according to realized price
    if (sequence.level != 0) {
       if (!RestorePositions(startTime, startPrice)) return(false);
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
@@ -499,8 +499,7 @@ bool StartSequence(int signal) {
    if (!SaveSequence()) return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
-   //else       debug("StartSequence(5)  sequence "+ sequence.name +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
+   if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" started at "+ NumberToStr(startPrice, PriceFormat) +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -686,7 +685,7 @@ bool StopSequence(int signal) {
       RedrawStartStop();
 
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(10)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+      if (__LOG()) log("StopSequence(10)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
       UpdateProfitTargets();
       ShowProfitTargets();
       SS.ProfitPerLevel();
@@ -739,7 +738,6 @@ bool StopSequence(int signal) {
 
    // reset the sequence and start a new cycle using the same sequence id
    if (signal == SIGNAL_TP) {
-      //debug("StopSequence(0.1)  sequence "+ sequence.name +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +", level "+ sequence.level +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
       if (AutoRestart != "Off") {
          if (ResetSequence()) {
             if (AutoRestart == "Continue") StartSequence(NULL);
@@ -926,7 +924,7 @@ bool ResumeSequence(int signal) {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
-   double   gridBase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
+   double   newGridbase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
 
    sequence.status = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
@@ -965,7 +963,7 @@ bool ResumeSequence(int signal) {
       for (int level=1; level <= sequence.level; level++) {
          int i = Grid.FindOpenPosition(level);
          if (i != -1) {
-            gridBase = orders.gridbase[i];                     // get the previously used gridbase
+            newGridbase = orders.gridbase[i];                  // get the gridbase to use from already opened positions
             break;
          }
       }
@@ -974,20 +972,20 @@ bool ResumeSequence(int signal) {
       for (level=-1; level >= sequence.level; level--) {
          i = Grid.FindOpenPosition(level);
          if (i != -1) {
-            gridBase = orders.gridbase[i];
+            newGridbase = orders.gridbase[i];
             break;
          }
       }
    }
 
-   if (!gridBase) {
-      // define the new gridbase if no open positions have been found
+   if (!newGridbase) {
+      // without open positions define the new gridbase using the previous one
       startTime  = TimeCurrentEx("ResumeSequence(4)");
       startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
       GridBase.Change(startTime, gridbase + startPrice - lastStopPrice);
    }
    else {
-      gridbase = NormalizeDouble(gridBase, Digits);            // re-use the previously used gridbase
+      gridbase = NormalizeDouble(newGridbase, Digits);         // re-use the gridbase of already opened positions
    }
 
    // open the previously active positions and receive last(OrderOpenTime) and avg(OrderOpenPrice)
@@ -1638,7 +1636,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (__LOG()) log("IsSessionBreak(1)  recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (__LOG()) log("IsSessionBreak(1)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
