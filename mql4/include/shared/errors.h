@@ -219,5 +219,5 @@
 #define ERS_TERMINAL_NOT_YET_READY                                65555    // terminal not yet ready (temporary state; in scripts treated as error)
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 
-// All user defined errors >=100000 are mapped Win32 errors: win32-error + 100000 = mql-error
+// user defined errors >=100000 are mapped Win32 errors: win32-error + 100000 = mql-error
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS
