@@ -63,7 +63,7 @@ int onTick() {
 double GetSuperTrend(int mode, int bar) {
    int atrPeriods = 5;
    int smaPeriods = 50;
-   return(icSuperTrend(NULL, atrPeriods, smaPeriods, mode, bar));
+   return(iSuperTrend(NULL, atrPeriods, smaPeriods, mode, bar));
 }
 
 

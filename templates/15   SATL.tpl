@@ -1,9 +1,9 @@
 <chart>
 symbol=USDCHF
-period=30
+period=60
 leftpos=13564
 digits=5
-scale=3
+scale=2
 graph=1
 fore=0
 grid=0
@@ -8769,8 +8769,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
@@ -8779,21 +8777,13 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=NonLagMA
+name=SATL
 flags=339
 window_num=0
 <inputs>
-Cycle.Length=32
-Color.UpTrend=16711680
-Color.DownTrend=65535
-Draw.Type=line
-Draw.Width=3
+Draw.Type=Dot
 </inputs>
 </expert>
-weight_0=0
-weight_1=0
-period_flags=0
-show_data=1
 </indicator>
 
 </window>

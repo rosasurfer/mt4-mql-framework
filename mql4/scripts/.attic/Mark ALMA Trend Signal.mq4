@@ -105,7 +105,7 @@ int onStart() {
  * @param  int bar - bar offset
  */
 void Long.CheckOpenSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = iMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
 
    // entry: if ALMA turned up
    if (trend == 1) {
@@ -124,7 +124,7 @@ void Long.CheckOpenSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Long.CheckCloseSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = iMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
 
    // exit: if ALMA turned down
    if (trend == -1) {
@@ -140,7 +140,7 @@ void Long.CheckCloseSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Short.CheckOpenSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = iMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
 
    // entry: if ALMA turned down
    if (trend == -1) {
@@ -159,7 +159,7 @@ void Short.CheckOpenSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Short.CheckCloseSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = iMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
 
    // exit: if ALMA turned up
    if (trend == 1) {
