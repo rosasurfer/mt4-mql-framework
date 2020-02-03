@@ -500,8 +500,7 @@ bool StartSequence(int signal) {
 
    // open missing orders
    if (!UpdatePendingOrders()) return(false);
-
-   if (!SaveSequence()) return(false);
+   if (!SaveSequence())        return(false);
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" started at "+ NumberToStr(startPrice, PriceFormat) +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
@@ -799,7 +798,7 @@ bool ResetSequence(double newGridbase) {
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
-   sequence.level          = ifInt(AutoRestart=="Continue", 1, 0);
+   sequence.level          = ifInt(AutoRestart=="Continue", ifInt(sequence.direction==D_LONG, 1, -1), 0);
    sequence.maxLevel       = sequence.level;
    ArrayResize(sequence.missedLevels, 0);
    //sequence.startEquity  = ...                         // kept           TODO: really?
