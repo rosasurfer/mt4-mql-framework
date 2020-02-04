@@ -154,10 +154,10 @@ bool     sessionbreak.waiting;                     // whether the sequence waits
 int      sessionbreak.startSignal;                 // start signal occurred during sessionbreak
 
 // --- gridbase management -----------------
-double   gridbase;                                 // current gridbase
-int      gridbase.event[];                         // gridbase history
-datetime gridbase.time [];
-double   gridbase.price[];
+int      gridbase.event [];                        // gridbase event id
+datetime gridbase.time  [];                        // time of gridbase event
+double   gridbase.price [];                        // gridbase value
+int      gridbase.status[];                        // status at time of gridbase event
 
 // --- order data --------------------------
 int      orders.ticket      [];
@@ -486,13 +486,13 @@ bool StartSequence(int signal) {
    SS.StartStopStats();
 
    // calculate new gridbase and store it after start/stop data
-   double newGridbase = gridbase;                                 // use an existing pre-set gridbase
-   if (!newGridbase)
-      newGridbase = startPrice - sequence.level*GridSize*Pips;
-   GridBase.Reset(startTime, newGridbase);
+   double gridbase = GetGridbase();                               // use an existing pre-set gridbase
+   if (!gridbase)
+      gridbase = startPrice - sequence.level*GridSize*Pips;
+   ResetGridbase(startTime, gridbase);                            // make sure the gridbase event follows the start event
 
    // open start positions if configured, and update start price according to real gridbase or realized price
-   if (!StartLevel) startPrice = NormalizeDouble(newGridbase + sequence.level*GridSize*Pips, Digits);
+   if (!StartLevel) startPrice = NormalizeDouble(gridbase + sequence.level*GridSize*Pips, Digits);
    else if (!RestorePositions(startTime, startPrice)) return(false);
 
    sequence.start.price[0] = startPrice;
@@ -500,8 +500,7 @@ bool StartSequence(int signal) {
 
    // open missing orders
    if (!UpdatePendingOrders()) return(false);
-
-   if (!SaveSequence()) return(false);
+   if (!SaveSequence())        return(false);
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" started at "+ NumberToStr(startPrice, PriceFormat) +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
@@ -690,7 +689,7 @@ bool StopSequence(int signal) {
       RedrawStartStop();
 
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(10)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+      if (__LOG()) log("StopSequence(10)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +" (gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
       UpdateProfitTargets();
       ShowProfitTargets();
       SS.ProfitPerLevel();
@@ -772,11 +771,11 @@ bool StopSequence(int signal) {
  * Reset a sequence to its initial state. Called if AutoRestart is enabled and the sequence was stopped due to a reached
  * profit target.
  *
- * @param  double newGridbase - the new gridbase to use if trading continues
+ * @param  double gridbase - the predefined gridbase to use if trading continues
  *
  * @return bool - success status
  */
-bool ResetSequence(double newGridbase) {
+bool ResetSequence(double gridbase) {
    if (IsLastError())                                         return(false);
    if (sequence.status!=STATUS_STOPPED)                       return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
    if (AutoRestart=="Off")                                    return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
@@ -799,7 +798,7 @@ bool ResetSequence(double newGridbase) {
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
-   sequence.level          = ifInt(AutoRestart=="Continue", 1, 0);
+   sequence.level          = ifInt(AutoRestart=="Continue", ifInt(sequence.direction==D_LONG, 1, -1), 0);
    sequence.maxLevel       = sequence.level;
    ArrayResize(sequence.missedLevels, 0);
    //sequence.startEquity  = ...                         // kept           TODO: really?
@@ -874,10 +873,7 @@ bool ResetSequence(double newGridbase) {
    sessionbreak.waiting       = false;
 
    // --- gridbase management ------------
-   gridbase                   = newGridbase;
-   ArrayResize(gridbase.event, 0);
-   ArrayResize(gridbase.time,  0);
-   ArrayResize(gridbase.price, 0);
+   ResetGridbase(NULL, gridbase);
 
    // --- order data ---------------------
    ResizeOrderArrays(0);
@@ -935,10 +931,11 @@ bool ResumeSequence(int signal) {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
-   double   newGridbase, startPrice, lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
+   double   lastGridbase = GetGridbase(), stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
+   double   newGridbase, startPrice;
 
    sequence.status = STATUS_STARTING;
-   if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(2)  resuming sequence "+ sequence.name +" at level "+ sequence.level +" (stopped at "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(lastGridbase, PriceFormat) +")");
 
    // update start/stop conditions
    switch (signal) {
@@ -991,13 +988,12 @@ bool ResumeSequence(int signal) {
 
    if (!newGridbase) {
       // without open positions define the new gridbase using the previous one
-      startTime  = TimeCurrentEx("ResumeSequence(4)");
-      startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
-      GridBase.Change(startTime, gridbase + startPrice - lastStopPrice);
+      startTime   = TimeCurrentEx("ResumeSequence(4)");
+      startPrice  = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
+      newGridbase = lastGridbase + startPrice - stopPrice;
+      SetGridbase(startTime, newGridbase);
    }
-   else {
-      gridbase = NormalizeDouble(newGridbase, Digits);         // re-use the gridbase of already opened positions
-   }
+   else {}                                                     // re-use the gridbase of found open positions
 
    // open the previously active positions and receive last(OrderOpenTime) and avg(OrderOpenPrice)
    if (!RestorePositions(startTime, startPrice)) return(false);
@@ -1026,7 +1022,7 @@ bool ResumeSequence(int signal) {
    if (!SaveSequence())                     return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -1234,12 +1230,12 @@ bool UpdateStatus(bool &gridChanged) {
          gridChanged = true;                                                  // enforce execution of UpdatePendingOrders()
       }
       else {
-         double last = gridbase;
+         double gridbase=GetGridbase(), lastGridbase=gridbase;
          if (sequence.direction == D_LONG) gridbase = MathMin(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
-         if (NE(gridbase, last, Digits)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(9)"), gridbase);
+         if (NE(gridbase, lastGridbase, Digits)) {
+            SetGridbase(TimeCurrentEx("UpdateStatus(9)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1709,7 +1705,7 @@ bool UpdatePendingOrders() {
    // trail a first level stop order (always an existing next level order, thus at the last index)
    if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
-      if (NE(gridbase, orders.gridbase[i], Digits)) {
+      if (NE(GetGridbase(), orders.gridbase[i], Digits)) {
          static double lastTrailed = INT_MIN;                           // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
          if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // at each tick. Wait 3 seconds between consecutive trailings.
             type = Grid.TrailPendingOrder(i); if (!type) return(false); //
@@ -1769,67 +1765,111 @@ bool UpdatePendingOrders() {
 
 
 /**
- * Drop all stored gridbase changes and re-intialize the gridbase with the specified values.
+ * Return the currently active gridbase value.
  *
- * @param  datetime time  - time of gridbase change
- * @param  double   value - new gridbase value
- *
- * @return double - new gridbase or NULL in case of errors
+ * @return double - gridbase value or NULL if the gridbase is not yet set
  */
-double GridBase.Reset(datetime time, double value) {
-   if (IsLastError()) return(0);
-
-   ArrayResize(gridbase.event, 0);
-   ArrayResize(gridbase.time,  0);
-   ArrayResize(gridbase.price, 0);
-
-   return(GridBase.Change(time, value));
+double GetGridbase() {
+   int size = ArraySize(gridbase.event);
+   if (size > 0)
+      return(gridbase.price[size-1]);
+   return(NULL);
 }
 
 
 /**
- * Set the gridbase to the specified values. All Previous gridbase changes are stored in a gridbase history.
+ * Set the gridbase to the specified value. All gridbase changes are stored in the gridbase history.
  *
  * @param  datetime time  - time of gridbase change
  * @param  double   value - new gridbase value
  *
- * @return double - new gridbase
+ * @return double - the same gridbase value
  */
-double GridBase.Change(datetime time, double value) {
+double SetGridbase(datetime time, double value) {
+   /*
+   Status changes and event order:
+   +-----------------------+--------------------+--------------------+
+   | StartSequence()       | STATUS_STARTING    | EV_SEQUENCE_START  |
+   | ResetGridBase()       | STATUS_STARTING    | EV_GRIDBASE_CHANGE | gridbase event after start event
+   | OpenStartLevel()      | STATUS_STARTING    | EV_POSITION_OPEN   |
+   | AddPendingOrder()     | STATUS_PROGRESSING |                    |
+   +-----------------------+--------------------+--------------------+
+   | TrailPendingOrder()   | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE |
+   | TrailPendingOrder()   | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE |
+   | ...                   | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE |
+   +-----------------------+--------------------+--------------------+
+   | StopSequence()        | STATUS_STOPPING    | EV_SEQUENCE_STOP   |
+   |                       | STATUS_STOPPED     |                    |
+   +-----------------------+--------------------+--------------------+
+   | ResumeSequence()      | STATUS_STARTING    |                    |
+   | SetGridBase()         | STATUS_STARTING    | EV_GRIDBASE_CHANGE | gridbase event before start event
+   | RestoreOpenPosition() | STATUS_STARTING    | EV_POSITION_OPEN   |
+   |                       | STATUS_STARTING    | EV_SEQUENCE_START  |
+   |                       | STATUS_PROGRESSING |                    |
+   +-----------------------+--------------------+--------------------+
+   | TrailPendingOrder()   | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE |
+   | TrailPendingOrder()   | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE |
+   | ...                   | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE |
+   +-----------------------+--------------------+--------------------+
+   - As long as no sequence level was triggered only the last gridbase trailing event is permanently stored.
+   - After a sequence level was triggered only the last gridbase trailing event per minute is permanently stored.
+   - Non-trailing gridbase events are always permanently stored.
+   */
    value = NormalizeDouble(value, Digits);
 
-   if (sequence.maxLevel == 0) {                            // overwrite existing values as long no trade was executed
-      ArrayResize(gridbase.event, 0);
-      ArrayResize(gridbase.time,  0);
-      ArrayResize(gridbase.price, 0);
-   }
+   // determine whether the current event is a consecutive gridbase trail event
+   int lastEvent = NULL,            lastMinute = -1,          lastStatus = STATUS_UNDEFINED;
+   int thisEvent = CreateEventId(), thisMinute = time/MINUTE, thisStatus = sequence.status;
 
-   int size = ArraySize(gridbase.event);                    // append new values to history as soon as a trade was executed
-   if (size == 0) {
-      ArrayPushInt   (gridbase.event, CreateEventId());
-      ArrayPushInt   (gridbase.time,  time           );
-      ArrayPushDouble(gridbase.price, value          );
-      size++;
+   int size = ArraySize(gridbase.event);
+   if (size > 0) {
+      lastEvent  = gridbase.event [size-1];
+      lastMinute = gridbase.time  [size-1]/MINUTE;
+      lastStatus = gridbase.status[size-1];
    }
-   else {
-      datetime lastStartTime = sequence.start.time[ArraySize(sequence.start.time)-1];
-      int minute=time/MINUTE, lastMinute=gridbase.time[size-1]/MINUTE;
+   bool overwritten = false;
 
-      if (time<=lastStartTime || minute!=lastMinute) {      // store all events
-         ArrayPushInt   (gridbase.event, CreateEventId());
-         ArrayPushInt   (gridbase.time,  time           );
-         ArrayPushDouble(gridbase.price, value          );
-         size++;
-      }
-      else {                                                // compact redundant events, store only the last change per minute
-         gridbase.event[size-1] = CreateEventId();
-         gridbase.time [size-1] = time;
-         gridbase.price[size-1] = value;
+   if (lastStatus==STATUS_PROGRESSING && thisStatus==STATUS_PROGRESSING && lastEvent+1==thisEvent) {
+      if (!sequence.maxLevel || thisMinute==lastMinute) {
+         gridbase.event [size-1] = thisEvent;               // overwrite the previous gridbase event
+         gridbase.time  [size-1] = time;
+         gridbase.price [size-1] = value;
+         gridbase.status[size-1] = thisStatus;
+         overwritten = true;
       }
    }
 
-   gridbase = value; SS.GridBase();
+   if (!overwritten) {                                      // append the event
+      ArrayPushInt   (gridbase.event,  thisEvent );
+      ArrayPushInt   (gridbase.time,   time      );
+      ArrayPushDouble(gridbase.price,  value     );
+      ArrayPushInt   (gridbase.status, thisStatus);
+   }
+
+   SS.GridBase();
    return(value);
+}
+
+
+/**
+ * Delete all stored gridbase changes. If a new value is passed re-intialize the gridbase with the given value.
+ *
+ * @param  datetime time  [optional] - time of gridbase change (default: the current time)
+ * @param  double   value [optional] - new gridbase value (default: none)
+ *
+ * @return double - new gridbase or NULL if the gridbase was not re-initialized with a new value
+ */
+double ResetGridbase(datetime time=NULL, double value=NULL) {
+   ArrayResize(gridbase.event,  0);
+   ArrayResize(gridbase.time,   0);
+   ArrayResize(gridbase.price,  0);
+   ArrayResize(gridbase.status, 0);
+
+   if (!time) time = TimeCurrentEx("ResetGridbase(1)");
+
+   if (time && value)
+      return(SetGridbase(time, value));
+   return(NULL);
 }
 
 
@@ -1850,7 +1890,7 @@ int Grid.AddPendingOrder(int level) {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   double price=gridbase + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
+   double gridbase=GetGridbase(), price=gridbase + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
    int counter, ticket, oe[];
    if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
    else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
@@ -1947,7 +1987,7 @@ bool Grid.AddPosition(int level) {
    // prepare dataset
    //int    ticket       = ...                     // use as is
    //int    level        = ...                     // ...
-   //double gridbase     = ...                     // ...
+   double   gridbase     = GetGridbase();
 
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
@@ -1994,6 +2034,7 @@ int Grid.TrailPendingOrder(int i) {
    // calculate changing data
    int      ticket       = orders.ticket[i], oe[];
    int      level        = orders.level[i];
+   double   gridbase     = GetGridbase();
    datetime pendingTime;
    double   pendingPrice = NormalizeDouble(gridbase +           level * GridSize * Pips, Digits);
    double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
@@ -2290,7 +2331,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
 
    double   price       = NULL;
    double   slippage    = 0.1;
-   double   stopLoss    = gridbase + (level-Sign(level))*GridSize*Pips;
+   double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pips;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
@@ -2345,7 +2386,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    if (type==OP_BUYSTOP  && level <= 0)                                         return(_NULL(catch("SubmitStopOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
-   double   stopPrice   = gridbase + level*GridSize*Pips;
+   double   stopPrice   = GetGridbase() + level*GridSize*Pips;
    double   slippage    = NULL;
    double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
@@ -2397,7 +2438,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    if (type==OP_BUYLIMIT  && level <= 0)                                        return(_NULL(catch("SubmitLimitOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
-   double   limitPrice  = gridbase + level*GridSize*Pips;
+   double   limitPrice  = GetGridbase() + level*GridSize*Pips;
    double   slippage    = NULL;
    double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
@@ -2593,9 +2634,10 @@ void SS.SequenceId() {
 void SS.GridBase() {
    if (!__CHART()) return;
 
-   if (ArraySize(gridbase.event) > 0) {
-      sGridBase = " @ "+ NumberToStr(gridbase, PriceFormat);
-   }
+   double gridbase = GetGridbase();
+   if (!gridbase) return;
+
+   sGridBase = " @ "+ NumberToStr(gridbase, PriceFormat);
 }
 
 
@@ -3571,6 +3613,10 @@ string SaveSequence.GridBaseToStr() {
  * @return string
  */
 string SaveSequence.OrderToStr(int index) {
+   /*
+   rt.order.{i}={ticket},{level},{gridbase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{closedBySL},{swap},{commission},{profit}
+   rt.order.0=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
+   */
    int      ticket       = orders.ticket      [index];
    int      level        = orders.level       [index];
    double   gridbase     = orders.gridbase    [index];
@@ -3890,9 +3936,11 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
  */
 bool ReadStatus.ParseGridBase(string value) {
    if (IsLastError()) return(false);
-   int      event; ArrayResize(gridbase.event, 0);
-   datetime time;  ArrayResize(gridbase.time,  0);
-   double   price; ArrayResize(gridbase.price, 0);    // rt.gridbase=1|1331710960|1.56743, 2|1331711010|1.56714
+
+   ResetGridbase();
+   int      event;
+   datetime time;
+   double   price;                                    // rt.gridbase=1|1331710960|1.56743, 2|1331711010|1.56714
 
    string records[], record, data[], sValue;
    int lastEvent, sizeOfRecords=Explode(value, ",", records, NULL);
@@ -3926,9 +3974,10 @@ bool ReadStatus.ParseGridBase(string value) {
 
       // store data but skip empty records ("0|0|0")
       if (event != 0) {
-         ArrayPushInt   (gridbase.event, event);
-         ArrayPushInt   (gridbase.time,  time );
-         ArrayPushDouble(gridbase.price, price);
+         ArrayPushInt   (gridbase.event,  event);
+         ArrayPushInt   (gridbase.time,   time );
+         ArrayPushDouble(gridbase.price,  price);
+         ArrayPushInt   (gridbase.status, NULL );     // that's STATUS_UNDEFINED (actual value doesn't matter)
          lastEventId = Max(lastEventId, event);
       }
    }
@@ -4500,7 +4549,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
    if (sizeOfEvents > 0) {
       ArraySort(events);
       int firstType = MathRound(events[0][2]);
-      if (firstType != EV_SEQUENCE_START) return(_false(catch("Sync.ProcessEvents(4)  illegal first status event "+ StatusEventToStr(firstType) +" (id="+ Round(events[0][0]) +"   time='"+ TimeToStr(events[0][1], TIME_FULL) +"')", ERR_RUNTIME_ERROR)));
+      if (firstType != EV_SEQUENCE_START) return(_false(catch("Sync.ProcessEvents(4)  illegal first event "+ StatusEventToStr(firstType) +" (id="+ Round(events[0][0]) +"   time='"+ TimeToStr(events[0][1], TIME_FULL) +"')", ERR_RUNTIME_ERROR)));
    }
 
    for (i=0; i < sizeOfEvents; i++) {
@@ -4518,18 +4567,17 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       // (2.2) Events auswerten
       // -- EV_SEQUENCE_START --------------
       if (type == EV_SEQUENCE_START) {
-         if (i && sequence.status!=STATUS_STARTING && sequence.status!=STATUS_STOPPED)   return(_false(catch("Sync.ProcessEvents(5)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
-         if (sequence.status==STATUS_STARTING && reopenedPositions!=Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(6)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (i && sequence.status!=STATUS_STARTING && sequence.status!=STATUS_STOPPED)   return(_false(catch("Sync.ProcessEvents(5)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (sequence.status==STATUS_STARTING && reopenedPositions!=Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(6)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          reopenedPositions = 0;
          sequence.status   = STATUS_PROGRESSING;
          sequence.start.event[index] = id;
       }
       // -- EV_GRIDBASE_CHANGE -------------
       else if (type == EV_GRIDBASE_CHANGE) {
-         if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPED)     return(_false(catch("Sync.ProcessEvents(7)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
-         gridbase = gridBase;
+         if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPED)     return(_false(catch("Sync.ProcessEvents(7)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          if (sequence.status == STATUS_PROGRESSING) {
-            if (sequence.level != 0)                                                     return(_false(catch("Sync.ProcessEvents(8)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+            if (sequence.level != 0)                                                     return(_false(catch("Sync.ProcessEvents(8)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          }
          else { // STATUS_STOPPED
             reopenedPositions = 0;
@@ -4539,7 +4587,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_OPEN ---------------
       else if (type == EV_POSITION_OPEN) {
-         if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING)    return(_false(catch("Sync.ProcessEvents(9)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING)    return(_false(catch("Sync.ProcessEvents(9)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          if (sequence.status == STATUS_PROGRESSING) {                                    // nicht bei PositionReopen
             sequence.level   += Sign(orders.level[index]);
             sequence.maxLevel = ifInt(sequence.direction==D_LONG, Max(sequence.level, sequence.maxLevel), Min(sequence.level, sequence.maxLevel));
@@ -4551,7 +4599,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_STOPOUT ------------
       else if (type == EV_POSITION_STOPOUT) {
-         if (sequence.status != STATUS_PROGRESSING)                                      return(_false(catch("Sync.ProcessEvents(10)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (sequence.status != STATUS_PROGRESSING)                                      return(_false(catch("Sync.ProcessEvents(10)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          sequence.level  -= Sign(orders.level[index]);
          sequence.stops++;
          sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
@@ -4559,7 +4607,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_CLOSE --------------
       else if (type == EV_POSITION_CLOSE) {
-         if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING)    return(_false(catch("Sync.ProcessEvents(11)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING)    return(_false(catch("Sync.ProcessEvents(11)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
          if (sequence.status == STATUS_PROGRESSING)
             closedPositions = 0;
@@ -4569,8 +4617,8 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_SEQUENCE_STOP ---------------
       else if (type == EV_SEQUENCE_STOP) {
-         if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING)    return(_false(catch("Sync.ProcessEvents(12)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
-         if (closedPositions != Abs(sequence.level))                                     return(_false(catch("Sync.ProcessEvents(13)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING)    return(_false(catch("Sync.ProcessEvents(12)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (closedPositions != Abs(sequence.level))                                     return(_false(catch("Sync.ProcessEvents(13)  illegal event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(sequence.status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          closedPositions = 0;
          sequence.status = STATUS_STOPPED;
          sequence.stop.event[index] = id;
@@ -5219,6 +5267,7 @@ bool UpdateProfitTargets() {
    // double be   = gridbase + RequiredDistance(loss);
 
    // calculate breakeven price (profit = losses)
+   double gridbase         = GetGridbase();
    double price            = ifDouble(sequence.direction==D_LONG, Bid, Ask);
    double gridbaseDistance = MathAbs(price - gridbase)/Pip;
    double potentialProfit  = PotentialProfit(gridbaseDistance);
