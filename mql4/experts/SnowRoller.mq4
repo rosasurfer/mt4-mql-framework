@@ -1188,31 +1188,37 @@ bool UpdateStatus(bool &gridChanged) {
          orders.profit    [i] = OrderProfit();
       }
 
-      if (!isClosed) {
+      if (!isClosed) {                                                        // a still open order
          if (orders.type[i] != OP_UNDEFINED) {
             floatingPL = NormalizeDouble(floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
-      else if (orders.type[i] == OP_UNDEFINED) {                              // now closed => a cancelled pending order is
-         Grid.DropData(i);                                                    // immediately removed from the order arrays
-         sizeOfTickets--;
+      else if (orders.type[i] == OP_UNDEFINED) {                              // a now closed pending order
+         if (OrderComment() == "deleted [no money]") warn("UpdateStatus(7)  "+ UpdateStatus.OrderDeletedMsg(i), ERR_NOT_ENOUGH_MONEY);
+         Grid.DropData(i);                                                    // cancelled pending orders are removed from
+         sizeOfTickets--;                                                     // the order arrays
+         if (OrderComment() == "deleted [no money]") {
+            if (StopSequence(NULL))
+               SetLastError(ERR_NOT_ENOUGH_MONEY);
+            return(false);
+         }
       }
-      else {
+      else {                                                                  // a now closed open position
          orders.closeEvent[i] = CreateEventId();
-         orders.closeTime [i] = OrderCloseTime();                             // now closed => a closed position
+         orders.closeTime [i] = OrderCloseTime();
          orders.closePrice[i] = OrderClosePrice();
          orders.closedBySL[i] = IsOrderClosedBySL();
          Chart.MarkPositionClosed(i);
 
          if (orders.closedBySL[i]) {                                          // stopped out
-            if (__LOG()) log("UpdateStatus(7)  "+ UpdateStatus.StopLossMsg(i));
+            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.StopLossMsg(i));
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++;
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
          else {                                                               // manually closed or closed at end of test
-            if (__LOG()) log("UpdateStatus(8)  "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1235,7 +1241,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, lastGridbase, Digits)) {
-            SetGridbase(TimeCurrentEx("UpdateStatus(9)"), gridbase);
+            SetGridbase(TimeCurrentEx("UpdateStatus(10)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1244,7 +1250,24 @@ bool UpdateStatus(bool &gridChanged) {
       }
    }
 
-   return(!catch("UpdateStatus(10)"));
+   return(!catch("UpdateStatus(11)"));
+}
+
+
+/**
+ * Compose a log message for a pending order deleted by the broker.
+ *
+ * @param  int i - order index
+ *
+ * @return string
+ */
+string UpdateStatus.OrderDeletedMsg(int i) {
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was deleted (not enough money)
+   string sType         = OperationTypeDescription(orders.pendingType[i]);
+   string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
+   string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was deleted (not enough money)";
+   return(message);
 }
 
 
