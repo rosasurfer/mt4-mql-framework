@@ -2,7 +2,7 @@
  * SnowRoller - a pyramiding trade manager
  *
  *
- * For background and proof-of-concept see the links below to "Snowballs and the anti-grid" by Bernd Kreuﬂ (aka 7bit).
+ * For theoretical background and proof-of-concept see the links to "Snowballs and the anti-grid" by Bernd Kreuﬂ (aka 7bit).
  *
  * This EA is a re-implementation of the above concept. It can be used as a trade manager or as a complete trading system.
  * Once started the EA waits until one of the defined start conditions is fulfilled. It then manages the resulting trades in
@@ -10,18 +10,15 @@
  * change of one of the supported trend indicators. Stop conditions can be price, time, a trend change of one the supported
  * trend indicators or an absolute or percentage profit amount. Multiple start and stop conditions may be combined.
  *
- * If AutoResume is enabled and both start and stop define a trend condition the EA waits after a stop and continues trading
- * when the next trend start condition is fulfilled. The EA finally stops after the profit target is reached.
+ * If both start and stop parameters define a trend condition the EA waits after a trend stop signal and continues trading
+ * when the next trend start condition is fulfilled. The EA finally stops after the defined profit target is reached.
  *
- * If AutoRestart is set to "Continue" and the profit target is reached the EA resets itself to the initial state and
- * immediately continues trading at level 1. If AutoRestart is set to "Restart" and the profit target is reached the EA
- * resets itself to the initial state and waits for the next start condition to continue trading. For both AutoRestart
- * options again start and stop must define a trend condition.
+ * If one of the AutoRestart options is enabled the EA continuously resets itself after the profit target is reached. If
+ * AutoRestart is set to "Continue" the EA resets itself to the initial state and immediately continues trading at level 1.
+ * If AutoRestart is set to "Restart" the EA resets itself to the initial state and waits for the next start condition to be
+ * fulfilled. For both AutoRestart options start and stop parmeters must define a trend condition.
  *
- * If both AutoResume and AutoRestart are enabled the EA continuously resets itself and trades to the profit target without
- * ever stopping.
- *
- * The EA can automatically interrupt and resume trading during configurable session breaks, e.g. Midnight or weekends.
+ * The EA can automatically interrupt and resume trading during configurable session breaks, e.g. on Midnight or at weekends.
  * During session breaks all pending orders and open positions are closed. Session break configuration supports holidays.
  *
  * In "/mql4/scripts" are some accompanying scripts named "SnowRoller.***" to manually control the EA (start, stop, wait).
@@ -44,15 +41,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/log filenames
+extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/logfile names
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;
 extern double   LotSize                = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
-extern bool     AutoResume             = false;                         // whether to reactivate a trend start condition after StopSequence(SIGNAL_TREND)
-extern string   AutoRestart            = "Off* | Continue | Restart";   // whether to continue/restart a sequence after StopSequence(SIGNAL_TP)
+extern string   AutoRestart            = "Off* | Continue | Restart";   // whether to continue trading or restart a sequence after StopSequence(SIGNAL_TP)
 extern bool     ShowProfitInPercent    = true;                          // whether PL values are displayed in absolute or percentage terms
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
@@ -207,7 +203,6 @@ string   sSequencePlStats        = "";
 string   sStartConditions        = "";
 string   sStopConditions         = "";
 string   sStartStopStats         = "";
-string   sAutoResume             = "";
 string   sAutoRestart            = "";
 string   sRestartStats           = "";
 
@@ -439,21 +434,21 @@ bool StartSequence(int signal) {
          break;
 
       case SIGNAL_TREND:
-         start.trend.condition = AutoResume;
-         start.conditions      = AutoResume;
+         start.trend.condition = true;
+         start.conditions      = true;
          break;
 
       case SIGNAL_PRICETIME:
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = (AutoResume && start.trend.condition);
+         start.conditions      = (start.trend.condition);
          break;
 
       case NULL:                                                  // manual start
-         start.trend.condition = (AutoResume && start.trend.description!="");
+         start.trend.condition = (start.trend.description != "");
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = (AutoResume && start.trend.condition);
+         start.conditions      = (start.trend.condition);
          break;
 
       default: return(!catch("StartSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -706,7 +701,7 @@ bool StopSequence(int signal) {
          break;
 
       case SIGNAL_TREND:
-         if (AutoResume && start.trend.description!="") {   // auto-resume if enabled and StartCondition is @trend
+         if (start.trend.description != "") {               // auto-resume if StartCondition is @trend
             start.conditions      = true;
             start.trend.condition = true;
             stop.trend.condition  = true;                   // stop condition is @trend
@@ -720,7 +715,7 @@ bool StopSequence(int signal) {
       case SIGNAL_PRICETIME:
          stop.price.condition = false;
          stop.time.condition  = false;
-         if (AutoResume && start.trend.description!="") {   // auto-resume if enabled, StartCondition is @trend and another
+         if (start.trend.description != "") {               // auto-resume if StartCondition is @trend and another
             start.conditions      = true;                   // stop condition is defined
             start.trend.condition = true;
             sequence.status       = STATUS_WAITING;
@@ -900,7 +895,6 @@ bool ResetSequence(double gridbase) {
    sStartConditions             = "";
    sStopConditions              = "";
    sStartStopStats              = "";
-   sAutoResume                  = "";
    sAutoRestart                 = "";
    sRestartStats                = " ----------------------------------------------------"+ NL
                                  +" "+ iCycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
@@ -944,22 +938,22 @@ bool ResumeSequence(int signal) {
          break;
 
       case SIGNAL_TREND:
-         start.trend.condition = AutoResume;
-         start.conditions      = AutoResume;
+         start.trend.condition = true;
+         start.conditions      = true;
          break;
 
       case SIGNAL_PRICETIME:
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = (AutoResume && start.trend.condition);
+         start.conditions      = start.trend.condition;
          break;
 
       case NULL:                                               // manual resume
          sessionbreak.waiting  = false;
-         start.trend.condition = (AutoResume && start.trend.description!="");
+         start.trend.condition = (start.trend.description != "");
          start.price.condition = false;
          start.time.condition  = false;
-         start.conditions      = (AutoResume && start.trend.condition);
+         start.conditions      = start.trend.condition;
          break;
 
       default: return(!catch("ResumeSequence(3)  unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
@@ -2609,7 +2603,6 @@ int ShowStatus(int error = NO_ERROR) {
                            "LotSize:          ",  sLotSize, sSequenceProfitPerLevel, NL,
                            "Start:             ", sStartConditions,                  NL,
                            "Stop:              ", sStopConditions,                   NL,
-                           sAutoResume,                  // if set the var ends with NL,
                            sAutoRestart,                 // if set the var ends with NL,
                            "Stops:             ", sSequenceStops, sSequenceStopsPL,  NL,
                            "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats, NL,
@@ -2651,7 +2644,6 @@ void SS.All() {
    SS.LotSize();
    SS.ProfitPerLevel();
    SS.StartStopConditions();
-   SS.AutoResume();
    SS.AutoRestart();
    SS.Stops();
    SS.TotalPL();
@@ -2775,17 +2767,6 @@ void SS.StartStopConditions() {
    }
    if (sValue == "") sStopConditions = "-";
    else              sStopConditions = sValue;
-}
-
-
-/**
- * ShowStatus(): Update the string representation of input parameter "AutoResume".
- */
-void SS.AutoResume() {
-   if (!__CHART()) return;
-
-   if (AutoResume) sAutoResume = "AutoResume: On" + NL;
-   else            sAutoResume = "AutoResume: Off"+ NL;
 }
 
 
@@ -3037,7 +3018,6 @@ double   last.LotSize;
 int      last.StartLevel;
 string   last.StartConditions = "";
 string   last.StopConditions = "";
-bool     last.AutoResume;
 string   last.AutoRestart;
 bool     last.ShowProfitInPercent;
 datetime last.Sessionbreak.StartTime;
@@ -3057,7 +3037,6 @@ void BackupInputs() {
    last.StartLevel             = StartLevel;
    last.StartConditions        = StringConcatenate(StartConditions, "");
    last.StopConditions         = StringConcatenate(StopConditions,  "");
-   last.AutoResume             = AutoResume;
    last.AutoRestart            = AutoRestart;
    last.ShowProfitInPercent    = ShowProfitInPercent;
    last.Sessionbreak.StartTime = Sessionbreak.StartTime;
@@ -3076,7 +3055,6 @@ void RestoreInputs() {
    StartLevel             = last.StartLevel;
    StartConditions        = last.StartConditions;
    StopConditions         = last.StopConditions;
-   AutoResume             = last.AutoResume;
    AutoRestart            = last.AutoRestart;
    ShowProfitInPercent    = last.ShowProfitInPercent;
    Sessionbreak.StartTime = last.Sessionbreak.StartTime;
@@ -3394,8 +3372,6 @@ bool ValidateInputs(bool interactive) {
       }
    }
 
-   // AutoResume: nothing to validate
-
    // AutoRestart
    sValue = StrToLower(AutoRestart);
    if (Explode(sValue, "*", elems, 2) > 1) {
@@ -3525,7 +3501,6 @@ bool SaveSequence() {
    WriteIniString(file, section, "StartLevel",               StartLevel);
    WriteIniString(file, section, "StartConditions",          sActiveStartConditions);
    WriteIniString(file, section, "StopConditions",           sActiveStopConditions);
-   WriteIniString(file, section, "AutoResume",               AutoResume);
    WriteIniString(file, section, "AutoRestart",              AutoRestart);
    WriteIniString(file, section, "Sessionbreak.StartTime",   Sessionbreak.StartTime);
    WriteIniString(file, section, "Sessionbreak.EndTime",     Sessionbreak.EndTime);
@@ -3766,7 +3741,6 @@ bool ReadStatus() {
    string sStartLevel            = GetIniStringA(file, section, "StartLevel",             "");     // int      StartLevel=0
    string sStartConditions       = GetIniStringA(file, section, "StartConditions",        "");     // string   StartConditions=@trend(HalfTrend:H1:3)
    string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");     // string   StopConditions=@trend(HalfTrend:H1:3) || @profit(2%)
-   string sAutoResume            = GetIniStringA(file, section, "AutoResume",             "");     // bool     AutoResume=1
    string sAutoRestart           = GetIniStringA(file, section, "AutoRestart",            "");     // string   AutoRestart=Continue
    string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");     // datetime Sessionbreak.StartTime=86160
    string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");     // datetime Sessionbreak.EndTime=3730
@@ -3784,7 +3758,6 @@ bool ReadStatus() {
    StartLevel      = StrToInteger(sStartLevel);
    StartConditions = sStartConditions;
    StopConditions  = sStopConditions;
-   AutoResume      = StrToBool(sAutoResume);
    AutoRestart     = sAutoRestart;
    if (!StrIsDigit(sSessionbreakStartTime)) return(!catch("ReadStatus(12)  invalid or missing Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
@@ -5974,7 +5947,6 @@ string InputsToStr() {
                             "StartLevel=",             StartLevel,                                   ";", NL,
                             "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
                             "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
-                            "AutoResume=",             BoolToStr(AutoResume),                        ";", NL,
                             "AutoRestart=",            DoubleQuoteStr(AutoRestart),                  ";", NL,
                             "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
                             "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
