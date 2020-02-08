@@ -1194,7 +1194,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
       else if (orders.type[i] == OP_UNDEFINED) {                              // a now closed pending order
-         if (OrderComment() == "deleted [no money]") warn("UpdateStatus(7)  "+ UpdateStatus.OrderDeletedMsg(i), ERR_NOT_ENOUGH_MONEY);
+         warn("UpdateStatus(7)  "+ UpdateStatus.OrderCancelledMsg(i));
          Grid.DropData(i);                                                    // cancelled pending orders are removed from
          sizeOfTickets--;                                                     // the order arrays
          if (OrderComment() == "deleted [no money]") {
@@ -1217,8 +1217,14 @@ bool UpdateStatus(bool &gridChanged) {
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
+         else if (StrStartsWithI(OrderComment(), "so:")) {                    // margin call
+            warn("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
+            if (StopSequence(NULL))
+               SetLastError(ERR_NOT_ENOUGH_MONEY);
+            return(false);
+         }
          else {                                                               // manually closed or closed at end of test
-            if (__LOG()) log("UpdateStatus(9)  "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(10)  "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1241,7 +1247,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, lastGridbase, Digits)) {
-            SetGridbase(TimeCurrentEx("UpdateStatus(10)"), gridbase);
+            SetGridbase(TimeCurrentEx("UpdateStatus(11)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1249,24 +1255,26 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
    }
-
-   return(!catch("UpdateStatus(11)"));
+   return(!catch("UpdateStatus(12)"));
 }
 
 
 /**
- * Compose a log message for a pending order deleted by the broker.
+ * Compose a log message for a cancelled pending order.
  *
  * @param  int i - order index
  *
  * @return string
  */
-string UpdateStatus.OrderDeletedMsg(int i) {
+string UpdateStatus.OrderCancelledMsg(int i) {
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was cancelled
    // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was deleted (not enough money)
    string sType         = OperationTypeDescription(orders.pendingType[i]);
    string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was deleted (not enough money)";
+   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
+
+   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled");
    return(message);
 }
 
@@ -1306,12 +1314,17 @@ string UpdateStatus.OrderFillMsg(int i) {
  * @return string
  */
 string UpdateStatus.PositionCloseMsg(int i) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was closed at 1.5457'2
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was closed at 1.5457'2[ (so: 47.7%/169.20/354.40)]
    string sType       = OperationTypeDescription(orders.type[i]);
    string sOpenPrice  = NumberToStr(orders.openPrice[i], PriceFormat);
    string sClosePrice = NumberToStr(orders.closePrice[i], PriceFormat);
    string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message     = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(LotSize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
+
+   SelectTicket(orders.ticket[i], "UpdateStatus.PositionCloseMsg(1)", /*pushTicket=*/true);
+   if (StrStartsWithI(OrderComment(), "so:"))
+      message = message +" ("+ OrderComment() +")";
+   OrderPop("UpdateStatus.PositionCloseMsg(2)");
 
    return(message);
 }
@@ -1387,6 +1400,9 @@ bool IsOrderClosedBySL() {
    if (isPosition) /*&&*/ if (isClosed) {
       if (StrEndsWithI(OrderComment(), "[sl]")) {
          closedBySL = true;
+      }
+      else if (StrStartsWithI(OrderComment(), "so:")) {
+         closedBySL = false;
       }
       else {
          // manually check the close price against the SL
