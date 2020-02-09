@@ -44,7 +44,7 @@ int __DEINIT_FLAGS__[];
 extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/logfile names
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;
-extern double   Lots                   = 0.1;
+extern double   UnitSize               = 0.1;
 extern int      StartLevel             = 0;
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
@@ -71,11 +71,12 @@ int      sequence.cycle;                           // counter of restarted seque
 string   sequence.name = "";                       // "L.1234" | "S.5678"
 datetime sequence.created;
 bool     sequence.isTest;                          // whether the sequence is/was a test (a finished test can be loaded into an online chart)
+double   sequence.unitsize;                        // lots per gridlevel
 int      sequence.direction;
 int      sequence.status;
-int      sequence.level;                           // current grid level:      -n...0...+n
-int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
-int      sequence.missedLevels[];                  // missed grid levels, e.g. in a fast moving market
+int      sequence.level;                           // current gridlevel:      -n...0...+n
+int      sequence.maxLevel;                        // max. reached gridlevel: -n...0...+n
+int      sequence.missedLevels[];                  // missed gridlevels, e.g. in a fast moving market
 double   sequence.startEquity;
 int      sequence.stops;                           // number of stopped-out positions: 0...+n
 double   sequence.stopsPL;                         // accumulated P/L of all stopped-out positions
@@ -84,9 +85,9 @@ double   sequence.floatingPL;                      // accumulated P/L of all ope
 double   sequence.totalPL;                         // current total P/L of the sequence: totalPL = stopsPL + closedPL + floatingPL
 double   sequence.maxProfit;                       // max. experienced total sequence profit:   0...+n
 double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
-double   sequence.profitPerLevel;                  // current profit amount per grid level
+double   sequence.profitPerLevel;                  // current profit amount per gridlevel
 double   sequence.breakeven;                       // current breakeven price
-double   sequence.commission;                      // commission value per grid level: -n...0
+double   sequence.commission;                      // commission value per gridlevel: -n...0
 
 int      sequence.start.event [];                  // sequence starts (the moment status changes to STATUS_PROGRESSING)
 datetime sequence.start.time  [];
@@ -157,7 +158,7 @@ int      gridbase.status[];                        // status at time of gridbase
 
 // --- order data --------------------------
 int      orders.ticket      [];
-int      orders.level       [];                    // order grid level: -n...-1 | 1...+n
+int      orders.level       [];                    // order gridlevel: -n...-1 | 1...+n
 double   orders.gridbase    [];                    // gridbase at the time the order was active
 int      orders.pendingType [];                    // pending order type (if applicable)        or -1
 datetime orders.pendingTime [];                    // time of OrderOpen() or last OrderModify() or  0
@@ -579,7 +580,7 @@ bool StopSequence(int signal) {
 
       // delete all pending limits
       int sizeOfPendings = ArraySize(pendingLimits);
-      for (i=0; i < sizeOfPendings; i++) {                                 // ordered by descending grid level
+      for (i=0; i < sizeOfPendings; i++) {                                 // ordered by descending gridlevel
          if (orders.type[pendingLimits[i]] == OP_UNDEFINED) {
             error = Grid.DeleteOrder(pendingLimits[i]);                    // removes the order from the order arrays
             if (!error)      continue;
@@ -594,11 +595,11 @@ bool StopSequence(int signal) {
             orders.commission[pendingLimits[i]] = OrderCommission();
             orders.profit    [pendingLimits[i]] = OrderProfit();
             if (__LOG()) log("StopSequence(5)  "+ UpdateStatus.OrderFillMsg(pendingLimits[i]));
-            if (IsStopOrderType(orders.pendingType[pendingLimits[i]])) {   // the next grid level was triggered
+            if (IsStopOrderType(orders.pendingType[pendingLimits[i]])) {   // the next gridlevel was triggered
                sequence.level   += Sign(orders.level[pendingLimits[i]]);
                sequence.maxLevel = Sign(orders.level[pendingLimits[i]]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
             }
-            else {                                                         // a previously missed grid level was triggered
+            else {                                                         // a previously missed gridlevel was triggered
                ArrayDropInt(sequence.missedLevels, orders.level[pendingLimits[i]]);
                SS.MissedLevels();
             }
@@ -1149,7 +1150,7 @@ bool UpdateStatus(bool &gridChanged) {
             orders.openTime  [i] = OrderOpenTime();
             orders.openPrice [i] = OrderOpenPrice();
             orders.swap      [i] = OrderSwap();
-            orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
+            orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.UnitSize();
             orders.profit    [i] = OrderProfit();
             Chart.MarkOrderFilled(i);
             if (__LOG()) log("UpdateStatus(5)  "+ UpdateStatus.OrderFillMsg(i));
@@ -1266,7 +1267,7 @@ string UpdateStatus.OrderCancelledMsg(int i) {
    string sType         = OperationTypeDescription(orders.pendingType[i]);
    string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(Lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
+   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
 
    message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled");
    return(message);
@@ -1285,7 +1286,7 @@ string UpdateStatus.OrderFillMsg(int i) {
    string sType         = OperationTypeDescription(orders.pendingType[i]);
    string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(Lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
+   string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
    if (NE(orders.pendingPrice[i], orders.openPrice[i])) {
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
@@ -1313,7 +1314,7 @@ string UpdateStatus.PositionCloseMsg(int i) {
    string sOpenPrice  = NumberToStr(orders.openPrice[i], PriceFormat);
    string sClosePrice = NumberToStr(orders.closePrice[i], PriceFormat);
    string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message     = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(Lots, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
+   string message     = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
 
    SelectTicket(orders.ticket[i], "UpdateStatus.PositionCloseMsg(1)", /*pushTicket=*/true);
    if (StrStartsWithI(OrderComment(), "so:"))
@@ -1338,7 +1339,7 @@ string UpdateStatus.StopLossMsg(int i) {
    string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
    string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
    string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(Lots, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), stoploss "+ sStopLoss +" was executed";
+   string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), stoploss "+ sStopLoss +" was executed";
 
    if (NE(orders.closePrice[i], orders.stopLoss[i])) {
       double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
@@ -2011,7 +2012,7 @@ bool Grid.AddPosition(int level) {
       if (ticket == -1) {
          // market violated                        // use #-1 as marker for a virtually triggered SL, UpdateStatus() will decrease the gridlevel and "close" it with PL=0.00
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
-         if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
+         if (__LOG()) log("Grid.AddPosition(4)  sequence "+ sequence.name +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing gridlevel...");
       }
       else if (ticket == -2) {
          return(!catch("Grid.AddPosition(5)  unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
@@ -2283,7 +2284,7 @@ bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendin
    orders.closedBySL  [i] = closedBySL;
 
    orders.swap        [i] = NormalizeDouble(swap,       2);
-   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.LotSize(); }
+   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.UnitSize(); }
    orders.profit      [i] = NormalizeDouble(profit,     2);
 
    return(!catch("Grid.SetData(2)"));
@@ -2366,6 +2367,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    if (type==OP_BUY  && level<=0)                                               return(_NULL(catch("SubmitMarketOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELL && level>=0)                                               return(_NULL(catch("SubmitMarketOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
+   double   lots        = sequence.unitsize;
    double   price       = NULL;
    double   slippage    = 0.1;
    double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pips;
@@ -2381,7 +2383,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
       oeFlags |= F_ERR_NO_CONNECTION;           // custom handling of ERR_NO_CONNECTION
       oeFlags |= F_ERR_TRADESERVER_GONE;        // custom handling of ERR_TRADESERVER_GONE
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
       SetLastNetworkError(oe);
       return(ticket);
@@ -2423,6 +2425,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    if (type==OP_BUYSTOP  && level <= 0)                                         return(_NULL(catch("SubmitStopOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
+   double   lots        = sequence.unitsize;
    double   stopPrice   = GetGridbase() + level*GridSize*Pips;
    double   slippage    = NULL;
    double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
@@ -2435,7 +2438,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
             oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   int ticket = OrderSendEx(Symbol(), type, lots, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
       SetLastNetworkError(oe);
       return(ticket);
@@ -2475,6 +2478,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    if (type==OP_BUYLIMIT  && level <= 0)                                        return(_NULL(catch("SubmitLimitOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
+   double   lots        = sequence.unitsize;
    double   limitPrice  = GetGridbase() + level*GridSize*Pips;
    double   slippage    = NULL;
    double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
@@ -2487,7 +2491,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
             oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   int ticket = OrderSendEx(Symbol(), type, lots, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
       SetLastNetworkError(oe);
       return(ticket);
@@ -2641,7 +2645,7 @@ void SS.All() {
    SS.GridBase();
    SS.GridDirection();
    SS.MissedLevels();
-   SS.LotSize();
+   SS.UnitSize();
    SS.ProfitPerLevel();
    SS.StartStopConditions();
    SS.AutoRestart();
@@ -2701,14 +2705,14 @@ void SS.MissedLevels() {
 
 
 /**
- * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
+ * ShowStatus(): Update the string representation of sequence.unitsize.
  */
-void SS.LotSize() {
+void SS.UnitSize() {
    if (!__CHART()) return;
 
-   double stopSize = GridSize * PipValue(Lots) - sequence.commission;
-   if (ShowProfitInPercent) sLotSize = NumberToStr(Lots, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
-   else                     sLotSize = NumberToStr(Lots, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
+   double stopSize = GridSize * PipValue(sequence.unitsize) - sequence.commission;
+   if (ShowProfitInPercent) sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot = "+ DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2) +"%/stop";
+   else                     sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
 
@@ -2843,7 +2847,7 @@ void SS.ProfitPerLevel() {
       sSequenceProfitPerLevel = "";                // no display if no position is open
    }
    else {
-      double stopSize = GridSize * PipValue(Lots);
+      double stopSize = GridSize * PipValue(sequence.unitsize);
       int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
       double profit   = levels * stopSize;
 
@@ -3014,7 +3018,7 @@ bool IsMyOrder(int sequenceId = NULL) {
 string   last.Sequence.ID = "";
 string   last.GridDirection = "";
 int      last.GridSize;
-double   last.Lots;
+double   last.UnitSize;
 int      last.StartLevel;
 string   last.StartConditions = "";
 string   last.StopConditions = "";
@@ -3033,7 +3037,7 @@ void BackupInputs() {
    last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
    last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
    last.GridSize               = GridSize;
-   last.Lots                   = Lots;
+   last.UnitSize               = UnitSize;
    last.StartLevel             = StartLevel;
    last.StartConditions        = StringConcatenate(StartConditions, "");
    last.StopConditions         = StringConcatenate(StopConditions,  "");
@@ -3051,7 +3055,7 @@ void RestoreInputs() {
    Sequence.ID            = last.Sequence.ID;
    GridDirection          = last.GridDirection;
    GridSize               = last.GridSize;
-   Lots                   = last.Lots;
+   UnitSize               = last.UnitSize;
    StartLevel             = last.StartLevel;
    StartConditions        = last.StartConditions;
    StopConditions         = last.StopConditions;
@@ -3151,21 +3155,22 @@ bool ValidateInputs(bool interactive) {
    }
    if (GridSize < 1)                                              return(_false(ValidateInputs.OnError("ValidateInputs(7)", "Invalid GridSize: "+ GridSize, interactive)));
 
-   // Lots
+   // UnitSize
    if (isParameterChange) {
-      if (NE(Lots, last.Lots))
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Cannot change Lots of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (NE(UnitSize, last.UnitSize))
+         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (LE(Lots, 0))                                               return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Invalid Lots: "+ NumberToStr(Lots, ".+"), interactive)));
+   if (LE(UnitSize, 0))                                           return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Invalid UnitSize: "+ NumberToStr(UnitSize, ".+"), interactive)));
    double minLot  = MarketInfo(Symbol(), MODE_MINLOT );
    double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT );
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
    int error = GetLastError();
    if (IsError(error))                                            return(_false(catch("ValidateInputs(10)  symbol="+ DoubleQuoteStr(Symbol()), error)));
-   if (LT(Lots, minLot))                                          return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid Lots: "+ NumberToStr(Lots, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
-   if (GT(Lots, maxLot))                                          return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid Lots: "+ NumberToStr(Lots, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
-   if (MathModFix(Lots, lotStep) != 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(13)", "Invalid Lots: "+ NumberToStr(Lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
-   SS.LotSize();
+   if (LT(UnitSize, minLot))                                      return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid UnitSize: "+ NumberToStr(UnitSize, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
+   if (GT(UnitSize, maxLot))                                      return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid UnitSize: "+ NumberToStr(UnitSize, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
+   if (MathModFix(UnitSize, lotStep) != 0)                        return(_false(ValidateInputs.OnError("ValidateInputs(13)", "Invalid UnitSize: "+ NumberToStr(UnitSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
+   sequence.unitsize = UnitSize;
+   SS.UnitSize();
 
    // StartLevel
    if (isParameterChange) {
@@ -3497,7 +3502,7 @@ bool SaveSequence() {
 
    WriteIniString(file, section, "Created",                  sequence.created +" ("+ GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") +")");
    WriteIniString(file, section, "GridSize",                 GridSize);
-   WriteIniString(file, section, "Lots",                     NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "UnitSize",                 NumberToStr(UnitSize, ".+"));
    WriteIniString(file, section, "StartLevel",               StartLevel);
    WriteIniString(file, section, "StartConditions",          sActiveStartConditions);
    WriteIniString(file, section, "StopConditions",           sActiveStopConditions);
@@ -3737,7 +3742,7 @@ bool ReadStatus() {
    section = sections[size-1];
    string sCreated               = GetIniStringA(file, section, "Created",                "");     // string   Created=Tue, 2019.09.24 01:00:00
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");     // int      GridSize=20
-   string sLots                  = GetIniStringA(file, section, "LotSize",                "");     // double   Lots=0.01
+   string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");     // double   UnitSize=0.01
    string sStartLevel            = GetIniStringA(file, section, "StartLevel",             "");     // int      StartLevel=0
    string sStartConditions       = GetIniStringA(file, section, "StartConditions",        "");     // string   StartConditions=@trend(HalfTrend:H1:3)
    string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");     // string   StopConditions=@trend(HalfTrend:H1:3) || @profit(2%)
@@ -3752,8 +3757,8 @@ bool ReadStatus() {
    if (!sequence.created)                   return(!catch("ReadStatus(8)  invalid creation timestamp "+ DoubleQuoteStr(sCreated) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsDigit(sGridSize))              return(!catch("ReadStatus(9)  invalid or missing GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    GridSize = StrToInteger(sGridSize);
-   if (!StrIsNumeric(sLots))                return(!catch("ReadStatus(10)  invalid or missing Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   Lots = StrToDouble(sLots);
+   if (!StrIsNumeric(UnitSize))             return(!catch("ReadStatus(10)  invalid or missing UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   UnitSize = StrToDouble(sUnitSize);
    if (!StrIsDigit(sStartLevel))            return(!catch("ReadStatus(11)  invalid or missing StartLevel "+ DoubleQuoteStr(sStartLevel) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    StartLevel      = StrToInteger(sStartLevel);
    StartConditions = sStartConditions;
@@ -4104,9 +4109,9 @@ bool ReadStatus.ParseOrder(string value) {
 
    // level
    string sLevel = StrTrim(values[1]);
-   if (!StrIsInteger(sLevel))                                            return(!catch("ReadStatus.ParseOrder(5)  illegal grid level "+ DoubleQuoteStr(sLevel) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsInteger(sLevel))                                            return(!catch("ReadStatus.ParseOrder(5)  illegal gridlevel "+ DoubleQuoteStr(sLevel) +" in order record", ERR_INVALID_FILE_FORMAT));
    int level = StrToInteger(sLevel);
-   if (!level)                                                           return(!catch("ReadStatus.ParseOrder(6)  illegal grid level "+ level +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!level)                                                           return(!catch("ReadStatus.ParseOrder(6)  illegal gridlevel "+ level +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // gridbase
    string sGridbase = StrTrim(values[2]);
@@ -4448,7 +4453,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
 
    if (!isPending) {
       orders.swap        [i] = OrderSwap();
-      orders.commission  [i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
+      orders.commission  [i] = OrderCommission(); sequence.commission = OrderCommission(); SS.UnitSize();
       orders.profit      [i] = OrderProfit();
    }
 
@@ -4920,7 +4925,7 @@ bool Chart.MarkOrderSent(int i) {
       if      (pending)                         markerColor = CLR_PENDING;
       else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_LONG, CLR_SHORT);
    }
-   return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, Lots, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
+   return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, sequence.unitsize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
 }
 
 
@@ -4945,7 +4950,7 @@ bool Chart.MarkOrderFilled(int i) {
    if (orderDisplayMode >= ODM_PYRAMID)
       markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
 
-   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, Lots, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
+   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
 }
 
 
@@ -4970,7 +4975,7 @@ bool Chart.MarkPositionClosed(int i) {
       if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSE;
       if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
    }
-   return(ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], Lots, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]));
+   return(ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]));
 }
 
 
@@ -5327,7 +5332,7 @@ bool ShowProfitTargets() {
 
 /**
  * Calculate the theoretically possible maximum profit at the specified distance away from the gridbase. The calculation
- * assumes a perfect grid. It considers commissions but disregards missed grid levels and slippage.
+ * assumes a perfect grid. It considers commissions but disregards missed gridlevels and slippage.
  *
  * @param  double distance - distance from the gridbase in pip
  *
@@ -5335,12 +5340,12 @@ bool ShowProfitTargets() {
  */
 double PotentialProfit(double distance) {
    // P = L * (L-1)/2 + partialP
-   distance = NormalizeDouble(distance, 1);
-   int    level = distance/GridSize;
+   distance            = NormalizeDouble(distance, 1);
+   int    level        = distance/GridSize;
    double partialLevel = MathModFix(distance/GridSize, 1);
-   double units = (level-1)/2.*level + partialLevel*level;
-   double unitSize = GridSize * PipValue(Lots) + sequence.commission;
-   double maxProfit = units * unitSize;
+   double units        = (level-1)/2.*level + partialLevel*level;
+   double unitSize     = GridSize * PipValue(sequence.unitsize) + sequence.commission;
+   double maxProfit    = units * unitSize;
    if (partialLevel > 0) {
       maxProfit += (1-partialLevel)*level*sequence.commission;    // a partial level pays full commission
    }
@@ -5350,7 +5355,7 @@ double PotentialProfit(double distance) {
 
 /**
  * Calculate the minimum distance price has to move away from the gridbase to theoretically generate the specified floating
- * profit. The calculation assumes a perfect grid. It considers commissions but disregards missed grid levels and slippage.
+ * profit. The calculation assumes a perfect grid. It considers commissions but disregards missed gridlevels and slippage.
  *
  * @param  double profit
  *
@@ -5358,9 +5363,9 @@ double PotentialProfit(double distance) {
  */
 double RequiredDistance(double profit) {
    // L = -0.5 + (0.25 + 2*units) ^ 1/2                           // quadratic equation solved with pq-formula
-   double unitSize = GridSize * PipValue(Lots) + sequence.commission;
-   double units = MathAbs(profit)/unitSize;
-   double level = MathPow(2*units + 0.25, 0.5) - 0.5;
+   double unitSize = GridSize * PipValue(sequence.unitsize) + sequence.commission;
+   double units    = MathAbs(profit)/unitSize;
+   double level    = MathPow(2*units + 0.25, 0.5) - 0.5;
    double distance = level * GridSize;
    return(RoundCeil(distance, 1));
 }
@@ -5943,7 +5948,7 @@ string InputsToStr() {
    return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
                             "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
                             "GridSize=",               GridSize,                                     ";", NL,
-                            "Lots=",                   NumberToStr(Lots, ".1+"),                     ";", NL,
+                            "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
                             "StartLevel=",             StartLevel,                                   ";", NL,
                             "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
                             "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
