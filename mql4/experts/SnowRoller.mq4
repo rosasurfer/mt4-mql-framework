@@ -859,9 +859,9 @@ bool ResetSequence(double gridbase) {
    stop.profitAbs.description = ifString(stop.profitAbs.condition, stop.profitAbs.description, "");
 
    stop.profitPct.condition   = (stop.profitPct.description != "");
-   stop.profitPct.value       = ifDouble(stop.profitPct.condition, stop.profitPct.value,          0);
-   stop.profitPct.absValue    = ifDouble(stop.profitPct.condition, stop.profitPct.absValue, INT_MAX);
-   stop.profitPct.description = ifString(stop.profitPct.condition, stop.profitPct.description,   "");
+   stop.profitPct.value       = ifDouble(stop.profitPct.condition, stop.profitPct.value, 0);
+   stop.profitPct.absValue    = ifDouble(stop.profitPct.condition, INT_MAX,              0);
+   stop.profitPct.description = ifString(stop.profitPct.condition, stop.profitPct.description, "");
 
    // --- session break management -------
    sessionbreak.starttime     = 0;
