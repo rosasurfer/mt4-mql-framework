@@ -2887,7 +2887,7 @@ string StdSymbol() {
    static string lastSymbol[1], result[1];
    /*
    Indikatoren:  lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
-   EA's:         lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
+   EAs:          lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
                                        Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
    */
 
