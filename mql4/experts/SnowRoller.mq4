@@ -25,7 +25,7 @@
  * The EA can be tested and the scripts work in tester, too. The EA can't be optimized in tester.
  *
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
- * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not set to 0 (zero).
+ * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not 0 (zero).
  *
  *  @link  https://sites.google.com/site/prof7bit/snowball       ["Snowballs and the anti-grid"]
  *  @link  https://www.forexfactory.com/showthread.php?t=226059  ["Snowballs and the anti-grid"]
@@ -394,7 +394,7 @@ bool HandleNetworkErrors() {
 
 
          if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
-            return(!catch("HandleNetworkErrors(1)  in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
+            return(!catch("HandleNetworkErrors(1)  in status "+ StatusToStr(sequence.status) +" not yet implemented ("+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +")", ERR_NOT_IMPLEMENTED));
 
          if (sequence.status == STATUS_PROGRESSING) {
             if (Tick.Time >= nextRetry) {
@@ -5915,7 +5915,7 @@ int SetLastNetworkError(int oe[]) {
    else          { error = oes.Error(oe, 0); duration = oes.Duration(oe, 0); }
 
    if (lastNetworkError && !error) {
-      warn("SetLastNetworkError(1)  network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
+      warn("SetLastNetworkError(1)  "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
    }
    lastNetworkError = error;
 
@@ -5934,7 +5934,7 @@ int SetLastNetworkError(int oe[]) {
          pauses[5] = 10*MINUTES;
       }
       nextRetry = now + pauses[Min(retries, 5)];
-      if (__LOG()) log("SetLastNetworkError(2)  networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
+      if (__LOG()) log("SetLastNetworkError(2)  "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
    }
    return(error);
 }
