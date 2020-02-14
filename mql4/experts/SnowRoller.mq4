@@ -457,7 +457,7 @@ bool StartSequence(int signal) {
    sessionbreak.waiting = false;
    SS.StartStopConditions();
 
-   // calculate start equity and unitsize
+   // re-calculate start equity and unitsize
    sequence.startEquity = CalculateStartEquity();
    sequence.unitsize    = CalculateUnitSize(sequence.startEquity);
 
@@ -981,6 +981,10 @@ bool ResumeSequence(int signal) {
       }
    }
 
+   // make sure the unitsize is set (to the previously used value)
+   sequence.unitsize = CalculateUnitSize(sequence.startEquity);
+
+   // calculate the new gridbase
    if (!newGridbase) {
       // without open positions define the new gridbase using the previous one
       startTime   = TimeCurrentEx("ResumeSequence(4)");
@@ -2710,18 +2714,17 @@ void SS.MissedLevels() {
 void SS.UnitSize() {
    if (!__CHART()) return;
 
-   double unitsize = sequence.unitsize;
-   double equity   = sequence.startEquity;
+   double equity = sequence.startEquity;
 
-   if (!unitsize) {
+   if (!sequence.unitsize) {
       if (!equity) equity = CalculateStartEquity();
-      unitsize = CalculateUnitSize(equity);
+      sequence.unitsize = CalculateUnitSize(equity);
    }
-   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (comp.)");
-   double stopSize     = GridSize * PipValue(unitsize) - sequence.commission;
+   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compounding)");
+   double stopSize     = GridSize * PipValue(sequence.unitsize) - sequence.commission;
 
-   if (ShowProfitInPercent) sLotSize = NumberToStr(unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(MathDiv(stopSize, equity) * 100, 2) +"%/stop";
-   else                     sLotSize = NumberToStr(unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(stopSize, 2) +"/stop";
+   if (ShowProfitInPercent) sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(MathDiv(stopSize, equity) * 100, 2) +"%/stop";
+   else                     sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
 
