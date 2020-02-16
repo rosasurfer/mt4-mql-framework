@@ -49,7 +49,7 @@ extern int      StartLevel             = 0;                             //
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
 extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue trading or reset a sequence after StopSequence(SIGNAL_TP)
-extern bool     ShowProfitInPercent    = true;                          // whether PL values are displayed in absolute or percentage terms
+extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed in absolute or percentage values
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
 
