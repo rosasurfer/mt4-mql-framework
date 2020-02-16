@@ -14,34 +14,32 @@ mqlcache.dat
 *.ex4
 *.ex5
 
-# ignore generated and log files in MQL4 structure
+# ignore log/generated/linked files in legacy MQL4 structure
 /mql4/experts/config
 /mql4/experts/files
-/mql4/experts/logs
-/mql4/experts/presets
-/mql4/experts/templates
-
-# ignore linked MQL4 sources in MQL4 structure
 /mql4/experts/include
 /mql4/experts/indicators
 /mql4/experts/libraries
+/mql4/experts/logs
+/mql4/experts/presets
 /mql4/experts/scripts
+/mql4/experts/templates
 
-# ignore DLL build artefacts
+# ignore DLL related files
 /mql4/libraries/*.Debug.dll
 /mql4/libraries/*.Release.dll
 
-# ignore generated and log files in MQL4.5 + MQL5 structures
+# ignore log/generated/linked files in MQL4.5 and MQL5 structures
 /mql*/Files
 /mql*/files
+/mql*/Images
 /mql*/Logs
 /mql*/logs
 /mql*/Presets
 /mql*/presets
-
-/mql*/Images
 /mql*/Projects
+/mql*/src
 /mql*/Shared Projects
 
-# ignore everything created by the tester
+# ignore Tester created files
 /tester/
