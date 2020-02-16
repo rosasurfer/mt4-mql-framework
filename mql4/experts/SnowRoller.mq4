@@ -15,7 +15,7 @@
  *
  * If one of the AutoRestart options is enabled the EA continuously resets itself after the profit target is reached. If
  * AutoRestart is set to "Continue" the EA resets itself to the initial state and immediately continues trading at level 1.
- * If AutoRestart is set to "Restart" the EA resets itself to the initial state and waits for the next start condition to be
+ * If AutoRestart is set to "Reset" the EA resets itself to the initial state and waits for the next start condition to be
  * fulfilled. For both AutoRestart options start and stop parmeters must define a trend condition.
  *
  * The EA can automatically interrupt and resume trading during configurable session breaks, e.g. on Midnight or at weekends.
@@ -44,11 +44,11 @@ int __DEINIT_FLAGS__[];
 extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/logfile names
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;                            //
-extern string   UnitSize               = "{double} | auto*";            // whether to use a fixed or a computed and compounding unitsize
+extern string   UnitSize               = "{double} | auto*";            // fixed or calculated and compounding unitsize
 extern int      StartLevel             = 0;                             //
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
-extern string   AutoRestart            = "Off* | Continue | Restart";   // whether to continue trading or restart a sequence after StopSequence(SIGNAL_TP)
+extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue trading or reset a sequence after StopSequence(SIGNAL_TP)
 extern bool     ShowProfitInPercent    = true;                          // whether PL values are displayed in absolute or percentage terms
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
@@ -772,10 +772,10 @@ bool StopSequence(int signal) {
  * @return bool - success status
  */
 bool ResetSequence(double gridbase) {
-   if (IsLastError())                                         return(false);
-   if (sequence.status!=STATUS_STOPPED)                       return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
-   if (AutoRestart=="Off")                                    return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
-   if (AutoRestart=="Restart" && start.trend.description=="") return(!warn("ResetSequence(3)  cannot restart sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
+   if (IsLastError())                                       return(false);
+   if (sequence.status!=STATUS_STOPPED)                     return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
+   if (AutoRestart=="Off")                                  return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoRestart=="Reset" && start.trend.description=="") return(!warn("ResetSequence(3)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
 
    // memorize needed vars
    int    iCycle   = sequence.cycle;
@@ -2720,7 +2720,7 @@ void SS.UnitSize() {
       if (!equity) equity = CalculateStartEquity();
       sequence.unitsize = CalculateUnitSize(equity);
    }
-   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compounding)");
+   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compound.)");
    double stopSize     = GridSize * PipValue(sequence.unitsize) - sequence.commission;
 
    if (ShowProfitInPercent) sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(MathDiv(stopSize, equity) * 100, 2) +"%/stop";
@@ -3405,9 +3405,9 @@ bool ValidateInputs(bool interactive) {
    }
    sValue = StrTrim(sValue);
    if      (sValue == "")                      sValue = "off";
-   else if (StrStartsWith("off"     , sValue)) sValue = "off";
+   else if (StrStartsWith("off",      sValue)) sValue = "off";
    else if (StrStartsWith("continue", sValue)) sValue = "continue";
-   else if (StrStartsWith("restart" , sValue)) sValue = "restart";
+   else if (StrStartsWith("reset",    sValue)) sValue = "reset";
    else                                                 return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
    AutoRestart = StrCapitalize(sValue);
 
