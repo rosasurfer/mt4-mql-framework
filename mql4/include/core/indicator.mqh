@@ -57,7 +57,7 @@ int init() {
 
 
    // (2) finish initialization
-   if (!init.UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!init.GlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) execute custom init tasks
@@ -171,10 +171,10 @@ int init() {
  *
  * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
  */
-bool init.UpdateGlobalVars() {
+bool init.GlobalVars() {
    __lpSuperContext = __ExecutionContext[EC.superContext];
-   if (!__lpSuperContext) {                                    // with a super-context this indicator's context is already up-to-date
-      ec_SetLogging(__ExecutionContext, IsLogging());          // TODO: move to Expander
+   if (!__lpSuperContext) {                                       // with a super-context this indicator's context is already up-to-date
+      ec_SetLogEnabled(__ExecutionContext, init.IsLogEnabled());  // TODO: move to Expander
    }
 
    N_INF = MathLog(0);
@@ -211,7 +211,7 @@ bool init.UpdateGlobalVars() {
    __LOG_ERROR.mail = false;                                   // ...
    __LOG_ERROR.sms  = false;                                   // ...
 
-   return(!catch("init.UpdateGlobalVars(1)"));
+   return(!catch("init.GlobalVars(1)"));
 }
 
 
@@ -618,7 +618,7 @@ bool EventListener_ChartCommand(string &commands[]) {
 #import "rsfExpander.dll"
    string ec_CustomLogFile         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool   ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   bool   ec_SetLogEnabled         (/*EXECUTION_CONTEXT*/int ec[], int status      );
    int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);

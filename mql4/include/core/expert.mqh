@@ -74,7 +74,7 @@ int init() {
    }
 
    // finish initialization of global vars
-   if (!init.UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
+   if (!init.GlobalVars()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -212,8 +212,8 @@ int init() {
  *
  * @return bool - success status
  */
-bool init.UpdateGlobalVars() {
-   ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: move to MT4Expander
+bool init.GlobalVars() {
+   ec_SetLogEnabled(__ExecutionContext, init.IsLogEnabled());              // TODO: move to Expander
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -231,7 +231,7 @@ bool init.UpdateGlobalVars() {
    __LOG_ERROR.mail = init.LogErrorsToMail();                              // ...
    __LOG_ERROR.sms  = init.LogErrorsToSMS();                               // ...
 
-   return(!catch("init.UpdateGlobalVars(1)"));
+   return(!catch("init.GlobalVars(1)"));
 }
 
 
@@ -717,7 +717,7 @@ bool Tester.RecordEquity() {
 
 #import "rsfExpander.dll"
    int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool   ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   bool   ec_SetLogEnabled         (/*EXECUTION_CONTEXT*/int ec[], int status      );
    int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);

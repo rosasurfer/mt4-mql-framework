@@ -92,7 +92,7 @@
    //       ec.dllErrorMsg
    int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.dllWarningMsg
-   bool     ec_Logging            (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_LogEnabled         (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_CustomLogging      (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_CustomLogFile      (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -101,7 +101,7 @@
    int      ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int function);
    int      ec_SetMqlError           (/*EXECUTION_CONTEXT*/int ec[], int error   );
    int      ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error   );
-   bool     ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   bool     ec_SetLogEnabled         (/*EXECUTION_CONTEXT*/int ec[], int status  );
 
 
    // helpers
