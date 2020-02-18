@@ -231,7 +231,7 @@
 #define INIT_TIMEZONE                     1              // initialize/check the timezone configuration
 #define INIT_PIPVALUE                     2              // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE          4              //
-#define INIT_CUSTOMLOG                    8              // use a custom logfile
+#define INIT_CUSTOMLOG                    8              // use a separate logfile
 #define INIT_NO_BARS_REQUIRED            16              // scripts only: executable without existing bars (no history)
 
 
