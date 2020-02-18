@@ -93,8 +93,8 @@
    int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.dllWarningMsg
    bool     ec_LogEnabled         (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_CustomLogging      (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_CustomLogFile      (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_LogFilename        (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_SeparateLog        (/*EXECUTION_CONTEXT*/int ec[]);
 
 
    // used setters
