@@ -205,11 +205,10 @@ bool init.GlobalVars() {
    Tick           = __ExecutionContext[EC.ticks       ];
    Tick.Time      = __ExecutionContext[EC.lastTickTime];
 
-   __LOG_CUSTOM     = false;                                   // experts only
-   __LOG_WARN.mail  = false;                                   // ...
-   __LOG_WARN.sms   = false;                                   // ...
-   __LOG_ERROR.mail = false;                                   // ...
-   __LOG_ERROR.sms  = false;                                   // ...
+   __LOG_WARN.mail  = false;
+   __LOG_WARN.sms   = false;
+   __LOG_ERROR.mail = false;
+   __LOG_ERROR.sms  = false;
 
    return(!catch("init.GlobalVars(1)"));
 }

@@ -225,7 +225,6 @@ bool init.GlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   __LOG_CUSTOM     = ec_CustomLogEnabled(__ExecutionContext);
    __LOG_WARN.mail  = init.LogWarningsToMail();
    __LOG_WARN.sms   = init.LogWarningsToSMS();
    __LOG_ERROR.mail = init.LogErrorsToMail();
