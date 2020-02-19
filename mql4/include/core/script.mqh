@@ -45,7 +45,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!init.UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!init.GlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -83,8 +83,8 @@ int init() {
  *
  * @return bool - success status
  */
-bool init.UpdateGlobalVars() {
-   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
+bool init.GlobalVars() {
+   ec_SetLogEnabled(__ExecutionContext, init.ReadLogConfig());       // TODO: move to Expander
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -96,13 +96,13 @@ bool init.UpdateGlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);          // supported by experts only
+   __LOG_CUSTOM     = ec_SeparateLog(__ExecutionContext);            // supported by experts only
    __LOG_WARN.mail  = false;                                         // ...
    __LOG_WARN.sms   = false;                                         // ...
    __LOG_ERROR.mail = false;                                         // ...
    __LOG_ERROR.sms  = false;                                         // ...
 
-   return(!catch("init.UpdateGlobalVars(1)"));
+   return(!catch("init.GlobalVars(1)"));
 }
 
 
@@ -336,7 +336,7 @@ bool CheckErrors(string location, int setError = NULL) {
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
-   bool   ec_SetLogging(int ec[], int status);
+   bool   ec_SetLogEnabled      (int ec[], int status);
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);

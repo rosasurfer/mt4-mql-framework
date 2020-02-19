@@ -205,7 +205,7 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's MQL logfile or the program's custom logfile (if configured).
+ * Log a message to the terminal's MQL logfile or the program's separate logfile (if configured).
  *
  * @param  string message
  * @param  int    error [optional] - optional error to log (default: none)
@@ -225,7 +225,7 @@ int log(string message, int error = NO_ERROR) {
    // log to custom file or...
    string name = __NAME();
    if (__LOG_CUSTOM) {
-      if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      if (__log.custom(StringConcatenate(name, "::", message)))            // separate Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
    }
 
@@ -1155,20 +1155,20 @@ double GetCommission(double lots = 1.0) {
 
 
 /**
- * Whether the current program's logging status is activated. By default logging in the tester is "disabled" and outside of
- * the tester "enabled".
+ * Read the logging configuration for the current program. By default online logging is enabled and offline logging (tester)
+ * is disabled. Called only from init.GlobalVars().
  *
  * @return bool
  */
-bool IsLogging() {
+bool init.ReadLogConfig() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "LogInTester", false));                    // in tester:     default=off
-   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // not in tester: default=on
+      return(GetConfigBool("Logging", "LogInTester", false));                    // tester: default=off
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // online: default=on
 }
 
 
 /**
- * Inlined conditional Boolean-Statement.
+ * Inlined conditional Boolean statement.
  *
  * @param  bool condition
  * @param  bool thenValue
@@ -1184,7 +1184,7 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
 
 
 /**
- * Inlined conditional Integer-Statement.
+ * Inlined conditional Integer statement.
  *
  * @param  bool condition
  * @param  int  thenValue
@@ -1200,7 +1200,7 @@ int ifInt(bool condition, int thenValue, int elseValue) {
 
 
 /**
- * Inlined conditional Double-Statement.
+ * Inlined conditional Double statement.
  *
  * @param  bool   condition
  * @param  double thenValue
@@ -1216,7 +1216,7 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
 
 
 /**
- * Inlined conditional String-Statement.
+ * Inlined conditional String statement.
  *
  * @param  bool   condition
  * @param  string thenValue
@@ -6677,8 +6677,8 @@ void __DummyCalls() {
 
    __CHART();
    __LOG();
-   __NAME();
    __log.custom(NULL);
+   __NAME();
    _bool(NULL);
    _double(NULL);
    _EMPTY();
@@ -6770,6 +6770,7 @@ void __DummyCalls() {
    init.LogErrorsToSMS();
    init.LogWarningsToMail();
    init.LogWarningsToSMS();
+   init.ReadLogConfig();
    InitReasonDescription(NULL);
    iNonLagMA(NULL, NULL, NULL, NULL, NULL);
    IntegerToHexString(NULL);
@@ -6790,7 +6791,6 @@ void __DummyCalls() {
    IsLeapYear(NULL);
    IsLibrary();
    IsLimitOrderType(NULL);
-   IsLogging();
    IsLongOrderType(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
@@ -6821,9 +6821,9 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
    MovingAverageMethodDescription(NULL);
+   MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
-   MovingAverageMethodToStr(NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
    NormalizeLots(NULL);
@@ -6953,9 +6953,9 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   bool     ec_CustomLogging(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
+   bool     ec_SeparateLog(int ec[]);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);
