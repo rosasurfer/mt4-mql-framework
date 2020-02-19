@@ -205,7 +205,7 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's MQL logfile or an expert's separate logfile (if configured).
+ * Log a message to the terminal's MQL logfile or to an expert's separate logfile (if configured).
  *
  * @param  string message
  * @param  int    error [optional] - error to log (default: none)
@@ -215,7 +215,7 @@ int warn(string message, int error = NO_ERROR) {
 int log(string message, int error = NO_ERROR) {
    if (!__LOG()) return(error);
 
-   // duplicate log message to the system debugger (if configured)
+   // duplicate the message to the system debugger (if configured)
    static int logToDebug = -1;
    if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
    if (logToDebug ==  1) debug(message, error);
@@ -223,21 +223,14 @@ int log(string message, int error = NO_ERROR) {
    string name = __NAME();
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   // log to custom file or...
+   // log to a separate logfile or...
    if (__LOG_CUSTOM) {
-      if (__logCustom(StringConcatenate(name, "::", message)))             // separate Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
-         return(error);
+      if (__logCustom(StringConcatenate(name, "::", message)))
+         return(error);                                              // on error fallback to terminal log
    }
 
-   // log to the terminal's log
-   int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
-   if (logId != 0) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
-      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
-   }
-   Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));  // global Log: ggf. mit Instanz-ID
-
+   // log to the terminal log
+   Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
    return(error);
 }
 
@@ -252,29 +245,29 @@ int log(string message, int error = NO_ERROR) {
  * @access private - Aufruf nur aus log()
  */
 bool __logCustom(string message) {
-   bool old.LOG_CUSTOM = __LOG_CUSTOM;
-   int logId = GetCustomLogID();
-   if (logId == NULL)
-      return(false);
+   bool oldLOG_CUSTOM = __LOG_CUSTOM;
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__logCustom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
+   int instanceId = GetCustomLogID();
+   if (!instanceId) return(false);
 
-   string fileName = StringConcatenate(logId, ".log");
+   message = StringConcatenate(TimeToStr(GetLocalTime(), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
+
+   string fileName = StringConcatenate("", instanceId, ".log");
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("__logCustom(2)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__logCustom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = oldLOG_CUSTOM;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("__logCustom(3)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__logCustom(2)->FileSeek()"); __LOG_CUSTOM = oldLOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("__logCustom(4)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__logCustom(3)->FileWrite()"); __LOG_CUSTOM = oldLOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -3749,7 +3742,7 @@ datetime TimeGMT() {
 
    if (This.IsTesting()) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = TimeLocalEx("TimeGMT(1)"); if (!localTime) return(NULL);
+      datetime localTime = GetLocalTime(); if (!localTime) return(NULL);
       gmt = ServerToGmtTime(localTime);                              // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
@@ -3792,25 +3785,6 @@ datetime GetFxtTime() {
 datetime GetServerTime() {
    datetime gmt  = GetGmtTime();         if (!gmt)        return(NULL);
    datetime time = GmtToServerTime(gmt); if (time == NaT) return(NULL);
-   return(time);
-}
-
-
-/**
- * Gibt die aktuelle lokale Zeit des Terminals zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des letzten Ticks.
- * Dies bedeutet, daß das Terminal während des Testens die lokale Zeitzone auf die Serverzeitzone setzt.
- *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
- *
- * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
- *
- *
- * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn TimeLocal() einen falschen Wert (NULL)
- *       zurückgibt.
- */
-datetime TimeLocalEx(string location = "") {
-   datetime time = TimeLocal();
-   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
    return(time);
 }
 
@@ -5871,7 +5845,7 @@ bool SendSMS(string receiver, string message) {
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlFilesPath();
-   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -5879,7 +5853,7 @@ bool SendSMS(string receiver, string message) {
 
    // (3) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(7)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:
@@ -5893,8 +5867,8 @@ bool SendSMS(string receiver, string message) {
     * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
     * Giving up.
     */
-   log("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
-   return(!catch("SendSMS(10)"));
+   log("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
+   return(!catch("SendSMS(9)"));
 }
 
 
@@ -6906,7 +6880,6 @@ void __DummyCalls() {
    TimeframeFlag();
    TimeFXT();
    TimeGMT();
-   TimeLocalEx();
    TimeServer();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
