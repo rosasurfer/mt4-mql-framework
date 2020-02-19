@@ -22,7 +22,7 @@ int    tester.reportId          = 0;
 string tester.reportSymbol      = "";
 string tester.reportDescription = "";
 double tester.equityValue       = 0;                                 // default: AccountEquity()-AccountCredit(), may be overridden
-int    tester.hEquitySet        = 0;                                 // handle of the equity curve's history set
+int    tester.hEquitySet        = 0;                                 // handle of the equity's history set
 
 
 /**
