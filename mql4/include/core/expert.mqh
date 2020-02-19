@@ -208,7 +208,7 @@ int init() {
 
 
 /**
- * Update global variables and the expert's EXECUTION_CONTEXT.
+ * Update global variables and the expert's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
@@ -225,11 +225,11 @@ bool init.GlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   __LOG_CUSTOM     = ec_SeparateLog(__ExecutionContext);                  // experts only
-   __LOG_WARN.mail  = init.LogWarningsToMail();                            // ...
-   __LOG_WARN.sms   = init.LogWarningsToSMS();                             // ...
-   __LOG_ERROR.mail = init.LogErrorsToMail();                              // ...
-   __LOG_ERROR.sms  = init.LogErrorsToSMS();                               // ...
+   __LOG_CUSTOM     = ec_SeparateLog(__ExecutionContext);
+   __LOG_WARN.mail  = init.LogWarningsToMail();
+   __LOG_WARN.sms   = init.LogWarningsToSMS();
+   __LOG_ERROR.mail = init.LogErrorsToMail();
+   __LOG_ERROR.sms  = init.LogErrorsToSMS();
 
    return(!catch("init.GlobalVars(1)"));
 }

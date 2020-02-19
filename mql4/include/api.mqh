@@ -270,7 +270,6 @@ int      TimeDayOfWeekFix(datetime time);;
 int      TimeframeFlag(int timeframe = NULL);;
 datetime TimeFXT();;
 datetime TimeGMT();;
-datetime TimeLocalEx(string location = "");;
 datetime TimeServer();;
 int      TimeYearFix(datetime time);;
 int      Toolbar.Experts(bool enable);;
