@@ -14,7 +14,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
-bool     __LOG_CUSTOM;                                      // whether the program uses a separate logfile (experts only)
+bool     __LOG_CUSTOM;                                      // whether the program uses a custom logfile (experts only)
 
 bool     __LOG_WARN.mail;                                   // whether warnings are logged to email
 string   __LOG_WARN.mail.sender;                            // warning mail sender
