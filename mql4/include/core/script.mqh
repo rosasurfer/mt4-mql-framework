@@ -84,7 +84,7 @@ int init() {
  * @return bool - success status
  */
 bool init.GlobalVars() {
-   ec_SetLogEnabled(__ExecutionContext, init.IsLogEnabled());        // TODO: move to Expander
+   ec_SetLogEnabled(__ExecutionContext, init.ReadLogConfig());       // TODO: move to Expander
 
    N_INF = MathLog(0);
    P_INF = -N_INF;

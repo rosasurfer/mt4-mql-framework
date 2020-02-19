@@ -1155,20 +1155,20 @@ double GetCommission(double lots = 1.0) {
 
 
 /**
- * Whether logging is enabled for the current program. Called from init.GlobalVars() only.
- * By default online logging is enabled and in tester logging is disabled.
+ * Read the logging configuration for the current program. By default online logging is enabled and offline logging (tester)
+ * is disabled. Called only from init.GlobalVars().
  *
  * @return bool
  */
-bool init.IsLogEnabled() {
+bool init.ReadLogConfig() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "LogInTester", false));                    // tester:     default=off
-   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // not tester: default=on
+      return(GetConfigBool("Logging", "LogInTester", false));                    // tester: default=off
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // online: default=on
 }
 
 
 /**
- * Inlined conditional Boolean-Statement.
+ * Inlined conditional Boolean statement.
  *
  * @param  bool condition
  * @param  bool thenValue
@@ -1184,7 +1184,7 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
 
 
 /**
- * Inlined conditional Integer-Statement.
+ * Inlined conditional Integer statement.
  *
  * @param  bool condition
  * @param  int  thenValue
@@ -1200,7 +1200,7 @@ int ifInt(bool condition, int thenValue, int elseValue) {
 
 
 /**
- * Inlined conditional Double-Statement.
+ * Inlined conditional Double statement.
  *
  * @param  bool   condition
  * @param  double thenValue
@@ -1216,7 +1216,7 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
 
 
 /**
- * Inlined conditional String-Statement.
+ * Inlined conditional String statement.
  *
  * @param  bool   condition
  * @param  string thenValue
@@ -6677,8 +6677,8 @@ void __DummyCalls() {
 
    __CHART();
    __LOG();
-   __NAME();
    __log.custom(NULL);
+   __NAME();
    _bool(NULL);
    _double(NULL);
    _EMPTY();
@@ -6765,9 +6765,18 @@ void __DummyCalls() {
    iHalfTrend(NULL, NULL, NULL, NULL);
    iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   iMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
+   init.LogErrorsToMail();
+   init.LogErrorsToSMS();
+   init.LogWarningsToMail();
+   init.LogWarningsToSMS();
+   init.ReadLogConfig();
    InitReasonDescription(NULL);
+   iNonLagMA(NULL, NULL, NULL, NULL, NULL);
    IntegerToHexString(NULL);
+   iRSIX(NULL, NULL, NULL, NULL, NULL);
    IsAccountConfigKey(NULL, NULL);
+   iSATL(NULL, NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();
@@ -6793,20 +6802,11 @@ void __DummyCalls() {
    IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);
-   LE(NULL, NULL);
-   iMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
-   iNonLagMA(NULL, NULL, NULL, NULL, NULL);
-   iRSIX(NULL, NULL, NULL, NULL, NULL);
-   iSATL(NULL, NULL, NULL);
    iSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    iSuperTrend(NULL, NULL, NULL, NULL, NULL);
    iTriEMA(NULL, NULL, NULL, NULL, NULL);
    iTrix(NULL, NULL, NULL, NULL, NULL);
-   init.IsLogEnabled();
-   init.LogErrorsToMail();
-   init.LogErrorsToSMS();
-   init.LogWarningsToMail();
-   init.LogWarningsToSMS();
+   LE(NULL, NULL);
    log(NULL);
    LogOrder(NULL);
    LogTicket(NULL);
@@ -6821,9 +6821,9 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
    MovingAverageMethodDescription(NULL);
+   MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
-   MovingAverageMethodToStr(NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
    NormalizeLots(NULL);
