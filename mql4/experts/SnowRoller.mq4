@@ -36,7 +36,7 @@
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_SEPARATE_LOG};
 int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////

@@ -97,7 +97,7 @@ int init() {
       if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
-   if (initFlags & INIT_CUSTOMLOG           && 1) {}                 // not yet implemented
+   if (initFlags & INIT_SEPARATE_LOG        && 1) {}                 // not yet implemented
 
    // enable experts if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
