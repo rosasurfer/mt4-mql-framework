@@ -64,7 +64,6 @@ int init() {
       if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
-   if (initFlags & INIT_SEPARATE_LOG        && 1) {}                 // not yet implemented
 
 
    // (3) Pre/Postprocessing-Hook

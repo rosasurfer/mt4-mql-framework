@@ -78,7 +78,7 @@
 #define EC.mqlError                        180
 #define EC.dllError                        181
 #define EC.dllWarning                      183
-#define EC.logging                         185
+#define EC.logEnabled                      185
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30

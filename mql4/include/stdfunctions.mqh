@@ -95,7 +95,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
       if (false && __LOG_CUSTOM)
-         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom log: w/o instance id, on error fall-back to standard logging
+         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));                    // custom log: w/o instance id, on error fall-back to standard logging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // standard log: with instance id (if any)
          logged  = true;
@@ -167,7 +167,7 @@ int warn(string message, int error = NO_ERROR) {
    // Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
-      logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));               // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message); // global Log: ggf. mit Instanz-ID
       logged  = true;
@@ -205,31 +205,31 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's MQL logfile or the program's separate logfile (if configured).
+ * Log a message to the terminal's MQL logfile or an expert's separate logfile (if configured).
  *
  * @param  string message
- * @param  int    error [optional] - optional error to log (default: none)
+ * @param  int    error [optional] - error to log (default: none)
  *
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
    if (!__LOG()) return(error);
 
-   // ggf. zusätzliche Ausgabe via OutputDebug()
+   // duplicate log message to the system debugger (if configured)
    static int logToDebug = -1;
    if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
    if (logToDebug ==  1) debug(message, error);
 
+   string name = __NAME();
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    // log to custom file or...
-   string name = __NAME();
    if (__LOG_CUSTOM) {
-      if (__log.custom(StringConcatenate(name, "::", message)))            // separate Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      if (__logCustom(StringConcatenate(name, "::", message)))             // separate Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
    }
 
-   // log to the terminal's MQL log
+   // log to the terminal's log
    int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
    if (logId != 0) {
       int pos = StringFind(name, "::");
@@ -251,30 +251,30 @@ int log(string message, int error = NO_ERROR) {
  *
  * @access private - Aufruf nur aus log()
  */
-bool __log.custom(string message) {
+bool __logCustom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
    int logId = GetCustomLogID();
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__logCustom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("__log.custom(2)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__logCustom(2)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("__log.custom(3)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__logCustom(3)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("__log.custom(4)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__logCustom(4)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -1615,15 +1615,12 @@ bool __CHART() {
 
 
 /**
- * Whether logging is configured for the current program. Without a configuration the following default settings apply:
- *
- * In tester:     off
- * Not in tester: on
+ * Whether logging is enabled for the current program.
  *
  * @return bool
  */
 bool __LOG() {
-   return(__ExecutionContext[EC.logging] != 0);
+   return(__ExecutionContext[EC.logEnabled] != 0);
 }
 
 
@@ -6677,7 +6674,7 @@ void __DummyCalls() {
 
    __CHART();
    __LOG();
-   __log.custom(NULL);
+   __logCustom(NULL);
    __NAME();
    _bool(NULL);
    _double(NULL);
