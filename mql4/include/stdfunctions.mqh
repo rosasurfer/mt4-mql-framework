@@ -205,7 +205,7 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's MQL logfile or to an expert's separate logfile (if configured).
+ * Log a message to the terminal's MQL logfile or to an expert's custom logfile (if configured).
  *
  * @param  string message
  * @param  int    error [optional] - error to log (default: none)
@@ -223,7 +223,7 @@ int log(string message, int error = NO_ERROR) {
    string name = __NAME();
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   // log to a separate logfile or...
+   // log to a custom logfile or...
    if (__LOG_CUSTOM) {
       if (__logCustom(StringConcatenate(name, "::", message)))
          return(error);                                              // on error fallback to terminal log
@@ -6923,9 +6923,9 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
+   bool     ec_CustomLogEnabled(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
-   bool     ec_SeparateLog(int ec[]);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);

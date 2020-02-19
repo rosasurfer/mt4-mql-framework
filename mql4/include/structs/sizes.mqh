@@ -36,8 +36,8 @@
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
-#define EXECUTION_CONTEXT.size            1004
-#define EXECUTION_CONTEXT.intSize          251     // The following EXECUTION_CONTEXT offsets must always be updated, too.
+#define EXECUTION_CONTEXT.size            1008
+#define EXECUTION_CONTEXT.intSize          252     // The following EXECUTION_CONTEXT offsets must always be updated, too.
 
 #define EC.pid                               0
 #define EC.previousPid                       1
@@ -79,6 +79,7 @@
 #define EC.dllError                        181
 #define EC.dllWarning                      183
 #define EC.logEnabled                      185
+#define EC.customLogEnabled                186
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30

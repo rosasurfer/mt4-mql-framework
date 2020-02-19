@@ -97,7 +97,7 @@ int init() {
       if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
-   if (initFlags & INIT_SEPARATE_LOG        && 1) {}                 // not yet implemented
+   if (initFlags & INIT_CUSTOM_LOG          && 1) {}                 // not yet implemented
 
    // enable experts if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
@@ -225,7 +225,7 @@ bool init.GlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   __LOG_CUSTOM     = ec_SeparateLog(__ExecutionContext);
+   __LOG_CUSTOM     = ec_CustomLogEnabled(__ExecutionContext);
    __LOG_WARN.mail  = init.LogWarningsToMail();
    __LOG_WARN.sms   = init.LogWarningsToSMS();
    __LOG_ERROR.mail = init.LogErrorsToMail();
