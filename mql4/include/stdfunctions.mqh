@@ -94,7 +94,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // log the error
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
-      if (false && __LOG_CUSTOM)
+      if (false && ec_CustomLogEnabled(__ExecutionContext))
          logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));                    // custom log: w/o instance id, on error fall-back to standard logging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // standard log: with instance id (if any)
@@ -166,7 +166,7 @@ int warn(string message, int error = NO_ERROR) {
 
    // Warnung loggen
    bool logged, alerted;
-   if (__LOG_CUSTOM)
+   if (ec_CustomLogEnabled(__ExecutionContext))
       logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));               // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message); // global Log: ggf. mit Instanz-ID
@@ -224,9 +224,9 @@ int log(string message, int error = NO_ERROR) {
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    // log to a custom logfile or...
-   if (__LOG_CUSTOM) {
+   if (ec_CustomLogEnabled(__ExecutionContext)) {                    // experts only
       if (__logCustom(StringConcatenate(name, "::", message)))
-         return(error);                                              // on error fallback to terminal log
+         return(error);                                              // on error fallback to the terminal log
    }
 
    // log to the terminal log
@@ -245,8 +245,6 @@ int log(string message, int error = NO_ERROR) {
  * @access private - Aufruf nur aus log()
  */
 bool __logCustom(string message) {
-   bool oldLOG_CUSTOM = __LOG_CUSTOM;
-
    int instanceId = GetCustomLogID();
    if (!instanceId) return(false);
 
@@ -256,18 +254,21 @@ bool __logCustom(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("__logCustom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = oldLOG_CUSTOM;
+      ec_SetCustomLogEnabled(__ExecutionContext, false);
+      catch("__logCustom(1)->FileOpen(\""+ fileName +"\")");
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("__logCustom(2)->FileSeek()"); __LOG_CUSTOM = oldLOG_CUSTOM;
+      ec_SetCustomLogEnabled(__ExecutionContext, false);
+      catch("__logCustom(2)->FileSeek()");
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("__logCustom(3)->FileWrite()"); __LOG_CUSTOM = oldLOG_CUSTOM;
+      ec_SetCustomLogEnabled(__ExecutionContext, false);
+      catch("__logCustom(3)->FileWrite()");
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -6926,6 +6927,7 @@ void __DummyCalls() {
    bool     ec_CustomLogEnabled(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
+   bool     ec_SetCustomLogEnabled(int ec[], int status);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);

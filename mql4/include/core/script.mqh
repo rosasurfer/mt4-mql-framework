@@ -95,11 +95,10 @@ bool init.GlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   __LOG_CUSTOM     = false;                                         // experts only
-   __LOG_WARN.mail  = false;                                         // ...
-   __LOG_WARN.sms   = false;                                         // ...
-   __LOG_ERROR.mail = false;                                         // ...
-   __LOG_ERROR.sms  = false;                                         // ...
+   __LOG_WARN.mail  = false;
+   __LOG_WARN.sms   = false;
+   __LOG_ERROR.mail = false;
+   __LOG_ERROR.sms  = false;
 
    return(!catch("init.GlobalVars(1)"));
 }
