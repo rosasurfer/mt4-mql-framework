@@ -173,8 +173,8 @@ int init() {
  */
 bool init.GlobalVars() {
    __lpSuperContext = __ExecutionContext[EC.superContext];
-   if (!__lpSuperContext) {                                       // with a super-context this indicator's context is already up-to-date
-      ec_SetLogEnabled(__ExecutionContext, init.IsLogEnabled());  // TODO: move to Expander
+   if (!__lpSuperContext) {                                          // with a supercontext this indicator's context is already up-to-date
+      ec_SetLogEnabled(__ExecutionContext, init.ReadLogConfig());    // TODO: move to Expander
    }
 
    N_INF = MathLog(0);
