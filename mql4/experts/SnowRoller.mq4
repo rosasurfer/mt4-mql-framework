@@ -8,17 +8,18 @@
  * Once started the EA waits until one of the defined start conditions is fulfilled. It then manages the resulting trades in
  * a pyramiding way until one of the defined stop conditions is fulfilled. Start conditions can be price, time or a trend
  * change of one of the supported trend indicators. Stop conditions can be price, time, a trend change of one the supported
- * trend indicators or an absolute or percentage profit amount. Multiple start and stop conditions may be combined.
+ * trend indicators or an absolute or percentage stoploss or takeprofit amount. Multiple start and stop conditions may be
+ * combined.
  *
  * If both start and stop parameters define a trend condition the EA waits after a trend stop signal and continues trading
- * when the next trend start condition is fulfilled. The EA finally stops after the defined profit target is reached.
+ * when the next trend start condition is fulfilled. The EA finally stops when takeprofit or stoploss are reached.
  *
- * If one of the AutoRestart options is enabled the EA continuously resets itself after the profit target is reached. If
- * AutoRestart is set to "Continue" the EA resets itself to the initial state and immediately continues trading at level 1.
+ * If one of the AutoRestart options is enabled the EA continuously resets itself after takeprofit or stoploss are reached.
+ * If AutoRestart is set to "Continue" the EA resets itself to the initial state and immediately continues trading at level 1.
  * If AutoRestart is set to "Reset" the EA resets itself to the initial state and waits for the next start condition to be
  * fulfilled. For both AutoRestart options start and stop parmeters must define a trend condition.
  *
- * The EA can automatically interrupt and resume trading during configurable session breaks, e.g. on Midnight or at weekends.
+ * The EA automatically interrupts and resumes trading during configurable session breaks, e.g. at Midnight or at weekends.
  * During session breaks all pending orders and open positions are closed. Session break configuration supports holidays.
  *
  * In "/mql4/scripts" are some accompanying scripts named "SnowRoller.***" to manually control the EA (start, stop, wait).
@@ -47,8 +48,8 @@ extern int      GridSize               = 20;                            //
 extern string   UnitSize               = "[L]{double} | auto*";         // fixed (double), compounding (L{double}) or pre-configured (auto) unitsize
 extern int      StartLevel             = 0;                             //
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
-extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%])
-extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue trading or reset a sequence after StopSequence(SIGNAL_TP)
+extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @tp(double[%]) | @sl(double[%])
+extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue trading or reset a sequence after StopSequence(SIGNAL_TP|SIGNAL_SL)
 extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed in absolute or percentage values
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
@@ -135,14 +136,23 @@ bool     stop.time.condition;                      // whether a stop time condit
 datetime stop.time.value;
 string   stop.time.description = "";
 
-bool     stop.profitAbs.condition;                 // whether an absolute stop profit condition is active
+bool     stop.profitAbs.condition;                 // whether an absolute takeprofit condition is active
 double   stop.profitAbs.value;
 string   stop.profitAbs.description = "";
 
-bool     stop.profitPct.condition;                 // whether a percentage stop profit condition is active
+bool     stop.profitPct.condition;                 // whether a percentage takeprofit condition is active
 double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
+
+bool     stop.lossAbs.condition;                   // whether an absolute stoploss condition is active
+double   stop.lossAbs.value;
+string   stop.lossAbs.description = "";
+
+bool     stop.lossPct.condition;                   // whether a percentage stoploss condition is active
+double   stop.lossPct.value;
+double   stop.lossPct.absValue    = INT_MIN;
+string   stop.lossPct.description = "";
 
 // --- session break management ------------
 datetime sessionbreak.starttime;                   // configurable via inputs and framework config
@@ -212,7 +222,8 @@ bool     tester.onStartPause        = false;       // whether to pause the teste
 bool     tester.onStopPause         = false;       // whether to pause the tester on a fulfilled stop condition
 bool     tester.onSessionBreakPause = false;       // whether to pause the tester on a sessionbreak stop/resume
 bool     tester.onTrendChangePause  = false;       // whether to pause the tester on a fulfilled trend change condition
-bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when the profit target is reached
+bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when takeprofit is reached
+bool     tester.onStopLossPause     = false;       // whether to pause the tester when stoploss is reached
 
 bool     tester.reduceStatusWrites  = true;        // whether to minimize status file writing in tester
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
@@ -723,9 +734,14 @@ bool StopSequence(int signal) {
          }
          break;
 
-      case SIGNAL_TP:
+      case SIGNAL_TP:                                       // reactivate a triggered TP condition if EA doesn't stop
          stop.profitAbs.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.profitAbs.description!="");
          stop.profitPct.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.profitPct.description!="");
+         break;
+
+      case SIGNAL_SL:                                       // reactivate a triggered SL condition if EA doesn't stop
+         stop.lossAbs.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.lossAbs.description!="");
+         stop.lossPct.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.lossPct.description!="");
          break;
 
       case NULL:                                            // explicit stop (manual or at end of test)
@@ -740,12 +756,17 @@ bool StopSequence(int signal) {
    if (signal == SIGNAL_TP) {
       if (AutoRestart != "Off") {
          double newGridbase = NULL;
-         if (AutoRestart == "Continue") {
+         if (AutoRestart == "Continue") {                   // continue after TP at level 1 if configured
             int newSequenceLevel = ifInt(sequence.direction==D_LONG, 1, -1);
             newGridbase = stopPrice - newSequenceLevel*GridSize*Pips;
          }
          if (!ResetSequence(newGridbase)) return(false);
          if (AutoRestart == "Continue") StartSequence(NULL);
+      }
+   }
+   else if (signal == SIGNAL_SL) {
+      if (AutoRestart != "Off") {
+         if (!ResetSequence(NULL)) return(false);           // full reset (never continue after SL)
       }
    }
 
@@ -756,10 +777,11 @@ bool StopSequence(int signal) {
          else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("StopSequence(13)");
          else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("StopSequence(14)");
          else if (tester.onTakeProfitPause   && signal==SIGNAL_TP)           Tester.Pause("StopSequence(15)");
+         else if (tester.onStopLossPause     && signal==SIGNAL_SL)           Tester.Pause("StopSequence(16)");
       }
-      else if (sequence.status == STATUS_STOPPED)                            Tester.Stop("StopSequence(16)");
+      else if (sequence.status == STATUS_STOPPED)                            Tester.Stop("StopSequence(17)");
    }
-   return(!catch("StopSequence(17)"));
+   return(!catch("StopSequence(18)"));
 }
 
 
@@ -1600,7 +1622,7 @@ bool IsStopSignal(int &signal) {
    }
 
    if (sequence.status == STATUS_PROGRESSING) {
-      // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
+      // -- stop.profitAbs: -------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (sequence.totalPL >= stop.profitAbs.value) {
             message = "IsStopSignal(5)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
@@ -1612,7 +1634,7 @@ bool IsStopSignal(int &signal) {
          }
       }
 
-      // -- stop.profitPct: ----------------------------------------------------------------------------------------------------
+      // -- stop.profitPct: -------------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (stop.profitPct.absValue == INT_MAX) {
             stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
@@ -1627,9 +1649,36 @@ bool IsStopSignal(int &signal) {
          }
       }
 
-      // -- session break ------------------------------------------------------------------------------------------------------
+      // -- stop.lossAbs: ---------------------------------------------------------------------------------------------------
+      if (stop.lossAbs.condition) {
+         if (sequence.totalPL <= stop.lossAbs.value) {
+            message = "IsStopSignal(7)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+            if (!IsTesting()) warn(message);
+            else if (__LOG()) log(message);
+            stop.lossAbs.condition = false;
+            signal = SIGNAL_SL;
+            return(true);
+         }
+      }
+
+      // -- stop.lossPct: ---------------------------------------------------------------------------------------------------
+      if (stop.lossPct.condition) {
+         if (stop.lossPct.absValue == INT_MIN) {
+            stop.lossPct.absValue = stop.lossPct.value/100 * sequence.startEquity;
+         }
+         if (sequence.totalPL <= stop.lossPct.absValue) {
+            message = "IsStopSignal(8)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+            if (!IsTesting()) warn(message);
+            else if (__LOG()) log(message);
+            stop.lossPct.condition = false;
+            signal = SIGNAL_SL;
+            return(true);
+         }
+      }
+
+      // -- session break ---------------------------------------------------------------------------------------------------
       if (IsSessionBreak()) {
-         message = "IsStopSignal(7)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
+         message = "IsStopSignal(9)  sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (__LOG()) log(message);
          signal = SIGNAL_SESSIONBREAK;
          return(true);
@@ -2761,7 +2810,7 @@ void SS.StartStopConditions() {
    if (sValue == "") sStartConditions = "-";
    else              sStartConditions = sValue;
 
-   // stop conditions, order: trend, profit, time, price
+   // stop conditions, order: trend, profit, loss, time, price
    sValue = "";
    if (stop.trend.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.trend.condition, "@", "!") + stop.trend.description;
@@ -2771,6 +2820,12 @@ void SS.StartStopConditions() {
    }
    if (stop.profitPct.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
+   }
+   if (stop.lossAbs.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossAbs.condition, "@", "!") + stop.lossAbs.description;
+   }
+   if (stop.lossPct.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossPct.condition, "@", "!") + stop.lossPct.description;
    }
    if (stop.time.description != "") {
       sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
@@ -3299,8 +3354,8 @@ bool ValidateInputs(bool interactive) {
       }
    }
 
-   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @profit(1234[%])
-   // -----------------------------------------------------------------------------------------------------------------------------------------
+   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @[tp|profit](1234[%]) | @[sl|loss](1234[%])
+   // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
    // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
    if (!isParameterChange || StopConditions!=last.StopConditions) {
       stop.trend.condition     = false;
@@ -3308,6 +3363,8 @@ bool ValidateInputs(bool interactive) {
       stop.time.condition      = false;
       stop.profitAbs.condition = false;
       stop.profitPct.condition = false;
+      stop.lossAbs.condition   = false;
+      stop.lossPct.condition   = false;
 
       // StopConditions in einzelne Ausdrücke zerlegen
       sizeOfExprs = Explode(StrTrim(StopConditions), "||", exprs, NULL);
@@ -3378,9 +3435,9 @@ bool ValidateInputs(bool interactive) {
             stop.time.condition   = true;
          }
 
-         else if (key == "@profit") {
+         else if (key=="@tp" || key=="@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                        return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
+                                                        return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple takeprofit conditions)", interactive)));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
             if (sizeOfElems > 2)                        return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
@@ -3401,7 +3458,31 @@ bool ValidateInputs(bool interactive) {
                stop.profitPct.condition   = true;
             }
          }
-         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+
+         else if (key=="@sl" || key=="@loss") {
+            if (stop.lossAbs.condition || stop.lossPct.condition)
+                                                        return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
+            sizeOfElems = Explode(sValue, "%", sValues, NULL);
+            if (sizeOfElems > 2)                        return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            sValue = StrTrim(sValues[0]);
+            if (!StringLen(sValue))                     return(_false(ValidateInputs.OnError("ValidateInputs(57)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                  return(_false(ValidateInputs.OnError("ValidateInputs(58)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            dValue = StrToDouble(sValue);
+            if (sizeOfElems == 1) {
+               stop.lossAbs.value       = NormalizeDouble(dValue, 2);
+               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
+               stop.lossAbs.description = exprs[i];
+               stop.lossAbs.condition   = true;
+            }
+            else {
+               stop.lossPct.value       = dValue;
+               stop.lossPct.absValue    = INT_MIN;
+               exprs[i]                   = "loss("+ NumberToStr(dValue, ".+") +"%)";
+               stop.lossPct.description = exprs[i];
+               stop.lossPct.condition   = true;
+            }
+         }
+         else                                           return(_false(ValidateInputs.OnError("ValidateInputs(59)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
       }
    }
 
@@ -3416,7 +3497,7 @@ bool ValidateInputs(bool interactive) {
    else if (StrStartsWith("off",      sValue)) sValue = "off";
    else if (StrStartsWith("continue", sValue)) sValue = "continue";
    else if (StrStartsWith("reset",    sValue)) sValue = "reset";
-   else                                                 return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
+   else                                                 return(_false(ValidateInputs.OnError("ValidateInputs(60)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
    AutoRestart = StrCapitalize(sValue);
 
    // ShowProfitInPercent: nothing to validate
@@ -3430,7 +3511,7 @@ bool ValidateInputs(bool interactive) {
    // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!catch("ValidateInputs(57)"));
+   return(!catch("ValidateInputs(61)"));
 }
 
 
@@ -3560,8 +3641,8 @@ bool SaveStatus() {
 
 
 /**
- * Return a string representation of active start and stop conditions as stored by SaveStatus(). The returned values don't
- * contain inactive conditions.
+ * Return a string representation of active start and stop conditions for SaveStatus(). The returned values don't contain
+ * inactive conditions.
  *
  * @param  _Out_ string &startConditions - variable to receive active start conditions
  * @param  _Out_ string &stopConditions  - variable to receive active stop conditions
@@ -3589,7 +3670,7 @@ void SaveStatus.ConditionsToStr(string &startConditions, string &stopConditions)
    }
    startConditions = sValue;
 
-   // active stop conditions (order: trend, time, price, profit)
+   // active stop conditions (order: trend, time, price, profit, loss)
    sValue = "";
    if (stop.trend.condition) {
       sValue = "@"+ stop.trend.description;
@@ -3605,6 +3686,12 @@ void SaveStatus.ConditionsToStr(string &startConditions, string &stopConditions)
    }
    if (stop.profitPct.condition) {
       sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
+   }
+   if (stop.lossAbs.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.lossAbs.description;
+   }
+   if (stop.lossPct.condition) {
+      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.lossPct.description;
    }
    stopConditions = sValue;
 }

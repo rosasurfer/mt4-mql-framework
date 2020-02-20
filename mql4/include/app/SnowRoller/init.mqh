@@ -158,6 +158,7 @@ int afterInit() {
       tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
       tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
+      tester.onStopLossPause     = GetConfigBool(section, "OnStopLossPause",     false);
       tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
       tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       false);
    }
