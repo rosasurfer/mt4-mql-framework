@@ -89,6 +89,7 @@
    int  RegisterWindowMessageA(string lpString);
    int  ReleaseDC(int hWnd, int hDC);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
+   int  SetActiveWindow(int hWnd);
    bool SetWindowTextA(int hWnd, string lpString);
 
 #import "version.dll"

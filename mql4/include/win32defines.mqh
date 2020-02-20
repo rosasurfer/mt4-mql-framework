@@ -469,6 +469,8 @@
 #define WM_PENWINLAST                         0x038F
 #define WM_APP                                0x8000
 
+#define BM_CLICK                              0x00F5
+
 
 // Mouse events
 #define MOUSEEVENTF_MOVE                      0x0001     // mouse move
