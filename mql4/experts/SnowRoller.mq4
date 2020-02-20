@@ -45,11 +45,11 @@ int __DEINIT_FLAGS__[];
 extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/logfile names
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;                            //
-extern string   UnitSize               = "[L]{double} | auto*";         // fixed (double), compounding (L{double}) or pre-configured (auto) unitsize
+extern string   UnitSize               = "[L]{double} | auto*";         // fixed (double), compounding (L{double}) or externally configured (auto) unitsize
 extern int      StartLevel             = 0;                             //
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @tp(double[%]) | @sl(double[%])
-extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue trading or reset a sequence after StopSequence(SIGNAL_TP|SIGNAL_SL)
+extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue or reset a sequence after StopSequence(SIGNAL_TP|SIGNAL_SL)
 extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed in absolute or percentage values
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
@@ -317,8 +317,9 @@ int onTick() {
    if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
 
    // update/show profit targets
-   if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
-
+   if (!IsTesting()) {
+      if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
+   }
    return(last_error);
 }
 
@@ -755,18 +756,19 @@ bool StopSequence(int signal) {
    // reset the sequence and start a new cycle using the same sequence id
    if (signal == SIGNAL_TP) {
       if (AutoRestart != "Off") {
-         double newGridbase = NULL;
+         double newGridbase      = NULL;
+         int    newSequenceLevel = 0;
          if (AutoRestart == "Continue") {                   // continue after TP at level 1 if configured
-            int newSequenceLevel = ifInt(sequence.direction==D_LONG, 1, -1);
-            newGridbase = stopPrice - newSequenceLevel*GridSize*Pips;
+            newSequenceLevel = ifInt(sequence.direction==D_LONG, 1, -1);
+            newGridbase      = stopPrice - newSequenceLevel*GridSize*Pips;
          }
-         if (!ResetSequence(newGridbase)) return(false);
+         if (!ResetSequence(newGridbase, newSequenceLevel)) return(false);
          if (AutoRestart == "Continue") StartSequence(NULL);
       }
    }
    else if (signal == SIGNAL_SL) {
       if (AutoRestart != "Off") {
-         if (!ResetSequence(NULL)) return(false);           // full reset (never continue after SL)
+         if (!ResetSequence(NULL, NULL)) return(false);     // full reset (never continue after SL)
       }
    }
 
@@ -789,11 +791,12 @@ bool StopSequence(int signal) {
  * Reset a sequence to its initial state. Called if AutoRestart is enabled and the sequence was stopped due to a reached
  * profit target.
  *
- * @param  double gridbase - the predefined gridbase to use if trading continues
+ * @param  double gridbase - the predefined gridbase to reset to       (if trading continues)
+ * @param  int    level    - the predefined sequence level to reset to (if trading continues)
  *
  * @return bool - success status
  */
-bool ResetSequence(double gridbase) {
+bool ResetSequence(double gridbase, int level) {
    if (IsLastError())                                       return(false);
    if (sequence.status!=STATUS_STOPPED)                     return(!catch("ResetSequence(1)  cannot reset "+ StatusDescription(sequence.status) +" sequence "+ sequence.name, ERR_ILLEGAL_STATE));
    if (AutoRestart=="Off")                                  return(!warn("ResetSequence(2)  cannot reset sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
@@ -816,7 +819,7 @@ bool ResetSequence(double gridbase) {
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
-   sequence.level          = ifInt(AutoRestart=="Continue", ifInt(sequence.direction==D_LONG, 1, -1), 0);
+   sequence.level          = level;
    sequence.maxLevel       = sequence.level;
    ArrayResize(sequence.missedLevels, 0);
    //sequence.startEquity  = ...                         // kept           TODO: really?
@@ -885,6 +888,15 @@ bool ResetSequence(double gridbase) {
    stop.profitPct.absValue    = ifDouble(stop.profitPct.condition, INT_MAX,              0);
    stop.profitPct.description = ifString(stop.profitPct.condition, stop.profitPct.description, "");
 
+   stop.lossAbs.condition     = (stop.lossAbs.description != "");
+   stop.lossAbs.value         = ifDouble(stop.lossAbs.condition, stop.lossAbs.value, 0);
+   stop.lossAbs.description   = ifString(stop.lossAbs.condition, stop.lossAbs.description, "");
+
+   stop.lossPct.condition     = (stop.lossPct.description != "");
+   stop.lossPct.value         = ifDouble(stop.lossPct.condition, stop.lossPct.value, 0);
+   stop.lossPct.absValue      = ifDouble(stop.lossPct.condition, INT_MIN,            0);
+   stop.lossPct.description   = ifString(stop.lossPct.condition, stop.lossPct.description, "");
+
    // --- session break management -------
    sessionbreak.starttime     = 0;
    sessionbreak.endtime       = 0;
@@ -922,7 +934,7 @@ bool ResetSequence(double gridbase) {
    sRestartStats                = " ----------------------------------------------------"+ NL
                                  +" "+ iCycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
 
-   // all debug settings stay unchanged
+   // debug settings stay unchanged
 
    // store the new status
    SS.All();
