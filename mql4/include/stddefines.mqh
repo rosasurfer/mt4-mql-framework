@@ -13,15 +13,13 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
-int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
-bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 
+int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_WARN.mail;                                   // whether warnings are logged to email
 string   __LOG_WARN.mail.sender;                            // warning mail sender
 string   __LOG_WARN.mail.receiver;                          // warning mail receiver
 bool     __LOG_WARN.sms;                                    // whether warnings are logged to text message
 string   __LOG_WARN.sms.receiver;                           // warning text message receiver
-
 bool     __LOG_ERROR.mail;                                  // whether errors are logged to email
 string   __LOG_ERROR.mail.sender;                           // error mail sender
 string   __LOG_ERROR.mail.receiver;                         // error mail receiver
