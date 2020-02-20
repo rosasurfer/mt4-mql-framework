@@ -94,8 +94,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // log the error
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
-      if (false && __LOG_CUSTOM)
-         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom log: w/o instance id, on error fall-back to standard logging
+      if (false && ec_CustomLogEnabled(__ExecutionContext))
+         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));                    // custom log: w/o instance id, on error fall-back to standard logging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // standard log: with instance id (if any)
          logged  = true;
@@ -166,8 +166,8 @@ int warn(string message, int error = NO_ERROR) {
 
    // Warnung loggen
    bool logged, alerted;
-   if (__LOG_CUSTOM)
-      logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+   if (ec_CustomLogEnabled(__ExecutionContext))
+      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));               // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message); // global Log: ggf. mit Instanz-ID
       logged  = true;
@@ -205,39 +205,32 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's MQL logfile or the program's separate logfile (if configured).
+ * Log a message to the terminal's MQL logfile or to an expert's custom logfile (if configured).
  *
  * @param  string message
- * @param  int    error [optional] - optional error to log (default: none)
+ * @param  int    error [optional] - error to log (default: none)
  *
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
    if (!__LOG()) return(error);
 
-   // ggf. zusätzliche Ausgabe via OutputDebug()
+   // duplicate the message to the system debugger (if configured)
    static int logToDebug = -1;
    if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
    if (logToDebug ==  1) debug(message, error);
 
+   string name = __NAME();
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   // log to custom file or...
-   string name = __NAME();
-   if (__LOG_CUSTOM) {
-      if (__log.custom(StringConcatenate(name, "::", message)))            // separate Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
-         return(error);
+   // log to a custom logfile or...
+   if (ec_CustomLogEnabled(__ExecutionContext)) {                    // experts only
+      if (__logCustom(StringConcatenate(name, "::", message)))
+         return(error);                                              // on error fallback to the terminal log
    }
 
-   // log to the terminal's MQL log
-   int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
-   if (logId != 0) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
-      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
-   }
-   Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));  // global Log: ggf. mit Instanz-ID
-
+   // log to the terminal log
+   Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
    return(error);
 }
 
@@ -251,30 +244,31 @@ int log(string message, int error = NO_ERROR) {
  *
  * @access private - Aufruf nur aus log()
  */
-bool __log.custom(string message) {
-   bool old.LOG_CUSTOM = __LOG_CUSTOM;
-   int logId = GetCustomLogID();
-   if (logId == NULL)
-      return(false);
+bool __logCustom(string message) {
+   int instanceId = GetCustomLogID();
+   if (!instanceId) return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
+   message = StringConcatenate(TimeToStr(GetLocalTime(), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
 
-   string fileName = StringConcatenate(logId, ".log");
+   string fileName = StringConcatenate("", instanceId, ".log");
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("__log.custom(2)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      ec_SetCustomLogEnabled(__ExecutionContext, false);
+      catch("__logCustom(1)->FileOpen(\""+ fileName +"\")");
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("__log.custom(3)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      ec_SetCustomLogEnabled(__ExecutionContext, false);
+      catch("__logCustom(2)->FileSeek()");
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("__log.custom(4)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      ec_SetCustomLogEnabled(__ExecutionContext, false);
+      catch("__logCustom(3)->FileWrite()");
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -1615,15 +1609,12 @@ bool __CHART() {
 
 
 /**
- * Whether logging is configured for the current program. Without a configuration the following default settings apply:
- *
- * In tester:     off
- * Not in tester: on
+ * Whether logging is enabled for the current program.
  *
  * @return bool
  */
 bool __LOG() {
-   return(__ExecutionContext[EC.logging] != 0);
+   return(__ExecutionContext[EC.logEnabled] != 0);
 }
 
 
@@ -3752,7 +3743,7 @@ datetime TimeGMT() {
 
    if (This.IsTesting()) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = TimeLocalEx("TimeGMT(1)"); if (!localTime) return(NULL);
+      datetime localTime = GetLocalTime(); if (!localTime) return(NULL);
       gmt = ServerToGmtTime(localTime);                              // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
@@ -3795,25 +3786,6 @@ datetime GetFxtTime() {
 datetime GetServerTime() {
    datetime gmt  = GetGmtTime();         if (!gmt)        return(NULL);
    datetime time = GmtToServerTime(gmt); if (time == NaT) return(NULL);
-   return(time);
-}
-
-
-/**
- * Gibt die aktuelle lokale Zeit des Terminals zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des letzten Ticks.
- * Dies bedeutet, daß das Terminal während des Testens die lokale Zeitzone auf die Serverzeitzone setzt.
- *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
- *
- * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
- *
- *
- * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn TimeLocal() einen falschen Wert (NULL)
- *       zurückgibt.
- */
-datetime TimeLocalEx(string location = "") {
-   datetime time = TimeLocal();
-   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
    return(time);
 }
 
@@ -5874,7 +5846,7 @@ bool SendSMS(string receiver, string message) {
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlFilesPath();
-   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -5882,7 +5854,7 @@ bool SendSMS(string receiver, string message) {
 
    // (3) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(7)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:
@@ -5896,8 +5868,8 @@ bool SendSMS(string receiver, string message) {
     * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
     * Giving up.
     */
-   log("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
-   return(!catch("SendSMS(10)"));
+   log("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
+   return(!catch("SendSMS(9)"));
 }
 
 
@@ -6677,7 +6649,7 @@ void __DummyCalls() {
 
    __CHART();
    __LOG();
-   __log.custom(NULL);
+   __logCustom(NULL);
    __NAME();
    _bool(NULL);
    _double(NULL);
@@ -6909,7 +6881,6 @@ void __DummyCalls() {
    TimeframeFlag();
    TimeFXT();
    TimeGMT();
-   TimeLocalEx();
    TimeServer();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
@@ -6953,9 +6924,10 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
+   bool     ec_CustomLogEnabled(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
-   bool     ec_SeparateLog(int ec[]);
+   bool     ec_SetCustomLogEnabled(int ec[], int status);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);

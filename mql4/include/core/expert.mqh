@@ -22,7 +22,7 @@ int    tester.reportId          = 0;
 string tester.reportSymbol      = "";
 string tester.reportDescription = "";
 double tester.equityValue       = 0;                                 // default: AccountEquity()-AccountCredit(), may be overridden
-int    tester.hEquitySet        = 0;                                 // handle of the equity curve's history set
+int    tester.hEquitySet        = 0;                                 // handle of the equity's history set
 
 
 /**
@@ -97,7 +97,7 @@ int init() {
       if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
-   if (initFlags & INIT_CUSTOMLOG           && 1) {}                 // not yet implemented
+   if (initFlags & INIT_CUSTOM_LOG          && 1) {}                 // not yet implemented
 
    // enable experts if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
@@ -208,7 +208,7 @@ int init() {
 
 
 /**
- * Update global variables and the expert's EXECUTION_CONTEXT.
+ * Update global variables and the expert's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
@@ -225,11 +225,10 @@ bool init.GlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   __LOG_CUSTOM     = ec_SeparateLog(__ExecutionContext);                  // experts only
-   __LOG_WARN.mail  = init.LogWarningsToMail();                            // ...
-   __LOG_WARN.sms   = init.LogWarningsToSMS();                             // ...
-   __LOG_ERROR.mail = init.LogErrorsToMail();                              // ...
-   __LOG_ERROR.sms  = init.LogErrorsToSMS();                               // ...
+   __LOG_WARN.mail  = init.LogWarningsToMail();
+   __LOG_WARN.sms   = init.LogWarningsToSMS();
+   __LOG_ERROR.mail = init.LogErrorsToMail();
+   __LOG_ERROR.sms  = init.LogErrorsToSMS();
 
    return(!catch("init.GlobalVars(1)"));
 }

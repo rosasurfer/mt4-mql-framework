@@ -21,14 +21,13 @@ int init() {
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
+   __LOG_WARN.mail  = init.LogWarningsToMail();
+   __LOG_WARN.sms   = init.LogWarningsToSMS();
+   __LOG_ERROR.mail = init.LogErrorsToMail();
+   __LOG_ERROR.sms  = init.LogErrorsToSMS();
+
    // EA-Tasks
    if (IsExpert()) {
-      __LOG_CUSTOM     = ec_SeparateLog(__ExecutionContext);         // experts only
-      __LOG_WARN.mail  = init.LogWarningsToMail();                   // ...
-      __LOG_WARN.sms   = init.LogWarningsToSMS();                    // ...
-      __LOG_ERROR.mail = init.LogErrorsToMail();                     // ...
-      __LOG_ERROR.sms  = init.LogErrorsToSMS();                      // ...
-
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
