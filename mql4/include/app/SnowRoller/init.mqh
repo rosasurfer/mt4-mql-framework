@@ -28,12 +28,13 @@ int onInitUser() {
          button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids) +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
          if (button == IDYES) {
             sequence.id     = ids[i];
-            Sequence.ID     = sequence.id; SS.SequenceId();
+            Sequence.ID     = sequence.id;
             sequence.isTest = false;
             sequence.status = STATUS_WAITING;
             SetCustomLog(sequence.id, NULL);
             if (RestoreSequence(false)) {
-               sequence.name = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
+               SS.SequenceId();
+               SS.SequenceName();
             }
             return(last_error);
          }
@@ -48,12 +49,13 @@ int onInitUser() {
    // ...zum Schluﬂ neue Sequenz anlegen
    if (ValidateInputs(interactive)) {
       sequence.id      = CreateSequenceId();
-      Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id;
       sequence.cycle   = 1;
       sequence.created = Max(TimeCurrentEx(), TimeServer());
-      sequence.name    = StrLeft(TradeDirectionDescription(sequence.direction), 1) +"."+ sequence.id;
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
+      SS.SequenceId();
+      SS.SequenceName();
 
       string logFile = StrLeft(GetStatusFileName(), -3) +"log";
       SetCustomLog(sequence.id, logFile);
@@ -224,7 +226,8 @@ void CopyInputStatus(bool store) {
 
    static int      _sequence.id;
    static int      _sequence.cycle;
-   static string   _sequence.name = "";
+   static string   _sequence.name     = "";
+   static string   _sequence.longName = "";
    static datetime _sequence.created;
    static bool     _sequence.isTest;
    static int      _sequence.direction;
@@ -232,9 +235,9 @@ void CopyInputStatus(bool store) {
 
    static bool     _start.conditions;
    static bool     _start.trend.condition;
-   static string   _start.trend.indicator = "";
+   static string   _start.trend.indicator   = "";
    static int      _start.trend.timeframe;
-   static string   _start.trend.params = "";
+   static string   _start.trend.params      = "";
    static string   _start.trend.description = "";
    static bool     _start.price.condition;
    static int      _start.price.type;
@@ -242,20 +245,20 @@ void CopyInputStatus(bool store) {
    static string   _start.price.description = "";
    static bool     _start.time.condition;
    static datetime _start.time.value;
-   static string   _start.time.description = "";
+   static string   _start.time.description  = "";
 
    static bool     _stop.trend.condition;
-   static string   _stop.trend.indicator = "";
+   static string   _stop.trend.indicator    = "";
    static int      _stop.trend.timeframe;
-   static string   _stop.trend.params = "";
-   static string   _stop.trend.description = "";
+   static string   _stop.trend.params       = "";
+   static string   _stop.trend.description  = "";
    static bool     _stop.price.condition;
    static int      _stop.price.type;
    static double   _stop.price.value;
-   static string   _stop.price.description = "";
+   static string   _stop.price.description  = "";
    static bool     _stop.time.condition;
    static datetime _stop.time.value;
-   static string   _stop.time.description = "";
+   static string   _stop.time.description   = "";
    static bool     _stop.profitAbs.condition;
    static double   _stop.profitAbs.value;
    static string   _stop.profitAbs.description = "";
@@ -263,6 +266,13 @@ void CopyInputStatus(bool store) {
    static double   _stop.profitPct.value;
    static double   _stop.profitPct.absValue;
    static string   _stop.profitPct.description = "";
+   static bool     _stop.lossAbs.condition;
+   static double   _stop.lossAbs.value;
+   static string   _stop.lossAbs.description = "";
+   static bool     _stop.lossPct.condition;
+   static double   _stop.lossPct.value;
+   static double   _stop.lossPct.absValue;
+   static string   _stop.lossPct.description = "";
 
    static datetime _sessionbreak.starttime;
    static datetime _sessionbreak.endtime;
@@ -271,6 +281,7 @@ void CopyInputStatus(bool store) {
       _sequence.id                = sequence.id;
       _sequence.cycle             = sequence.cycle;
       _sequence.name              = sequence.name;
+      _sequence.longName          = sequence.longName;
       _sequence.created           = sequence.created;
       _sequence.isTest            = sequence.isTest;
       _sequence.direction         = sequence.direction;
@@ -309,6 +320,13 @@ void CopyInputStatus(bool store) {
       _stop.profitPct.value       = stop.profitPct.value;
       _stop.profitPct.absValue    = stop.profitPct.absValue;
       _stop.profitPct.description = stop.profitPct.description;
+      _stop.lossAbs.condition     = stop.lossAbs.condition;
+      _stop.lossAbs.value         = stop.lossAbs.value;
+      _stop.lossAbs.description   = stop.lossAbs.description;
+      _stop.lossPct.condition     = stop.lossPct.condition;
+      _stop.lossPct.value         = stop.lossPct.value;
+      _stop.lossPct.absValue      = stop.lossPct.absValue;
+      _stop.lossPct.description   = stop.lossPct.description;
 
       _sessionbreak.starttime     = sessionbreak.starttime;
       _sessionbreak.endtime       = sessionbreak.endtime;
@@ -317,6 +335,7 @@ void CopyInputStatus(bool store) {
       sequence.id                = _sequence.id;
       sequence.cycle             = _sequence.cycle;
       sequence.name              = _sequence.name;
+      sequence.longName          = _sequence.longName;
       sequence.created           = _sequence.created;
       sequence.isTest            = _sequence.isTest;
       sequence.direction         = _sequence.direction;
@@ -355,6 +374,13 @@ void CopyInputStatus(bool store) {
       stop.profitPct.value       = _stop.profitPct.value;
       stop.profitPct.absValue    = _stop.profitPct.absValue;
       stop.profitPct.description = _stop.profitPct.description;
+      stop.lossAbs.condition     = _stop.lossAbs.condition;
+      stop.lossAbs.value         = _stop.lossAbs.value;
+      stop.lossAbs.description   = _stop.lossAbs.description;
+      stop.lossPct.condition     = _stop.lossPct.condition;
+      stop.lossPct.value         = _stop.lossPct.value;
+      stop.lossPct.absValue      = _stop.lossPct.absValue;
+      stop.lossPct.description   = _stop.lossPct.description;
 
       sessionbreak.starttime     = _sessionbreak.starttime;
       sessionbreak.endtime       = _sessionbreak.endtime;
