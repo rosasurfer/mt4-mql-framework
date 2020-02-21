@@ -1754,7 +1754,8 @@ bool IsSessionBreak() {
 
 
 /**
- * Trail existing, open missing and delete obsolete pending orders.
+ * Trail existing, open missing and delete obsolete pending orders. If open positions are missing, create pending orders for
+ * those positions and add them to the list of missed order levels.
  *
  * @return bool - success status
  */
@@ -1762,19 +1763,19 @@ bool UpdatePendingOrders() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.longName +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int type, limitOrders, level, lastExistingLevel, nextLevel=sequence.level + ifInt(sequence.direction==D_LONG, 1, -1), sizeOfTickets=ArraySize(orders.ticket);
-   bool nextStopExists, ordersChanged;
+   int type, limitOrders, level, lastExistingLevel=0, nextLevel=sequence.level + ifInt(sequence.direction==D_LONG, 1, -1), sizeOfTickets=ArraySize(orders.ticket);
+   bool nextStopExists=false, ordersChanged=false;
    string sMissedLevels = "";
 
    // check if the stop order for the next level exists (always at the last order index)
    int i = sizeOfTickets - 1;
    if (sizeOfTickets > 0) {
-      if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) { // a pending stop or limit order
+      if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) { // a pending entry order
          if (orders.level[i] == nextLevel) {                      // the next stop order
             nextStopExists = true;
          }
          else if (IsStopOrderType(orders.pendingType[i])) {
-            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order (always at the last order index)
+            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order
             if (!error) {
                sizeOfTickets--;
                ordersChanged = true;
@@ -1800,11 +1801,12 @@ bool UpdatePendingOrders() {
          }
          if (level == 1) break;
       }
-      if (sizeOfTickets && lastExistingLevel!=sequence.level)
-         return(!catch("UpdatePendingOrders(4)  "+ sequence.longName +" sequence.level("+ sequence.level +") != lastExistingOrder("+ lastExistingLevel +")", ERR_ILLEGAL_STATE));
+      if (sizeOfTickets && lastExistingLevel!=sequence.level) {
+         return(!catch("UpdatePendingOrders(4)  "+ sequence.longName +" orders out of sync: lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
+      }
    }
 
-   // trail a first level stop order (always an existing next level order, thus at the last index)
+   // trail a first level stop order (always an existing next level order, thus at the last array index)
    if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
       if (NE(GetGridbase(), orders.gridbase[i], Digits)) {
@@ -1836,17 +1838,21 @@ bool UpdatePendingOrders() {
 
          type = Grid.AddPendingOrder(level); if (!type) return(false);
 
-         if (level == nextLevel) {
-            if (IsLimitOrderType(type)) {                         // a limit order was opened
-               sequence.level    = nextLevel; SS.SequenceName();
-               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
-               nextLevel        += Sign(nextLevel);
+         if (level != nextLevel) {
+            if (IsStopOrderType(type)) {                          // a stop order was opened for a previous level
+               sequence.level = level; SS.SequenceName();
+               nextLevel     += Sign(nextLevel);
             }
-            else {
-               nextStopExists = true;
-               ordersChanged = true;
-               break;
-            }
+         }
+         else if (IsLimitOrderType(type)) {                       // level==nextLevel: a limit order was opened
+            sequence.level    = nextLevel; SS.SequenceName();
+            sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
+            nextLevel        += Sign(nextLevel);
+         }
+         else {                                                   // level==nextLevel: a stop order was opened
+            nextStopExists = true;
+            ordersChanged = true;
+            break;
          }
          lastExistingLevel = level;
       }
