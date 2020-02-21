@@ -23,7 +23,7 @@ int onStart() {
    string receiver = GetGlobalConfigString(section, key);
    if (!StrIsEmailAddress(receiver)) return(!catch("onStart(2)  invalid email address: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE));
 
-   string message = TimeToStr(TimeLocalEx("onStart(3)"), TIME_MINUTES) +" Test email";
+   string message = TimeToStr(GetLocalTime(), TIME_MINUTES) +" Test email";
    SendEmail(sender, receiver, message, message);
 
    return(catch("onStart(4)"));

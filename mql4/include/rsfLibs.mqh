@@ -6,7 +6,6 @@
    // Status- und Laufzeit-Informationen
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
-   string   GetCustomLogFile(int id);
 #import "rsfLib2.ex4"
    int      GetTerminalRuntime();
 #import "rsfLib1.ex4"
