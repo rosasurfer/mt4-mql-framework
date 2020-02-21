@@ -325,6 +325,10 @@
 #define IDC_DOCKABLES_CONTAINER             59422        // window containing all child windows docked to the main application window
 #define IDC_UNDOCKED_CONTAINER              59423        // window containing a single undocked/floating dockable child window (possibly more than one, not a toplevel window)
 
+#define IDC_CUSTOM_INDICATOR_OK                 1        // load dialog "Custom Indicator"
+#define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
+#define IDC_CUSTOM_INDICATOR_RESET          12321        // ...
+
 #define IDC_MARKETWATCH                        80        // Market Watch
 #define IDC_MARKETWATCH_SYMBOLS             35441        // Market Watch - Symbols
 #define IDC_MARKETWATCH_TICKCHART           35442        // Market Watch - Tick Chart
