@@ -50,7 +50,7 @@ extern int      StartLevel             = 0;                             //
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @tp(double[%]) | @sl(double[%])
 extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue or reset a sequence after StopSequence(SIGNAL_TP|SIGNAL_SL)
-extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed in absolute or percentage values
+extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed in absolute or percentage terms
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
 extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
 
@@ -93,12 +93,12 @@ double   sequence.commission;                      // commission value per gridl
 
 int      sequence.start.event [];                  // sequence starts (the moment status changes to STATUS_PROGRESSING)
 datetime sequence.start.time  [];
-double   sequence.start.price [];                  // average open price of all opened positions
+double   sequence.start.price [];                  // average open price of all positions opened at sequence start
 double   sequence.start.profit[];
 
 int      sequence.stop.event  [];                  // sequence stops (the moment status changes to STATUS_STOPPED)
 datetime sequence.stop.time   [];
-double   sequence.stop.price  [];                  // average close price of all closed positions
+double   sequence.stop.price  [];                  // average close price of all positions closed at sequence stop
 double   sequence.stop.profit [];
 
 // --- start conditions ("AND" combined) ---
