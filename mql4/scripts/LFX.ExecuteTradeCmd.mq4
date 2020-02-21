@@ -517,7 +517,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(GetLocalTime(), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);
@@ -716,7 +716,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(GetLocalTime(), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);
