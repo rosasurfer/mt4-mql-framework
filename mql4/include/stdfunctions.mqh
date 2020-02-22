@@ -84,8 +84,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string name    = __NAME();
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
-      if (false && ec_LogToCustom(__ExecutionContext))
-         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));           // custom log, on error fall-back to terminal log
+      if (false && ec_LogToCustomEnabled(__ExecutionContext))
+         logged = logged || _logCustom(StringConcatenate("ERROR: ", name, "::", message));            // custom log, on error fall-back to terminal log
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
          logged  = true;
@@ -146,8 +146,8 @@ int warn(string message, int error = NO_ERROR) {
    // log the warning
    string name = __NAME();
    bool logged, alerted;
-   if (false && ec_LogToCustom(__ExecutionContext))
-      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));            // custom Log, on error fall-back to terminal log
+   if (false && ec_LogToCustomEnabled(__ExecutionContext))
+      logged = logged || _logCustom(StringConcatenate("WARN: ", name, "::", message));             // custom Log, on error fall-back to terminal log
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // terminal log
       logged  = true;
@@ -187,30 +187,27 @@ int warn(string message, int error = NO_ERROR) {
  * Log a message to the terminal log or to a program's custom logfile (if configured).
  *
  * @param  string message
- * @param  int    error [optional] - error to log (default: none)
+ * @param  int    error [optional] - error to log (default: no error)
  *
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__LOG()) return(error);
+   if (!__ExecutionContext[EC.logEnabled]) return(error);   // skip logging if disabled
 
-   // duplicate the message to the system debugger (if configured)
-   static int logToDebug = -1;
-   if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
-   if (logToDebug ==  1) debug(message, error);
-
-   string name = __NAME();
-   if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
-
-   // log to a custom logfile or...
-   if (false && ec_LogToCustom(__ExecutionContext)) {
-      if (__logCustom(StringConcatenate(name, "::", message)))    // custom log, on error fallback to terminal log
-         return(error);
+   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {  // send the message to the terminal log
+      Print(__NAME(), "::", StrReplaceR(message, NL, " "), ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
    }
-
-   // log to the terminal log
-   Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
+   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {     // send the message to the system debugger
+      debug(message, error);
+   }
+   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {    // send the message to a custom logger
+      _logCustom(message, error);
+   }
    return(error);
+
+   //static int logToDebug = -1;
+   //if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
+   //if (logToDebug ==  1) debug(message, error);
 }
 
 
@@ -218,17 +215,23 @@ int log(string message, int error = NO_ERROR) {
  * Log a message to a program's custom logfile.
  *
  * @param  string message
+ * @param  int    error [optional] - error to log (default: no error)
  *
  * @return bool - success status; FALSE if the program's custom log is disabled
  */
-bool __logCustom(string message) {
-   return(!catch("__logCustom(1)", ERR_FUNC_NOT_ALLOWED));
+bool _logCustom(string message, int error = NO_ERROR) {
+   return(!catch("_logCustom(1)", ERR_FUNC_NOT_ALLOWED));
+
+   message = TimeToStr(GetLocalTime(), TIME_FULL) +"  "+ Symbol() +","+ StrPadRight(PeriodDescription(Period()), 3, " ") +"  "+ __NAME() +"::"+ message;
+   if (error != NO_ERROR) message = message +"  ["+ ErrorToStr(error) +"]";
 
    int hFile = FileOpen("custom.log", FILE_READ|FILE_WRITE);
    FileSeek (hFile, 0, SEEK_END);
-   FileWrite(hFile, TimeToStr(GetLocalTime(), TIME_FULL) +"  "+ Symbol() +","+ StrPadRight(PeriodDescription(Period()), 3, " ") +"  "+ message);
+   FileWrite(hFile, message);
    FileClose(hFile);
    return(true);
+
+   SetCustomLog(NULL, NULL);
 }
 
 
@@ -6614,7 +6617,6 @@ void __DummyCalls() {
 
    __CHART();
    __LOG();
-   __logCustom(NULL);
    __NAME();
    _bool(NULL);
    _double(NULL);
@@ -6888,10 +6890,10 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   bool     ec_LogToCustom(int ec[]);
+   bool     ec_LogToCustomEnabled(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
-   bool     ec_SetLogToCustom(int ec[], int status);
+   bool     ec_SetLogToCustomEnabled(int ec[], int status);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);
