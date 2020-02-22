@@ -300,19 +300,6 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 }
 
 
-/**
- * Obsolete
- *
- * @param  int    id
- * @param  string file
- *
- * @return int
- */
-int SetCustomLog(int id, string file) {
-   return(id);
-}
-
-
 string lock.names   [];                                           // Namen der Locks, die vom aktuellen Programm gehalten werden
 int    lock.counters[];                                           // Anzahl der akquirierten Locks je Name
 
