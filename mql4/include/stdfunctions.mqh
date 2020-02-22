@@ -220,40 +220,25 @@ int log(string message, int error = NO_ERROR) {
  *
  * @param  string message
  *
- * @return bool - success status;
- *                FALSE if the program's custom log is disabled
+ * @return bool - success status; FALSE if the program's custom log is disabled
  */
 bool __logCustom(string message) {
    return(!catch("__logCustom(1)", ERR_INVALID_ACCESS));
 
-   int instanceId = 123456789;
-   message = StringConcatenate(TimeToStr(GetLocalTime(), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
+   message = TimeToStr(GetLocalTime(), TIME_FULL) +"  "+ Symbol() +","+ StrPadRight(PeriodDescription(Period()), 3, " ") +"  "+ message;
 
-   string filename = StringConcatenate("", instanceId, ".log");
-
-   int hFile = FileOpen(filename, FILE_READ|FILE_WRITE);
-   if (hFile < 0) return(_false(catch("__logCustom(1)->FileOpen(\""+ filename +"\")")));
-
-   if (!FileSeek(hFile, 0, SEEK_END)) {
-      catch("__logCustom(2)->FileSeek()");
-      FileClose(hFile);
-      return(_false(GetLastError()));
-   }
-
-   if (FileWrite(hFile, message) < 0) {
-      catch("__logCustom(3)->FileWrite()");
-      FileClose(hFile);
-      return(_false(GetLastError()));
-   }
-
+   int hFile = FileOpen("custom.log", FILE_READ|FILE_WRITE);
+   FileSeek (hFile, 0, SEEK_END);
+   FileWrite(hFile, message);
    FileClose(hFile);
+
    return(true);
 }
 
 
 /**
- * Set the last error code of the module. If called in a library the error will bubble up to the library's main module.
- * If called in an indicator loaded by iCustom() the error will bubble up to the loading program. The error code NO_ERROR
+ * Set the last error code of the module. If called in a library the error will bubble up to the program's main module.
+ * If called in an indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR
  * will never bubble up.
  *
  * @param  int error - error code
@@ -265,7 +250,7 @@ int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
 
    if (error != NO_ERROR) /*&&*/ if (IsExpert())
-      CheckErrors("SetLastError(1)");                                // update __STATUS_OFF in experts
+      CheckErrors("SetLastError(1)");                 // update __STATUS_OFF in experts
    return(error);
 }
 

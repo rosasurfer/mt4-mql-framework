@@ -37,7 +37,7 @@
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOM_LOG};
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -3583,7 +3583,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
  * @return string
  */
 string GetStatusFileName() {
-   string directory, baseName=StrToLower(StdSymbol()) +".SR."+ sequence.id +".set";
+   string directory, baseName=StrToLower(Symbol()) +".SR."+ sequence.id +".set";
 
    if (IsTestSequence()) directory = "\\presets\\";
    else                  directory = "\\presets\\"+ ShortAccountCompany() +"\\";
