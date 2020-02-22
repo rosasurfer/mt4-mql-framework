@@ -3,13 +3,6 @@
  */
 #import "rsfLib1.ex4"
 
-   // Status- und Laufzeit-Informationen
-   int      SetCustomLog(int id, string file);
-#import "rsfLib2.ex4"
-   int      GetTerminalRuntime();
-#import "rsfLib1.ex4"
-
-
    // Arrays
    bool     ArrayAddInt         (int    array[],   int value);
    int      ArraySetInts        (int    array[][], int i, int values[]);
@@ -271,6 +264,8 @@
    string   GetWindowText(int hWnd);
    string   WaitForSingleObjectValueToStr(int value);
    int      WinExecWait(string cmdLine, int cmdShow);
+#import "rsfLib2.ex4"
+   int      GetTerminalRuntime();
 #import
 
 

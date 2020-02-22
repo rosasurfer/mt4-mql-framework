@@ -216,6 +216,7 @@ bool     SelectTicket(int ticket, string location, bool pushTicket=false, bool o
 bool     SendChartCommand(string cmdObject, string cmd, string cmdMutex = "");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;
+int      SetCustomLog(int id, string file);;
 string   ShellExecuteErrorDescription(int error);;
 string   ShortAccountCompany();;
 string   ShortAccountCompanyFromId(int id);;
@@ -499,7 +500,6 @@ int      SearchStringArray(string &haystack[], string needle);;
 int      SearchStringArrayI(string &haystack[], string needle);;
 datetime ServerToFxtTime(datetime serverTime);;
 datetime ServerToGmtTime(datetime serverTime);;
-int      SetCustomLog(int id, string file);;
 int      SortTicketsChronological(int &tickets[]);;
 string   StdSymbol();;
 bool     StringInArray(string &haystack[], string needle);;

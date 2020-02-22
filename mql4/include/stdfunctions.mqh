@@ -53,13 +53,12 @@ int debug(string message, int error = NO_ERROR) {
 
 
 /**
- * Check if an error occurred and signal it (debug output console, visual, audible, mail if configured, SMS if configured).
- * The error is stored in the global var "last_error". After the function returned the internal MQL error code as read by
- * GetLastError() is always reset.
+ * Check if an error occurred and signal it. The error is stored in the global var "last_error". After the function returned
+ * the internal MQL error code as returned by GetLastError() is always reset.
  *
  * @param  string location            - the error's location identifier incl. optional message
  * @param  int    error    [optional] - enforce a specific error (default: none)
- * @param  bool   orderPop [optional] - whether an order context should be restored from the order context stack
+ * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack
  *                                      (default: no)
  *
  * @return int - the occurred or enforced error
@@ -74,7 +73,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    static bool recursive = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                          // prevent recursive errors
+      if (recursive)                                                                                  // prevent recursive errors
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
@@ -86,9 +85,9 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
       if (false && ec_CustomLogEnabled(__ExecutionContext))
-         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));           // custom log: on error fall-back to standard logging
+         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));           // custom log, on error fall-back to terminal log
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // standard log
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
@@ -148,9 +147,9 @@ int warn(string message, int error = NO_ERROR) {
    string name = __NAME();
    bool logged, alerted;
    if (false && ec_CustomLogEnabled(__ExecutionContext))
-      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));            // custom Log: on error fall-back to standard logging
+      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));            // custom Log, on error fall-back to terminal log
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // standard log
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // terminal log
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
@@ -161,7 +160,7 @@ int warn(string message, int error = NO_ERROR) {
       // neither Alert() nor MessageBox() can be used
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       int pos = StringFind(message, ") ");
-      if (pos == -1) message = StringConcatenate("WARN in ", message);                             // wrap message after the closing function brace
+      if (pos == -1) message = StringConcatenate("WARN in ", message);                          // wrap message after the closing function brace
       else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
@@ -185,7 +184,7 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's MQL logfile or to an expert's custom logfile (if configured).
+ * Log a message to the terminal log or to a program's custom logfile (if configured).
  *
  * @param  string message
  * @param  int    error [optional] - error to log (default: none)
@@ -204,9 +203,9 @@ int log(string message, int error = NO_ERROR) {
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    // log to a custom logfile or...
-   if (ec_CustomLogEnabled(__ExecutionContext)) {                    // experts only
-      if (__logCustom(StringConcatenate(name, "::", message)))
-         return(error);                                              // on error fallback to the terminal log
+   if (false && ec_CustomLogEnabled(__ExecutionContext)) {
+      if (__logCustom(StringConcatenate(name, "::", message)))    // custom log, on error fallback to terminal log
+         return(error);
    }
 
    // log to the terminal log
@@ -216,23 +215,31 @@ int log(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the program's custom logfile.
+ * Log a message to a program's custom logfile.
  *
  * @param  string message
  *
  * @return bool - success status; FALSE if the program's custom log is disabled
  */
 bool __logCustom(string message) {
-   return(!catch("__logCustom(1)", ERR_INVALID_ACCESS));
-
-   message = TimeToStr(GetLocalTime(), TIME_FULL) +"  "+ Symbol() +","+ StrPadRight(PeriodDescription(Period()), 3, " ") +"  "+ message;
+   return(!catch("__logCustom(1)", ERR_FUNC_NOT_ALLOWED));
 
    int hFile = FileOpen("custom.log", FILE_READ|FILE_WRITE);
    FileSeek (hFile, 0, SEEK_END);
-   FileWrite(hFile, message);
+   FileWrite(hFile, TimeToStr(GetLocalTime(), TIME_FULL) +"  "+ Symbol() +","+ StrPadRight(PeriodDescription(Period()), 3, " ") +"  "+ message);
    FileClose(hFile);
-
    return(true);
+}
+
+
+/**
+ * @param  int    id
+ * @param  string file
+ *
+ * @return int
+ */
+int SetCustomLog(int id, string file) {
+   return(id);
 }
 
 
