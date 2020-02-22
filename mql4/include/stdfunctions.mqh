@@ -53,13 +53,13 @@ int debug(string message, int error = NO_ERROR) {
 
 
 /**
- * Check if an error occurred and signal it (debug output console, visual, audible, if configured by email, if configured by
- * text message). The error is stored in the global var "last_error". After the function returned the internal MQL error code
- * as read by GetLastError() is always reset.
+ * Check if an error occurred and signal it (debug output console, visual, audible, mail if configured, SMS if configured).
+ * The error is stored in the global var "last_error". After the function returned the internal MQL error code as read by
+ * GetLastError() is always reset.
  *
- * @param  string location - the error's location identifier incl. an optional message
- * @param  int    error    [optional] - enforces a specific error (default: none)
- * @param  bool   orderPop [optional] - whether an order context stored on the order context stack should be restored
+ * @param  string location            - the error's location identifier incl. optional message
+ * @param  int    error    [optional] - enforce a specific error (default: none)
+ * @param  bool   orderPop [optional] - whether an order context should be restored from the order context stack
  *                                      (default: no)
  *
  * @return int - the occurred or enforced error
@@ -78,37 +78,28 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
-      // send the error to the debug output console
+      // always send the error to the system debugger
       debug("ERROR: "+ location, error);
 
-      // extend the program name by an instance id (if any)
-      string name=__NAME(), nameInstanceId;
-      int logId = 0;//GetCustomLogID();                                       // TODO: GetCustomLogID() must be moved from the library
-      if (!logId) nameInstanceId = name;
-      else {
-         int pos = StringFind(name, "::");
-         if (pos == -1) nameInstanceId = StringConcatenate(        name,       "(", logId, ")");
-         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
-      }
-
       // log the error
+      string name    = __NAME();
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
       if (false && ec_CustomLogEnabled(__ExecutionContext))
-         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));                    // custom log: w/o instance id, on error fall-back to standard logging
+         logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));           // custom log: on error fall-back to standard logging
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // standard log: with instance id (if any)
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // standard log
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
-      message = StringConcatenate(nameInstanceId, "::", message);
+      message = StringConcatenate(name, "::", message);
 
       // display the error
       if (IsTesting()) {
-         // in tester neither Alert() nor MessageBox() must be used
+         // neither Alert() nor MessageBox() can be used
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
-         pos = StringFind(message, ") ");
-         if (pos == -1) message = StringConcatenate("ERROR in ", message);          // wrap message after the closing function brace
+         int pos = StringFind(message, ") ");
+         if (pos == -1) message = StringConcatenate("ERROR in ", message);                            // wrap message after the closing function brace
          else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
          PlaySoundEx("alert.wav");
@@ -118,7 +109,6 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       else {
          message = StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
          if (!alerted) {
-            // an EA not in tester, or a script/indicator in or outside of tester
             Alert(message);
             alerted = true;
          }
@@ -129,7 +119,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          }
       }
 
-      // set var last_error
+      // set last_error
       SetLastError(error, NULL);
       recursive = false;
    }
@@ -141,7 +131,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
 /**
- * Show a warning with an optional error (visual and audible) but don't set the error.
+ * Show a warning with an optional error but don't set the error.
  *
  * @param  string message          - message to display
  * @param  int    error [optional] - error to display
@@ -149,38 +139,29 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - the same error
  */
 int warn(string message, int error = NO_ERROR) {
-   // Warnung zusätzlich an Debug-Ausgabe schicken
+   // always send the warning to the system debugger
    debug("WARN: "+ message, error);
-
-   // Programmnamen um Instanz-ID erweitern
-   string name=__NAME(), nameWithId;
-   int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
-   if (logId != 0) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
-      else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrSubstr(name, pos));
-   }
-   else              nameWithId = name;
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   // Warnung loggen
+   // log the warning
+   string name = __NAME();
    bool logged, alerted;
-   if (ec_CustomLogEnabled(__ExecutionContext))
-      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));               // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+   if (false && ec_CustomLogEnabled(__ExecutionContext))
+      logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));            // custom Log: on error fall-back to standard logging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message); // global Log: ggf. mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // standard log
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
-   message = StringConcatenate(nameWithId, "::", message);
+   message = StringConcatenate(name, "::", message);
 
-   // Warnung anzeigen
+   // display the warning
    if (IsTesting()) {
-      // weder Alert() noch MessageBox() können verwendet werden
+      // neither Alert() nor MessageBox() can be used
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
-      pos = StringFind(message, ") ");
-      if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
+      int pos = StringFind(message, ") ");
+      if (pos == -1) message = StringConcatenate("WARN in ", message);                             // wrap message after the closing function brace
       else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
@@ -190,7 +171,6 @@ int warn(string message, int error = NO_ERROR) {
    else {
       message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
       if (!alerted) {
-         // außerhalb des Testers
          Alert(message);
          alerted = true;
       }
@@ -236,38 +216,31 @@ int log(string message, int error = NO_ERROR) {
 
 
 /**
- * Loggt eine Message in das Logfile des Programms.
+ * Log a message to the program's custom logfile.
  *
- * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
+ * @param  string message
  *
- * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile nicht definiert ist
- *
- * @access private - Aufruf nur aus log()
+ * @return bool - success status;
+ *                FALSE if the program's custom log is disabled
  */
 bool __logCustom(string message) {
-   int instanceId = GetCustomLogID();
-   if (!instanceId) return(false);
+   return(!catch("__logCustom(1)", ERR_INVALID_ACCESS));
 
+   int instanceId = 123456789;
    message = StringConcatenate(TimeToStr(GetLocalTime(), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
 
-   string fileName = StringConcatenate("", instanceId, ".log");
+   string filename = StringConcatenate("", instanceId, ".log");
 
-   int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
-   if (hFile < 0) {
-      ec_SetCustomLogEnabled(__ExecutionContext, false);
-      catch("__logCustom(1)->FileOpen(\""+ fileName +"\")");
-      return(false);
-   }
+   int hFile = FileOpen(filename, FILE_READ|FILE_WRITE);
+   if (hFile < 0) return(_false(catch("__logCustom(1)->FileOpen(\""+ filename +"\")")));
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      ec_SetCustomLogEnabled(__ExecutionContext, false);
       catch("__logCustom(2)->FileSeek()");
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      ec_SetCustomLogEnabled(__ExecutionContext, false);
       catch("__logCustom(3)->FileWrite()");
       FileClose(hFile);
       return(_false(GetLastError()));
@@ -6909,7 +6882,6 @@ void __DummyCalls() {
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
-   int      GetCustomLogID();
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetServerName();

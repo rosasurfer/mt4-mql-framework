@@ -319,16 +319,6 @@ int SetCustomLog(int id, string file) {
 }
 
 
-/**
- * Gibt die ID des Custom-Logs zurück.
- *
- * @return int - ID
- */
-int GetCustomLogID() {
-   return(costum.log.id);
-}
-
-
 string lock.names   [];                                           // Namen der Locks, die vom aktuellen Programm gehalten werden
 int    lock.counters[];                                           // Anzahl der akquirierten Locks je Name
 
