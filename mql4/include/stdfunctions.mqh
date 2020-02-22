@@ -84,7 +84,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string name    = __NAME();
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
-      if (false && ec_CustomLogEnabled(__ExecutionContext))
+      if (false && ec_LogToCustom(__ExecutionContext))
          logged = logged || __logCustom(StringConcatenate("ERROR: ", name, "::", message));           // custom log, on error fall-back to terminal log
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
@@ -146,7 +146,7 @@ int warn(string message, int error = NO_ERROR) {
    // log the warning
    string name = __NAME();
    bool logged, alerted;
-   if (false && ec_CustomLogEnabled(__ExecutionContext))
+   if (false && ec_LogToCustom(__ExecutionContext))
       logged = logged || __logCustom(StringConcatenate("WARN: ", name, "::", message));            // custom Log, on error fall-back to terminal log
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // terminal log
@@ -203,7 +203,7 @@ int log(string message, int error = NO_ERROR) {
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    // log to a custom logfile or...
-   if (false && ec_CustomLogEnabled(__ExecutionContext)) {
+   if (false && ec_LogToCustom(__ExecutionContext)) {
       if (__logCustom(StringConcatenate(name, "::", message)))    // custom log, on error fallback to terminal log
          return(error);
    }
@@ -6888,10 +6888,10 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   bool     ec_CustomLogEnabled(int ec[]);
+   bool     ec_LogToCustom(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
-   bool     ec_SetCustomLogEnabled(int ec[], int status);
+   bool     ec_SetLogToCustom(int ec[], int status);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);
