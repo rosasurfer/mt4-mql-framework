@@ -36,10 +36,10 @@
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
-#define EXECUTION_CONTEXT.size            1016
-#define EXECUTION_CONTEXT.intSize          254     // The following EXECUTION_CONTEXT offsets must always be updated, too.
+#define EXECUTION_CONTEXT.size            1020
+#define EXECUTION_CONTEXT.intSize          255
 
-#define EC.pid                               0
+#define EC.pid                               0     // The following EXECUTION_CONTEXT offsets must be in sync with the Expander.
 #define EC.previousPid                       1
 #define EC.programType                       2
 #define EC.programCoreFunction              67
@@ -79,9 +79,9 @@
 #define EC.dllError                        181
 #define EC.dllWarning                      183
 #define EC.logEnabled                      185
-#define EC.logToDebug                      186
-#define EC.logToTerminal                   187
-#define EC.logToCustom                     188
+#define EC.logToDebugEnabled               186
+#define EC.logToTerminalEnabled            187
+#define EC.logToCustomEnabled              188
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30
