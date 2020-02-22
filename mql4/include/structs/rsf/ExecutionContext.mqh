@@ -93,7 +93,9 @@
    int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.dllWarningMsg
    bool     ec_LogEnabled         (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_CustomLogEnabled   (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_LogToDebug         (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_LogToTerminal      (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_LogToCustom        (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_CustomLogFilename  (/*EXECUTION_CONTEXT*/int ec[]);
 
 
@@ -102,6 +104,9 @@
    int      ec_SetMqlError           (/*EXECUTION_CONTEXT*/int ec[], int error   );
    int      ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error   );
    bool     ec_SetLogEnabled         (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   bool     ec_SetLogToDebug         (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   bool     ec_SetLogToTerminal      (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   bool     ec_SetLogToCustom        (/*EXECUTION_CONTEXT*/int ec[], int status  );
 
 
    // helpers
