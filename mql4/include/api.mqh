@@ -167,7 +167,6 @@ double   iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, i
 double   iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 bool     LE(double double1, double double2, int digits = 8);;
 int      log(string message, int error = NO_ERROR);;
-bool     LogOrder(int ticket);;
 bool     LogTicket(int ticket);;
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method);;

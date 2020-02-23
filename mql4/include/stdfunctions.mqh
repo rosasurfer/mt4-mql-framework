@@ -73,7 +73,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    static bool recursive = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                                                  // prevent recursive errors
+      if (recursive)                                                                                  // prevent recursive calls
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
@@ -84,8 +84,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string name    = __NAME();
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
-      if (false && ec_LogToCustomEnabled(__ExecutionContext))
-         logged = logged || _logCustom(StringConcatenate("ERROR: ", name, "::", message));            // custom log, on error fall-back to terminal log
+      if (false && __ExecutionContext[EC.logToCustomEnabled])
+         logged = logged || Logger(StringConcatenate("ERROR: ", name, "::", message));                // custom log, on error fall-back to terminal log
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
          logged  = true;
@@ -146,8 +146,8 @@ int warn(string message, int error = NO_ERROR) {
    // log the warning
    string name = __NAME();
    bool logged, alerted;
-   if (false && ec_LogToCustomEnabled(__ExecutionContext))
-      logged = logged || _logCustom(StringConcatenate("WARN: ", name, "::", message));             // custom Log, on error fall-back to terminal log
+   if (false && __ExecutionContext[EC.logToCustomEnabled])
+      logged = logged || Logger(StringConcatenate("WARN: ", name, "::", message));                 // custom Log, on error fall-back to terminal log
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // terminal log
       logged  = true;
@@ -184,15 +184,15 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the terminal log or to a program's custom logfile (if configured).
+ * Log a message to the configured log appenders.
  *
  * @param  string message
- * @param  int    error [optional] - error to log (default: no error)
+ * @param  int    error [optional] - error to log (default: none)
  *
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__ExecutionContext[EC.logEnabled]) return(error);   // skip logging if disabled
+   if (!__ExecutionContext[EC.logEnabled]) return(error);   // skip logging if fully disabled
 
    if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {  // send the message to the terminal log
       Print(__NAME(), "::", StrReplaceR(message, NL, " "), ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
@@ -201,37 +201,22 @@ int log(string message, int error = NO_ERROR) {
       debug(message, error);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {    // send the message to a custom logger
-      _logCustom(message, error);
+      Logger(message, error);
    }
    return(error);
-
-   //static int logToDebug = -1;
-   //if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
-   //if (logToDebug ==  1) debug(message, error);
 }
 
 
 /**
- * Log a message to a program's custom logfile.
+ * Send a message to a program's custom logger.
  *
  * @param  string message
- * @param  int    error [optional] - error to log (default: no error)
+ * @param  int    error [optional] - error to log (default: none)
  *
- * @return bool - success status; FALSE if the program's custom log is disabled
+ * @return bool - success status; FALSE if custom logging is disabled
  */
-bool _logCustom(string message, int error = NO_ERROR) {
-   return(!catch("_logCustom(1)", ERR_FUNC_NOT_ALLOWED));
-
-   message = TimeToStr(GetLocalTime(), TIME_FULL) +"  "+ Symbol() +","+ StrPadRight(PeriodDescription(Period()), 3, " ") +"  "+ __NAME() +"::"+ message;
-   if (error != NO_ERROR) message = message +"  ["+ ErrorToStr(error) +"]";
-
-   int hFile = FileOpen("custom.log", FILE_READ|FILE_WRITE);
-   FileSeek (hFile, 0, SEEK_END);
-   FileWrite(hFile, message);
-   FileClose(hFile);
-   return(true);
-
-   SetCustomLog(NULL, NULL);
+bool Logger(string message, int error = NO_ERROR) {
+   return(!catch("Logger(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1117,12 +1102,12 @@ double GetCommission(double lots = 1.0) {
 
 
 /**
- * Read the logging configuration for the current program. By default online logging is enabled and offline logging (tester)
- * is disabled. Called only from init.GlobalVars().
+ * Whether logging in general is enabled (read from the configuration). By default online logging is enabled and offline
+ * logging (tester) is disabled. Called only from init.GlobalVars().
  *
  * @return bool
  */
-bool init.ReadLogConfig() {
+bool init.IsLogEnabled() {
    if (This.IsTesting())
       return(GetConfigBool("Logging", "LogInTester", false));                    // tester: default=off
    return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // online: default=on
@@ -5578,28 +5563,14 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Alias of LogOrder()
- *
- * Log the orderdata of a ticket. Replacement for the limited built-in function OrderPrint().
+ * Log the order data of a ticket. Replacement for the limited built-in function OrderPrint().
  *
  * @param  int ticket
  *
  * @return bool - success status
  */
 bool LogTicket(int ticket) {
-   return(LogOrder(ticket));
-}
-
-
-/**
- * Log the orderdata of a ticket. Replacement for the limited built-in function OrderPrint().
- *
- * @param  int ticket
- *
- * @return bool - success status
- */
-bool LogOrder(int ticket) {
-   if (!SelectTicket(ticket, "LogOrder(1)", O_PUSH))
+   if (!SelectTicket(ticket, "LogTicket(1)", O_PUSH))
       return(false);
 
    int      type        = OrderType();
@@ -5622,9 +5593,9 @@ bool LogOrder(int ticket) {
    string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
-   log("LogOrder()  "+ message);
+   log("LogTicket()  "+ message);
 
-   return(OrderPop("LogOrder(2)"));
+   return(OrderPop("LogTicket(2)"));
 }
 
 
@@ -6705,11 +6676,11 @@ void __DummyCalls() {
    iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    iMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
+   init.IsLogEnabled();
    init.LogErrorsToMail();
    init.LogErrorsToSMS();
    init.LogWarningsToMail();
    init.LogWarningsToSMS();
-   init.ReadLogConfig();
    InitReasonDescription(NULL);
    iNonLagMA(NULL, NULL, NULL, NULL, NULL);
    IntegerToHexString(NULL);
@@ -6747,7 +6718,6 @@ void __DummyCalls() {
    iTrix(NULL, NULL, NULL, NULL, NULL);
    LE(NULL, NULL);
    log(NULL);
-   LogOrder(NULL);
    LogTicket(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
@@ -6791,6 +6761,7 @@ void __DummyCalls() {
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
+   SetCustomLog(NULL, NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    ShortAccountCompany();
@@ -6890,10 +6861,8 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   bool     ec_LogToCustomEnabled(int ec[]);
    string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
-   bool     ec_SetLogToCustomEnabled(int ec[], int status);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
    int      LeaveContext(int ec[]);

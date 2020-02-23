@@ -212,22 +212,24 @@ int init() {
  * @return bool - success status
  */
 bool init.GlobalVars() {
-   ec_SetLogEnabled(__ExecutionContext, init.ReadLogConfig());             // TODO: move to Expander
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
+   ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
+   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Logging", "LogToDebug", true));
+   ec_SetLogToTerminalEnabled(__ExecutionContext, true);
+
    __LOG_WARN.mail  = init.LogWarningsToMail();
    __LOG_WARN.sms   = init.LogWarningsToSMS();
    __LOG_ERROR.mail = init.LogErrorsToMail();
    __LOG_ERROR.sms  = init.LogErrorsToSMS();
+
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
 
    return(!catch("init.GlobalVars(1)"));
 }
@@ -714,9 +716,11 @@ bool Tester.RecordEquity() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool   ec_SetLogEnabled         (/*EXECUTION_CONTEXT*/int ec[], int status      );
-   int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
+   int    ec_SetDllError            (int ec[], int error   );
+   bool   ec_SetLogEnabled          (int ec[], int status  );
+   bool   ec_SetLogToDebugEnabled   (int ec[], int status  );
+   bool   ec_SetLogToTerminalEnabled(int ec[], int status  );
+   int    ec_SetProgramCoreFunction (int ec[], int function);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
