@@ -84,8 +84,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string name    = __NAME();
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
       bool logged, alerted;
-      if (false && __ExecutionContext[EC.logToCustomEnabled])
-         logged = logged || Logger(StringConcatenate("ERROR: ", name, "::", message));                // custom log, on error fall-back to terminal log
+      if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                             // custom log, on error fall-back to terminal log
+         logged = logged || Logger(__ExecutionContext[EC.pid], "ERROR: "+ name +"::"+ message, error);
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
          logged  = true;
@@ -146,10 +146,10 @@ int warn(string message, int error = NO_ERROR) {
    // log the warning
    string name = __NAME();
    bool logged, alerted;
-   if (false && __ExecutionContext[EC.logToCustomEnabled])
-      logged = logged || Logger(StringConcatenate("WARN: ", name, "::", message));                 // custom Log, on error fall-back to terminal log
+   if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                          // custom log, on error fall-back to terminal log
+      logged = logged || Logger(__ExecutionContext[EC.pid], "WARN: "+ name +"::"+ message, error);
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);    // terminal log
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message); // terminal log
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
@@ -195,28 +195,17 @@ int log(string message, int error = NO_ERROR) {
    if (!__ExecutionContext[EC.logEnabled]) return(error);   // skip logging if fully disabled
 
    if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {  // send the message to the terminal log
-      Print(__NAME(), "::", StrReplaceR(message, NL, " "), ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+      string sError = "";
+      if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
+      Print(__NAME(), "::", message, sError);
    }
    if (__ExecutionContext[EC.logToDebugEnabled] != 0) {     // send the message to the system debugger
       debug(message, error);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {    // send the message to a custom logger
-      Logger(message, error);
+      Logger(__ExecutionContext[EC.pid], message, error);
    }
    return(error);
-}
-
-
-/**
- * Send a message to a program's custom logger.
- *
- * @param  string message
- * @param  int    error [optional] - error to log (default: none)
- *
- * @return bool - success status; FALSE if custom logging is disabled
- */
-bool Logger(string message, int error = NO_ERROR) {
-   return(!catch("Logger(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
