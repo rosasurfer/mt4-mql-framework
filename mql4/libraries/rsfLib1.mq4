@@ -681,7 +681,6 @@ string GetServerName() {
       static.serverName[0] = "";
    static.lastTick = tick;
 
-
    if (!StringLen(static.serverName[0])) {
       string serverName=AccountServer(), tmpFilename="", fullTmpFilename;
 
