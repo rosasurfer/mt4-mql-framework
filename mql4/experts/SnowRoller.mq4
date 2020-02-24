@@ -1837,6 +1837,7 @@ bool UpdatePendingOrders() {
          }
          level = lastExistingLevel + Sign(nextLevel);
 
+         debug("UpdatePendingOrders(0.1)  "+ sequence.longName +"  adding order for level "+ level +" (lastExistingLevel="+ lastExistingLevel +", nextLevel="+ nextLevel +")");
          type = Grid.AddPendingOrder(level); if (!type) return(false);
 
          if (level != nextLevel) {
