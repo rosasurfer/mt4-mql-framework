@@ -42,12 +42,21 @@ int start.RelaunchInputDialog() {
  *  - The terminal must run with Administrator rights for OutputDebugString() to transport debug messages.
  */
 int debug(string message, int error = NO_ERROR) {
+   static bool recursiveCall = false;
+   if (recursiveCall) {                               // prevent recursive calls
+      Print("debug(1)  recursive call: ", message);
+      return(error);
+   }
+   recursiveCall = true;
+
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
    else                         application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
+
+   recursiveCall = false;
    return(error);
 }
 
@@ -62,7 +71,7 @@ int debug(string message, int error = NO_ERROR) {
  * @param  bool   orderPop [optional] - whether an order context stored on the order context stack should be restored
  *                                      (default: no)
  *
- * @return int - the occurred or enforced error
+ * @return int - the same error
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    orderPop = orderPop!=0;
@@ -71,12 +80,12 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
    else                               {                               GetLastError(); }
 
-   static bool recursive = false;
+   static bool recursiveCall = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                          // prevent recursive errors
-         return(debug("catch(1)  recursive error: "+ location, error));
-      recursive = true;
+      if (recursiveCall)                                                      // prevent recursive calls
+         return(debug("catch(1)  recursive call: "+ location, error));
+      recursiveCall = true;
 
       // send the error to the debug output console
       debug("ERROR: "+ location, error);
@@ -131,7 +140,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
       // set var last_error
       SetLastError(error, NULL);
-      recursive = false;
+      recursiveCall = false;
    }
 
    if (orderPop)
@@ -149,6 +158,11 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - the same error
  */
 int warn(string message, int error = NO_ERROR) {
+   static bool recursiveCall = false;
+   if (recursiveCall)                                                   // prevent recursive calls
+      return(debug("warn(1)  recursive call: "+ message, error));
+   recursiveCall = true;
+
    // Warnung zus‰tzlich an Debug-Ausgabe schicken
    debug("WARN: "+ message, error);
 
@@ -182,7 +196,7 @@ int warn(string message, int error = NO_ERROR) {
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schlieﬂenden Klammer umbrechen
       else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
-                     message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
+                     message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(2)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
       MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
@@ -200,6 +214,8 @@ int warn(string message, int error = NO_ERROR) {
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
    }
+
+   recursiveCall = false;
    return(error);
 }
 
@@ -215,6 +231,11 @@ int warn(string message, int error = NO_ERROR) {
 int log(string message, int error = NO_ERROR) {
    if (!__LOG()) return(error);
 
+   static bool recursiveCall = false;
+   if (recursiveCall)                                                // prevent recursive calls
+      return(debug("log(1)  recursive call: "+ message, error));
+   recursiveCall = true;
+
    // duplicate the message to the system debugger (if configured)
    static int logToDebug = -1;
    if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
@@ -225,12 +246,15 @@ int log(string message, int error = NO_ERROR) {
 
    // log to a custom logfile or...
    if (ec_CustomLogEnabled(__ExecutionContext)) {                    // experts only
-      if (__logCustom(StringConcatenate(name, "::", message)))
+      if (__logCustom(StringConcatenate(name, "::", message))) {
+         recursiveCall = false;
          return(error);                                              // on error fallback to the terminal log
+      }
    }
 
    // log to the terminal log
    Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
+   recursiveCall = false;
    return(error);
 }
 
@@ -245,8 +269,16 @@ int log(string message, int error = NO_ERROR) {
  * @access private - Aufruf nur aus log()
  */
 bool __logCustom(string message) {
+   static bool recursiveCall = false;
+   if (recursiveCall)                                                // prevent recursive calls
+      return(debug("__logCustom(1)  recursive call: "+ message));
+   recursiveCall = true;
+
    int instanceId = GetCustomLogID();
-   if (!instanceId) return(false);
+   if (!instanceId) {
+      recursiveCall = false;
+      return(false);
+   }
 
    message = StringConcatenate(TimeToStr(GetLocalTime(), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
 
@@ -255,25 +287,29 @@ bool __logCustom(string message) {
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
       ec_SetCustomLogEnabled(__ExecutionContext, false);
-      catch("__logCustom(1)->FileOpen(\""+ fileName +"\")");
+      catch("__logCustom(2)->FileOpen(\""+ fileName +"\")");
+      recursiveCall = false;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
       ec_SetCustomLogEnabled(__ExecutionContext, false);
-      catch("__logCustom(2)->FileSeek()");
+      catch("__logCustom(3)->FileSeek()");
       FileClose(hFile);
+      recursiveCall = false;
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
       ec_SetCustomLogEnabled(__ExecutionContext, false);
-      catch("__logCustom(3)->FileWrite()");
+      catch("__logCustom(4)->FileWrite()");
       FileClose(hFile);
+      recursiveCall = false;
       return(_false(GetLastError()));
    }
 
    FileClose(hFile);
+   recursiveCall = false;
    return(true);
 }
 
