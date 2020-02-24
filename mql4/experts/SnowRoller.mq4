@@ -1818,7 +1818,7 @@ bool UpdatePendingOrders() {
                lastExistingLevel = nextLevel;                           // -1 | +1
                sequence.level    = nextLevel; SS.SequenceName();
                sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastExistingLevel;
-               nextLevel        += nextLevel;                           // -2 | +2
+               nextLevel        += Sign(nextLevel);                     // -2 | +2
                nextStopExists    = false;
             }
             ordersChanged = true;
@@ -1837,19 +1837,18 @@ bool UpdatePendingOrders() {
          }
          level = lastExistingLevel + Sign(nextLevel);
 
-         debug("UpdatePendingOrders(0.1)  "+ sequence.longName +"  adding order for level "+ level +" (lastExistingLevel="+ lastExistingLevel +", nextLevel="+ nextLevel +")");
          type = Grid.AddPendingOrder(level); if (!type) return(false);
 
          if (level != nextLevel) {
             if (IsStopOrderType(type)) {                          // a stop order was opened for a previous level
                sequence.level = level; SS.SequenceName();
-               nextLevel     += Sign(nextLevel);
+               nextLevel      = sequence.level + Sign(nextLevel);
             }
          }
          else if (IsLimitOrderType(type)) {                       // level==nextLevel: a limit order was opened
             sequence.level    = nextLevel; SS.SequenceName();
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
-            nextLevel        += Sign(nextLevel);
+            nextLevel         = sequence.level + Sign(nextLevel);
          }
          else {                                                   // level==nextLevel: a stop order was opened
             nextStopExists = true;
