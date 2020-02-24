@@ -75,6 +75,9 @@
    bool     IsJunctionA(string name);
    bool     IsSymlinkA(string name);
 
+   // logging
+   bool     Logger(int pid, string message, int error);
+
    // pointer utlities
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
