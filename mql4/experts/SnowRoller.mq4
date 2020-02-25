@@ -1841,7 +1841,7 @@ bool UpdatePendingOrders() {
 
          if (level != nextLevel) {
             if (IsStopOrderType(type)) {                          // a stop order was opened for a previous level
-               sequence.level = level; SS.SequenceName();
+               sequence.level = level - Sign(level); SS.SequenceName();
                nextLevel      = sequence.level + Sign(nextLevel);
             }
          }
