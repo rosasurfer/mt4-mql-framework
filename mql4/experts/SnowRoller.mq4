@@ -440,7 +440,9 @@ bool StartSequence(int signal) {
       return(_false(StopSequence(NULL)));
 
    sequence.status = STATUS_STARTING;
-   if (__LOG()) log("StartSequence(2)  starting sequence "+ sequence.name + ifString(sequence.level, " at level "+ Abs(sequence.level), ""));
+
+   double gridbase = GetGridbase();
+   if (__LOG()) log("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level + ifString(gridbase, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
 
    // update start/stop conditions
    switch (signal) {
@@ -495,8 +497,7 @@ bool StartSequence(int signal) {
    SS.StartStopStats();
 
    // calculate new gridbase and set it after start/stop data
-   double gridbase = GetGridbase();                               // use an existing pre-set gridbase
-   if (!gridbase)
+   if (!gridbase)                                                 // use an existing pre-set gridbase
       gridbase = startPrice - sequence.level*GridSize*Pips;
    ResetGridbase(startTime, gridbase);                            // make sure the gridbase event follows the start event
 
@@ -512,7 +513,7 @@ bool StartSequence(int signal) {
    if (!SaveStatus())          return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("StartSequence(6)  "+ sequence.longName +" started at "+ NumberToStr(startPrice, PriceFormat) +" (gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+   if (__LOG()) log("StartSequence(6)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -698,7 +699,7 @@ bool StopSequence(int signal) {
       RedrawStartStop();
 
       sequence.status = STATUS_STOPPED;
-      if (__LOG()) log("StopSequence(10)  "+ sequence.longName +" stopped at "+ NumberToStr(stopPrice, PriceFormat) +" (gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
+      if (__LOG()) log("StopSequence(10)  "+ sequence.name +" sequence stopped at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
       UpdateProfitTargets();
       ShowProfitTargets();
       SS.ProfitPerLevel();
@@ -942,7 +943,7 @@ bool ResetSequence(double gridbase, int level) {
    SS.All();
    SaveStatus();
 
-   if (__LOG()) log("ResetSequence(4)  "+ sequence.longName +" sequence reset, status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
+   if (__LOG()) log("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
    return(!catch("ResetSequence(5)"));
 }
 
@@ -966,7 +967,7 @@ bool ResumeSequence(int signal) {
    double   newGridbase, startPrice;
 
    sequence.status = STATUS_STARTING;
-   if (__LOG()) log("ResumeSequence(2)  "+ sequence.longName +" resuming sequence (stopped at "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(lastGridbase, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(2)  "+ sequence.name +" resuming sequence at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", old gridbase "+ NumberToStr(lastGridbase, PriceFormat) +")");
 
    // update start/stop conditions
    switch (signal) {
@@ -1054,7 +1055,7 @@ bool ResumeSequence(int signal) {
    if (!SaveStatus())                       return(false);
    RedrawStartStop();
 
-   if (__LOG()) log("ResumeSequence(5)  sequence "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
+   if (__LOG()) log("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -1817,7 +1818,7 @@ bool UpdatePendingOrders() {
                lastExistingLevel = nextLevel;                           // -1 | +1
                sequence.level    = nextLevel; SS.SequenceName();
                sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastExistingLevel;
-               nextLevel        += nextLevel;                           // -2 | +2
+               nextLevel        += Sign(nextLevel);                     // -2 | +2
                nextStopExists    = false;
             }
             ordersChanged = true;
@@ -1841,13 +1842,13 @@ bool UpdatePendingOrders() {
          if (level != nextLevel) {
             if (IsStopOrderType(type)) {                          // a stop order was opened for a previous level
                sequence.level = level; SS.SequenceName();
-               nextLevel     += Sign(nextLevel);
+               nextLevel      = sequence.level + Sign(nextLevel);
             }
          }
          else if (IsLimitOrderType(type)) {                       // level==nextLevel: a limit order was opened
             sequence.level    = nextLevel; SS.SequenceName();
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
-            nextLevel        += Sign(nextLevel);
+            nextLevel         = sequence.level + Sign(nextLevel);
          }
          else {                                                   // level==nextLevel: a stop order was opened
             nextStopExists = true;
