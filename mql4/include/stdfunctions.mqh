@@ -42,12 +42,21 @@ int start.RelaunchInputDialog() {
  *  - The terminal must run with Administrator rights for OutputDebugString() to transport debug messages.
  */
 int debug(string message, int error = NO_ERROR) {
+   static bool recursiveCall = false;
+   if (recursiveCall) {                               // prevent recursive calls
+      Print("debug(1)  recursive call: ", message);
+      return(error);
+   }
+   recursiveCall = true;
+
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
    else                         application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
+
+   recursiveCall = false;
    return(error);
 }
 
@@ -61,7 +70,7 @@ int debug(string message, int error = NO_ERROR) {
  * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack
  *                                      (default: no)
  *
- * @return int - the occurred or enforced error
+ * @return int - the same error
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    orderPop = orderPop!=0;
@@ -70,19 +79,19 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
    else                               {                               GetLastError(); }
 
-   static bool recursive = false;
+   static bool recursiveCall = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                                                  // prevent recursive calls
-         return(debug("catch(1)  recursive error: "+ location, error));
-      recursive = true;
+      if (recursiveCall)                                                                              // prevent recursive calls
+         return(debug("catch(1)  recursive call: "+ location, error));
+      recursiveCall = true;
 
       // always send the error to the system debugger
       debug("ERROR: "+ location, error);
 
       // log the error
       string name    = __NAME();
-      string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
+      string message = location +"  ["+ ErrorToStr(error) +"]";
       bool logged, alerted;
       if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                             // custom log, on error fall-back to terminal log
          logged = logged || Logger(__ExecutionContext[EC.pid], "ERROR: "+ name +"::"+ message, error);
@@ -91,22 +100,22 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
-      message = StringConcatenate(name, "::", message);
+      message = name +"::"+ message;
 
       // display the error
       if (IsTesting()) {
          // neither Alert() nor MessageBox() can be used
-         string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
+         string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
          int pos = StringFind(message, ") ");
-         if (pos == -1) message = StringConcatenate("ERROR in ", message);                            // wrap message after the closing function brace
-         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
-                        message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
+         if (pos == -1) message = "ERROR in "+ message;                                               // wrap message after the closing function brace
+         else           message = "ERROR in "+ StrLeft(message, pos+1) + NL + StringTrimLeft(StrSubstr(message, pos+2));
+                        message = TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL) + NL + message;
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
          alerted = true;
       }
       else {
-         message = StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
+         message = "ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
          if (!alerted) {
             Alert(message);
             alerted = true;
@@ -120,7 +129,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
       // set last_error
       SetLastError(error, NULL);
-      recursive = false;
+      recursiveCall = false;
    }
 
    if (orderPop)
@@ -138,10 +147,15 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - the same error
  */
 int warn(string message, int error = NO_ERROR) {
+   static bool recursiveCall = false;
+   if (recursiveCall)                                                                           // prevent recursive calls
+      return(debug("warn(1)  recursive call: "+ message, error));
+   recursiveCall = true;
+
    // always send the warning to the system debugger
    debug("WARN: "+ message, error);
 
-   if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
+   if (error != NO_ERROR) message = message +"  ["+ ErrorToStr(error) +"]";
 
    // log the warning
    string name = __NAME();
@@ -153,22 +167,22 @@ int warn(string message, int error = NO_ERROR) {
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
-   message = StringConcatenate(name, "::", message);
+   message = name +"::"+ message;
 
    // display the warning
    if (IsTesting()) {
       // neither Alert() nor MessageBox() can be used
-      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
+      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
       int pos = StringFind(message, ") ");
-      if (pos == -1) message = StringConcatenate("WARN in ", message);                          // wrap message after the closing function brace
-      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrSubstr(message, pos+2)));
-                     message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
+      if (pos == -1) message = "WARN in "+ message;                                             // wrap message after the closing function brace
+      else           message = "WARN in "+ StrLeft(message, pos+1) + NL + StringTrimLeft(StrSubstr(message, pos+2));
+                     message = TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL) + NL + message;
 
       PlaySoundEx("alert.wav");
       MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
    else {
-      message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
+      message = "WARN:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
       if (!alerted) {
          Alert(message);
          alerted = true;
@@ -179,6 +193,8 @@ int warn(string message, int error = NO_ERROR) {
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
    }
+
+   recursiveCall = false;
    return(error);
 }
 
@@ -192,19 +208,26 @@ int warn(string message, int error = NO_ERROR) {
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__ExecutionContext[EC.logEnabled]) return(error);   // skip logging if fully disabled
+   if (!__ExecutionContext[EC.logEnabled]) return(error);         // skip logging if fully disabled
 
-   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {  // send the message to the terminal log
+   static bool recursiveCall = false;
+   if (recursiveCall)                                             // prevent recursive calls
+      return(debug("log(1)  recursive call: "+ message, error));
+   recursiveCall = true;
+
+   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {        // send the message to the terminal log
       string sError = "";
       if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
       Print(__NAME(), "::", message, sError);
    }
-   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {     // send the message to the system debugger
+   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {           // send the message to the system debugger
       debug(message, error);
    }
-   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {    // send the message to a custom logger
+   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {          // send the message to a custom logger
       Logger(__ExecutionContext[EC.pid], message, error);
    }
+
+   recursiveCall = false;
    return(error);
 }
 
@@ -234,7 +257,7 @@ int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
 
    if (error != NO_ERROR) /*&&*/ if (IsExpert())
-      CheckErrors("SetLastError(1)");                 // update __STATUS_OFF in experts
+      CheckErrors("SetLastError(1)");                             // update __STATUS_OFF in experts
    return(error);
 }
 

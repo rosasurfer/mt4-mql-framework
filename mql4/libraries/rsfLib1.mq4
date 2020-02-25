@@ -652,7 +652,6 @@ string GetServerName() {
       static.serverName[0] = "";
    static.lastTick = tick;
 
-
    if (!StringLen(static.serverName[0])) {
       string serverName=AccountServer(), tmpFilename="", fullTmpFilename;
 
@@ -660,6 +659,7 @@ string GetServerName() {
          // create temporary file
          tmpFilename = "~GetServerName~"+ GetCurrentThreadId() +".tmp";
          int hFile = FileOpenHistory(tmpFilename, FILE_BIN|FILE_WRITE);
+
          if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
             int error = GetLastError();
             if (error == ERR_CANNOT_OPEN_FILE) log("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
