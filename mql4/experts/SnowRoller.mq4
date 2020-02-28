@@ -1838,24 +1838,20 @@ bool UpdatePendingOrders() {
          level = lastExistingLevel + Sign(nextLevel);
 
          type = Grid.AddPendingOrder(level); if (!type) return(false);
+         lastExistingLevel = level;
+         ordersChanged     = true;
 
-         if (level != nextLevel) {
-            if (IsStopOrderType(type)) {                          // a stop order was opened for a previous level
-               sequence.level = level - Sign(level); SS.SequenceName();
-               nextLevel      = sequence.level + Sign(nextLevel);
-            }
+         if (IsStopOrderType(type)) {                             // a stop order was opened
+            sequence.level = level - Sign(level); SS.SequenceName();
+            nextLevel      = level;
+            nextStopExists = true;
+            break;
          }
-         else if (IsLimitOrderType(type)) {                       // level==nextLevel: a limit order was opened
+         if (level == nextLevel) {                                // a limit order for the next level was opened
             sequence.level    = nextLevel; SS.SequenceName();
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
             nextLevel         = sequence.level + Sign(nextLevel);
          }
-         else {                                                   // level==nextLevel: a stop order was opened
-            nextStopExists = true;
-            ordersChanged = true;
-            break;
-         }
-         lastExistingLevel = level;
       }
    }
 
