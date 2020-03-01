@@ -67,7 +67,7 @@
    string   LocalTimeFormat(datetime timestamp, string format);
 
    // file functions
-   int      CreateDirectoryRecursive(string path);
+   int      CreateDirectoryRecursiveA(string path);
    string   GetFinalPathNameA(string name);
    string   GetReparsePointTargetA(string name);
    bool     IsDirectoryA(string name);
