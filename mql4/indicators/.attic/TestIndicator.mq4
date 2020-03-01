@@ -10,9 +10,8 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-
-#import "test/testlibrary.ex4"
-   int ex4_GetIntValue(int value);
+#import "rsfExpander.dll"
+   bool SetCustomLogA(int ec[], string filename);
 #import
 
 
@@ -22,14 +21,13 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onTick() {
-   static bool done = false;
-   if (!done) {
+   string filename = GetMqlFilesPath() +"\\presets\\indicator.log";
 
-      int bar = 1;
-      double price = iMA(NULL, -1, -1, 0, MODE_SMA, -1, bar); // result: on invalid parameters iMA doesn't set any errors
+   SetCustomLogA(__ExecutionContext, filename);
 
-      debug("onTick()  price = "+ price);
-      done = true;
-   }
+   log("onTick(1)  Tick="+ Tick +"  hello world");
+
+   //SetCustomLogA(__ExecutionContext, "");
+
    return(catch("onTick(1)"));
 }

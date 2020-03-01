@@ -386,3 +386,15 @@ void CopyInputStatus(bool store) {
       sessionbreak.endtime       = _sessionbreak.endtime;
    }
 }
+
+
+/**
+ * @param  int    id
+ * @param  string file
+ *
+ * @return int
+ */
+int SetCustomLog(int id, string file) {
+   return(id);
+}
+
