@@ -3032,7 +3032,7 @@ bool RestoreChartStatus() {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
          sequence.status = STATUS_WAITING;
-         SetCustomLog(sequence.id, NULL);
+         //SetCustomLog(sequence.id, NULL);
       }
       bool bValue;
       Chart.RestoreInt (name +".runtime.startStopDisplayMode",   startStopDisplayMode  );
@@ -3194,7 +3194,7 @@ bool ValidateInputs.ID(bool interactive) {
 
    sequence.id = iValue; SS.SequenceId();
    Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-   SetCustomLog(sequence.id, NULL);
+   //SetCustomLog(sequence.id, NULL);
 
    return(true);
 }

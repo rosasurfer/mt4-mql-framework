@@ -323,9 +323,22 @@ bool CheckErrors(string location, int setError = NULL) {
 
    return(__STATUS_OFF);
 
-   // dummy calls to suppress compiler warnings
+   // suppress compiler warnings
    __DummyCalls();
    HandleScriptError(NULL, NULL, NULL);
+   SetCustomLog(NULL);
+}
+
+
+/**
+ * Configure the use of a custom logfile.
+ *
+ * @param  string filename - name of a custom logfile or an empty string to disable custom logging
+ *
+ * @return bool - success status
+ */
+bool SetCustomLog(string filename) {
+   return(SetCustomLogA(__ExecutionContext, filename));
 }
 
 
@@ -339,6 +352,7 @@ bool CheckErrors(string location, int setError = NULL) {
    bool   ec_SetLogEnabled          (int ec[], int status);
    bool   ec_SetLogToDebugEnabled   (int ec[], int status);
    bool   ec_SetLogToTerminalEnabled(int ec[], int status);
+   bool   SetCustomLogA             (int ec[], string file);
    int    SyncMainContext_init      (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start     (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit    (int ec[], int uninitReason);

@@ -215,13 +215,13 @@ int log(string message, int error = NO_ERROR) {
       return(debug("log(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
+   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {           // send the message to the system debugger
+      debug(message, error);
+   }
    if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {        // send the message to the terminal log
       string sError = "";
       if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
       Print(__NAME(), "::", message, sError);
-   }
-   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {           // send the message to the system debugger
-      debug(message, error);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {          // send the message to a custom logger
       LogMessageA(__ExecutionContext, message, error);

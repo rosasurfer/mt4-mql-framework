@@ -10,9 +10,20 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-#import "rsfExpander.dll"
-   bool SetCustomLogA(int ec[], string filename);
-#import
+
+/**
+ * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
+ * returned with -1 (which signals a hard stop as opposite to a regular error).
+ *
+ * @return int - error status
+ */
+int afterInit() {
+   if (Tick ==  1) SetCustomLog(GetMqlFilesPath() +"\\presets\\indicator.log");
+   if (Tick == 11) SetCustomLog("");
+
+   debug("afterInit(1)  Tick="+ Tick +"  logEnabled="+ __ExecutionContext[EC.logEnabled] +"  logToDebug="+ __ExecutionContext[EC.logToDebugEnabled] +"  logToTerminal="+ __ExecutionContext[EC.logToTerminalEnabled] +"  logToCustom="+ __ExecutionContext[EC.logToCustomEnabled]);
+   return(NO_ERROR);
+}
 
 
 /**
@@ -21,13 +32,6 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onTick() {
-   string filename = GetMqlFilesPath() +"\\presets\\indicator.log";
-
-   SetCustomLogA(__ExecutionContext, filename);
-
    log("onTick(1)  Tick="+ Tick +"  hello world");
-
-   //SetCustomLogA(__ExecutionContext, "");
-
-   return(catch("onTick(1)"));
+   return(catch("onTick(2)"));
 }
