@@ -31,7 +31,7 @@ int onInitUser() {
             Sequence.ID     = sequence.id;
             sequence.isTest = false;
             sequence.status = STATUS_WAITING;
-            SetCustomLog(sequence.id, NULL);
+            //SetCustomLog(sequence.id, NULL);
             if (RestoreSequence(false)) {
                SS.SequenceId();
                SS.SequenceName();
@@ -58,7 +58,7 @@ int onInitUser() {
       SS.SequenceName();
 
       string logFile = StrLeft(GetStatusFileName(), -3) +"log";
-      SetCustomLog(sequence.id, logFile);
+      //SetCustomLog(sequence.id, logFile);
 
       if (start.conditions) {                            // without start conditions StartSequence() is called immediately and will save the sequence
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");

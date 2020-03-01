@@ -294,38 +294,9 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 
       else return(!catch("GetTimezoneTransitions(4)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
-      i++;                                                           // nächster Wechsel ist später
+      i++;                                                        // nächster Wechsel ist später
    }
    return(true);
-}
-
-
-int costum.log.id = 0;                    // static: EA ok, Indikator ?
-
-
-/**
- * Setzt das zu verwendende Custom-Log.
- *
- * @param  int    id   - Log-ID (ähnlich einer Instanz-ID)
- * @param  string file - Name des Logfiles relativ zu ".\files\"
- *
- * @return int - dieselbe ID (for chaining)
- */
-int SetCustomLog(int id, string file) {
-   if (file == "0")                       // (string) NULL
-      file = "";
-   costum.log.id   = id;
-   return(id);
-}
-
-
-/**
- * Gibt die ID des Custom-Logs zurück.
- *
- * @return int - ID
- */
-int GetCustomLogID() {
-   return(costum.log.id);
 }
 
 
