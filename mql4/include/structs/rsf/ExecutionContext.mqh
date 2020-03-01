@@ -21,90 +21,96 @@
  */
 #import "rsfExpander.dll"
    // getters
-   int      ec_Pid                (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_PreviousPid        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Pid                 (int ec[]);
+   int      ec_PreviousPid         (int ec[]);
 
-   int      ec_ProgramType        (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_ProgramName        (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramInitReason  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramUninitReason(/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramInitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramDeinitFlags (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ProgramType         (int ec[]);
+   string   ec_ProgramName         (int ec[]);
+   int      ec_ProgramCoreFunction (int ec[]);
+   int      ec_ProgramInitReason   (int ec[]);
+   int      ec_ProgramUninitReason (int ec[]);
+   int      ec_ProgramInitFlags    (int ec[]);
+   int      ec_ProgramDeinitFlags  (int ec[]);
 
-   int      ec_ModuleType         (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_ModuleName         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ModuleCoreFunction (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ModuleUninitReason (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ModuleInitFlags    (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ModuleDeinitFlags  (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ModuleType          (int ec[]);
+   string   ec_ModuleName          (int ec[]);
+   int      ec_ModuleCoreFunction  (int ec[]);
+   int      ec_ModuleUninitReason  (int ec[]);
+   int      ec_ModuleInitFlags     (int ec[]);
+   int      ec_ModuleDeinitFlags   (int ec[]);
 
-   string   ec_Symbol             (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_Timeframe          (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_Symbol              (int ec[]);
+   int      ec_Timeframe           (int ec[]);
    //       ec.rates
-   int      ec_Bars               (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ChangedBars        (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_UnchangedBars      (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_Ticks              (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_CycleTicks         (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_LastTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_PrevTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Bars                (int ec[]);
+   int      ec_ChangedBars         (int ec[]);
+   int      ec_UnchangedBars       (int ec[]);
+   int      ec_Ticks               (int ec[]);
+   int      ec_CycleTicks          (int ec[]);
+   datetime ec_LastTickTime        (int ec[]);
+   datetime ec_PrevTickTime        (int ec[]);
+   double   ec_Bid                 (int ec[]);
+   double   ec_Ask                 (int ec[]);
 
-   int      ec_Digits             (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_PipDigits          (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_SubPipDigits       (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_Pip                (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_Point              (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_PipPoints          (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_PriceFormat        (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_PipPriceFormat     (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_SubPipPriceFormat  (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Digits              (int ec[]);
+   int      ec_PipDigits           (int ec[]);
+   int      ec_SubPipDigits        (int ec[]);
+   double   ec_Pip                 (int ec[]);
+   double   ec_Point               (int ec[]);
+   int      ec_PipPoints           (int ec[]);
+   string   ec_PriceFormat         (int ec[]);
+   string   ec_PipPriceFormat      (int ec[]);
+   string   ec_SubPipPriceFormat   (int ec[]);
 
-   bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
-   int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ThreadId           (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_hChart             (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_hChartWindow       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_SuperContext        (int ec[], int target[]);
+   int      ec_lpSuperContext      (int ec[]);
+   int      ec_ThreadId            (int ec[]);
+   int      ec_hChart              (int ec[]);
+   int      ec_hChartWindow        (int ec[]);
 
    //       ec.test
-   int      ec_TestId             (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_TestCreated        (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_TestStartTime      (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_TestEndTime        (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestBarModel       (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestBars           (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestTicks          (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_TestSpread         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestTradeDirections(/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestReportId       (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_TestReportSymbol   (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestId              (int ec[]);
+   datetime ec_TestCreated         (int ec[]);
+   datetime ec_TestStartTime       (int ec[]);
+   datetime ec_TestEndTime         (int ec[]);
+   int      ec_TestBarModel        (int ec[]);
+   int      ec_TestBars            (int ec[]);
+   int      ec_TestTicks           (int ec[]);
+   double   ec_TestSpread          (int ec[]);
+   int      ec_TestTradeDirections (int ec[]);
+   int      ec_TestReportId        (int ec[]);
+   string   ec_TestReportSymbol    (int ec[]);
+   bool     ec_Testing             (int ec[]);
+   bool     ec_VisualMode          (int ec[]);
+   bool     ec_Optimization        (int ec[]);
 
-   bool     ec_ExtReporting       (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_RecordEquity       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_ExtReporting        (int ec[]);
+   bool     ec_RecordEquity        (int ec[]);
 
-   int      ec_MqlError           (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_DllError           (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_MqlError            (int ec[]);
+   int      ec_DllError            (int ec[]);
    //       ec.dllErrorMsg
-   int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_DllWarning          (int ec[]);
    //       ec.dllWarningMsg
-   bool     ec_LogEnabled         (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_CustomLogEnabled   (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_CustomLogFilename  (/*EXECUTION_CONTEXT*/int ec[]);
+
+   bool     ec_LogEnabled          (int ec[]);
+   bool     ec_LogToDebugEnabled   (int ec[]);
+   bool     ec_LogToTerminalEnabled(int ec[]);
+   bool     ec_LogToCustomEnabled  (int ec[]);
+   //       ec.customLog
+   string   ec_CustomLogFilename   (int ec[]);
 
 
    // used setters
-   int      ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int function);
-   int      ec_SetMqlError           (/*EXECUTION_CONTEXT*/int ec[], int error   );
-   int      ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error   );
-   bool     ec_SetLogEnabled         (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   int      ec_SetProgramCoreFunction (int ec[], int function);
+   int      ec_SetMqlError            (int ec[], int error   );
+   int      ec_SetDllError            (int ec[], int error   );
+   bool     ec_SetLogEnabled          (int ec[], int status  );
+   bool     ec_SetLogToDebugEnabled   (int ec[], int status  );
+   bool     ec_SetLogToTerminalEnabled(int ec[], int status  );
 
 
    // helpers
-   string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);
-   string lpEXECUTION_CONTEXT_toStr(/*EXECUTION_CONTEXT*/int lpEc, int outputDebug);
+   string EXECUTION_CONTEXT_toStr  (int ec[], int outputDebug);
+   string lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);
 #import
