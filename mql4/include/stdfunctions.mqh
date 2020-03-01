@@ -94,7 +94,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = location +"  ["+ ErrorToStr(error) +"]";
       bool logged, alerted;
       if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                             // custom log, on error fall-back to terminal log
-         logged = logged || Logger(__ExecutionContext[EC.pid], "ERROR: "+ name +"::"+ message, error);
+         logged = logged || LogMessageA(__ExecutionContext, "ERROR: "+ name +"::"+ message, error);
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
          logged  = true;
@@ -161,7 +161,7 @@ int warn(string message, int error = NO_ERROR) {
    string name = __NAME();
    bool logged, alerted;
    if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                          // custom log, on error fall-back to terminal log
-      logged = logged || Logger(__ExecutionContext[EC.pid], "WARN: "+ name +"::"+ message, error);
+      logged = logged || LogMessageA(__ExecutionContext, "WARN: "+ name +"::"+ message, error);
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message); // terminal log
       logged  = true;
@@ -224,22 +224,11 @@ int log(string message, int error = NO_ERROR) {
       debug(message, error);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {          // send the message to a custom logger
-      Logger(__ExecutionContext[EC.pid], message, error);
+      LogMessageA(__ExecutionContext, message, error);
    }
 
    recursiveCall = false;
    return(error);
-}
-
-
-/**
- * @param  int    id
- * @param  string file
- *
- * @return int
- */
-int SetCustomLog(int id, string file) {
-   return(id);
 }
 
 
@@ -450,7 +439,7 @@ string ErrorDescription(int error) {
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      );    //  65540
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      );    //  65541
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65542
-      case ERR_INVALID_ACCESS             : return("invalid access"                                            );    //  65543
+      case ERR_ACCESS_DENIED              : return("access denied"                                             );    //  65543
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 );    //  65544
       case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                               );    //  65545
       case ERR_INVALID_FILE_FORMAT        : return("invalid file format"                                       );    //  65546
@@ -464,6 +453,7 @@ string ErrorDescription(int error) {
       case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
+      case ERR_UNDEFINED_STATE            : return("undefined state or behaviour"                              );    //  65557
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -6773,7 +6763,6 @@ void __DummyCalls() {
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
-   SetCustomLog(NULL, NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    ShortAccountCompany();

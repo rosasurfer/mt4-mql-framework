@@ -76,7 +76,7 @@
    bool     IsSymlinkA(string name);
 
    // logging
-   bool     Logger(int pid, string message, int error);
+   bool     LogMessageA(int ec[], string message, int error);
 
    // pointer utlities
    int      GetBoolsAddress  (bool   values[]);
