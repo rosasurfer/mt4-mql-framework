@@ -3193,8 +3193,6 @@ bool ValidateInputs.ID(bool interactive) {
 
    sequence.id = iValue; SS.SequenceId();
    Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-   //SetCustomLog(sequence.id, NULL);
-
    return(true);
 }
 
