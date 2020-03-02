@@ -3032,7 +3032,6 @@ bool RestoreChartStatus() {
          sequence.id     = iValue; SS.SequenceId();
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
          sequence.status = STATUS_WAITING;
-         //SetCustomLog(sequence.id, NULL);
       }
       bool bValue;
       Chart.RestoreInt (name +".runtime.startStopDisplayMode",   startStopDisplayMode  );
@@ -3577,15 +3576,30 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
 /**
  * Return the full name of the status file.
  *
- * @return string
+ * @return string - filename or an empty string in case of errors
  */
 string GetStatusFileName() {
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFileName(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
+
    string directory, baseName=StrToLower(Symbol()) +".SR."+ sequence.id +".set";
 
    if (IsTestSequence()) directory = "\\presets\\";
    else                  directory = "\\presets\\"+ ShortAccountCompany() +"\\";
 
    return(GetMqlFilesPath() + directory + baseName);
+}
+
+
+/**
+ * Return the full name of the custom logfile.
+ *
+ * @return string - filename or an empty string in tester (no custom logfile)
+ */
+string GetCustomLogFileName() {
+   string name = GetStatusFileName();
+   if (!StringLen(name)) return("");
+   if (IsTestSequence()) return("");
+   return(StrLeft(name, -3) +"log");
 }
 
 
@@ -3607,7 +3621,7 @@ int CreateEventId() {
  */
 bool SaveStatus() {
    if (IsLastError())                             return(false);
-   if (!sequence.id)                              return(!catch("SaveStatus(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
+   if (!sequence.id)                              return(!catch("SaveStatus(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
    // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
