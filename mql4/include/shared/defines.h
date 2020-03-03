@@ -133,6 +133,10 @@
 #define TRADE_DIRECTION_BOTH              3
 
 
+// file system related constants
+#define MKDIR_PARENT                      1              // create non-existing parent directories as needed => @see CreateDirectory()
+
+
 // time constants
 #define SECOND                            1
 #define MINUTE                           60              //  60 seconds
@@ -189,7 +193,7 @@
 #define zFEB                      zFEBRUARY
 #define zMAR                         zMARCH
 #define zAPR                         zAPRIL
-//efine zMAY                           zMAY              // short form equals long form
+//      zMAY                           zMAY              // short form equals long form
 #define zJUN                          zJUNE
 #define zJUL                          zJULY
 #define zAUG                        zAUGUST
@@ -217,7 +221,7 @@
 #define FEB                        FEBRUARY
 #define MAR                           MARCH
 #define APR                           APRIL
-//efine MAY                             MAY              // short form equals long form
+//      MAY                             MAY              // short form equals long form
 #define JUN                            JUNE
 #define JUL                            JULY
 #define AUG                          AUGUST
