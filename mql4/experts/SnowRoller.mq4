@@ -1207,8 +1207,11 @@ bool UpdateStatus(bool &gridChanged) {
                SS.MissedLevels();
 
                // @see  https://github.com/rosasurfer/mt4-mql/issues/10
-               if (IsDemoFix()) /*&&*/ if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG()) log("UpdateStatus(6)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...");
+               if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
+                  string message = "UpdateStatus(6)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...";
+                  if (!IsTesting()) warn(message);
+                  else if (__LOG()) log(message);
+
                   int oe[];
                   if (!OrderCloseEx(orders.ticket[i], NULL, NULL, CLR_NONE, NULL, oe)) return(false);
                   OrderSelect(orders.ticket[i], SELECT_BY_TICKET);            // refresh order context as it changed during the tick
@@ -2163,7 +2166,7 @@ int Grid.TrailPendingOrder(int i) {
          error = Grid.DeleteOrder(i);
          if (!error) return(Grid.AddPendingOrder(level));
 
-         if (error == -1) {                              // the order was already executed
+         if (error == -1) {                              // the stop order was already executed
             pendingTime  = prevPendingTime;              // restore the original values
             pendingPrice = prevPendingPrice;
             stopLoss     = prevStoploss;                 // TODO: modify StopLoss of the now open position
