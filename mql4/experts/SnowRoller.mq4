@@ -400,12 +400,12 @@ bool onCommand(string commands[]) {
 bool HandleNetworkErrors() {
    // TODO: Regular processing must always continue, only trade requests must be disabled.
    switch (lastNetworkError) {
-      case NO_ERROR: return(true);
+      case NO_ERROR:
+         return(true);
 
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
-
-
+      case ERR_TRADE_DISABLED:
          if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
             return(!catch("HandleNetworkErrors(1)  "+ sequence.longName +" in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
 
@@ -418,7 +418,6 @@ bool HandleNetworkErrors() {
                return(false);
             }
          }
-
          return(!catch("HandleNetworkErrors(2)  "+ sequence.longName +" unsupported sequence status "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
    }
    return(!catch("HandleNetworkErrors(3)  "+ sequence.longName +" unsupported error ", lastNetworkError));
@@ -576,6 +575,7 @@ bool StopSequence(int signal) {
          oeFlags  = F_OE_DONT_CHECK_STATUS;                                // skip status check to prevent errors
          oeFlags |= F_ERR_NO_CONNECTION;                                   // custom handling of ERR_NO_CONNECTION
          oeFlags |= F_ERR_TRADESERVER_GONE;                                // custom handling of ERR_TRADESERVER_GONE
+         oeFlags |= F_ERR_TRADE_DISABLED;                                  // custom handling of ERR_TRADE_DISABLED
 
          int ticket = OrdersHedge(openPositions, slippage, oeFlags, oes);
          if (!ticket) {
@@ -583,6 +583,7 @@ bool StopSequence(int signal) {
             switch (error) {
                case ERR_NO_CONNECTION:
                case ERR_TRADESERVER_GONE:
+               case ERR_TRADE_DISABLED:
                   return(!SetLastNetworkError(oes));
             }
             return(!SetLastError(error));
@@ -649,12 +650,15 @@ bool StopSequence(int signal) {
       if (sizeOfPositions > 0) {
          oeFlags  = F_ERR_NO_CONNECTION;                                   // custom handling of ERR_NO_CONNECTION
          oeFlags |= F_ERR_TRADESERVER_GONE;                                // custom handling of ERR_TRADESERVER_GONE
+         oeFlags |= F_ERR_TRADE_DISABLED;                                  // custom handling of ERR_TRADE_DISABLED
 
          if (!OrdersClose(openPositions, slippage, CLR_CLOSE, oeFlags, oes)) {
             error = oes.Error(oes, 0);
             switch (error) {
                case ERR_NO_CONNECTION:
-               case ERR_TRADESERVER_GONE: return(!SetLastNetworkError(oes));
+               case ERR_TRADESERVER_GONE:
+               case ERR_TRADE_DISABLED:
+                  return(!SetLastNetworkError(oes));
             }
             return(!SetLastError(error));
          }
@@ -2206,6 +2210,7 @@ int Grid.DeleteOrder(int i) {
       int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the order already being executed
                 oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of ERR_NO_CONNECTION
                 oeFlags |= F_ERR_TRADESERVER_GONE;             // custom handling of ERR_TRADESERVER_GONE
+                oeFlags |= F_ERR_TRADE_DISABLED;               // custom handling of ERR_TRADE_DISABLED
 
       bool success = OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe);
       if (success) {
@@ -2214,9 +2219,12 @@ int Grid.DeleteOrder(int i) {
       else {
          int error = oe.Error(oe);
          switch (error) {
-            case ERR_INVALID_TRADE_PARAMETERS: return(-1);
+            case ERR_INVALID_TRADE_PARAMETERS:
+               return(-1);
             case ERR_NO_CONNECTION:
-            case ERR_TRADESERVER_GONE:         return(SetLastNetworkError(oe));
+            case ERR_TRADESERVER_GONE:
+            case ERR_TRADE_DISABLED:
+               return(SetLastNetworkError(oe));
          }
          return(SetLastError(error));
       }
@@ -2247,15 +2255,19 @@ int Grid.DeleteLimit(int i) {
    int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the limit already being executed
              oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of ERR_NO_CONNECTION
              oeFlags |= F_ERR_TRADESERVER_GONE;             // custom handling of ERR_TRADESERVER_GONE
+             oeFlags |= F_ERR_TRADE_DISABLED;               // custom handling of ERR_TRADE_DISABLED
 
    if (OrderModifyEx(orders.ticket[i], orders.openPrice[i], NULL, NULL, NULL, CLR_NONE, oeFlags, oe))
       return(_NULL(SetLastNetworkError(oe)));
 
    int error = oe.Error(oe);
    switch (error) {
-      case ERR_INVALID_TRADE_PARAMETERS: return(-1);
+      case ERR_INVALID_TRADE_PARAMETERS:
+         return(-1);
       case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE:         return(SetLastNetworkError(oe));
+      case ERR_TRADESERVER_GONE:
+      case ERR_TRADE_DISABLED:
+         return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
 }
@@ -2449,6 +2461,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
       oeFlags |= F_ERR_INVALID_STOP;            // custom handling of ERR_INVALID_STOP for the last gridlevel only
       oeFlags |= F_ERR_NO_CONNECTION;           // custom handling of ERR_NO_CONNECTION
       oeFlags |= F_ERR_TRADESERVER_GONE;        // custom handling of ERR_TRADESERVER_GONE
+      oeFlags |= F_ERR_TRADE_DISABLED;          // custom handling of ERR_TRADE_DISABLED
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2468,7 +2481,9 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
          return(ifInt(insideSpread, -1, -2));
 
       case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE: return(_NULL(SetLastNetworkError(oe)));
+      case ERR_TRADESERVER_GONE:
+      case ERR_TRADE_DISABLED:
+         return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -2504,6 +2519,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
             oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
+            oeFlags    |= F_ERR_TRADE_DISABLED;       // custom handling of ERR_TRADE_DISABLED
 
    int ticket = OrderSendEx(Symbol(), type, lots, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2521,7 +2537,9 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
          return(ifInt(violatedMarket, -1, -2));
 
       case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE: return(_NULL(SetLastNetworkError(oe)));
+      case ERR_TRADESERVER_GONE:
+      case ERR_TRADE_DISABLED:
+         return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -2557,6 +2575,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
             oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
+            oeFlags    |= F_ERR_TRADE_DISABLED;       // custom handling of ERR_TRADE_DISABLED
 
    int ticket = OrderSendEx(Symbol(), type, lots, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2574,7 +2593,9 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
          return(ifInt(violatedMarket, -1, -2));
 
       case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE: return(_NULL(SetLastNetworkError(oe)));
+      case ERR_TRADESERVER_GONE:
+      case ERR_TRADE_DISABLED:
+         return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
 }
@@ -2599,6 +2620,7 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
    int oeFlags  = F_ERR_INVALID_STOP;           // custom handling of ERR_INVALID_STOP
        oeFlags |= F_ERR_NO_CONNECTION;          // custom handling of ERR_NO_CONNECTION
        oeFlags |= F_ERR_TRADESERVER_GONE;       // custom handling of ERR_TRADESERVER_GONE
+       oeFlags |= F_ERR_TRADE_DISABLED;         // custom handling of ERR_TRADE_DISABLED
 
    bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_PENDING, oeFlags, oe);
    if (success) {
@@ -2616,7 +2638,9 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
          return(ifInt(violatedMarket, -1, -2));
 
       case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE: return(SetLastNetworkError(oe));
+      case ERR_TRADESERVER_GONE:
+      case ERR_TRADE_DISABLED:
+         return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
 }
@@ -6071,7 +6095,7 @@ int SetLastNetworkError(int oe[]) {
       retries = 0;
    }
    else {
-      datetime now = Tick.Time + Ceil(duration/1000.);            // assumed current server time (may lag to real time)
+      datetime now = Tick.Time + Ceil(duration/1000.);            // assumed current server time (may lag real time)
       int pauses[6]; if (!pauses[0]) {
          pauses[0] =  5*SECONDS;
          pauses[1] = 30*SECONDS;
