@@ -3618,9 +3618,12 @@ string GetStatusFileName() {
  * @return string - filename or an empty string in tester (no custom logfile)
  */
 string GetCustomLogFileName() {
+   return("");                            // for the time being: disable the custom log
+
    string name = GetStatusFileName();
    if (!StringLen(name)) return("");
    if (IsTestSequence()) return("");
+
    return(StrLeft(name, -3) +"log");
 }
 
