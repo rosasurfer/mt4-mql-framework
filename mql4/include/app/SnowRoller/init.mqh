@@ -10,8 +10,10 @@ int onInitUser() {
 
    // Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateInputs.ID(interactive)) {
+      SetCustomLog(GetCustomLogFileName());              // on success a sequence id was specified
+
       sequence.status = STATUS_WAITING;
-      RestoreSequence(interactive);
+      if (!RestoreSequence(interactive)) SetCustomLog("");
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
@@ -31,11 +33,13 @@ int onInitUser() {
             Sequence.ID     = sequence.id;
             sequence.isTest = false;
             sequence.status = STATUS_WAITING;
-            //SetCustomLog(sequence.id, NULL);
+            SetCustomLog(GetCustomLogFileName());        // on success a sequence id was specified
+
             if (RestoreSequence(false)) {
                SS.SequenceId();
                SS.SequenceName();
             }
+            else SetCustomLog("");
             return(last_error);
          }
          if (button == IDCANCEL)
@@ -54,11 +58,9 @@ int onInitUser() {
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
+      SetCustomLog(GetCustomLogFileName());
       SS.SequenceId();
       SS.SequenceName();
-
-      string logFile = StrLeft(GetStatusFileName(), -3) +"log";
-      //SetCustomLog(sequence.id, logFile);
 
       if (start.conditions) {                            // without start conditions StartSequence() is called immediately and will save the sequence
          if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created at "+ NumberToStr((Bid+Ask)/2, PriceFormat) +", waiting for start condition");
@@ -75,8 +77,9 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // im Chart gespeicherte Sequenz restaurieren
+   // restore sequence data from the chart
    if (RestoreChartStatus()) {
+      SetCustomLog(GetCustomLogFileName());              // on success a sequence id was restored
       RestoreSequence(false);
    }
    DeleteChartStatus();
@@ -130,6 +133,7 @@ int onInitTimeframeChange() {
  * @return int - error status
  */
 int onInitSymbolChange() {
+   SetCustomLog("");
    return(SetLastError(ERR_CANCELLED_BY_USER));
 }
 

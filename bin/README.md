@@ -20,5 +20,5 @@ Options:
 ```
 - - -
 
-### How to fix the compiler error "<include-file> - cannot open the program file"?
+### How to fix the compiler error "cannot open <include-filename>"?
 To make the compiler find the framework's include files a symbolic link pointing to `mql4/experts/include` must be created in `bin/experts`. There is no reliable way for the script to create the symlink in the different Windows versions, therefore the user has to do it manually. A comfortable way to manage Windows symlinks and junctions is the free [Link Shell Extension](http://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html) by Hermann Schinagl.
