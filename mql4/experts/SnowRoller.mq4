@@ -573,9 +573,9 @@ bool StopSequence(int signal) {
       int sizeOfPositions = ArraySize(openPositions);
       if (sizeOfPositions > 0) {
          oeFlags  = F_OE_DONT_CHECK_STATUS;                                // skip status check to prevent errors
-         oeFlags |= F_ERR_NO_CONNECTION;                                   // custom handling of ERR_NO_CONNECTION
-         oeFlags |= F_ERR_TRADESERVER_GONE;                                // custom handling of ERR_TRADESERVER_GONE
-         oeFlags |= F_ERR_TRADE_DISABLED;                                  // custom handling of ERR_TRADE_DISABLED
+         oeFlags |= F_ERR_NO_CONNECTION;                                   // custom handling of recoverable network errors
+         oeFlags |= F_ERR_TRADESERVER_GONE;
+         oeFlags |= F_ERR_TRADE_DISABLED;
 
          int ticket = OrdersHedge(openPositions, slippage, oeFlags, oes);
          if (!ticket) {
@@ -648,9 +648,9 @@ bool StopSequence(int signal) {
       double remainingSwap, remainingCommission, remainingProfit;
 
       if (sizeOfPositions > 0) {
-         oeFlags  = F_ERR_NO_CONNECTION;                                   // custom handling of ERR_NO_CONNECTION
-         oeFlags |= F_ERR_TRADESERVER_GONE;                                // custom handling of ERR_TRADESERVER_GONE
-         oeFlags |= F_ERR_TRADE_DISABLED;                                  // custom handling of ERR_TRADE_DISABLED
+         oeFlags  = F_ERR_NO_CONNECTION;                                   // custom handling of recoverable network errors
+         oeFlags |= F_ERR_TRADESERVER_GONE;
+         oeFlags |= F_ERR_TRADE_DISABLED;
 
          if (!OrdersClose(openPositions, slippage, CLR_CLOSE, oeFlags, oes)) {
             error = oes.Error(oes, 0);
@@ -1207,8 +1207,11 @@ bool UpdateStatus(bool &gridChanged) {
                SS.MissedLevels();
 
                // @see  https://github.com/rosasurfer/mt4-mql/issues/10
-               if (IsDemoFix()) /*&&*/ if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG()) log("UpdateStatus(6)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...");
+               if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
+                  string message = "UpdateStatus(6)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...";
+                  if (!IsTesting()) warn(message);
+                  else if (__LOG()) log(message);
+
                   int oe[];
                   if (!OrderCloseEx(orders.ticket[i], NULL, NULL, CLR_NONE, NULL, oe)) return(false);
                   OrderSelect(orders.ticket[i], SELECT_BY_TICKET);            // refresh order context as it changed during the tick
@@ -1311,7 +1314,7 @@ string UpdateStatus.OrderCancelledMsg(int i) {
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
 
-   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled");
+   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled") +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
    return(message);
 }
 
@@ -1339,6 +1342,8 @@ string UpdateStatus.OrderFillMsg(int i) {
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
+   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+
    return(message);
 }
 
@@ -1363,6 +1368,7 @@ string UpdateStatus.PositionCloseMsg(int i) {
       message = message +" ("+ OrderComment() +")";
    OrderPop("UpdateStatus.PositionCloseMsg(2)");
 
+   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
    return(message);
 }
 
@@ -1392,6 +1398,8 @@ string UpdateStatus.StopLossMsg(int i) {
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
+
+   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
    return(message);
 }
 
@@ -2124,10 +2132,10 @@ bool Grid.AddPosition(int level) {
 
 
 /**
- * Trail pending open price and stoploss of the specified pending order. If modification of the order is not possible (due to
- * market constraints) it is replaced by a new limit order.
+ * Trail pending open price and stoploss of the specified pending stop order. If the new open price is too close to the market
+ * the stop order may be replaced by a limit order.
  *
- * @param  int i - order index
+ * @param  int i - pending order index
  *
  * @return int - order type of the resulting pending order or NULL in case of errors
  */
@@ -2163,7 +2171,7 @@ int Grid.TrailPendingOrder(int i) {
          error = Grid.DeleteOrder(i);
          if (!error) return(Grid.AddPendingOrder(level));
 
-         if (error == -1) {                              // the order was already executed
+         if (error == -1) {                              // the stop order was already executed
             pendingTime  = prevPendingTime;              // restore the original values
             pendingPrice = prevPendingPrice;
             stopLoss     = prevStoploss;                 // TODO: modify StopLoss of the now open position
@@ -2208,9 +2216,9 @@ int Grid.DeleteOrder(int i) {
 
    if (orders.ticket[i] > 0) {
       int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the order already being executed
-                oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of ERR_NO_CONNECTION
-                oeFlags |= F_ERR_TRADESERVER_GONE;             // custom handling of ERR_TRADESERVER_GONE
-                oeFlags |= F_ERR_TRADE_DISABLED;               // custom handling of ERR_TRADE_DISABLED
+                oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
+                oeFlags |= F_ERR_TRADESERVER_GONE;
+                oeFlags |= F_ERR_TRADE_DISABLED;
 
       bool success = OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe);
       if (success) {
@@ -2253,9 +2261,9 @@ int Grid.DeleteLimit(int i) {
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the limit already being executed
-             oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of ERR_NO_CONNECTION
-             oeFlags |= F_ERR_TRADESERVER_GONE;             // custom handling of ERR_TRADESERVER_GONE
-             oeFlags |= F_ERR_TRADE_DISABLED;               // custom handling of ERR_TRADE_DISABLED
+             oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
+             oeFlags |= F_ERR_TRADESERVER_GONE;
+             oeFlags |= F_ERR_TRADE_DISABLED;
 
    if (OrderModifyEx(orders.ticket[i], orders.openPrice[i], NULL, NULL, NULL, CLR_NONE, oeFlags, oe))
       return(_NULL(SetLastNetworkError(oe)));
@@ -2456,12 +2464,12 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = ifInt(level > 0, CLR_LONG, CLR_SHORT); if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = NULL;
+            oeFlags    |= F_ERR_NO_CONNECTION;     // custom handling of recoverable network errors
+            oeFlags    |= F_ERR_TRADESERVER_GONE;
+            oeFlags    |= F_ERR_TRADE_DISABLED;
 
    if (Abs(level) >= Abs(sequence.level))
-      oeFlags |= F_ERR_INVALID_STOP;            // custom handling of ERR_INVALID_STOP for the last gridlevel only
-      oeFlags |= F_ERR_NO_CONNECTION;           // custom handling of ERR_NO_CONNECTION
-      oeFlags |= F_ERR_TRADESERVER_GONE;        // custom handling of ERR_TRADESERVER_GONE
-      oeFlags |= F_ERR_TRADE_DISABLED;          // custom handling of ERR_TRADE_DISABLED
+      oeFlags |= F_ERR_INVALID_STOP;               // custom handling of ERR_INVALID_STOP for the last gridlevel only
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2471,7 +2479,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
 
    int error = oe.Error(oe);
    switch (error) {
-      case ERR_INVALID_STOP:                    // either the stoploss violates the market (-1) or the broker's stop distance (-2)
+      case ERR_INVALID_STOP:                       // either the stoploss violates the market (-1) or the broker's stop distance (-2)
          if (!oeFlags & F_ERR_INVALID_STOP)
             break;
          bool insideSpread;
@@ -2517,9 +2525,9 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
-            oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
-            oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
-            oeFlags    |= F_ERR_TRADE_DISABLED;       // custom handling of ERR_TRADE_DISABLED
+            oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of recoverable network errors
+            oeFlags    |= F_ERR_TRADESERVER_GONE;
+            oeFlags    |= F_ERR_TRADE_DISABLED;
 
    int ticket = OrderSendEx(Symbol(), type, lots, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2573,9 +2581,9 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
-            oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of ERR_NO_CONNECTION
-            oeFlags    |= F_ERR_TRADESERVER_GONE;     // custom handling of ERR_TRADESERVER_GONE
-            oeFlags    |= F_ERR_TRADE_DISABLED;       // custom handling of ERR_TRADE_DISABLED
+            oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of recoverable network errors
+            oeFlags    |= F_ERR_TRADESERVER_GONE;
+            oeFlags    |= F_ERR_TRADE_DISABLED;
 
    int ticket = OrderSendEx(Symbol(), type, lots, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2618,9 +2626,9 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
    if (sequence.status != STATUS_PROGRESSING) return(catch("ModifyStopOrder(1)  "+ sequence.longName +" cannot modify order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    int oeFlags  = F_ERR_INVALID_STOP;           // custom handling of ERR_INVALID_STOP
-       oeFlags |= F_ERR_NO_CONNECTION;          // custom handling of ERR_NO_CONNECTION
-       oeFlags |= F_ERR_TRADESERVER_GONE;       // custom handling of ERR_TRADESERVER_GONE
-       oeFlags |= F_ERR_TRADE_DISABLED;         // custom handling of ERR_TRADE_DISABLED
+       oeFlags |= F_ERR_NO_CONNECTION;          // custom handling of recoverable network errors
+       oeFlags |= F_ERR_TRADESERVER_GONE;
+       oeFlags |= F_ERR_TRADE_DISABLED;
 
    bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_PENDING, oeFlags, oe);
    if (success) {
@@ -5302,8 +5310,8 @@ bool ConfirmFirstTickTrade(string location, string message) {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
-      if (Tick > 0) RefreshRates();       // no need for RefreshRates() on Tick=0, which is in init()
+      result = (IDOK == MessageBoxEx(__NAME() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      RefreshRates();
    }
    confirmed = true;
    return(result);
