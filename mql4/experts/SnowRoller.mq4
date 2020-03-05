@@ -1314,7 +1314,7 @@ string UpdateStatus.OrderCancelledMsg(int i) {
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
 
-   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled") +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled") +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
@@ -1342,7 +1342,7 @@ string UpdateStatus.OrderFillMsg(int i) {
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
-   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
 
    return(message);
 }
@@ -1368,7 +1368,7 @@ string UpdateStatus.PositionCloseMsg(int i) {
       message = message +" ("+ OrderComment() +")";
    OrderPop("UpdateStatus.PositionCloseMsg(2)");
 
-   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
@@ -1399,7 +1399,7 @@ string UpdateStatus.StopLossMsg(int i) {
       message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
 
-   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
@@ -3851,7 +3851,12 @@ string SaveStatus.OrderToStr(int index) {
    double   swap         = orders.swap        [index];
    double   commission   = orders.commission  [index];
    double   profit       = orders.profit      [index];
-   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+
+   string sOrder = StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2));
+   if (ticket <= 0) {
+      warn("SaveStatus.OrderToStr(1)  "+sequence.longName +" writing order record with illeagl ticket: "+ sOrder);
+   }
+   return(sOrder);
 }
 
 
