@@ -1314,7 +1314,7 @@ string UpdateStatus.OrderCancelledMsg(int i) {
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
 
-   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled") +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled") +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
@@ -1342,7 +1342,7 @@ string UpdateStatus.OrderFillMsg(int i) {
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
-   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
 
    return(message);
 }
@@ -1368,7 +1368,7 @@ string UpdateStatus.PositionCloseMsg(int i) {
       message = message +" ("+ OrderComment() +")";
    OrderPop("UpdateStatus.PositionCloseMsg(2)");
 
-   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
@@ -1399,7 +1399,7 @@ string UpdateStatus.StopLossMsg(int i) {
       message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
    }
 
-   message = message +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
