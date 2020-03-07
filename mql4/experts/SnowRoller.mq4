@@ -322,10 +322,6 @@ int onTick() {
    // update equity for equity recorder
    if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
 
-   // update/show profit targets
-   if (!IsTesting()) {
-      if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
-   }
    return(last_error);
 }
 
