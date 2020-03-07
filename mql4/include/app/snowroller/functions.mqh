@@ -84,12 +84,18 @@ bool Chart.MarkOrderSent(int i) {
    #define ODM_PYRAMID  2     // Pending, Open,             Closed
    #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
    */
+   static string sPrefix = "";
+   if (!StringLen(sPrefix)) {
+      if      (STRATEGY_ID == 103) sPrefix = "SR.";
+      else if (STRATEGY_ID == 104) sPrefix = "SPH.";
+      else                         sPrefix = "??.";
+   }
    bool pending = orders.pendingType[i] != OP_UNDEFINED;
 
    int      type        =    ifInt(pending, orders.pendingType [i], orders.type     [i]);
    datetime openTime    =    ifInt(pending, orders.pendingTime [i], orders.openTime [i]);
    double   openPrice   = ifDouble(pending, orders.pendingPrice[i], orders.openPrice[i]);
-   string   comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   string   comment     = sPrefix + sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    color    markerColor = CLR_NONE;
 
    if (orderDisplayMode != ODM_NONE) {
@@ -115,7 +121,13 @@ bool Chart.MarkOrderFilled(int i) {
    #define ODM_PYRAMID  2     // Pending, Open,             Closed
    #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
    */
-   string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   static string sPrefix = "";
+   if (!StringLen(sPrefix)) {
+      if      (STRATEGY_ID == 103) sPrefix = "SR.";
+      else if (STRATEGY_ID == 104) sPrefix = "SPH.";
+      else                         sPrefix = "??.";
+   }
+   string comment     = sPrefix + sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    color  markerColor = CLR_NONE;
 
    if (orderDisplayMode >= ODM_PYRAMID)

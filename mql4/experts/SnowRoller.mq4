@@ -4788,7 +4788,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
 
 /**
- * Return the number of closed positions of the sequence closed by stoploss.
+ * Return the number of positions of the sequence closed by a stoploss.
  *
  * @return int
  */
@@ -4804,7 +4804,7 @@ int CountStoppedOutPositions() {
 
 
 /**
- * Return the number of closed positions of the sequence closed by StopSequence().
+ * Return the number of positions of the sequence closed by StopSequence().
  *
  * @return int
  */
