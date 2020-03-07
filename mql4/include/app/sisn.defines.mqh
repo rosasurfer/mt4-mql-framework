@@ -1,5 +1,9 @@
+/**
+ * Common definitions for SnowRoller and Sisyphus
+ */
 
-#define STRATEGY_ID               103           // unique strategy id (between 101-1023)
+
+// sequence id limits
 #define SID_MIN                  1000           // min. sequence id value, at least 4 digits
 #define SID_MAX                 16383           // max. sequence id value, at most 14 bits: 32767 >> 1
 

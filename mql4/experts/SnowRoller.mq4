@@ -36,7 +36,7 @@
  * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
  */
 #include <stddefines.mqh>
-#include <app/SnowRoller/defines.mqh>
+#include <app/sisn.defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
@@ -65,6 +65,10 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FX
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
+
+
+#define STRATEGY_ID  103                           // unique strategy id (between 101-1023)
+
 
 // --- sequence data -----------------------
 int      sequence.id;
