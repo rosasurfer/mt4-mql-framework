@@ -393,39 +393,6 @@ bool onCommand(string commands[]) {
 
 
 /**
- * Handle occurred network errors. Disables regular processing of the EA until the retry condition for the next trade request
- * is fulfilled.
- *
- * @return bool - whether regular processing should continue (i.e. the trade request should be repeated)
- */
-bool HandleNetworkErrors() {
-   // TODO: Regular processing must always continue, only trade requests must be disabled.
-   switch (lastNetworkError) {
-      case NO_ERROR:
-         return(true);
-
-      case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE:
-      case ERR_TRADE_DISABLED:
-         if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
-            return(!catch("HandleNetworkErrors(1)  "+ sequence.longName +" in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
-
-         if (sequence.status == STATUS_PROGRESSING) {
-            if (Tick.Time >= nextRetry) {
-               retries++;
-               return(true);
-            }
-            else {
-               return(false);
-            }
-         }
-         return(!catch("HandleNetworkErrors(2)  "+ sequence.longName +" unsupported sequence status "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
-   }
-   return(!catch("HandleNetworkErrors(3)  "+ sequence.longName +" unsupported error ", lastNetworkError));
-}
-
-
-/**
  * Start a new trade sequence.
  *
  * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
@@ -1583,7 +1550,7 @@ bool IsStartSignal(int &signal) {
 
 
 /**
- * Whether a stop condition is satisfied for a waiting or progressing sequence. All stop conditions are "OR" combined.
+ * Whether a stop condition is satisfied for a waiting or a progressing sequence. All stop conditions are "OR" combined.
  *
  * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled stop condition
  *
@@ -5321,46 +5288,6 @@ bool ConfirmFirstTickTrade(string location, string message) {
    }
    confirmed = true;
    return(result);
-}
-
-
-/**
- * Return a readable version of a sequence status code.
- *
- * @param  int status
- *
- * @return string
- */
-string StatusToStr(int status) {
-   switch (status) {
-      case STATUS_UNDEFINED  : return("STATUS_UNDEFINED"  );
-      case STATUS_WAITING    : return("STATUS_WAITING"    );
-      case STATUS_STARTING   : return("STATUS_STARTING"   );
-      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
-      case STATUS_STOPPING   : return("STATUS_STOPPING"   );
-      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
-   }
-   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Return a description of a sequence status code.
- *
- * @param  int status
- *
- * @return string
- */
-string StatusDescription(int status) {
-   switch (status) {
-      case STATUS_UNDEFINED  : return("undefined"  );
-      case STATUS_WAITING    : return("waiting"    );
-      case STATUS_STARTING   : return("starting"   );
-      case STATUS_PROGRESSING: return("progressing");
-      case STATUS_STOPPING   : return("stopping"   );
-      case STATUS_STOPPED    : return("stopped"    );
-   }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
