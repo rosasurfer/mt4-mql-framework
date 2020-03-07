@@ -68,7 +68,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FX
 
 // --- sequence data -----------------------
 int      sequence.id;
-int      sequence.cycle;                           // counter of restarted sequences if AutoRestart=On: 1...+n
+int      sequence.cycle;                           // counter of restarted sequences if AutoRestart is not "Off"
 string   sequence.name     = "";                   // "L.1234"    | "S.5678"
 string   sequence.longName = "";                   // "L.1234.+1" | "S.5678.-2"
 datetime sequence.created;
