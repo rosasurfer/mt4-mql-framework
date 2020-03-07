@@ -4788,119 +4788,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
 
 /**
- * Redraw the start/stop markers of the currently active sequence. If AutoRestart is enabled markers of finished sequence
- * cycles will no be redrawn.
- */
-void RedrawStartStop() {
-   if (!__CHART()) return;
-
-   string   label, sCycle = StrPadLeft(sequence.cycle, 3, "0");
-   datetime time;
-   double   price;
-   double   profit;
-   int starts = ArraySize(sequence.start.event);
-
-   // start markers
-   for (int i=0; i < starts; i++) {
-      time   = sequence.start.time  [i];
-      price  = sequence.start.price [i];
-      profit = sequence.start.profit[i];
-
-      label = "SR."+ sequence.id +"."+ sCycle +".start."+ (i+1);
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-
-      if (startStopDisplayMode != SDM_NONE) {
-         ObjectCreate (label, OBJ_ARROW, 0, time, price);
-         ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-         ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     Blue                );
-         ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
-      }
-   }
-
-   // stop markers
-   for (i=0; i < starts; i++) {
-      if (sequence.stop.time[i] > 0) {
-         time   = sequence.stop.time [i];
-         price  = sequence.stop.price[i];
-         profit = sequence.stop.profit[i];
-
-         label = "SR."+ sequence.id +"."+ sCycle +".stop."+ (i+1);
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-
-         if (startStopDisplayMode != SDM_NONE) {
-            ObjectCreate (label, OBJ_ARROW, 0, time, price);
-            ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-            ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     Blue                );
-            ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
-         }
-      }
-   }
-   catch("RedrawStartStop(1)");
-}
-
-
-/**
- * Zeichnet die ChartMarker aller Orders neu.
- */
-void RedrawOrders() {
-   if (!__CHART()) return;
-
-   bool wasPending, isPending, closedPosition;
-   int  size = ArraySize(orders.ticket);
-
-   for (int i=0; i < size; i++) {
-      wasPending     = orders.pendingType[i] != OP_UNDEFINED;
-      isPending      = orders.type[i] == OP_UNDEFINED;
-      closedPosition = !isPending && orders.closeTime[i]!=0;
-
-      if    (isPending)                         Chart.MarkOrderSent(i);
-      else /*openPosition || closedPosition*/ {                                  // openPosition ist Folge einer
-         if (wasPending)                        Chart.MarkOrderFilled(i);        // ...ausgeführten Pending-Order
-         else                                   Chart.MarkOrderSent(i);          // ...oder Market-Order
-         if (closedPosition)                    Chart.MarkPositionClosed(i);
-      }
-   }
-}
-
-
-/**
- * Gibt die Anzahl der Pending-Orders der Sequenz zurück.
- *
- * @return int
- */
-int CountPendingOrders() {
-   int count, size=ArraySize(orders.ticket);
-
-   for (int i=0; i < size; i++) {
-      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0)
-         count++;
-   }
-   return(count);
-}
-
-
-/**
- * Gibt die Anzahl der offenen Positionen der Sequenz zurück.
- *
- * @return int
- */
-int CountOpenPositions() {
-   int count, size=ArraySize(orders.ticket);
-
-   for (int i=0; i < size; i++) {
-      if (orders.type[i]!=OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0)
-         count++;
-   }
-   return(count);
-}
-
-
-/**
- * Gibt die Anzahl der ausgestoppten Positionen der Sequenz zurück.
+ * Return the number of closed positions of the sequence closed by stoploss.
  *
  * @return int
  */
@@ -4916,7 +4804,7 @@ int CountStoppedOutPositions() {
 
 
 /**
- * Gibt die Anzahl der durch StopSequence() geschlossenen Positionen der Sequenz zurück.
+ * Return the number of closed positions of the sequence closed by StopSequence().
  *
  * @return int
  */
@@ -4928,98 +4816,6 @@ int CountClosedPositions() {
          count++;
    }
    return(count);
-}
-
-
-/**
- * Korrigiert die vom Terminal beim Abschicken einer Pending- oder Market-Order gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int i - Orderindex
- *
- * @return bool - success status
- */
-bool Chart.MarkOrderSent(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   bool pending = orders.pendingType[i] != OP_UNDEFINED;
-
-   int      type        =    ifInt(pending, orders.pendingType [i], orders.type     [i]);
-   datetime openTime    =    ifInt(pending, orders.pendingTime [i], orders.openTime [i]);
-   double   openPrice   = ifDouble(pending, orders.pendingPrice[i], orders.openPrice[i]);
-   string   comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   color    markerColor = CLR_NONE;
-
-   if (orderDisplayMode != ODM_NONE) {
-      if      (pending)                         markerColor = CLR_PENDING;
-      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_LONG, CLR_SHORT);
-   }
-   return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, sequence.unitsize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
-}
-
-
-/**
- * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int i - Orderindex
- *
- * @return bool - success status
- */
-bool Chart.MarkOrderFilled(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   color  markerColor = CLR_NONE;
-
-   if (orderDisplayMode >= ODM_PYRAMID)
-      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
-
-   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
-}
-
-
-/**
- * Korrigiert den vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int i - Orderindex
- *
- * @return bool - success status
- */
-bool Chart.MarkPositionClosed(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   color markerColor = CLR_NONE;
-
-   if (orderDisplayMode != ODM_NONE) {
-      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSE;
-      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
-   }
-   return(ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]));
-}
-
-
-/**
- * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
- * sequence may be loaded in an online chart after the test (for visualization).
- *
- * @return bool
- */
-bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
 }
 
 
