@@ -1,6 +1,6 @@
 
 /**
- * Called before the input parameters are changed.
+ * Called before input parameters are changed.
  *
  * @return int - error status
  */
@@ -11,7 +11,7 @@ int onDeinitParameters() {
 
 
 /**
- * Called before the current chart symbol or period are changed.
+ * Called before the current chart symbol or timeframe are changed.
  *
  * @return int - error status
  */
@@ -32,11 +32,10 @@ int onDeinitChartChange() {
  * @return int - error status
  */
 int onDeinitChartClose() {
-   // Im Tester
    if (IsTesting()) {
-      // !!! Vorsicht: Die start()-Funktion wurde gewaltsam beendet, die primitiven Variablen können Datenmüll enthalten !!!
+      // Expert::start() was interrupted by the "Stop" button and primitive vars (bool, int, double) may contain invalid values.
       if (IsLastError()) {
-         // Der Fenstertitel des Testers kann nicht zurückgesetzt werden: SendMessage() führt in deinit() zu Deadlock.
+         // The tester's title bar cannot be reset as SendMessage() would cause a UI thread deadlock.
       }
       else {
          SetLastError(ERR_CANCELLED_BY_USER);
@@ -44,8 +43,8 @@ int onDeinitChartClose() {
       return(last_error);
    }
 
-   // Nicht im Tester
-   StoreChartStatus();                                            // für Terminal-Restart oder Profilwechsel
+   // online
+   StoreChartStatus();                                            // for profile changes and terminal restart
    return(last_error);
 }
 
@@ -59,7 +58,7 @@ int onDeinitChartClose() {
 int onDeinitUndefined() {
    if (IsTesting()) {
       if (IsLastError())
-         return(onDeinitChartClose());                            // entspricht gewaltsamen Ende
+         return(onDeinitChartClose());                            // same as a test interruption
 
       bool success = true;
       if (sequence.status == STATUS_PROGRESSING) {

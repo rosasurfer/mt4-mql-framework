@@ -1,71 +1,85 @@
 /**
  * Functions shared by SnowRoller and Sisyphus
  */
+string   last.Sequence.ID = "";
+string   last.GridDirection = "";
+int      last.GridSize;
+string   last.UnitSize;
+int      last.StartLevel;
+string   last.StartConditions = "";
+string   last.StopConditions = "";
+string   last.AutoRestart;
+bool     last.ShowProfitInPercent;
+datetime last.Sessionbreak.StartTime;
+datetime last.Sessionbreak.EndTime;
 
 
 /**
- * Handle incoming commands.
- *
- * @param  string commands[] - received commands
- *
- * @return bool - success status of the executed command
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
+ * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands))
-      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
+void BackupInputs() {
+   // backed-up inputs are also accessed from ValidateInputs()
+   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
+   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
+   last.GridSize               = GridSize;
+   last.UnitSize               = UnitSize;
+   last.StartLevel             = StartLevel;
+   last.StartConditions        = StringConcatenate(StartConditions, "");
+   last.StopConditions         = StringConcatenate(StopConditions,  "");
+   last.AutoRestart            = AutoRestart;
+   last.ShowProfitInPercent    = ShowProfitInPercent;
+   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
+   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
+}
 
-   string cmd = commands[0];
 
-   // wait
-   if (cmd == "wait") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
+/**
+ * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
+ */
+void RestoreInputs() {
+   Sequence.ID            = last.Sequence.ID;
+   GridDirection          = last.GridDirection;
+   GridSize               = last.GridSize;
+   UnitSize               = last.UnitSize;
+   StartLevel             = last.StartLevel;
+   StartConditions        = last.StartConditions;
+   StopConditions         = last.StopConditions;
+   AutoRestart            = last.AutoRestart;
+   ShowProfitInPercent    = last.ShowProfitInPercent;
+   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
+   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
+}
 
-      switch (sequence.status) {
-         case STATUS_STOPPED:
-            if (!start.conditions)                       // whether any start condition is active
-               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
-            sequence.status = STATUS_WAITING;
-      }
-      return(true);
+
+/**
+ * Adjust the order markers created or omitted by the terminal for a filled pending order.
+ *
+ * @param  int i - index in the order arrays
+ *
+ * @return bool - success status
+ */
+bool Chart.MarkOrderFilled(int i) {
+   if (!__CHART()) return(true);
+   /*
+   #define ODM_NONE     0     // - no display -
+   #define ODM_STOPS    1     // Pending,       ClosedBySL
+   #define ODM_PYRAMID  2     // Pending, Open,             Closed
+   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
+   */
+   static string sPrefix = "";
+   if (!StringLen(sPrefix)) {
+      if      (SNOWROLLER) sPrefix = "SR.";
+      else if (SISYPHUS)   sPrefix = "SPH.";
+      else                 sPrefix = "??.";
    }
+   string comment     = sPrefix + sequence.id +"."+ NumberToStr(orders.level[i], "+.");
+   color  markerColor = CLR_NONE;
 
-   // start
-   if (cmd == "start") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
+   if (orderDisplayMode >= ODM_PYRAMID)
+      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
 
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            bool neverStarted = !ArraySize(sequence.start.event);
-            if (neverStarted) return(StartSequence(NULL));
-            else              return(ResumeSequence(NULL));
-
-      }
-      return(true);
-   }
-
-   // stop
-   if (cmd == "stop") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_PROGRESSING:
-            bool bNull;
-            if (!UpdateStatus(bNull)) return(false);     // fall-through to STATUS_WAITING
-         case STATUS_WAITING:
-            return(StopSequence(NULL));
-      }
-      return(true);
-   }
-
-   if (cmd ==     "orderdisplay") return(ToggleOrderDisplayMode());
-   if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
-
-   // log unknown commands and let the EA continue
-   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
+   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
 }
 
 
@@ -103,37 +117,6 @@ bool Chart.MarkOrderSent(int i) {
       else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_LONG, CLR_SHORT);
    }
    return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, sequence.unitsize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
-}
-
-
-/**
- * Adjust the order markers created or omitted by the terminal for a filled pending order.
- *
- * @param  int i - index in the order arrays
- *
- * @return bool - success status
- */
-bool Chart.MarkOrderFilled(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - no display -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   static string sPrefix = "";
-   if (!StringLen(sPrefix)) {
-      if      (SNOWROLLER) sPrefix = "SR.";
-      else if (SISYPHUS)   sPrefix = "SPH.";
-      else                 sPrefix = "??.";
-   }
-   string comment     = sPrefix + sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   color  markerColor = CLR_NONE;
-
-   if (orderDisplayMode >= ODM_PYRAMID)
-      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
-
-   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
 }
 
 
@@ -239,6 +222,72 @@ bool IsTestSequence() {
 
 
 /**
+ * Handle incoming commands.
+ *
+ * @param  string commands[] - received commands
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands))
+      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
+
+   string cmd = commands[0];
+
+   // wait
+   if (cmd == "wait") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_STOPPED:
+            if (!start.conditions)                       // whether any start condition is active
+               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
+            sequence.status = STATUS_WAITING;
+      }
+      return(true);
+   }
+
+   // start
+   if (cmd == "start") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_WAITING:
+         case STATUS_STOPPED:
+            bool neverStarted = !ArraySize(sequence.start.event);
+            if (neverStarted) return(StartSequence(NULL));
+            else              return(ResumeSequence(NULL));
+
+      }
+      return(true);
+   }
+
+   // stop
+   if (cmd == "stop") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_PROGRESSING:
+            bool bNull;
+            if (!UpdateStatus(bNull)) return(false);     // fall-through to STATUS_WAITING
+         case STATUS_WAITING:
+            return(StopSequence(NULL));
+      }
+      return(true);
+   }
+
+   if (cmd ==     "orderdisplay") return(ToggleOrderDisplayMode());
+   if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
+
+   // log unknown commands and let the EA continue
+   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
+}
+
+
+/**
  * Redraw order markers of the active sequence. Markers of finished sequence cycles will no be redrawn.
  */
 void RedrawOrders() {
@@ -319,6 +368,26 @@ void RedrawStartStop() {
 
 
 /**
+ * Return a description of a sequence status code.
+ *
+ * @param  int status
+ *
+ * @return string
+ */
+string StatusDescription(int status) {
+   switch (status) {
+      case STATUS_UNDEFINED  : return("undefined"  );
+      case STATUS_WAITING    : return("waiting"    );
+      case STATUS_STARTING   : return("starting"   );
+      case STATUS_PROGRESSING: return("progressing");
+      case STATUS_STOPPING   : return("stopping"   );
+      case STATUS_STOPPED    : return("stopped"    );
+   }
+   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * Return a readable version of a sequence status code.
  *
  * @param  int status
@@ -339,22 +408,18 @@ string StatusToStr(int status) {
 
 
 /**
- * Return a description of a sequence status code.
+ * Store sequence id and transient status in the chart before recompilation or terminal restart.
  *
- * @param  int status
- *
- * @return string
+ * @return int - error status
  */
-string StatusDescription(int status) {
-   switch (status) {
-      case STATUS_UNDEFINED  : return("undefined"  );
-      case STATUS_WAITING    : return("waiting"    );
-      case STATUS_STARTING   : return("starting"   );
-      case STATUS_PROGRESSING: return("progressing");
-      case STATUS_STOPPING   : return("stopping"   );
-      case STATUS_STOPPED    : return("stopped"    );
-   }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+int StoreChartStatus() {
+   string name = __NAME();
+   Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
+   Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
+   Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
+   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT           );
+   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",      last_error==ERR_CANCELLED_BY_USER);
+   return(catch("StoreChartStatus(1)"));
 }
 
 

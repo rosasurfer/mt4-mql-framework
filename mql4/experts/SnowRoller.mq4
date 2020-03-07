@@ -236,8 +236,8 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <app/snowroller/snowroller-1-init.mqh>
-#include <app/snowroller/snowroller-2-deinit.mqh>
+#include <app/snowroller/1-init-snowroller.mqh>
+#include <app/snowroller/2-deinit.mqh>
 #include <app/snowroller/functions.mqh>
 
 
@@ -2930,22 +2930,6 @@ void SS.StartStopStats() {
 
 
 /**
- * Store sequence id and transient status in the chart before recompilation or terminal restart.
- *
- * @return int - error status
- */
-int StoreChartStatus() {
-   string name = __NAME();
-   Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
-   Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
-   Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
-   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT           );
-   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",      last_error==ERR_CANCELLED_BY_USER);
-   return(catch("StoreChartStatus(1)"));
-}
-
-
-/**
  * Restore sequence id and transient status found in the chart after recompilation or terminal restart.
  *
  * @return bool - whether a sequence id was found and restored
@@ -3043,57 +3027,6 @@ bool IsMyOrder(int sequenceId = NULL) {
       }
    }
    return(false);
-}
-
-
-string   last.Sequence.ID = "";
-string   last.GridDirection = "";
-int      last.GridSize;
-string   last.UnitSize;
-int      last.StartLevel;
-string   last.StartConditions = "";
-string   last.StopConditions = "";
-string   last.AutoRestart;
-bool     last.ShowProfitInPercent;
-datetime last.Sessionbreak.StartTime;
-datetime last.Sessionbreak.EndTime;
-
-
-/**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
- */
-void BackupInputs() {
-   // backed-up inputs are also accessed from ValidateInputs()
-   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
-   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
-   last.GridSize               = GridSize;
-   last.UnitSize               = UnitSize;
-   last.StartLevel             = StartLevel;
-   last.StartConditions        = StringConcatenate(StartConditions, "");
-   last.StopConditions         = StringConcatenate(StopConditions,  "");
-   last.AutoRestart            = AutoRestart;
-   last.ShowProfitInPercent    = ShowProfitInPercent;
-   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
-   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
-}
-
-
-/**
- * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
- */
-void RestoreInputs() {
-   Sequence.ID            = last.Sequence.ID;
-   GridDirection          = last.GridDirection;
-   GridSize               = last.GridSize;
-   UnitSize               = last.UnitSize;
-   StartLevel             = last.StartLevel;
-   StartConditions        = last.StartConditions;
-   StopConditions         = last.StopConditions;
-   AutoRestart            = last.AutoRestart;
-   ShowProfitInPercent    = last.ShowProfitInPercent;
-   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
-   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
 }
 
 
