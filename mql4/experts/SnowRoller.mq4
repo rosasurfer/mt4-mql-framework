@@ -68,6 +68,8 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FX
 
 
 #define STRATEGY_ID  103                           // unique strategy identifier
+bool    SNOWROLLER;
+bool    SISYPHUS;
 
 
 // --- sequence data -----------------------

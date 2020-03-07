@@ -86,9 +86,9 @@ bool Chart.MarkOrderSent(int i) {
    */
    static string sPrefix = "";
    if (!StringLen(sPrefix)) {
-      if      (STRATEGY_ID == 103) sPrefix = "SR.";
-      else if (STRATEGY_ID == 104) sPrefix = "SPH.";
-      else                         sPrefix = "??.";
+      if      (SNOWROLLER) sPrefix = "SR.";
+      else if (SISYPHUS)   sPrefix = "SPH.";
+      else                 sPrefix = "??.";
    }
    bool pending = orders.pendingType[i] != OP_UNDEFINED;
 
@@ -123,9 +123,9 @@ bool Chart.MarkOrderFilled(int i) {
    */
    static string sPrefix = "";
    if (!StringLen(sPrefix)) {
-      if      (STRATEGY_ID == 103) sPrefix = "SR.";
-      else if (STRATEGY_ID == 104) sPrefix = "SPH.";
-      else                         sPrefix = "??.";
+      if      (SNOWROLLER) sPrefix = "SR.";
+      else if (SISYPHUS)   sPrefix = "SPH.";
+      else                 sPrefix = "??.";
    }
    string comment     = sPrefix + sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    color  markerColor = CLR_NONE;

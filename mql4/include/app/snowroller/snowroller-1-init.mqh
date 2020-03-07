@@ -1,5 +1,17 @@
 
 /**
+ * Initialization pre-processing hook.
+ *
+ * @return int - error status
+ */
+int onInit() {
+   SNOWROLLER = true;                                    // MQL4 doesn't allow constant bool definitions
+   SISYPHUS   = false;
+   return(NO_ERROR);
+}
+
+
+/**
  * Called after the expert was manually loaded by the user. Also in Strategy Tester with both "VisualMode=On|Off".
  * There was an input dialog.
  *
