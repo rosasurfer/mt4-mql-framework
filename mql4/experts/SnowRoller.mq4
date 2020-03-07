@@ -67,7 +67,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FX
 #include <win32api.mqh>
 
 
-#define STRATEGY_ID  103                           // unique strategy id (between 101-1023)
+#define STRATEGY_ID  103                           // unique strategy identifier
 
 
 // --- sequence data -----------------------
@@ -236,6 +236,7 @@ bool     tester.showBreakeven       = false;       // whether to show breakeven 
 
 #include <app/snowroller/snowroller-1-init.mqh>
 #include <app/snowroller/snowroller-2-deinit.mqh>
+#include <app/snowroller/functions.mqh>
 
 
 /*
@@ -6248,27 +6249,6 @@ double CalculateUnitSize(double equity) {
    if (!catch("CalculateUnitSize(15)"))
       return(result);
    return(NULL);
-}
-
-
-/**
- * Return a string representation of the input parameters (for logging purposes).
- *
- * @return string
- */
-string InputsToStr() {
-   return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
-                            "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
-                            "GridSize=",               GridSize,                                     ";", NL,
-                            "UnitSize=",               DoubleQuoteStr(UnitSize),                     ";", NL,
-                            "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
-                            "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
-                            "AutoRestart=",            DoubleQuoteStr(AutoRestart),                  ";", NL,
-                            "StartLevel=",             StartLevel,                                   ";", NL,
-                            "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
-                            "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
-                            "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
-   );
 
    // prevent compiler warnings
    int iNulls[];
