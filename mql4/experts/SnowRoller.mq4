@@ -22,8 +22,8 @@
  * The EA automatically interrupts and resumes trading during configurable session breaks, e.g. at Midnight or at weekends.
  * During session breaks all pending orders and open positions are closed. Session break configuration supports holidays.
  *
- * In "/mql4/scripts" are some accompanying scripts named "SnowRoller.***" to manually control the EA (start, stop, wait).
- * The EA can be tested and the scripts work in tester, too. The EA can't be optimized in tester.
+ * In "/mql4/scripts" there are some accompanying scripts named "SnowRoller.***" to manually control the EA. The EA can be
+ * tested and the scripts work in tester, too. The EA can't be optimized in tester.
  *
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
  * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not 0 (zero).
@@ -36,7 +36,7 @@
  * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
  */
 #include <stddefines.mqh>
-#include <app/sisn.defines.mqh>
+#include <app/snowroller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
@@ -234,8 +234,8 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <app/SnowRoller/init.mqh>
-#include <app/SnowRoller/deinit.mqh>
+#include <app/snowroller/1-init.mqh>
+#include <app/snowroller/2-deinit.mqh>
 
 
 /*
