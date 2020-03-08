@@ -236,7 +236,7 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <app/snowroller/1-init-snowroller.mqh>
+#include <app/snowroller/1-init.mqh>
 #include <app/snowroller/2-deinit.mqh>
 #include <app/snowroller/functions.mqh>
 
@@ -2983,34 +2983,6 @@ int DeleteChartStatus() {
 
 
 /**
- * Ermittelt die aktuell laufenden Sequenzen.
- *
- * @param  int ids[] - Array zur Aufnahme der gefundenen Sequenz-IDs
- *
- * @return bool - ob mindestens eine laufende Sequenz gefunden wurde
- */
-bool GetRunningSequences(int ids[]) {
-   ArrayResize(ids, 0);
-   int id;
-
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
-         continue;
-
-      if (IsMyOrder()) {
-         id = OrderMagicNumber() & 0x3FFF;                           // 14 Bits (Bits 1-14) => sequence.id
-         if (!IntInArray(ids, id))
-            ArrayPushInt(ids, id);
-      }
-   }
-
-   if (ArraySize(ids) != 0)
-      return(ArraySort(ids));
-   return(false);
-}
-
-
-/**
  * Ob die aktuell selektierte Order zu dieser Strategie gehört. Wird eine Sequenz-ID angegeben, wird zusätzlich überprüft,
  * ob die Order zur angegebenen Sequenz gehört.
  *
@@ -4879,6 +4851,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
       RefreshRates();
    }
    confirmed = true;
+
    return(result);
 }
 

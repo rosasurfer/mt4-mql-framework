@@ -1,6 +1,74 @@
 /**
- * Functions shared by SnowRoller and Sisyphus
+ * Shared functions used by SnowRoller and Sisyphus
  */
+
+
+/**
+ * Handle incoming commands.
+ *
+ * @param  string commands[] - received commands
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands))
+      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
+
+   string cmd = commands[0];
+
+   // wait
+   if (cmd == "wait") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_STOPPED:
+            if (!start.conditions)                       // whether any start condition is active
+               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
+            sequence.status = STATUS_WAITING;
+      }
+      return(true);
+   }
+
+   // start
+   if (cmd == "start") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_WAITING:
+         case STATUS_STOPPED:
+            bool neverStarted = !ArraySize(sequence.start.event);
+            if (neverStarted) return(StartSequence(NULL));
+            else              return(ResumeSequence(NULL));
+
+      }
+      return(true);
+   }
+
+   // stop
+   if (cmd == "stop") {
+      if (IsTestSequence() && !IsTesting())
+         return(true);
+
+      switch (sequence.status) {
+         case STATUS_PROGRESSING:
+            bool bNull;
+            if (!UpdateStatus(bNull)) return(false);     // fall-through to STATUS_WAITING
+         case STATUS_WAITING:
+            return(StopSequence(NULL));
+      }
+      return(true);
+   }
+
+   if (cmd ==     "orderdisplay") return(ToggleOrderDisplayMode());
+   if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
+
+   // log unknown commands and let the EA continue
+   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
+}
+
+
 string   last.Sequence.ID = "";
 string   last.GridDirection = "";
 int      last.GridSize;
@@ -49,6 +117,197 @@ void RestoreInputs() {
    ShowProfitInPercent    = last.ShowProfitInPercent;
    Sessionbreak.StartTime = last.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
+}
+
+
+/**
+ * Backup status variables which may change by modifying input parameters. This way status can be restored in case of input
+ * errors. Called only from onInitParameters().
+ */
+void BackupInputStatus() {
+   CopyInputStatus(true);
+}
+
+
+/**
+ * Restore status variables from the backup. Called only from onInitParameters().
+ */
+void RestoreInputStatus() {
+   CopyInputStatus(false);
+}
+
+
+/**
+ * Backup or restore status variables related to input parameter changes. Called only from BackupInputStatus() and
+ * RestoreInputStatus() in onInitParameters().
+ *
+ * @param  bool store - TRUE:  copy status to internal storage (backup)
+ *                      FALSE: copy internal storage to status (restore)
+ */
+void CopyInputStatus(bool store) {
+   store = store!=0;
+
+   static int      _sequence.id;
+   static int      _sequence.cycle;
+   static string   _sequence.name     = "";
+   static string   _sequence.longName = "";
+   static datetime _sequence.created;
+   static bool     _sequence.isTest;
+   static int      _sequence.direction;
+   static int      _sequence.status;
+
+   static bool     _start.conditions;
+   static bool     _start.trend.condition;
+   static string   _start.trend.indicator   = "";
+   static int      _start.trend.timeframe;
+   static string   _start.trend.params      = "";
+   static string   _start.trend.description = "";
+   static bool     _start.price.condition;
+   static int      _start.price.type;
+   static double   _start.price.value;
+   static string   _start.price.description = "";
+   static bool     _start.time.condition;
+   static datetime _start.time.value;
+   static string   _start.time.description  = "";
+
+   static bool     _stop.trend.condition;
+   static string   _stop.trend.indicator    = "";
+   static int      _stop.trend.timeframe;
+   static string   _stop.trend.params       = "";
+   static string   _stop.trend.description  = "";
+   static bool     _stop.price.condition;
+   static int      _stop.price.type;
+   static double   _stop.price.value;
+   static string   _stop.price.description  = "";
+   static bool     _stop.time.condition;
+   static datetime _stop.time.value;
+   static string   _stop.time.description   = "";
+   static bool     _stop.profitAbs.condition;
+   static double   _stop.profitAbs.value;
+   static string   _stop.profitAbs.description = "";
+   static bool     _stop.profitPct.condition;
+   static double   _stop.profitPct.value;
+   static double   _stop.profitPct.absValue;
+   static string   _stop.profitPct.description = "";
+   static bool     _stop.lossAbs.condition;
+   static double   _stop.lossAbs.value;
+   static string   _stop.lossAbs.description = "";
+   static bool     _stop.lossPct.condition;
+   static double   _stop.lossPct.value;
+   static double   _stop.lossPct.absValue;
+   static string   _stop.lossPct.description = "";
+
+   static datetime _sessionbreak.starttime;
+   static datetime _sessionbreak.endtime;
+
+   if (store) {
+      _sequence.id                = sequence.id;
+      _sequence.cycle             = sequence.cycle;
+      _sequence.name              = sequence.name;
+      _sequence.longName          = sequence.longName;
+      _sequence.created           = sequence.created;
+      _sequence.isTest            = sequence.isTest;
+      _sequence.direction         = sequence.direction;
+      _sequence.status            = sequence.status;
+
+      _start.conditions           = start.conditions;
+      _start.trend.condition      = start.trend.condition;
+      _start.trend.indicator      = start.trend.indicator;
+      _start.trend.timeframe      = start.trend.timeframe;
+      _start.trend.params         = start.trend.params;
+      _start.trend.description    = start.trend.description;
+      _start.price.condition      = start.price.condition;
+      _start.price.type           = start.price.type;
+      _start.price.value          = start.price.value;
+      _start.price.description    = start.price.description;
+      _start.time.condition       = start.time.condition;
+      _start.time.value           = start.time.value;
+      _start.time.description     = start.time.description;
+
+      _stop.trend.condition       = stop.trend.condition;
+      _stop.trend.indicator       = stop.trend.indicator;
+      _stop.trend.timeframe       = stop.trend.timeframe;
+      _stop.trend.params          = stop.trend.params;
+      _stop.trend.description     = stop.trend.description;
+      _stop.price.condition       = stop.price.condition;
+      _stop.price.type            = stop.price.type;
+      _stop.price.value           = stop.price.value;
+      _stop.price.description     = stop.price.description;
+      _stop.time.condition        = stop.time.condition;
+      _stop.time.value            = stop.time.value;
+      _stop.time.description      = stop.time.description;
+      _stop.profitAbs.condition   = stop.profitAbs.condition;
+      _stop.profitAbs.value       = stop.profitAbs.value;
+      _stop.profitAbs.description = stop.profitAbs.description;
+      _stop.profitPct.condition   = stop.profitPct.condition;
+      _stop.profitPct.value       = stop.profitPct.value;
+      _stop.profitPct.absValue    = stop.profitPct.absValue;
+      _stop.profitPct.description = stop.profitPct.description;
+      _stop.lossAbs.condition     = stop.lossAbs.condition;
+      _stop.lossAbs.value         = stop.lossAbs.value;
+      _stop.lossAbs.description   = stop.lossAbs.description;
+      _stop.lossPct.condition     = stop.lossPct.condition;
+      _stop.lossPct.value         = stop.lossPct.value;
+      _stop.lossPct.absValue      = stop.lossPct.absValue;
+      _stop.lossPct.description   = stop.lossPct.description;
+
+      _sessionbreak.starttime     = sessionbreak.starttime;
+      _sessionbreak.endtime       = sessionbreak.endtime;
+   }
+   else {
+      sequence.id                = _sequence.id;
+      sequence.cycle             = _sequence.cycle;
+      sequence.name              = _sequence.name;
+      sequence.longName          = _sequence.longName;
+      sequence.created           = _sequence.created;
+      sequence.isTest            = _sequence.isTest;
+      sequence.direction         = _sequence.direction;
+      sequence.status            = _sequence.status;
+
+      start.conditions           = _start.conditions;
+      start.trend.condition      = _start.trend.condition;
+      start.trend.indicator      = _start.trend.indicator;
+      start.trend.timeframe      = _start.trend.timeframe;
+      start.trend.params         = _start.trend.params;
+      start.trend.description    = _start.trend.description;
+      start.price.condition      = _start.price.condition;
+      start.price.type           = _start.price.type;
+      start.price.value          = _start.price.value;
+      start.price.description    = _start.price.description;
+      start.time.condition       = _start.time.condition;
+      start.time.value           = _start.time.value;
+      start.time.description     = _start.time.description;
+
+      stop.trend.condition       = _stop.trend.condition;
+      stop.trend.indicator       = _stop.trend.indicator;
+      stop.trend.timeframe       = _stop.trend.timeframe;
+      stop.trend.params          = _stop.trend.params;
+      stop.trend.description     = _stop.trend.description;
+      stop.price.condition       = _stop.price.condition;
+      stop.price.type            = _stop.price.type;
+      stop.price.value           = _stop.price.value;
+      stop.price.description     = _stop.price.description;
+      stop.time.condition        = _stop.time.condition;
+      stop.time.value            = _stop.time.value;
+      stop.time.description      = _stop.time.description;
+      stop.profitAbs.condition   = _stop.profitAbs.condition;
+      stop.profitAbs.value       = _stop.profitAbs.value;
+      stop.profitAbs.description = _stop.profitAbs.description;
+      stop.profitPct.condition   = _stop.profitPct.condition;
+      stop.profitPct.value       = _stop.profitPct.value;
+      stop.profitPct.absValue    = _stop.profitPct.absValue;
+      stop.profitPct.description = _stop.profitPct.description;
+      stop.lossAbs.condition     = _stop.lossAbs.condition;
+      stop.lossAbs.value         = _stop.lossAbs.value;
+      stop.lossAbs.description   = _stop.lossAbs.description;
+      stop.lossPct.condition     = _stop.lossPct.condition;
+      stop.lossPct.value         = _stop.lossPct.value;
+      stop.lossPct.absValue      = _stop.lossPct.absValue;
+      stop.lossPct.description   = _stop.lossPct.description;
+
+      sessionbreak.starttime     = _sessionbreak.starttime;
+      sessionbreak.endtime       = _sessionbreak.endtime;
+   }
 }
 
 
@@ -178,6 +437,34 @@ int CountPendingOrders() {
 
 
 /**
+ * Create the status display box. It consists of overlapping rectangles made of char "g" in font "Webdings". Called only from
+ * afterInit().
+ *
+ * @return int - error status
+ */
+int CreateStatusBox() {
+   if (!__CHART()) return(NO_ERROR);
+
+   int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
+   color  bgColor = C'248,248,248';                      // that's chart background color
+   string label;
+
+   for (int i=0; i < rectangles; i++) {
+      label = __NAME() +".statusbox."+ (i+1);
+      if (ObjectFind(label) != 0) {
+         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+         ObjectRegister(label);
+      }
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y   );
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(catch("CreateStatusBox(1)"));
+}
+
+
+/**
  * Handle occurred network errors. Disables regular processing of the EA until the retry condition for the next trade request
  * is fulfilled.
  *
@@ -218,72 +505,6 @@ bool HandleNetworkErrors() {
  */
 bool IsTestSequence() {
    return(sequence.isTest || IsTesting());
-}
-
-
-/**
- * Handle incoming commands.
- *
- * @param  string commands[] - received commands
- *
- * @return bool - success status of the executed command
- */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands))
-      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
-
-   string cmd = commands[0];
-
-   // wait
-   if (cmd == "wait") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_STOPPED:
-            if (!start.conditions)                       // whether any start condition is active
-               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
-            sequence.status = STATUS_WAITING;
-      }
-      return(true);
-   }
-
-   // start
-   if (cmd == "start") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            bool neverStarted = !ArraySize(sequence.start.event);
-            if (neverStarted) return(StartSequence(NULL));
-            else              return(ResumeSequence(NULL));
-
-      }
-      return(true);
-   }
-
-   // stop
-   if (cmd == "stop") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_PROGRESSING:
-            bool bNull;
-            if (!UpdateStatus(bNull)) return(false);     // fall-through to STATUS_WAITING
-         case STATUS_WAITING:
-            return(StopSequence(NULL));
-      }
-      return(true);
-   }
-
-   if (cmd ==     "orderdisplay") return(ToggleOrderDisplayMode());
-   if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
-
-   // log unknown commands and let the EA continue
-   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
 }
 
 
