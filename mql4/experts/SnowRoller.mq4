@@ -1063,7 +1063,7 @@ bool UpdateStatus(bool &gridChanged) {
    double floatingPL = 0;
 
    for (int level, i=sizeOfTickets-1; i >= 0; i--) {
-      if (level == 1) break;                                                  // limit tickets to inspect
+      if (level == 1) break;                                                  // iterate backwards and limit tickets to inspect
 
       level = Abs(orders.level[i]);
       if (orders.closeTime[i] > 0)                                            // process all tickets known as open
@@ -1083,14 +1083,14 @@ bool UpdateStatus(bool &gridChanged) {
          continue;
       }
 
-      // regular tickets
+      // process regular tickets
       if (!SelectTicket(orders.ticket[i], "UpdateStatus(4)")) return(false);
       bool wasPending = (orders.type[i] == OP_UNDEFINED);
       bool isClosed   = OrderCloseTime() != 0;
 
       if (wasPending) {
          // last time a pending order
-         if (OrderType() != orders.pendingType[i]) {                          // a pending entry limit was executed
+         if (OrderType() != orders.pendingType[i]) {                          // a pending entry order was executed
             orders.type      [i] = OrderType();
             orders.openEvent [i] = CreateEventId();
             orders.openTime  [i] = OrderOpenTime();
@@ -1727,8 +1727,8 @@ bool UpdatePendingOrders() {
    if (!sequence.level && nextStopExists) {
       i = sizeOfTickets - 1;
       if (NE(GetGridbase(), orders.gridbase[i], Digits)) {
-         static double lastTrailed = INT_MIN;                           // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
-         if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // at each tick. Wait 3 seconds between consecutive trailings.
+         static double lastTrailed = INT_MIN;
+         if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // wait 3 seconds between requests to avoid ERR_TOO_MANY_REQUESTS
             type = Grid.TrailPendingOrder(i); if (!type) return(false); //
             if (IsLimitOrderType(type)) {                               // TrailPendingOrder() missed a level
                lastExistingLevel = nextLevel;                           // -1 | +1
@@ -1746,7 +1746,7 @@ bool UpdatePendingOrders() {
    // add all missing levels (pending limit or stop orders) up to the next sequence level
    if (!nextStopExists) {
       while (true) {
-         if (IsLimitOrderType(type)) {                            // TrailPendingOrder() or AddPendingOrder() missed a level
+         if (IsLimitOrderType(type)) {                            // TrailPendingOrder() missed a level
             limitOrders++;
             ArrayPushInt(sequence.missedLevels, lastExistingLevel);
             sMissedLevels = sMissedLevels +", "+ lastExistingLevel;

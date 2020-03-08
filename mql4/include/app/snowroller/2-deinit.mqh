@@ -33,13 +33,9 @@ int onDeinitChartChange() {
  */
 int onDeinitChartClose() {
    if (IsTesting()) {
-      // Expert::start() was interrupted by the "Stop" button and primitive vars (bool, int, double) may contain invalid values.
-      if (IsLastError()) {
-         // The tester's title bar cannot be reset as SendMessage() would cause a UI thread deadlock.
-      }
-      else {
+      // start() was interrupted by the "Stop" button and primitive vars (bool, int, double) may contain invalid values
+      if (!IsLastError())
          SetLastError(ERR_CANCELLED_BY_USER);
-      }
       return(last_error);
    }
 
