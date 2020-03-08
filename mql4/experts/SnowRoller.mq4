@@ -302,7 +302,7 @@ int onTick() {
 
    // sequence either waits for start/stop/resume signal...
    if (sequence.status == STATUS_WAITING) {
-      if (IsStopSignal(signal))                StopSequence(signal);
+      if      (IsStopSignal(signal))           StopSequence(signal);
       else if (IsStartSignal(signal)) {
          if (!ArraySize(sequence.start.event)) StartSequence(signal);
          else                                  ResumeSequence(signal);
@@ -412,8 +412,7 @@ bool StartSequence(int signal) {
    sequence.status         = STATUS_PROGRESSING;
 
    // open missing orders
-   if (!UpdatePendingOrders()) return(false);
-   if (!SaveStatus())          return(false);
+   if (!UpdatePendingOrders(true)) return(false);
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(6)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
@@ -817,7 +816,7 @@ bool ResetSequence(double gridbase, int level) {
    ResetGridbase(NULL, gridbase);
 
    // --- order data ---------------------
-   ResizeOrderArrays(0);
+   Orders.ResizeArrays(0);
 
    // --- other --------------------------
    ArrayResize(ignorePendingOrders,   0);
@@ -842,7 +841,7 @@ bool ResetSequence(double gridbase, int level) {
    sStopConditions              = "";
    sStartStopStats              = "";
    sAutoRestart                 = "";
-   sRestartStats                = " ----------------------------------------------------"+ NL
+   sRestartStats                = "-------------------------------------------------------"+ NL
                                  +" "+ iCycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
 
    // debug settings stay unchanged
@@ -958,9 +957,8 @@ bool ResumeSequence(int signal) {
 
    // update and store status
    bool changes;                                               // If RestorePositions() found a virtually triggered SL (#-1)
-   if (!UpdateStatus(changes))              return(false);     // UpdateStatus() "closes" the ticket and decreases the gridlevel.
-   if (changes) if (!UpdatePendingOrders()) return(false);     // Only in this case pending orders need to be updated again.
-   if (!SaveStatus())                       return(false);
+   if (!UpdateStatus(changes))                  return(false); // UpdateStatus() "closes" the ticket and decreases the gridlevel.
+   if (changes) if (!UpdatePendingOrders(true)) return(false); // Only in this case pending orders need to be updated again.
    RedrawStartStop();
 
    if (__LOG()) log("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
@@ -1013,7 +1011,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
             openPrice += orders.openPrice[i];
          }
       }
-      openPrice /= (Abs(sequence.level)-missedLevels);                  // avg(OpenPrice)
+      openPrice /= (Abs(sequence.level)-missedLevels);                        // avg(OpenPrice)
    }
 
    // Short
@@ -1035,11 +1033,11 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
             openPrice += orders.openPrice[i];
          }
       }
-      openPrice /= (Abs(sequence.level)-missedLevels);                  // avg(OpenPrice)
+      openPrice /= (Abs(sequence.level)-missedLevels);                        // avg(OpenPrice)
    }
 
    // write-back results to the passed variables
-   if (openTime != 0) {                                                 // sequence.level != 0
+   if (openTime != 0) {                                                       // sequence.level != 0
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
@@ -1048,9 +1046,9 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 
 
 /**
- * Update internal order and PL status according to current market data.
+ * Update internal order and PL status with current market data.
  *
- * @param  _InOut_ bool gridChanged - whether the current gridbase or the gridlevel changed
+ * @param  _InOut_ bool gridChanged - whether the current gridbase or gridlevel changed
  *
  * @return bool - success status
  */
@@ -1061,6 +1059,7 @@ bool UpdateStatus(bool &gridChanged) {
 
    int sizeOfTickets = ArraySize(orders.ticket);
    double floatingPL = 0;
+   bool levelIncreased = false;
 
    for (int level, i=sizeOfTickets-1; i >= 0; i--) {
       if (level == 1) break;                                                  // iterate backwards and limit tickets to inspect
@@ -1102,8 +1101,9 @@ bool UpdateStatus(bool &gridChanged) {
             if (__LOG()) log("UpdateStatus(5)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(i));
 
             if (IsStopOrderType(orders.pendingType[i])) {                     // an executed stop order
-               sequence.level   += Sign(orders.level[i]); SS.SequenceName();
-               sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               sequence.level    = orders.level[i]; SS.SequenceName();
+               sequence.maxLevel = Sign(sequence.level) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               levelIncreased    = true;
                gridChanged       = true;
             }
             else {
@@ -1139,7 +1139,7 @@ bool UpdateStatus(bool &gridChanged) {
       }
       else if (orders.type[i] == OP_UNDEFINED) {                              // a now closed pending order
          warn("UpdateStatus(7)  "+ sequence.longName +" "+ UpdateStatus.OrderCancelledMsg(i));
-         Grid.DropData(i);                                                    // cancelled pending orders are removed from
+         Orders.RemoveRecord(i);                                              // cancelled pending orders are removed from
          sizeOfTickets--;                                                     // the order arrays
          if (OrderComment() == "deleted [no money]") {
             if (StopSequence(NULL))
@@ -1156,19 +1156,24 @@ bool UpdateStatus(bool &gridChanged) {
 
          if (orders.closedBySL[i]) {                                          // stopped out
             if (__LOG()) log("UpdateStatus(8)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
-            sequence.level  -= Sign(orders.level[i]); SS.SequenceName();
+            if (levelIncreased) {
+               if (!IsTesting()) warn("UpdateStatus(9)  "+ sequence.longName +" multiple limits triggered: StopLoss and StopEntry");
+            }
+            else {
+               sequence.level -= Sign(orders.level[i]); SS.SequenceName();    // don't modify level when at the same time an entry stop was triggered
+            }
             sequence.stops++;
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
          else if (StrStartsWithI(OrderComment(), "so:")) {                    // margin call
-            warn("UpdateStatus(9)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
+            warn("UpdateStatus(10)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
             if (StopSequence(NULL))
                SetLastError(ERR_NOT_ENOUGH_MONEY);
             return(false);
          }
          else {                                                               // manually closed or closed at end of test
-            if (__LOG()) log("UpdateStatus(10)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(11)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1191,7 +1196,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, lastGridbase, Digits)) {
-            SetGridbase(TimeCurrentEx("UpdateStatus(11)"), gridbase);
+            SetGridbase(TimeCurrentEx("UpdateStatus(12)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1199,7 +1204,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
    }
-   return(!catch("UpdateStatus(12)"));
+   return(!catch("UpdateStatus(13)"));
 }
 
 
@@ -1671,117 +1676,181 @@ bool IsSessionBreak() {
 
 
 /**
- * Trail existing, open missing and delete obsolete pending orders. If open positions are missing, create pending orders for
- * those positions and add them to the list of missed order levels.
+ * Update all pending orders. Trail a first-level order or add new pending orders for all missing levels.
  *
+ * @param  bool saveStatus [optional] - whether to enforce a status save at successful execution
+ *                                      (default: save the status only if order data changed)
  * @return bool - success status
  */
-bool UpdatePendingOrders() {
+bool UpdatePendingOrders(bool saveStatus = false) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.longName +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   /*
+   Processing logic
+   ----------------
+   (1) iterate downwards starting at the current level and check all active levels
+       - for each level an order must exist (open or closed) except when in StartSequence()
+       - if an order is closed open a new one and store it directly after the closed one
 
-   int type, limitOrders, level, lastExistingLevel=0, nextLevel=sequence.level + ifInt(sequence.direction==D_LONG, 1, -1), sizeOfTickets=ArraySize(orders.ticket);
-   bool nextStopExists=false, ordersChanged=false;
+   (2) iterate upwards starting at the current level and check any inactive levels
+       - cancel and remove obsolete stop orders (possibly multiple)
+       - if the next stop order is missing open it and store it at the end (top)
+
+   (3) if in level 0 trail the next stop order (if required)
+   */
+   int level=sequence.level, levelStep=ifInt(sequence.direction==D_LONG, 1, -1), nextLevel=level+levelStep, newLimitOrders, sizeOfTickets=ArraySize(orders.ticket);
+   int idxCurrentLevel=-1, idxNextStop=-1;
    string sMissedLevels = "";
 
-   // check if the stop order for the next level exists (always at the last order index)
-   int i = sizeOfTickets - 1;
-   if (sizeOfTickets > 0) {
-      if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) { // a pending entry order
-         if (orders.level[i] == nextLevel) {                      // the next stop order
-            nextStopExists = true;
-         }
-         else if (IsStopOrderType(orders.pendingType[i])) {
-            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order
-            if (!error) {
-               sizeOfTickets--;
-               ordersChanged = true;
+   // (1) iterate from the current level downward and check all active levels
+   for (int i=sizeOfTickets-1; i >= 0; i--) {
+      if (orders.level[i] == level) {
+         if (idxCurrentLevel < 0) idxCurrentLevel = i;                  // remember the index of the current level
+
+         if (orders.closeTime[i] != 0) {                                // order is closed, re-open it
+            int type = Grid.AddPendingOrder(level, i+1); if (!type) return(false);
+            sizeOfTickets++;
+            saveStatus = true;
+
+            if (IsLimitOrderType(type)) {                               // add limit order to missed levels
+               newLimitOrders++;
+               ArrayPushInt(sequence.missedLevels, level);
+               sMissedLevels = sMissedLevels +", "+ level;
+               idxCurrentLevel++;
             }
-            else if (error == -1) {                               // TODO: handle the just filled pending order
-               if (__LOG()) log("UpdatePendingOrders(2)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" was already executed");
-               return(!catch("UpdatePendingOrders(3)  "+ sequence.longName +" unimplemented feature", ERR_NOT_IMPLEMENTED));
+            else {                                                      // on a stop order the sequence level decreased
+               nextLevel       = level;
+               sequence.level  = level - levelStep; SS.SequenceName();
+               idxCurrentLevel = -1;
             }
-            else return(false);
          }
+         level -= levelStep;
+         if (!level) break;
+      }
+      if (Abs(orders.level[i]) < Abs(level)) {
+         if (idxCurrentLevel < 0) idxCurrentLevel = i;
+         break;
       }
    }
 
-   // find the last open order of an active level (an open position or a pending limit order)
-   if (sequence.level != 0) {
-      for (i=sizeOfTickets-1; i >= 0; i--) {
-         level = Abs(orders.level[i]);
-         if (!orders.closeTime[i]) {
-            if (level < Abs(nextLevel)) {
-               lastExistingLevel = orders.level[i];
-               break;
-            }
+   if (level != 0) {
+      if (sizeOfTickets > 0) return(!catch("UpdatePendingOrders(2)  "+ sequence.longName +" order of level "+ level +" not found", ERR_ILLEGAL_STATE));
+
+      level = levelStep;
+      while (true) {                                                    // without any orders we are in StartSequence() with a StartLevel != 0
+         type = Grid.AddPendingOrder(level); if (!type) return(false);
+         sizeOfTickets++;
+         saveStatus = true;
+
+         if (IsLimitOrderType(type)) {                                  // add limit order to missed levels
+            newLimitOrders++;
+            ArrayPushInt(sequence.missedLevels, level);
+            sMissedLevels   = sMissedLevels +", "+ level;
+            idxCurrentLevel = sizeOfTickets-1;
          }
-         if (level == 1) break;
-      }
-      if (sizeOfTickets && lastExistingLevel!=sequence.level) {
-         return(!catch("UpdatePendingOrders(4)  "+ sequence.longName +" orders out of sync: lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
+         else {                                                         // on a stop order the sequence level decreased
+            nextLevel      = level;
+            sequence.level = level - levelStep; SS.SequenceName();
+         }
+         level += levelStep;
+         if (level == nextLevel)
+            break;
       }
    }
 
-   // trail a first level stop order (always an existing next level order, thus at the last array index)
-   if (!sequence.level && nextStopExists) {
-      i = sizeOfTickets - 1;
+   // (2) iterate from the current level upward and check any inactive levels
+   for (i=idxCurrentLevel+1; i < sizeOfTickets; i++) {
+      if (orders.closeTime[i] != 0)                continue;            // process only open orders
+      if (orders.type[i] != OP_UNDEFINED)          return(!catch("UpdatePendingOrders(3)  "+ sequence.longName +" orders out of sync: open position of level "+ orders.level[i] +" found (#"+ orders.ticket[i] +")", ERR_ILLEGAL_STATE));
+      if (!IsStopOrderType(orders.pendingType[i])) return(!catch("UpdatePendingOrders(4)  "+ sequence.longName +" orders out of sync: limit order of level "+ orders.level[i] +" above the current level found (#"+ orders.ticket[i] +")", ERR_ILLEGAL_STATE));
+
+      if (orders.level[i]==nextLevel && idxNextStop==-1) {              // order is open and pending
+         idxNextStop = i;
+      }
+      else {
+         int error = Grid.DeleteOrder(i);                               // delete an obsolete old stop order
+         if (error != 0) return(UpdatePendingOrders.DeleteError(i, error));
+         sizeOfTickets--;
+         i--;
+         saveStatus = true;
+      }
+   }
+
+   while (idxNextStop == -1) {                                          // open a missing next stop order
+      type = Grid.AddPendingOrder(nextLevel); if (!type) return(false);
+      sizeOfTickets++;
+      saveStatus = true;
+
+      if (IsStopOrderType(type)) {                                      // a stop order was opened
+         idxNextStop = sizeOfTickets-1;
+      }
+      else {                                                            // on a limit order the sequence level increased
+         sequence.level    = nextLevel; SS.SequenceName();
+         sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
+         nextLevel        += levelStep;
+         newLimitOrders++;
+         ArrayPushInt(sequence.missedLevels, sequence.level);
+         sMissedLevels = sMissedLevels +", "+ sequence.level;
+      }
+   }
+
+   // (3) if in level 0 trail the next stop order (if required)
+   if (!sequence.level) {
+      i = idxNextStop;
       if (NE(GetGridbase(), orders.gridbase[i], Digits)) {
          static double lastTrailed = INT_MIN;
+
          if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // wait 3 seconds between requests to avoid ERR_TOO_MANY_REQUESTS
-            type = Grid.TrailPendingOrder(i); if (!type) return(false); //
-            if (IsLimitOrderType(type)) {                               // TrailPendingOrder() missed a level
-               lastExistingLevel = nextLevel;                           // -1 | +1
-               sequence.level    = nextLevel; SS.SequenceName();
-               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastExistingLevel;
-               nextLevel        += Sign(nextLevel);                     // -2 | +2
-               nextStopExists    = false;
-            }
-            ordersChanged = true;
+            type = Grid.TrailPendingOrder(i); if (!type) return(false);
             lastTrailed = GetTickCount();
+            saveStatus  = true;
+
+            if (IsLimitOrderType(type)) {                               // on a limit order the sequence level increased
+               sequence.level    = nextLevel; SS.SequenceName();
+               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
+               nextLevel        += levelStep;
+               newLimitOrders++;
+               ArrayPushInt(sequence.missedLevels, sequence.level);
+               sMissedLevels = sMissedLevels +", "+ sequence.level;
+
+               if (!UpdatePendingOrders()) return(false);               // handle the now missing next stop order recursively
+               sizeOfTickets++;
+               idxNextStop = sizeOfTickets-1;
+            }
          }
       }
    }
 
-   // add all missing levels (pending limit or stop orders) up to the next sequence level
-   if (!nextStopExists) {
-      while (true) {
-         if (IsLimitOrderType(type)) {                            // TrailPendingOrder() missed a level
-            limitOrders++;
-            ArrayPushInt(sequence.missedLevels, lastExistingLevel);
-            sMissedLevels = sMissedLevels +", "+ lastExistingLevel;
-         }
-         level = lastExistingLevel + Sign(nextLevel);
-
-         type = Grid.AddPendingOrder(level); if (!type) return(false);
-         lastExistingLevel = level;
-         ordersChanged     = true;
-
-         if (IsStopOrderType(type)) {                             // a stop order was opened
-            sequence.level = level - Sign(level); SS.SequenceName();
-            nextLevel      = level;
-            nextStopExists = true;
-            break;
-         }
-         if (level == nextLevel) {                                // a limit order for the next level was opened
-            sequence.level    = nextLevel; SS.SequenceName();
-            sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
-            nextLevel         = sequence.level + Sign(nextLevel);
-         }
-      }
-   }
-
-   if (limitOrders > 0) {
+   if (newLimitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(5)  "+ sequence.longName +" opened "+ limitOrders +" limit order"+ Pluralize(limitOrders) +" for missed level"+ Pluralize(limitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
+      if (__LOG()) log("UpdatePendingOrders(5)  "+ sequence.longName +" opened "+ newLimitOrders +" limit order"+ Pluralize(newLimitOrders) +" for missed level"+ Pluralize(newLimitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
    SS.ProfitPerLevel();
 
-   if (ordersChanged)
+   if (saveStatus)
       if (!SaveStatus()) return(false);
    return(!catch("UpdatePendingOrders(6)"));
+}
+
+
+/**
+ * Handle an error returned by Grid.DeleteOrder() called in UpdatePendingOrders():
+ *
+ * @param  int i     - array index of the stop order for which the error occurred
+ * @param  int error - the occurred error
+ *
+ * @return bool - success status
+ */
+bool UpdatePendingOrders.DeleteError(int i, int error) {
+   if (error == -1) {                                                   // the order was already executed
+      if (__LOG()) log("UpdatePendingOrders.DeleteError(1)  "+ sequence.longName +" pending stop order for level "+ orders.level[i] +" was already executed (#"+ orders.ticket[i] +")");
+      bool bNull;
+      UpdateStatus(bNull);                                              // handle it recursively
+      return(UpdatePendingOrders(true));
+   }
+   return(false);                                                       // any other error
 }
 
 
@@ -1883,13 +1952,14 @@ double ResetGridbase(datetime time=NULL, double value=NULL) {
 
 /**
  * Open a pending entry order for the specified gridlevel and add it to the order arrays. Depending on the market a stop or
- * a limit order may be opened.
+ * a limit order is opened.
  *
- * @param  int level - gridlevel of the order to open: -n...1 | 1...+n
+ * @param  int level             - gridlevel of the order to open: -n...1 | 1...+n
+ * @param  int offset [optional] - order array position (index) to add the new order (default: append to the end)
  *
- * @return int - order type of the opened order or NULL in case of errors
+ * @return int - order type of the opened order (stop or limit order) or NULL in case of errors
  */
-int Grid.AddPendingOrder(int level) {
+int Grid.AddPendingOrder(int level, int offset=-1) {
    if (IsLastError())                                                           return(NULL);
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(1)  "+ sequence.longName +" cannot add order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -1948,7 +2018,7 @@ int Grid.AddPendingOrder(int level) {
    double   profit       = NULL;
 
    // store dataset
-   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
+   if (!Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit, offset))
       return(NULL);
 
    if (last_error || catch("Grid.AddPendingOrder(7)"))
@@ -2016,7 +2086,7 @@ bool Grid.AddPosition(int level) {
    double   profit       = NULL;
 
    // store dataset
-   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
+   if (!Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
       return(false);
    return(!catch("Grid.AddPosition(7)"));
 }
@@ -2128,7 +2198,7 @@ int Grid.DeleteOrder(int i) {
          return(SetLastError(error));
       }
    }
-   if (!Grid.DropData(i)) return(last_error);
+   if (!Orders.RemoveRecord(i)) return(last_error);
 
    ArrayResize(oe, 0);
    return(catch("Grid.DeleteOrder(3)"));
@@ -2173,7 +2243,8 @@ int Grid.DeleteLimit(int i) {
 
 
 /**
- * Add a set with order data to the internal order arrays.
+ * Add an order record at the specified offset of the internal order arrays. Array size is increased and the record is
+ * inserted, no data is overwritten.
  *
  * @param  int      ticket
  * @param  int      level
@@ -2197,111 +2268,144 @@ int Grid.DeleteLimit(int i) {
  * @param  double   commission
  * @param  double   profit
  *
+ * @param  int      offset [optional] - position (array index) to add the order record (default: append to the end)
+ *
  * @return bool - success status
  */
-bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
+bool Orders.AddRecord(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit, int offset = -1) {
    closedBySL = closedBySL!=0;
-   return(Grid.SetData(-1, ticket, level, gridBase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit));
+
+   int ordersSize = ArraySize(orders.ticket);
+   if (offset < -1 || offset > ordersSize) return(!catch("Orders.AddRecord(1)  "+ sequence.longName +" illegal parameter offset: "+ offset +" (order array size: "+ ordersSize +")", ERR_INVALID_PARAMETER));
+
+   if (offset == -1)
+      offset = ordersSize;
+
+   ArrayInsertInt   (orders.ticket,       offset, ticket                               );
+   ArrayInsertInt   (orders.level,        offset, level                                );
+   ArrayInsertDouble(orders.gridbase,     offset, NormalizeDouble(gridBase, Digits)    );
+
+   ArrayInsertInt   (orders.pendingType,  offset, pendingType                          );
+   ArrayInsertInt   (orders.pendingTime,  offset, pendingTime                          );
+   ArrayInsertDouble(orders.pendingPrice, offset, NormalizeDouble(pendingPrice, Digits));
+
+   ArrayInsertInt   (orders.type,         offset, type                                 );
+   ArrayInsertInt   (orders.openEvent,    offset, openEvent                            );
+   ArrayInsertInt   (orders.openTime,     offset, openTime                             );
+   ArrayInsertDouble(orders.openPrice,    offset, NormalizeDouble(openPrice, Digits)   );
+   ArrayInsertInt   (orders.closeEvent,   offset, closeEvent                           );
+   ArrayInsertInt   (orders.closeTime,    offset, closeTime                            );
+   ArrayInsertDouble(orders.closePrice,   offset, NormalizeDouble(closePrice, Digits)  );
+   ArrayInsertDouble(orders.stopLoss,     offset, NormalizeDouble(stopLoss, Digits)    );
+   ArrayInsertBool  (orders.closedBySL,   offset, closedBySL                           );
+
+   ArrayInsertDouble(orders.swap,         offset, NormalizeDouble(swap,       2)       );
+   ArrayInsertDouble(orders.commission,   offset, NormalizeDouble(commission, 2)       );
+   ArrayInsertDouble(orders.profit,       offset, NormalizeDouble(profit,     2)       );
+
+   return(!catch("Orders.AddRecord(2)"));
 }
 
 
 /**
- * Store a set with order data at the specified position of the internal order arrays.
+ * Remove the order record at the specified offset from the internal order arrays. After removal the array size is decreased.
  *
- * @param  int      offset - order array position; if -1 or out-of-bounds the order array size is increased accordingly
- *
- * @param  int      ticket
- * @param  int      level
- * @param  double   gridBase
- *
- * @param  int      pendingType
- * @param  datetime pendingTime
- * @param  double   pendingPrice
- *
- * @param  int      type
- * @param  int      openEvent
- * @param  datetime openTime
- * @param  double   openPrice
- * @param  int      closeEvent
- * @param  datetime closeTime
- * @param  double   closePrice
- * @param  double   stopLoss
- * @param  bool     closedBySL
- *
- * @param  double   swap
- * @param  double   commission
- * @param  double   profit
+ * @param  int offset - position (array index) of the record to remove
  *
  * @return bool - success status
  */
-bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
-   closedBySL = closedBySL!=0;
-   if (offset < -1) return(_false(catch("Grid.SetData(1)  "+ sequence.longName +" illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
+bool Orders.RemoveRecord(int offset) {
+   if (offset < 0 || offset >= ArraySize(orders.ticket)) return(!catch("Orders.RemoveRecord(1)  "+ sequence.longName +" illegal parameter offset: "+ offset +" (order array size: "+ ArraySize(orders.ticket) +")", ERR_INVALID_PARAMETER));
 
-   int i=offset, size=ArraySize(orders.ticket);
+   ArraySpliceInts   (orders.ticket,       offset, 1);
+   ArraySpliceInts   (orders.level,        offset, 1);
+   ArraySpliceDoubles(orders.gridbase,     offset, 1);
 
-   if      (offset ==    -1) i = ResizeOrderArrays(  size+1)-1;
-   else if (offset > size-1) i = ResizeOrderArrays(offset+1)-1;
+   ArraySpliceInts   (orders.pendingType,  offset, 1);
+   ArraySpliceInts   (orders.pendingTime,  offset, 1);
+   ArraySpliceDoubles(orders.pendingPrice, offset, 1);
 
-   orders.ticket      [i] = ticket;
-   orders.level       [i] = level;
-   orders.gridbase    [i] = NormalizeDouble(gridBase, Digits);
+   ArraySpliceInts   (orders.type,         offset, 1);
+   ArraySpliceInts   (orders.openEvent,    offset, 1);
+   ArraySpliceInts   (orders.openTime,     offset, 1);
+   ArraySpliceDoubles(orders.openPrice,    offset, 1);
+   ArraySpliceInts   (orders.closeEvent,   offset, 1);
+   ArraySpliceInts   (orders.closeTime,    offset, 1);
+   ArraySpliceDoubles(orders.closePrice,   offset, 1);
+   ArraySpliceDoubles(orders.stopLoss,     offset, 1);
+   ArraySpliceBools  (orders.closedBySL,   offset, 1);
 
-   orders.pendingType [i] = pendingType;
-   orders.pendingTime [i] = pendingTime;
-   orders.pendingPrice[i] = NormalizeDouble(pendingPrice, Digits);
+   ArraySpliceDoubles(orders.swap,         offset, 1);
+   ArraySpliceDoubles(orders.commission,   offset, 1);
+   ArraySpliceDoubles(orders.profit,       offset, 1);
 
-   orders.type        [i] = type;
-   orders.openEvent   [i] = openEvent;
-   orders.openTime    [i] = openTime;
-   orders.openPrice   [i] = NormalizeDouble(openPrice, Digits);
-   orders.closeEvent  [i] = closeEvent;
-   orders.closeTime   [i] = closeTime;
-   orders.closePrice  [i] = NormalizeDouble(closePrice, Digits);
-   orders.stopLoss    [i] = NormalizeDouble(stopLoss, Digits);
-   orders.closedBySL  [i] = closedBySL;
-
-   orders.swap        [i] = NormalizeDouble(swap,       2);
-   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.UnitSize(); }
-   orders.profit      [i] = NormalizeDouble(profit,     2);
-
-   return(!catch("Grid.SetData(2)"));
+   return(!catch("Orders.RemoveRecord(2)"));
 }
 
 
 /**
- * Remove the order dataset at the specified position from the internal order arrays.
+ * Resize the order arrays.
  *
- * @param  int i - order array index
+ * @param  int  size             - new order array size
+ * @param  bool reset [optional] - whether to re-initialize all records (default: initialize only added records)
  *
- * @return bool - success status
+ * @return int - new array size
  */
-bool Grid.DropData(int i) {
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(!catch("Grid.DropData(1)  "+ sequence.longName +" illegal parameter i = "+ i, ERR_INVALID_PARAMETER));
+int Orders.ResizeArrays(int size, bool reset = false) {
+   reset = reset!=0;
 
-   ArraySpliceInts   (orders.ticket,       i, 1);
-   ArraySpliceInts   (orders.level,        i, 1);
-   ArraySpliceDoubles(orders.gridbase,     i, 1);
+   int oldSize = ArraySize(orders.ticket);
 
-   ArraySpliceInts   (orders.pendingType,  i, 1);
-   ArraySpliceInts   (orders.pendingTime,  i, 1);
-   ArraySpliceDoubles(orders.pendingPrice, i, 1);
+   if (size != oldSize) {
+      ArrayResize(orders.ticket,       size);
+      ArrayResize(orders.level,        size);
+      ArrayResize(orders.gridbase,     size);
+      ArrayResize(orders.pendingType,  size);
+      ArrayResize(orders.pendingTime,  size);
+      ArrayResize(orders.pendingPrice, size);
+      ArrayResize(orders.type,         size);
+      ArrayResize(orders.openEvent,    size);
+      ArrayResize(orders.openTime,     size);
+      ArrayResize(orders.openPrice,    size);
+      ArrayResize(orders.closeEvent,   size);
+      ArrayResize(orders.closeTime,    size);
+      ArrayResize(orders.closePrice,   size);
+      ArrayResize(orders.stopLoss,     size);
+      ArrayResize(orders.closedBySL,   size);
+      ArrayResize(orders.swap,         size);
+      ArrayResize(orders.commission,   size);
+      ArrayResize(orders.profit,       size);
+   }
 
-   ArraySpliceInts   (orders.type,         i, 1);
-   ArraySpliceInts   (orders.openEvent,    i, 1);
-   ArraySpliceInts   (orders.openTime,     i, 1);
-   ArraySpliceDoubles(orders.openPrice,    i, 1);
-   ArraySpliceInts   (orders.closeEvent,   i, 1);
-   ArraySpliceInts   (orders.closeTime,    i, 1);
-   ArraySpliceDoubles(orders.closePrice,   i, 1);
-   ArraySpliceDoubles(orders.stopLoss,     i, 1);
-   ArraySpliceBools  (orders.closedBySL,   i, 1);
-
-   ArraySpliceDoubles(orders.swap,         i, 1);
-   ArraySpliceDoubles(orders.commission,   i, 1);
-   ArraySpliceDoubles(orders.profit,       i, 1);
-
-   return(!catch("Grid.DropData(2)"));
+   if (reset) {                                                      // re-initialize all fields
+      if (size != 0) {
+         ArrayInitialize(orders.ticket,                 0);
+         ArrayInitialize(orders.level,                  0);
+         ArrayInitialize(orders.gridbase,               0);
+         ArrayInitialize(orders.pendingType, OP_UNDEFINED);
+         ArrayInitialize(orders.pendingTime,            0);
+         ArrayInitialize(orders.pendingPrice,           0);
+         ArrayInitialize(orders.type,        OP_UNDEFINED);
+         ArrayInitialize(orders.openEvent,              0);
+         ArrayInitialize(orders.openTime,               0);
+         ArrayInitialize(orders.openPrice,              0);
+         ArrayInitialize(orders.closeEvent,             0);
+         ArrayInitialize(orders.closeTime,              0);
+         ArrayInitialize(orders.closePrice,             0);
+         ArrayInitialize(orders.stopLoss,               0);
+         ArrayInitialize(orders.closedBySL,         false);
+         ArrayInitialize(orders.swap,                   0);
+         ArrayInitialize(orders.commission,             0);
+         ArrayInitialize(orders.profit,                 0);
+      }
+   }
+   else {                                                            // initialize only added fields
+      for (int i=oldSize; i < size; i++) {
+         orders.pendingType[i] = OP_UNDEFINED;                       // always initialize pendingType and type to non-zero
+         orders.type       [i] = OP_UNDEFINED;                       // as 0 is a valid value
+      }
+   }
+   return(size);
 }
 
 
@@ -3030,7 +3134,7 @@ bool ReadStatus() {
 
    string orderKeys[], sOrder;
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
-   ResizeOrderArrays(0);
+   Orders.ResizeArrays(0);
    for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
       success = ReadStatus.ParseOrder(sOrder);
@@ -3441,7 +3545,7 @@ bool ReadStatus.ParseOrder(string value) {
    if (type==OP_UNDEFINED && NE(profit, 0))                              return(!catch("ReadStatus.ParseOrder(48)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // store all data in the order arrays
-   Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit);
+   Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit);
    lastEventId = Max(lastEventId, openEvent, closeEvent);
 
    ArrayResize(values, 0);
@@ -3487,7 +3591,7 @@ bool SynchronizeStatus() {
 
       if (orders.closeTime[i] != 0) {
          if (orders.type[i] == OP_UNDEFINED) {
-            if (!Grid.DropData(i))                                         // geschlossene PendingOrders löschen
+            if (!Orders.RemoveRecord(i))                                   // geschlossene PendingOrders löschen
                return(false);
             sizeOfTickets--; i--;
             permanentStatusChange = true;
@@ -3923,73 +4027,6 @@ int CountClosedPositions() {
          count++;
    }
    return(count);
-}
-
-
-/**
- * Setzt die Größe der Datenarrays auf den angegebenen Wert.
- *
- * @param  int  size             - neue Größe
- * @param  bool reset [optional] - ob die Arrays komplett zurückgesetzt werden sollen
- *                                 (default: nur neu hinzugefügte Felder werden initialisiert)
- *
- * @return int - neue Größe der Arrays
- */
-int ResizeOrderArrays(int size, bool reset = false) {
-   reset = reset!=0;
-
-   int oldSize = ArraySize(orders.ticket);
-
-   if (size != oldSize) {
-      ArrayResize(orders.ticket,       size);
-      ArrayResize(orders.level,        size);
-      ArrayResize(orders.gridbase,     size);
-      ArrayResize(orders.pendingType,  size);
-      ArrayResize(orders.pendingTime,  size);
-      ArrayResize(orders.pendingPrice, size);
-      ArrayResize(orders.type,         size);
-      ArrayResize(orders.openEvent,    size);
-      ArrayResize(orders.openTime,     size);
-      ArrayResize(orders.openPrice,    size);
-      ArrayResize(orders.closeEvent,   size);
-      ArrayResize(orders.closeTime,    size);
-      ArrayResize(orders.closePrice,   size);
-      ArrayResize(orders.stopLoss,     size);
-      ArrayResize(orders.closedBySL,   size);
-      ArrayResize(orders.swap,         size);
-      ArrayResize(orders.commission,   size);
-      ArrayResize(orders.profit,       size);
-   }
-
-   if (reset) {                                                      // alle Felder zurücksetzen
-      if (size != 0) {
-         ArrayInitialize(orders.ticket,                 0);
-         ArrayInitialize(orders.level,                  0);
-         ArrayInitialize(orders.gridbase,               0);
-         ArrayInitialize(orders.pendingType, OP_UNDEFINED);
-         ArrayInitialize(orders.pendingTime,            0);
-         ArrayInitialize(orders.pendingPrice,           0);
-         ArrayInitialize(orders.type,        OP_UNDEFINED);
-         ArrayInitialize(orders.openEvent,              0);
-         ArrayInitialize(orders.openTime,               0);
-         ArrayInitialize(orders.openPrice,              0);
-         ArrayInitialize(orders.closeEvent,             0);
-         ArrayInitialize(orders.closeTime,              0);
-         ArrayInitialize(orders.closePrice,             0);
-         ArrayInitialize(orders.stopLoss,               0);
-         ArrayInitialize(orders.closedBySL,         false);
-         ArrayInitialize(orders.swap,                   0);
-         ArrayInitialize(orders.commission,             0);
-         ArrayInitialize(orders.profit,                 0);
-      }
-   }
-   else {
-      for (int i=oldSize; i < size; i++) {
-         orders.pendingType[i] = OP_UNDEFINED;                       // Hinzugefügte pendingType- und type-Felder immer re-initialisieren,
-         orders.type       [i] = OP_UNDEFINED;                       // 0 ist ein gültiger Wert und daher als Default unzulässig.
-      }
-   }
-   return(size);
 }
 
 

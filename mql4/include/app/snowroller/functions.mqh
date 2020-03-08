@@ -1062,7 +1062,7 @@ void SS.StartStopStats() {
          sStartPL = NumberToStr(sequence.start.profit[i], "+.2");
          sStopPL  = NumberToStr(sequence.stop.profit [i], "+.2");
       }
-      sStartStopStats = " ----------------------------------------------------"+ NL
+      sStartStopStats = "-------------------------------------------------------"+ NL
                        +" "+ (i+1) +":   Start: "+ sStartPL +"   Stop: "+ sStopPL + StrRightFrom(sStartStopStats, "--", -1);
    }
    if (StringLen(sStartStopStats) > 0)
