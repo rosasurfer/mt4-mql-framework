@@ -405,6 +405,34 @@ bool Chart.MarkPositionClosed(int i) {
 
 
 /**
+ * Get a user confirmation for a trade request at the first tick. Safety measure against runtime errors.
+ *
+ * @param  string location - location identifier of the confirmation
+ * @param  string message  - confirmation message
+ *
+ * @return bool - confirmation result
+ */
+bool ConfirmFirstTickTrade(string location, string message) {
+   static bool confirmed;
+   if (confirmed)                         // On nested calls behave like a no-op, don't return the former result. Trade requests
+      return(true);                       // will differ and the calling logic must correctly interprete the first result.
+
+   bool result;
+   if (Tick > 1 || IsTesting()) {
+      result = true;
+   }
+   else {
+      PlaySoundEx("Windows Notify.wav");
+      result = (IDOK == MessageBoxEx(__NAME() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      RefreshRates();
+   }
+   confirmed = true;
+
+   return(result);
+}
+
+
+/**
  * Return the number of known open positions of the sequence.
  *
  * @return int
@@ -437,6 +465,21 @@ int CountPendingOrders() {
 
 
 /**
+ * Generate a new sequence id.
+ *
+ * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
+ */
+int CreateSequenceId() {
+   MathSrand(GetTickCount());
+   int id;                                               // TODO: in tester generate consecutive ids
+   while (id < SID_MIN || id > SID_MAX) {
+      id = MathRand();
+   }
+   return(id);                                           // TODO: test id for uniqueness
+}
+
+
+/**
  * Create the status display box. It consists of overlapping rectangles made of char "g" in font "Webdings". Called only from
  * afterInit().
  *
@@ -461,6 +504,43 @@ int CreateStatusBox() {
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
    return(catch("CreateStatusBox(1)"));
+}
+
+
+/**
+ * Return the full name of the custom logfile.
+ *
+ * @return string - filename or an empty string in tester (no separate logfile)
+ */
+string GetCustomLogFileName() {
+   return("");                            // for the time being: disable the custom log
+
+   string name = GetStatusFileName();
+   if (!StringLen(name)) return("");
+   if (IsTestSequence()) return("");
+
+   return(StrLeft(name, -3) +"log");
+}
+
+
+/**
+ * Return the full name of the status file.
+ *
+ * @return string - filename or an empty string in case of errors
+ */
+string GetStatusFileName() {
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFileName(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
+
+   string sSID = "";
+   if (SNOWROLLER) sSID = "SR.";
+   if (SISYPHUS)   sSID = "SPH.";
+
+   string directory, baseName=StrToLower(Symbol()) +"."+ sSID + sequence.id +".set";
+
+   if (IsTestSequence()) directory = "\\presets\\";
+   else                  directory = "\\presets\\"+ ShortAccountCompany() +"\\";
+
+   return(GetMqlFilesPath() + directory + baseName);
 }
 
 
@@ -589,12 +669,335 @@ void RedrawStartStop() {
 
 
 /**
- * ShowStatus(): Update the sequence id displayed in the tester's title bar (if active).
+ * Restore sequence id and transient status found in the chart after recompilation or terminal restart.
+ *
+ * @return bool - whether a sequence id was found and restored
  */
-void SS.Tester() {
-   if (IsTesting() && IsVisualMode()) {
-      SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id);
+bool RestoreChartStatus() {
+   string name=__NAME(), key=name +".runtime.Sequence.ID", sValue="";
+
+   if (ObjectFind(key) == 0) {
+      Chart.RestoreString(key, sValue);
+
+      if (StrStartsWith(sValue, "T")) {
+         sequence.isTest = true;
+         sValue = StrSubstr(sValue, 1);
+      }
+      int iValue = StrToInteger(sValue);
+      if (!iValue) {
+         sequence.status = STATUS_UNDEFINED;
+      }
+      else {
+         sequence.id     = iValue;
+         Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
+         sequence.status = STATUS_WAITING;
+      }
+      bool bValue;
+      Chart.RestoreInt (name +".runtime.startStopDisplayMode",   startStopDisplayMode  );
+      Chart.RestoreInt (name +".runtime.orderDisplayMode",       orderDisplayMode      );
+      Chart.RestoreBool(name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
+      Chart.RestoreBool(name +".runtime.CANCELLED_BY_USER",      bValue                ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
+      catch("RestoreChartStatus(1)");
+      return(iValue != 0);
    }
+   return(false);
+}
+
+
+/**
+ * Delete all sequence data stored in the chart.
+ *
+ * @return int - error status
+ */
+int DeleteChartStatus() {
+   string label, prefix=__NAME() +".runtime.";
+
+   for (int i=ObjectsTotal()-1; i>=0; i--) {
+      label = ObjectName(i);
+      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+   }
+   return(catch("DeleteChartStatus(1)"));
+}
+
+
+/**
+ * Update all string representations for ShowStatus().
+ */
+void SS.All() {
+   if (!__CHART()) return;
+
+   SS.SequenceName();
+   SS.GridBase();
+   SS.GridDirection();
+   SS.MissedLevels();
+   SS.UnitSize();
+   SS.ProfitPerLevel();
+   SS.StartStopConditions();
+   SS.AutoRestart();
+   SS.Stops();
+   SS.TotalPL();
+   SS.MaxProfit();
+   SS.MaxDrawdown();
+   SS.StartStopStats();
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of the "AutoRestart" option.
+ */
+void SS.AutoRestart() {
+   if (!__CHART()) return;
+
+   if (AutoRestart=="Off") sAutoRestart = "AutoRestart:  "+ AutoRestart + NL;
+   else                    sAutoRestart = "AutoRestart:  "+ AutoRestart +" ("+ (sequence.cycle-1) +")" + NL;
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of the gridbase.
+ */
+void SS.GridBase() {
+   if (!__CHART()) return;
+
+   double gridbase = GetGridbase();
+   if (!gridbase) return;
+
+   sGridBase = " @ "+ NumberToStr(gridbase, PriceFormat);
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of the sequence direction.
+ */
+void SS.GridDirection() {
+   if (!__CHART()) return;
+
+   if (sequence.direction != 0) {
+      sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
+   }
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of "sequence.maxDrawdown".
+ */
+void SS.MaxDrawdown() {
+   if (!__CHART()) return;
+
+   if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+   SS.PLStats();
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of "sequence.maxProfit".
+ */
+void SS.MaxProfit() {
+   if (!__CHART()) return;
+
+   if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+   else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
+   SS.PLStats();
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of the missed gridlevels.
+ */
+void SS.MissedLevels() {
+   if (!__CHART()) return;
+
+   int size = ArraySize(sequence.missedLevels);
+   if (!size) sSequenceMissedLevels = "";
+   else       sSequenceMissedLevels = ", missed: "+ JoinInts(sequence.missedLevels);
+}
+
+
+/**
+ * ShowStatus(): Update the string representaton of the P/L statistics.
+ */
+void SS.PLStats() {
+   if (!__CHART()) return;
+
+   if (sequence.maxLevel != 0) {             // not before a positions was opened
+      sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
+   }
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of "sequence.profitPerLevel".
+ */
+void SS.ProfitPerLevel() {
+   if (!__CHART()) return;
+
+   if (!sequence.level) {
+      sSequenceProfitPerLevel = "";          // not before a positions was opened
+   }
+   else {
+      double stopSize = GridSize * PipValue(sequence.unitsize);
+      int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
+      double profit   = levels * stopSize;
+
+      if (ShowProfitInPercent) sSequenceProfitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
+      else                     sSequenceProfitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
+   }
+}
+
+
+/**
+ * ShowStatus(): Update the string representations of standard and long sequence name.
+ */
+void SS.SequenceName() {
+   sequence.name = "";
+
+   if      (sequence.direction == D_LONG)  sequence.name = "L";
+   else if (sequence.direction == D_SHORT) sequence.name = "S";
+
+   sequence.name     = sequence.name +"."+ sequence.id;
+   sequence.longName = sequence.name +"."+ NumberToStr(sequence.level, "+.");
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of the configured start/stop conditions.
+ */
+void SS.StartStopConditions() {
+   if (!__CHART()) return;
+
+   // start conditions, order: [sessionbreak >>] trend, time, price
+   string sValue = "";
+   if (start.time.description!="" || start.price.description!="") {
+      if (start.time.description != "") {
+         sValue = sValue + ifString(start.time.condition, "@", "!") + start.time.description;
+      }
+      if (start.price.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " && ") + ifString(start.price.condition, "@", "!") + start.price.description;
+      }
+   }
+   if (start.trend.description != "") {
+      string sTrend = ifString(start.trend.condition, "@", "!") + start.trend.description;
+
+      if (start.time.description!="" && start.price.description!="") {
+         sValue = "("+ sValue +")";
+      }
+      if (start.time.description=="" && start.price.description=="") {
+         sValue = sTrend;
+      }
+      else {
+         sValue = sTrend +" || "+ sValue;
+      }
+   }
+   if (sessionbreak.waiting) {
+      if (sValue != "") sValue = " >> "+ sValue;
+      sValue = "sessionbreak"+ sValue;
+   }
+   if (sValue == "") sStartConditions = "-";
+   else              sStartConditions = sValue;
+
+   // stop conditions, order: trend, profit, loss, time, price
+   sValue = "";
+   if (stop.trend.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.trend.condition, "@", "!") + stop.trend.description;
+   }
+   if (stop.profitAbs.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
+   }
+   if (stop.profitPct.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
+   }
+   if (stop.lossAbs.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossAbs.condition, "@", "!") + stop.lossAbs.description;
+   }
+   if (stop.lossPct.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossPct.condition, "@", "!") + stop.lossPct.description;
+   }
+   if (stop.time.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+   }
+   if (stop.price.description != "") {
+      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
+   }
+   if (sValue == "") sStopConditions = "-";
+   else              sStopConditions = sValue;
+}
+
+
+/**
+ * ShowStatus(); Update the string representation of the start/stop statistics.
+ */
+void SS.StartStopStats() {
+   if (!__CHART()) return;
+
+   sStartStopStats = "";
+
+   int size = ArraySize(sequence.start.event);
+   string sStartPL, sStopPL;
+
+   for (int i=0; i < size-1; i++) {
+      if (ShowProfitInPercent) {
+         sStartPL = NumberToStr(MathDiv(sequence.start.profit[i], sequence.startEquity) * 100, "+.2") +"%";
+         sStopPL  = NumberToStr(MathDiv(sequence.stop.profit [i], sequence.startEquity) * 100, "+.2") +"%";
+      }
+      else {
+         sStartPL = NumberToStr(sequence.start.profit[i], "+.2");
+         sStopPL  = NumberToStr(sequence.stop.profit [i], "+.2");
+      }
+      sStartStopStats = " ----------------------------------------------------"+ NL
+                       +" "+ (i+1) +":   Start: "+ sStartPL +"   Stop: "+ sStopPL + StrRightFrom(sStartStopStats, "--", -1);
+   }
+   if (StringLen(sStartStopStats) > 0)
+      sStartStopStats = sStartStopStats + NL;
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of "sequence.stops" and "sequence.stopsPL".
+ */
+void SS.Stops() {
+   if (!__CHART()) return;
+   sSequenceStops = sequence.stops +" stop"+ ifString(sequence.stops==1, "", "s");
+
+   // not set before the first stopped-out position
+   if (sequence.stops > 0) {
+      if (ShowProfitInPercent) sSequenceStopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
+      else                     sSequenceStopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
+   }
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of "sequence.totalPL".
+ */
+void SS.TotalPL() {
+   if (!__CHART()) return;
+
+   // not set before the first open position
+   if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";
+   else if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+   else                          sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+}
+
+
+/**
+ * ShowStatus(): Update the string representation of the unitsize.
+ */
+void SS.UnitSize() {
+   if (!__CHART()) return;
+
+   double equity = sequence.startEquity;
+
+   if (!sequence.unitsize) {
+      if (!equity) equity = CalculateStartEquity();
+      sequence.unitsize = CalculateUnitSize(equity);
+   }
+   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compound.)");
+   double stopSize     = GridSize * PipValue(sequence.unitsize) - sequence.commission;
+
+   if (ShowProfitInPercent) sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(MathDiv(stopSize, equity) * 100, 2) +"%/stop";
+   else                     sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(stopSize, 2) +"/stop";
 }
 
 

@@ -45,10 +45,14 @@ int onInitUser() {
       sequence.status  = STATUS_WAITING;
       SetCustomLog(GetCustomLogFileName());
       SS.SequenceName();
-      SS.Tester();
-
-      if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       SaveStatus();
+
+      if (__LOG()) {
+         log("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
+      }
+      else if (IsTesting() && !IsVisualMode()) {
+         debug("onInitUser(2)  sequence "+ sequence.name +" created");
+      }
    }
    return(last_error);
 }
