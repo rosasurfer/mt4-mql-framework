@@ -312,6 +312,110 @@ void CopyInputStatus(bool store) {
 
 
 /**
+ * Calculate and return the reference equity value for a new sequence.
+ *
+ * @return double - equity value or NULL in case of errors
+ */
+double CalculateStartEquity() {
+   double result;
+
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !tester.startEquity) {
+      result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   }
+   else {
+      result = tester.startEquity;
+   }
+
+   if (!catch("CalculateStartEquity(1)"))
+      return(result);
+   return(NULL);
+}
+
+
+/**
+ * Calculate and return the unitsize to use for the given equity value. If the sequence was already started the returned
+ * value is equal to the initially calculated unitsize, no matter the equity value passed.
+ *
+ * @param  double equity - equity value
+ *
+ * @return double - unitsize or NULL in case of errors
+ */
+double CalculateUnitSize(double equity) {
+   if (LE(equity, 0))         return(!catch("CalculateUnitSize(1)  "+ sequence.longName +" invalid parameter equity: "+ NumberToStr(equity, ".2+"), ERR_INVALID_PARAMETER));
+
+   if (ArraySize(orders.ticket) > 0) {
+      if (!sequence.unitsize) return(!catch("CalculateUnitSize(2)  "+ sequence.longName +" illegal stored value of sequence.unitsize: 0", ERR_ILLEGAL_STATE));
+      return(sequence.unitsize);
+   }
+
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE );
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double minLot    = MarketInfo(Symbol(), MODE_MINLOT   );
+   double maxLot    = MarketInfo(Symbol(), MODE_MAXLOT   );
+   double lotStep   = MarketInfo(Symbol(), MODE_LOTSTEP  );
+   int    error     = GetLastError();
+   if (IsError(error)) return(!catch("CalculateUnitSize(3)", error));
+
+   if (!tickSize || !tickValue || !minLot || !maxLot || !lotStep) {
+      string sDetail = ifString(tickSize, "", "tickSize=0, ") + ifString(tickValue, "", "tickValue=0, ") + ifString(minLot, "", "minLot=0, ") + ifString(maxLot, "", "maxLot=0, ") + ifString(lotStep, "", "lotStep=0, ");
+      return(!catch("CalculateUnitSize(4)  "+ sequence.longName +" market data not (yet) available: "+ StrLeft(sDetail, -2), ERS_TERMINAL_NOT_YET_READY));
+   }
+
+   string sValue;
+   bool   calculated = false;
+   double result;
+
+   if (UnitSize == "auto") {
+      calculated = true;
+      // read and parse configuration: Unitsize.{symbol} = L[everage]{double}
+      string section="SnowRoller", key="Unitsize."+ StdSymbol(), sUnitSize=GetConfigString(section, key);
+      if      (StrStartsWithI(sUnitSize, "Leverage")) sValue = StrTrim(StrSubstr(sUnitSize, 8));
+      else if (StrStartsWithI(sUnitSize, "L"       )) sValue = StrTrim(StrSubstr(sUnitSize, 1));
+      else                                            sValue = sUnitSize;
+      if (!StrIsNumeric(sValue))               return(!catch("CalculateUnitSize(5)  "+ sequence.longName +" invalid configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
+      double leverage = StrToDouble(sValue);
+      if (LE(leverage, 0))                     return(!catch("CalculateUnitSize(6)  "+ sequence.longName +" invalid leverage value in configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
+   }
+   else {
+      if      (StrStartsWithI(UnitSize, "Leverage")) { sValue = StrTrim(StrSubstr(UnitSize, 8)); calculated = true; }
+      else if (StrStartsWithI(UnitSize, "L"       )) { sValue = StrTrim(StrSubstr(UnitSize, 1)); calculated = true; }
+      else                                             sValue = UnitSize;
+      if (!StrIsNumeric(sValue))               return(!catch("CalculateUnitSize(7)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize), ERR_INVALID_INPUT_PARAMETER));
+
+      if (calculated) {
+         leverage = StrToDouble(sValue);
+         if (LE(leverage, 0))                  return(!catch("CalculateUnitSize(8)  "+ sequence.longName +" invalid leverage value in input parameter UnitSize: "+ DoubleQuoteStr(UnitSize), ERR_INVALID_INPUT_PARAMETER));
+      }
+      else {
+         result = StrToDouble(sValue);
+         if (LE(result, 0))                    return(!catch("CalculateUnitSize(9)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize), ERR_INVALID_INPUT_PARAMETER));
+      }
+   }
+
+   if (calculated) {
+      double price   = (Bid+Ask)/2;
+      double lotSize = price * tickValue/tickSize;    // lotsize in account currency
+      double margin  = equity * leverage;             // available leveraged margin
+      result         = margin / lotSize;
+      int steps      = result / lotStep;
+      result         = NormalizeDouble(steps * lotStep, 2);
+
+      if (LT(result, minLot))               return(!catch("CalculateUnitSize(10)  "+ sequence.longName +" too low parameter equity = "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_PARAMETER));
+      if (GT(result, maxLot))               return(!catch("CalculateUnitSize(11)  "+ sequence.longName +" too high parameter equity = "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_PARAMETER));
+   }
+   else {
+      if (LT(result, minLot))               return(!catch("CalculateUnitSize(12)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(result, maxLot))               return(!catch("CalculateUnitSize(13)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (MathModFix(result, lotStep) != 0) return(!catch("CalculateUnitSize(14)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
+   }
+
+   if (!catch("CalculateUnitSize(15)"))
+      return(result);
+   return(NULL);
+}
+
+
+/**
  * Adjust the order markers created or omitted by the terminal for a filled pending order.
  *
  * @param  int i - index in the order arrays
@@ -541,6 +645,19 @@ string GetStatusFileName() {
    else                  directory = "\\presets\\"+ ShortAccountCompany() +"\\";
 
    return(GetMqlFilesPath() + directory + baseName);
+}
+
+
+/**
+ * Return the currently active gridbase value.
+ *
+ * @return double - gridbase value or NULL if the gridbase is not yet set
+ */
+double GetGridbase() {
+   int size = ArraySize(gridbase.event);
+   if (size > 0)
+      return(gridbase.price[size-1]);
+   return(NULL);
 }
 
 
