@@ -42,7 +42,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/logfile names
+extern string   Sequence.ID            = "";                            // instance id in format /T?[0-9]{4,}/, affects magic number and status/logfile names
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;                            //
 extern string   UnitSize               = "[L]{double} | auto*";         // fixed (double), compounding (L{double}) or externally configured (auto) unitsize
@@ -2646,9 +2646,8 @@ bool IsMyOrder(int sequenceId = NULL) {
 
 
 /**
- * Validate new or changed input parameters of a sequence. Parameters may have been entered through the input dialog, may
- * have been read and applied from a sequence status file or may have been deserialized and applied programmatically by the
- * terminal (e.g. at terminal restart).
+ * Validate new or changed input parameters. Parameters may have been entered through the input dialog, may have been read
+ * and applied from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at restart).
  *
  * @param  bool interactive - whether the parameters have been entered through the input dialog
  *
@@ -3004,7 +3003,7 @@ int CreateEventId() {
 
 
 /**
- * Write the current sequence status to a file. The sequence can be reloaded from such a file (e.g. on terminal restart).
+ * Write the current sequence status to a file. The sequence can be reloaded from the file.
  *
  * @return bool - success status
  */
