@@ -2644,7 +2644,6 @@ int ShowStatus(int error = NO_ERROR) {
 void SS.All() {
    if (!__CHART()) return;
 
-   SS.SequenceId();
    SS.SequenceName();
    SS.GridBase();
    SS.GridDirection();
@@ -2658,16 +2657,7 @@ void SS.All() {
    SS.MaxProfit();
    SS.MaxDrawdown();
    SS.StartStopStats();
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die Anzeige der Sequenz-ID in der Titelzeile des Testers.
- */
-void SS.SequenceId() {
-   if (IsTesting() && IsVisualMode()) {
-      SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id);
-   }
+   SS.Tester();
 }
 
 
@@ -2949,7 +2939,7 @@ bool RestoreChartStatus() {
          sequence.status = STATUS_UNDEFINED;
       }
       else {
-         sequence.id     = iValue; SS.SequenceId();
+         sequence.id     = iValue;
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
          sequence.status = STATUS_WAITING;
       }
@@ -2999,42 +2989,6 @@ bool IsMyOrder(int sequenceId = NULL) {
       }
    }
    return(false);
-}
-
-
-/**
- * Validiert und setzt nur die in der Konfiguration angegebene Sequenz-ID. Called only from onInitUser().
- *
- * @param  bool interactive - whether parameters have been entered through the input dialog
- *
- * @return bool - ob eine gültige Sequenz-ID gefunden und restauriert wurde
- */
-bool ValidateInputs.ID(bool interactive) {
-   interactive = interactive!=0;
-
-   bool isParameterChange = (ProgramInitReason() == IR_PARAMETERS);  // otherwise inputs have been applied programmatically
-   if (isParameterChange)
-      interactive = true;
-
-   string sValue = StrToUpper(StrTrim(Sequence.ID));
-
-   if (!StringLen(sValue))
-      return(false);
-
-   if (StrLeft(sValue, 1) == "T") {
-      sequence.isTest = true;
-      sValue = StrSubstr(sValue, 1);
-   }
-   if (!StrIsDigit(sValue))
-      return(_false(ValidateInputs.OnError("ValidateInputs.ID(1)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
-
-   int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX)
-      return(_false(ValidateInputs.OnError("ValidateInputs.ID(2)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
-
-   sequence.id = iValue; SS.SequenceId();
-   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-   return(true);
 }
 
 
@@ -3382,33 +3336,6 @@ bool ValidateInputs(bool interactive) {
    if (interactive)
       __STATUS_INVALID_INPUT = false;
    return(!catch("ValidateInputs(61)"));
-}
-
-
-/**
- * Error-Handler für ungültige Input-Parameter. Je nach Situation wird der Fehler an den Default-Errorhandler übergeben
- * oder zur Korrektur aufgefordert.
- *
- * @param  string location    - Ort, an dem der Fehler auftrat
- * @param  string message     - Fehlermeldung
- * @param  bool   interactive - ob der Fehler interaktiv behandelt werden kann
- *
- * @return int - der resultierende Fehlerstatus
- */
-int ValidateInputs.OnError(string location, string message, bool interactive) {
-   interactive = interactive!=0;
-   if (IsTesting() || !interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
-
-   int error = ERR_INVALID_INPUT_PARAMETER;
-   __STATUS_INVALID_INPUT = true;
-
-   if (__LOG()) log(location +"   "+ message, error);
-   PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY)
-      __STATUS_RELAUNCH_INPUT = true;
-   return(error);
 }
 
 

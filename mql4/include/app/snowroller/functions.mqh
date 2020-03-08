@@ -589,6 +589,16 @@ void RedrawStartStop() {
 
 
 /**
+ * ShowStatus(): Update the sequence id displayed in the tester's title bar (if active).
+ */
+void SS.Tester() {
+   if (IsTesting() && IsVisualMode()) {
+      SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id);
+   }
+}
+
+
+/**
  * Return a description of a sequence status code.
  *
  * @param  int status
@@ -708,6 +718,65 @@ bool ToggleStartStopDisplayMode() {
    // update display
    RedrawStartStop();
    return(!catch("ToggleStartStopDisplayMode(1)"));
+}
+
+
+/**
+ * Syntactically validate and set a specified sequence id (format: /T?[0-9]{4,}/i). Called only from onInitUser().
+ *
+ * @return bool - validation success status; existence of the status file is NOT checked
+ */
+bool ValidateInputs.ID() {
+   bool interactive = true;
+
+   string sValue = StrToUpper(StrTrim(Sequence.ID));
+
+   if (!StringLen(sValue))
+      return(false);
+
+   if (StrLeft(sValue, 1) == "T") {
+      sequence.isTest = true;
+      sValue = StrSubstr(sValue, 1);
+   }
+   if (!StrIsDigit(sValue))
+      return(_false(ValidateInputs.OnError("ValidateInputs.ID(1)", "Invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive)));
+
+   int iValue = StrToInteger(sValue);
+   if (iValue < SID_MIN || iValue > SID_MAX)
+      return(_false(ValidateInputs.OnError("ValidateInputs.ID(2)", "Invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive)));
+
+   sequence.id = iValue;
+   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
+   return(true);
+}
+
+
+/**
+ * Error handler for invalid input parameters. Either prompts for input correction or passes on execution to the standard
+ * error handler.
+ *
+ * @param  string location    - error location identifier
+ * @param  string message     - error message
+ * @param  bool   interactive - whether the error occurred in an interactive or programatic context
+ *
+ * @return int - resulting error status
+ */
+int ValidateInputs.OnError(string location, string message, bool interactive) {
+   interactive = interactive!=0;
+   if (IsTesting() || !interactive)
+      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
+
+   int error = ERR_INVALID_INPUT_PARAMETER;
+   __STATUS_INVALID_INPUT = true;
+
+   if (__LOG()) log(location +"   "+ message, error);
+
+   PlaySoundEx("Windows Chord.wav");
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   if (button == IDRETRY)
+      __STATUS_RELAUNCH_INPUT = true;
+
+   return(error);
 }
 
 

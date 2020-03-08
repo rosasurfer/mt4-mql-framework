@@ -21,7 +21,7 @@ int onInitUser() {
    bool interactive = true;
 
    // check for a specified sequence id
-   if (ValidateInputs.ID(interactive)) {                    // on success a sequence id was specified
+   if (ValidateInputs.ID()) {                               // on success a valid sequence id was specified
       SetCustomLog(GetCustomLogFileName());
 
       sequence.status = STATUS_WAITING;
@@ -44,8 +44,8 @@ int onInitUser() {
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
       SetCustomLog(GetCustomLogFileName());
-      SS.SequenceId();
       SS.SequenceName();
+      SS.Tester();
 
       if (__LOG()) log("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       SaveStatus();
