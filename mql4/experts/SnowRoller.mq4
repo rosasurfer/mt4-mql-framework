@@ -2605,7 +2605,7 @@ int ShowStatus(int error = NO_ERROR) {
    );
 
    // 4 lines margin-top for instrument and indicator legends
-   Comment(StringConcatenate(NL, NL, NL, NL, msg));
+   Comment(NL, NL, NL, NL, msg);
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
