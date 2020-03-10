@@ -233,7 +233,7 @@ int start() {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
             return(__STATUS_OFF.reason);
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL + NL + NL + msg);                                           // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+         Comment(NL, NL, NL, NL, msg);                                              // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
       }
       return(__STATUS_OFF.reason);
    }
