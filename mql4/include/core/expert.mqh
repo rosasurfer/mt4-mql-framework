@@ -298,7 +298,7 @@ int start() {
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
          if (Tick.Time < Tester.StartTime) {
-            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", tester.starttime));
+            Comment(NL, NL, NL, "Tester: starting at ", tester.starttime);
             return(last_error);
          }
          Tester.StartTime = 0;
@@ -306,17 +306,17 @@ int start() {
       if (Tester.StartPrice != 0) {
          static double tester.lastPrice; if (!tester.lastPrice) {
             tester.lastPrice = Bid;
-            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", tester.startprice));
+            Comment(NL, NL, NL, "Tester: starting at ", tester.startprice);
             return(last_error);
          }
          if (LT(tester.lastPrice, Tester.StartPrice)) /*&&*/ if (LT(Bid, Tester.StartPrice)) {
             tester.lastPrice = Bid;
-            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", tester.startprice));
+            Comment(NL, NL, NL, "Tester: starting at ", tester.startprice);
             return(last_error);
          }
          if (GT(tester.lastPrice, Tester.StartPrice)) /*&&*/ if (GT(Bid, Tester.StartPrice)) {
             tester.lastPrice = Bid;
-            Comment(StringConcatenate(NL, NL, NL, "Tester: starting at ", tester.startprice));
+            Comment(NL, NL, NL, "Tester: starting at ", tester.startprice);
             return(last_error);
          }
          Tester.StartPrice = 0;

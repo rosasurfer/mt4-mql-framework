@@ -16,6 +16,6 @@ int __DEINIT_FLAGS__[];
 int onStart() {
    string msg = OrdersTotal() +" open orders";
    log("onStart()  "+ msg);
-   Comment(NL + NL + NL + msg);
+   Comment(NL, NL, NL, msg);
    return(last_error);
 }
