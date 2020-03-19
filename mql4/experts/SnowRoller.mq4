@@ -22,8 +22,8 @@
  * The EA automatically interrupts and resumes trading during configurable session breaks, e.g. at Midnight or at weekends.
  * During session breaks all pending orders and open positions are closed. Session break configuration supports holidays.
  *
- * In "/mql4/scripts" are some accompanying scripts named "SnowRoller.***" to manually control the EA (start, stop, wait).
- * The EA can be tested and the scripts work in tester, too. The EA can't be optimized in tester.
+ * In "/mql4/scripts" there are some accompanying scripts named "SnowRoller.***" to manually control the EA. The EA can be
+ * tested and the scripts work in tester, too. The EA can't be optimized in tester.
  *
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
  * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not 0 (zero).
@@ -36,13 +36,13 @@
  * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
  */
 #include <stddefines.mqh>
-#include <app/SnowRoller/defines.mqh>
+#include <app/snowroller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                            // instance id, affects magic number and status/logfile names
+extern string   Sequence.ID            = "";                            // instance id in format /T?[0-9]{4,}/, affects magic number and status/logfile names
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;                            //
 extern string   UnitSize               = "[L]{double} | auto*";         // fixed (double), compounding (L{double}) or externally configured (auto) unitsize
@@ -66,9 +66,15 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FX
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
+
+#define STRATEGY_ID  103                           // unique strategy identifier
+bool    SNOWROLLER;
+bool    SISYPHUS;
+
+
 // --- sequence data -----------------------
 int      sequence.id;
-int      sequence.cycle;                           // counter of restarted sequences if AutoRestart=On: 1...+n
+int      sequence.cycle;                           // counter of restarted sequences if AutoRestart is not "Off"
 string   sequence.name     = "";                   // "L.1234"    | "S.5678"
 string   sequence.longName = "";                   // "L.1234.+1" | "S.5678.-2"
 datetime sequence.created;
@@ -230,8 +236,9 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <app/SnowRoller/init.mqh>
-#include <app/SnowRoller/deinit.mqh>
+#include <app/snowroller/1-init.mqh>
+#include <app/snowroller/2-deinit.mqh>
+#include <app/snowroller/functions.mqh>
 
 
 /*
@@ -295,7 +302,7 @@ int onTick() {
 
    // sequence either waits for start/stop/resume signal...
    if (sequence.status == STATUS_WAITING) {
-      if (IsStopSignal(signal))                StopSequence(signal);
+      if      (IsStopSignal(signal))           StopSequence(signal);
       else if (IsStartSignal(signal)) {
          if (!ArraySize(sequence.start.event)) StartSequence(signal);
          else                                  ResumeSequence(signal);
@@ -317,110 +324,7 @@ int onTick() {
    // update equity for equity recorder
    if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
 
-   // update/show profit targets
-   if (!IsTesting()) {
-      if (IsBarOpenEvent(PERIOD_M1)) ShowProfitTargets();
-   }
    return(last_error);
-}
-
-
-/**
- * Handle incoming commands.
- *
- * @param  string commands[] - received commands
- *
- * @return bool - success status of the executed command
- */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands))
-      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
-
-   string cmd = commands[0];
-
-   // wait
-   if (cmd == "wait") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_STOPPED:
-            if (!start.conditions)                       // whether any start condition is active
-               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
-            sequence.status = STATUS_WAITING;
-      }
-      return(true);
-   }
-
-   // start
-   if (cmd == "start") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            bool neverStarted = !ArraySize(sequence.start.event);
-            if (neverStarted) return(StartSequence(NULL));
-            else              return(ResumeSequence(NULL));
-
-      }
-      return(true);
-   }
-
-   // stop
-   if (cmd == "stop") {
-      if (IsTestSequence() && !IsTesting())
-         return(true);
-
-      switch (sequence.status) {
-         case STATUS_PROGRESSING:
-            bool bNull;
-            if (!UpdateStatus(bNull)) return(false);     // fall-through to STATUS_WAITING
-         case STATUS_WAITING:
-            return(StopSequence(NULL));
-      }
-      return(true);
-   }
-
-   if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode());
-   if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
-
-   // log unknown commands and let the EA continue
-   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
-}
-
-
-/**
- * Handle occurred network errors. Disables regular processing of the EA until the retry condition for the next trade request
- * is fulfilled.
- *
- * @return bool - whether regular processing should continue (i.e. the trade request should be repeated)
- */
-bool HandleNetworkErrors() {
-   // TODO: Regular processing must always continue, only trade requests must be disabled.
-   switch (lastNetworkError) {
-      case NO_ERROR:
-         return(true);
-
-      case ERR_NO_CONNECTION:
-      case ERR_TRADESERVER_GONE:
-      case ERR_TRADE_DISABLED:
-         if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
-            return(!catch("HandleNetworkErrors(1)  "+ sequence.longName +" in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
-
-         if (sequence.status == STATUS_PROGRESSING) {
-            if (Tick.Time >= nextRetry) {
-               retries++;
-               return(true);
-            }
-            else {
-               return(false);
-            }
-         }
-         return(!catch("HandleNetworkErrors(2)  "+ sequence.longName +" unsupported sequence status "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
-   }
-   return(!catch("HandleNetworkErrors(3)  "+ sequence.longName +" unsupported error ", lastNetworkError));
 }
 
 
@@ -508,8 +412,7 @@ bool StartSequence(int signal) {
    sequence.status         = STATUS_PROGRESSING;
 
    // open missing orders
-   if (!UpdatePendingOrders()) return(false);
-   if (!SaveStatus())          return(false);
+   if (!UpdatePendingOrders(true)) return(false);
    RedrawStartStop();
 
    if (__LOG()) log("StartSequence(6)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
@@ -913,7 +816,7 @@ bool ResetSequence(double gridbase, int level) {
    ResetGridbase(NULL, gridbase);
 
    // --- order data ---------------------
-   ResizeOrderArrays(0);
+   Orders.ResizeArrays(0);
 
    // --- other --------------------------
    ArrayResize(ignorePendingOrders,   0);
@@ -938,7 +841,7 @@ bool ResetSequence(double gridbase, int level) {
    sStopConditions              = "";
    sStartStopStats              = "";
    sAutoRestart                 = "";
-   sRestartStats                = " ----------------------------------------------------"+ NL
+   sRestartStats                = "-------------------------------------------------------"+ NL
                                  +" "+ iCycle +":  "+ sPL + sPlStats + StrRightFrom(sRestartStats, "--", -1);
 
    // debug settings stay unchanged
@@ -1054,9 +957,8 @@ bool ResumeSequence(int signal) {
 
    // update and store status
    bool changes;                                               // If RestorePositions() found a virtually triggered SL (#-1)
-   if (!UpdateStatus(changes))              return(false);     // UpdateStatus() "closes" the ticket and decreases the gridlevel.
-   if (changes) if (!UpdatePendingOrders()) return(false);     // Only in this case pending orders need to be updated again.
-   if (!SaveStatus())                       return(false);
+   if (!UpdateStatus(changes))                  return(false); // UpdateStatus() "closes" the ticket and decreases the gridlevel.
+   if (changes) if (!UpdatePendingOrders(true)) return(false); // Only in this case pending orders need to be updated again.
    RedrawStartStop();
 
    if (__LOG()) log("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
@@ -1109,7 +1011,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
             openPrice += orders.openPrice[i];
          }
       }
-      openPrice /= (Abs(sequence.level)-missedLevels);                  // avg(OpenPrice)
+      openPrice /= (Abs(sequence.level)-missedLevels);                        // avg(OpenPrice)
    }
 
    // Short
@@ -1131,11 +1033,11 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
             openPrice += orders.openPrice[i];
          }
       }
-      openPrice /= (Abs(sequence.level)-missedLevels);                  // avg(OpenPrice)
+      openPrice /= (Abs(sequence.level)-missedLevels);                        // avg(OpenPrice)
    }
 
    // write-back results to the passed variables
-   if (openTime != 0) {                                                 // sequence.level != 0
+   if (openTime != 0) {                                                       // sequence.level != 0
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
@@ -1144,9 +1046,9 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
 
 
 /**
- * Update internal order and PL status according to current market data.
+ * Update internal order and PL status with current market data.
  *
- * @param  _InOut_ bool gridChanged - whether the current gridbase or the gridlevel changed
+ * @param  _InOut_ bool gridChanged - whether the current gridbase or gridlevel changed
  *
  * @return bool - success status
  */
@@ -1157,9 +1059,10 @@ bool UpdateStatus(bool &gridChanged) {
 
    int sizeOfTickets = ArraySize(orders.ticket);
    double floatingPL = 0;
+   bool levelIncreased = false;
 
    for (int level, i=sizeOfTickets-1; i >= 0; i--) {
-      if (level == 1) break;                                                  // limit tickets to inspect
+      if (level == 1) break;                                                  // iterate backwards and limit tickets to inspect
 
       level = Abs(orders.level[i]);
       if (orders.closeTime[i] > 0)                                            // process all tickets known as open
@@ -1179,14 +1082,14 @@ bool UpdateStatus(bool &gridChanged) {
          continue;
       }
 
-      // regular tickets
+      // process regular tickets
       if (!SelectTicket(orders.ticket[i], "UpdateStatus(4)")) return(false);
       bool wasPending = (orders.type[i] == OP_UNDEFINED);
       bool isClosed   = OrderCloseTime() != 0;
 
       if (wasPending) {
          // last time a pending order
-         if (OrderType() != orders.pendingType[i]) {                          // a pending entry limit was executed
+         if (OrderType() != orders.pendingType[i]) {                          // a pending entry order was executed
             orders.type      [i] = OrderType();
             orders.openEvent [i] = CreateEventId();
             orders.openTime  [i] = OrderOpenTime();
@@ -1198,8 +1101,9 @@ bool UpdateStatus(bool &gridChanged) {
             if (__LOG()) log("UpdateStatus(5)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(i));
 
             if (IsStopOrderType(orders.pendingType[i])) {                     // an executed stop order
-               sequence.level   += Sign(orders.level[i]); SS.SequenceName();
-               sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               sequence.level    = orders.level[i]; SS.SequenceName();
+               sequence.maxLevel = Sign(sequence.level) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               levelIncreased    = true;
                gridChanged       = true;
             }
             else {
@@ -1235,7 +1139,7 @@ bool UpdateStatus(bool &gridChanged) {
       }
       else if (orders.type[i] == OP_UNDEFINED) {                              // a now closed pending order
          warn("UpdateStatus(7)  "+ sequence.longName +" "+ UpdateStatus.OrderCancelledMsg(i));
-         Grid.DropData(i);                                                    // cancelled pending orders are removed from
+         Orders.RemoveRecord(i);                                              // cancelled pending orders are removed from
          sizeOfTickets--;                                                     // the order arrays
          if (OrderComment() == "deleted [no money]") {
             if (StopSequence(NULL))
@@ -1252,19 +1156,24 @@ bool UpdateStatus(bool &gridChanged) {
 
          if (orders.closedBySL[i]) {                                          // stopped out
             if (__LOG()) log("UpdateStatus(8)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
-            sequence.level  -= Sign(orders.level[i]); SS.SequenceName();
+            if (levelIncreased) {
+               if (!IsTesting()) warn("UpdateStatus(9)  "+ sequence.longName +" multiple limits triggered: StopLoss and StopEntry");
+            }
+            else {
+               sequence.level -= Sign(orders.level[i]); SS.SequenceName();    // don't modify level when at the same time an entry stop was triggered
+            }
             sequence.stops++;
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
             gridChanged      = true;
          }
          else if (StrStartsWithI(OrderComment(), "so:")) {                    // margin call
-            warn("UpdateStatus(9)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
+            warn("UpdateStatus(10)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
             if (StopSequence(NULL))
                SetLastError(ERR_NOT_ENOUGH_MONEY);
             return(false);
          }
          else {                                                               // manually closed or closed at end of test
-            if (__LOG()) log("UpdateStatus(10)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(11)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1287,7 +1196,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, lastGridbase, Digits)) {
-            SetGridbase(TimeCurrentEx("UpdateStatus(11)"), gridbase);
+            SetGridbase(TimeCurrentEx("UpdateStatus(12)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1295,7 +1204,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
    }
-   return(!catch("UpdateStatus(12)"));
+   return(!catch("UpdateStatus(13)"));
 }
 
 
@@ -1582,7 +1491,7 @@ bool IsStartSignal(int &signal) {
 
 
 /**
- * Whether a stop condition is satisfied for a waiting or progressing sequence. All stop conditions are "OR" combined.
+ * Whether a stop condition is satisfied for a waiting or a progressing sequence. All stop conditions are "OR" combined.
  *
  * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled stop condition
  *
@@ -1767,130 +1676,181 @@ bool IsSessionBreak() {
 
 
 /**
- * Trail existing, open missing and delete obsolete pending orders. If open positions are missing, create pending orders for
- * those positions and add them to the list of missed order levels.
+ * Update all pending orders. Trail a first-level order or add new pending orders for all missing levels.
  *
+ * @param  bool saveStatus [optional] - whether to enforce a status save at successful execution
+ *                                      (default: save the status only if order data changed)
  * @return bool - success status
  */
-bool UpdatePendingOrders() {
+bool UpdatePendingOrders(bool saveStatus = false) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.longName +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   /*
+   Processing logic
+   ----------------
+   (1) iterate downwards starting at the current level and check all active levels
+       - for each level an order must exist (open or closed) except when in StartSequence()
+       - if an order is closed open a new one and store it directly after the closed one
 
-   int type, limitOrders, level, lastExistingLevel=0, nextLevel=sequence.level + ifInt(sequence.direction==D_LONG, 1, -1), sizeOfTickets=ArraySize(orders.ticket);
-   bool nextStopExists=false, ordersChanged=false;
+   (2) iterate upwards starting at the current level and check any inactive levels
+       - cancel and remove obsolete stop orders (possibly multiple)
+       - if the next stop order is missing open it and store it at the end (top)
+
+   (3) if in level 0 trail the next stop order (if required)
+   */
+   int level=sequence.level, levelStep=ifInt(sequence.direction==D_LONG, 1, -1), nextLevel=level+levelStep, newLimitOrders, sizeOfTickets=ArraySize(orders.ticket);
+   int idxCurrentLevel=-1, idxNextStop=-1;
    string sMissedLevels = "";
 
-   // check if the stop order for the next level exists (always at the last order index)
-   int i = sizeOfTickets - 1;
-   if (sizeOfTickets > 0) {
-      if (!orders.closeTime[i] && orders.type[i]==OP_UNDEFINED) { // a pending entry order
-         if (orders.level[i] == nextLevel) {                      // the next stop order
-            nextStopExists = true;
-         }
-         else if (IsStopOrderType(orders.pendingType[i])) {
-            int error = Grid.DeleteOrder(i);                      // delete an obsolete old stop order
-            if (!error) {
-               sizeOfTickets--;
-               ordersChanged = true;
+   // (1) iterate from the current level downward and check all active levels
+   for (int i=sizeOfTickets-1; i >= 0; i--) {
+      if (orders.level[i] == level) {
+         if (idxCurrentLevel < 0) idxCurrentLevel = i;                  // remember the index of the current level
+
+         if (orders.closeTime[i] != 0) {                                // order is closed, re-open it
+            int type = Grid.AddPendingOrder(level, i+1); if (!type) return(false);
+            sizeOfTickets++;
+            saveStatus = true;
+
+            if (IsLimitOrderType(type)) {                               // add limit order to missed levels
+               newLimitOrders++;
+               ArrayPushInt(sequence.missedLevels, level);
+               sMissedLevels = sMissedLevels +", "+ level;
+               idxCurrentLevel++;
             }
-            else if (error == -1) {                               // TODO: handle the just filled pending order
-               if (__LOG()) log("UpdatePendingOrders(2)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" was already executed");
-               return(!catch("UpdatePendingOrders(3)  "+ sequence.longName +" unimplemented feature", ERR_NOT_IMPLEMENTED));
+            else {                                                      // on a stop order the sequence level decreased
+               nextLevel       = level;
+               sequence.level  = level - levelStep; SS.SequenceName();
+               idxCurrentLevel = -1;
             }
-            else return(false);
          }
+         level -= levelStep;
+         if (!level) break;
+      }
+      if (Abs(orders.level[i]) < Abs(level)) {
+         if (idxCurrentLevel < 0) idxCurrentLevel = i;
+         break;
       }
    }
 
-   // find the last open order of an active level (an open position or a pending limit order)
-   if (sequence.level != 0) {
-      for (i=sizeOfTickets-1; i >= 0; i--) {
-         level = Abs(orders.level[i]);
-         if (!orders.closeTime[i]) {
-            if (level < Abs(nextLevel)) {
-               lastExistingLevel = orders.level[i];
-               break;
-            }
-         }
-         if (level == 1) break;
-      }
-      if (sizeOfTickets && lastExistingLevel!=sequence.level) {
-         return(!catch("UpdatePendingOrders(4)  "+ sequence.longName +" orders out of sync: lastExistingOrder("+ lastExistingLevel +") != sequence.level("+ sequence.level +")", ERR_ILLEGAL_STATE));
-      }
-   }
+   if (level != 0) {
+      if (sizeOfTickets > 0) return(!catch("UpdatePendingOrders(2)  "+ sequence.longName +" order of level "+ level +" not found", ERR_ILLEGAL_STATE));
 
-   // trail a first level stop order (always an existing next level order, thus at the last array index)
-   if (!sequence.level && nextStopExists) {
-      i = sizeOfTickets - 1;
-      if (NE(GetGridbase(), orders.gridbase[i], Digits)) {
-         static double lastTrailed = INT_MIN;                           // Avoid ERR_TOO_MANY_REQUESTS caused by contacting the trade server
-         if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // at each tick. Wait 3 seconds between consecutive trailings.
-            type = Grid.TrailPendingOrder(i); if (!type) return(false); //
-            if (IsLimitOrderType(type)) {                               // TrailPendingOrder() missed a level
-               lastExistingLevel = nextLevel;                           // -1 | +1
-               sequence.level    = nextLevel; SS.SequenceName();
-               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * lastExistingLevel;
-               nextLevel        += Sign(nextLevel);                     // -2 | +2
-               nextStopExists    = false;
-            }
-            ordersChanged = true;
-            lastTrailed = GetTickCount();
-         }
-      }
-   }
-
-   // add all missing levels (pending limit or stop orders) up to the next sequence level
-   if (!nextStopExists) {
-      while (true) {
-         if (IsLimitOrderType(type)) {                            // TrailPendingOrder() or AddPendingOrder() missed a level
-            limitOrders++;
-            ArrayPushInt(sequence.missedLevels, lastExistingLevel);
-            sMissedLevels = sMissedLevels +", "+ lastExistingLevel;
-         }
-         level = lastExistingLevel + Sign(nextLevel);
-
+      level = levelStep;
+      while (true) {                                                    // without any orders we are in StartSequence() with a StartLevel != 0
          type = Grid.AddPendingOrder(level); if (!type) return(false);
-         lastExistingLevel = level;
-         ordersChanged     = true;
+         sizeOfTickets++;
+         saveStatus = true;
 
-         if (IsStopOrderType(type)) {                             // a stop order was opened
-            sequence.level = level - Sign(level); SS.SequenceName();
-            nextLevel      = level;
-            nextStopExists = true;
-            break;
+         if (IsLimitOrderType(type)) {                                  // add limit order to missed levels
+            newLimitOrders++;
+            ArrayPushInt(sequence.missedLevels, level);
+            sMissedLevels   = sMissedLevels +", "+ level;
+            idxCurrentLevel = sizeOfTickets-1;
          }
-         if (level == nextLevel) {                                // a limit order for the next level was opened
-            sequence.level    = nextLevel; SS.SequenceName();
-            sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
-            nextLevel         = sequence.level + Sign(nextLevel);
+         else {                                                         // on a stop order the sequence level decreased
+            nextLevel      = level;
+            sequence.level = level - levelStep; SS.SequenceName();
+         }
+         level += levelStep;
+         if (level == nextLevel)
+            break;
+      }
+   }
+
+   // (2) iterate from the current level upward and check any inactive levels
+   for (i=idxCurrentLevel+1; i < sizeOfTickets; i++) {
+      if (orders.closeTime[i] != 0)                continue;            // process only open orders
+      if (orders.type[i] != OP_UNDEFINED)          return(!catch("UpdatePendingOrders(3)  "+ sequence.longName +" orders out of sync: open position of level "+ orders.level[i] +" found (#"+ orders.ticket[i] +")", ERR_ILLEGAL_STATE));
+      if (!IsStopOrderType(orders.pendingType[i])) return(!catch("UpdatePendingOrders(4)  "+ sequence.longName +" orders out of sync: limit order of level "+ orders.level[i] +" above the current level found (#"+ orders.ticket[i] +")", ERR_ILLEGAL_STATE));
+
+      if (orders.level[i]==nextLevel && idxNextStop==-1) {              // order is open and pending
+         idxNextStop = i;
+      }
+      else {
+         int error = Grid.DeleteOrder(i);                               // delete an obsolete old stop order
+         if (error != 0) return(UpdatePendingOrders.DeleteError(i, error));
+         sizeOfTickets--;
+         i--;
+         saveStatus = true;
+      }
+   }
+
+   while (idxNextStop == -1) {                                          // open a missing next stop order
+      type = Grid.AddPendingOrder(nextLevel); if (!type) return(false);
+      sizeOfTickets++;
+      saveStatus = true;
+
+      if (IsStopOrderType(type)) {                                      // a stop order was opened
+         idxNextStop = sizeOfTickets-1;
+      }
+      else {                                                            // on a limit order the sequence level increased
+         sequence.level    = nextLevel; SS.SequenceName();
+         sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
+         nextLevel        += levelStep;
+         newLimitOrders++;
+         ArrayPushInt(sequence.missedLevels, sequence.level);
+         sMissedLevels = sMissedLevels +", "+ sequence.level;
+      }
+   }
+
+   // (3) if in level 0 trail the next stop order (if required)
+   if (!sequence.level) {
+      i = idxNextStop;
+      if (NE(GetGridbase(), orders.gridbase[i], Digits)) {
+         static double lastTrailed = INT_MIN;
+
+         if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // wait 3 seconds between requests to avoid ERR_TOO_MANY_REQUESTS
+            type = Grid.TrailPendingOrder(i); if (!type) return(false);
+            lastTrailed = GetTickCount();
+            saveStatus  = true;
+
+            if (IsLimitOrderType(type)) {                               // on a limit order the sequence level increased
+               sequence.level    = nextLevel; SS.SequenceName();
+               sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * Sign(nextLevel);
+               nextLevel        += levelStep;
+               newLimitOrders++;
+               ArrayPushInt(sequence.missedLevels, sequence.level);
+               sMissedLevels = sMissedLevels +", "+ sequence.level;
+
+               if (!UpdatePendingOrders()) return(false);               // handle the now missing next stop order recursively
+               sizeOfTickets++;
+               idxNextStop = sizeOfTickets-1;
+            }
          }
       }
    }
 
-   if (limitOrders > 0) {
+   if (newLimitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(5)  "+ sequence.longName +" opened "+ limitOrders +" limit order"+ Pluralize(limitOrders) +" for missed level"+ Pluralize(limitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
+      if (__LOG()) log("UpdatePendingOrders(5)  "+ sequence.longName +" opened "+ newLimitOrders +" limit order"+ Pluralize(newLimitOrders) +" for missed level"+ Pluralize(newLimitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
    SS.ProfitPerLevel();
 
-   if (ordersChanged)
+   if (saveStatus)
       if (!SaveStatus()) return(false);
    return(!catch("UpdatePendingOrders(6)"));
 }
 
 
 /**
- * Return the currently active gridbase value.
+ * Handle an error returned by Grid.DeleteOrder() called in UpdatePendingOrders():
  *
- * @return double - gridbase value or NULL if the gridbase is not yet set
+ * @param  int i     - array index of the stop order for which the error occurred
+ * @param  int error - the occurred error
+ *
+ * @return bool - success status
  */
-double GetGridbase() {
-   int size = ArraySize(gridbase.event);
-   if (size > 0)
-      return(gridbase.price[size-1]);
-   return(NULL);
+bool UpdatePendingOrders.DeleteError(int i, int error) {
+   if (error == -1) {                                                   // the order was already executed
+      if (__LOG()) log("UpdatePendingOrders.DeleteError(1)  "+ sequence.longName +" pending stop order for level "+ orders.level[i] +" was already executed (#"+ orders.ticket[i] +")");
+      bool bNull;
+      UpdateStatus(bNull);                                              // handle it recursively
+      return(UpdatePendingOrders(true));
+   }
+   return(false);                                                       // any other error
 }
 
 
@@ -1992,13 +1952,14 @@ double ResetGridbase(datetime time=NULL, double value=NULL) {
 
 /**
  * Open a pending entry order for the specified gridlevel and add it to the order arrays. Depending on the market a stop or
- * a limit order may be opened.
+ * a limit order is opened.
  *
- * @param  int level - gridlevel of the order to open: -n...1 | 1...+n
+ * @param  int level             - gridlevel of the order to open: -n...1 | 1...+n
+ * @param  int offset [optional] - order array position (index) to add the new order (default: append to the end)
  *
- * @return int - order type of the opened order or NULL in case of errors
+ * @return int - order type of the opened order (stop or limit order) or NULL in case of errors
  */
-int Grid.AddPendingOrder(int level) {
+int Grid.AddPendingOrder(int level, int offset=-1) {
    if (IsLastError())                                                           return(NULL);
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(1)  "+ sequence.longName +" cannot add order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -2057,7 +2018,7 @@ int Grid.AddPendingOrder(int level) {
    double   profit       = NULL;
 
    // store dataset
-   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
+   if (!Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit, offset))
       return(NULL);
 
    if (last_error || catch("Grid.AddPendingOrder(7)"))
@@ -2125,7 +2086,7 @@ bool Grid.AddPosition(int level) {
    double   profit       = NULL;
 
    // store dataset
-   if (!Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
+   if (!Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
       return(false);
    return(!catch("Grid.AddPosition(7)"));
 }
@@ -2237,7 +2198,7 @@ int Grid.DeleteOrder(int i) {
          return(SetLastError(error));
       }
    }
-   if (!Grid.DropData(i)) return(last_error);
+   if (!Orders.RemoveRecord(i)) return(last_error);
 
    ArrayResize(oe, 0);
    return(catch("Grid.DeleteOrder(3)"));
@@ -2282,7 +2243,8 @@ int Grid.DeleteLimit(int i) {
 
 
 /**
- * Add a set with order data to the internal order arrays.
+ * Add an order record at the specified offset of the internal order arrays. Array size is increased and the record is
+ * inserted, no data is overwritten.
  *
  * @param  int      ticket
  * @param  int      level
@@ -2306,111 +2268,144 @@ int Grid.DeleteLimit(int i) {
  * @param  double   commission
  * @param  double   profit
  *
+ * @param  int      offset [optional] - position (array index) to add the order record (default: append to the end)
+ *
  * @return bool - success status
  */
-bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
+bool Orders.AddRecord(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit, int offset = -1) {
    closedBySL = closedBySL!=0;
-   return(Grid.SetData(-1, ticket, level, gridBase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit));
+
+   int ordersSize = ArraySize(orders.ticket);
+   if (offset < -1 || offset > ordersSize) return(!catch("Orders.AddRecord(1)  "+ sequence.longName +" illegal parameter offset: "+ offset +" (order array size: "+ ordersSize +")", ERR_INVALID_PARAMETER));
+
+   if (offset == -1)
+      offset = ordersSize;
+
+   ArrayInsertInt   (orders.ticket,       offset, ticket                               );
+   ArrayInsertInt   (orders.level,        offset, level                                );
+   ArrayInsertDouble(orders.gridbase,     offset, NormalizeDouble(gridBase, Digits)    );
+
+   ArrayInsertInt   (orders.pendingType,  offset, pendingType                          );
+   ArrayInsertInt   (orders.pendingTime,  offset, pendingTime                          );
+   ArrayInsertDouble(orders.pendingPrice, offset, NormalizeDouble(pendingPrice, Digits));
+
+   ArrayInsertInt   (orders.type,         offset, type                                 );
+   ArrayInsertInt   (orders.openEvent,    offset, openEvent                            );
+   ArrayInsertInt   (orders.openTime,     offset, openTime                             );
+   ArrayInsertDouble(orders.openPrice,    offset, NormalizeDouble(openPrice, Digits)   );
+   ArrayInsertInt   (orders.closeEvent,   offset, closeEvent                           );
+   ArrayInsertInt   (orders.closeTime,    offset, closeTime                            );
+   ArrayInsertDouble(orders.closePrice,   offset, NormalizeDouble(closePrice, Digits)  );
+   ArrayInsertDouble(orders.stopLoss,     offset, NormalizeDouble(stopLoss, Digits)    );
+   ArrayInsertBool  (orders.closedBySL,   offset, closedBySL                           );
+
+   ArrayInsertDouble(orders.swap,         offset, NormalizeDouble(swap,       2)       );
+   ArrayInsertDouble(orders.commission,   offset, NormalizeDouble(commission, 2)       );
+   ArrayInsertDouble(orders.profit,       offset, NormalizeDouble(profit,     2)       );
+
+   return(!catch("Orders.AddRecord(2)"));
 }
 
 
 /**
- * Store a set with order data at the specified position of the internal order arrays.
+ * Remove the order record at the specified offset from the internal order arrays. After removal the array size is decreased.
  *
- * @param  int      offset - order array position; if -1 or out-of-bounds the order array size is increased accordingly
- *
- * @param  int      ticket
- * @param  int      level
- * @param  double   gridBase
- *
- * @param  int      pendingType
- * @param  datetime pendingTime
- * @param  double   pendingPrice
- *
- * @param  int      type
- * @param  int      openEvent
- * @param  datetime openTime
- * @param  double   openPrice
- * @param  int      closeEvent
- * @param  datetime closeTime
- * @param  double   closePrice
- * @param  double   stopLoss
- * @param  bool     closedBySL
- *
- * @param  double   swap
- * @param  double   commission
- * @param  double   profit
+ * @param  int offset - position (array index) of the record to remove
  *
  * @return bool - success status
  */
-bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool closedBySL, double swap, double commission, double profit) {
-   closedBySL = closedBySL!=0;
-   if (offset < -1) return(_false(catch("Grid.SetData(1)  "+ sequence.longName +" illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
+bool Orders.RemoveRecord(int offset) {
+   if (offset < 0 || offset >= ArraySize(orders.ticket)) return(!catch("Orders.RemoveRecord(1)  "+ sequence.longName +" illegal parameter offset: "+ offset +" (order array size: "+ ArraySize(orders.ticket) +")", ERR_INVALID_PARAMETER));
 
-   int i=offset, size=ArraySize(orders.ticket);
+   ArraySpliceInts   (orders.ticket,       offset, 1);
+   ArraySpliceInts   (orders.level,        offset, 1);
+   ArraySpliceDoubles(orders.gridbase,     offset, 1);
 
-   if      (offset ==    -1) i = ResizeOrderArrays(  size+1)-1;
-   else if (offset > size-1) i = ResizeOrderArrays(offset+1)-1;
+   ArraySpliceInts   (orders.pendingType,  offset, 1);
+   ArraySpliceInts   (orders.pendingTime,  offset, 1);
+   ArraySpliceDoubles(orders.pendingPrice, offset, 1);
 
-   orders.ticket      [i] = ticket;
-   orders.level       [i] = level;
-   orders.gridbase    [i] = NormalizeDouble(gridBase, Digits);
+   ArraySpliceInts   (orders.type,         offset, 1);
+   ArraySpliceInts   (orders.openEvent,    offset, 1);
+   ArraySpliceInts   (orders.openTime,     offset, 1);
+   ArraySpliceDoubles(orders.openPrice,    offset, 1);
+   ArraySpliceInts   (orders.closeEvent,   offset, 1);
+   ArraySpliceInts   (orders.closeTime,    offset, 1);
+   ArraySpliceDoubles(orders.closePrice,   offset, 1);
+   ArraySpliceDoubles(orders.stopLoss,     offset, 1);
+   ArraySpliceBools  (orders.closedBySL,   offset, 1);
 
-   orders.pendingType [i] = pendingType;
-   orders.pendingTime [i] = pendingTime;
-   orders.pendingPrice[i] = NormalizeDouble(pendingPrice, Digits);
+   ArraySpliceDoubles(orders.swap,         offset, 1);
+   ArraySpliceDoubles(orders.commission,   offset, 1);
+   ArraySpliceDoubles(orders.profit,       offset, 1);
 
-   orders.type        [i] = type;
-   orders.openEvent   [i] = openEvent;
-   orders.openTime    [i] = openTime;
-   orders.openPrice   [i] = NormalizeDouble(openPrice, Digits);
-   orders.closeEvent  [i] = closeEvent;
-   orders.closeTime   [i] = closeTime;
-   orders.closePrice  [i] = NormalizeDouble(closePrice, Digits);
-   orders.stopLoss    [i] = NormalizeDouble(stopLoss, Digits);
-   orders.closedBySL  [i] = closedBySL;
-
-   orders.swap        [i] = NormalizeDouble(swap,       2);
-   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.UnitSize(); }
-   orders.profit      [i] = NormalizeDouble(profit,     2);
-
-   return(!catch("Grid.SetData(2)"));
+   return(!catch("Orders.RemoveRecord(2)"));
 }
 
 
 /**
- * Remove the order dataset at the specified position from the internal order arrays.
+ * Resize the order arrays.
  *
- * @param  int i - order array index
+ * @param  int  size             - new order array size
+ * @param  bool reset [optional] - whether to re-initialize all records (default: initialize only added records)
  *
- * @return bool - success status
+ * @return int - new array size
  */
-bool Grid.DropData(int i) {
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(!catch("Grid.DropData(1)  "+ sequence.longName +" illegal parameter i = "+ i, ERR_INVALID_PARAMETER));
+int Orders.ResizeArrays(int size, bool reset = false) {
+   reset = reset!=0;
 
-   ArraySpliceInts   (orders.ticket,       i, 1);
-   ArraySpliceInts   (orders.level,        i, 1);
-   ArraySpliceDoubles(orders.gridbase,     i, 1);
+   int oldSize = ArraySize(orders.ticket);
 
-   ArraySpliceInts   (orders.pendingType,  i, 1);
-   ArraySpliceInts   (orders.pendingTime,  i, 1);
-   ArraySpliceDoubles(orders.pendingPrice, i, 1);
+   if (size != oldSize) {
+      ArrayResize(orders.ticket,       size);
+      ArrayResize(orders.level,        size);
+      ArrayResize(orders.gridbase,     size);
+      ArrayResize(orders.pendingType,  size);
+      ArrayResize(orders.pendingTime,  size);
+      ArrayResize(orders.pendingPrice, size);
+      ArrayResize(orders.type,         size);
+      ArrayResize(orders.openEvent,    size);
+      ArrayResize(orders.openTime,     size);
+      ArrayResize(orders.openPrice,    size);
+      ArrayResize(orders.closeEvent,   size);
+      ArrayResize(orders.closeTime,    size);
+      ArrayResize(orders.closePrice,   size);
+      ArrayResize(orders.stopLoss,     size);
+      ArrayResize(orders.closedBySL,   size);
+      ArrayResize(orders.swap,         size);
+      ArrayResize(orders.commission,   size);
+      ArrayResize(orders.profit,       size);
+   }
 
-   ArraySpliceInts   (orders.type,         i, 1);
-   ArraySpliceInts   (orders.openEvent,    i, 1);
-   ArraySpliceInts   (orders.openTime,     i, 1);
-   ArraySpliceDoubles(orders.openPrice,    i, 1);
-   ArraySpliceInts   (orders.closeEvent,   i, 1);
-   ArraySpliceInts   (orders.closeTime,    i, 1);
-   ArraySpliceDoubles(orders.closePrice,   i, 1);
-   ArraySpliceDoubles(orders.stopLoss,     i, 1);
-   ArraySpliceBools  (orders.closedBySL,   i, 1);
-
-   ArraySpliceDoubles(orders.swap,         i, 1);
-   ArraySpliceDoubles(orders.commission,   i, 1);
-   ArraySpliceDoubles(orders.profit,       i, 1);
-
-   return(!catch("Grid.DropData(2)"));
+   if (reset) {                                                      // re-initialize all fields
+      if (size != 0) {
+         ArrayInitialize(orders.ticket,                 0);
+         ArrayInitialize(orders.level,                  0);
+         ArrayInitialize(orders.gridbase,               0);
+         ArrayInitialize(orders.pendingType, OP_UNDEFINED);
+         ArrayInitialize(orders.pendingTime,            0);
+         ArrayInitialize(orders.pendingPrice,           0);
+         ArrayInitialize(orders.type,        OP_UNDEFINED);
+         ArrayInitialize(orders.openEvent,              0);
+         ArrayInitialize(orders.openTime,               0);
+         ArrayInitialize(orders.openPrice,              0);
+         ArrayInitialize(orders.closeEvent,             0);
+         ArrayInitialize(orders.closeTime,              0);
+         ArrayInitialize(orders.closePrice,             0);
+         ArrayInitialize(orders.stopLoss,               0);
+         ArrayInitialize(orders.closedBySL,         false);
+         ArrayInitialize(orders.swap,                   0);
+         ArrayInitialize(orders.commission,             0);
+         ArrayInitialize(orders.profit,                 0);
+      }
+   }
+   else {                                                            // initialize only added fields
+      for (int i=oldSize; i < size; i++) {
+         orders.pendingType[i] = OP_UNDEFINED;                       // always initialize pendingType and type to non-zero
+         orders.type       [i] = OP_UNDEFINED;                       // as 0 is a valid value
+      }
+   }
+   return(size);
 }
 
 
@@ -2714,7 +2709,7 @@ int ShowStatus(int error = NO_ERROR) {
    );
 
    // 4 lines margin-top for instrument and indicator legends
-   Comment(StringConcatenate(NL, NL, NL, NL, msg));
+   Comment(NL, NL, NL, NL, msg);
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
@@ -2731,394 +2726,6 @@ int ShowStatus(int error = NO_ERROR) {
    if (!catch("ShowStatus(3)"))
       return(error);
    return(last_error);
-}
-
-
-/**
- * Update all string representations used by ShowStatus().
- */
-void SS.All() {
-   if (!__CHART()) return;
-
-   SS.SequenceId();
-   SS.SequenceName();
-   SS.GridBase();
-   SS.GridDirection();
-   SS.MissedLevels();
-   SS.UnitSize();
-   SS.ProfitPerLevel();
-   SS.StartStopConditions();
-   SS.AutoRestart();
-   SS.Stops();
-   SS.TotalPL();
-   SS.MaxProfit();
-   SS.MaxDrawdown();
-   SS.StartStopStats();
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die Anzeige der Sequenz-ID in der Titelzeile des Testers.
- */
-void SS.SequenceId() {
-   if (IsTesting() && IsVisualMode()) {
-      SetWindowTextA(FindTesterWindow(), "Tester - SR."+ sequence.id);
-   }
-}
-
-
-/**
- * Update the string representations of standard and long sequence names.
- */
-void SS.SequenceName() {
-   sequence.name = "";
-
-   if      (sequence.direction == D_LONG)  sequence.name = "L";
-   else if (sequence.direction == D_SHORT) sequence.name = "S";
-
-   sequence.name     = sequence.name +"."+ sequence.id;
-   sequence.longName = sequence.name +"."+ NumberToStr(sequence.level, "+.");
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die String-Repräsentation von gridbase.
- */
-void SS.GridBase() {
-   if (!__CHART()) return;
-
-   double gridbase = GetGridbase();
-   if (!gridbase) return;
-
-   sGridBase = " @ "+ NumberToStr(gridbase, PriceFormat);
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.direction.
- */
-void SS.GridDirection() {
-   if (!__CHART()) return;
-
-   if (sequence.direction != 0) {
-      sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
-   }
-}
-
-
-/**
- * ShowStatus(): Update the string representation of sequence.missedLevels.
- */
-void SS.MissedLevels() {
-   if (!__CHART()) return;
-
-   int size = ArraySize(sequence.missedLevels);
-   if (!size) sSequenceMissedLevels = "";
-   else       sSequenceMissedLevels = ", missed: "+ JoinInts(sequence.missedLevels);
-}
-
-
-/**
- * ShowStatus(): Update the string representation of sequence.unitsize.
- */
-void SS.UnitSize() {
-   if (!__CHART()) return;
-
-   double equity = sequence.startEquity;
-
-   if (!sequence.unitsize) {
-      if (!equity) equity = CalculateStartEquity();
-      sequence.unitsize = CalculateUnitSize(equity);
-   }
-   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compound.)");
-   double stopSize     = GridSize * PipValue(sequence.unitsize) - sequence.commission;
-
-   if (ShowProfitInPercent) sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(MathDiv(stopSize, equity) * 100, 2) +"%/stop";
-   else                     sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(stopSize, 2) +"/stop";
-}
-
-
-/**
- * ShowStatus(): Update the string representation of the configured start/stop conditions.
- */
-void SS.StartStopConditions() {
-   if (!__CHART()) return;
-
-   // start conditions, order: [sessionbreak >>] trend, time, price
-   string sValue = "";
-   if (start.time.description!="" || start.price.description!="") {
-      if (start.time.description != "") {
-         sValue = sValue + ifString(start.time.condition, "@", "!") + start.time.description;
-      }
-      if (start.price.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " && ") + ifString(start.price.condition, "@", "!") + start.price.description;
-      }
-   }
-   if (start.trend.description != "") {
-      string sTrend = ifString(start.trend.condition, "@", "!") + start.trend.description;
-
-      if (start.time.description!="" && start.price.description!="") {
-         sValue = "("+ sValue +")";
-      }
-      if (start.time.description=="" && start.price.description=="") {
-         sValue = sTrend;
-      }
-      else {
-         sValue = sTrend +" || "+ sValue;
-      }
-   }
-   if (sessionbreak.waiting) {
-      if (sValue != "") sValue = " >> "+ sValue;
-      sValue = "sessionbreak"+ sValue;
-   }
-   if (sValue == "") sStartConditions = "-";
-   else              sStartConditions = sValue;
-
-   // stop conditions, order: trend, profit, loss, time, price
-   sValue = "";
-   if (stop.trend.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.trend.condition, "@", "!") + stop.trend.description;
-   }
-   if (stop.profitAbs.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
-   }
-   if (stop.profitPct.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
-   }
-   if (stop.lossAbs.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossAbs.condition, "@", "!") + stop.lossAbs.description;
-   }
-   if (stop.lossPct.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossPct.condition, "@", "!") + stop.lossPct.description;
-   }
-   if (stop.time.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
-   }
-   if (stop.price.description != "") {
-      sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
-   }
-   if (sValue == "") sStopConditions = "-";
-   else              sStopConditions = sValue;
-}
-
-
-/**
- * ShowStatus(): Update the string representation of input parameter "AutoRestart".
- */
-void SS.AutoRestart() {
-   if (!__CHART()) return;
-
-   if (AutoRestart=="Off") sAutoRestart = "AutoRestart:  "+ AutoRestart + NL;
-   else                    sAutoRestart = "AutoRestart:  "+ AutoRestart +" ("+ (sequence.cycle-1) +")" + NL;
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die String-Repräsentationen von sequence.stops und sequence.stopsPL.
- */
-void SS.Stops() {
-   if (!__CHART()) return;
-   sSequenceStops = sequence.stops +" stop"+ ifString(sequence.stops==1, "", "s");
-
-   // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
-   if (sequence.stops > 0) {
-      if (ShowProfitInPercent) sSequenceStopsPL = " = "+ DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2) +"%";
-      else                     sSequenceStopsPL = " = "+ DoubleToStr(sequence.stopsPL, 2);
-   }
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.totalPL.
- */
-void SS.TotalPL() {
-   if (!__CHART()) return;
-
-   // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";
-   else if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-   else                          sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxProfit.
- */
-void SS.MaxProfit() {
-   if (!__CHART()) return;
-
-   if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-   else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
-   SS.PLStats();
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxDrawdown.
- */
-void SS.MaxDrawdown() {
-   if (!__CHART()) return;
-
-   if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
-   else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
-   SS.PLStats();
-}
-
-
-/**
- * ShowStatus(): Update the string representation of sequence.profitPerLevel.
- */
-void SS.ProfitPerLevel() {
-   if (!__CHART()) return;
-
-   if (!sequence.level) {
-      sSequenceProfitPerLevel = "";                // no display if no position is open
-   }
-   else {
-      double stopSize = GridSize * PipValue(sequence.unitsize);
-      int    levels   = Abs(sequence.level) - ArraySize(sequence.missedLevels);
-      double profit   = levels * stopSize;
-
-      if (ShowProfitInPercent) sSequenceProfitPerLevel = " = "+ DoubleToStr(MathDiv(profit, sequence.startEquity) * 100, 1) +"%/level";
-      else                     sSequenceProfitPerLevel = " = "+ DoubleToStr(profit, 2) +"/level";
-   }
-}
-
-
-/**
- * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
- */
-void SS.PLStats() {
-   if (!__CHART()) return;
-
-   if (sequence.maxLevel != 0) {    // no display until a position was opened
-      sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
-   }
-}
-
-
-/**
- * Update the string representation of the start/stop statistics displayed by ShowStatus().
- */
-void SS.StartStopStats() {
-   if (!__CHART()) return;
-
-   sStartStopStats = "";
-
-   int size = ArraySize(sequence.start.event);
-   string sStartPL, sStopPL;
-
-   for (int i=0; i < size-1; i++) {
-      if (ShowProfitInPercent) {
-         sStartPL = NumberToStr(MathDiv(sequence.start.profit[i], sequence.startEquity) * 100, "+.2") +"%";
-         sStopPL  = NumberToStr(MathDiv(sequence.stop.profit [i], sequence.startEquity) * 100, "+.2") +"%";
-      }
-      else {
-         sStartPL = NumberToStr(sequence.start.profit[i], "+.2");
-         sStopPL  = NumberToStr(sequence.stop.profit [i], "+.2");
-      }
-      sStartStopStats = " ----------------------------------------------------"+ NL
-                       +" "+ (i+1) +":   Start: "+ sStartPL +"   Stop: "+ sStopPL + StrRightFrom(sStartStopStats, "--", -1);
-   }
-   if (StringLen(sStartStopStats) > 0)
-      sStartStopStats = sStartStopStats + NL;
-}
-
-
-/**
- * Store sequence id and transient status in the chart before recompilation or terminal restart.
- *
- * @return int - error status
- */
-int StoreChartStatus() {
-   string name = __NAME();
-   Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
-   Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
-   Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
-   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT           );
-   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",      last_error==ERR_CANCELLED_BY_USER);
-   return(catch("StoreChartStatus(1)"));
-}
-
-
-/**
- * Restore sequence id and transient status found in the chart after recompilation or terminal restart.
- *
- * @return bool - whether a sequence id was found and restored
- */
-bool RestoreChartStatus() {
-   string name=__NAME(), key=name +".runtime.Sequence.ID", sValue="";
-
-   if (ObjectFind(key) == 0) {
-      Chart.RestoreString(key, sValue);
-
-      if (StrStartsWith(sValue, "T")) {
-         sequence.isTest = true;
-         sValue = StrSubstr(sValue, 1);
-      }
-      int iValue = StrToInteger(sValue);
-      if (!iValue) {
-         sequence.status = STATUS_UNDEFINED;
-      }
-      else {
-         sequence.id     = iValue; SS.SequenceId();
-         Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
-         sequence.status = STATUS_WAITING;
-      }
-      bool bValue;
-      Chart.RestoreInt (name +".runtime.startStopDisplayMode",   startStopDisplayMode  );
-      Chart.RestoreInt (name +".runtime.orderDisplayMode",       orderDisplayMode      );
-      Chart.RestoreBool(name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
-      Chart.RestoreBool(name +".runtime.CANCELLED_BY_USER",      bValue                ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
-      catch("RestoreChartStatus(1)");
-      return(iValue != 0);
-   }
-   return(false);
-}
-
-
-/**
- * Löscht alle im Chart gespeicherten Sequenzdaten.
- *
- * @return int - Fehlerstatus
- */
-int DeleteChartStatus() {
-   string label, prefix=__NAME() +".runtime.";
-
-   for (int i=ObjectsTotal()-1; i>=0; i--) {
-      label = ObjectName(i);
-      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-   }
-   return(catch("DeleteChartStatus(1)"));
-}
-
-
-/**
- * Ermittelt die aktuell laufenden Sequenzen.
- *
- * @param  int ids[] - Array zur Aufnahme der gefundenen Sequenz-IDs
- *
- * @return bool - ob mindestens eine laufende Sequenz gefunden wurde
- */
-bool GetRunningSequences(int ids[]) {
-   ArrayResize(ids, 0);
-   int id;
-
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
-         continue;
-
-      if (IsMyOrder()) {
-         id = OrderMagicNumber() & 0x3FFF;                           // 14 Bits (Bits 1-14) => sequence.id
-         if (!IntInArray(ids, id))
-            ArrayPushInt(ids, id);
-      }
-   }
-
-   if (ArraySize(ids) != 0)
-      return(ArraySort(ids));
-   return(false);
 }
 
 
@@ -3142,500 +2749,6 @@ bool IsMyOrder(int sequenceId = NULL) {
 }
 
 
-string   last.Sequence.ID = "";
-string   last.GridDirection = "";
-int      last.GridSize;
-string   last.UnitSize;
-int      last.StartLevel;
-string   last.StartConditions = "";
-string   last.StopConditions = "";
-string   last.AutoRestart;
-bool     last.ShowProfitInPercent;
-datetime last.Sessionbreak.StartTime;
-datetime last.Sessionbreak.EndTime;
-
-
-/**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
- */
-void BackupInputs() {
-   // backed-up inputs are also accessed from ValidateInputs()
-   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
-   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
-   last.GridSize               = GridSize;
-   last.UnitSize               = UnitSize;
-   last.StartLevel             = StartLevel;
-   last.StartConditions        = StringConcatenate(StartConditions, "");
-   last.StopConditions         = StringConcatenate(StopConditions,  "");
-   last.AutoRestart            = AutoRestart;
-   last.ShowProfitInPercent    = ShowProfitInPercent;
-   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
-   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
-}
-
-
-/**
- * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
- */
-void RestoreInputs() {
-   Sequence.ID            = last.Sequence.ID;
-   GridDirection          = last.GridDirection;
-   GridSize               = last.GridSize;
-   UnitSize               = last.UnitSize;
-   StartLevel             = last.StartLevel;
-   StartConditions        = last.StartConditions;
-   StopConditions         = last.StopConditions;
-   AutoRestart            = last.AutoRestart;
-   ShowProfitInPercent    = last.ShowProfitInPercent;
-   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
-   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
-}
-
-
-/**
- * Validiert und setzt nur die in der Konfiguration angegebene Sequenz-ID. Called only from onInitUser().
- *
- * @param  bool interactive - whether parameters have been entered through the input dialog
- *
- * @return bool - ob eine gültige Sequenz-ID gefunden und restauriert wurde
- */
-bool ValidateInputs.ID(bool interactive) {
-   interactive = interactive!=0;
-
-   bool isParameterChange = (ProgramInitReason() == IR_PARAMETERS);  // otherwise inputs have been applied programmatically
-   if (isParameterChange)
-      interactive = true;
-
-   string sValue = StrToUpper(StrTrim(Sequence.ID));
-
-   if (!StringLen(sValue))
-      return(false);
-
-   if (StrLeft(sValue, 1) == "T") {
-      sequence.isTest = true;
-      sValue = StrSubstr(sValue, 1);
-   }
-   if (!StrIsDigit(sValue))
-      return(_false(ValidateInputs.OnError("ValidateInputs.ID(1)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
-
-   int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX)
-      return(_false(ValidateInputs.OnError("ValidateInputs.ID(2)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
-
-   sequence.id = iValue; SS.SequenceId();
-   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-   return(true);
-}
-
-
-/**
- * Validate new or changed input parameters of a sequence. Parameters may have been entered through the input dialog, may
- * have been read and applied from a sequence status file or may have been deserialized and applied programmatically by the
- * terminal (e.g. at terminal restart).
- *
- * @param  bool interactive - whether the parameters have been entered through the input dialog
- *
- * @return bool - whether the input parameters are valid
- */
-bool ValidateInputs(bool interactive) {
-   interactive = interactive!=0;
-   if (IsLastError()) return(false);
-
-   bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
-   if (isParameterChange)
-      interactive = true;
-
-   // Sequence.ID
-   if (isParameterChange) {
-      if (sequence.status == STATUS_UNDEFINED) {
-         if (Sequence.ID != last.Sequence.ID)                     return(_false(ValidateInputs.OnError("ValidateInputs(1)", "Changing the sequence at runtime is not supported. Unload the EA first.", interactive)));
-      }
-      else if (!StringLen(StrTrim(Sequence.ID))) {
-         Sequence.ID = last.Sequence.ID;                          // apply the existing internal id
-      }
-      else if (StrTrim(Sequence.ID) != StrTrim(last.Sequence.ID)) return(_false(ValidateInputs.OnError("ValidateInputs(2)", "Changing the sequence at runtime is not supported. Unload the EA first.", interactive)));
-   }
-   else if (!StringLen(Sequence.ID)) {                            // wir müssen im STATUS_UNDEFINED sein (sequence.id = 0)
-      if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
-   }
-   else {}                                                        // wenn gesetzt, ist die ID schon validiert und die Sequenz geladen (sonst landen wir hier nicht)
-
-   // GridDirection
-   string sValues[], sValue=StrToLower(StrTrim(GridDirection));
-   if      (StrStartsWith("long",  sValue)) sValue = "Long";
-   else if (StrStartsWith("short", sValue)) sValue = "Short";
-   else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(4)", "Invalid GridDirection "+ DoubleQuoteStr(GridDirection), interactive)));
-   if (isParameterChange && !StrCompareI(sValue, last.GridDirection)) {
-      if (ArraySize(sequence.start.event) > 0)                    return(_false(ValidateInputs.OnError("ValidateInputs(5)", "Cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence", interactive)));
-   }
-   sequence.direction = StrToTradeDirection(sValue);
-   GridDirection      = sValue; SS.GridDirection();
-   SS.SequenceName();
-
-   // GridSize
-   if (isParameterChange) {
-      if (GridSize != last.GridSize)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(6)", "Cannot change GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
-   }
-   if (GridSize < 1)                                              return(_false(ValidateInputs.OnError("ValidateInputs(7)", "Invalid GridSize: "+ GridSize, interactive)));
-
-   // UnitSize
-   if (isParameterChange) {
-      if (UnitSize != last.UnitSize)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
-   }
-   sValue = StrToLower(UnitSize);
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrTrim(sValue);
-   if (sValue == "auto") {
-      UnitSize = sValue;
-   }
-   else {
-      bool fixedSize = true;
-      if      (StrStartsWithI(sValue, "Leverage")) { sValue = StrTrim(StrSubstr(sValue, 8)); fixedSize = false; }
-      else if (StrStartsWithI(sValue, "L"       )) { sValue = StrTrim(StrSubstr(sValue, 1)); fixedSize = false; }
-      if (!StrIsNumeric(sValue))                                  return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Invalid UnitSize: "+ DoubleQuoteStr(UnitSize), interactive)));
-      double dValue = StrToDouble(sValue);
-      if (fixedSize) {
-         double minLot  = MarketInfo(Symbol(), MODE_MINLOT );
-         double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT );
-         double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
-         int    error   = GetLastError();
-         if (IsError(error))                                      return(_false(ValidateInputs.OnError("ValidateInputs(10)", "", interactive)));
-         if (LE(dValue, 0))                                       return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue), interactive)));
-         if (LT(dValue, minLot))                                  return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
-         if (GT(dValue, maxLot))                                  return(_false(ValidateInputs.OnError("ValidateInputs(13)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
-         if (MathModFix(dValue, lotStep) != 0)                    return(_false(ValidateInputs.OnError("ValidateInputs(14)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
-      }
-      else {
-         if (LE(dValue, 0))                                       return(_false(ValidateInputs.OnError("ValidateInputs(15)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue), interactive)));
-      }
-      UnitSize = ifString(fixedSize, "", "L") + sValue;
-   }
-
-   string trendIndicators[] = {"ALMA", "EMA", "HalfTrend", "JMA", "LWMA", "NonLagMA", "SATL", "SMA", "SuperSmoother", "SuperTrend", "TriEMA"};
-
-   // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
-   // -----------------------------------------------------------------------------------------------------------------------------
-   // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
-   if (!isParameterChange || StartConditions!=last.StartConditions) {
-      start.conditions      = false;
-      start.trend.condition = false;
-      start.price.condition = false;
-      start.time.condition  = false;
-
-      // StartConditions in einzelne Ausdrücke zerlegen
-      string exprs[], expr, key;
-      int    iValue, time, sizeOfElems, sizeOfExprs = Explode(StartConditions, "&&", exprs, NULL);
-
-      // jeden Ausdruck parsen und validieren
-      for (int i=0; i < sizeOfExprs; i++) {
-         start.conditions = false;                                // im Fehlerfall ist start.conditions immer deaktiviert
-
-         expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                                  return(_false(ValidateInputs.OnError("ValidateInputs(16)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-            break;
-         }
-         if (StringGetChar(expr, 0) != '@')                       return(_false(ValidateInputs.OnError("ValidateInputs(17)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(_false(ValidateInputs.OnError("ValidateInputs(18)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(_false(ValidateInputs.OnError("ValidateInputs(19)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-         key = StrTrim(sValues[0]);
-         sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(_false(ValidateInputs.OnError("ValidateInputs(20)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-
-         if (key == "@trend") {
-            if (start.trend.condition)                            return(_false(ValidateInputs.OnError("ValidateInputs(21)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)", interactive)));
-            if (start.price.condition)                            return(_false(ValidateInputs.OnError("ValidateInputs(22)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
-            if (start.time.condition)                             return(_false(ValidateInputs.OnError("ValidateInputs(23)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
-            size = Explode(sValue, ":", sValues, NULL);
-            if (size < 2 || size > 3)                             return(_false(ValidateInputs.OnError("ValidateInputs(24)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-            sValue = StrTrim(sValues[0]);
-            int idx = SearchStringArrayI(trendIndicators, sValue);
-            if (idx == -1)                                        return(_false(ValidateInputs.OnError("ValidateInputs(25)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
-            start.trend.indicator = StrToLower(sValue);
-            start.trend.timeframe = StrToPeriod(sValues[1], F_ERR_INVALID_PARAMETER);
-            if (start.trend.timeframe == -1)                      return(_false(ValidateInputs.OnError("ValidateInputs(26)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
-            if (size == 2) {
-               start.trend.params = "";
-            }
-            else {
-               start.trend.params = StrTrim(sValues[2]);
-               if (!StringLen(start.trend.params))                return(_false(ValidateInputs.OnError("ValidateInputs(27)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
-            }
-            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
-            start.trend.description = exprs[i];
-            start.trend.condition   = true;
-         }
-
-         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (start.price.condition)                            return(_false(ValidateInputs.OnError("ValidateInputs(28)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
-            sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(29)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-            dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(_false(ValidateInputs.OnError("ValidateInputs(30)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-            start.price.value     = NormalizeDouble(dValue, Digits);
-            start.price.lastValue = NULL;
-            if      (key == "@bid") start.price.type = PRICE_BID;
-            else if (key == "@ask") start.price.type = PRICE_ASK;
-            else                    start.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            exprs[i] = StrSubstr(key, 1) +"("+ StrLeftTo(exprs[i], "'0") +")";   // cut "'0" for improved readability
-            start.price.description = exprs[i];
-            start.price.condition   = true;
-         }
-
-         else if (key == "@time") {
-            if (start.time.condition)                             return(_false(ValidateInputs.OnError("ValidateInputs(31)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(_false(ValidateInputs.OnError("ValidateInputs(32)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-            // TODO: Validierung von @time ist unzureichend
-            start.time.value = time;
-            exprs[i]         = "time("+ TimeToStr(time) +")";
-            start.time.description = exprs[i];
-            start.time.condition   = true;
-         }
-         else                                                     return(_false(ValidateInputs.OnError("ValidateInputs(33)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-
-         start.conditions = true;                                 // im Erfolgsfall ist start.conditions aktiviert
-      }
-   }
-
-   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @[tp|profit](1234[%]) | @[sl|loss](1234[%])
-   // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
-   if (!isParameterChange || StopConditions!=last.StopConditions) {
-      stop.trend.condition     = false;
-      stop.price.condition     = false;
-      stop.time.condition      = false;
-      stop.profitAbs.condition = false;
-      stop.profitPct.condition = false;
-      stop.lossAbs.condition   = false;
-      stop.lossPct.condition   = false;
-
-      // StopConditions in einzelne Ausdrücke zerlegen
-      sizeOfExprs = Explode(StrTrim(StopConditions), "||", exprs, NULL);
-
-      // jeden Ausdruck parsen und validieren
-      for (i=0; i < sizeOfExprs; i++) {
-         expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                                  return(_false(ValidateInputs.OnError("ValidateInputs(34)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            break;
-         }
-         if (StringGetChar(expr, 0) != '@')                       return(_false(ValidateInputs.OnError("ValidateInputs(35)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(_false(ValidateInputs.OnError("ValidateInputs(36)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(_false(ValidateInputs.OnError("ValidateInputs(37)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-         key = StrTrim(sValues[0]);
-         sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(_false(ValidateInputs.OnError("ValidateInputs(38)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-
-         if (key == "@trend") {
-            if (stop.trend.condition)                             return(_false(ValidateInputs.OnError("ValidateInputs(39)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple trend conditions)", interactive)));
-            size = Explode(sValue, ":", sValues, NULL);
-            if (size < 2 || size > 3)                             return(_false(ValidateInputs.OnError("ValidateInputs(40)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-
-
-            sValue = StrTrim(sValues[0]);
-            idx = SearchStringArrayI(trendIndicators, sValue);
-            if (idx == -1)                                        return(_false(ValidateInputs.OnError("ValidateInputs(41)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
-            stop.trend.indicator = StrToLower(sValue);
-            stop.trend.timeframe = StrToPeriod(sValues[1], F_ERR_INVALID_PARAMETER);
-            if (stop.trend.timeframe == -1)                       return(_false(ValidateInputs.OnError("ValidateInputs(42)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)", interactive)));
-            if (size == 2) {
-               stop.trend.params = "";
-            }
-            else {
-               stop.trend.params = StrTrim(sValues[2]);
-               if (!StringLen(stop.trend.params))                 return(_false(ValidateInputs.OnError("ValidateInputs(43)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)", interactive)));
-            }
-            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
-            stop.trend.description = exprs[i];
-            stop.trend.condition   = true;
-         }
-
-         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (stop.price.condition)                             return(_false(ValidateInputs.OnError("ValidateInputs(44)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
-            sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(45)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(_false(ValidateInputs.OnError("ValidateInputs(46)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            stop.price.value     = NormalizeDouble(dValue, Digits);
-            stop.price.lastValue = NULL;
-            if      (key == "@bid") stop.price.type = PRICE_BID;
-            else if (key == "@ask") stop.price.type = PRICE_ASK;
-            else                    stop.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            exprs[i] = StrSubstr(key, 1) +"("+ StrLeftTo(exprs[i], "'0") +")";   // cut "'0" for improved readability
-            stop.price.description = exprs[i];
-            stop.price.condition   = true;
-         }
-
-         else if (key == "@time") {
-            if (stop.time.condition)                              return(_false(ValidateInputs.OnError("ValidateInputs(47)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(_false(ValidateInputs.OnError("ValidateInputs(48)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            // TODO: Validierung von @time ist unzureichend
-            stop.time.value       = time;
-            exprs[i]              = "time("+ TimeToStr(time) +")";
-            stop.time.description = exprs[i];
-            stop.time.condition   = true;
-         }
-
-         else if (key=="@tp" || key=="@profit") {
-            if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                                  return(_false(ValidateInputs.OnError("ValidateInputs(49)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple takeprofit conditions)", interactive)));
-            sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            sValue = StrTrim(sValues[0]);
-            if (!StringLen(sValue))                               return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(sValue);
-            if (sizeOfElems == 1) {
-               stop.profitAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
-               stop.profitAbs.description = exprs[i];
-               stop.profitAbs.condition   = true;
-            }
-            else {
-               stop.profitPct.value       = dValue;
-               stop.profitPct.absValue    = INT_MAX;
-               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
-               stop.profitPct.description = exprs[i];
-               stop.profitPct.condition   = true;
-            }
-         }
-
-         else if (key=="@sl" || key=="@loss") {
-            if (stop.lossAbs.condition || stop.lossPct.condition)
-                                                                  return(_false(ValidateInputs.OnError("ValidateInputs(53)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
-            sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(54)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            sValue = StrTrim(sValues[0]);
-            if (!StringLen(sValue))                               return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            dValue = StrToDouble(sValue);
-            if (sizeOfElems == 1) {
-               stop.lossAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
-               stop.lossAbs.description = exprs[i];
-               stop.lossAbs.condition   = true;
-            }
-            else {
-               stop.lossPct.value       = dValue;
-               stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                   = "loss("+ NumberToStr(dValue, ".+") +"%)";
-               stop.lossPct.description = exprs[i];
-               stop.lossPct.condition   = true;
-            }
-         }
-         else                                                     return(_false(ValidateInputs.OnError("ValidateInputs(57)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-      }
-   }
-
-   // AutoRestart
-   sValue = StrToLower(AutoRestart);
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrTrim(sValue);
-   if      (sValue == "")                      sValue = "off";
-   else if (StrStartsWith("off",      sValue)) sValue = "off";
-   else if (StrStartsWith("continue", sValue)) sValue = "continue";
-   else if (StrStartsWith("reset",    sValue)) sValue = "reset";
-   else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(58)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
-   AutoRestart = StrCapitalize(sValue);
-
-   // StartLevel
-   if (isParameterChange) {
-      if (StartLevel != last.StartLevel)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(59)", "Cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
-   }
-   if (sequence.direction == D_LONG) {
-      if (StartLevel < 0)                                         return(_false(ValidateInputs.OnError("ValidateInputs(60)", "Invalid StartLevel: "+ StartLevel, interactive)));
-   }
-   StartLevel = Abs(StartLevel);
-
-   // ShowProfitInPercent: nothing to validate
-
-   // Sessionbreak.StartTime/EndTime
-   if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
-      sessionbreak.starttime = NULL;
-      sessionbreak.endtime   = NULL;                              // real times are updated automatically on next use
-   }
-
-   // reset __STATUS_INVALID_INPUT
-   if (interactive)
-      __STATUS_INVALID_INPUT = false;
-   return(!catch("ValidateInputs(61)"));
-}
-
-
-/**
- * Error-Handler für ungültige Input-Parameter. Je nach Situation wird der Fehler an den Default-Errorhandler übergeben
- * oder zur Korrektur aufgefordert.
- *
- * @param  string location    - Ort, an dem der Fehler auftrat
- * @param  string message     - Fehlermeldung
- * @param  bool   interactive - ob der Fehler interaktiv behandelt werden kann
- *
- * @return int - der resultierende Fehlerstatus
- */
-int ValidateInputs.OnError(string location, string message, bool interactive) {
-   interactive = interactive!=0;
-   if (IsTesting() || !interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
-
-   int error = ERR_INVALID_INPUT_PARAMETER;
-   __STATUS_INVALID_INPUT = true;
-
-   if (__LOG()) log(location +"   "+ message, error);
-   PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY)
-      __STATUS_RELAUNCH_INPUT = true;
-   return(error);
-}
-
-
-/**
- * Return the full name of the status file.
- *
- * @return string - filename or an empty string in case of errors
- */
-string GetStatusFileName() {
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFileName(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
-
-   string directory, baseName=StrToLower(Symbol()) +".SR."+ sequence.id +".set";
-
-   if (IsTestSequence()) directory = "\\presets\\";
-   else                  directory = "\\presets\\"+ ShortAccountCompany() +"\\";
-
-   return(GetMqlFilesPath() + directory + baseName);
-}
-
-
-/**
- * Return the full name of the custom logfile.
- *
- * @return string - filename or an empty string in tester (no custom logfile)
- */
-string GetCustomLogFileName() {
-   return("");                            // for the time being: disable the custom log
-
-   string name = GetStatusFileName();
-   if (!StringLen(name)) return("");
-   if (IsTestSequence()) return("");
-
-   return(StrLeft(name, -3) +"log");
-}
-
-
 /**
  * Generate and return a new event id.
  *
@@ -3648,7 +2761,7 @@ int CreateEventId() {
 
 
 /**
- * Write the current sequence status to a file. The sequence can be reloaded from such a file (e.g. on terminal restart).
+ * Write the current sequence status to a file. The sequence can be reloaded from the file.
  *
  * @return bool - success status
  */
@@ -4021,7 +3134,7 @@ bool ReadStatus() {
 
    string orderKeys[], sOrder;
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
-   ResizeOrderArrays(0);
+   Orders.ResizeArrays(0);
    for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
       success = ReadStatus.ParseOrder(sOrder);
@@ -4432,7 +3545,7 @@ bool ReadStatus.ParseOrder(string value) {
    if (type==OP_UNDEFINED && NE(profit, 0))                              return(!catch("ReadStatus.ParseOrder(48)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // store all data in the order arrays
-   Grid.PushData(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit);
+   Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit);
    lastEventId = Max(lastEventId, openEvent, closeEvent);
 
    ArrayResize(values, 0);
@@ -4478,7 +3591,7 @@ bool SynchronizeStatus() {
 
       if (orders.closeTime[i] != 0) {
          if (orders.type[i] == OP_UNDEFINED) {
-            if (!Grid.DropData(i))                                         // geschlossene PendingOrders löschen
+            if (!Orders.RemoveRecord(i))                                   // geschlossene PendingOrders löschen
                return(false);
             sizeOfTickets--; i--;
             permanentStatusChange = true;
@@ -4886,192 +3999,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
 
 /**
- * Redraw the start/stop markers of the currently active sequence. If AutoRestart is enabled markers of finished sequence
- * cycles will no be redrawn.
- */
-void RedrawStartStop() {
-   if (!__CHART()) return;
-
-   string   label, sCycle = StrPadLeft(sequence.cycle, 3, "0");
-   datetime time;
-   double   price;
-   double   profit;
-   int starts = ArraySize(sequence.start.event);
-
-   // start markers
-   for (int i=0; i < starts; i++) {
-      time   = sequence.start.time  [i];
-      price  = sequence.start.price [i];
-      profit = sequence.start.profit[i];
-
-      label = "SR."+ sequence.id +"."+ sCycle +".start."+ (i+1);
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-
-      if (startStopDisplayMode != SDM_NONE) {
-         ObjectCreate (label, OBJ_ARROW, 0, time, price);
-         ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-         ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     Blue                );
-         ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
-      }
-   }
-
-   // stop markers
-   for (i=0; i < starts; i++) {
-      if (sequence.stop.time[i] > 0) {
-         time   = sequence.stop.time [i];
-         price  = sequence.stop.price[i];
-         profit = sequence.stop.profit[i];
-
-         label = "SR."+ sequence.id +"."+ sCycle +".stop."+ (i+1);
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-
-         if (startStopDisplayMode != SDM_NONE) {
-            ObjectCreate (label, OBJ_ARROW, 0, time, price);
-            ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-            ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     Blue                );
-            ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
-         }
-      }
-   }
-   catch("RedrawStartStop(1)");
-}
-
-
-/**
- * Zeichnet die ChartMarker aller Orders neu.
- */
-void RedrawOrders() {
-   if (!__CHART()) return;
-
-   bool wasPending, isPending, closedPosition;
-   int  size = ArraySize(orders.ticket);
-
-   for (int i=0; i < size; i++) {
-      wasPending     = orders.pendingType[i] != OP_UNDEFINED;
-      isPending      = orders.type[i] == OP_UNDEFINED;
-      closedPosition = !isPending && orders.closeTime[i]!=0;
-
-      if    (isPending)                         Chart.MarkOrderSent(i);
-      else /*openPosition || closedPosition*/ {                                  // openPosition ist Folge einer
-         if (wasPending)                        Chart.MarkOrderFilled(i);        // ...ausgeführten Pending-Order
-         else                                   Chart.MarkOrderSent(i);          // ...oder Market-Order
-         if (closedPosition)                    Chart.MarkPositionClosed(i);
-      }
-   }
-}
-
-
-/**
- * Wechselt den Modus der Start/Stopanzeige.
- *
- * @return int - Fehlerstatus
- */
-int ToggleStartStopDisplayMode() {
-   // Mode wechseln
-   int i = SearchIntArray(startStopDisplayModes, startStopDisplayMode);    // #define SDM_NONE        - keine Anzeige -
-   if (i == -1) {                                                          // #define SDM_PRICE       Markierung mit Preisangabe
-      startStopDisplayMode = SDM_PRICE;           // default
-   }
-   else {
-      int size = ArraySize(startStopDisplayModes);
-      startStopDisplayMode = startStopDisplayModes[(i+1) % size];
-   }
-
-   // Anzeige aktualisieren
-   RedrawStartStop();
-
-   return(catch("ToggleStartStopDisplayMode()"));
-}
-
-
-/**
- * Wechselt den Modus der Orderanzeige.
- *
- * @return int - Fehlerstatus
- */
-int ToggleOrderDisplayMode() {
-   int pendings   = CountPendingOrders();
-   int open       = CountOpenPositions();
-   int stoppedOut = CountStoppedOutPositions();
-   int closed     = CountClosedPositions();
-
-   // Modus wechseln, dabei Modes ohne entsprechende Orders überspringen
-   int oldMode      = orderDisplayMode;
-   int size         = ArraySize(orderDisplayModes);
-   orderDisplayMode = (orderDisplayMode+1) % size;
-
-   while (orderDisplayMode != oldMode) {                                   // #define ODM_NONE        - keine Anzeige -
-      if (orderDisplayMode == ODM_NONE) {                                  // #define ODM_STOPS       Pending,       StoppedOut
-         break;                                                            // #define ODM_PYRAMID     Pending, Open,             Closed
-      }                                                                    // #define ODM_ALL         Pending, Open, StoppedOut, Closed
-      else if (orderDisplayMode == ODM_STOPS) {
-         if (pendings+stoppedOut > 0)
-            break;
-      }
-      else if (orderDisplayMode == ODM_PYRAMID) {
-         if (pendings+open+closed > 0)
-            if (open+stoppedOut+closed > 0)                                // ansonsten ist Anzeige identisch zu vorherigem Mode
-               break;
-      }
-      else if (orderDisplayMode == ODM_ALL) {
-         if (pendings+open+stoppedOut+closed > 0)
-            if (stoppedOut > 0)                                            // ansonsten ist Anzeige identisch zu vorherigem Mode
-               break;
-      }
-      orderDisplayMode = (orderDisplayMode+1) % size;
-   }
-
-
-   // Anzeige aktualisieren
-   if (orderDisplayMode != oldMode) {
-      RedrawOrders();
-   }
-   else {
-      // nothing to change, Anzeige bleibt unverändert
-      PlaySoundEx("Plonk.wav");
-   }
-   return(catch("ToggleOrderDisplayMode()"));
-}
-
-
-/**
- * Gibt die Anzahl der Pending-Orders der Sequenz zurück.
- *
- * @return int
- */
-int CountPendingOrders() {
-   int count, size=ArraySize(orders.ticket);
-
-   for (int i=0; i < size; i++) {
-      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0)
-         count++;
-   }
-   return(count);
-}
-
-
-/**
- * Gibt die Anzahl der offenen Positionen der Sequenz zurück.
- *
- * @return int
- */
-int CountOpenPositions() {
-   int count, size=ArraySize(orders.ticket);
-
-   for (int i=0; i < size; i++) {
-      if (orders.type[i]!=OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0)
-         count++;
-   }
-   return(count);
-}
-
-
-/**
- * Gibt die Anzahl der ausgestoppten Positionen der Sequenz zurück.
+ * Return the number of positions of the sequence closed by a stoploss.
  *
  * @return int
  */
@@ -5087,7 +4015,7 @@ int CountStoppedOutPositions() {
 
 
 /**
- * Gibt die Anzahl der durch StopSequence() geschlossenen Positionen der Sequenz zurück.
+ * Return the number of positions of the sequence closed by StopSequence().
  *
  * @return int
  */
@@ -5099,165 +4027,6 @@ int CountClosedPositions() {
          count++;
    }
    return(count);
-}
-
-
-/**
- * Korrigiert die vom Terminal beim Abschicken einer Pending- oder Market-Order gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int i - Orderindex
- *
- * @return bool - success status
- */
-bool Chart.MarkOrderSent(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   bool pending = orders.pendingType[i] != OP_UNDEFINED;
-
-   int      type        =    ifInt(pending, orders.pendingType [i], orders.type     [i]);
-   datetime openTime    =    ifInt(pending, orders.pendingTime [i], orders.openTime [i]);
-   double   openPrice   = ifDouble(pending, orders.pendingPrice[i], orders.openPrice[i]);
-   string   comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   color    markerColor = CLR_NONE;
-
-   if (orderDisplayMode != ODM_NONE) {
-      if      (pending)                         markerColor = CLR_PENDING;
-      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_LONG, CLR_SHORT);
-   }
-   return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, sequence.unitsize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
-}
-
-
-/**
- * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int i - Orderindex
- *
- * @return bool - success status
- */
-bool Chart.MarkOrderFilled(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
-   color  markerColor = CLR_NONE;
-
-   if (orderDisplayMode >= ODM_PYRAMID)
-      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
-
-   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
-}
-
-
-/**
- * Korrigiert den vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int i - Orderindex
- *
- * @return bool - success status
- */
-bool Chart.MarkPositionClosed(int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   color markerColor = CLR_NONE;
-
-   if (orderDisplayMode != ODM_NONE) {
-      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSE;
-      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
-   }
-   return(ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]));
-}
-
-
-/**
- * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
- * sequence may be loaded in an online chart after the test (for visualization).
- *
- * @return bool
- */
-bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
-}
-
-
-/**
- * Setzt die Größe der Datenarrays auf den angegebenen Wert.
- *
- * @param  int  size             - neue Größe
- * @param  bool reset [optional] - ob die Arrays komplett zurückgesetzt werden sollen
- *                                 (default: nur neu hinzugefügte Felder werden initialisiert)
- *
- * @return int - neue Größe der Arrays
- */
-int ResizeOrderArrays(int size, bool reset = false) {
-   reset = reset!=0;
-
-   int oldSize = ArraySize(orders.ticket);
-
-   if (size != oldSize) {
-      ArrayResize(orders.ticket,       size);
-      ArrayResize(orders.level,        size);
-      ArrayResize(orders.gridbase,     size);
-      ArrayResize(orders.pendingType,  size);
-      ArrayResize(orders.pendingTime,  size);
-      ArrayResize(orders.pendingPrice, size);
-      ArrayResize(orders.type,         size);
-      ArrayResize(orders.openEvent,    size);
-      ArrayResize(orders.openTime,     size);
-      ArrayResize(orders.openPrice,    size);
-      ArrayResize(orders.closeEvent,   size);
-      ArrayResize(orders.closeTime,    size);
-      ArrayResize(orders.closePrice,   size);
-      ArrayResize(orders.stopLoss,     size);
-      ArrayResize(orders.closedBySL,   size);
-      ArrayResize(orders.swap,         size);
-      ArrayResize(orders.commission,   size);
-      ArrayResize(orders.profit,       size);
-   }
-
-   if (reset) {                                                      // alle Felder zurücksetzen
-      if (size != 0) {
-         ArrayInitialize(orders.ticket,                 0);
-         ArrayInitialize(orders.level,                  0);
-         ArrayInitialize(orders.gridbase,               0);
-         ArrayInitialize(orders.pendingType, OP_UNDEFINED);
-         ArrayInitialize(orders.pendingTime,            0);
-         ArrayInitialize(orders.pendingPrice,           0);
-         ArrayInitialize(orders.type,        OP_UNDEFINED);
-         ArrayInitialize(orders.openEvent,              0);
-         ArrayInitialize(orders.openTime,               0);
-         ArrayInitialize(orders.openPrice,              0);
-         ArrayInitialize(orders.closeEvent,             0);
-         ArrayInitialize(orders.closeTime,              0);
-         ArrayInitialize(orders.closePrice,             0);
-         ArrayInitialize(orders.stopLoss,               0);
-         ArrayInitialize(orders.closedBySL,         false);
-         ArrayInitialize(orders.swap,                   0);
-         ArrayInitialize(orders.commission,             0);
-         ArrayInitialize(orders.profit,                 0);
-      }
-   }
-   else {
-      for (int i=oldSize; i < size; i++) {
-         orders.pendingType[i] = OP_UNDEFINED;                       // Hinzugefügte pendingType- und type-Felder immer re-initialisieren,
-         orders.type       [i] = OP_UNDEFINED;                       // 0 ist ein gültiger Wert und daher als Default unzulässig.
-      }
-   }
-   return(size);
 }
 
 
@@ -5278,88 +4047,6 @@ string StatusEventToStr(int event) {
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
    return(_EMPTY_STR(catch("StatusEventToStr(1)  "+ sequence.longName +" illegal parameter event = "+ event, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Generiert eine neue Sequenz-ID.
- *
- * @return int - Sequenz-ID im Bereich 1000-16383 (mindestens 4-stellig, maximal 14 bit)
- */
-int CreateSequenceId() {
-   MathSrand(GetTickCount());
-   int id;                                               // TODO: Im Tester müssen fortlaufende IDs generiert werden.
-   while (id < SID_MIN || id > SID_MAX) {
-      id = MathRand();
-   }
-   return(id);                                           // TODO: ID auf Eindeutigkeit prüfen
-}
-
-
-/**
- * Get a user confirmation for a trade request at the first tick. This function is a safety measure against runtime errors.
- *
- * @param  string location - location identifier of the confirmation
- * @param  string message  - confirmation message
- *
- * @return bool - confirmation result
- */
-bool ConfirmFirstTickTrade(string location, string message) {
-   static bool confirmed;
-   if (confirmed)                         // Behave like a no-op on nested calls, don't return the former result. Trade requests
-      return(true);                       // will differ and the calling logic must correctly interprete the first result.
-
-   bool result;
-   if (Tick > 1 || IsTesting()) {
-      result = true;
-   }
-   else {
-      PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(__NAME() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
-      RefreshRates();
-   }
-   confirmed = true;
-   return(result);
-}
-
-
-/**
- * Return a readable version of a sequence status code.
- *
- * @param  int status
- *
- * @return string
- */
-string StatusToStr(int status) {
-   switch (status) {
-      case STATUS_UNDEFINED  : return("STATUS_UNDEFINED"  );
-      case STATUS_WAITING    : return("STATUS_WAITING"    );
-      case STATUS_STARTING   : return("STATUS_STARTING"   );
-      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
-      case STATUS_STOPPING   : return("STATUS_STOPPING"   );
-      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
-   }
-   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Return a description of a sequence status code.
- *
- * @param  int status
- *
- * @return string
- */
-string StatusDescription(int status) {
-   switch (status) {
-      case STATUS_UNDEFINED  : return("undefined"  );
-      case STATUS_WAITING    : return("waiting"    );
-      case STATUS_STARTING   : return("starting"   );
-      case STATUS_PROGRESSING: return("progressing");
-      case STATUS_STOPPING   : return("stopping"   );
-      case STATUS_STOPPED    : return("stopped"    );
-   }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6140,131 +4827,6 @@ bool IsStopLossTriggered(int type, double price) {
    if (type == OP_SELL) return(GE(Ask, price, Digits));
 
    return(!catch("IsStopLossTriggered(1)  "+ sequence.longName +" illegal parameter type: "+ type, ERR_INVALID_PARAMETER));
-}
-
-
-/**
- * Calculate and return the reference equity value for a new sequence.
- *
- * @return double - equity value or NULL in case of errors
- */
-double CalculateStartEquity() {
-   double result;
-
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !tester.startEquity) {
-      result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
-   }
-   else {
-      result = tester.startEquity;
-   }
-
-   if (!catch("CalculateStartEquity(1)"))
-      return(result);
-   return(NULL);
-}
-
-
-/**
- * Calculate and return the unitsize to use for the given equity value. If the sequence was already started the returned
- * value is constant and equal to the unitsize used at sequence start, no matter the equity value passed.
- *
- * @param  double equity - equity value
- *
- * @return double - unitsize or NULL in case of errors
- */
-double CalculateUnitSize(double equity) {
-   if (LE(equity, 0))         return(!catch("CalculateUnitSize(1)  "+ sequence.longName +" invalid parameter equity: "+ NumberToStr(equity, ".2+"), ERR_INVALID_PARAMETER));
-
-   if (ArraySize(orders.ticket) > 0) {
-      if (!sequence.unitsize) return(!catch("CalculateUnitSize(2)  "+ sequence.longName +" illegal stored value of sequence.unitsize: 0", ERR_ILLEGAL_STATE));
-      return(sequence.unitsize);
-   }
-
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE );
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double minLot    = MarketInfo(Symbol(), MODE_MINLOT   );
-   double maxLot    = MarketInfo(Symbol(), MODE_MAXLOT   );
-   double lotStep   = MarketInfo(Symbol(), MODE_LOTSTEP  );
-   int    error     = GetLastError();
-   if (IsError(error)) return(!catch("CalculateUnitSize(3)", error));
-
-   if (!tickSize || !tickValue || !minLot || !maxLot || !lotStep) {
-      string sDetail = ifString(tickSize, "", "tickSize=0, ") + ifString(tickValue, "", "tickValue=0, ") + ifString(minLot, "", "minLot=0, ") + ifString(maxLot, "", "maxLot=0, ") + ifString(lotStep, "", "lotStep=0, ");
-      return(!catch("CalculateUnitSize(4)  "+ sequence.longName +" market data not (yet) available: "+ StrLeft(sDetail, -2), ERS_TERMINAL_NOT_YET_READY));
-   }
-
-   string sValue;
-   bool   calculated = false;
-   double result;
-
-   if (UnitSize == "auto") {
-      calculated = true;
-      // read and parse configuration: Unitsize.{symbol} = L[everage]{double}
-      string section="SnowRoller", key="Unitsize."+ StdSymbol(), sUnitSize=GetConfigString(section, key);
-      if      (StrStartsWithI(sUnitSize, "Leverage")) sValue = StrTrim(StrSubstr(sUnitSize, 8));
-      else if (StrStartsWithI(sUnitSize, "L"       )) sValue = StrTrim(StrSubstr(sUnitSize, 1));
-      else                                            sValue = sUnitSize;
-      if (!StrIsNumeric(sValue))               return(!catch("CalculateUnitSize(5)  "+ sequence.longName +" invalid configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
-      double leverage = StrToDouble(sValue);
-      if (LE(leverage, 0))                     return(!catch("CalculateUnitSize(6)  "+ sequence.longName +" invalid leverage value in configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
-   }
-   else {
-      if      (StrStartsWithI(UnitSize, "Leverage")) { sValue = StrTrim(StrSubstr(UnitSize, 8)); calculated = true; }
-      else if (StrStartsWithI(UnitSize, "L"       )) { sValue = StrTrim(StrSubstr(UnitSize, 1)); calculated = true; }
-      else                                             sValue = UnitSize;
-      if (!StrIsNumeric(sValue))               return(!catch("CalculateUnitSize(7)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize), ERR_INVALID_INPUT_PARAMETER));
-
-      if (calculated) {
-         leverage = StrToDouble(sValue);
-         if (LE(leverage, 0))                  return(!catch("CalculateUnitSize(8)  "+ sequence.longName +" invalid leverage value in input parameter UnitSize: "+ DoubleQuoteStr(UnitSize), ERR_INVALID_INPUT_PARAMETER));
-      }
-      else {
-         result = StrToDouble(sValue);
-         if (LE(result, 0))                    return(!catch("CalculateUnitSize(9)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize), ERR_INVALID_INPUT_PARAMETER));
-      }
-   }
-
-   if (calculated) {
-      double price   = (Bid+Ask)/2;
-      double lotSize = price * tickValue/tickSize;    // lotsize in account currency
-      double margin  = equity * leverage;             // available leveraged margin
-      result         = margin / lotSize;
-      int steps      = result / lotStep;
-      result         = NormalizeDouble(steps * lotStep, 2);
-
-      if (LT(result, minLot))               return(!catch("CalculateUnitSize(10)  "+ sequence.longName +" too low parameter equity = "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_PARAMETER));
-      if (GT(result, maxLot))               return(!catch("CalculateUnitSize(11)  "+ sequence.longName +" too high parameter equity = "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_PARAMETER));
-   }
-   else {
-      if (LT(result, minLot))               return(!catch("CalculateUnitSize(12)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(result, maxLot))               return(!catch("CalculateUnitSize(13)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
-      if (MathModFix(result, lotStep) != 0) return(!catch("CalculateUnitSize(14)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
-   }
-
-   if (!catch("CalculateUnitSize(15)"))
-      return(result);
-   return(NULL);
-}
-
-
-/**
- * Return a string representation of the input parameters (for logging purposes).
- *
- * @return string
- */
-string InputsToStr() {
-   return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
-                            "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
-                            "GridSize=",               GridSize,                                     ";", NL,
-                            "UnitSize=",               DoubleQuoteStr(UnitSize),                     ";", NL,
-                            "StartConditions=",        DoubleQuoteStr(StartConditions),              ";", NL,
-                            "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
-                            "AutoRestart=",            DoubleQuoteStr(AutoRestart),                  ";", NL,
-                            "StartLevel=",             StartLevel,                                   ";", NL,
-                            "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
-                            "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
-                            "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
-   );
 
    // prevent compiler warnings
    int iNulls[];
