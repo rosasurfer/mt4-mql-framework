@@ -2826,9 +2826,14 @@ bool SaveStatus() {
 
    int size = ArraySize(orders.ticket);
    for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "rt.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i));
+      int ticket   = orders.ticket[i];
+      string key   = "rt.order."+ StrPadLeft(i, 4, "0");
+      string value = SaveStatus.OrderToStr(i);
+      if (ticket <= 0) warn("SaveStatus(2)  "+ sequence.longName +" writing illegal order record (ticket="+ ticket +"): "+ key +"="+ value);
+
+      WriteIniString(file, section, key, value);
    }
-   return(!catch("SaveStatus(2)"));
+   return(!catch("SaveStatus(3)"));
 }
 
 
@@ -2965,11 +2970,7 @@ string SaveStatus.OrderToStr(int index) {
    double   commission   = orders.commission  [index];
    double   profit       = orders.profit      [index];
 
-   string sOrder = StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2));
-   if (ticket <= 0) {
-      warn("SaveStatus.OrderToStr(1)  "+sequence.longName +" writing order record with illeagl ticket: "+ sOrder);
-   }
-   return(sOrder);
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(gridbase, Digits), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", orderType, ",", openEvent, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeEvent, ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", closedBySL, ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
