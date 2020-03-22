@@ -1828,7 +1828,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (NE(gridbase, orders.gridbase[i], Digits)) {
          static int lastTrailed = 0;
 
-         if (/*IsTesting() ||*/Tick.Time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
+         if (IsTesting() || Tick.Time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
             lastTrailed = Tick.Time;
             saveStatus  = true;
