@@ -17,7 +17,7 @@
  * If one of the AutoRestart options is enabled the EA continuously resets itself after takeprofit or stoploss are reached.
  * If AutoRestart is set to "Continue" the EA resets itself to the initial state and immediately continues trading at level 1.
  * If AutoRestart is set to "Reset" the EA resets itself to the initial state and waits for the next start condition to be
- * fulfilled. For both AutoRestart options start and stop parmeters must define a trend condition.
+ * fulfilled. For both AutoRestart options start and stop parameters must define a trend condition.
  *
  * The EA automatically interrupts and resumes trading during configurable session breaks, e.g. at Midnight or at weekends.
  * During session breaks all pending orders and open positions are closed. Session break configuration supports holidays.
@@ -33,7 +33,7 @@
  *  @link  https://www.forexfactory.com/showthread.php?t=239717  ["Trading the anti-grid with the Snowball EA"]
  *
  *
- * Risk warning: The market can range longer without reaching the profit target than a trading account can survive.
+ * Risk warning: The market can range longer without reaching the profit target than a trading account is able to survive.
  */
 #include <stddefines.mqh>
 #include <app/snowroller/defines.mqh>
