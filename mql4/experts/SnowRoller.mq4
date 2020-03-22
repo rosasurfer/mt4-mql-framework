@@ -1003,15 +1003,17 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
             if (!success) return(false);
             i = ArraySize(orders.ticket) - 1;
          }
-         else {
-            // TODO: check/update the stoploss
+         else warn("RestorePositions(2)  check/update the stoploss not implemented", ERR_NOT_IMPLEMENTED);
+
+         if (isMissedLevel) {
+            openTime   = Max(openTime, orders.pendingTime[i]);
+            openPrice += MarketInfo(Symbol(), MODE_ASK);
          }
-         if (!isMissedLevel) {
+         else {
             openTime   = Max(openTime, orders.openTime[i]);
             openPrice += orders.openPrice[i];
          }
       }
-      openPrice /= (Abs(sequence.level)-missedLevels);                        // avg(OpenPrice)
    }
 
    // Short
@@ -1025,23 +1027,25 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
             if (!success) return(false);
             i = ArraySize(orders.ticket) - 1;
          }
-         else {
-            // TODO: check/update the stoploss
+         else warn("RestorePositions(3)  check/update the stoploss not implemented", ERR_NOT_IMPLEMENTED);
+
+         if (isMissedLevel) {
+            openTime   = Max(openTime, orders.pendingTime[i]);
+            openPrice += MarketInfo(Symbol(), MODE_BID);
          }
-         if (!isMissedLevel) {
+         else {
             openTime   = Max(openTime, orders.openTime[i]);
             openPrice += orders.openPrice[i];
          }
       }
-      openPrice /= (Abs(sequence.level)-missedLevels);                        // avg(OpenPrice)
    }
 
    // write-back results to the passed variables
    if (openTime != 0) {                                                       // sequence.level != 0
       lpOpenTime  = openTime;
-      lpOpenPrice = NormalizeDouble(openPrice, Digits);
+      lpOpenPrice = NormalizeDouble(openPrice/Abs(sequence.level), Digits);   // avg(OpenPrice)
    }
-   return(!catch("RestorePositions(2)"));
+   return(!catch("RestorePositions(4)"));
 }
 
 
