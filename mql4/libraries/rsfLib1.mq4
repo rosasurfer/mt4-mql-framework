@@ -5253,7 +5253,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
  * Extended version of the built-in function OrderModify().
  *
  * @param  _In_  int      ticket      - ticket to modify
- * @param  _In_  double   openPrice   - new OpenPrice (valid only for pending entry orders)
+ * @param  _In_  double   openPrice   - new OpenPrice for pending orders or NULL for no change
  * @param  _In_  double   stopLoss    - new StopLoss price
  * @param  _In_  double   takeProfit  - new TakeProfit price
  * @param  _In_  datetime expires     - new expiration (valid only for pending entry orders)
@@ -5268,7 +5268,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
  *        - ERR_NO_RESULT:                the request doesn't change any trade parameters
  *        - ERR_INVALID_STOP:             the request violates the market or the broker's stop distance
  *        - ERR_TRADE_MODIFY_DENIED:      the request violates the broker's freeze level
- *        - ERR_INVALID_TRADE_PARAMETERS: order status changed (order or limit already executed)
+ *        - ERR_INVALID_TRADE_PARAMETERS: order status changed (order limit already executed or position already closed)
  */
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
@@ -5281,7 +5281,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(!oe.setError(oe, ERR_INVALID_TICKET));
    if (!IsOrderType(OrderType()))                              return(_false(Order.HandleError("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, oeFlags, oe), OrderPop("OrderModifyEx(4)")));
    if (OrderCloseTime() != 0)                                  return(_false(Order.HandleError("OrderModifyEx(5)  ticket #"+ ticket +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(6)")));
-   bool   isPendingType  = IsPendingOrderType(OrderType());
+   bool   isPendingOrder = IsPendingOrderType(OrderType());
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
    int    pipPoints      = MathRound(MathPow(10, digits & 1));
@@ -5292,9 +5292,11 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (IsError(error))                                         return(_false(Order.HandleError("OrderModifyEx(7)  symbol=\""+ OrderSymbol() +"\"", error, oeFlags, oe), OrderPop("OrderModifyEx(8)")));
    // openPrice
    openPrice = NormalizeDouble(openPrice, digits);
-   if (LE(openPrice, 0, digits))                               return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
-   if (!isPendingType)
-      if (!EQ(openPrice, OrderOpenPrice(), digits))            return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify entry limit of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
+   if (LT(openPrice, 0, digits))                               return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
+   if (EQ(openPrice, 0, digits)) openPrice = NormalizeDouble(OrderOpenPrice(), digits);
+   if (!isPendingOrder) {
+      if (!EQ(openPrice, OrderOpenPrice(), digits))            return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify entry price of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
+   }
    // stopLoss
    stopLoss = NormalizeDouble(stopLoss, digits);
    if (LT(stopLoss, 0, digits))                                return(_false(Order.HandleError("OrderModifyEx(13)  illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
@@ -5305,7 +5307,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (expires != 0)
       if (expires <= TimeCurrentEx("OrderModifyEx(17)"))       return(_false(Order.HandleError("OrderModifyEx(18)  illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(19)")));
    if (expires != OrderExpiration())
-      if (!isPendingType)                                      return(_false(Order.HandleError("OrderModifyEx(20)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(21)")));
+      if (!isPendingOrder)                                     return(_false(Order.HandleError("OrderModifyEx(20)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(21)")));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(Order.HandleError("OrderModifyEx(22)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(23)")));
 
@@ -5366,9 +5368,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setOpenPrice (oe, openPrice      );
          oe.setStopLoss  (oe, stopLoss       );
          oe.setTakeProfit(oe, takeProfit     );
-         oe.setSwap      (oe, ifDouble(isPendingType, 0, OrderSwap()));
-         oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
-         oe.setProfit    (oe, ifDouble(isPendingType, 0, OrderProfit()));
+         oe.setSwap      (oe, ifDouble(isPendingOrder, 0, OrderSwap()));
+         oe.setCommission(oe, ifDouble(isPendingOrder, 0, OrderCommission()));
+         oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
          if (__LOG()) log("OrderModifyEx(32)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!IsTesting()) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
