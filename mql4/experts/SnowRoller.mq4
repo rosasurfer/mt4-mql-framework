@@ -195,6 +195,7 @@ double   orders.profit      [];
 
 // --- other -------------------------------
 int      lastEventId;
+int      limitOrderTrailing;                       // limit trailing to one request per <x> seconds (default: 3)
 
 int      lastNetworkError;                         // the last trade server network error (if any)
 datetime nextRetry;                                // time of the next trade retry after a network error
@@ -1711,9 +1712,9 @@ bool UpdatePendingOrders(bool saveStatus = false) {
    // (1) iterate from the current level downward and check all active levels
    for (int i=sizeOfTickets-1; i >= 0; i--) {
       if (orders.level[i] == level) {
-         if (idxCurrentLevel < 0) idxCurrentLevel = i;                  // remember the index of the current level
+         if (idxCurrentLevel < 0) idxCurrentLevel = i;                     // remember the index of the current level
 
-         if (!orders.closeTime[i]) {                                    // order is open, check the SL of level 1 orders
+         if (!orders.closeTime[i]) {                                       // order is open, check the SL of level 1 orders
             if (Abs(level) == 1) {
                double stoploss = gridbase + (level-levelStep)*GridSize*Pips;
                if (NE(orders.stopLoss[i], stoploss, Digits)) {
@@ -1721,19 +1722,19 @@ bool UpdatePendingOrders(bool saveStatus = false) {
                }
             }
          }
-         else {                                                         // order is closed, re-open it
+         else {                                                            // order is closed, re-open it
             if (__LOG()) log("UpdatePendingOrders(3)  "+ sequence.longName +" re-opening closed level "+ level +" order...");
             int type = Grid.AddPendingOrder(level, i+1); if (!type) return(false);
             sizeOfTickets++;
             saveStatus = true;
 
-            if (IsLimitOrderType(type)) {                               // add limit order to missed levels
+            if (IsLimitOrderType(type)) {                                  // add limit order to missed levels
                newLimitOrders++;
                ArrayPushInt(sequence.missedLevels, level);
                sMissedLevels = sMissedLevels +", "+ level;
                idxCurrentLevel++;
             }
-            else {                                                      // on a stop order decrease the sequence level
+            else {                                                         // on a stop order decrease the sequence level
                if (__LOG()) log("UpdatePendingOrders(4)  "+ sequence.longName +" re-opened order is a stop order, decreasing sequence level...");
                nextLevel       = level;
                sequence.level  = level - levelStep; SS.SequenceName();
@@ -1753,18 +1754,18 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (sizeOfTickets > 0) return(!catch("UpdatePendingOrders(5)  "+ sequence.longName +" order of level "+ level +" not found", ERR_ILLEGAL_STATE));
 
       level = levelStep;
-      while (true) {                                                    // without any orders we are in StartSequence() with a StartLevel != 0
+      while (true) {                                                       // without any orders we are in StartSequence() with a StartLevel != 0
          type = Grid.AddPendingOrder(level); if (!type) return(false);
          sizeOfTickets++;
          saveStatus = true;
 
-         if (IsLimitOrderType(type)) {                                  // add limit order to missed levels
+         if (IsLimitOrderType(type)) {                                     // add limit order to missed levels
             newLimitOrders++;
             ArrayPushInt(sequence.missedLevels, level);
             sMissedLevels   = sMissedLevels +", "+ level;
             idxCurrentLevel = sizeOfTickets-1;
          }
-         else {                                                         // on a stop order decrease the sequence level
+         else {                                                            // on a stop order decrease the sequence level
             if (__LOG()) log("UpdatePendingOrders(6)  "+ sequence.longName +" StartLevel order is a stop order, decreasing sequence level...");
             nextLevel      = level;
             sequence.level = level - levelStep; SS.SequenceName();
@@ -1777,15 +1778,15 @@ bool UpdatePendingOrders(bool saveStatus = false) {
 
    // (2) iterate from the current level upward and check any inactive levels
    for (i=idxCurrentLevel+1; i < sizeOfTickets; i++) {
-      if (orders.closeTime[i] != 0)                continue;            // process only open orders
+      if (orders.closeTime[i] != 0)                continue;               // process only open orders
       if (orders.type[i] != OP_UNDEFINED)          return(!catch("UpdatePendingOrders(7)  "+ sequence.longName +" orders out of sync: open position of level "+ orders.level[i] +" found (#"+ orders.ticket[i] +")", ERR_ILLEGAL_STATE));
       if (!IsStopOrderType(orders.pendingType[i])) return(!catch("UpdatePendingOrders(8)  "+ sequence.longName +" orders out of sync: limit order of level "+ orders.level[i] +" above the current level found (#"+ orders.ticket[i] +")", ERR_ILLEGAL_STATE));
 
-      if (orders.level[i]==nextLevel && idxNextStop==-1) {              // order is open and pending
+      if (orders.level[i]==nextLevel && idxNextStop==-1) {                 // order is open and pending
          idxNextStop = i;
       }
       else {
-         int error = Grid.DeleteOrder(i);                               // delete an obsolete old stop order
+         int error = Grid.DeleteOrder(i);                                  // delete an obsolete old stop order
          if (error != 0) return(UpdatePendingOrders.DeleteError(i, error));
          sizeOfTickets--;
          i--;
@@ -1793,7 +1794,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       }
    }
 
-   while (idxNextStop == -1) {                                          // open a missing next stop order
+   while (idxNextStop == -1) {                                             // open a missing next stop order
       type = Grid.AddPendingOrder(nextLevel); if (!type) return(false);
       sizeOfTickets++;
       saveStatus = true;
@@ -1804,10 +1805,10 @@ bool UpdatePendingOrders(bool saveStatus = false) {
          }
       }
 
-      if (IsStopOrderType(type)) {                                      // a stop order was opened
+      if (IsStopOrderType(type)) {                                         // a stop order was opened
          idxNextStop = sizeOfTickets-1;
       }
-      else {                                                            // on a limit order the sequence level increased
+      else {                                                               // on a limit order the sequence level increased
          if (__LOG()) log("UpdatePendingOrders(10)  "+ sequence.longName +" submitted order is a limit order, increasing sequence level...");
          sequence.level    = nextLevel; SS.SequenceName();
          sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * levelStep;
@@ -1824,12 +1825,12 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (NE(gridbase, orders.gridbase[i], Digits)) {
          static int lastTrailed = 0;
 
-         if (IsTesting() || Tick.Time-lastTrailed > 3) {                // wait 4 seconds between requests to avoid ERR_TOO_MANY_REQUESTS
+         if (IsTesting() || Tick.Time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
             lastTrailed = Tick.Time;
             saveStatus  = true;
 
-            if (IsLimitOrderType(type)) {                               // on a limit order the sequence level increased
+            if (IsLimitOrderType(type)) {                                  // on a limit order the sequence level increased
                sequence.level    = nextLevel; SS.SequenceName();
                sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * levelStep;
                nextLevel        += levelStep;
@@ -1837,7 +1838,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
                ArrayPushInt(sequence.missedLevels, sequence.level);
                sMissedLevels = sMissedLevels +", "+ sequence.level;
 
-               if (!UpdatePendingOrders()) return(false);               // handle the now missing next stop order recursively
+               if (!UpdatePendingOrders()) return(false);                  // handle the now missing next stop order recursively
                sizeOfTickets++;
                idxNextStop = sizeOfTickets-1;
             }
