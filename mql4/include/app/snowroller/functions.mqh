@@ -1110,7 +1110,7 @@ void SS.UnitSize() {
       if (!equity) equity = CalculateStartEquity();
       sequence.unitsize = CalculateUnitSize(equity);
    }
-   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compound.)");
+   string sCompounding = ifString(StrIsNumeric(UnitSize), "", " (compounding)");
    double stopSize     = GridSize * PipValue(sequence.unitsize) - sequence.commission;
 
    if (ShowProfitInPercent) sLotSize = NumberToStr(sequence.unitsize, ".+") +" lot"+ sCompounding +" = "+ DoubleToStr(MathDiv(stopSize, equity) * 100, 2) +"%/stop";
