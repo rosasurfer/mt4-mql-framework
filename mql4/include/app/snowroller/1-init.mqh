@@ -143,9 +143,11 @@ int onInitRecompile() {
 int afterInit() {
    CreateStatusBox();
    SS.All();
+   string section = __NAME();
+   limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {
-      string section = __NAME() +".Tester";
+      section = section +".Tester";
       tester.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
       tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
       tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
