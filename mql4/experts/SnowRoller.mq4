@@ -346,7 +346,7 @@ bool StartSequence(int signal) {
    sequence.status = STATUS_STARTING;
 
    double gridbase = GetGridbase();
-   if (__LOG()) log("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level + ifString(gridbase, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", "") +"...");
+   if (__LOG()) log("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level +"..."+ ifString(gridbase, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
 
    // update start/stop conditions
    switch (signal) {
@@ -1802,17 +1802,12 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       sizeOfTickets++;
       saveStatus = true;
 
-      if (Abs(nextLevel) > 1) {
-         if (NE(orders.gridbase[idxCurrentLevel], orders.gridbase[sizeOfTickets-1])) {
-            return(!catch("UpdatePendingOrders(10)  "+ sequence.longName +" gridbase out of sync: currentLevel("+ orders.level[idxCurrentLevel] +")="+ NumberToStr(orders.gridbase[idxCurrentLevel], PriceFormat) +"  nextLevel("+ orders.level[sizeOfTickets-1] +")="+ NumberToStr(orders.gridbase[sizeOfTickets-1], PriceFormat), ERR_ILLEGAL_STATE));
-         }
-      }
-
       if (IsStopOrderType(type)) {                                         // a stop order was opened
          idxNextStop = sizeOfTickets-1;
       }
       else {                                                               // on a limit order the sequence level increased
-         if (__LOG()) log("UpdatePendingOrders(11)  "+ sequence.longName +" submitted order is a limit order, increasing sequence level...");
+         if (__LOG()) log("UpdatePendingOrders(10)  "+ sequence.longName +" submitted order is a limit order, increasing sequence level...");
+         idxCurrentLevel   = sizeOfTickets-1;
          sequence.level    = nextLevel; SS.SequenceName();
          sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * levelStep;
          nextLevel        += levelStep;
@@ -1851,7 +1846,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
 
    if (newLimitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (__LOG()) log("UpdatePendingOrders(12)  "+ sequence.longName +" opened "+ newLimitOrders +" limit order"+ Pluralize(newLimitOrders) +" for missed level"+ Pluralize(newLimitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
+      if (__LOG()) log("UpdatePendingOrders(11)  "+ sequence.longName +" opened "+ newLimitOrders +" limit order"+ Pluralize(newLimitOrders) +" for missed level"+ Pluralize(newLimitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
@@ -1859,7 +1854,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
 
    if (saveStatus)
       if (!SaveStatus()) return(false);
-   return(!catch("UpdatePendingOrders(13)"));
+   return(!catch("UpdatePendingOrders(12)"));
 }
 
 
