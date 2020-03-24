@@ -1115,14 +1115,12 @@ bool UpdateStatus(bool &gridChanged) {
                ArrayDropInt(sequence.missedLevels, orders.level[i]);          // an executed limit order => clear missed gridlevels
                SS.MissedLevels();
 
-               // @see  https://github.com/rosasurfer/mt4-mql/issues/10
                if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
                   string message = "UpdateStatus(6)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...";
-                  if (!IsTesting()) warn(message);
+                  if (!IsTesting()) warn(message);                            // @see  https://github.com/rosasurfer/mt4-mql/issues/10
                   else if (__LOG()) log(message);
 
-                  int oe[];
-                  if (!OrderCloseEx(orders.ticket[i], NULL, NULL, CLR_NONE, NULL, oe)) return(false);
+                  if (!UpdateStatus.ExecuteStopLoss(orders.ticket[i])) return(false);
                   OrderSelect(orders.ticket[i], SELECT_BY_TICKET);            // refresh order context as it changed during the tick
                   isClosed             = true;
                   orders.closedBySL[i] = true;
@@ -2714,6 +2712,42 @@ int ModifyStopLoss(int i, double gridbase, double stoploss) {
          return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
+}
+
+
+/**
+ * Manually execute a triggered StopLoss of an open position. Called only by UpdateStatus() to work around a terminal bug.
+ *
+ * @param  int ticket
+ *
+ * @return bool - whether the position was successfully closed was already closed by the broker
+ *
+ * @see    https://github.com/rosasurfer/mt4-mql/issues/10
+ */
+bool UpdateStatus.ExecuteStopLoss(int ticket) {
+   if (IsLastError())                                                              return(last_error);
+   if (sequence.status != STATUS_PROGRESSING)                                      return(catch("ModifyStopLoss(1)  "+ sequence.longName +" cannot modify order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the position already being closed
+             oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
+             oeFlags |= F_ERR_TRADESERVER_GONE;
+             oeFlags |= F_ERR_TRADE_DISABLED;
+
+   bool success = OrderCloseEx(ticket, NULL, NULL, CLR_NONE, NULL, oe);
+   SetLastNetworkError(oe);
+   if (success) return(true);
+
+   int error = oe.Error(oe);
+   switch (error) {
+      case ERR_INVALID_TRADE_PARAMETERS:                    // position already closed
+         return(true);
+
+      case ERR_NO_CONNECTION:
+      case ERR_TRADESERVER_GONE:
+      case ERR_TRADE_DISABLED:
+         return(false);
+   }
+   return(!SetLastError(error));
 }
 
 
