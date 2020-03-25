@@ -2734,8 +2734,8 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
              oeFlags |= F_ERR_TRADE_DISABLED;
 
    bool success = OrderCloseEx(ticket, NULL, NULL, CLR_NONE, NULL, oe);
-   SetLastNetworkError(oe);
-   if (success) return(true);
+   if (success)
+      return(_true(SetLastNetworkError(oe)));
 
    int error = oe.Error(oe);
    switch (error) {
@@ -2745,7 +2745,7 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
-         return(false);
+         return(!SetLastNetworkError(oe));
    }
    return(!SetLastError(error));
 }
@@ -4878,7 +4878,7 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
 
 
 /**
- * Store the last occurred network error and update the time of the next retry.
+ * Store the last occurred network error and update the time of the next trade request retry.
  *
  * @param  int oe[] - one or multiple order execution details (struct ORDER_EXECUTION)
  *
