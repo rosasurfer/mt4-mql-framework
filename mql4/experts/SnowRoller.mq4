@@ -2725,15 +2725,15 @@ int ModifyStopLoss(int i, double gridbase, double stoploss) {
  * @see    https://github.com/rosasurfer/mt4-mql/issues/10
  */
 bool UpdateStatus.ExecuteStopLoss(int ticket) {
-   if (IsLastError())                                                              return(last_error);
-   if (sequence.status != STATUS_PROGRESSING)                                      return(catch("ModifyStopLoss(1)  "+ sequence.longName +" cannot modify order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (IsLastError())                         return(!last_error);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus.ExecuteStopLoss(1)  "+ sequence.longName +" cannot execute stoploss of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the position already being closed
              oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
              oeFlags |= F_ERR_TRADESERVER_GONE;
              oeFlags |= F_ERR_TRADE_DISABLED;
 
-   bool success = OrderCloseEx(ticket, NULL, NULL, CLR_NONE, NULL, oe);
+   bool success = OrderCloseEx(ticket, NULL, NULL, CLR_NONE, oeFlags, oe);
    if (success)
       return(_true(SetLastNetworkError(oe)));
 
