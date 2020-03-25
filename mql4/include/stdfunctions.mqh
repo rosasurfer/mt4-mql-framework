@@ -5649,7 +5649,6 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
 bool SendEmail(string sender, string receiver, string subject, string message) {
    string filesDir = GetMqlFilesPath() +"\\";
 
-
    // (1) Validierung
    // Sender
    string _sender = StrTrim(sender);
@@ -5683,7 +5682,6 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
-
    // (2) Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
    message = StrTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
@@ -5694,7 +5692,6 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       FileClose(hFile);
       if (bytes <= 0) return(!catch("SendEmail(9)->FileWriteString() => "+ bytes +" written"));
    }
-
 
    // (3) benötigte Binaries ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
@@ -5708,7 +5705,6 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       //       - sendmail suchen
       return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
-
 
    // (4) Befehlszeile für Shell-Aufruf zusammensetzen
    //
@@ -5730,14 +5726,12 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    string mail.log = StrReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
           cmdLine  = bash +" -lc '"+ cmdLine +"'";
-   //debug("SendEmail(12)  cmdLine="+ DoubleQuoteStr(cmdLine));
-
 
    // (5) Shell-Aufruf
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   log("SendEmail(14)  Mail from "+ sender +" to "+ receiver +" transmitted: \""+ subject +"\"");
+   if (__LOG()) log("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(15)"));
 }
 
