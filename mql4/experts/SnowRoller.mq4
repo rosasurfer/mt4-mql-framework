@@ -1978,7 +1978,7 @@ double ResetGridbase(datetime time=NULL, double value=NULL) {
  * @param  int level             - gridlevel of the order to open: -n...1 | 1...+n
  * @param  int offset [optional] - order array position (index) to add the new order (default: append to the end)
  *
- * @return int - order type of the opened order (stop or limit order) or NULL in case of errors
+ * @return int - order type of the opened order (stop or limit) or NULL in case of errors
  */
 int Grid.AddPendingOrder(int level, int offset=-1) {
    if (IsLastError())                                                           return(NULL);
@@ -2114,12 +2114,12 @@ bool Grid.AddPosition(int level) {
 
 
 /**
- * Trail pending open price and stoploss of the specified pending stop order. If the new open price is too close to the market
- * the stop order may be replaced by a limit order.
+ * Trail pending open price and stoploss of the specified stop order. If the new open price is too close to the market the
+ * stop order may be replaced by a limit order.
  *
  * @param  int i - pending order index
  *
- * @return int - order type of the resulting pending order or NULL in case of errors
+ * @return int - order type of the resulting order (stop or limit) or NULL in case of errors
  */
 int Grid.TrailPendingOrder(int i) {
    if (IsLastError())                         return(NULL);
@@ -2149,18 +2149,23 @@ int Grid.TrailPendingOrder(int i) {
 
    if (IsError(error)) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(NULL);
-      if (error == -1) {                                 // market violated: delete stop order and open a limit order instead
+      if (error == -1) {                                    // market violated: delete stop order and open a limit order instead
          error = Grid.DeleteOrder(i);
          if (!error) return(Grid.AddPendingOrder(level));
 
-         if (error == -1) {                              // the stop order was already executed
-            pendingTime  = prevPendingTime;              // restore the original values
-            pendingPrice = prevPendingPrice;
-            stopLoss     = prevStoploss;                 // TODO: modify StopLoss of the now open position
+         if (error == -1) {                                 // deletion failed, the stop order was already executed
             if (__LOG()) log("Grid.TrailPendingOrder(6)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" was already executed");
-            return(!catch("Grid.TrailPendingOrder(7)  "+ sequence.longName +" unimplemented feature", ERR_NOT_IMPLEMENTED));
+            pendingTime  = prevPendingTime;                 // restore the original values
+            pendingPrice = prevPendingPrice;
+
+            error = ModifyStopLoss(i, gridbase, stopLoss);  // modify stoploss of the now open position
+            if (IsError(error)) {
+               if (error != -1) return(NULL);               // another error
+               warn("Grid.TrailPendingOrder(7)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" entry limit and SL were already executed");
+               stopLoss = prevStoploss;
+            }
          }
-         return(NULL);                                   // covers network errors
+         else return(NULL);                                 // another error
       }
       else if (error == -2) {
          return(!catch("Grid.TrailPendingOrder(8)  "+ sequence.longName +" unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
@@ -2168,7 +2173,7 @@ int Grid.TrailPendingOrder(int i) {
       else return(!catch("Grid.TrailPendingOrder(9)  "+ sequence.longName +" unknown ModifyStopOrder() return value "+ error, oe.Error(oe)));
    }
 
-   // update changed data (ignore current ticket state which may be different)
+   // update changed data (ignore current ticket status which may be different)
    orders.gridbase    [i] = gridbase;
    orders.pendingTime [i] = pendingTime;
    orders.pendingPrice[i] = pendingPrice;
@@ -2679,7 +2684,7 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
  * @param  double stoploss - new stoploss
  *
  * @return int - NULL on success or another value in case of errors, especially
- *                -1 if the position was already closed
+ *               -1 if the position was already closed
  */
 int ModifyStopLoss(int i, double gridbase, double stoploss) {
    if (IsLastError())                                                              return(last_error);
