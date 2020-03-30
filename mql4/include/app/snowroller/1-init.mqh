@@ -141,12 +141,14 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
+   // initialize status display
    CreateStatusBox();
    SS.All();
    string section = __NAME();
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {
+      // initialize tester configuration
       section = section +".Tester";
       tester.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
       tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
@@ -157,8 +159,16 @@ int afterInit() {
       tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
       tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       false);
    }
-   else if (IsTestSequence() && sequence.status!=STATUS_STOPPED) {
-      sequence.status = STATUS_STOPPED;                     // a finished test loaded into an online chart
-   }                                                        // TODO: move to SynchronizeStatus()
+   else if (IsTestSequence()) {
+      // a finished test loaded into an online chart
+      sequence.status = STATUS_STOPPED;                           // TODO: move to SynchronizeStatus()
+   }
+   else {
+      // setup virtual ticks to continue operation on a stalling data feed
+      int hWnd    = __ExecutionContext[EC.hChart];
+      int millis  = 10 * 1000;                                    // every 10 seconds
+      tickTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!tickTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+   }
    return(last_error);
 }

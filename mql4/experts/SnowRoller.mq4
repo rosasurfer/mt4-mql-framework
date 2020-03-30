@@ -197,6 +197,7 @@ double   orders.profit      [];
 // --- other -------------------------------
 int      lastEventId;
 int      limitOrderTrailing;                       // limit trailing to one request per <x> seconds (default: 3)
+int      tickTimerId;                              // timer id for synthetic ticks
 
 int      lastNetworkError;                         // the last trade server network error (if any)
 datetime nextRetry;                                // time of the next trade retry after a network error
