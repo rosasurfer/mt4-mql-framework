@@ -246,20 +246,25 @@ int start() {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
-         if (IsTesting() && !tester.stopped) {                                      // Stop the tester in case of errors.
-            Tester.Stop("start(1)");                                                // Covers errors in init(), too.
+         if (IsTesting() && !tester.stopped) {                                      // ctop the tester in case of errors
+            Tester.Stop("start(1)");                                                // covers errors in init(), too
             tester.stopped = true;
          }
       }
       return(last_error);
    }
 
+   // resolve tick status
    Tick++;                                                                          // simple counter, the value is meaningless
-   Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
-   Tick.isVirtual = true;
-   ChangedBars    = -1;                                                             // in experts not available
-   UnchangedBars  = -1;                                                             // ...
-   ShiftedBars    = -1;                                                             // ...
+   Tick.Time = MarketInfo(Symbol(), MODE_TIME);
+   static int lastVolume;
+   if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
+   else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
+   else                                Tick.isVirtual = false;
+   lastVolume = Volume[0];
+   ChangedBars   = -1;                                                              // in experts not available
+   UnchangedBars = -1;                                                              // ...
+   ShiftedBars   = -1;                                                              // ...
 
    // if called after init() check it's return value
    if (__WHEREAMI__ == CF_INIT) {
