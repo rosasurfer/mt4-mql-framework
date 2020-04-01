@@ -197,6 +197,7 @@ double   orders.profit      [];
 // --- other -------------------------------
 int      lastEventId;
 int      limitOrderTrailing;                       // limit trailing to one request per <x> seconds (default: 3)
+int      tickTimerId;                              // timer id for synthetic ticks
 
 int      lastNetworkError;                         // the last trade server network error (if any)
 datetime nextRetry;                                // time of the next trade retry after a network error
@@ -3247,7 +3248,7 @@ bool ReadStatus() {
    for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
       success = ReadStatus.ParseOrder(sOrder);
-      if (!success) return(!catch("ReadStatus(30)  invalid order record "+ DoubleQuoteStr(orderKeys[i]) +" = "+ DoubleQuoteStr(sOrder) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+      if (!success) return(!catch("ReadStatus(30)  invalid order record in status file "+ DoubleQuoteStr(file) + NL + orderKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    return(!catch("ReadStatus(31)"));
 }

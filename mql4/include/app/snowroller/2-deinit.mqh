@@ -1,5 +1,21 @@
 
 /**
+ * Deinitialization pre-processing hook.
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   // reset the virtual tick timer
+   if (tickTimerId != NULL) {
+      int id = tickTimerId;
+      tickTimerId = NULL;
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
+   return(last_error);
+}
+
+
+/**
  * Called before input parameters are changed.
  *
  * @return int - error status
