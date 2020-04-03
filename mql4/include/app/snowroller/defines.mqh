@@ -30,6 +30,12 @@
 #define SIGNAL_SESSIONBREAK         5
 
 
+// SaveStatus() control modes
+#define SAVESTATUS_AUTO             0           // status is saved if order data changed
+#define SAVESTATUS_ENFORCE          1           // status is always saved
+#define SAVESTATUS_SKIP             2           // status is never saved
+
+
 // event types for SynchronizeStatus()
 #define EV_SEQUENCE_START           1
 #define EV_SEQUENCE_STOP            2
