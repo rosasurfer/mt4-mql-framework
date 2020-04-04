@@ -4877,7 +4877,7 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
    if (This.IsTesting() && IsStopped())
       filter |= F_ERS_EXECUTION_STOPPING;
 
-   // filter the specified errors and only log them
+   // filter the specified errors and log them
    if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return( log(message, error));
    if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return( log(message, error));
    if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return( log(message, error));

@@ -668,7 +668,7 @@ double GetGridbase() {
  * @return bool - whether regular processing should continue (i.e. the trade request should be repeated)
  */
 bool HandleNetworkErrors() {
-   // TODO: Regular processing must always continue, only trade requests must be disabled.
+   // TODO: Regular processing must continue, only further trade requests must be disabled.
    switch (lastNetworkError) {
       case NO_ERROR:
          return(true);
@@ -676,6 +676,7 @@ bool HandleNetworkErrors() {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          if (sequence.status==STATUS_STARTING || sequence.status==STATUS_STOPPING)
             return(!catch("HandleNetworkErrors(1)  "+ sequence.longName +" in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
 

@@ -482,6 +482,7 @@ bool StopSequence(int signal) {
          oeFlags |= F_ERR_NO_CONNECTION;                                   // custom handling of recoverable network errors
          oeFlags |= F_ERR_TRADESERVER_GONE;
          oeFlags |= F_ERR_TRADE_DISABLED;
+         oeFlags |= F_ERR_MARKET_CLOSED;
 
          int ticket = OrdersHedge(openPositions, slippage, oeFlags, oes);
          if (!ticket) {
@@ -490,6 +491,7 @@ bool StopSequence(int signal) {
                case ERR_NO_CONNECTION:
                case ERR_TRADESERVER_GONE:
                case ERR_TRADE_DISABLED:
+               case ERR_MARKET_CLOSED:
                   return(!SetLastNetworkError(oes));
             }
             return(!SetLastError(error));
@@ -557,6 +559,7 @@ bool StopSequence(int signal) {
          oeFlags  = F_ERR_NO_CONNECTION;                                   // custom handling of recoverable network errors
          oeFlags |= F_ERR_TRADESERVER_GONE;
          oeFlags |= F_ERR_TRADE_DISABLED;
+         oeFlags |= F_ERR_MARKET_CLOSED;
 
          if (!OrdersClose(openPositions, slippage, CLR_CLOSE, oeFlags, oes)) {
             error = oes.Error(oes, 0);
@@ -564,6 +567,7 @@ bool StopSequence(int signal) {
                case ERR_NO_CONNECTION:
                case ERR_TRADESERVER_GONE:
                case ERR_TRADE_DISABLED:
+               case ERR_MARKET_CLOSED:
                   return(!SetLastNetworkError(oes));
             }
             return(!SetLastError(error));
@@ -2221,6 +2225,7 @@ int Grid.DeleteOrder(int i) {
                 oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
                 oeFlags |= F_ERR_TRADESERVER_GONE;
                 oeFlags |= F_ERR_TRADE_DISABLED;
+                oeFlags |= F_ERR_MARKET_CLOSED;
 
       bool success = OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe);
       if (success) {
@@ -2234,6 +2239,7 @@ int Grid.DeleteOrder(int i) {
             case ERR_NO_CONNECTION:
             case ERR_TRADESERVER_GONE:
             case ERR_TRADE_DISABLED:
+            case ERR_MARKET_CLOSED:
                return(SetLastNetworkError(oe));
          }
          return(SetLastError(error));
@@ -2267,6 +2273,7 @@ int Grid.DeleteLimit(int i) {
              oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
              oeFlags |= F_ERR_TRADESERVER_GONE;
              oeFlags |= F_ERR_TRADE_DISABLED;
+             oeFlags |= F_ERR_MARKET_CLOSED;
 
    if (OrderModifyEx(orders.ticket[i], orders.openPrice[i], NULL, NULL, NULL, CLR_NONE, oeFlags, oe))
       return(_NULL(SetLastNetworkError(oe)));
@@ -2278,6 +2285,7 @@ int Grid.DeleteLimit(int i) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
@@ -2504,6 +2512,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;     // custom handling of recoverable network errors
             oeFlags    |= F_ERR_TRADESERVER_GONE;
             oeFlags    |= F_ERR_TRADE_DISABLED;
+            oeFlags    |= F_ERR_MARKET_CLOSED;
 
    if (Abs(level) >= Abs(sequence.level))
       oeFlags |= F_ERR_INVALID_STOP;               // custom handling of ERR_INVALID_STOP for the last gridlevel only
@@ -2528,6 +2537,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
@@ -2565,6 +2575,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of recoverable network errors
             oeFlags    |= F_ERR_TRADESERVER_GONE;
             oeFlags    |= F_ERR_TRADE_DISABLED;
+            oeFlags    |= F_ERR_MARKET_CLOSED;
 
    int ticket = OrderSendEx(Symbol(), type, lots, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2584,6 +2595,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
@@ -2621,6 +2633,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of recoverable network errors
             oeFlags    |= F_ERR_TRADESERVER_GONE;
             oeFlags    |= F_ERR_TRADE_DISABLED;
+            oeFlags    |= F_ERR_MARKET_CLOSED;
 
    int ticket = OrderSendEx(Symbol(), type, lots, limitPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) {
@@ -2640,6 +2653,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(_NULL(SetLastNetworkError(oe)));
    }
    return(_NULL(SetLastError(error)));
@@ -2666,6 +2680,7 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
        oeFlags |= F_ERR_NO_CONNECTION;          // custom handling of recoverable network errors
        oeFlags |= F_ERR_TRADESERVER_GONE;
        oeFlags |= F_ERR_TRADE_DISABLED;
+       oeFlags |= F_ERR_MARKET_CLOSED;
 
    bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_PENDING, oeFlags, oe);
    if (success) {
@@ -2685,6 +2700,7 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
@@ -2714,6 +2730,7 @@ int ModifyStopLoss(int i, double gridbase, double stoploss) {
              oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
              oeFlags |= F_ERR_TRADESERVER_GONE;
              oeFlags |= F_ERR_TRADE_DISABLED;
+             oeFlags |= F_ERR_MARKET_CLOSED;
 
    if (OrderModifyEx(orders.ticket[i], NULL, stoploss, NULL, NULL, CLR_NONE, oeFlags, oe)) {
       orders.gridbase[i] = gridbase;
@@ -2729,6 +2746,7 @@ int ModifyStopLoss(int i, double gridbase, double stoploss) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(SetLastNetworkError(oe));
    }
    return(SetLastError(error));
@@ -2752,6 +2770,7 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
              oeFlags |= F_ERR_NO_CONNECTION;                // custom handling of recoverable network errors
              oeFlags |= F_ERR_TRADESERVER_GONE;
              oeFlags |= F_ERR_TRADE_DISABLED;
+             oeFlags |= F_ERR_MARKET_CLOSED;
 
    bool success = OrderCloseEx(ticket, NULL, NULL, CLR_NONE, oeFlags, oe);
    if (success)
@@ -2765,6 +2784,7 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
       case ERR_NO_CONNECTION:
       case ERR_TRADESERVER_GONE:
       case ERR_TRADE_DISABLED:
+      case ERR_MARKET_CLOSED:
          return(!SetLastNetworkError(oe));
    }
    return(!SetLastError(error));
