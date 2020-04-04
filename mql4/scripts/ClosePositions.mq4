@@ -140,7 +140,7 @@ int onStart() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySoundEx("Windows Notify.wav");
-      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ Pluralize(selected) +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
          int oes[][ORDER_EXECUTION.intSize];

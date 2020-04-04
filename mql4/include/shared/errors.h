@@ -14,7 +14,7 @@
 //      OrderModify().
 #define ERR_TRADESERVER_GONE                                          2
 #define ERR_COMMON_ERROR                           ERR_TRADESERVER_GONE    // MetaQuotes alias
-//      The trade request failed. A trade server or trade server related execution error.
+//      The trade request failed. A trade server related execution error.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 //      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
