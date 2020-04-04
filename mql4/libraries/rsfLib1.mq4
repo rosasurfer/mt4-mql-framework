@@ -4877,7 +4877,7 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
    if (This.IsTesting() && IsStopped())
       filter |= F_ERS_EXECUTION_STOPPING;
 
-   // filter the specified errors and only log them
+   // filter the specified errors and log them
    if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return( log(message, error));
    if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return( log(message, error));
    if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return( log(message, error));
@@ -4916,11 +4916,8 @@ string Order.TempErrorMsg(int oe[], int errors) {
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    int requotes = oe.Requotes(oe);
-   if (requotes > 0) {
-      message = message +" and "+ requotes +" requote";
-      if (requotes > 1)
-         message = message +"s";
-   }
+   message = message +" and "+ requotes +" requote" + Pluralize(requotes);
+
    return(message +", retrying... ("+ errors +")");
 }
 
@@ -5162,11 +5159,8 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (!This.IsTesting())         message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
-   if (requotes > 0) {
-      message = StringConcatenate(message, " and ", requotes, " requote");
-      if (requotes > 1)
-         message = StringConcatenate(message, "s");
-   }
+   message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
+
    return(StringConcatenate(message, sSlippage));
 }
 
@@ -5202,11 +5196,8 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
    if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
-   if (requotes > 0) {
-      message = StringConcatenate(message, " and ", requotes, " requote");
-      if (requotes > 1)
-         message = StringConcatenate(message, "s");
-   }
+   message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
+
    return(StringConcatenate(message, ", retrying... ("+ errors +")"));
 }
 
@@ -5219,7 +5210,7 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
  * @return string
  */
 string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // error while trying to Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote
+   // error while trying to Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market Bid/Ask) after 0.345 s and 1 requote
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -5234,19 +5225,16 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
    string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
 
-   string message = StringConcatenate("error while trying to ", sType, " ", sLots, " ", symbol, sComment, " at ", sPrice, " (market ", sBid, "/", sAsk, ")");
+   string message = StringConcatenate("error while trying to ", sType, " ", sLots, " ", symbol, sComment, " at ", sPrice);
 
    if (!EQ(oe.StopLoss  (oe), 0))        message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss(oe), priceFormat));
    if (!EQ(oe.TakeProfit(oe), 0))        message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
    if (oe.Error(oe) == ERR_INVALID_STOP) message = StringConcatenate(message, ", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
+                                         message = StringConcatenate(message, " (market ", sBid, "/", sAsk, ")");
    if (!This.IsTesting())                message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
-   if (requotes > 0) {
-      message = StringConcatenate(message, " and ", requotes, " requote");
-      if (requotes > 1)
-         message = StringConcatenate(message, "s");
-   }
+   if (requotes > 0) message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
    return(message);
 }
 
@@ -5459,7 +5447,7 @@ string OrderModifyEx.SuccessMsg(int oe[], double prevOpenPrice, double prevStopL
  * @return string
  */
 string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLoss, double prevTakeProfit) {
-   // error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ => 1.5520'0][ (market Bid/Ask)][, sl=1.5450'0 => 1.5455'0][, tp=1.5520'0 => 1.5530'0][, stop distance=5 pip] after 0.345 s
+   // error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ => 1.5520'0][, sl=1.5450'0 => 1.5455'0][, tp=1.5520'0 => 1.5530'0][, stop distance=5 pip] (market Bid/Ask) after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -5469,19 +5457,17 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
    string symbol      = oe.Symbol(oe);
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
+   string sMarket     = "(market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
 
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string sPrice = NumberToStr(openPrice, priceFormat);
-                    if (!EQ(openPrice,  prevOpenPrice) ) sPrice = NumberToStr(prevOpenPrice, priceFormat) +" => "+ sPrice;
-   string sSL = ""; if (!EQ(stopLoss,   prevStopLoss)  ) sSL    = ", sl="+ NumberToStr(prevStopLoss, priceFormat) +" => "+ NumberToStr(stopLoss, priceFormat);
-   string sTP = ""; if (!EQ(takeProfit, prevTakeProfit)) sTP    = ", tp="+ NumberToStr(prevTakeProfit, priceFormat) +" => "+ NumberToStr(takeProfit, priceFormat);
+                       if (!EQ(openPrice, prevOpenPrice))    sPrice = NumberToStr(prevOpenPrice, priceFormat) +" => "+ sPrice;
+   string sSL    = ""; if (!EQ(stopLoss,   prevStopLoss))    sSL    = ", sl="+ NumberToStr(prevStopLoss, priceFormat) +" => "+ NumberToStr(stopLoss, priceFormat);
+   string sTP    = ""; if (!EQ(takeProfit, prevTakeProfit))  sTP    = ", tp="+ NumberToStr(prevTakeProfit, priceFormat) +" => "+ NumberToStr(takeProfit, priceFormat);
+   string sSD    = ""; if (oe.Error(oe) == ERR_INVALID_STOP) sSD    = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
 
-   string sSD = ""; if (oe.Error(oe) == ERR_INVALID_STOP) {
-      sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
-      sPrice = sPrice +" (market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
-   }
-   string message = "error while trying to modify #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP + sSD;
+   string message = "error while trying to modify #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP + sSD +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
@@ -5750,11 +5736,8 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    int requotes = oe.Requotes(oe);
-   if (requotes > 0) {
-      message = message +" and "+ requotes +" requote";
-      if (requotes > 1)
-         message = message +"s";
-   }
+   message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
+
    return(message + sSlippage);
 }
 
@@ -5767,7 +5750,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
  * @return string
  */
 string OrderCloseEx.ErrorMsg(int oe[]) {
-   // error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask)[, sl=1.5500'0[, tp=1.5600'0[, stop distance=0.1 pip]]] after 0.345 s
+   // error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8[, sl=1.5500'0[, tp=1.5600'0[, stop distance=0.1 pip]]] (market Bid/Ask) after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -5777,14 +5760,15 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
    string symbol      = oe.Symbol(oe);
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
-   string sPrice      = NumberToStr(oe.ClosePrice(oe), priceFormat) +" (market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
+   string sPrice      = NumberToStr(oe.ClosePrice(oe), priceFormat);
+   string sMarket     = "(market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
 
    string sSL = ""; if (!EQ(oe.StopLoss  (oe), 0)) sSL = ", sl="+ NumberToStr(oe.StopLoss  (oe), priceFormat);
    string sTP = ""; if (!EQ(oe.TakeProfit(oe), 0)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
    string sSD = ""; if (oe.Error(oe) == ERR_INVALID_STOP)
       sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
 
-   string message = "error while trying to close #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP + sSD;
+   string message = "error while trying to close #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP + sSD +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
@@ -6848,7 +6832,7 @@ string OrderDeleteEx.SuccessMsg(int oe[]) {
  */
 string OrderDeleteEx.ErrorMsg(int oe[]) {
    // The ticket always exists. Typically it is not a pendig order (anymore).
-   // error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
+   // error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market Bid/Ask) after 0.345 s
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
@@ -6858,14 +6842,13 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
    string sComment    = oe.Comment(oe);
       if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
 
-   string sPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sSL = ""; if (!EQ(oe.StopLoss  (oe), 0, digits)) sSL = ", sl="+ NumberToStr(oe.StopLoss  (oe), priceFormat);
-   string sTP = ""; if (!EQ(oe.TakeProfit(oe), 0, digits)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
-   string sSD = ""; if (oe.Error(oe) == ERR_INVALID_STOP) {
-      sPrice = sPrice +" (market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
-      sSD    = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
-   }
-   string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP + sSD;
+   string sPrice  = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string sSL     = ""; if (!EQ(oe.StopLoss  (oe), 0, digits)) sSL = ", sl="+ NumberToStr(oe.StopLoss  (oe), priceFormat);
+   string sTP     = ""; if (!EQ(oe.TakeProfit(oe), 0, digits)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
+   string sSD     = ""; if (oe.Error(oe) == ERR_INVALID_STOP)  sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
+   string sMarket = "(market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")";
+
+   string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP + sSD +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
