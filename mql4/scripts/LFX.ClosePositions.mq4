@@ -113,7 +113,7 @@ int onStart() {
 
    // (2) Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
-   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ ifString(magicsSize==1, "", "s") +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
+   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ Pluralize(magicsSize) +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(2)"));
 
