@@ -960,18 +960,10 @@ bool ResumeSequence(int signal) {
    sequence.status = STATUS_PROGRESSING;                          // TODO: correct the resulting gridbase and adjust the previously set stoplosses
 
    // update stop orders
-   if (!UpdatePendingOrders(SAVESTATUS_SKIP))    return(false);
-
-   // update and store status
-   bool changes;                                                  // If RestorePositions() found a virtually triggered SL (#-1)
-   if (!UpdateStatus(changes))                   return(false);   // UpdateStatus() "closes" the ticket and decreases the gridlevel.
-   if (changes) {
-      if (!UpdatePendingOrders(SAVESTATUS_SKIP)) return(false);   // In this case pending orders need to be updated again.
-   }
+   if (!UpdatePendingOrders(SAVESTATUS_ENFORCE)) return(false);
+   RedrawStartStop();
 
    if (__LOG()) log("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
-   if (!SaveStatus()) return(false);
-   RedrawStartStop();
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -997,7 +989,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                      return(false);
    if (sequence.status != STATUS_STARTING) return(!catch("RestorePositions(1)  "+ sequence.longName +" cannot restore positions of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int i, level, missedLevels=ArraySize(sequence.missedLevels);
+   int i, level, levelStep=ifInt(sequence.direction==D_LONG, 1, -1), missedLevels=ArraySize(sequence.missedLevels);
    bool isMissedLevel, success;
    datetime openTime;
    double openPrice;
@@ -1006,14 +998,14 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    if (sequence.level > 0) {
       for (level=1; level <= sequence.level; level++) {
          isMissedLevel = IntInArray(sequence.missedLevels, level);
-         i = Grid.FindOpenPosition(level);
-         if (i == -1) {
-            if (isMissedLevel) success = Grid.AddPendingOrder(level);
-            else               success = Grid.AddPosition(level);
-            if (!success) return(false);
-            i = ArraySize(orders.ticket) - 1;
-         }
-         else warn("RestorePositions(2)  check/update the stoploss not implemented", ERR_NOT_IMPLEMENTED);
+
+         if (isMissedLevel) success = (Grid.AddPendingOrder(level) != 0);
+         else               success =  Grid.AddPosition(level);
+         if (!success) return(false);
+
+         i = ArraySize(orders.ticket) - 1;
+         if (orders.ticket[i] == -1)                                          // detect a virtually triggered SL
+            break;
 
          if (isMissedLevel) {
             openTime   = Max(openTime, orders.pendingTime[i]);
@@ -1030,14 +1022,14 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    else if (sequence.level < 0) {
       for (level=-1; level >= sequence.level; level--) {
          isMissedLevel = IntInArray(sequence.missedLevels, level);
-         i = Grid.FindOpenPosition(level);
-         if (i == -1) {
-            if (isMissedLevel) success = Grid.AddPendingOrder(level);
-            else               success = Grid.AddPosition(level);
-            if (!success) return(false);
-            i = ArraySize(orders.ticket) - 1;
-         }
-         else warn("RestorePositions(3)  check/update the stoploss not implemented", ERR_NOT_IMPLEMENTED);
+
+         if (isMissedLevel) success = (Grid.AddPendingOrder(level) != 0);
+         else               success =  Grid.AddPosition(level);
+         if (!success) return(false);
+
+         i = ArraySize(orders.ticket) - 1;
+         if (orders.ticket[i] == -1)                                          // detect a virtually triggered SL
+            break;
 
          if (isMissedLevel) {
             openTime   = Max(openTime, orders.pendingTime[i]);
@@ -1050,12 +1042,21 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
       }
    }
 
+   // handle a virtually triggered SL
+   if (level != 0) {
+      if (orders.ticket[i] == -1) {
+         if (__LOG()) log("RestorePositions(2)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
+         sequence.level = orders.level[i] - levelStep; SS.SequenceName();
+         Orders.RemoveRecord(i);
+      }
+   }
+
    // write-back results to the passed variables
    if (openTime != 0) {                                                       // sequence.level != 0
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice/Abs(sequence.level), Digits);   // avg(OpenPrice)
    }
-   return(!catch("RestorePositions(4)"));
+   return(!catch("RestorePositions(3)"));
 }
 
 
@@ -1079,21 +1080,10 @@ bool UpdateStatus(bool &gridChanged) {
       if (level == 1) break;                                                  // iterate backwards and limit tickets to inspect
 
       level = Abs(orders.level[i]);
-      if (orders.closeTime[i] > 0)                                            // process all tickets known as open
+      if (orders.closeTime[i] > 0)                                            // skip tickets already known as closed
          continue;
 
-      // check for magic ticket #-1 (on resume a virtually triggered SL: a position immediately stopped-out if restored)
-      if (orders.ticket[i] == -1) {
-         if (__LOG()) log("UpdateStatus(2)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
-         sequence.level -= Sign(orders.level[i]); SS.SequenceName();
-         Orders.RemoveRecord(i);                                              // magic tickets #-1 are removed from the order arrays
-         sizeOfTickets--;
-         gridChanged = true;                                                  // PL(#-1): stops and stopsPL are unchanged
-         continue;
-      }
-
-      // process regular tickets
-      if (!SelectTicket(orders.ticket[i], "UpdateStatus(3)")) return(false);
+      if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)")) return(false);
       bool wasPending = (orders.type[i] == OP_UNDEFINED);
       bool isClosed   = OrderCloseTime() != 0;
 
@@ -1108,7 +1098,7 @@ bool UpdateStatus(bool &gridChanged) {
             orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.UnitSize();
             orders.profit    [i] = OrderProfit();
             Chart.MarkOrderFilled(i);
-            if (__LOG()) log("UpdateStatus(4)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(i));
+            if (__LOG()) log("UpdateStatus(3)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(i));
 
             if (IsStopOrderType(orders.pendingType[i])) {                     // an executed stop order
                sequence.level     = orders.level[i]; SS.SequenceName();
@@ -1121,7 +1111,7 @@ bool UpdateStatus(bool &gridChanged) {
                SS.MissedLevels();
 
                if (!isClosed) /*&&*/ if (IsStopLossTriggered(orders.type[i], orders.stopLoss[i])) {
-                  string message = "UpdateStatus(5)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...";
+                  string message = "UpdateStatus(4)  "+ sequence.longName +" SL of #"+ orders.ticket[i] +" reached but not executed, closing it manually...";
                   if (!IsTesting()) warn(message);                            // @see  https://github.com/rosasurfer/mt4-mql/issues/10
                   else if (__LOG()) log(message);
 
@@ -1146,7 +1136,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
       else if (orders.type[i] == OP_UNDEFINED) {                              // a now closed pending order
-         warn("UpdateStatus(6)  "+ sequence.longName +" "+ UpdateStatus.OrderCancelledMsg(i));
+         warn("UpdateStatus(5)  "+ sequence.longName +" "+ UpdateStatus.OrderCancelledMsg(i));
          Orders.RemoveRecord(i);                                              // cancelled pending orders are removed from
          sizeOfTickets--;                                                     // the order arrays
          if (OrderComment() == "deleted [no money]") {
@@ -1163,8 +1153,8 @@ bool UpdateStatus(bool &gridChanged) {
          Chart.MarkPositionClosed(i);
 
          if (orders.closedBySL[i]) {                                          // stopped out
-            if (__LOG()) {             log("UpdateStatus(7)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
-               if (entryStopTriggered) log("UpdateStatus(8)  "+ sequence.longName +" multiple limits triggered: StopEntry and StopLoss");
+            if (__LOG()) {             log("UpdateStatus(6)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
+               if (entryStopTriggered) log("UpdateStatus(7)  "+ sequence.longName +" multiple limits triggered: StopEntry and StopLoss");
             }
             if (orders.level[i] == sequence.level) {
                sequence.level -= Sign(orders.level[i]); SS.SequenceName();    // only decrease level when the triggered SL is of the current level (the last)
@@ -1174,13 +1164,13 @@ bool UpdateStatus(bool &gridChanged) {
             gridChanged      = true;
          }
          else if (StrStartsWithI(OrderComment(), "so:")) {                    // margin call
-            warn("UpdateStatus(9)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
+            warn("UpdateStatus(8)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
             if (StopSequence(NULL))
                SetLastError(ERR_NOT_ENOUGH_MONEY);
             return(false);
          }
          else {                                                               // manually closed or closed at end of test
-            if (__LOG()) log("UpdateStatus(10)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
+            if (__LOG()) log("UpdateStatus(9)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1203,7 +1193,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, lastGridbase, Digits)) {
-            SetGridbase(TimeCurrentEx("UpdateStatus(11)"), gridbase);
+            SetGridbase(TimeCurrentEx("UpdateStatus(10)"), gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -1211,7 +1201,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
    }
-   return(!catch("UpdateStatus(12)"));
+   return(!catch("UpdateStatus(11)"));
 }
 
 
@@ -2090,9 +2080,9 @@ bool Grid.AddPosition(int level) {
    if (ticket <= 0) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       if (ticket == -1) {
-         // market violated                        // use #-1 as marker for a virtually triggered SL, UpdateStatus() will decrease the gridlevel and "close" it with PL=0.00
+         // market violated                        // use #-1 as marker for a virtually triggered SL, the caller will decrease the gridlevel and "close" it with PL=0.00
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
-         if (__LOG()) log("Grid.AddPosition(4)  "+ sequence.longName +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +", adding magic ticket #-1 (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +")");
+         if (__LOG()) log("Grid.AddPosition(4)  "+ sequence.longName +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +", adding marker ticket #-1 (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +")");
       }
       else if (ticket == -2) {
          return(!catch("Grid.AddPosition(5)  "+ sequence.longName +" unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
