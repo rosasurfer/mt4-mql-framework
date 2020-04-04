@@ -1075,7 +1075,7 @@ void SS.StartStopStats() {
  */
 void SS.Stops() {
    if (!__CHART()) return;
-   sSequenceStops = sequence.stops +" stop"+ ifString(sequence.stops==1, "", "s");
+   sSequenceStops = sequence.stops +" stop"+ Pluralize(sequence.stops);
 
    // not set before the first stopped-out position
    if (sequence.stops > 0) {
