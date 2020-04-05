@@ -296,8 +296,6 @@ int onTick() {
    if (sequence.status == STATUS_UNDEFINED)
       return(NO_ERROR);
 
-   debug("onTick(ß.1)  Tick="+ Tick +"  isVirtual="+ Tick.isVirtual);
-
    if (!HandleCommands())      return(last_error);                // process incoming commands
    if (!HandleNetworkErrors()) return(last_error);                // process occurred network errors
 
