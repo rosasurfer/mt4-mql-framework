@@ -197,8 +197,6 @@ double   orders.profit      [];
 // --- other -------------------------------
 int      lastEventId;
 int      limitOrderTrailing;                       // limit trailing to one request per <x> seconds (default: 3)
-int      tickTimerId;                              // timer id for synthetic ticks
-
 int      lastNetworkError;                         // the last trade server network error (if any)
 datetime nextRetry;                                // time of the next trade retry after a network error
 int      retries;                                  // number of retries so far
@@ -297,6 +295,8 @@ bool     tester.showBreakeven       = false;       // whether to show breakeven 
 int onTick() {
    if (sequence.status == STATUS_UNDEFINED)
       return(NO_ERROR);
+
+   debug("onTick(ß.1)  Tick="+ Tick +"  isVirtual="+ Tick.isVirtual);
 
    if (!HandleCommands())      return(last_error);                // process incoming commands
    if (!HandleNetworkErrors()) return(last_error);                // process occurred network errors

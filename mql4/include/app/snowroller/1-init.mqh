@@ -163,12 +163,5 @@ int afterInit() {
       // a finished test loaded into an online chart
       sequence.status = STATUS_STOPPED;                           // TODO: move to SynchronizeStatus()
    }
-   else {
-      // setup virtual ticks to continue operation on a stalling data feed
-      int hWnd    = __ExecutionContext[EC.hChart];
-      int millis  = 10 * 1000;                                    // every 10 seconds
-      tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
-   }
    return(last_error);
 }
