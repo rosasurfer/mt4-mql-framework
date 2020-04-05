@@ -189,14 +189,14 @@ int onInit() {
 
    // chart legend
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
+   indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
        chartLegendLabel = CreateLegendLabel(indicatorName);
        ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
-   string shortName = __NAME() +"("+ MA.Periods +")";
+   string shortName = MA.Method +"("+ MA.Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
