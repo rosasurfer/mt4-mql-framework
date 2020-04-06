@@ -14,9 +14,7 @@
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
- * Notes:
- *  - There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
- *  - A user's custom indicator having the same name as a distributed custom indicator would be deleted by the terminal.
+ * Note: There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
