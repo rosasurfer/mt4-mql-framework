@@ -1,65 +1,158 @@
 /**
- * StochasticRSI v2
+ * Stochastic of RSI (as of v2)
  */
-extern int RsiLength   = 100;
-extern int StochLength = 100;
-extern int SmoothK     =  30;
-extern int SmoothD     =   6;
+#include <stddefines.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
+extern int RSI.Periods            = 100;
+extern int Stochastic.Periods     = 100;
+extern int Stochastic.MA1.Periods =  30;
+extern int Stochastic.MA2.Periods =   6;
+
+extern int Max.Values             = 10000;            // max. amount of values to calculate (-1: all)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
+
+#define MODE_RSI              0
+#define MODE_STOCH            1
+#define MODE_MA1              2
+#define MODE_MA2              3
 
 #property indicator_separate_window
-#property indicator_buffers    3
+#property indicator_buffers   4
 
-#property indicator_color3     DodgerBlue
-
-#property indicator_maximum  100
-#property indicator_minimum    0
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+#property indicator_color4    DodgerBlue
 
 #property indicator_level1    40
 #property indicator_level2    60
-#property indicator_levelcolor DodgerBlue
-#property indicator_levelstyle STYLE_DOT
 
-double Buffer1[];
-double Buffer2[];
-double Buffer3[];
+#property indicator_minimum   0
+#property indicator_maximum   100
+
+double bufferRsi  [];
+double bufferStoch[];
+double bufferMa1  [];
+double bufferMa2  [];
+
+int maxValues;
 
 
 /**
+ * Initialization
  *
+ * @return int - error status
  */
-int init() {
-   SetIndexBuffer(0, Buffer1); SetIndexStyle(0, DRAW_NONE, STYLE_SOLID, 1); SetIndexLabel(0, NULL);
-   SetIndexBuffer(1, Buffer2); SetIndexStyle(1, DRAW_NONE, STYLE_SOLID, 1); SetIndexLabel(1, NULL);
-   SetIndexBuffer(2, Buffer3); SetIndexStyle(2, DRAW_LINE, STYLE_SOLID, 2); SetIndexLabel(2, "StochasticRSI");
-   return(0);
+int onInit() {
+   // validate inputs
+   if (RSI.Periods < 1)            return(catch("onInit(1)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 1)     return(catch("onInit(2)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)            return(catch("onInit(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+
+   // buffer management
+   SetIndexBuffer(MODE_RSI,   bufferRsi);             // RSI value:             invisible
+   SetIndexBuffer(MODE_STOCH, bufferStoch);           // Stochastic main value: invisible
+   SetIndexBuffer(MODE_MA1,   bufferMa1  );           // first MA(Stoch):       invisible
+   SetIndexBuffer(MODE_MA2,   bufferMa2  );           // second MA(MA1):        visible, displayed in "Data" window
+
+   // names, labels and display options
+   string indicatorName = "Stoch(RSI("+ RSI.Periods +"), "+ Stochastic.MA1.Periods +", "+ Stochastic.MA2.Periods +")";
+   IndicatorShortName(indicatorName +"    ");         // indicator subwindow and context menu
+   SetIndexLabel(MODE_RSI,   NULL);                   // "Data" window and tooltips
+   SetIndexLabel(MODE_STOCH, NULL);
+   SetIndexLabel(MODE_MA1,   NULL);
+   SetIndexLabel(MODE_MA2,  "Stochastic(RSI)");
+   IndicatorDigits(2);
+   SetIndicatorOptions();
+
+   return(catch("onInit(1)"));
 }
 
 
 /**
+ * Main function
  *
+ * @return int - error status
  */
-int start() {
-   double rsi, rsiHigh, rsiLow;
-   int NumOfBars = MathMin(Bars, 6000) ;
+int onTick() {
+   // a not initialized buffer can happen on terminal start under specific circumstances
+   if (!ArraySize(bufferRsi)) return(log("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   for (int i=NumOfBars-MathMax(RsiLength, StochLength)-1; i >= 0; i--) {     // all bars are recalculated on each tick
-      rsi     = iRSI(NULL, 0, RsiLength, PRICE_CLOSE, i);
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   if (!UnchangedBars) {
+      ArrayInitialize(bufferRsi,   EMPTY_VALUE);
+      ArrayInitialize(bufferStoch, EMPTY_VALUE);
+      ArrayInitialize(bufferMa1,   EMPTY_VALUE);
+      ArrayInitialize(bufferMa2,   EMPTY_VALUE);
+      SetIndicatorOptions();
+   }
+
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferRsi,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferStoch, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMa1,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMa2,   Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+   // calculate RSI start bar
+   int bars = Min(ChangedBars, maxValues);
+   int rsiStartBar   = Min(bars-1, Bars-RSI.Periods);                        if (rsiStartBar   < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   int stochStartBar = Min(bars-1, Bars-RSI.Periods+1 - Stochastic.Periods); if (stochStartBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
+
+   // recalculate changed bars
+   for (int bar=rsiStartBar; bar >= 0; bar--) {
+      bufferRsi[bar] = iRSI(NULL, NULL, RSI.Periods, PRICE_CLOSE, bar);                   // RSI
+   }
+
+   double rsi, rsiHigh, rsiLow;
+
+   for (bar=stochStartBar; bar >= 0; bar--) {
+      rsi     = bufferRsi[bar];
       rsiHigh = rsi;
       rsiLow  = rsi;
-
-       for (int x=0; x < StochLength; x++) {
-         rsiHigh = MathMax(rsiHigh, iRSI(NULL, 0, RsiLength, PRICE_CLOSE, i+x));
-         rsiLow  = MathMin(rsiLow,  iRSI(NULL, 0, RsiLength, PRICE_CLOSE, i+x));
+      for (int n=0; n < Stochastic.Periods; n++) {
+         if (bufferRsi[bar+n] > rsiHigh) rsiHigh = bufferRsi[bar+n];
+         if (bufferRsi[bar+n] < rsiLow)  rsiLow  = bufferRsi[bar+n];
       }
-      Buffer1[i] = (rsi-rsiLow) / (rsiHigh-rsiLow) * 100;                     // Stochastics
+      bufferStoch[bar] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;                  // Stochastics
    }
 
-   for (i=NumOfBars-MathMax(RsiLength, StochLength)-1; i >= 0; i--) {         // all bars are recalculated on each tick
-      Buffer2[i] = iMAOnArray(Buffer1, 0, SmoothK, 0, MODE_SMA, i);           // MA 1
+
+
+   int NumOfBars = MathMin(Bars, 6000) ;
+
+   for (int i=NumOfBars-MathMax(RSI.Periods, Stochastic.Periods)-1; i >= 0; i--) {        // all bars are recalculated on each tick
+      bufferMa1[i] = iMAOnArray(bufferStoch, 0, Stochastic.MA1.Periods, 0, MODE_SMA, i);  // MA 1
    }
 
-   for (i=NumOfBars-MathMax(RsiLength, StochLength)-1; i >= 0; i--) {         // all bars are recalculated on each tick
-      Buffer3[i] = iMAOnArray(Buffer2, 0, SmoothD, 0, MODE_SMA, i);           // MA 2
+   for (i=NumOfBars-MathMax(RSI.Periods, Stochastic.Periods)-1; i >= 0; i--) {            // all bars are recalculated on each tick
+      bufferMa2[i] = iMAOnArray(bufferMa1, 0, Stochastic.MA2.Periods, 0, MODE_SMA, i);    // MA 2
    }
-   return(0);
+   return(catch("onTick(1)"));
+}
+
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
+ */
+void SetIndicatorOptions() {
+   IndicatorBuffers(indicator_buffers);
+
+   SetIndexStyle(MODE_MAIN, DRAW_NONE, EMPTY,       EMPTY);
+   SetIndexStyle(MODE_MA1,  DRAW_NONE, EMPTY,       EMPTY);
+   SetIndexStyle(MODE_MA2,  DRAW_LINE, STYLE_SOLID, 2    );
 }
