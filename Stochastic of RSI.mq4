@@ -107,41 +107,38 @@ int onTick() {
       ShiftIndicatorBuffer(bufferMa2,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-   // calculate RSI start bar
-   int bars = Min(ChangedBars, maxValues);
+   // calculate start bars
+   int bars          = Min(ChangedBars, maxValues);
    int rsiStartBar   = Min(bars-1, Bars-RSI.Periods);                        if (rsiStartBar   < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
    int stochStartBar = Min(bars-1, Bars-RSI.Periods+1 - Stochastic.Periods); if (stochStartBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   for (int bar=rsiStartBar; bar >= 0; bar--) {
-      bufferRsi[bar] = iRSI(NULL, NULL, RSI.Periods, PRICE_CLOSE, bar);                   // RSI
+   for (int i=rsiStartBar; i >= 0; i--) {
+      bufferRsi[i] = iRSI(NULL, NULL, RSI.Periods, PRICE_CLOSE, i);                                // RSI
    }
 
    double rsi, rsiHigh, rsiLow;
 
-   for (bar=stochStartBar; bar >= 0; bar--) {
-      rsi     = bufferRsi[bar];
+   for (i=stochStartBar; i >= 0; i--) {
+      rsi     = bufferRsi[i];
       rsiHigh = rsi;
       rsiLow  = rsi;
+
       for (int n=0; n < Stochastic.Periods; n++) {
-         if (bufferRsi[bar+n] > rsiHigh) rsiHigh = bufferRsi[bar+n];
-         if (bufferRsi[bar+n] < rsiLow)  rsiLow  = bufferRsi[bar+n];
+         if (bufferRsi[i+n] > rsiHigh) rsiHigh = bufferRsi[i+n];
+         if (bufferRsi[i+n] < rsiLow)  rsiLow  = bufferRsi[i+n];
       }
-      bufferStoch[bar] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;                  // Stochastics
+      bufferStoch[i] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;                             // Stochastics
    }
 
-
-
-   int NumOfBars = MathMin(Bars, 6000) ;
-
-   for (int i=NumOfBars-MathMax(RSI.Periods, Stochastic.Periods)-1; i >= 0; i--) {        // all bars are recalculated on each tick
-      bufferMa1[i] = iMAOnArray(bufferStoch, 0, Stochastic.MA1.Periods, 0, MODE_SMA, i);  // MA 1
+   for (i=stochStartBar; i >= 0; i--) {
+      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, Stochastic.MA1.Periods, 0, MODE_SMA, i); // MA 1
    }
 
-   for (i=NumOfBars-MathMax(RSI.Periods, Stochastic.Periods)-1; i >= 0; i--) {            // all bars are recalculated on each tick
-      bufferMa2[i] = iMAOnArray(bufferMa1, 0, Stochastic.MA2.Periods, 0, MODE_SMA, i);    // MA 2
+   for (i=stochStartBar; i >= 0; i--) {
+      bufferMa2[i] = iMAOnArray(bufferMa1, WHOLE_ARRAY, Stochastic.MA2.Periods, 0, MODE_SMA, i);   // MA 2
    }
-   return(catch("onTick(1)"));
+   return(catch("onTick(4)"));
 }
 
 
@@ -155,4 +152,19 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_MAIN, DRAW_NONE, EMPTY,       EMPTY);
    SetIndexStyle(MODE_MA1,  DRAW_NONE, EMPTY,       EMPTY);
    SetIndexStyle(MODE_MA2,  DRAW_LINE, STYLE_SOLID, 2    );
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("RSI.Periods=",            RSI.Periods,            ";"+ NL,
+                            "Stochastic.Periods=",     Stochastic.Periods,     ";"+ NL,
+                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods, ";"+ NL,
+                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods, ";"+ NL,
+                            "Max.Values=",             Max.Values,             ";"+ NL)
+   );
 }
