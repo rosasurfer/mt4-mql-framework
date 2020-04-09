@@ -1,5 +1,7 @@
 /**
- * Stochastic of RSI (as of v2)
+ * Stochastic of RSI
+ *
+ * @version 2
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
