@@ -1,7 +1,7 @@
 /**
  * Stochastic of RSI
  *
- * @version 2
+ * - corresponds with version 3
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -70,7 +70,7 @@ int onInit() {
    SetIndexBuffer(MODE_MA2,   bufferMa2  );           // second MA(MA1):        visible, displayed in "Data" window
 
    // names, labels and display options
-   string indicatorName = "Stoch(RSI("+ RSI.Periods +"), "+ Stochastic.MA1.Periods +", "+ Stochastic.MA2.Periods +")";
+   string indicatorName = "Stochastic(RSI("+ RSI.Periods +"), "+ Stochastic.MA1.Periods +", "+ Stochastic.MA2.Periods +")";
    IndicatorShortName(indicatorName +"    ");         // indicator subwindow and context menu
    SetIndexLabel(MODE_RSI,   NULL);                   // "Data" window and tooltips
    SetIndexLabel(MODE_STOCH, NULL);
