@@ -1,7 +1,10 @@
 /**
- * Stochastic of RSI
+ * Stochastic of RSI (corresponds with BT's version 4)
  *
- * corresponds with BT's version 4
+ *
+ * Indicator buffers for iCustom():
+ *  • MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
+ *  • MODE_SIGNAL: Stochastic signal line (last moving average)
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -10,11 +13,11 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int Stochastic.Periods     = 100;
-extern int Stochastic.MA1.Periods =  30;
-extern int Stochastic.MA2.Periods =   6;
+extern int Stochastic.MA1.Periods =  30;                 // first moving average periods
+extern int Stochastic.MA2.Periods =   6;                 // second moving average periods
 extern int RSI.Periods            = 100;
 
-extern int Max.Values             = 10000;            // max. amount of values to calculate (-1: all)
+extern int Max.Values             = 5000;                // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22,18 +25,17 @@ extern int Max.Values             = 10000;            // max. amount of values t
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define MODE_RSI              0
-#define MODE_STOCH            1
-#define MODE_MA1              2
-#define MODE_MA2              3
+#define MODE_STOCH_MA1        MODE_MAIN                  // indicator buffer ids
+#define MODE_STOCH_MA2        MODE_SIGNAL
+#define MODE_STOCH_RAW        2
+#define MODE_RSI              3
 
 #property indicator_separate_window
-#property indicator_buffers   4
+#property indicator_buffers   2                          // visible in input dialog
+int       allocated_buffers = 4;
 
 #property indicator_color1    CLR_NONE
-#property indicator_color2    CLR_NONE
-#property indicator_color3    CLR_NONE
-#property indicator_color4    DodgerBlue
+#property indicator_color2    DodgerBlue
 
 #property indicator_level1    40
 #property indicator_level2    60
@@ -41,10 +43,10 @@ extern int Max.Values             = 10000;            // max. amount of values t
 #property indicator_minimum   0
 #property indicator_maximum   100
 
-double bufferRsi  [];
-double bufferStoch[];
-double bufferMa1  [];
-double bufferMa2  [];
+double bufferRsi  [];                                    // RSI value:            invisible
+double bufferStoch[];                                    // Stochastic raw value: invisible
+double bufferMa1  [];                                    // first MA(Stoch):      visible
+double bufferMa2  [];                                    // second MA(MA1):       visible, displayed in "Data" window
 
 int maxValues;
 
@@ -64,18 +66,21 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // buffer management
-   SetIndexBuffer(MODE_RSI,   bufferRsi);             // RSI value:            invisible
-   SetIndexBuffer(MODE_STOCH, bufferStoch);           // Stochastic raw value: invisible
-   SetIndexBuffer(MODE_MA1,   bufferMa1  );           // first MA(Stoch):      invisible
-   SetIndexBuffer(MODE_MA2,   bufferMa2  );           // second MA(MA1):       visible, displayed in "Data" window
+   SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:            invisible
+   SetIndexBuffer(MODE_STOCH_RAW, bufferStoch);          // Stochastic raw value: invisible
+   SetIndexBuffer(MODE_STOCH_MA1, bufferMa1  );          // first MA(Stoch):      visible
+   SetIndexBuffer(MODE_STOCH_MA2, bufferMa2  );          // second MA(MA1):       visible, displayed in "Data" window
 
    // names, labels and display options
-   string indicatorName = "Stochastic(RSI("+ RSI.Periods +"), "+ Stochastic.MA1.Periods +", "+ Stochastic.MA2.Periods +")";
-   IndicatorShortName(indicatorName +"    ");         // indicator subwindow and context menu
-   SetIndexLabel(MODE_RSI,   NULL);                   // "Data" window and tooltips
-   SetIndexLabel(MODE_STOCH, NULL);
-   SetIndexLabel(MODE_MA1,   NULL);
-   SetIndexLabel(MODE_MA2,  "Stochastic(RSI)");
+   string sStochMa1Periods = ifString(Stochastic.MA1.Periods==1, "", ", "+ Stochastic.MA1.Periods);
+   string sStochMa2Periods = ifString(Stochastic.MA2.Periods==1, "", ", "+ Stochastic.MA2.Periods);
+   string indicatorName = "Stochastic("+ Stochastic.Periods + sStochMa1Periods + sStochMa2Periods +", RSI("+ RSI.Periods +"))";
+
+   IndicatorShortName(indicatorName +"    ");            // indicator subwindow and context menu
+   SetIndexLabel(MODE_RSI,       NULL);
+   SetIndexLabel(MODE_STOCH_RAW, NULL);
+   SetIndexLabel(MODE_STOCH_MA1, NULL);
+   SetIndexLabel(MODE_STOCH_MA2, "Stoch(RSI) signal");   // "Data" window and tooltips
    IndicatorDigits(2);
    SetIndicatorOptions();
 
@@ -116,7 +121,7 @@ int onTick() {
 
    // recalculate changed bars
    for (int i=rsiStartBar; i >= 0; i--) {
-      bufferRsi[i] = iRSI(NULL, NULL, RSI.Periods, PRICE_CLOSE, i);                                // RSI
+      bufferRsi[i] = iRSI(NULL, NULL, RSI.Periods, PRICE_CLOSE, i);        // RSI
    }
 
    double rsi, rsiHigh, rsiLow;
@@ -130,15 +135,15 @@ int onTick() {
          if (bufferRsi[i+n] > rsiHigh) rsiHigh = bufferRsi[i+n];
          if (bufferRsi[i+n] < rsiLow)  rsiLow  = bufferRsi[i+n];
       }
-      bufferStoch[i] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;                             // Stochastics
+      bufferStoch[i] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;     // raw Stochastic
    }
 
-   for (i=stochStartBar; i >= 0; i--) {
-      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, Stochastic.MA1.Periods, 0, MODE_SMA, i); // MA 1
+   for (i=stochStartBar; i >= 0; i--) {                                    // MA 1
+      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, Stochastic.MA1.Periods, 0, MODE_SMA, i);
    }
 
-   for (i=stochStartBar; i >= 0; i--) {
-      bufferMa2[i] = iMAOnArray(bufferMa1, WHOLE_ARRAY, Stochastic.MA2.Periods, 0, MODE_SMA, i);   // MA 2
+   for (i=stochStartBar; i >= 0; i--) {                                    // MA 2
+      bufferMa2[i] = iMAOnArray(bufferMa1, WHOLE_ARRAY, Stochastic.MA2.Periods, 0, MODE_SMA, i);
    }
    return(catch("onTick(4)"));
 }
@@ -149,11 +154,10 @@ int onTick() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
+   IndicatorBuffers(allocated_buffers);
 
-   SetIndexStyle(MODE_MAIN, DRAW_NONE, EMPTY,       EMPTY);
-   SetIndexStyle(MODE_MA1,  DRAW_NONE, EMPTY,       EMPTY);
-   SetIndexStyle(MODE_MA2,  DRAW_LINE, STYLE_SOLID, 2    );
+   SetIndexStyle(MODE_STOCH_MA1, DRAW_NONE, EMPTY,       EMPTY);
+   SetIndexStyle(MODE_STOCH_MA2, DRAW_LINE, STYLE_SOLID, 2    );
 }
 
 
