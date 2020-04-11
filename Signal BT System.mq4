@@ -1,7 +1,8 @@
 /**
- * Signal BT System
+ * Marks long and short sections of BrokeTrader's 1-Hour-Swing system (corresponds with Jagg's version 8)
  *
- * corresponds with Jagg's version 8
+ *
+ * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -9,58 +10,63 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int  SmaLength  = 96;                          // 100;
-extern int  SRSILength = 96;                          // 100;
-extern int  SmoothK    = 10;                          //  30;
-extern int  SmoothD    = 6;                           //   6;
+extern int  SMA.Periods            = 96;                 // 100
+extern int  RSI.Periods            = 96;                 // 100
+extern int  Stochastic.Periods     = 96;                 // 100
+extern int  Stochastic.MA1.Periods = 10;                 //  30   first moving average periods
+extern int  Stochastic.MA2.Periods = 6;                  //   6   second moving average periods
 
-extern int  Max.Values = 10000;                       // max. amount of values to calculate (-1: all)
+extern int  Max.Values             = 5000;               // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/@Trend.mqh>
 
-#property   indicator_chart_window
-#property   indicator_buffers    9
+#define MODE_HIST_L_MA        0                          // indicator buffer ids
+#define MODE_HIST_L_PRICE     1
+#define MODE_HIST_S_MA        2
+#define MODE_HIST_S_PRICE     3
+#define MODE_MA_L             4                          // after (above) histogram
+#define MODE_MA_S             5
 
-#property   indicator_color1     YellowGreen
-#property   indicator_color2     YellowGreen
-#property   indicator_color3     LightSkyBlue
-#property   indicator_color4     LightSkyBlue
-#property   indicator_color5     CLR_NONE
-#property   indicator_color6     CLR_NONE
-#property   indicator_color7     CLR_NONE
-#property   indicator_color8     Green
-#property   indicator_color9     RoyalBlue
+#property indicator_chart_window
+#property indicator_buffers   6                          // buffers visible in input dialog
 
-#property   indicator_width1     5
-#property   indicator_width2     5
-#property   indicator_width3     5
-#property   indicator_width4     5
-#property   indicator_width5     0
-#property   indicator_width6     0
-#property   indicator_width7     0
-#property   indicator_width8     3
-#property   indicator_width9     3
+#property indicator_color1    GreenYellow
+#property indicator_color2    GreenYellow
+#property indicator_color3    C'81,211,255'
+#property indicator_color4    C'81,211,255'
+#property indicator_color5    LimeGreen
+#property indicator_color6    C'33,150,243'
 
-double buffer3[];          // positive bull hist
-double buffer4[];          // negative bull hist
-double buffer5[];          // positive bear hist
-double buffer6[];          // negative bear hist
+#property indicator_width1    5
+#property indicator_width2    5
+#property indicator_width3    5
+#property indicator_width4    5
+#property indicator_width5    2
+#property indicator_width6    2
 
-double stochBuffer1[];     // Stochastic(RSI) buffer
-double stochBuffer2[];     // Stochastic(RSI) MA1 buffer
-double stochBuffer3[];     // Stochastic(RSI) MA2 buffer
+double maLong        [];                                 // MA long:               visible, displayed in legend
+double maShort       [];                                 // MA short:              visible, displayed in legend
+double histLongMa    [];                                 // MA long histogram:     visible
+double histLongPrice [];                                 // price long histogram:  visible
+double histShortMa   [];                                 // MA short histogram:    visible
+double histShortPrice[];                                 // price short histogram: visible
 
-double MaBufferL[];        // MA long
-double MaBufferS[];        // MA short
+int    smaPeriods;
+int    rsiPeriods;
+int    stochPeriods;
+int    stochMa1Periods;
+int    stochMa2Periods;
 
+bool   lastStateIsBull;
+int    maxValues;
 
-int      LastPeriod = -1;
-datetime lastbar;
-bool     LastStateIsBull = false;
+string indicatorName;
+string chartLegendLabel;
 
 
 /**
@@ -69,24 +75,72 @@ bool     LastStateIsBull = false;
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
+   if (SMA.Periods < 1)            return(catch("onInit(1)  Invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   smaPeriods = SMA.Periods;
+   if (RSI.Periods < 1)            return(catch("onInit(2)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   rsiPeriods = RSI.Periods;
+   if (Stochastic.Periods < 1)     return(catch("onInit(3)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods, ERR_INVALID_INPUT_PARAMETER));
+   stochPeriods = Stochastic.Periods;
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   stochMa1Periods = Stochastic.MA1.Periods;
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(5)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   stochMa2Periods = Stochastic.MA2.Periods;
+   if (Max.Values < -1)            return(catch("onInit(6)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+
+   // buffer management
+   SetIndexBuffer(MODE_MA_L,         maLong        );    // MA long:               visible, displayed in legend
+   SetIndexBuffer(MODE_MA_S,         maShort       );    // MA short:              visible, displayed in legend
+   SetIndexBuffer(MODE_HIST_L_MA,    histLongMa    );    // MA long histogram:     visible
+   SetIndexBuffer(MODE_HIST_L_PRICE, histLongPrice );    // price long histogram:  visible
+   SetIndexBuffer(MODE_HIST_S_MA,    histShortMa   );    // MA short histogram:    visible
+   SetIndexBuffer(MODE_HIST_S_PRICE, histShortPrice);    // price short histogram: visible
+
+   // chart legend
+   indicatorName = "SMA("+ SMA.Periods +")";
+   if (!IsSuperContext()) {
+       chartLegendLabel = CreateLegendLabel(indicatorName);
+       ObjectRegister(chartLegendLabel);
+   }
+
+   // names, labels and display options
+   IndicatorShortName(indicatorName);
+   SetIndexLabel(MODE_MA_L,         NULL);
+   SetIndexLabel(MODE_MA_S,         NULL);
+   SetIndexLabel(MODE_HIST_L_MA,    NULL);
+   SetIndexLabel(MODE_HIST_L_PRICE, NULL);
+   SetIndexLabel(MODE_HIST_S_MA,    NULL);
+   SetIndexLabel(MODE_HIST_S_PRICE, NULL);
    IndicatorDigits(Digits);
+   SetIndicatorOptions();
 
-   IndicatorShortName(WindowExpertName());
-   SetIndexDrawBegin(0, SmaLength-1);
+   // adjust MTF period settings
+   switch (Period()) {
+      case PERIOD_M1:
+         smaPeriods = SMA.Periods*60; rsiPeriods = RSI.Periods*60; stochPeriods = Stochastic.Periods*60; stochMa1Periods = Stochastic.MA1.Periods*60; stochMa2Periods = Stochastic.MA2.Periods*60; break;
+      case PERIOD_M5:
+         smaPeriods = SMA.Periods*12; rsiPeriods = RSI.Periods*12; stochPeriods = Stochastic.Periods*12; stochMa1Periods = Stochastic.MA1.Periods*12; stochMa2Periods = Stochastic.MA2.Periods*12; break;
+      case PERIOD_M15:
+         smaPeriods = SMA.Periods*4;  rsiPeriods = RSI.Periods*4;  stochPeriods = Stochastic.Periods*4;  stochMa1Periods = Stochastic.MA1.Periods*4;  stochMa2Periods = Stochastic.MA2.Periods*4;  break;
+      case PERIOD_M30:
+         smaPeriods = SMA.Periods*2;  rsiPeriods = RSI.Periods*2;  stochPeriods = Stochastic.Periods*2;  stochMa1Periods = Stochastic.MA1.Periods*2;  stochMa2Periods = Stochastic.MA2.Periods*2;  break;
+      case PERIOD_H1:
+         smaPeriods = SMA.Periods;    rsiPeriods = RSI.Periods;    stochPeriods = Stochastic.Periods;    stochMa1Periods = Stochastic.MA1.Periods;    stochMa2Periods = Stochastic.MA2.Periods;    break;
+   }
+   return(catch("onInit(7)"));
+}
 
-   SetIndexBuffer(0, buffer3);      SetIndexStyle(0, DRAW_HISTOGRAM, EMPTY);
-   SetIndexBuffer(1, buffer4);      SetIndexStyle(1, DRAW_HISTOGRAM, EMPTY);
-   SetIndexBuffer(2, buffer5);      SetIndexStyle(2, DRAW_HISTOGRAM, EMPTY);
-   SetIndexBuffer(3, buffer6);      SetIndexStyle(3, DRAW_HISTOGRAM, EMPTY);
 
-   SetIndexBuffer(4, stochBuffer1); SetIndexStyle(4, DRAW_NONE, EMPTY, EMPTY);
-   SetIndexBuffer(5, stochBuffer2); SetIndexStyle(5, DRAW_NONE, EMPTY, EMPTY);
-   SetIndexBuffer(6, stochBuffer3); SetIndexStyle(6, DRAW_NONE, EMPTY, EMPTY);
-
-   SetIndexBuffer(7, MaBufferL);    SetIndexStyle(7, DRAW_LINE, EMPTY);
-   SetIndexBuffer(8, MaBufferS);    SetIndexStyle(8, DRAW_LINE, EMPTY);
-
-   return(catch("onInit(1)"));
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   DeleteRegisteredObjects(NULL);
+   RepositionLegend();
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -96,87 +150,157 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   int counted = IndicatorCounted();
-   if (counted > 0) counted--;
+   // a not initialized buffer can happen on terminal start under specific circumstances
+   if (!ArraySize(maLong)) return(log("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   int limit = MathMin(Bars-counted, Bars-1);
-   if (limit > Max.Values) limit = Max.Values;
-
-   if (LastPeriod != Period()) {
-      switch (Period()) {
-         case PERIOD_H1:
-            SmaLength  = 96;
-            SRSILength = 96;
-            SmoothK    = 10;
-            SmoothD    = 6;
-            break;
-
-         case PERIOD_M5:
-            SmaLength  = 96*12;
-            SRSILength = 96*12;
-            SmoothK    = 10*12;
-            SmoothD    =  6*12;
-            break;
-
-         default: return(catch("onTick(2)"));
-      }
-      LastPeriod = Period();
-      lastbar    = 0;
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   if (!UnchangedBars) {
+      ArrayInitialize(maLong,         EMPTY_VALUE);
+      ArrayInitialize(maShort,        EMPTY_VALUE);
+      ArrayInitialize(histLongMa,     EMPTY_VALUE);
+      ArrayInitialize(histLongPrice,  EMPTY_VALUE);
+      ArrayInitialize(histShortMa,    EMPTY_VALUE);
+      ArrayInitialize(histShortPrice, EMPTY_VALUE);
+      SetIndicatorOptions();
    }
 
-   double rsi, rsiHigh, rsiLow, ma, price;
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(maLong,         Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(maShort,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(histLongMa,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(histLongPrice,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(histShortMa,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(histShortPrice, Bars, ShiftedBars, EMPTY_VALUE);
+   }
 
-   for (int i=limit; i >= 0; i--) {
-      rsi     = iRSI(NULL, NULL, SRSILength, PRICE_CLOSE, i);
-      rsiHigh = rsi;
-      rsiLow  = rsi;
+   // calculate start bar
+   int bars     = Min(ChangedBars, maxValues);
+   int startBar = Min(bars-1, Bars-smaPeriods);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-      for (int x=0; x < SRSILength; x++) {
-         rsiHigh = MathMax(rsiHigh, iRSI(NULL, NULL, SRSILength, PRICE_CLOSE, i+x));
-         rsiLow  = MathMin(rsiLow,  iRSI(NULL, NULL, SRSILength, PRICE_CLOSE, i+x));
-      }
+   double ma, stoch, price;
 
-      stochBuffer1[i] = (rsi-rsiLow) / (rsiHigh-rsiLow) * 100;
-      stochBuffer2[i] = iMAOnArray(stochBuffer1, WHOLE_ARRAY, SmoothK, 0, MODE_SMA, i);
-      stochBuffer3[i] = iMAOnArray(stochBuffer2, WHOLE_ARRAY, SmoothD, 0, MODE_SMA, i);
+   // recalculate changed bars
+   for (int i=startBar; i >= 0; i--) {
+      histLongMa    [i] = EMPTY_VALUE;
+      histLongPrice [i] = EMPTY_VALUE;
+      histShortMa   [i] = EMPTY_VALUE;
+      histShortPrice[i] = EMPTY_VALUE;
 
-      ma    = iMA(NULL, NULL, SmaLength, 0, MODE_SMA, PRICE_CLOSE, i);
-      price = Close[i];
+      ma    = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, i);
+      stoch = GetStochasticOfRSI(i); if (last_error || 0) return(last_error);
 
-      if (Close[i] > ma && Low[i] > ma) {
-         price = Low[i];
-      }
-      else if (Close[i] < ma && High[i] < ma) {
-         price = High[i];
-      }
-      else {
-         price = ma;
-      }
+      if      (Close[i] > ma && Low [i] > ma) price = Close[i];
+      else if (Close[i] < ma && High[i] < ma) price = Close[i];
+      else                                    price = ma;
 
-      buffer3[i] = EMPTY_VALUE;
-      buffer4[i] = EMPTY_VALUE;
-      buffer5[i] = EMPTY_VALUE;
-      buffer6[i] = EMPTY_VALUE;
+      if      (Close[i] >= ma && stoch >= 40) lastStateIsBull = true;
+      else if (Close[i] <  ma && stoch <  60) lastStateIsBull = false;
 
-      if (Close[i] >= ma && stochBuffer3[i] >= 40) {
-         LastStateIsBull = true;
-      }
-      else if (Close[i] < ma && stochBuffer3[i] < 60) {
-         LastStateIsBull = false;
-      }
-
-      if (LastStateIsBull) {
-         buffer3  [i] = ma;
-         buffer4  [i] = price;
-         MaBufferL[i] = ma;
-         MaBufferS[i] = EMPTY_VALUE;
+      if (lastStateIsBull) {
+         maLong        [i] = ma;
+         maShort       [i] = EMPTY_VALUE;
+         histLongMa    [i] = ma;
+         histLongPrice [i] = price;
       }
       else {
-         buffer5  [i] = ma;
-         buffer6  [i] = price;
-         MaBufferL[i] = EMPTY_VALUE;
-         MaBufferS[i] = ma;
+         maLong        [i] = EMPTY_VALUE;
+         maShort       [i] = ma;
+         histShortMa   [i] = ma;
+         histShortPrice[i] = price;
       }
+   }
+
+   if (!IsSuperContext()) {
+      if (lastStateIsBull) color legendColor = indicator_color5;
+      else                       legendColor = indicator_color6;
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", legendColor, legendColor, ma, Digits, 0, Time[0]);
    }
    return(catch("onTick(3)"));
+}
+
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
+ */
+void SetIndicatorOptions() {
+   IndicatorBuffers(indicator_buffers);
+   SetIndexStyle(MODE_MA_L,         DRAW_LINE,      EMPTY);
+   SetIndexStyle(MODE_MA_S,         DRAW_LINE,      EMPTY);
+   SetIndexStyle(MODE_HIST_L_MA   , DRAW_HISTOGRAM, EMPTY);
+   SetIndexStyle(MODE_HIST_L_PRICE, DRAW_HISTOGRAM, EMPTY);
+   SetIndexStyle(MODE_HIST_S_MA   , DRAW_HISTOGRAM, EMPTY);
+   SetIndexStyle(MODE_HIST_S_PRICE, DRAW_HISTOGRAM, EMPTY);
+}
+
+
+/**
+ * Return a Stochastic(RSI) indicator value.
+ *
+ * @param  int iBar - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double GetStochasticOfRSI(int iBar) {
+   return(iStochasticOfRSI(NULL, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Stochastic.MODE_SIGNAL, iBar));
+}
+
+
+/**
+ * Load the "Stochastic of RSI" indicator and return an indicator value.
+ *
+ * @param  int timeframe            - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int stochasticPeriods    - indicator parameter
+ * @param  int stochasticMa1Periods - indicator parameter
+ * @param  int stochasticMa2Periods - indicator parameter
+ * @param  int rsiPeriods           - indicator parameter
+ * @param  int iBuffer              - indicator buffer index of the value to return
+ * @param  int iBar                 - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "BT Stochastic(RSI)",
+                          stochasticPeriods,                               // int    Stochastic.Periods
+                          stochasticMa1Periods,                            // int    Stochastic.MA1.Periods
+                          stochasticMa2Periods,                            // int    Stochastic.MA2.Periods
+                          rsiPeriods,                                      // int    RSI.Periods
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("iStochasticOfRSI(1)", error));
+      warn("iStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("SMA.Periods=",            SMA.Periods,            ";", NL,
+                            "RSI.Periods=",            RSI.Periods,            ";", NL,
+                            "Stochastic.Periods=",     Stochastic.Periods,     ";", NL,
+                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods, ";", NL,
+                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods, ";", NL,
+                            "Max.Values=",             Max.Values,             ";")
+   );
 }

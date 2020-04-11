@@ -3,8 +3,8 @@
  *
  *
  * Indicator buffers for iCustom():
- *  • MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
- *  • MODE_SIGNAL: Stochastic signal line (last moving average)
+ *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
+ *  • Stochastic.MODE_SIGNAL: Stochastic signal line (the last moving average)
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -25,13 +25,13 @@ extern int Max.Values             = 5000;                // max. amount of value
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define MODE_STOCH_MA1        MODE_MAIN                  // indicator buffer ids
-#define MODE_STOCH_MA2        MODE_SIGNAL
+#define MODE_STOCH_MA1        Stochastic.MODE_MAIN       // indicator buffer ids
+#define MODE_STOCH_MA2        Stochastic.MODE_SIGNAL
 #define MODE_STOCH_RAW        2
 #define MODE_RSI              3
 
 #property indicator_separate_window
-#property indicator_buffers   2                          // visible in input dialog
+#property indicator_buffers   2                          // buffers visible in input dialog
 int       allocated_buffers = 4;
 
 #property indicator_color1    CLR_NONE
