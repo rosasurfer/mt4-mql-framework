@@ -254,7 +254,7 @@ int onTick() {
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
-      main[bar] = JMASeries(0, oldestBar, startBar, Periods, Phase, price, bar); if (last_error||0) return(last_error);
+      main[bar] = JMASeries(0, oldestBar, startBar, Periods, Phase, price, bar); if (last_error != 0) return(last_error);
 
       @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
    }
