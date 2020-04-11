@@ -1,7 +1,7 @@
 /**
  * Stochastic of RSI
  *
- * - corresponds with version 3
+ * corresponds with BT's version 4
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -9,10 +9,10 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int RSI.Periods            = 100;
 extern int Stochastic.Periods     = 100;
 extern int Stochastic.MA1.Periods =  30;
 extern int Stochastic.MA2.Periods =   6;
+extern int RSI.Periods            = 100;
 
 extern int Max.Values             = 10000;            // max. amount of values to calculate (-1: all)
 
@@ -56,18 +56,18 @@ int maxValues;
  */
 int onInit() {
    // validate inputs
-   if (RSI.Periods < 1)            return(catch("onInit(1)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.Periods < 1)     return(catch("onInit(2)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 1)     return(catch("onInit(1)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 1)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (Max.Values < -1)            return(catch("onInit(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // buffer management
-   SetIndexBuffer(MODE_RSI,   bufferRsi);             // RSI value:             invisible
-   SetIndexBuffer(MODE_STOCH, bufferStoch);           // Stochastic main value: invisible
-   SetIndexBuffer(MODE_MA1,   bufferMa1  );           // first MA(Stoch):       invisible
-   SetIndexBuffer(MODE_MA2,   bufferMa2  );           // second MA(MA1):        visible, displayed in "Data" window
+   SetIndexBuffer(MODE_RSI,   bufferRsi);             // RSI value:            invisible
+   SetIndexBuffer(MODE_STOCH, bufferStoch);           // Stochastic raw value: invisible
+   SetIndexBuffer(MODE_MA1,   bufferMa1  );           // first MA(Stoch):      invisible
+   SetIndexBuffer(MODE_MA2,   bufferMa2  );           // second MA(MA1):       visible, displayed in "Data" window
 
    // names, labels and display options
    string indicatorName = "Stochastic(RSI("+ RSI.Periods +"), "+ Stochastic.MA1.Periods +", "+ Stochastic.MA2.Periods +")";
@@ -79,7 +79,7 @@ int onInit() {
    IndicatorDigits(2);
    SetIndicatorOptions();
 
-   return(catch("onInit(1)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -163,10 +163,10 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("RSI.Periods=",            RSI.Periods,            ";"+ NL,
-                            "Stochastic.Periods=",     Stochastic.Periods,     ";"+ NL,
+   return(StringConcatenate("Stochastic.Periods=",     Stochastic.Periods,     ";"+ NL,
                             "Stochastic.MA1.Periods=", Stochastic.MA1.Periods, ";"+ NL,
                             "Stochastic.MA2.Periods=", Stochastic.MA2.Periods, ";"+ NL,
+                            "RSI.Periods=",            RSI.Periods,            ";"+ NL,
                             "Max.Values=",             Max.Values,             ";"+ NL)
    );
 }
