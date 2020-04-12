@@ -115,18 +115,13 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // adjust MTF period settings
+   // adjust MTF settings
    switch (Period()) {
-      case PERIOD_M1:
-         smaPeriods = SMA.Periods*60; rsiPeriods = RSI.Periods*60; stochPeriods = Stochastic.Periods*60; stochMa1Periods = Stochastic.MA1.Periods*60; stochMa2Periods = Stochastic.MA2.Periods*60; break;
-      case PERIOD_M5:
-         smaPeriods = SMA.Periods*12; rsiPeriods = RSI.Periods*12; stochPeriods = Stochastic.Periods*12; stochMa1Periods = Stochastic.MA1.Periods*12; stochMa2Periods = Stochastic.MA2.Periods*12; break;
-      case PERIOD_M15:
-         smaPeriods = SMA.Periods*4;  rsiPeriods = RSI.Periods*4;  stochPeriods = Stochastic.Periods*4;  stochMa1Periods = Stochastic.MA1.Periods*4;  stochMa2Periods = Stochastic.MA2.Periods*4;  break;
-      case PERIOD_M30:
-         smaPeriods = SMA.Periods*2;  rsiPeriods = RSI.Periods*2;  stochPeriods = Stochastic.Periods*2;  stochMa1Periods = Stochastic.MA1.Periods*2;  stochMa2Periods = Stochastic.MA2.Periods*2;  break;
-      case PERIOD_H1:
-         smaPeriods = SMA.Periods;    rsiPeriods = RSI.Periods;    stochPeriods = Stochastic.Periods;    stochMa1Periods = Stochastic.MA1.Periods;    stochMa2Periods = Stochastic.MA2.Periods;    break;
+      //case PERIOD_M1:  smaPeriods *= 60; rsiPeriods *= 60; stochPeriods *= 60; stochMa1Periods *= 60; stochMa2Periods *= 60; break;
+      //case PERIOD_M5:  smaPeriods *= 12; rsiPeriods *= 12; stochPeriods *= 12; stochMa1Periods *= 12; stochMa2Periods *= 12; break;
+      //case PERIOD_M15: smaPeriods *= 4;  rsiPeriods *= 4;  stochPeriods *= 4;  stochMa1Periods *= 4;  stochMa2Periods *= 4;  break;
+      //case PERIOD_M30: smaPeriods *= 2;  rsiPeriods *= 2;  stochPeriods *= 2;  stochMa1Periods *= 2;  stochMa2Periods *= 2;  break;
+      //case PERIOD_H1:  smaPeriods *= 1;  rsiPeriods *= 1;  stochPeriods *= 1;  stochMa1Periods *= 1;  stochMa2Periods *= 1;  break;
    }
    return(catch("onInit(7)"));
 }
@@ -213,8 +208,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      if (lastStateIsBull) color legendColor = indicator_color5;
-      else                       legendColor = indicator_color6;
+      color legendColor = ifInt(lastStateIsBull, Green, DodgerBlue);
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", legendColor, legendColor, ma, Digits, 0, Time[0]);
    }
    return(catch("onTick(3)"));
