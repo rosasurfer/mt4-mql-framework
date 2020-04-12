@@ -12,10 +12,10 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Stochastic.Periods     = 100;
-extern int Stochastic.MA1.Periods =  30;                 // first moving average periods
-extern int Stochastic.MA2.Periods =   6;                 // second moving average periods
-extern int RSI.Periods            = 100;
+extern int Stochastic.Periods     = 96;
+extern int Stochastic.MA1.Periods = 10;                  // first moving average periods
+extern int Stochastic.MA2.Periods =  6;                  // second moving average periods
+extern int RSI.Periods            = 96;
 
 extern int Max.Values             = 5000;                // max. amount of values to calculate (-1: all)
 
@@ -74,7 +74,7 @@ int onInit() {
    // names, labels and display options
    string sStochMa1Periods = ifString(Stochastic.MA1.Periods==1, "", ", "+ Stochastic.MA1.Periods);
    string sStochMa2Periods = ifString(Stochastic.MA2.Periods==1, "", ", "+ Stochastic.MA2.Periods);
-   string indicatorName = "Stochastic("+ Stochastic.Periods + sStochMa1Periods + sStochMa2Periods +", RSI("+ RSI.Periods +"))";
+   string indicatorName = "Stochastic(RSI("+ RSI.Periods +"), "+ Stochastic.Periods + sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"    ");            // indicator subwindow and context menu
    SetIndexLabel(MODE_RSI,       NULL);

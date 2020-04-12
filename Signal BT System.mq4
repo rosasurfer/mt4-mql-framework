@@ -103,8 +103,8 @@ int onInit() {
 
    // names, labels and display options
    IndicatorShortName(indicatorName);
-   SetIndexLabel(MODE_MA_L,         NULL);
-   SetIndexLabel(MODE_MA_S,         NULL);
+   SetIndexLabel(MODE_MA_L,         indicatorName);
+   SetIndexLabel(MODE_MA_S,         indicatorName);
    SetIndexLabel(MODE_HIST_L_MA,    NULL);
    SetIndexLabel(MODE_HIST_L_PRICE, NULL);
    SetIndexLabel(MODE_HIST_S_MA,    NULL);
