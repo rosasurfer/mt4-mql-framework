@@ -14,9 +14,7 @@
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
- * Notes:
- *  - There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
- *  - A user's custom indicator having the same name as a distributed custom indicator would be deleted by the terminal.
+ * Note: There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -243,7 +241,7 @@ int onInit() {
    else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
    string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
-   IndicatorShortName(indicatorName + signalInfo +"  ");                // indicator subwindow and context menu
+   IndicatorShortName(indicatorName + signalInfo +"    ");              // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // "Data" window and tooltips
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);

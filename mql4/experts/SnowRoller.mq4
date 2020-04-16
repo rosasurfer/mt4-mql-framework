@@ -4197,10 +4197,10 @@ bool ReadTradeSessions(datetime time, datetime &config[][2]) {
    else if (IsConfigKey(section, sWeekday))              value = GetConfigString(section, sWeekday);
    else                                                  return(_false(debug("ReadTradeSessions(1)  "+ sequence.longName +" no trade session configuration found")));
 
-   // Monday    =                                  // no trade session
-   // Tuesday   = 00:00-24:00                      // a full trade session
-   // Wednesday = 01:02-20:00                      // a limited trade session
-   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions
+   // Sunday    =                                  // no trade session
+   // Monday    = 00:00-24:00                      // a full trade session
+   // Tuesday   = 01:02-20:00                      // a limited trade session
+   // Wednesday = 03:00-12:10, 13:30-19:00         // multiple trade sessions
 
    ArrayResize(config, 0);
    if (value == "")
