@@ -153,7 +153,7 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       else if (digits == SubPipDigits) sValue = NumberToStr(value, SubPipPriceFormat);
       else                             sValue = DoubleToStr(value, digits);
 
-      sTrend = StringConcatenate("(", trend, ")");
+      if (trend != 0) sTrend = StringConcatenate("(", trend, ")");
 
       if (uptrendColor != downtrendColor) {
          if      (trend ==  1) sOnTrendChange = "turns up";             // intra-bar trend change

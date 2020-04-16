@@ -355,6 +355,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length
 
+#define Stochastic.MODE_MAIN           0        // Stochastic main line
+#define Stochastic.MODE_SIGNAL         1        // Stochastic signal line (the last moving average)
+
 #define SuperTrend.MODE_MAIN           0        // SuperTrend SR line
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
