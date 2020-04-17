@@ -20,7 +20,7 @@ int __DEINIT_FLAGS__[];
 
 extern int Stochastic.Periods     = 96;
 extern int Stochastic.MA1.Periods = 10;                  // first moving average periods
-extern int Stochastic.MA2.Periods =  6;                  // second moving average periods
+extern int Stochastic.MA2.Periods = 6;                   // second moving average periods
 extern int RSI.Periods            = 96;
 
 extern int Max.Values             = 5000;                // max. amount of values to calculate (-1: all)
@@ -54,6 +54,11 @@ double bufferStoch[];                                    // Stochastic raw value
 double bufferMa1  [];                                    // first MA(Stoch):      visible
 double bufferMa2  [];                                    // second MA(MA1):       visible, displayed in "Data" window
 
+int stochPeriods;
+int ma1Periods;
+int ma2Periods;
+int rsiPeriods;
+
 int maxValues;
 
 
@@ -64,12 +69,16 @@ int maxValues;
  */
 int onInit() {
    // validate inputs
-   if (Stochastic.Periods < 1)     return(catch("onInit(1)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 2)     return(catch("onInit(1)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    if (Stochastic.MA1.Periods < 1) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (Stochastic.MA2.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 1)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    if (Max.Values < -1)            return(catch("onInit(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   stochPeriods = Stochastic.Periods;
+   ma1Periods   = Stochastic.MA1.Periods;
+   ma2Periods   = Stochastic.MA2.Periods;
+   rsiPeriods   = RSI.Periods;
+   maxValues    = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // buffer management
    SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:            invisible
@@ -78,9 +87,9 @@ int onInit() {
    SetIndexBuffer(MODE_STOCH_MA2, bufferMa2  );          // second MA(MA1):       visible, displayed in "Data" window
 
    // names, labels and display options
-   string sStochMa1Periods = ifString(Stochastic.MA1.Periods==1, "", ", "+ Stochastic.MA1.Periods);
-   string sStochMa2Periods = ifString(Stochastic.MA2.Periods==1, "", ", "+ Stochastic.MA2.Periods);
-   string indicatorName = "Stochastic(RSI("+ RSI.Periods +"), "+ Stochastic.Periods + sStochMa1Periods + sStochMa2Periods +")";
+   string sStochMa1Periods = ifString(stochPeriods==1, "", ", "+ ma1Periods);
+   string sStochMa2Periods = ifString(ma2Periods==1, "", ", "+ ma2Periods);
+   string indicatorName    = "Stochastic(RSI("+ rsiPeriods +"), "+ stochPeriods + sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"    ");            // indicator subwindow and context menu
    SetIndexLabel(MODE_RSI,       NULL);
@@ -120,38 +129,57 @@ int onTick() {
       ShiftIndicatorBuffer(bufferMa2,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
+   // +------------------------------------------------------+----------------------------------------------------+
+   // | Top down                                             | Bottom up                                          |
+   // +------------------------------------------------------+----------------------------------------------------+
+   // | RequestedBars   = 5000                               | ResultingBars   = startBar(MA2) + 1                |
+   // | startBar(MA2)   = RequestedBars - 1                  | startBar(MA2)   = startBar(MA1)   - ma2Periods + 1 |
+   // | startBar(MA1)   = startBar(MA2)   + ma2Periods   - 1 | startBar(MA1)   = startBar(Stoch) - ma1Periods + 1 |
+   // | startBar(Stoch) = startBar(MA1)   + ma1Periods   - 1 | startBar(Stoch) = startBar(RSI) - stochPeriods + 1 |
+   // | startBar(RSI)   = startBar(Stoch) + stochPeriods - 1 | startBar(RSI)   = oldestBar - 5 - rsiPeriods   + 1 | RSI requires at least 5 more bars to initialize the integrated EMA.
+   // | firstBar        = startBar(RSI) + rsiPeriods + 5 - 1 | oldestBar       = AvailableBars - 1                |
+   // | RequiredBars    = firstBar + 1                       | AvailableBars   = Bars                             |
+   // +------------------------------------------------------+----------------------------------------------------+
+   // |                 --->                                                ---^                                  |
+   // +-----------------------------------------------------------------------------------------------------------+
+
    // calculate start bars
-   int bars          = Min(ChangedBars, maxValues);
-   int rsiStartBar   = Min(bars-1, Bars-RSI.Periods);                        if (rsiStartBar   < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-   int stochStartBar = Min(bars-1, Bars-RSI.Periods+1 - Stochastic.Periods); if (stochStartBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
+   int requestedBars = Min(ChangedBars, maxValues);
+   int maxBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1;    // max. possible resulting bars
+   if (maxBars < 1) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+
+   int bars          = Min(requestedBars, maxBars);                                 // actual bars to be updated
+   int ma2StartBar   = bars - 1;
+   int ma1StartBar   = ma2StartBar + ma2Periods - 1;
+   int stochStartBar = ma1StartBar + ma1Periods - 1;
+   int rsiStartBar   = stochStartBar + stochPeriods - 1;
 
    // recalculate changed bars
    for (int i=rsiStartBar; i >= 0; i--) {
-      bufferRsi[i] = iRSI(NULL, NULL, RSI.Periods, PRICE_CLOSE, i);        // RSI
+      bufferRsi[i] = iRSI(NULL, NULL, rsiPeriods, PRICE_CLOSE, i);
    }
 
-   double rsi, rsiHigh, rsiLow;
-
    for (i=stochStartBar; i >= 0; i--) {
-      rsi     = bufferRsi[i];
-      rsiHigh = rsi;
-      rsiLow  = rsi;
+      double rsi     = bufferRsi[i];
+      double rsiHigh = rsi;
+      double rsiLow  = rsi;
 
-      for (int n=0; n < Stochastic.Periods; n++) {
+      for (int n=0; n < stochPeriods; n++) {
          if (bufferRsi[i+n] > rsiHigh) rsiHigh = bufferRsi[i+n];
          if (bufferRsi[i+n] < rsiLow)  rsiLow  = bufferRsi[i+n];
       }
-      bufferStoch[i] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;     // raw Stochastic
+      bufferStoch[i] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;  // raw Stochastic
    }
 
-   for (i=stochStartBar; i >= 0; i--) {                                    // MA 1
-      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, Stochastic.MA1.Periods, 0, MODE_SMA, i);
+   for (i=ma1StartBar; i >= 0; i--) {
+      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, ma1Periods, 0, MODE_SMA, i);
    }
 
-   for (i=stochStartBar; i >= 0; i--) {                                    // MA 2
-      bufferMa2[i] = iMAOnArray(bufferMa1, WHOLE_ARRAY, Stochastic.MA2.Periods, 0, MODE_SMA, i);
+   for (i=ma2StartBar; i >= 0; i--) {
+      bufferMa2[i] = iMAOnArray(bufferMa1, WHOLE_ARRAY, ma2Periods, 0, MODE_SMA, i);
    }
-   return(catch("onTick(4)"));
+
+   return(catch("onTick(3)"));
 }
 
 
@@ -161,9 +189,10 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
+   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
    SetIndexStyle(MODE_STOCH_MA1, DRAW_NONE, EMPTY,       EMPTY);
-   SetIndexStyle(MODE_STOCH_MA2, DRAW_LINE, STYLE_SOLID, 2    );
+   SetIndexStyle(MODE_STOCH_MA2, DRAW_LINE, STYLE_SOLID, EMPTY); SetIndexArrow(MODE_STOCH_MA2, 159);
 }
 
 
