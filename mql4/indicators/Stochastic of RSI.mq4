@@ -1,10 +1,16 @@
 /**
- * Stochastic of RSI (corresponds with BT's version 4)
+ * Stochastic of RSI
  *
+ *
+ * The Stochastic oscillator shows the relative position of current price compared to the price range of the lookback period,
+ * normalized to a value from 0 to 100. The fast Stochastic is smoothed once, the slow Stochastic is smoothed twice.
+ *
+ * The RSI (Relative Strength Index) is the EMA-smoothed ratio of gains to losses during the lookback period, again normalized
+ * to a value from 0 to 100.
  *
  * Indicator buffers for iCustom():
  *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
- *  • Stochastic.MODE_SIGNAL: Stochastic signal line (the last moving average)
+ *  • Stochastic.MODE_SIGNAL: indicator signal line (the last moving average)
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
