@@ -145,10 +145,10 @@ int onTick() {
 
    // calculate start bars
    int requestedBars = Min(ChangedBars, maxValues);
-   int maxBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1;       // max. possible resulting bars
-   if (maxBars < 1) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   int resultingBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1; // max. resulting bars
+   if (resultingBars < 1) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   int bars          = Min(requestedBars, maxBars);                                    // actual bars to be updated
+   int bars          = Min(requestedBars, resultingBars);                              // actual number of bars to be updated
    int ma2StartBar   = bars - 1;
    int ma1StartBar   = ma2StartBar + ma2Periods - 1;
    int stochStartBar = ma1StartBar + ma1Periods - 1;
