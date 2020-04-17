@@ -6311,7 +6311,7 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "RSI ",
+   double value = iCustom(NULL, timeframe, ".attic/RSI",
                           periods,                                         // int    RSI.Periods
                           appliedPrice,                                    // string RSI.AppliedPrice
 

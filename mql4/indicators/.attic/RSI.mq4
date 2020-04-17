@@ -1,17 +1,15 @@
 /**
- * RSI (Relative Strength Index)
+ * RSI (Relative Strength Index) - an implementation supporting the display as histogram
  *
- * An RSI implementation supporting the display as histogram.
  *
+ * The RSI (Relative Strength Index) is the EMA-smoothed ratio of gains to losses during a lookback period, again normalized
+ * to a value from 0 to 100.
  *
  * Indicator buffers for iCustom():
  *  • RSI.MODE_MAIN:    RSI main values
  *  • RSI.MODE_SECTION: RSI section and section length since last crossing of level 50
  *    - section: positive values denote a RSI above 50 (+1...+n), negative values a RSI below 50 (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of level 50)
- *
- *
- * Note: The file is intentionally named "RSI .mql" as a file "RSI.mql" would be overwritten by newer terminal versions.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
