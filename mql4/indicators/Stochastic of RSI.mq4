@@ -23,7 +23,7 @@ extern int Stochastic.MA1.Periods = 10;                  // first moving average
 extern int Stochastic.MA2.Periods = 6;                   // second moving average periods
 extern int RSI.Periods            = 96;
 
-extern int Max.Values             = 5000;                // max. amount of values to calculate (-1: all)
+extern int Max.Values             = 10000;               // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -145,10 +145,10 @@ int onTick() {
 
    // calculate start bars
    int requestedBars = Min(ChangedBars, maxValues);
-   int maxBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1;    // max. possible resulting bars
+   int maxBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1;       // max. possible resulting bars
    if (maxBars < 1) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   int bars          = Min(requestedBars, maxBars);                                 // actual bars to be updated
+   int bars          = Min(requestedBars, maxBars);                                    // actual bars to be updated
    int ma2StartBar   = bars - 1;
    int ma1StartBar   = ma2StartBar + ma2Periods - 1;
    int stochStartBar = ma1StartBar + ma1Periods - 1;
@@ -160,19 +160,13 @@ int onTick() {
    }
 
    for (i=stochStartBar; i >= 0; i--) {
-      double rsi     = bufferRsi[i];
-      double rsiHigh = rsi;
-      double rsiLow  = rsi;
-
-      for (int n=0; n < stochPeriods; n++) {
-         if (bufferRsi[i+n] > rsiHigh) rsiHigh = bufferRsi[i+n];
-         if (bufferRsi[i+n] < rsiLow)  rsiLow  = bufferRsi[i+n];
-      }
-      bufferStoch[i] = MathDiv(rsi-rsiLow, rsiHigh-rsiLow, 0.5) * 100;  // raw Stochastic
+      double rsiHigh = bufferRsi[ArrayMaximum(bufferRsi, stochPeriods, i)];
+      double rsiLow  = bufferRsi[ArrayMinimum(bufferRsi, stochPeriods, i)];
+      bufferStoch[i] = MathDiv(bufferRsi[i]-rsiLow, rsiHigh-rsiLow, 0.5) * 100;        // raw Stochastic
    }
 
    for (i=ma1StartBar; i >= 0; i--) {
-      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, ma1Periods, 0, MODE_SMA, i);
+      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, ma1Periods, 0, MODE_SMA, i); // no performance impact of WHOLE_ARRAY with MODE_SMA
    }
 
    for (i=ma2StartBar; i >= 0; i--) {
