@@ -243,7 +243,7 @@ double GetStochasticOfRSI(int iBar) {
 
 
 /**
- * Load the "Stochastic of RSI" indicator and return an indicator value.
+ * Load the "Stochastic of RSI" and return an indicator value.
  *
  * @param  int timeframe            - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int stochasticPeriods    - indicator parameter
@@ -259,13 +259,17 @@ double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1P
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "BT Stochastic(RSI)",
+   double value = iCustom(NULL, timeframe, "Stochastic of RSI",
                           stochasticPeriods,                               // int    Stochastic.Periods
                           stochasticMa1Periods,                            // int    Stochastic.MA1.Periods
                           stochasticMa2Periods,                            // int    Stochastic.MA2.Periods
                           rsiPeriods,                                      // int    RSI.Periods
+                          CLR_NONE,                                        // color  Main.Color
+                          DodgerBlue,                                      // color  Signal.Color
+                          "Line",                                          // string Signal.DrawType
+                          1,                                               // int    Signal.DrawWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string ____________________
+                          "",                                              // string ______________________
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);
