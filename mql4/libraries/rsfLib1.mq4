@@ -4709,46 +4709,48 @@ color HSLToRGB(double hsl[3]) {
 
 
 /**
- * Adjust a RGB color using the HSL color model. This model is used by the Windows color picker. The function adjusts
- * existing color values, it does not set new values.
+ * Adjust an RGB color using the HSL color model (same as the Windows color picker).
  *
- * @param  color  rgb              - color to adjust
- * @param  double adjustHue        - the hue can be shifted by +/-360°
- * @param  double adjustSaturation - the saturation can be adjusted from -100% to a positive infinite percentage
- * @param  double adjustLightness  - the lightness can be adjusted from -100% to a positive infinite percentage
+ * @param  color  rgb        - color to adjust
+ * @param  double hue        - shift from -360° to +360°                  (NULL for no change)
+ * @param  double saturation - adjustment from -100% to positive infinite (NULL for no change)
+ * @param  double lightness  - adjustment from -100% to positive infinite (NULL for no change)
  *
  * @return color - adjusted color or -1 (EMPTY) in case of errors
  *
  * Example:
  * --------
- *   ColorAdjust(C'90,128,162', NULL, NULL, 30) => C'119,168,212'          // lightness of the color is increased by 30%
+ *   ModifyColor(C'90,128,162', NULL, NULL, 30) => C'119,168,212'          // lightness of the color is increased by 30%
  */
-color ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double adjustLightness) {
+color ModifyColor(color rgb, double hue, double saturation, double lightness) {
+   if (rgb == CLR_NONE) return(CLR_NONE);
+
    if (rgb >= 0) {
-      if (-360 <= adjustHue && adjustHue <= 360) {
-         if (adjustSaturation >= -100) {                                   // max. reduction is -100%
-            if (adjustLightness >= -100) {                                 // max. reduction is -100%
+      if (-360 <= hue && hue <= 360) {
+         if (saturation >= -100) {                                         // max. reduction is -100%
+            if (lightness >= -100) {                                       // max. reduction is -100%
 
                // convert color to HSL
-               double hsl[]; RGBToHSL(rgb, hsl);
+               double hsl[];
+               RGBToHSL(rgb, hsl);
 
                // adjust hue
-               if (!EQ(adjustHue, 0)) {
-                  hsl[HSL_HUE] += adjustHue/360;
+               if (!EQ(hue, 0)) {
+                  hsl[HSL_HUE] += hue/360;
                   if      (hsl[HSL_HUE] < 0) hsl[HSL_HUE] += 1;            // limit range to 0...1
                   else if (hsl[HSL_HUE] > 1) hsl[HSL_HUE] -= 1;
                }
 
                // adjust saturation
-               if (!EQ(adjustSaturation, 0)) {
-                  hsl[HSL_SATURATION] *= (1 + adjustSaturation/100);
+               if (!EQ(saturation, 0)) {
+                  hsl[HSL_SATURATION] *= (1 + saturation/100);
                   hsl[HSL_SATURATION]  = MathMax(hsl[HSL_SATURATION], 0);  // limit range to 0...1
                   hsl[HSL_SATURATION]  = MathMin(hsl[HSL_SATURATION], 1);
                }
 
                // adjust lightness
-               if (!EQ(adjustLightness, 0)) {
-                  hsl[HSL_LIGHTNESS] *= (1 + adjustLightness/100);
+               if (!EQ(lightness, 0)) {
+                  hsl[HSL_LIGHTNESS] *= (1 + lightness/100);
                   hsl[HSL_LIGHTNESS]  = MathMax(hsl[HSL_LIGHTNESS], 0);    // limit range to 0...1
                   hsl[HSL_LIGHTNESS]  = MathMin(hsl[HSL_LIGHTNESS], 1);
                }
@@ -4757,13 +4759,13 @@ color ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double a
                color result = HSLToRGB(hsl);
                ArrayResize(hsl, 0);
 
-               if (!catch("ColorAdjust(1)"))
+               if (!catch("ModifyColor(1)"))
                   return(result);
 
-            } else catch("ColorAdjust(2)  invalid parameter adjustLightness = "+ NumberToStr(adjustLightness, ".1+"), ERR_INVALID_PARAMETER);
-         } else    catch("ColorAdjust(3)  invalid parameter adjustSaturation = "+ NumberToStr(adjustSaturation, ".1+"), ERR_INVALID_PARAMETER);
-      } else       catch("ColorAdjust(4)  invalid parameter adjustHue = "+ NumberToStr(adjustHue, ".1+"), ERR_INVALID_PARAMETER);
-   } else          catch("ColorAdjust(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_PARAMETER);
+            } else catch("ModifyColor(2)  invalid parameter lightness: "+ NumberToStr(lightness, ".1+"), ERR_INVALID_PARAMETER);
+         } else    catch("ModifyColor(3)  invalid parameter saturation: "+ NumberToStr(saturation, ".1+"), ERR_INVALID_PARAMETER);
+      } else       catch("ModifyColor(4)  invalid parameter hue: "+ NumberToStr(hue, ".1+"), ERR_INVALID_PARAMETER);
+   } else          catch("ModifyColor(5)  invalid parameter rgb: "+ rgb, ERR_INVALID_PARAMETER);
 
    return(EMPTY);
 }
