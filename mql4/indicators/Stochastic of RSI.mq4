@@ -8,9 +8,14 @@
  * The RSI (Relative Strength Index) is the EMA-smoothed ratio of gains to losses during the lookback period, again normalized
  * to a value from 0 to 100.
  *
+ *
  * Indicator buffers for iCustom():
  *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
  *  • Stochastic.MODE_SIGNAL: indicator signal line (the last moving average)
+ *
+ * If only one Moving Average is configured (MA1 or MA2) the indicator calculates the "Fast Stochastic" and MODE_MAIN contains
+ * the raw Stochastic. If both Moving Averages are configured the indicator calculates the "Slow Stochastic" and MODE_MAIN
+ * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average of MODE_MAIN.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -115,16 +120,24 @@ int onInit() {
    SetIndexBuffer(MODE_STOCH_MA1, bufferMa1  );          // first MA(Stoch):      visible
    SetIndexBuffer(MODE_STOCH_MA2, bufferMa2  );          // second MA(MA1):       visible, displayed in "Data" window
 
+   // swap MA periods for fast Stochastic
+   if (ma2Periods == 1) {
+      int tmp = ma1Periods;
+      ma1Periods = ma2Periods;
+      ma2Periods = tmp;
+   }
+
    // names, labels and display options
-   string sStochMa1Periods = ifString(stochPeriods==1, "", ", "+ ma1Periods);
-   string sStochMa2Periods = ifString(ma2Periods==1, "", ", "+ ma2Periods);
+   string sStochMa1Periods="", sStochMa2Periods="";
+   if (ma1Periods!=1)                  sStochMa1Periods = ", "+ ma1Periods;
+   if (ma1Periods==1 || ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
    string indicatorName    = "Stochastic(RSI("+ rsiPeriods +"), "+ stochPeriods + sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"    ");            // indicator subwindow and context menu
    SetIndexLabel(MODE_RSI,       NULL);
    SetIndexLabel(MODE_STOCH_RAW, NULL);
-   SetIndexLabel(MODE_STOCH_MA1, NULL);
-   SetIndexLabel(MODE_STOCH_MA2, "Stoch(RSI) signal");   // "Data" window and tooltips
+   SetIndexLabel(MODE_STOCH_MA1, "Stoch(RSI) main");     // "Data" window and tooltips
+   SetIndexLabel(MODE_STOCH_MA2, "Stoch(RSI) signal");
    IndicatorDigits(2);
    SetIndicatorOptions();
 
@@ -212,12 +225,12 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
-   int sigType = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
+   int sigType  = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
+   int sigWidth = signalDrawWidth;
 
-   SetIndexStyle(MODE_STOCH_MA1, DRAW_LINE, EMPTY, EMPTY,           Main.Color);
-   SetIndexStyle(MODE_STOCH_MA2, sigType,   EMPTY, signalDrawWidth, Signal.Color); SetIndexArrow(MODE_STOCH_MA2, 158);
+   SetIndexStyle(MODE_STOCH_MA1, DRAW_LINE, EMPTY, EMPTY,    Main.Color);
+   SetIndexStyle(MODE_STOCH_MA2, sigType,   EMPTY, sigWidth, Signal.Color); SetIndexArrow(MODE_STOCH_MA2, 158);
 }
 
 
@@ -227,10 +240,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Stochastic.Periods=",     Stochastic.Periods,     ";"+ NL,
-                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods, ";"+ NL,
-                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods, ";"+ NL,
-                            "RSI.Periods=",            RSI.Periods,            ";"+ NL,
-                            "Max.Values=",             Max.Values,             ";"+ NL)
+   return(StringConcatenate("Stochastic.Periods=",     Stochastic.Periods,       ";"+ NL,
+                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,   ";"+ NL,
+                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,   ";"+ NL,
+                            "RSI.Periods=",            RSI.Periods,              ";"+ NL,
+                            "Main.Color=",             ColorToStr(Main.Color),   ";"+ NL,
+                            "Signal.Color=",           ColorToStr(Signal.Color), ";"+ NL,
+                            "Signal.DrawType=",        Signal.DrawType,          ";"+ NL,
+                            "Signal.DrawWidth=",       Signal.DrawWidth,         ";"+ NL,
+                            "Max.Values=",             Max.Values,               ";"+ NL)
    );
 }
