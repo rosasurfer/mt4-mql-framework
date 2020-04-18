@@ -166,7 +166,7 @@ int onTick() {
    }
 
    for (i=ma1StartBar; i >= 0; i--) {
-      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, ma1Periods, 0, MODE_SMA, i); // no performance impact of WHOLE_ARRAY with MODE_SMA
+      bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, ma1Periods, 0, MODE_SMA, i); // SMA: no performance impact of WHOLE_ARRAY
    }
 
    for (i=ma2StartBar; i >= 0; i--) {
