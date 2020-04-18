@@ -18,12 +18,17 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Stochastic.Periods     = 96;
-extern int Stochastic.MA1.Periods = 10;                  // first moving average periods
-extern int Stochastic.MA2.Periods = 6;                   // second moving average periods
-extern int RSI.Periods            = 96;
+extern int    Stochastic.Periods     = 96;
+extern int    Stochastic.MA1.Periods = 10;               // first moving average periods
+extern int    Stochastic.MA2.Periods = 6;                // second moving average periods
+extern int    RSI.Periods            = 96;
 
-extern int Max.Values             = 10000;               // max. amount of values to calculate (-1: all)
+extern color  Main.Color             = CLR_NONE;
+extern color  Signal.Color           = DodgerBlue;
+extern string Signal.DrawType        = "Line* | Dot";
+extern int    Signal.DrawWidth       = 2;
+
+extern int    Max.Values             = 10000;            // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +46,7 @@ extern int Max.Values             = 10000;               // max. amount of value
 int       allocated_buffers = 4;
 
 #property indicator_color1    CLR_NONE
-#property indicator_color2    DodgerBlue
+#property indicator_color2    CLR_NONE
 
 #property indicator_level1    40
 #property indicator_level2    60
@@ -59,6 +64,8 @@ int ma1Periods;
 int ma2Periods;
 int rsiPeriods;
 
+int signalDrawType;
+int signalDrawWidth;
 int maxValues;
 
 
@@ -73,12 +80,34 @@ int onInit() {
    if (Stochastic.MA1.Periods < 1) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (Stochastic.MA2.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (RSI.Periods < 2)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Max.Values < -1)            return(catch("onInit(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    stochPeriods = Stochastic.Periods;
    ma1Periods   = Stochastic.MA1.Periods;
    ma2Periods   = Stochastic.MA2.Periods;
    rsiPeriods   = RSI.Periods;
-   maxValues    = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Main.Color   == 0xFF000000) Main.Color   = CLR_NONE;
+   if (Signal.Color == 0xFF000000) Signal.Color = CLR_NONE;
+
+   // Signal.DrawType
+   string sValues[], sValue=StrToLower(Signal.DrawType);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if      (StrStartsWith("line", sValue)) { signalDrawType = DRAW_LINE;  Signal.DrawType = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { signalDrawType = DRAW_ARROW; Signal.DrawType = "Dot";  }
+   else                       return(catch("onInit(5)  Invalid input parameter Signal.DrawType = "+ DoubleQuoteStr(Signal.DrawType), ERR_INVALID_INPUT_PARAMETER));
+
+   // Signal.DrawWidth
+   if (Signal.DrawWidth < 0)  return(catch("onInit(6)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.DrawWidth > 5)  return(catch("onInit(7)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   signalDrawWidth = Signal.DrawWidth;
+
+   // Max.Values
+   if (Max.Values < -1)       return(catch("onInit(8)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // buffer management
    SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:            invisible
@@ -185,8 +214,10 @@ void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
-   SetIndexStyle(MODE_STOCH_MA1, DRAW_NONE, EMPTY,       EMPTY);
-   SetIndexStyle(MODE_STOCH_MA2, DRAW_LINE, STYLE_SOLID, EMPTY); SetIndexArrow(MODE_STOCH_MA2, 159);
+   int sigType = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
+
+   SetIndexStyle(MODE_STOCH_MA1, DRAW_LINE, EMPTY, EMPTY,           Main.Color);
+   SetIndexStyle(MODE_STOCH_MA2, sigType,   EMPTY, signalDrawWidth, Signal.Color); SetIndexArrow(MODE_STOCH_MA2, 158);
 }
 
 
