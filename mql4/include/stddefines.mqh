@@ -335,6 +335,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define Bands.MODE_UPPER               1        // upper band value
 #define Bands.MODE_LOWER               2        // lower band value
 
+#define Broketrader.MODE_POSITION      6        // Broketrader positioning indicator
+
 #define Fisher.MODE_MAIN               0        // Fisher Transform main line
 #define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
 
