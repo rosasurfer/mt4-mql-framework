@@ -1400,7 +1400,7 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return int - EMPTY
+ * @return int - EMPTY (-1)
  */
 int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(EMPTY);
@@ -1408,7 +1408,7 @@ int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY darstellt.
+ * Ob der angegebene Wert die Konstante EMPTY darstellt (-1).
  *
  * @param  double value
  *
@@ -1433,7 +1433,7 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt.
+ * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt (0x7FFFFFFF = 2147483647 = INT_MAX).
  *
  * @param  double value
  *
