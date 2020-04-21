@@ -134,9 +134,9 @@ int onInit() {
    string indicatorName    = "Stochastic(RSI("+ rsiPeriods +"), "+ stochPeriods + sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"    ");            // indicator subwindow and context menu
-   SetIndexLabel(MODE_RSI,       NULL);
+   SetIndexLabel(MODE_RSI,       NULL);                  // "Data" window and tooltips
    SetIndexLabel(MODE_STOCH_RAW, NULL);
-   SetIndexLabel(MODE_STOCH_MA1, "Stoch(RSI) main");     // "Data" window and tooltips
+   SetIndexLabel(MODE_STOCH_MA1, "Stoch(RSI) main"); if (Main.Color == CLR_NONE) SetIndexLabel(MODE_STOCH_MA1, NULL);
    SetIndexLabel(MODE_STOCH_MA2, "Stoch(RSI) signal");
    IndicatorDigits(2);
    SetIndicatorOptions();
