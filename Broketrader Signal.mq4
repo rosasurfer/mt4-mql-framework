@@ -116,6 +116,9 @@ int onInit() {
    SetIndexBuffer(MODE_POSITION,      position      );   // position duration:      invisible (-n..0..+n)
    SetIndexBuffer(MODE_EXIT,          exit          );   // exit bar marker:        invisible (0..1)
 
+   SetIndexEmptyValue(MODE_POSITION, 0);
+   SetIndexEmptyValue(MODE_EXIT,     0);
+
    // chart legend
    indicatorName = "SMA("+ smaPeriods +")";
    if (!IsSuperContext()) {
@@ -265,7 +268,7 @@ int onTick() {
          histShortPrice1[i] = EMPTY_VALUE;
          histShortPrice2[i] = EMPTY_VALUE;
       }
-   }
+  }
 
    if (!IsSuperContext()) {
       color legendColor = ifInt(position[0] > 0, Green, DodgerBlue);
