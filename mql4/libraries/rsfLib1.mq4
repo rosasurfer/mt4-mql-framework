@@ -76,11 +76,11 @@ bool ArrayAddInt(int &array[], int value) {
 
 
 /**
- * Öffnet eine einzelne Datei im Texteditor.
+ * Load a file into the text editor.
  *
- * @param  string filename - Dateiname
+ * @param  string filename
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool EditFile(string filename) {
    if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename = "+ DoubleQuoteStr(filename), ERR_INVALID_PARAMETER));
@@ -91,52 +91,60 @@ bool EditFile(string filename) {
 
 
 /**
- * Öffnet eine oder mehrere Dateien im Texteditor.
+ * Load multiple files into the text editor.
  *
- * @param  string &filenames[] - Dateinamen
+ * @param  string &filenames[]
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
-   if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames = {}", ERR_INVALID_PARAMETER));
+   if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames: {}", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"] = "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+      if (__LOG()) log("EditFiles(3)  loading \""+ filenames[i] +"\"");
 
-      // resolve symlinks
-      while (IsSymlinkA(filenames[i])) {
-         string target = GetReparsePointTargetA(filenames[i]);
-         if (!StringLen(target))
-            break;
-         filenames[i] = target;
-         //debug("EditFiles(3)  resolved symlink: "+ target);
+      if (IsFileA(filenames[i])) {
+         // resolve existing symlinks
+         while (IsSymlinkA(filenames[i])) {
+            string target = GetReparsePointTargetA(filenames[i]);
+            if (!StringLen(target))
+               break;
+            filenames[i] = target;
+         }
       }
+      else if (!IsDirectoryA(filenames[i])) {
+         // create directory
+         int pos = Max(StrFindR(filenames[i], "/"), StrFindR(filenames[i], "\\"));
+         if (pos == 0)          return(!catch("EditFiles(4)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+         if (pos > 0) {
+            string dir = StrLeft(filenames[i], pos);
+            int error = CreateDirectoryA(dir, MKDIR_PARENT);
+            if (IsError(error)) return(!catch("EditFiles(5)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
+         }
+      }
+      else catch("EditFiles(6)  cannot open file "+ DoubleQuoteStr(filenames[i]) +" (is directory)", ERR_FILE_IS_DIRECTORY);
    }
 
-   // prüfen, ob ein Editor konfiguriert ist
-   string section = "System";
-   string key     = "Editor";
-   string editor  = GetGlobalConfigString(section, key);
-
+   // check the editor configuration
+   string editor = GetGlobalConfigString("System", "Editor");
 
    if (StringLen(editor) > 0) {
-      // ja: konfigurierten Editor benutzen
+      // use configured editor
       string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
-      if (result < 32)
-         return(!catch("EditFiles(4)->kernel32::WinExec(cmd=\""+ editor +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      if (result < 32) return(!catch("EditFiles(7)->kernel32::WinExec(cmd="+ DoubleQuoteStr(editor) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
    else {
-      // nein: ShellExecute() mit Default-Open-Methode benutzen
+      // use ShellExecute() and the OS default "open" handler
       string sNull;
       for (i=0; i < size; i++) {
          result = ShellExecuteA(NULL, "open", filenames[i], sNull, sNull, SW_SHOWNORMAL);
-         if (result <= 32)
-            return(!catch("EditFiles(5)->shell32::ShellExecuteA(file=\""+ filenames[i] +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+         if (result <= 32) return(!catch("EditFiles(8)->shell32::ShellExecuteA(file="+ DoubleQuoteStr(filenames[i]) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
       }
    }
-   return(!catch("EditFiles(6)"));
+   return(!catch("EditFiles(9)"));
 }
 
 
@@ -4709,46 +4717,48 @@ color HSLToRGB(double hsl[3]) {
 
 
 /**
- * Adjust a RGB color using the HSL color model. This model is used by the Windows color picker. The function adjusts
- * existing color values, it does not set new values.
+ * Adjust an RGB color using the HSL color model (same as the Windows color picker).
  *
- * @param  color  rgb              - color to adjust
- * @param  double adjustHue        - the hue can be shifted by +/-360°
- * @param  double adjustSaturation - the saturation can be adjusted from -100% to a positive infinite percentage
- * @param  double adjustLightness  - the lightness can be adjusted from -100% to a positive infinite percentage
+ * @param  color  rgb        - color to adjust
+ * @param  double hue        - shift from -360° to +360°                  (NULL for no change)
+ * @param  double saturation - adjustment from -100% to positive infinite (NULL for no change)
+ * @param  double lightness  - adjustment from -100% to positive infinite (NULL for no change)
  *
  * @return color - adjusted color or -1 (EMPTY) in case of errors
  *
  * Example:
  * --------
- *   ColorAdjust(C'90,128,162', NULL, NULL, 30) => C'119,168,212'          // lightness of the color is increased by 30%
+ *   ModifyColor(C'90,128,162', NULL, NULL, 30) => C'119,168,212'          // lightness of the color is increased by 30%
  */
-color ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double adjustLightness) {
+color ModifyColor(color rgb, double hue, double saturation, double lightness) {
+   if (rgb == CLR_NONE) return(CLR_NONE);
+
    if (rgb >= 0) {
-      if (-360 <= adjustHue && adjustHue <= 360) {
-         if (adjustSaturation >= -100) {                                   // max. reduction is -100%
-            if (adjustLightness >= -100) {                                 // max. reduction is -100%
+      if (-360 <= hue && hue <= 360) {
+         if (saturation >= -100) {                                         // max. reduction is -100%
+            if (lightness >= -100) {                                       // max. reduction is -100%
 
                // convert color to HSL
-               double hsl[]; RGBToHSL(rgb, hsl);
+               double hsl[];
+               RGBToHSL(rgb, hsl);
 
                // adjust hue
-               if (!EQ(adjustHue, 0)) {
-                  hsl[HSL_HUE] += adjustHue/360;
+               if (!EQ(hue, 0)) {
+                  hsl[HSL_HUE] += hue/360;
                   if      (hsl[HSL_HUE] < 0) hsl[HSL_HUE] += 1;            // limit range to 0...1
                   else if (hsl[HSL_HUE] > 1) hsl[HSL_HUE] -= 1;
                }
 
                // adjust saturation
-               if (!EQ(adjustSaturation, 0)) {
-                  hsl[HSL_SATURATION] *= (1 + adjustSaturation/100);
+               if (!EQ(saturation, 0)) {
+                  hsl[HSL_SATURATION] *= (1 + saturation/100);
                   hsl[HSL_SATURATION]  = MathMax(hsl[HSL_SATURATION], 0);  // limit range to 0...1
                   hsl[HSL_SATURATION]  = MathMin(hsl[HSL_SATURATION], 1);
                }
 
                // adjust lightness
-               if (!EQ(adjustLightness, 0)) {
-                  hsl[HSL_LIGHTNESS] *= (1 + adjustLightness/100);
+               if (!EQ(lightness, 0)) {
+                  hsl[HSL_LIGHTNESS] *= (1 + lightness/100);
                   hsl[HSL_LIGHTNESS]  = MathMax(hsl[HSL_LIGHTNESS], 0);    // limit range to 0...1
                   hsl[HSL_LIGHTNESS]  = MathMin(hsl[HSL_LIGHTNESS], 1);
                }
@@ -4757,13 +4767,13 @@ color ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double a
                color result = HSLToRGB(hsl);
                ArrayResize(hsl, 0);
 
-               if (!catch("ColorAdjust(1)"))
+               if (!catch("ModifyColor(1)"))
                   return(result);
 
-            } else catch("ColorAdjust(2)  invalid parameter adjustLightness = "+ NumberToStr(adjustLightness, ".1+"), ERR_INVALID_PARAMETER);
-         } else    catch("ColorAdjust(3)  invalid parameter adjustSaturation = "+ NumberToStr(adjustSaturation, ".1+"), ERR_INVALID_PARAMETER);
-      } else       catch("ColorAdjust(4)  invalid parameter adjustHue = "+ NumberToStr(adjustHue, ".1+"), ERR_INVALID_PARAMETER);
-   } else          catch("ColorAdjust(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_PARAMETER);
+            } else catch("ModifyColor(2)  invalid parameter lightness: "+ NumberToStr(lightness, ".1+"), ERR_INVALID_PARAMETER);
+         } else    catch("ModifyColor(3)  invalid parameter saturation: "+ NumberToStr(saturation, ".1+"), ERR_INVALID_PARAMETER);
+      } else       catch("ModifyColor(4)  invalid parameter hue: "+ NumberToStr(hue, ".1+"), ERR_INVALID_PARAMETER);
+   } else          catch("ModifyColor(5)  invalid parameter rgb: "+ rgb, ERR_INVALID_PARAMETER);
 
    return(EMPTY);
 }

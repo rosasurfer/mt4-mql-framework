@@ -8782,7 +8782,6 @@ flags=339
 window_num=0
 <inputs>
 Periods=20
-Draw.Type=Dot
 </inputs>
 </expert>
 period_flags=0

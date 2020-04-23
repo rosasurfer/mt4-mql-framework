@@ -598,7 +598,7 @@ bool UpdateDescription() {
    ObjectSetText(label, description, fontSize, fontName, Black);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // on Object::onDrag() or on opened dialog "Properties"
       return(!catch("UpdateDescription(1)", error));
    return(true);
 }

@@ -1400,7 +1400,7 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return int - EMPTY
+ * @return int - EMPTY (-1)
  */
 int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(EMPTY);
@@ -1408,7 +1408,7 @@ int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY darstellt.
+ * Ob der angegebene Wert die Konstante EMPTY darstellt (-1).
  *
  * @param  double value
  *
@@ -1433,7 +1433,7 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt.
+ * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt (0x7FFFFFFF = 2147483647 = INT_MAX).
  *
  * @param  double value
  *
@@ -5949,7 +5949,7 @@ bool init.LogErrorsToSMS() {
 
 
 /**
- * Load the "ALMA" indicator and return an indicator value.
+ * Load the "ALMA" indicator and return a value.
  *
  * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    maPeriods          - indicator parameter
@@ -6001,7 +6001,7 @@ double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distrib
 
 
 /**
- * Load the "FATL" indicator and return an indicator value.
+ * Load the "FATL" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int iBuffer   - indicator buffer index of the value to return
@@ -6044,7 +6044,7 @@ double iFATL(int timeframe, int iBuffer, int iBar) {
 
 
 /**
- * Load the "HalfTrend" indicator and return an indicator value.
+ * Load the "HalfTrend" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int periods   - indicator parameter
@@ -6091,7 +6091,7 @@ double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
 
 
 /**
- * Load the "Jurik Moving Average" indicator and return an indicator value.
+ * Load the "Jurik Moving Average" and return an indicator value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    periods      - indicator parameter
@@ -6141,7 +6141,7 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
 
 
 /**
- * Load the framework'a "MACD" indicator and return an indicator value.
+ * Load the custom "MACD" indicator and return a value.
  *
  * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    fastMaPeriods      - indicator parameter
@@ -6199,7 +6199,7 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
 
 
 /**
- * Load the "Moving Average" indicator and return an indicator value.
+ * Load the custom "Moving Average" and return an indicator value.
  *
  * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    maPeriods      - indicator parameter
@@ -6249,7 +6249,7 @@ double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAp
 
 
 /**
- * Load the "NonLagMA" indicator and return an indicator value.
+ * Load the "NonLagMA" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    cycleLength  - indicator parameter
@@ -6297,7 +6297,7 @@ double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffe
 
 
 /**
- * Load the "RSI" indicator and return an indicator value.
+ * Load the custom "RSI" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    periods      - indicator parameter
@@ -6311,7 +6311,7 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "RSI ",
+   double value = iCustom(NULL, timeframe, ".attic/RSI",
                           periods,                                         // int    RSI.Periods
                           appliedPrice,                                    // string RSI.AppliedPrice
 
@@ -6341,7 +6341,7 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
 
 
 /**
- * Load the "SATL" indicator and return an indicator value.
+ * Load the "SATL" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int iBuffer   - indicator buffer index of the value to return
@@ -6384,7 +6384,53 @@ double iSATL(int timeframe, int iBuffer, int iBar) {
 
 
 /**
- * Load "Ehlers 2-Pole-SuperSmoother" indicator and return an indicator value.
+ * Load the "Stochastic of RSI" indicator and return a value.
+ *
+ * @param  int timeframe            - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int stochasticPeriods    - indicator parameter
+ * @param  int stochasticMa1Periods - indicator parameter
+ * @param  int stochasticMa2Periods - indicator parameter
+ * @param  int rsiPeriods           - indicator parameter
+ * @param  int iBuffer              - indicator buffer index of the value to return
+ * @param  int iBar                 - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "Stochastic of RSI",
+                          stochasticPeriods,                               // int    Stochastic.Periods
+                          stochasticMa1Periods,                            // int    Stochastic.MA1.Periods
+                          stochasticMa2Periods,                            // int    Stochastic.MA2.Periods
+                          rsiPeriods,                                      // int    RSI.Periods
+                          CLR_NONE,                                        // color  Main.Color
+                          DodgerBlue,                                      // color  Signal.Color
+                          "Line",                                          // string Signal.DrawType
+                          1,                                               // int    Signal.DrawWidth
+                          -1,                                              // int    Max.Values
+                          "",                                              // string ______________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("iStochasticOfRSI(1)", error));
+      warn("iStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Load "Ehlers 2-Pole-SuperSmoother" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    periods      - indicator parameter
@@ -6432,7 +6478,7 @@ double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuff
 
 
 /**
- * Load the "SuperTrend" indicator and return an indicator value.
+ * Load the "SuperTrend" indicator and return a value.
  *
  * @param  int timeframe  - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int atrPeriods - indicator parameter
@@ -6482,7 +6528,7 @@ double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, i
 
 
 /**
- * Load the "TriEMA" indicator and return an indicator value.
+ * Load the "TriEMA" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    periods      - indicator parameter
@@ -6530,7 +6576,7 @@ double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int
 
 
 /**
- * Load the "Trix" indicator and return an indicator value.
+ * Load the "Trix" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    periods      - indicator parameter
@@ -6705,6 +6751,7 @@ void __DummyCalls() {
    IsScript();
    IsShortAccountCompany(NULL);
    IsShortOrderType(NULL);
+   iStochasticOfRSI(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);

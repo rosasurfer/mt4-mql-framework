@@ -152,7 +152,7 @@
    color    RGB(int red, int green, int blue);
    int      RGBToHSL(color rgb, double hsl[], bool human = false);
    color    HSLToRGB(double hsl[3]);
-   color    ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double adjustLightness);
+   color    ModifyColor(color rgb, double hue, double saturation, double lightness);
 
 
    // Files, I/O

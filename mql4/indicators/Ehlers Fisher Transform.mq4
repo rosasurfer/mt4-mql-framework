@@ -1,8 +1,8 @@
 /**
  * Ehlers' Fisher Transform
  *
- * as described in his book "Cybernetic Analysis for Stocks and Futures". Essentially this indicator is a different
- * visualization of a smoothed Stochastic oscillator.
+ * as described in his book "Cybernetic Analysis for Stocks and Futures". This indicator is a different visualization of a
+ * smoothed Stochastic oscillator.
  *
  *
  * Indicator buffers for iCustom():
@@ -263,8 +263,7 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Fisher.Periods=",  Fisher.Periods,                          ";", NL,
-
+   return(StringConcatenate("Fisher.Periods=",        Fisher.Periods,                    ";", NL,
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";", NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";", NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,             ";")
