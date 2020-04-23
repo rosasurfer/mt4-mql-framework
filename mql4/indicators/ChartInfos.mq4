@@ -4797,9 +4797,9 @@ bool onPositionClose(int tickets[][]) {
 
 
 /**
- * Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
+ * Load the current account configuration into the editor.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool EditAccountConfig() {
    string files[];
@@ -4817,7 +4817,7 @@ bool EditAccountConfig() {
       ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
    }
 
-   if (!EditFiles(files)) return(false);
+   return(EditFiles(files));
 }
 
 
