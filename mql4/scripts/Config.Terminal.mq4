@@ -1,5 +1,5 @@
 /**
- * Load global and local framework configuration in the configured text editor.
+ * Load global and current terminal configurations into the editor.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
@@ -19,7 +19,6 @@ int onStart() {
    files[0] = GetGlobalConfigPathA(); if (!StringLen(files[0])) return(ERR_RUNTIME_ERROR);
    files[1] = GetLocalConfigPathA();  if (!StringLen(files[1])) return(ERR_RUNTIME_ERROR);
 
-   if (!EditFiles(files)) return(ERR_RUNTIME_ERROR);
-
+   EditFiles(files);
    return(catch("onStart(1)"));
 }
