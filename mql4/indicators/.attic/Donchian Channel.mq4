@@ -45,7 +45,7 @@ int onInit() {
    string indicatorName = "Donchian Channel("+ Periods +")";
    IndicatorShortName(indicatorName);
 
-   SetIndexLabel(0, "Donchian Upper("+ Periods +")");                // Daten-Anzeige
+   SetIndexLabel(0, "Donchian Upper("+ Periods +")");                      // Daten-Anzeige
    SetIndexLabel(1, "Donchian Lower("+ Periods +")");
    IndicatorDigits(Digits);
 
@@ -55,7 +55,7 @@ int onInit() {
        ObjectRegister(legendLabel);
        ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);
        int error = GetLastError();
-       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
+       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)   // on Object::onDrag() or on opened dialog "Properties"
           return(catch("onInit(2)", error));
    }
 
