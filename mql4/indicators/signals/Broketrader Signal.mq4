@@ -17,11 +17,11 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int   SMA.Periods            = 96;                // 100
-extern int   Stochastic.Periods     = 96;                // 100
-extern int   Stochastic.MA1.Periods = 10;                //  30
-extern int   Stochastic.MA2.Periods = 6;                 //   6
-extern int   RSI.Periods            = 96;                // 100
+extern int   SMA.Periods            = 96;
+extern int   Stochastic.Periods     = 96;
+extern int   Stochastic.MA1.Periods = 10;
+extern int   Stochastic.MA2.Periods = 6;
+extern int   RSI.Periods            = 96;
 
 extern color Color.Long             = GreenYellow;
 extern color Color.Short            = C'81,211,255';     // lightblue-ish

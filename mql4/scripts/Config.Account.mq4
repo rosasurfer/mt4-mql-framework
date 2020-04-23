@@ -1,5 +1,5 @@
 /**
- * Send the command to the ChartInfos indikator to load the current account configuration into the editor.
+ * Send the command to the ChartInfos indicator to load the current account configuration into the editor.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
