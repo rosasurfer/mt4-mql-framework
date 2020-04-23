@@ -1109,7 +1109,7 @@ bool ToggleAuM() {
    }
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or on opened dialog "Properties"
       return(!catch("ToggleAuM(1)", error));
 
    // Anzeigestatus im Chart speichern
@@ -1329,27 +1329,26 @@ bool UpdatePrice() {
    ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdatePrice(1)", error));
 }
 
 
 /**
- * Aktualisiert die Spreadanzeige.
+ * Update the displayed spread.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateSpread() {
-   if (!Bid)                                                                  // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      return(true);
+   if (!Bid) return(true);                                                 // symbol not (yet) subscribed: on start, account/template change, offline chart
 
-   string strSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);               // in Tester MarketInfo(MODE_SPREAD) is wrongly implemented
+   string sSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);              // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
 
-   ObjectSetText(label.spread, strSpread, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1361,7 +1360,7 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                     return(true);         // Anzeige wird im Tester nicht benötigt
+   if (IsTesting())                                     return(true);      // Anzeige wird im Tester nicht benötigt
    if (!mm.isDone) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
    if (!mm.isDone)                                      return(true);
 
@@ -1375,7 +1374,7 @@ bool UpdateUnitSize() {
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1414,7 +1413,7 @@ bool UpdatePositions() {
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or on opened dialog "Properties"
       return(!catch("UpdatePositions(1)", error));
 
 
@@ -1637,7 +1636,7 @@ bool UpdateOrderCounter() {
    ObjectSetText(label.orderCounter, sText, 8, "Tahoma Fett", objectColor);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdateOrderCounter(1)", error));
 }
@@ -1666,7 +1665,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
@@ -1684,7 +1683,7 @@ bool UpdateStopoutLevel() {
    if (!mode.intern.trading || !totalPosition) {                                       // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // bei offenem Properties-Dialog oder Object::onDrag()
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on Object::onDrag() or on opened dialog "Properties"
          return(!catch("UpdateStopoutLevel(1)", error));
       return(true);
    }
@@ -1720,7 +1719,7 @@ bool UpdateStopoutLevel() {
 
 
    error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdateStopoutLevel(2)", error));
 }
@@ -1776,7 +1775,7 @@ bool UpdateOHLC() {
    ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or on opened dialog "Properties"
       return(true);
    return(!catch("UpdateOHLC(2)", error));
 }
