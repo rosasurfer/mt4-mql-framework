@@ -1,9 +1,9 @@
 /**
  * Ehlers' Two-Pole Super Smoother Filter
  *
- *
  * as described in his book "Cybernetic Analysis for Stocks and Futures". Compared to the ALMA the SuperSmoother is a little
  * more smooth at the cost of a bit more lag.
+ *
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    all filter values
@@ -11,8 +11,7 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @author  John F. Ehlers
- * @see     "/etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures [Ehlers, 2004].pdf"
+ * @see  "/etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures [Ehlers, 2004].pdf"
  *
  *
  * TODO: analyze and fix the required run-up period

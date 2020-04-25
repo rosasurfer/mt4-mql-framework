@@ -1,5 +1,5 @@
 /**
- * Low-lag moving average
+ * Low-lag moving average (based on sources by Igor Durkin aka igorad)
  *
  *
  * This implementation uses the formula of version 4. While version 7 is a bit less responsive (and may be more correct) in
@@ -11,7 +11,6 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @author  Igor Durkin (aka igorad)
  * @see     v4.0: http://www.forexfactory.com/showthread.php?t=571026
  * @see     v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
  * @see     v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
