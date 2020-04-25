@@ -1,3 +1,14 @@
+/**
+ * Fractal Dimension Index (presumably Ehlers)
+ *
+ * @see  https://www.tradingview.com/script/GyR8LJq0-Fractal-Dimension-Index-FDI/
+ * @see  https://www.forexfactory.com/showthread.php?t=716482&page=17                          [formulas & extensive details]
+ */
+
+
+
+
+
 //+------------------------------------------------------------------------------------------------------------------+
 //|                                                                              fractal_dimension.mq4               |
 //|                                                                              iliko [arcsin5@netscape.net]        |
@@ -17,30 +28,30 @@
 //|  For more informations, see                                                                                      |
 //|  http://www.forex-tsd.com/suggestions-trading-systems/6119-tasc-03-07-fractal-dimension-index.html               |
 //|                                                                                                                  |
-//|                                                                                                                  |   
-//|  HOW TO USE INPUT PARAMETERS :                                                                                   |   
-//|  -----------------------------                                                                                   |   
-//|                                                                                                                  |   
-//|      1) e_period [ integer >= 1 ]                                              =>  30                            |   
-//|                                                                                                                  |   
-//|         The indicator will compute the historical market volatility over this period.                            |   
-//|         Choose its value according to the average of trend lengths.                                              |   
-//|                                                                                                                  |   
-//|      2) e_type_data [ int = {PRICE_CLOSE = 0,                                                                    |   
-//|                              PRICE_OPEN  = 1,                                                                    |   
-//|                              PRICE_HIGH  = 2,                                                                    |   
-//|                              PRICE_LOW   = 3,                                                                    |   
-//|                              PRICE_MEDIAN    (high+low)/2              = 4,                                      |   
-//|                              PRICE_TYPICAL   (high+low+close)/3        = 5,                                      |   
-//|                              PRICE_WEIGHTED  (high+low+close+close)/4  = 6}     => PRICE_CLOSE                   |   
-//|                                                                                                                  |   
-//|         Defines on which price type the Fractal Dimension is computed.                                           |   
+//|                                                                                                                  |
+//|  HOW TO USE INPUT PARAMETERS :                                                                                   |
+//|  -----------------------------                                                                                   |
+//|                                                                                                                  |
+//|      1) e_period [ integer >= 1 ]                                              =>  30                            |
+//|                                                                                                                  |
+//|         The indicator will compute the historical market volatility over this period.                            |
+//|         Choose its value according to the average of trend lengths.                                              |
+//|                                                                                                                  |
+//|      2) e_type_data [ int = {PRICE_CLOSE = 0,                                                                    |
+//|                              PRICE_OPEN  = 1,                                                                    |
+//|                              PRICE_HIGH  = 2,                                                                    |
+//|                              PRICE_LOW   = 3,                                                                    |
+//|                              PRICE_MEDIAN    (high+low)/2              = 4,                                      |
+//|                              PRICE_TYPICAL   (high+low+close)/3        = 5,                                      |
+//|                              PRICE_WEIGHTED  (high+low+close+close)/4  = 6}     => PRICE_CLOSE                   |
+//|                                                                                                                  |
+//|         Defines on which price type the Fractal Dimension is computed.                                           |
 //|                                                                                                                  |
 //|      3) e_random_line [ 0.0 < double < 2.0 ]                                   => 1.5                            |
 //|                                                                                                                  |
-//|         Defines your separation betwen a trend market (red) and an erratic/high volatily one.                    |   
-//|                                                                                                                  |   
-//| v1.0 - February 2007                                                                                            |   
+//|         Defines your separation betwen a trend market (red) and an erratic/high volatily one.                    |
+//|                                                                                                                  |
+//| v1.0 - February 2007                                                                                            |
 //+------------------------------------------------------------------------------------------------------------------+
 #property link      "arcsin5@netscape.net"
 //----
@@ -58,7 +69,7 @@
 //************************************************************
 extern int    e_period      =30;
 extern int    e_type_data   =PRICE_CLOSE;
-extern double e_random_line =1.5;
+extern double e_random_line =1.5;               // Indicator triggering is defined by the value of the following input parameter:
 //************************************************************
 // Constant
 //************************************************************
@@ -75,9 +86,9 @@ double ExtOutputBufferUp[];
 double ExtOutputBufferDown[];
 int g_period_minus_1;
 //+-----------------------------------------------------------------------+
-//| FUNCTION : init                                                       |                                                                                                                                                                                                                                                      
-//| Initialization function                                               |                                   
-//| Check the user input parameters and convert them in appropriate types.|                                                                                                    
+//| FUNCTION : init                                                       |
+//| Initialization function                                               |
+//| Check the user input parameters and convert them in appropriate types.|
 //+-----------------------------------------------------------------------+
 int init()
   {
@@ -131,7 +142,7 @@ int start()
    if(counted_bars>0) counted_bars--;
    int limit=Bars-counted_bars;
    if(counted_bars==0) limit-=1+e_period;
-   
+
    _computeLastNbBars(limit);
 //----
    return(0);
@@ -149,7 +160,7 @@ int start()
 //+------------------------------------------------------------------+
 //| FUNCTION : _computeLastNbBars                                    |
 //| This callback is fired by metatrader for each tick                |
-//| In : - lastBars : these "n" last bars must be repainted           | 
+//| In : - lastBars : these "n" last bars must be repainted           |
 //+------------------------------------------------------------------+
 void _computeLastNbBars(int lastBars)
   {
