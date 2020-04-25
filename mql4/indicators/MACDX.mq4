@@ -1,5 +1,5 @@
 /**
- * Extended MACD (Moving Average Convergence-Divergence) with support for non-standard moving averages.
+ * A MACD (Moving Average Convergence-Divergence) with support for non-standard moving averages
  *
  *
  * Available Moving Average types:
@@ -8,13 +8,13 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
+ * There's intentionally no support for the SMMA as SMMA(n) = EMA(2*n-1).
+ *
  * Indicator buffers for iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
  *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
- *
- * Note: There's no support for the SMMA as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
