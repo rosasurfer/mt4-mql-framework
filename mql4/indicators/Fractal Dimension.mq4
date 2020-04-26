@@ -1,14 +1,13 @@
 /**
  * Fractal Dimension Index (presumably Ehlers)
  *
+ * @see  https://www.mql5.com/en/code/7758                                         [iliko]
  * @see  https://www.tradingview.com/script/GyR8LJq0-Fractal-Dimension-Index-FDI/
- * @see  https://www.forexfactory.com/showthread.php?t=716482&page=17                          [formulas & extensive details]
+ * @see  https://www.forexfactory.com/showthread.php?t=716482&page=17              [Formulas & Details]
  */
 
 
-
-
-
+// @source  https://www.mql5.com/en/code/7758
 //+------------------------------------------------------------------------------------------------------------------+
 //|                                                                              fractal_dimension.mq4               |
 //|                                                                              iliko [arcsin5@netscape.net]        |

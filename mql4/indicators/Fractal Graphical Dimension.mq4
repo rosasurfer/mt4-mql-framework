@@ -1,10 +1,25 @@
+/**
+ * Fractal Graphical Dimension Index
+ *
+ * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, Jean-Philippe Poton]
+ * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog entry, Jean-Philippe Poton]
+ *
+ * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, Jean-Philippe Poton]
+ * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog entry, Jean-Philippe Poton]
+ *
+ * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
+ * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on Poton]
+ */
+
+
+// @source  https://www.mql5.com/en/forum/176309/page4#comment_4308422
 //+------------------------------------------------------------------+
 //|                                                         FDGI.mq4 |
-//|                             Copyright (c) 2016, Gehtsoft USA LLC | 
+//|                             Copyright (c) 2016, Gehtsoft USA LLC |
 //|                                            http://fxcodebase.com |
-//|                                   Paypal: https://goo.gl/9Rj74e  | 
+//|                                   Paypal: https://goo.gl/9Rj74e  |
 //+------------------------------------------------------------------+
-//|                                      Developed by : Mario Jemic  |                    
+//|                                      Developed by : Mario Jemic  |
 //|                                          mario.jemic@gmail.com   |
 //|                   BitCoin : 15VCJTLaz12Amr7adHSBtL9v8XomURo9RF   |
 //+------------------------------------------------------------------+
@@ -30,14 +45,14 @@ double buffDN[];
 double UPbuffUP[];
 double UPbuffDN[];
 double DNbuffUP[];
-double DNbuffDN[]; 
+double DNbuffDN[];
 double Price[];
 
 int init(){
-   
+
    IndicatorShortName("FDGI");
    IndicatorBuffers(7);
-   
+
    SetIndexStyle(0,DRAW_LINE,STYLE_SOLID,1,Color_buffUP);
    SetIndexBuffer(0,buffUP);
    SetIndexLabel(0,"buffUP");
@@ -56,24 +71,24 @@ int init(){
    SetIndexStyle(5,DRAW_LINE,STYLE_SOLID,1,Color_DNbuffDN);
    SetIndexBuffer(5,DNbuffDN);
    SetIndexLabel(5,"DNbuffDN");
-   
+
    SetIndexBuffer(6,Price);
-   
+
    SetLevelValue(0,1.5);
    SetLevelStyle(STYLE_DOT,1);
-   
+
    return(0);
 }
 
 int start()
   {
-   
+
    int i, j;
    int counted_bars=IndicatorCounted();
    int limit = Bars-counted_bars-1;
-      
+
    for (i=limit-Periods+1; i>=0; i--){
-      
+
       if (ENUM_APPLIED_PRICE(Price_Type)==PRICE_CLOSE)
          Price[i]=Close[i];
       else if (ENUM_APPLIED_PRICE(Price_Type)==PRICE_OPEN)
@@ -88,19 +103,19 @@ int start()
          Price[i]=(High[i]+Low[i]+Close[i])/3;
       else
          Price[i]=(High[i]+Low[i]+(2*Close[i]))/4;
-         
+
    }
-    
+
    double priceMax, priceMin, length, priorDiff, diff, sum;
    double fdi, variance, mean, delta, stddev;
-   
+
    for (i=limit-Periods+1; i>=0; i--){
-      
+
       length=0;
       priorDiff=0;
       diff=0;
       sum=0;
-      
+
       for (j=(i+Periods-1); j>=i; j--){
          if (j==(i+Periods-1))
             priceMax = priceMin = Price[j];
@@ -109,7 +124,7 @@ int start()
             if (Price[j]<priceMin)  priceMin = Price[j];
          }
       }
-      
+
       for (j=(i+Periods-1); j>=i; j--){
          if ((priceMax-priceMin) > 0){
             diff = (Price[j]-priceMin)/(priceMax-priceMin);
@@ -119,9 +134,9 @@ int start()
             priorDiff=diff;
          }
       }
-      
-      
-      
+
+
+
       if (length > 0){
          fdi = 1+(MathLog(length)+MathLog(2)) / MathLog(2*(Periods-1));
          mean=length/(Periods-1);
@@ -143,7 +158,7 @@ int start()
       //buffUP[i]=fdi;
       stddev = MathSqrt(variance);
       if (i==1) Comment(fdi);
-         
+
       if (fdi>Random_Line){
          buffUP[i]=fdi;
          buffUP[i+1]=MathMin(buffUP[i+1],buffDN[i+1]);
@@ -178,9 +193,9 @@ int start()
          DNbuffDN[i+1]=buffDN[i+1]-stddev;
          DNbuffUP[i]=EMPTY_VALUE;
       }
-         
+
    }
-   
+
 //----
    return(0);
 }
