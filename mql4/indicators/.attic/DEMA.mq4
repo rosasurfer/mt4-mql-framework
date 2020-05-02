@@ -1,11 +1,11 @@
 /**
  * Double Exponential Moving Average (DEMA) by Patrick G. Mulloy
  *
- *
  * Opposite to what its name suggests the DEMA is not an EMA applied twice. Instead for calculation a double-smoothed EMA is
  * subtracted from a previously doubled regular EMA:
  *
  *   DEMA(n) = 2*EMA(n) - EMA(EMA(n))
+ *
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA: MA values

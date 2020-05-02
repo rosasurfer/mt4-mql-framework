@@ -1,15 +1,15 @@
 /**
  * Broketrader Signal
  *
- * Marks long and short position periods of Broketrader's EURUSD-H1-Swing system.
- *
- * @see  https://www.forexfactory.com/showthread.php?t=970975
+ * Marks long and short position periods of the Broketrader EURUSD-H1-Swing system.
  *
  *
  * Indicator buffers for iCustom():
  *  • Broketrader.MODE_POSITION: positioning direction and duration
  *    - positioning direction: positive values denote a long position (+1...+n), negative values a short position (-1...-n)
  *    - positioning duration:  the absolute direction value is the age in bars since position open
+ *
+ * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];

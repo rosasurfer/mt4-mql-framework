@@ -1,7 +1,7 @@
 /**
  * EquityRecorder
  *
- * Records the account's true equity value (without duplicated fees or spreads).
+ * Records the current account's equity curve. The actual value is adjusted for duplicated trading costs (fees and spreads).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -18,32 +18,31 @@ int __DEINIT_FLAGS__[];
 #include <rsfHistory.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers      0
+#property indicator_color1       CLR_NONE
 
+#define I_ACCOUNT                0                                   // index of the adjusted equity value
+#define I_ACCOUNT_PLUS_ASSETS    1                                   // index of the adjusted equity value plus external assets
 
-double   account.data     [2];                                       // Accountdaten
-double   account.data.last[2];                                       // vorheriger Datenwert für RecordAccountData()
-int      account.hSet     [2];                                       // HistorySet-Handles der Accountdaten
+double currentEquity[2];                                             // current equity values
+double prevEquity   [2];                                             // previous equity values
+int    hHstSet      [2];                                             // HistorySet handles
 
-string   account.symbolSuffixes    [] = { ".EA"                           , ".EX"                                                 };
-string   account.symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity with external assets" };
-
-// Array-Indizes
-#define I_ACCOUNT_EQUITY            0                                // echter Equity-Wert des Accounts (nicht wie vom Broker berechnet)
-#define I_ACCOUNT_EQUITY_WITH_AUM   1                                // echter Equity-Wert inklusive externer Assets
+string symbolSuffixes    [] = { ".EA"                           , ".EX"                                                 };
+string symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity plus external assets" };
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
-
-   int size = ArraySize(account.hSet);
+   int size = ArraySize(hHstSet);
    for (int i=0; i < size; i++) {
-      if (account.hSet[i] != 0) {
-         int tmp=account.hSet[i]; account.hSet[i]=NULL;
+      if (hHstSet[i] != 0) {
+         int tmp = hHstSet[i];
+         hHstSet[i] = NULL;
          if (!HistorySet.Close(tmp)) return(ERR_RUNTIME_ERROR);
       }
    }
@@ -52,20 +51,17 @@ int onDeinit() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
-   // alte Ticks abfangen (am oder nach dem Wochenende)
+   // skip old ticks (e.g. during session break or weekend)
    bool isStale = (Tick.Time < GetServerTime()-2*MINUTES);
    if (isStale) return(last_error);
 
-   // aktuelle Accountdaten ermitteln
    if (!CollectAccountData()) return(last_error);
-
-   // Accountdaten speichern
-   if (!RecordAccountData()) return(last_error);
+   if (!RecordAccountData())  return(last_error);
 
    return(last_error);
 }
@@ -74,15 +70,14 @@ int onTick() {
 /**
  * Ermittelt die aktuellen Accountdaten: Account-Balance und Account-Equity jeweils mit und ohne externe Assets
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CollectAccountData() {
    // nach Symbol gruppierte Daten
    string symbols       []; ArrayResize(symbols       , 0);          // alle Symbole mit offenen Positionen
    double symbols.profit[]; ArrayResize(symbols.profit, 0);          // Gesamt-P/L eines Symbols
 
-
-   // (1) offene Positionen einlesen
+   // offene Positionen einlesen
    int orders = OrdersTotal();
    int    symbols.idx[]; ArrayResize(symbols.idx, orders);           // Index des OrderSymbols in symbols[]
    int    tickets    []; ArrayResize(tickets    , orders);
@@ -126,8 +121,7 @@ bool CollectAccountData() {
       orders = n;
    }
 
-
-   // (2) P/L je Symbol ermitteln
+   // P/L je Symbol ermitteln
    int symbolsSize = ArraySize(symbols);
    ArrayResize(symbols.profit, symbolsSize);
 
@@ -138,16 +132,12 @@ bool CollectAccountData() {
       symbols.profit[i] = NormalizeDouble(symbols.profit[i], 2);
    }
 
-
-   // (3) resultierende Accountdaten berechnen und global speichern
+   // resultierende Accountdaten berechnen und global speichern
    double fullPL          = SumDoubles(symbols.profit);
    double externalAssets  = GetExternalAssets(ShortAccountCompany(), GetAccountNumber()); if (IsEmptyValue(externalAssets)) return(false);
 
-   account.data[I_ACCOUNT_EQUITY         ] = NormalizeDouble(AccountBalance()               + fullPL        , 2);
-   account.data[I_ACCOUNT_EQUITY_WITH_AUM] = NormalizeDouble(account.data[I_ACCOUNT_EQUITY] + externalAssets, 2);
-
-   //static bool done;
-   //if (!done) done = !debug("CollectAccountData(2)  equity="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY], 2) +"  withAuM="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY_WITH_AUM], 2));
+   currentEquity[I_ACCOUNT            ] = NormalizeDouble(AccountBalance()         + fullPL,         2);
+   currentEquity[I_ACCOUNT_PLUS_ASSETS] = NormalizeDouble(currentEquity[I_ACCOUNT] + externalAssets, 2);
 
    return(!catch("CollectAccountData(3)"));
 }
@@ -175,7 +165,7 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
    double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit, vtmProfit, pipValue, pipDistance;
    int    ticketsSize = ArraySize(tickets);
 
-   // (1) Gesamtposition des Symbols ermitteln: gehedgter Anteil (konstanter Profit) und direktionaler Anteil (variabler Profit)
+   // Gesamtposition des Symbols ermitteln: gehedgter Anteil (konstanter Profit) und direktionaler Anteil (variabler Profit)
    for (int i=0; i < ticketsSize; i++) {
       if (symbol.idx[i] != index) continue;
 
@@ -191,8 +181,7 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
    double pipSize    = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    double spreadPips = MarketInfo(symbol, MODE_SPREAD)/MathPow(10, digits & 1);  // SpreadPoints/PipPoints = Spread in Pip
 
-
-   // (2) Konstanten Profit einer eventuellen Hedgeposition ermitteln
+   // Konstanten Profit einer eventuellen Hedgeposition ermitteln
    if (longPosition && shortPosition) {
       hedgedLots     = MathMin(longPosition, shortPosition);
       remainingLong  = hedgedLots;
@@ -260,8 +249,7 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
       }
    }
 
-
-   // (3) Variablen Profit einer eventuellen Longposition ermitteln
+   // Variablen Profit einer eventuellen Longposition ermitteln
    if (totalPosition > 0) {
       swap           = 0;
       commission     = 0;
@@ -287,8 +275,7 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
       return(ifDouble(!catch("CalculateProfit(4)"), fullProfit, EMPTY_VALUE));
    }
 
-
-   // (4) Variablen Profit einer eventuellen Shortposition ermitteln
+   // Variablen Profit einer eventuellen Shortposition ermitteln
    if (totalPosition < 0) {
       swap           = 0;
       commission     = 0;
@@ -327,38 +314,36 @@ bool RecordAccountData() {
       return(true);
 
    datetime now.fxt = GetFxtTime();
-   int      size    = ArraySize(account.hSet);
+   int      size    = ArraySize(hHstSet);
 
    for (int i=0; i < size; i++) {
-      double tickValue     = account.data     [i];
-      double lastTickValue = account.data.last[i];
+      double tickValue     = currentEquity[i];
+      double lastTickValue = prevEquity   [i];
 
       // Virtuelle Ticks werden nur aufgezeichnet, wenn sich der Datenwert geändert hat.
       if (Tick.isVirtual) {
          if (!lastTickValue || EQ(tickValue, lastTickValue, 2)) {
-            if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(1)  Tick.isVirtual="+ Tick.isVirtual +"  skipping "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
+            if (symbolSuffixes[i]==".AB") debug("RecordAccountData(1)  Tick.isVirtual="+ Tick.isVirtual +"  skipping "+ symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
             continue;
          }
       }
 
-      //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(2)  Tick.isVirtual="+ Tick.isVirtual +"  recording "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
-
-      if (!account.hSet[i]) {
-         string symbol      = GetAccountNumber() + account.symbolSuffixes[i];
-         string description = StrReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
+      if (!hHstSet[i]) {
+         string symbol      = GetAccountNumber() + symbolSuffixes[i];
+         string description = StrReplace(symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
          int    digits      = 2;
          int    format      = 400;
          string server      = "XTrade-Synthetic";
 
-         account.hSet[i] = HistorySet.Get(symbol, server);
-         if (account.hSet[i] == -1)
-            account.hSet[i] = HistorySet.Create(symbol, description, digits, format, server);
-         if (!account.hSet[i]) return(false);
+         hHstSet[i] = HistorySet.Get(symbol, server);
+         if (hHstSet[i] == -1)
+            hHstSet[i] = HistorySet.Create(symbol, description, digits, format, server);
+         if (!hHstSet[i]) return(false);
       }
 
-      if (!HistorySet.AddTick(account.hSet[i], now.fxt, tickValue, NULL)) return(false);
+      if (!HistorySet.AddTick(hHstSet[i], now.fxt, tickValue, NULL)) return(false);
 
-      account.data.last[i] = tickValue;
+      prevEquity[i] = tickValue;
    }
    return(true);
 }
