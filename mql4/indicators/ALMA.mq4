@@ -1,8 +1,8 @@
 /**
  * Arnaud Legoux Moving Average
  *
- *
  * A moving average with bar weights using a Gaussian distribution function.
+ *
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -10,8 +10,7 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @author  Arnaud Legoux
- * @see     http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  */
 #include <stddefines.mqh>

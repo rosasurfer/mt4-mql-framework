@@ -8,7 +8,6 @@
  * The RSI (Relative Strength Index) is the EMA-smoothed ratio of gains to losses during the lookback period, again normalized
  * to a value from 0 to 100.
  *
- *
  * Indicator buffers for iCustom():
  *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
  *  • Stochastic.MODE_SIGNAL: indicator signal line (the last moving average)

@@ -9,8 +9,6 @@
  *  • HalfTrend.MODE_TREND: trend direction and length
  *    - trend direction:    positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:       the absolute direction value is the length of the trend in bars since the last reversal
- *
- * @see  /mql4/indicators/SuperTrend.mq4
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
