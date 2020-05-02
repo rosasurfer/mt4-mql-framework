@@ -1,5 +1,5 @@
 /**
- * Functions for managing MT4 symbols, history files and complete history sets (all nine timeframes).
+ * Functions for managing MT4 symbols, single history files and full history sets (nine timeframes).
  *
  * Notes:
  * ------
