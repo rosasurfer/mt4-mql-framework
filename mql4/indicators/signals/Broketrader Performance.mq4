@@ -173,6 +173,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
                           rsiPeriods,                                      // int    RSI.Periods
                           CLR_NONE,                                        // color  Color.Long
                           CLR_NONE,                                        // color  Color.Short
+                          false,                                           // bool   FillSections
                           1,                                               // int    SMA.DrawWidth
                           -1,                                              // int    Max.Values
                           "",                                              // string ______________________
