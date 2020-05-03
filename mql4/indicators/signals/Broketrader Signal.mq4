@@ -1,7 +1,7 @@
 /**
  * Broketrader Signal
  *
- * Marks long and short position periods of the Broketrader EURUSD-H1-Swing system.
+ * Marks long and short position periods of the Broketrader EURUSD-H1-Swing strategy.
  *
  *
  * Indicator buffers for iCustom():
@@ -25,6 +25,7 @@ extern int   RSI.Periods            = 96;
 
 extern color Color.Long             = GreenYellow;
 extern color Color.Short            = C'81,211,255';     // lightblue-ish
+extern bool  FillSections           = true;
 extern int   SMA.DrawWidth          = 2;
 
 extern int   Max.Values             = 10000;             //  max. amount of values to calculate (-1: all)
@@ -284,16 +285,28 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor)
+   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
-   int drawType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_MA_L, drawType, EMPTY, SMA.DrawWidth, ModifyColor(Color.Long,  NULL, NULL, -30));
-   SetIndexStyle(MODE_MA_S, drawType, EMPTY, SMA.DrawWidth, ModifyColor(Color.Short, NULL, NULL, -30));
+   int maType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
 
-   SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
-   SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
-   SetIndexStyle(MODE_HIST_S_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
-   SetIndexStyle(MODE_HIST_S_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
+   if (FillSections) {
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Long,  NULL, NULL, -30));
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Short, NULL, NULL, -30));
+
+      SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
+      SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
+      SetIndexStyle(MODE_HIST_S_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
+      SetIndexStyle(MODE_HIST_S_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
+   }
+   else {
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, Color.Long );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, Color.Short);
+
+      SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_NONE);
+      SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_NONE);
+      SetIndexStyle(MODE_HIST_S_PRICE1, DRAW_NONE);
+      SetIndexStyle(MODE_HIST_S_PRICE2, DRAW_NONE);
+   }
 }
 
 
@@ -322,6 +335,7 @@ string InputsToStr() {
                             "RSI.Periods=",            RSI.Periods,             ";", NL,
                             "Color.Long=",             ColorToStr(Color.Long),  ";", NL,
                             "Color.Short=",            ColorToStr(Color.Short), ";", NL,
+                            "FillSections=",           BoolToStr(FillSections), ";", NL,
                             "SMA.DrawWidth=",          SMA.DrawWidth,           ";", NL,
                             "Max.Values=",             Max.Values,              ";")
    );

@@ -5142,8 +5142,7 @@ int init() {
         name=lineStyle
         def_value=<span class="const">EMPTY</span>
         <description>
-        One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a> if <span class="code">drawType=</span><span class="const">DRAW_LINE</span>
-        and <span class="code">drawWidth=</span><span class="number">1</span> (default: <span class="const">EMPTY</span> - the pen style is not changed).
+        One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a> (default: <span class="const">EMPTY</span> - the pen style is not changed).
         </description>
       </parameter>
       <parameter>
@@ -5157,6 +5156,7 @@ int init() {
       <parameter>
         type=color
         name=drawColor
+        def_value=<span class="const">NULL</span>
         description=Drawing color (optional: if not provided the color is not changed).
       </parameter>
     </function>
