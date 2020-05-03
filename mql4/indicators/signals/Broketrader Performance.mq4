@@ -176,7 +176,12 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
                           false,                                           // bool   FillSections
                           1,                                               // int    SMA.DrawWidth
                           -1,                                              // int    Max.Values
-                          "",                                              // string ______________________
+                          "",                                              // string ____________________
+                          "off",                                           // string Signal.onReversal
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string ____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);

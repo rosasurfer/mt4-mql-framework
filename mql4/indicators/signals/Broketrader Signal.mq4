@@ -1,7 +1,7 @@
 /**
  * Broketrader Signal
  *
- * Marks long and short position periods of the Broketrader EURUSD-H1-Swing strategy.
+ * Marks long and short position periods of the Broketrader EURUSD-H1 swing trading system.
  *
  *
  * Indicator buffers for iCustom():
@@ -17,18 +17,23 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int   SMA.Periods            = 96;
-extern int   Stochastic.Periods     = 96;
-extern int   Stochastic.MA1.Periods = 10;
-extern int   Stochastic.MA2.Periods = 6;
-extern int   RSI.Periods            = 96;
+extern int    SMA.Periods            = 96;
+extern int    Stochastic.Periods     = 96;
+extern int    Stochastic.MA1.Periods = 10;
+extern int    Stochastic.MA2.Periods = 6;
+extern int    RSI.Periods            = 96;
 
-extern color Color.Long             = GreenYellow;
-extern color Color.Short            = C'81,211,255';     // lightblue-ish
-extern bool  FillSections           = true;
-extern int   SMA.DrawWidth          = 2;
+extern color  Color.Long             = GreenYellow;
+extern color  Color.Short            = C'81,211,255';    // lightblue-ish
+extern bool   FillSections           = true;
+extern int    SMA.DrawWidth          = 2;
+extern int    Max.Values             = 10000;            //  max. amount of values to calculate (-1: all)
+extern string __________________________;
 
-extern int   Max.Values             = 10000;             //  max. amount of values to calculate (-1: all)
+extern string Signal.onReversal      = "on | off | auto*";
+extern string Signal.Sound           = "on | off | auto*";
+extern string Signal.Mail.Receiver   = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,6 +41,11 @@ extern int   Max.Values             = 10000;             //  max. amount of valu
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/BarOpenEvent.mqh>
+#include <functions/Configure.Signal.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 
 #define MODE_HIST_L_PRICE1    0                          // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
@@ -71,10 +81,24 @@ int    stochPeriods;
 int    stochMa1Periods;
 int    stochMa2Periods;
 int    rsiPeriods;
+int    maxValues;
 
 string indicatorName;
 string chartLegendLabel;
-int    maxValues;
+
+bool   signals;
+bool   signal.sound;
+string signal.sound.trendChange_up   = "Signal-Up.wav";
+string signal.sound.trendChange_down = "Signal-Down.wav";
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+bool   signal.sms;
+string signal.sms.receiver = "";
+string signal.info = "";                                 // additional chart legend info
+
+#define D_LONG   TRADE_DIRECTION_LONG                    // 1
+#define D_SHORT TRADE_DIRECTION_SHORT                    // 2
 
 
 /**
@@ -106,6 +130,18 @@ int onInit() {
    // Max.Values
    if (Max.Values < -1)            return(catch("onInit(8)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+
+   // signals
+   if (!Configure.Signal("Broketrader", Signal.onReversal, signals))                                            return(last_error);
+   if (signals) {
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (signal.sound || signal.mail || signal.sms) {
+         signal.info = "Reversal="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1);
+      }
+      else signals = false;
+   }
 
    // buffer management
    SetIndexBuffer(MODE_MA_L,          maLong         );  // MA long:                visible, displayed in legend
@@ -273,9 +309,52 @@ int onTick() {
 
    if (!IsSuperContext()) {
       color legendColor = ifInt(position[0] > 0, Green, DodgerBlue);
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", legendColor, legendColor, ma, Digits, position[0], Time[0]);
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, legendColor, legendColor, ma, Digits, position[0], Time[0]);
+
+      // monitor position reversals
+      if (signals) /*&&*/ if (IsBarOpenEvent()) {
+         if      (position[1] ==  1) onReversal(D_LONG);
+         else if (position[1] == -1) onReversal(D_SHORT);
+      }
    }
    return(catch("onTick(3)"));
+}
+
+
+/**
+ * Event handler for position direction reversals.
+ *
+ * @param  int direction
+ *
+ * @return bool - success status
+ */
+bool onReversal(int direction) {
+   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+   int error = 0;
+
+   if (direction == D_LONG) {
+      message = "Broketrader signal LONG (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      if (__LOG()) log("onReversal(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
+      return(!error);
+   }
+
+   if (direction == D_SHORT) {
+      message = "Broketrader signal SHORT (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      if (__LOG()) log("onReversal(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
+      return(!error);
+   }
+
+   return(!catch("onReversal(3)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
@@ -328,15 +407,19 @@ double GetStochasticOfRSI(int iBar) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("SMA.Periods=",            SMA.Periods,             ";", NL,
-                            "Stochastic.Periods=",     Stochastic.Periods,      ";", NL,
-                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,  ";", NL,
-                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,  ";", NL,
-                            "RSI.Periods=",            RSI.Periods,             ";", NL,
-                            "Color.Long=",             ColorToStr(Color.Long),  ";", NL,
-                            "Color.Short=",            ColorToStr(Color.Short), ";", NL,
-                            "FillSections=",           BoolToStr(FillSections), ";", NL,
-                            "SMA.DrawWidth=",          SMA.DrawWidth,           ";", NL,
-                            "Max.Values=",             Max.Values,              ";")
+   return(StringConcatenate("SMA.Periods=",            SMA.Periods,                          ";", NL,
+                            "Stochastic.Periods=",     Stochastic.Periods,                   ";", NL,
+                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,               ";", NL,
+                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,               ";", NL,
+                            "RSI.Periods=",            RSI.Periods,                          ";", NL,
+                            "Color.Long=",             ColorToStr(Color.Long),               ";", NL,
+                            "Color.Short=",            ColorToStr(Color.Short),              ";", NL,
+                            "FillSections=",           BoolToStr(FillSections),              ";", NL,
+                            "SMA.DrawWidth=",          SMA.DrawWidth,                        ";", NL,
+                            "Max.Values=",             Max.Values,                           ";", NL,
+                            "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal),    ";", NL,
+                            "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=",   DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",    DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }
