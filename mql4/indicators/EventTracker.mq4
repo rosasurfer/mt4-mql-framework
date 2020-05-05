@@ -1255,7 +1255,7 @@ int ShowStatus(int error=NULL) {
    }
 
    Comment(NL, NL, NL, msg);
-   if (__WHEREAMI__ == CF_INIT)
+   if (__CoreFunction == CF_INIT)
       WindowRedraw();
    return(error);
 }
