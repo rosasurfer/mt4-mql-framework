@@ -2840,7 +2840,7 @@ int ShowStatus(int error = NO_ERROR) {
 
    // 4 lines margin-top for instrument and indicator legends
    Comment(NL, NL, NL, NL, msg);
-   if (__WHEREAMI__ == CF_INIT)
+   if (__CoreFunction == CF_INIT)
       WindowRedraw();
 
    // für Fernbedienung: versteckten Status im Chart speichern
@@ -2903,7 +2903,7 @@ bool SaveStatus() {
    // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
    if (IsTesting() && tester.reduceStatusWrites) {
       static bool saved = false;
-      if (saved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT) {
+      if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) {
          return(true);
       }
       saved = true;
