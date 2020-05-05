@@ -563,29 +563,6 @@ bool SetCustomLog(string filename) {
 
 
 /**
- * Stop the tester. Can be called only from an active test.
- *
- * @param  string location [optional] - location identifier of the caller (default: none)
- *
- * @return int - error status
- */
-int Tester.Stop(string location = "") {
-   if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   if (Tester.IsStopped())          return(NO_ERROR);                // skipping
-   if (__CoreFunction == CF_DEINIT) return(NO_ERROR);                // SendMessage() can't be used in deinit() => UI thread lock
-
-   int hWnd = GetTerminalMainWindow();
-   if (!hWnd) return(last_error);
-
-   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
-
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
-   return(NO_ERROR);
-}
-
-
-/**
  * Called once at start of a test. If reporting is enabled the test's metadata is initialized.
  *
  * @return bool - success status
