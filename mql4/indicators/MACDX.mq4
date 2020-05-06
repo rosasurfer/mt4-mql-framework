@@ -346,8 +346,9 @@ int onTick() {
    if (!IsSuperContext()) {
       // signal zero line crossings
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
-         else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
+         int iSection = Round(bufferSection[1]);
+         if      (iSection ==  1) onCross(MODE_UPPER_SECTION);
+         else if (iSection == -1) onCross(MODE_LOWER_SECTION);
       }
    }
    return(last_error);
