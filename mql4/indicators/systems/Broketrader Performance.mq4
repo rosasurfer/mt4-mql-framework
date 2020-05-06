@@ -1,7 +1,7 @@
 /**
  * Broketrader Performance
  *
- * Displays the performance of a Broketrader signal.
+ * Displays the performance of a Broketrader system.
  *
  * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
@@ -165,7 +165,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "signals/Broketrader Signal",
+   double value = iCustom(NULL, timeframe, "systems/Broketrader",
                           smaPeriods,                                      // int    SMA.Periods
                           stochasticPeriods,                               // int    Stochastic.Periods
                           stochasticMa1Periods,                            // int    Stochastic.MA1.Periods

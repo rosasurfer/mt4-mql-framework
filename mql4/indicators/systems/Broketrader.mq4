@@ -1,5 +1,5 @@
 /**
- * Broketrader Signal
+ * Broketrader system
  *
  * Marks long and short position periods of the Broketrader EURUSD-H1 swing trading system.
  *
