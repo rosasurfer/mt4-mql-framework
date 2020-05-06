@@ -162,7 +162,7 @@ int onInit() {
 
       debug("onInit(0.1)  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1);
+         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
