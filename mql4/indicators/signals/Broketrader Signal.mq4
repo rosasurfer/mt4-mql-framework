@@ -237,22 +237,23 @@ int onTick() {
       double ma    = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, i), price1, price2;
       double stoch = GetStochasticOfRSI(i); if (last_error || 0) return(last_error);
 
-      // positioning and exit
+      // update positioning and exit
       if (Close[i] > ma && stoch > 40) {                                               // long condition
-         if      (exit[i+1] > 0)     position[i] = -Sign(position[i+1]);               // reversing position
+         if      (exit[i+1] > 0)     position[i] = 1;                                  // reverse direction
          else if (position[i+1] < 0) position[i] = position[i+1] - 1;                  // continue short
-         else                        position[i] = position[i+1] + 1;                  // continue long
+         else                        position[i] = position[i+1] + 1;                  // continue/start long (position[i+1] may be 0)
          if (position[i] < 0)        exit    [i] = 1;                                  // mark short exit
       }
       else if (Close[i] < ma && stoch < 60) {                                          // short condition
-         if      (exit[i+1] > 0)     position[i] = -Sign(position[i+1]);               // reversing position
+         if      (exit[i+1] > 0)     position[i] = -1;                                 // reverse direction
          else if (position[i+1] > 0) position[i] = position[i+1] + 1;                  // continue long
-         else                        position[i] = position[i+1] - 1;                  // continue short
+         else                        position[i] = position[i+1] - 1;                  // continue/start short (position[i+1] may be 0)
          if (position[i] > 0)        exit    [i] = 1;                                  // mark long exit
       }
       else {
-         if (exit[i+1] > 0) position[i] = -Sign(position[i+1]);                        // reversing position
-         else               position[i] = _int(position[i+1]) + Sign(position[i+1]);   // continue any position
+         if (exit[i+1] > 0) position[i] = -Sign(position[i+1]);                        // reverse direction
+         else               position[i] = position[i+1] + Sign(position[i+1]);         // continue existing/no position
+         exit[i] = 0;                                                                  // reset exit marker
       }
 
       // MA
@@ -274,7 +275,7 @@ int onTick() {
       }
 
       // histogram
-      if (Low [i] > ma) {
+      if (Low[i] > ma) {
          price1 = MathMax(Open[i], Close[i]);
          price2 = ma;
       }
@@ -305,7 +306,7 @@ int onTick() {
          histShortPrice1[i] = EMPTY_VALUE;
          histShortPrice2[i] = EMPTY_VALUE;
       }
-  }
+   }
 
    if (!IsSuperContext()) {
       color legendColor = ifInt(position[0] > 0, Green, DodgerBlue);
@@ -313,8 +314,9 @@ int onTick() {
 
       // monitor position reversals
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (position[1] ==  1) onReversal(D_LONG);
-         else if (position[1] == -1) onReversal(D_SHORT);
+         int iPosition = Round(position[0]);
+         if      (iPosition ==  1) onReversal(D_LONG);
+         else if (iPosition == -1) onReversal(D_SHORT);
       }
    }
    return(catch("onTick(3)"));
