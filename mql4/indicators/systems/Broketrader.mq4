@@ -24,13 +24,13 @@ extern int    Stochastic.MA2.Periods = 6;
 extern int    RSI.Periods            = 96;
 
 extern color  Color.Long             = GreenYellow;
-extern color  Color.Short            = C'81,211,255';    // lightblue-ish
+extern color  Color.Short            = C'81,211,255';       // lightblue-ish
 extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
-extern int    Max.Values             = 10000;            //  max. amount of values to calculate (-1: all)
+extern int    Max.Values             = 10000;               //  max. amount of values to calculate (-1: all)
 extern string __________________________;
 
-extern string Signal.onReversal      = "on | off | auto*";
+extern string Signal.onReversal      = "on | off | auto*";  // auto: configuration key "Broketrader"
 extern string Signal.Sound           = "on | off | auto*";
 extern string Signal.Mail.Receiver   = "on | off | auto* | {email-address}";
 extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
@@ -47,17 +47,17 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 
-#define MODE_HIST_L_PRICE1    0                          // indicator buffer ids
+#define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
 #define MODE_HIST_S_PRICE1    2
 #define MODE_HIST_S_PRICE2    3
-#define MODE_MA_L             4                          // the SMA overlays the histogram
+#define MODE_MA_L             4                             // the SMA overlays the histogram
 #define MODE_MA_S             5
 #define MODE_POSITION         Broketrader.MODE_POSITION
 #define MODE_EXIT             7
 
 #property indicator_chart_window
-#property indicator_buffers   6                          // buffers visible in input dialog
+#property indicator_buffers   6                             // buffers visible in input dialog
 int       allocated_buffers = 8;
 
 #property indicator_color1    CLR_NONE
@@ -67,14 +67,14 @@ int       allocated_buffers = 8;
 #property indicator_color5    CLR_NONE
 #property indicator_color6    CLR_NONE
 
-double maLong         [];                                // MA long:                visible, displayed in legend
-double maShort        [];                                // MA short:               visible, displayed in legend
-double histLongPrice1 [];                                // long histogram price1:  visible
-double histLongPrice2 [];                                // long histogram price2:  visible
-double histShortPrice1[];                                // short histogram price1: visible
-double histShortPrice2[];                                // short histogram price2: visible
-double position       [];                                // position duration:      invisible (-n..0..+n)
-double exit           [];                                // exit bar marker:        invisible (0..1)
+double maLong         [];                                   // MA long:                visible, displayed in legend
+double maShort        [];                                   // MA short:               visible, displayed in legend
+double histLongPrice1 [];                                   // long histogram price1:  visible
+double histLongPrice2 [];                                   // long histogram price2:  visible
+double histShortPrice1[];                                   // short histogram price1: visible
+double histShortPrice2[];                                   // short histogram price2: visible
+double position       [];                                   // position duration:      invisible (-n..0..+n)
+double exit           [];                                   // exit bar marker:        invisible (0..1)
 
 int    smaPeriods;
 int    stochPeriods;
@@ -95,10 +95,10 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
-string signal.info = "";                                 // additional chart legend info
+string signal.info = "";                                    // additional chart legend info
 
-#define D_LONG   TRADE_DIRECTION_LONG                    // 1
-#define D_SHORT TRADE_DIRECTION_SHORT                    // 2
+#define D_LONG   TRADE_DIRECTION_LONG                       // 1
+#define D_SHORT TRADE_DIRECTION_SHORT                       // 2
 
 
 /**

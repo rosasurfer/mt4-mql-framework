@@ -4,7 +4,7 @@
  *
  *
  * (1) Order-Events (Trading)
- *     Ein aktiver Order-EventTracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in
+ *     Ein aktiver OrderEvent-Tracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in
  *     der Verantwortung des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
  *     Folgende Events werden überwacht:
  *
@@ -15,7 +15,7 @@
  *
  *
  * (2) Preis-Events (Signale)
- *     Ein aktiver Preis-EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des
+ *     Ein aktiver PreisEvent-Tracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des
  *     aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Preis-Events
  *     zu aktivieren. Folgende Events können überwacht werden:
  *
@@ -40,7 +40,6 @@
  *
  * TODO:
  * -----
- *  - Benachrichtigung per IRC
  *  - Candle-Pattern: neues Inside-Range-Pattern und Auflösung desselben auf Timeframe-Basis
  *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen

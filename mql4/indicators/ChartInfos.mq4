@@ -3,13 +3,13 @@
  *
  *
  *  • on builds <= 509: the current symbol
- *  • the current price with configurable type
+ *  • the current price (configurable price type)
  *  • the current spread
- *  • the trade unit size according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
+ *  • the trade unitsize according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
  *  • open total position, current total risk according to the configured risk profile, current total leverage
- *  • the current Stopout price level
- *  • a warning in different colors when the current account's open order limit comes closer
- *  • custom user-defined open positions and/or history periods, @see CustomPositions.ReadConfig() for the format
+ *  • the current stopout price level
+ *  • warnings in different colors when the account's open order limit is close
+ *  • P/L of open positions and/or trade history (configurable, format: see CustomPositions.ReadConfig())
  *
  *    (1) internal positions: - positions hold in the current account
  *                            - position data and P/L as provided by the current account
@@ -25,9 +25,7 @@
  *                            - order limit monitoring and notification of the remote account
  *                            - additionally the remote account identifier is displayed
  *
- * TODO:
- *   - Order tracking must monitor all symbols, not just the current one.
- *   - Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
+ * TODO: Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
