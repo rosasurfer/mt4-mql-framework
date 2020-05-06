@@ -1,3 +1,9 @@
+<!-- 
+ Marks long and short position periods of the Broketrader EURUSD-H1 swing trading system.
+ 
+ @see  https://www.forexfactory.com/showthread.php?t=970975
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -8777,7 +8783,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=signals/Broketrader Signal
+name=systems/Broketrader
 flags=339
 window_num=0
 <inputs>

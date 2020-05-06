@@ -37,7 +37,7 @@
  * Risk warning: The market can range longer without reaching the profit target than a trading account may be able to survive.
  */
 #include <stddefines.mqh>
-#include <app/snowroller/defines.mqh>
+#include <apps/snowroller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
@@ -237,9 +237,9 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <app/snowroller/1-init.mqh>
-#include <app/snowroller/2-deinit.mqh>
-#include <app/snowroller/functions.mqh>
+#include <apps/snowroller/1-init.mqh>
+#include <apps/snowroller/2-deinit.mqh>
+#include <apps/snowroller/functions.mqh>
 
 
 /*
@@ -2840,7 +2840,7 @@ int ShowStatus(int error = NO_ERROR) {
 
    // 4 lines margin-top for instrument and indicator legends
    Comment(NL, NL, NL, NL, msg);
-   if (__WHEREAMI__ == CF_INIT)
+   if (__CoreFunction == CF_INIT)
       WindowRedraw();
 
    // für Fernbedienung: versteckten Status im Chart speichern
@@ -2903,7 +2903,7 @@ bool SaveStatus() {
    // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
    if (IsTesting() && tester.reduceStatusWrites) {
       static bool saved = false;
-      if (saved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT) {
+      if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) {
          return(true);
       }
       saved = true;

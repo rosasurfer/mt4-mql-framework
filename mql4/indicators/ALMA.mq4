@@ -158,7 +158,7 @@ int onInit() {
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1);
+         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -264,10 +264,11 @@ int onTick() {
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
-      // signal trend changes
+      // monitor trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
-         else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
+         int iTrend = Round(trend[1]);
+         if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
+         else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
    return(last_error);
@@ -309,8 +310,8 @@ bool onTrendChange(int trend) {
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
       return(!error);
    }
 
@@ -320,12 +321,12 @@ bool onTrendChange(int trend) {
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
+      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

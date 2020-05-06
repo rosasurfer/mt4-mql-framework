@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                       // current MQL core function: CF_INIT | CF_START | CF_DEINIT
+int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 // current price series
 double rates[][6];
@@ -15,8 +15,8 @@ int init() {
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
-   if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
-      __WHEREAMI__ = CF_INIT;
+   if (__CoreFunction == NULL)                                       // init() called by the terminal, all variables are reset
+      __CoreFunction = CF_INIT;
 
    if (!IsDllsAllowed()) {
       ForceAlert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
@@ -120,7 +120,7 @@ int start() {
       }
       return(__STATUS_OFF.reason);
    }
-   __WHEREAMI__   = CF_START;
+   __CoreFunction = CF_START;
 
    Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
@@ -170,7 +170,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ = CF_DEINIT;
+   __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);
