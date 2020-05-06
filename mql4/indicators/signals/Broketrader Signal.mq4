@@ -6,8 +6,8 @@
  *
  * Indicator buffers for iCustom():
  *  • Broketrader.MODE_POSITION: positioning direction and duration
- *    - positioning direction: positive values denote a long position (+1...+n), negative values a short position (-1...-n)
- *    - positioning duration:  the absolute direction value is the age in bars since position open
+ *    - direction: positive values denote a long position (+1...+n), negative values a short position (-1...-n)
+ *    - duration:  the absolute direction value is the age in bars since position open
  *
  * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
