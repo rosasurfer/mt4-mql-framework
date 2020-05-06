@@ -3494,7 +3494,7 @@ int Tester.GetBarModel() {
 
 
 /**
- * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
+ * Pause the tester. Must be called from within the tester.
  *
  * @param  string location [optional] - location identifier of the caller (default: none)
  *
@@ -3503,55 +3503,62 @@ int Tester.GetBarModel() {
 int Tester.Pause(string location = "") {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (!IsVisualModeFix())
-      return(NO_ERROR);                                        // skipping
-
-   if (!IsScript() && __ExecutionContext[EC.programCoreFunction]==CF_DEINIT)
-      return(NO_ERROR);                                        // SendMessage() darf in deinit() nicht mehr benutzt werden
-
-   if (Tester.IsPaused())
-      return(NO_ERROR);                                        // skipping
+   if (!IsVisualModeFix()) return(NO_ERROR);                            // skip if VisualMode=Off
+   if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
+   if (Tester.IsPaused())  return(NO_ERROR);                            // skip if already paused
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
    if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
-   return(NO_ERROR);
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
+   return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
 }
 
 
 /**
- * Ob der Tester momentan pausiert. Der Aufruf ist nur im Tester selbst möglich.
+ * Stop the tester. Must be called from within the tester.
+ *
+ * @param  string location [optional] - location identifier of the caller (default: none)
+ *
+ * @return int - error status
+ */
+int Tester.Stop(string location = "") {
+   if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
+
+   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+
+   int hWnd = GetTerminalMainWindow();
+   if (!hWnd) return(last_error);
+
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // in deinit() SendMessage() causes a thread lock which is
+   return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
+}
+
+
+/**
+ * Whether the tester currently pauses. Must be called from within the tester.
  *
  * @return bool
  */
 bool Tester.IsPaused() {
    if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   bool testerStopped;
-   int  hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
+   if (!IsVisualModeFix()) return(false);
+   if (Tester.IsStopped()) return(false);
 
-   if (IsScript()) {
-      // VisualMode=On
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start"; // muß im Script reichen
-   }
-   else {
-      if (!IsVisualModeFix())                                                                            // EA/Indikator aus iCustom()
-         return(false);                                                                                  // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __ExecutionContext[EC.programCoreFunction]==CF_DEINIT);            // der EA stoppt(e) also auch
-   }
+   int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
+   int hWnd = GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME);
 
-   if (testerStopped)
-      return(false);
-
-   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME)) == ">>");
+   return(GetWindowText(hWnd) == ">>");
 }
 
 
 /**
- * Ob der Tester momentan gestoppt ist. Der Aufruf ist nur im Tester möglich.
+ * Whether the tester was stopped. Must be called from within the tester.
  *
  * @return bool
  */
@@ -3560,10 +3567,10 @@ bool Tester.IsStopped() {
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
-      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
+      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");
    }
-   return(IsStopped() || __ExecutionContext[EC.programCoreFunction]==CF_DEINIT);                   // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                                                  // zeitgleich zu Expert::deinit() ausgeführt, der EA stoppt(e) also auch.
+   return(__ExecutionContext[EC.programCoreFunction] == CF_DEINIT);     // if in deinit() the tester was already stopped,
+}                                                                       // no matter whether in an expert or an indicator
 
 
 /**
@@ -6854,6 +6861,7 @@ void __DummyCalls() {
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
+   Tester.Stop();
    This.IsTesting();
    TimeCurrentEx();
    TimeDayFix(NULL);

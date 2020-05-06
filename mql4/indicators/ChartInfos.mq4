@@ -3,13 +3,13 @@
  *
  *
  *  • on builds <= 509: the current symbol
- *  • the current price with configurable type
+ *  • the current price (configurable price type)
  *  • the current spread
- *  • the trade unit size according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
+ *  • the trade unitsize according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
  *  • open total position, current total risk according to the configured risk profile, current total leverage
- *  • the current Stopout price level
- *  • a warning in different colors when the current account's open order limit comes closer
- *  • custom user-defined open positions and/or history periods, @see CustomPositions.ReadConfig() for the format
+ *  • the current stopout price level
+ *  • warnings in different colors when the account's open order limit is close
+ *  • P/L of open positions and/or trade history (configurable, format: see CustomPositions.ReadConfig())
  *
  *    (1) internal positions: - positions hold in the current account
  *                            - position data and P/L as provided by the current account
@@ -25,9 +25,7 @@
  *                            - order limit monitoring and notification of the remote account
  *                            - additionally the remote account identifier is displayed
  *
- * TODO:
- *   - Order tracking must monitor all symbols, not just the current one.
- *   - Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
+ * TODO: Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
@@ -256,8 +254,8 @@ int    orders.knownOrders.type  [];
 #define CLOSE_TYPE_SO               3                                // StopOut (Margin-Call)
 
 
-#include <app/chartinfos/1-init.mqh>
-#include <app/chartinfos/2-deinit.mqh>
+#include <apps/chartinfos/1-init.mqh>
+#include <apps/chartinfos/2-deinit.mqh>
 
 
 /**
@@ -1392,7 +1390,6 @@ bool UpdatePositions() {
       if (!mm.isDone)                                        return(true);
    }
 
-
    // (1) Gesamtpositionsanzeige unten rechts
    string sCurrentVola, sCurrentLeverage, sCurrentPosition;
    if      (!isPosition   ) sCurrentPosition = " ";
@@ -1438,28 +1435,28 @@ bool UpdatePositions() {
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
       if (positions.absoluteProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    142, 167,      233,    265,   352,      413};
+         // col.xShifts[] = {20,   66,    142, 167,      233,    268,   355,      416};
          ArrayResize(col.xShifts, 8);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 142;
          col.xShifts[3] = 167;
          col.xShifts[4] = 233;
-         col.xShifts[5] = 265;
-         col.xShifts[6] = 352;
-         col.xShifts[7] = 413;
+         col.xShifts[5] = 268;
+         col.xShifts[6] = 355;
+         col.xShifts[7] = 416;
       }
       else {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    142, 167,      233,    265,      326};
+         // col.xShifts[] = {20,   66,    142, 167,      233,    268,      329};
          ArrayResize(col.xShifts, 7);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 142;
          col.xShifts[3] = 167;
          col.xShifts[4] = 233;
-         col.xShifts[5] = 265;
-         col.xShifts[6] = 326;
+         col.xShifts[5] = 268;
+         col.xShifts[6] = 329;
       }
       cols                = ArraySize(col.xShifts);
       percentCol          = cols - 2;
