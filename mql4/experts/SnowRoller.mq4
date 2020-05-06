@@ -37,7 +37,7 @@
  * Risk warning: The market can range longer without reaching the profit target than a trading account may be able to survive.
  */
 #include <stddefines.mqh>
-#include <app/snowroller/defines.mqh>
+#include <apps/snowroller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
@@ -237,9 +237,9 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <app/snowroller/1-init.mqh>
-#include <app/snowroller/2-deinit.mqh>
-#include <app/snowroller/functions.mqh>
+#include <apps/snowroller/1-init.mqh>
+#include <apps/snowroller/2-deinit.mqh>
+#include <apps/snowroller/functions.mqh>
 
 
 /*
