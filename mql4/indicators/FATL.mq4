@@ -233,8 +233,9 @@ int onTick() {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
-         else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
+         int iTrend = Round(trend[1]);
+         if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
+         else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
    return(last_error);

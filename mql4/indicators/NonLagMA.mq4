@@ -273,8 +273,9 @@ int onTick() {
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         if      (trend[1] ==  1) onTrendChange(MODE_UPTREND);
-         else if (trend[1] == -1) onTrendChange(MODE_DOWNTREND);
+         int iTrend = Round(trend[1]);
+         if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
+         else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
    return(last_error);

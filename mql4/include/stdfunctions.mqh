@@ -3551,7 +3551,9 @@ bool Tester.IsPaused() {
    if (Tester.IsStopped()) return(false);
 
    int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
-   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME)) == ">>");
+   int hWnd = GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME);
+
+   return(GetWindowText(hWnd) == ">>");
 }
 
 
