@@ -57,7 +57,7 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #define MODE_EXIT             7
 
 #property indicator_chart_window
-#property indicator_buffers   6                             // buffers visible in input dialog
+#property indicator_buffers   7                             // buffers visible in input dialog
 int       allocated_buffers = 8;
 
 #property indicator_color1    CLR_NONE
@@ -66,6 +66,7 @@ int       allocated_buffers = 8;
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 #property indicator_color6    CLR_NONE
+#property indicator_color7    CLR_NONE
 
 double maLong         [];                                   // MA long:                visible, displayed in legend
 double maShort        [];                                   // MA short:               visible, displayed in legend
@@ -73,7 +74,7 @@ double histLongPrice1 [];                                   // long histogram pr
 double histLongPrice2 [];                                   // long histogram price2:  visible
 double histShortPrice1[];                                   // short histogram price1: visible
 double histShortPrice2[];                                   // short histogram price2: visible
-double position       [];                                   // position duration:      invisible (-n..0..+n)
+double position       [];                                   // position duration:      invisible (-n..0..+n), displayed in data window
 double exit           [];                                   // exit bar marker:        invisible (0..1)
 
 int    smaPeriods;
@@ -150,14 +151,14 @@ int onInit() {
    SetIndexBuffer(MODE_HIST_L_PRICE2, histLongPrice2 );  // long histogram price2:  visible
    SetIndexBuffer(MODE_HIST_S_PRICE1, histShortPrice1);  // short histogram price1: visible
    SetIndexBuffer(MODE_HIST_S_PRICE2, histShortPrice2);  // short histogram price2: visible
-   SetIndexBuffer(MODE_POSITION,      position      );   // position duration:      invisible (-n..0..+n)
-   SetIndexBuffer(MODE_EXIT,          exit          );   // exit bar marker:        invisible (0..1)
+   SetIndexBuffer(MODE_POSITION,      position       );  // position duration:      invisible (-n..0..+n), displayed in data window
+   SetIndexBuffer(MODE_EXIT,          exit           );  // exit bar marker:        invisible (0..1)
 
    SetIndexEmptyValue(MODE_POSITION, 0);
    SetIndexEmptyValue(MODE_EXIT,     0);
 
    // chart legend
-   indicatorName = "SMA("+ smaPeriods +")";
+   indicatorName = "Broketrader SMA("+ smaPeriods +")";
    if (!IsSuperContext()) {
        chartLegendLabel = CreateLegendLabel(indicatorName);
        ObjectRegister(chartLegendLabel);
@@ -171,6 +172,7 @@ int onInit() {
    SetIndexLabel(MODE_HIST_L_PRICE2, NULL);
    SetIndexLabel(MODE_HIST_S_PRICE1, NULL);
    SetIndexLabel(MODE_HIST_S_PRICE2, NULL);
+   SetIndexLabel(MODE_POSITION,      "Broketrader direction");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -340,7 +342,7 @@ bool onReversal(int direction) {
 
    if (direction == D_LONG) {
       //message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      message = "Broketrader LONG signal (close="+ NumberToStr(price, PriceFormat) +", ma="+ NumberToStr(ma, PriceFormat) +", stoch="+ NumberToStr(stoch, PriceFormat) +")";
+      message = "Broketrader LONG signal (close="+ NumberToStr(price, PriceFormat) +", ma="+ NumberToStr(ma, PriceFormat) +", stoch="+ DoubleToStr(stoch, 2) +")";
 
       if (__LOG()) log("onReversal(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
@@ -353,7 +355,7 @@ bool onReversal(int direction) {
 
    if (direction == D_SHORT) {
       //message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      message = "Broketrader SHORT signal (close="+ NumberToStr(price, PriceFormat) +", ma="+ NumberToStr(ma, PriceFormat) +", stoch="+ NumberToStr(stoch, PriceFormat) +")";
+      message = "Broketrader SHORT signal (close="+ NumberToStr(price, PriceFormat) +", ma="+ NumberToStr(ma, PriceFormat) +", stoch="+ DoubleToStr(stoch, 2) +")";
 
       if (__LOG()) log("onReversal(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
@@ -375,6 +377,7 @@ bool onReversal(int direction) {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   SetIndexStyle(MODE_POSITION, DRAW_NONE);
 
    int maType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
 
