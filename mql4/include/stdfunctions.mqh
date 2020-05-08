@@ -221,7 +221,7 @@ int log(string message, int error = NO_ERROR) {
    if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {        // send the message to the terminal log
       string sError = "";
       if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
-      Print(__NAME(), "::", message, sError);
+      Print(__NAME(), "::", StrReplace(message, NL, " "), sError);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {          // send the message to a custom logger
       LogMessageA(__ExecutionContext, message, error);

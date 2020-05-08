@@ -334,8 +334,14 @@ bool onReversal(int direction) {
    string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
    int error = 0;
 
+   double price = Close[1];
+   double ma    = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double stoch = GetStochasticOfRSI(1);
+
    if (direction == D_LONG) {
-      message = "Broketrader signal LONG (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      //message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      message = "Broketrader LONG signal (close="+ NumberToStr(price, PriceFormat) +", ma="+ NumberToStr(ma, PriceFormat) +", stoch="+ NumberToStr(stoch, PriceFormat) +")";
+
       if (__LOG()) log("onReversal(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -346,7 +352,9 @@ bool onReversal(int direction) {
    }
 
    if (direction == D_SHORT) {
-      message = "Broketrader signal SHORT (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      //message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      message = "Broketrader SHORT signal (close="+ NumberToStr(price, PriceFormat) +", ma="+ NumberToStr(ma, PriceFormat) +", stoch="+ NumberToStr(stoch, PriceFormat) +")";
+
       if (__LOG()) log("onReversal(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
