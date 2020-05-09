@@ -5,9 +5,9 @@
  *
  *
  * Indicator buffers for iCustom():
- *  • Broketrader.MODE_POSITION: positioning direction and duration
- *    - direction: positive values denote a long position (+1...+n), negative values a short position (-1...-n)
- *    - duration:  the absolute direction value is the age in bars since position open
+ *  • Broketrader.MODE_TREND: trend direction and length
+ *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
@@ -53,10 +53,11 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #define MODE_HIST_S_PRICE2    3
 #define MODE_MA_L             4                             // the SMA overlays the histogram
 #define MODE_MA_S             5
-#define MODE_POSITION         Broketrader.MODE_POSITION
+#define MODE_MA               Broketrader.MODE_MA           // 6
+#define MODE_TREND            Broketrader.MODE_TREND        // 7
 
 #property indicator_chart_window
-#property indicator_buffers   7                             // buffers visible in input dialog
+#property indicator_buffers   8                             // buffers visible in input dialog
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -64,14 +65,17 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 #property indicator_color6    CLR_NONE
+#property indicator_color7    CLR_NONE
+#property indicator_color8    CLR_NONE
 
-double maLong         [];                                   // MA long:                visible, displayed in legend
-double maShort        [];                                   // MA short:               visible, displayed in legend
+double ma             [];                                   // MA main values:         invisible, displayed in legend and "Data" window
+double maLong         [];                                   // MA long:                visible
+double maShort        [];                                   // MA short:               visible
 double histLongPrice1 [];                                   // long histogram price1:  visible
 double histLongPrice2 [];                                   // long histogram price2:  visible
 double histShortPrice1[];                                   // short histogram price1: visible
 double histShortPrice2[];                                   // short histogram price2: visible
-double position       [];                                   // position duration:      invisible (-n..0..+n), displayed in data window
+double trend          [];                                   // trend direction:        invisible (-n..+n), displayed in "Data" window
 
 int    smaPeriods;
 int    stochPeriods;
@@ -82,7 +86,7 @@ int    maxValues;
 
 bool   prevReversal;                                        // trend reversal state of the previous bar
 bool   currentReversal;                                     // trend reversal state of the current bar
-bool   reversalInitialized;                                 // whether reversal state is initialized
+bool   reversalInitialized;                                 // whether the reversal states are initialized
 
 string indicatorName;
 string chartLegendLabel;
@@ -145,14 +149,15 @@ int onInit() {
    }
 
    // buffer management
+   SetIndexBuffer(MODE_MA,            ma             );  // MA main values:         invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_MA_L,          maLong         );  // MA long:                visible, displayed in legend
    SetIndexBuffer(MODE_MA_S,          maShort        );  // MA short:               visible, displayed in legend
    SetIndexBuffer(MODE_HIST_L_PRICE1, histLongPrice1 );  // long histogram price1:  visible
    SetIndexBuffer(MODE_HIST_L_PRICE2, histLongPrice2 );  // long histogram price2:  visible
    SetIndexBuffer(MODE_HIST_S_PRICE1, histShortPrice1);  // short histogram price1: visible
    SetIndexBuffer(MODE_HIST_S_PRICE2, histShortPrice2);  // short histogram price2: visible
-   SetIndexBuffer(MODE_POSITION,      position       );  // position duration:      invisible (-n..0..+n), displayed in data window
-   SetIndexEmptyValue(MODE_POSITION, 0);
+   SetIndexBuffer(MODE_TREND,         trend          );  // trend direction:        invisible (-n..+n), displayed in "Data" window
+   SetIndexEmptyValue(MODE_TREND, 0);
 
    // chart legend
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
@@ -163,13 +168,14 @@ int onInit() {
 
    // names, labels and display options
    IndicatorShortName(indicatorName);
-   SetIndexLabel(MODE_MA_L,          indicatorName);
-   SetIndexLabel(MODE_MA_S,          indicatorName);
+   SetIndexLabel(MODE_MA,            indicatorName);
+   SetIndexLabel(MODE_MA_L,          NULL);
+   SetIndexLabel(MODE_MA_S,          NULL);
    SetIndexLabel(MODE_HIST_L_PRICE1, NULL);
    SetIndexLabel(MODE_HIST_L_PRICE2, NULL);
    SetIndexLabel(MODE_HIST_S_PRICE1, NULL);
    SetIndexLabel(MODE_HIST_S_PRICE2, NULL);
-   SetIndexLabel(MODE_POSITION,      "Broketrader direction");
+   SetIndexLabel(MODE_TREND,         "Broketrader trend");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -200,26 +206,28 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!UnchangedBars) {
+      ArrayInitialize(ma,              EMPTY_VALUE);
       ArrayInitialize(maLong,          EMPTY_VALUE);
       ArrayInitialize(maShort,         EMPTY_VALUE);
       ArrayInitialize(histLongPrice1,  EMPTY_VALUE);
       ArrayInitialize(histLongPrice2,  EMPTY_VALUE);
       ArrayInitialize(histShortPrice1, EMPTY_VALUE);
       ArrayInitialize(histShortPrice2, EMPTY_VALUE);
-      ArrayInitialize(position,                  0);
+      ArrayInitialize(trend,                     0);
       SetIndicatorOptions();
       reversalInitialized = false;
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(ma,              Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(maLong,          Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(maShort,         Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(histLongPrice1,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(histLongPrice2,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(histShortPrice1, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(histShortPrice2, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(position,        Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(trend,           Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
@@ -230,56 +238,58 @@ int onTick() {
    int startBar       = bars - 1;
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   double ma, stoch, price1, price2;
+   double sma, stoch, price1, price2;
 
    // initialize the reversal state of the previous bar => Bar[startBar+1]
    if (!reversalInitialized || ChangedBars > 2) {
       int prevBar = startBar + 1;
-      ma    = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, prevBar);
+      sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, prevBar);
       stoch = GetStochasticOfRSI(prevBar); if (last_error != 0) return(last_error);
 
       prevReversal = false;
-      if      (position[prevBar] < 0) prevReversal = (Close[prevBar] > ma && stoch > 40);
-      else if (position[prevBar] > 0) prevReversal = (Close[prevBar] < ma && stoch < 60);
+      if      (trend[prevBar] < 0) prevReversal = (Close[prevBar] > sma && stoch > 40);
+      else if (trend[prevBar] > 0) prevReversal = (Close[prevBar] < sma && stoch < 60);
       reversalInitialized = true;
    }
 
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
-      ma    = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, bar);
+      sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, bar);
       stoch = GetStochasticOfRSI(bar); if (last_error != 0) return(last_error);
 
-      position[bar]   = 0;
+      trend[bar]      = 0;
       currentReversal = false;
 
-      // check previous bar and set new position
-      if (!position[bar+1]) {
-         // check entry condition for new position
-         if      (Close[bar] > ma && stoch > 40) position[bar] =  1;                               // long condition fulfilled
-         else if (Close[bar] < ma && stoch < 60) position[bar] = -1;                               // short condition fulfilled
+      // check previous bar and set trend
+      if (!trend[bar+1]) {
+         // check start condition for new trend
+         if      (Close[bar] > sma && stoch > 40) trend[bar] =  1;                                 // long condition fulfilled
+         else if (Close[bar] < sma && stoch < 60) trend[bar] = -1;                                 // short condition fulfilled
       }
       else {
-         // update existing position or direction
-         if (!prevReversal) position[bar] = position[bar+1] + Sign(position[bar+1]);               // extend existing position
-         else               position[bar] = -Sign(position[bar+1]);                                // toggle position and direction
+         // update existing trend
+         if (!prevReversal) trend[bar] = trend[bar+1] + Sign(trend[bar+1]);                        // extend existing trend
+         else               trend[bar] = -Sign(trend[bar+1]);                                      // toggle trend
 
          // update reversal state of the current bar
-         if      (position[bar] < 0) currentReversal = (Close[bar] > ma && stoch > 40);            // mark long reversal
-         else if (position[bar] > 0) currentReversal = (Close[bar] < ma && stoch < 60);            // mark short reversal
+         if      (trend[bar] < 0) currentReversal = (Close[bar] > sma && stoch > 40);              // mark long reversal
+         else if (trend[bar] > 0) currentReversal = (Close[bar] < sma && stoch < 60);              // mark short reversal
       }
 
       // MA
+      ma[bar] = sma;
+
       if (prevReversal) {
-         maLong [bar] = ma;
-         maShort[bar] = ma;
+         maLong [bar] = sma;
+         maShort[bar] = sma;
       }
-      else if (position[bar] > 0) {
-         maLong [bar] = ma;
+      else if (trend[bar] > 0) {
+         maLong [bar] = sma;
          maShort[bar] = EMPTY_VALUE;
       }
-      else if (position[bar] < 0) {
+      else if (trend[bar] < 0) {
          maLong [bar] = EMPTY_VALUE;
-         maShort[bar] = ma;
+         maShort[bar] = sma;
       }
       else {
          maLong [bar] = EMPTY_VALUE;
@@ -287,26 +297,26 @@ int onTick() {
       }
 
       // histogram
-      if (Low[bar] > ma) {
+      if (Low[bar] > sma) {
          price1 = MathMax(Open[bar], Close[bar]);
-         price2 = ma;
+         price2 = sma;
       }
-      else if (High[bar] < ma) {
+      else if (High[bar] < sma) {
          price1 = MathMin(Open[bar], Close[bar]);
-         price2 = ma;
+         price2 = sma;
       }
       else                   {
-         price1 = MathMax(ma, MathMax(Open[bar], Close[bar]));
-         price2 = MathMin(ma, MathMin(Open[bar], Close[bar]));
+         price1 = MathMax(sma, MathMax(Open[bar], Close[bar]));
+         price2 = MathMin(sma, MathMin(Open[bar], Close[bar]));
       }
 
-      if (position[bar] > 0) {
+      if (trend[bar] > 0) {
          histLongPrice1 [bar] = price1;
          histLongPrice2 [bar] = price2;
          histShortPrice1[bar] = EMPTY_VALUE;
          histShortPrice2[bar] = EMPTY_VALUE;
       }
-      else if (position[bar] < 0) {
+      else if (trend[bar] < 0) {
          histLongPrice1 [bar] = EMPTY_VALUE;
          histLongPrice2 [bar] = EMPTY_VALUE;
          histShortPrice1[bar] = price1;
@@ -323,14 +333,14 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      color legendColor = ifInt(position[0] > 0, Green, DodgerBlue);
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, legendColor, legendColor, ma, Digits, position[0], Time[0]);
+      color legendColor = ifInt(trend[0] > 0, Green, DodgerBlue);
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
-      // monitor position reversals
+      // monitor trend reversals
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         int iPosition = Round(position[0]);
-         if      (iPosition ==  1) onReversal(D_LONG);
-         else if (iPosition == -1) onReversal(D_SHORT);
+         int iTrend = Round(trend[0]);
+         if      (iTrend ==  1) onReversal(D_LONG);
+         else if (iTrend == -1) onReversal(D_SHORT);
       }
    }
    return(catch("onTick(3)"));
@@ -379,10 +389,9 @@ bool onReversal(int direction) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
-
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
-   SetIndexStyle(MODE_POSITION, DRAW_NONE);
+   SetIndexStyle(MODE_MA,    DRAW_NONE);
+   SetIndexStyle(MODE_TREND, DRAW_NONE);
 
    int maType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
 
