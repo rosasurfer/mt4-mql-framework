@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                       // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
+int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
 extern bool     EA.CreateReport                 = false;
@@ -53,8 +53,8 @@ int init() {
       return(last_error);
    }
 
-   if (__WHEREAMI__ == NULL) {                                       // init() is called by the terminal
-      __WHEREAMI__ = CF_INIT;                                        // TODO: ??? does this work in experts ???
+   if (__CoreFunction == NULL) {                                     // init() is called by the terminal
+      __CoreFunction = CF_INIT;                                      // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
@@ -70,7 +70,7 @@ int init() {
       last_error          = error;
       __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
-      __WHEREAMI__        = NULL;
+      __CoreFunction      = NULL;
       return(last_error);
    }
 
@@ -276,8 +276,8 @@ int start() {
    ShiftedBars   = -1;                                                              // ...
 
    // if called after init() check it's return value
-   if (__WHEREAMI__ == CF_INIT) {
-      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF is FALSE here, but an error may be set
+   if (__CoreFunction == CF_INIT) {
+      __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);     // __STATUS_OFF is FALSE here, but an error may be set
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
          log("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -287,7 +287,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // again an error may be set
-            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // reset __WHEREAMI__ and wait for the next tick
+            __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);// reset __CoreFunction and wait for the next tick
             return(ShowStatus(error));
          }
       }
@@ -383,7 +383,7 @@ int start() {
  * to its own thread). Writing status changes to disk as they happen avoids this issue in the first place.
  */
 int deinit() {
-   __WHEREAMI__ = CF_DEINIT;
+   __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);
@@ -559,29 +559,6 @@ bool CheckErrors(string location, int setError = NULL) {
  */
 bool SetCustomLog(string filename) {
    return(SetCustomLogA(__ExecutionContext, filename));
-}
-
-
-/**
- * Stop the tester. Can be called only from an active test.
- *
- * @param  string location [optional] - location identifier of the caller (default: none)
- *
- * @return int - error status
- */
-int Tester.Stop(string location = "") {
-   if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
-   if (__WHEREAMI__ == CF_DEINIT) return(NO_ERROR);                  // SendMessage() can't be used in deinit() => UI thread lock
-
-   int hWnd = GetTerminalMainWindow();
-   if (!hWnd) return(last_error);
-
-   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
-
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
-   return(NO_ERROR);
 }
 
 

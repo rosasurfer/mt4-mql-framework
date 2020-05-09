@@ -12,7 +12,7 @@
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
 //int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
-//int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
+//int    __CoreFunction;                                    // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
 
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_WARN.mail;                                   // whether warnings are logged to email
@@ -37,7 +37,7 @@ bool     __STATUS_OFF;                                      // Programm komplett
 int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
-int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
+int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
 int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
@@ -335,7 +335,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define Bands.MODE_UPPER               1        // upper band value
 #define Bands.MODE_LOWER               2        // lower band value
 
-#define Broketrader.MODE_POSITION      6        // Broketrader positioning indicator
+#define Broketrader.MODE_MA            6        // Broketrader SMA value
+#define Broketrader.MODE_TREND         7        // Broketrader trend direction and length
 
 #define Fisher.MODE_MAIN               0        // Fisher Transform main line
 #define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
