@@ -79,7 +79,7 @@ int onInit() {
 
 
    // (2) display configuration, names, labels
-   SetIndexLabel(0, NULL);                                     // disable "Data Window" display
+   SetIndexLabel(0, NULL);                                     // disable "Data" window display
    CreateDescriptionLabel();                                   // create label for superbar period description
 
 
