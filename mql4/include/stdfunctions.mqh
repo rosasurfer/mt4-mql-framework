@@ -3512,7 +3512,8 @@ int Tester.Pause(string location = "") {
 
    if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
+ //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
    return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
 }
 
@@ -3534,7 +3535,8 @@ int Tester.Stop(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // in deinit() SendMessage() causes a thread lock which is
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
+ //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // in deinit() SendMessage() causes a thread lock which is
    return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
 }
 
