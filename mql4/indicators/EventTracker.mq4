@@ -40,10 +40,9 @@
  *
  * TODO:
  * -----
- *  - Candle-Pattern: neues Inside-Range-Pattern und Auflösung desselben auf Timeframe-Basis
  *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
+ *  - Candle-Pattern: neues Inside-Range-Pattern und Auflösung desselben auf Timeframe-Basis
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
- *  - Konfiguration während eines init-Cycles im Chart speichern und Recompilation überleben
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
