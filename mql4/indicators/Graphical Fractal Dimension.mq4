@@ -1,14 +1,14 @@
 /**
- * Fractal Graphical Dimension Index
+ * Graphical Fractal Dimension Index
  *
- * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, Jean-Philippe Poton]
- * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog entry, Jean-Philippe Poton]
+ * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, jppoton]
+ * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog post, jppoton]
  *
- * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, Jean-Philippe Poton]
- * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog entry, Jean-Philippe Poton]
+ * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, jppoton]
+ * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog post, jppoton]
  *
  * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
- * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on Poton]
+ * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on jppoton]
  */
 
 

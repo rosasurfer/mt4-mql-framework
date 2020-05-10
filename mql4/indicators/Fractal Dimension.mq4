@@ -1,8 +1,8 @@
 /**
- * Fractal Dimension Index (presumably Ehlers)
+ * Fractal Dimension Index
  *
- * @see  https://www.mql5.com/en/code/7758                                         [iliko]
- * @see  https://www.forexfactory.com/showthread.php?p=11504048#post11504048       [Background & Details]
+ * @source  https://www.mql5.com/en/code/7758                                    [iliko]
+ * @see     https://www.forexfactory.com/showthread.php?p=11504048#post11504048  [source: JohnLast]
  */
 
 
