@@ -143,7 +143,7 @@ int onTick() {
  * @return int - position value or NULL in case of errors
  */
 int GetBroketraderPosition(int iBar) {
-   return(iBroketrader(NULL, smaPeriods, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Broketrader.MODE_POSITION, iBar));
+   return(iBroketrader(NULL, smaPeriods, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Broketrader.MODE_TREND, iBar));
 }
 
 
