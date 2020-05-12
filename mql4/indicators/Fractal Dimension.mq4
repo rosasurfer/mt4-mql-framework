@@ -2,26 +2,25 @@
  * Fractal Dimension Index
  *
  * @source  https://www.mql5.com/en/code/7758                                    [iliko]
- * @see     https://www.forexfactory.com/showthread.php?p=11504048#post11504048  [source: JohnLast]
+ * @see     https://www.mql5.com/en/forum/176309#comment_4308400                 [edited, Mladen]
+ * @see     https://www.mql5.com/en/code/8844                                    [corrections, jjpoton]
+ * @see     https://www.forexfactory.com/showthread.php?p=11504048#post11504048  [multiple mashed-up posts from JohnLast]
  */
 
 
-/*
-@see  https://www.tradingview.com/script/GyR8LJq0-Fractal-Dimension-Index-FDI/
-
-int    Periods   = 30;
-double rangeHigh = highest(Close, Periods);
-double rangeLow  = lowest(Close, Periods);
-
-double length = 0;
-
-for (int i=1; i <= Periods-1, i++) {
-    double diff = (Close[i]-rangeLow) / (rangeHigh-rangeLow);
-    length     += Sqrt(Pow(diff[i]-diff[i+1], 2) + (1/Pow(Periods, 2)));
-}
-
-double FDI = 1 + (log(length)+log(2)) / log(2*Periods);
-*/
+/**
+ * Graphical Fractal Dimension Index
+ *
+ * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, jppoton]
+ * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog post, jppoton]
+ *
+ * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, jppoton]
+ * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog post, jppoton]
+ *
+ * @see  https://www.mql5.com/en/forum/176309/page4#comment_4308422                         [Tampa]
+ * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
+ * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on jppoton]
+ */
 
 
 // @source  https://www.mql5.com/en/code/7758
