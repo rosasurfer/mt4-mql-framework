@@ -1,1 +1,0 @@
-F:/Projects/mt4/private/templates/Bagovino.tpl
