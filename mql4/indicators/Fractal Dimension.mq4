@@ -9,13 +9,17 @@
  * The index is computed using the Sevcik algorithm (3) which is an optimized estimation for the real fractal dimension of a
  * data set as described by Long (1). It holds:
  *
- *   Fractal dimension = 2 - Hurst exponent (H)
+ *   Fractal Dimension (D) = 2 - Hurst exponent (H)
  *
- * The modification by Matulich (4) changes the interpretion of an element of the data set in the context of financial
- * timeseries. Matulich doesn't change the algorithm. It holds:
+ * The modification by Matulich (4) changes the interpretation of a data point in the context of financial timeseries.
+ * Matulich doesn't change the algorithm. It holds:
  *
  *   FDI(N, Matulich) = FDI(N+1, Sevcik)
  *
+ * The similar named "Fractal Dimension" by Ehlers is not related to this indicator.
+ *
+ * Indicator buffers for iCustom():
+ *  • FDI.MODE_MAIN: FDI values
  *
  *
  * @see  (2) http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html          [Long, 2004]
@@ -44,10 +48,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Periods    = 30;                           // number of periods (according to average trend length?)
-extern string DrawType   = "Line* | Dot";
-extern int    DrawWidth  = 2;
-extern int    Max.Values = 1000;                         // max. amount of values to calculate (-1: all)
+extern int    Periods        = 30;                       // number of periods (according to average trend length?)
+extern color  Color.Ranging  = Blue;
+extern color  Color.Trending = Red;
+extern string DrawType       = "Line* | Dot";
+extern int    DrawWidth      = 1;
+extern int    Max.Values     = 10000;                    // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -55,14 +61,14 @@ extern int    Max.Values = 1000;                         // max. amount of value
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define MODE_MAIN             0                          // indicator buffer ids
-#define MODE_UPPER            1
+#define MODE_MAIN             FDI.MODE_MAIN
+#define MODE_UPPER            1                          // indicator buffer ids
 #define MODE_LOWER            2
 
 #property indicator_separate_window
 #property indicator_buffers   3                          // buffers visible in input dialog
 
-#property indicator_color1    Blue
+#property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
 
@@ -91,6 +97,9 @@ int onInit() {
    // Periods
    if (Periods < 2)     return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    fdiPeriods = Periods;
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.Ranging  == 0xFF000000) Color.Ranging  = CLR_NONE;
+   if (Color.Trending == 0xFF000000) Color.Trending = CLR_NONE;
    // DrawType
    string sValues[], sValue=StrToLower(DrawType);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -172,7 +181,7 @@ int onTick() {
 bool UpdateChangedBars(int startBar) {
    double log2        = MathLog(2);
    double log2Periods = MathLog(2 * fdiPeriods);
-   double periodsPow2 = MathPow(fdiPeriods, -2);                        // = 1/MathPow(fdiPeriods, 2)
+   double periodsPow2 = MathPow(fdiPeriods, -2);                           // same as: 1/MathPow(fdiPeriods, 2)
 
    // Sevcik's algorithm (3) adapted to financial timeseries by Matulich (4). It holds:
    //
@@ -188,12 +197,12 @@ bool UpdateChangedBars(int startBar) {
             double diff = (Close[bar+i]-Close[bar+i+1]) / range;
             length += MathSqrt(MathPow(diff, 2) + periodsPow2);
          }
-         fdi = 1 + (MathLog(length) + log2)/log2Periods;                // Sevcik formula (6a) for small values of N
+         fdi = 1 + (MathLog(length) + log2)/log2Periods;                   // Sevcik's formula (6a) for small values of N
 
          if (fdi < 1 || fdi > 2) return(!catch("UpdateChangedBars(1)  bar="+ bar +"  fdi="+ fdi, ERR_RUNTIME_ERROR));
       }
       else {
-         fdi = main[bar+1];                                             // no movement => Dimension = 0 (a point)
+         fdi = main[bar+1];                                                // no movement: D = 0 (a point)
       }
 
       main[bar] = fdi;
@@ -201,12 +210,18 @@ bool UpdateChangedBars(int startBar) {
       if (fdi > 1.5) {
          upper[bar] = fdi;
          lower[bar] = EMPTY_VALUE;
-         if (upper[bar+1] == EMPTY_VALUE) upper[bar+1] = lower[bar+1];
+
+         if (drawType==DRAW_LINE) /*&&*/ if (upper[bar+1]==EMPTY_VALUE) {  // make sure the line is not interrupted
+            upper[bar+1] = lower[bar+1];
+         }
       }
       else {
          upper[bar] = EMPTY_VALUE;
          lower[bar] = fdi;
-         if (lower[bar+1] == EMPTY_VALUE) lower[bar+1] = upper[bar+1];
+
+         if (drawType==DRAW_LINE) /*&&*/ if (lower[bar+1]==EMPTY_VALUE) {  // make sure the line is not interrupted
+            lower[bar+1] = upper[bar+1];
+         }
       }
    }
    return(true);
@@ -218,13 +233,13 @@ bool UpdateChangedBars(int startBar) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   SetIndexStyle(MODE_MAIN, DRAW_NONE);
 
+   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    int draw_type = ifInt(drawWidth, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_MAIN,  draw_type, EMPTY, drawWidth, Blue    ); SetIndexArrow(MODE_MAIN,  158);
-   SetIndexStyle(MODE_UPPER, draw_type, EMPTY, drawWidth, CLR_NONE); SetIndexArrow(MODE_UPPER, 158);
-   SetIndexStyle(MODE_LOWER, draw_type, EMPTY, drawWidth, CLR_NONE); SetIndexArrow(MODE_LOWER, 158);
+   SetIndexStyle(MODE_UPPER, draw_type, EMPTY, drawWidth, Color.Ranging ); SetIndexArrow(MODE_UPPER, 158);
+   SetIndexStyle(MODE_LOWER, draw_type, EMPTY, drawWidth, Color.Trending); SetIndexArrow(MODE_LOWER, 158);
 
 }
 
@@ -235,9 +250,11 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Periods=",    Periods,                  ";", NL,
-                            "DrawType=",   DoubleQuoteStr(DrawType), ";", NL,
-                            "DrawWidth=",  DrawWidth,                ";", NL,
-                            "Max.Values=", Max.Values,               ";")
+   return(StringConcatenate("Periods=",        Periods,                    ";", NL,
+                            "Color.Ranging=",  ColorToStr(Color.Ranging),  ";", NL,
+                            "Color.Trending=", ColorToStr(Color.Trending), ";", NL,
+                            "DrawType=",       DoubleQuoteStr(DrawType),   ";", NL,
+                            "DrawWidth=",      DrawWidth,                  ";", NL,
+                            "Max.Values=",     Max.Values,                 ";")
    );
 }
