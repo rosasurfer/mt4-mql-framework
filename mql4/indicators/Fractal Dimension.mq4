@@ -1,14 +1,215 @@
 /**
- * Fractal Dimension Index
+ * FDI - Fractal Dimension Index
  *
- * @source  https://www.mql5.com/en/code/7758                                    [iliko]
- * @see     https://www.mql5.com/en/forum/176309#comment_4308400                 [edited, Mladen]
- * @see     https://www.mql5.com/en/code/8844                                    [corrections, jjpoton]
- * @see     https://www.forexfactory.com/showthread.php?p=11504048#post11504048  [multiple mashed-up posts from JohnLast]
+ * The Fractal Dimension Index describes market volatility and trendiness. It oscillates between 1 (a 1-dimensional market)
+ * and 2 (a 2-dimensional market). An FDI below 1.5 indicates a market with mainly trending behaviour. An FDI above 1.5
+ * indicates a market with mainly cyclic behaviour. An FDI at 1.5 indicates a market with nearly random behaviour. The FDI
+ * does not indicate market direction.
+ *
+ * The index is computed using the Sevcik algorithm (3) which is an optimized estimation for the real fractal dimension of a
+ * data set as described by Long (1). The modification by Matulich (4) changes the interpretion of an element of the data set
+ * in the context of financial timeseries. Matulich doesn't change the algorithm. It holds:
+ *
+ *   FDI(N, Matulich) = FDI(N+1, Sevcik)
+ *
+ * @see  (1) "etc/doc/fdi/Making Sense of Fractals [Long, 2003].pdf"
+ * @see  (2) http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html          [Long, 2004]
+ * @see  (3) http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html  [Estimation of Fractal Dimension, Sevcik, 1998]
+ * @see  (4) http://unicorn.us.com/trading/el.html#FractalDim                                                [Fractal Dimension, Matulich, 2006]
  */
+#include <stddefines.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
+extern int Periods    = 30;                              // number of periods (according to the average trend length?)
+extern int Max.Values = 1000;                            // max. amount of values to calculate (-1: all)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
+
+#define MODE_MAIN             0                          // indicator buffer ids
+#define MODE_UPPER            1
+#define MODE_LOWER            2
+
+#property indicator_separate_window
+#property indicator_buffers   3                          // buffers visible in input dialog
+
+#property indicator_color1    Blue
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+
+#property indicator_minimum   1
+#property indicator_maximum   2
+
+#property indicator_level1    1
+#property indicator_level2    1.5
+#property indicator_level3    2
+
+double main [];                                          // all FDI values: invisible
+double upper[];                                          // upper line:     visible (ranging)
+double lower[];                                          // lower line:     visible (trending)
+
+int    fdiPeriods;
+int    maxValues;
+
+double log2;                                             // MathLog(2)
+double log2FdiPeriods;                                   // MathLog(2 * fdiPeriods)
+double log2FdiPeriodsMinus1;                             // MathLog(2 * (fdiPeriods-1))
+double fdiPeriodsPow2;                                   // MathPow(fdiPeriods, 2)
+double fdiPeriodsMinus1Pow2;                             // MathPow(fdiPeriods-1, 2)
 
 
 /**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // validate inputs
+   // Periods
+   if (Periods < 2)     return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   fdiPeriods = Periods;
+   // Max.Values
+   if (Max.Values < -1) return(catch("onInit(2)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+
+   // buffer management
+   SetIndexBuffer(MODE_MAIN,  main );                    // all FDI values: invisible
+   SetIndexBuffer(MODE_UPPER, upper);                    // upper line:     visible (ranging)
+   SetIndexBuffer(MODE_LOWER, lower);                    // lower line:     visible (trending)
+
+   // names, labels and display options
+   string indicatorName = "FDI("+ fdiPeriods +")";
+   IndicatorShortName(indicatorName +"  ");              // indicator subwindow and context menu
+   SetIndexLabel(MODE_MAIN,  indicatorName);             // "Data" window and tooltips
+   SetIndexLabel(MODE_UPPER, NULL);
+   SetIndexLabel(MODE_LOWER, NULL);
+   SetIndicatorOptions();
+
+   // init global vars
+   log2                 = MathLog(2);
+   log2FdiPeriods       = MathLog(2 * fdiPeriods);
+   log2FdiPeriodsMinus1 = MathLog(2 * (fdiPeriods-1));
+   fdiPeriodsPow2       = MathPow(fdiPeriods, 2);
+   fdiPeriodsMinus1Pow2 = MathPow(fdiPeriods-1, 2);
+
+   return(catch("onInit(3)"));
+}
+
+
+/**
+ * Main function
+ *
+ * @return int - error status
+ */
+int onTick() {
+   // a not initialized buffer can happen on terminal start under specific circumstances
+   if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   if (!UnchangedBars) {
+      ArrayInitialize(main,  EMPTY_VALUE);
+      ArrayInitialize(upper, EMPTY_VALUE);
+      ArrayInitialize(lower, EMPTY_VALUE);
+      SetIndicatorOptions();
+   }
+
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(main,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(upper, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(lower, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+   // calculate start bar
+   int bars     = Min(ChangedBars, maxValues);
+   int startBar = Min(bars-1, Bars-fdiPeriods-1);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+
+   // recalculate changed bars
+   for (int bar=startBar; bar >= 0; bar--) {
+      // Sevcik's algorithm (3) adapted to financial markets by Matulich (4). We have:
+      //
+      //  FDI(N, Matulich) = FDI(N+1, Sevcik)
+      //
+      double priceMax = Close[ArrayMaximum(Close, fdiPeriods+1, bar)];
+      double priceMin = Close[ArrayMinimum(Close, fdiPeriods+1, bar)];
+      double range    = NormalizeDouble(priceMax-priceMin, Digits), length=0, fdi=0;
+
+      if (range > 0) {
+         for (int i=0; i < fdiPeriods; i++) {
+            double diff = (Close[bar+i]-Close[bar+i+1]) / range;
+            length += MathSqrt(MathPow(diff, 2) + MathPow(fdiPeriods, -2));
+         }
+         fdi = 1 + (MathLog(length) + MathLog(2)) / MathLog(2*fdiPeriods);    // see (3): formula 6a for small values of N
+
+         if (fdi < 1 || fdi > 2) return(catch("onTick(3)  bar="+ bar +"  fdi="+ fdi, ERR_RUNTIME_ERROR));
+      }
+      else {
+         fdi = main[bar+1];                                                   // D = 0
+      }
+
+      main[bar] = fdi;
+
+      if (fdi > 1.5) {
+         upper[bar] = fdi;
+         lower[bar] = EMPTY_VALUE;
+         if (upper[bar+1] == EMPTY_VALUE) upper[bar+1] = lower[bar+1];
+      }
+      else {
+         upper[bar] = EMPTY_VALUE;
+         lower[bar] = fdi;
+         if (lower[bar+1] == EMPTY_VALUE) lower[bar+1] = upper[bar+1];
+      }
+   }
+
+   return(catch("onTick(4)"));
+}
+
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
+ */
+void SetIndicatorOptions() {
+   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   SetIndexStyle(MODE_MAIN,  DRAW_LINE);
+
+   SetIndexStyle(MODE_UPPER, DRAW_LINE, STYLE_SOLID, 1);
+   SetIndexStyle(MODE_LOWER, DRAW_LINE, STYLE_SOLID, 1);
+
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("Periods=",    Periods,    ";", NL,
+                            "Max.Values=", Max.Values, ";")
+   );
+}
+
+
+
+
+/**
+ * Fractal Dimension Index
+ *
+ * @source  https://www.mql5.com/en/code/7758                                               [iliko]
+ * @see     https://www.mql5.com/en/forum/176309#comment_4308400                            [edited, Mladen]
+ * @see     https://www.mql5.com/en/code/8844                                               [corrections, jjpoton]
+ * @see     https://www.forexfactory.com/showthread.php?p=11504048#post11504048             [multiple mashed-up posts from JohnLast]
+ *
+ *
+ *
  * Graphical Fractal Dimension Index
  *
  * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, jppoton]
@@ -21,256 +222,3 @@
  * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
  * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on jppoton]
  */
-
-
-// @source  https://www.mql5.com/en/code/7758
-//+------------------------------------------------------------------------------------------------------------------+
-//|                                                                              fractal_dimension.mq4               |
-//|                                                                              iliko [arcsin5@netscape.net]        |
-//|                                                                                                                  |
-//|                                                                                                                  |
-//|  The Fractal Dimension Index determines the amount of market volatility. The easiest way to use this indicator is|
-//|  to understand that a value of 1.5 suggests the market is acting in a completely random fashion.                 |
-//|  As the market deviates from 1.5, the opportunity for earning profits is increased in proportion                 |
-//|  to the amount of deviation.                                                                                     |
-//|  But be carreful, the indicator does not show the direction of trends !!                                         |
-//|                                                                                                                  |
-//|  The indicator is RED when the market is in a trend. And it is blue when there is a high volatility.             |
-//|  When the FDI changes its color from red to blue, it means that a trend is finishing, the market becomes         |
-//|  erratic and a high volatility is present. Usually, these "blue times" do not go for a long time.They come before|
-//|  a new trend.                                                                                                    |
-//|                                                                                                                  |
-//|  For more informations, see                                                                                      |
-//|  http://www.forex-tsd.com/suggestions-trading-systems/6119-tasc-03-07-fractal-dimension-index.html               |
-//|                                                                                                                  |
-//|                                                                                                                  |
-//|  HOW TO USE INPUT PARAMETERS :                                                                                   |
-//|  -----------------------------                                                                                   |
-//|                                                                                                                  |
-//|      1) e_period [ integer >= 1 ]                                              =>  30                            |
-//|                                                                                                                  |
-//|         The indicator will compute the historical market volatility over this period.                            |
-//|         Choose its value according to the average of trend lengths.                                              |
-//|                                                                                                                  |
-//|      2) e_type_data [ int = {PRICE_CLOSE = 0,                                                                    |
-//|                              PRICE_OPEN  = 1,                                                                    |
-//|                              PRICE_HIGH  = 2,                                                                    |
-//|                              PRICE_LOW   = 3,                                                                    |
-//|                              PRICE_MEDIAN    (high+low)/2              = 4,                                      |
-//|                              PRICE_TYPICAL   (high+low+close)/3        = 5,                                      |
-//|                              PRICE_WEIGHTED  (high+low+close+close)/4  = 6}     => PRICE_CLOSE                   |
-//|                                                                                                                  |
-//|         Defines on which price type the Fractal Dimension is computed.                                           |
-//|                                                                                                                  |
-//|      3) e_random_line [ 0.0 < double < 2.0 ]                                   => 1.5                            |
-//|                                                                                                                  |
-//|         Defines your separation betwen a trend market (red) and an erratic/high volatily one.                    |
-//|                                                                                                                  |
-//| v1.0 - February 2007                                                                                            |
-//+------------------------------------------------------------------------------------------------------------------+
-#property indicator_separate_window
-#property indicator_levelcolor LimeGreen
-#property indicator_levelwidth 1
-#property indicator_levelstyle STYLE_DASH
-#property indicator_buffers 2
-#property indicator_color1 Blue
-#property indicator_color2 Red
-#property indicator_width1 2
-#property indicator_width2 2
-
-// input parameters
-extern int    e_period      = 30;
-extern int    e_type_data   = PRICE_CLOSE;
-extern double e_random_line = 1.5;              // Indicator triggering is defined by the value of the following input parameter:
-
-double LOG_2;
-
-double ExtInputBuffer[];         // input buffer
-double ExtOutputBufferUp[];      // output buffer
-double ExtOutputBufferDown[];
-
-int g_period_minus_1;
-
-
-/**
- * Initialization
- *
- * @return int - error status
- */
-int init() {
-   // Check e_period input parameter
-   if (e_period < 2) {
-      Alert("input parameter e_period must be >= 1 ("+ e_period +")");
-      return(-1);
-   }
-   if (e_type_data < PRICE_CLOSE || e_type_data > PRICE_WEIGHTED) {
-      Alert("input parameter e_type_data unknown ("+ e_type_data +")");
-      return(-1);
-   }
-   if (e_random_line < 0 || e_random_line > 2) {
-      Alert("input parameter e_random_line = " +e_random_line +" out of range (0.0 < e_random_line < 2.0)");
-      return(-1);
-   }
-   IndicatorBuffers(3);
-   SetIndexBuffer(0, ExtOutputBufferUp  ); SetIndexStyle(0, DRAW_LINE, STYLE_SOLID, 2); SetIndexLabel(0, "FDI"); SetIndexDrawBegin(0, 2*e_period);
-   SetIndexBuffer(1, ExtOutputBufferDown); SetIndexStyle(1, DRAW_LINE, STYLE_SOLID, 2);
-   SetIndexBuffer(2, ExtInputBuffer     );
-
-   SetLevelValue(0,e_random_line);
-   IndicatorShortName("FDI");
-   g_period_minus_1 = e_period-1;
-   LOG_2 = MathLog(2.0);
-
-   return(0);
-}
-
-
-/**
- * Main function
- *
- * @return int - error status
- */
-int start() {
-   int counted_bars = IndicatorCounted();
-   if (counted_bars > 0) counted_bars--;
-
-   int limit = Bars-counted_bars;
-   if (!counted_bars) limit -= 1+e_period;
-
-   computeLastNbBars(limit);
-   return(0);
-}
-
-
-/**
- * @param int lastBars - these "n" last bars must be repainted
- */
-void computeLastNbBars(int lastBars) {
-   int pos;
-   double tmp_close[], tmp_open[], tmp_high[], tmp_low[];
-
-   ArrayCopy(tmp_open,  Open );
-   ArrayCopy(tmp_high,  High );
-   ArrayCopy(tmp_low,   Low  );
-   ArrayCopy(tmp_close, Close);
-
-   switch (e_type_data) {
-      case PRICE_OPEN : computeFdi(lastBars, tmp_open ); break;
-      case PRICE_HIGH : computeFdi(lastBars, tmp_high ); break;
-      case PRICE_LOW  : computeFdi(lastBars, tmp_low  ); break;
-      case PRICE_CLOSE: computeFdi(lastBars, tmp_close); break;
-
-      case PRICE_MEDIAN:
-         for (pos=lastBars; pos >= 0; pos--) {
-            ExtInputBuffer[pos] = (tmp_high[pos]+tmp_low[pos]) / 2;
-         }
-         computeFdi(lastBars, ExtInputBuffer);
-         break;
-
-      case PRICE_TYPICAL:
-         for (pos=lastBars; pos >= 0; pos--) {
-            ExtInputBuffer[pos] = (tmp_high[pos]+tmp_low[pos]+tmp_close[pos]) / 3;
-         }
-         computeFdi(lastBars, ExtInputBuffer);
-         break;
-
-      case PRICE_WEIGHTED:
-         for (pos=lastBars; pos >= 0; pos--) {
-            ExtInputBuffer[pos] = (tmp_high[pos]+tmp_low[pos]+tmp_close[pos]+tmp_close[pos]) / 4;
-         }
-         computeFdi(lastBars, ExtInputBuffer);
-         break;
-
-      default :
-         Alert("input parameter e_type_data "+ e_type_data +" is unknown");
-   }
-}
-
-
-/**
- * Compute FDI values from input data.
- *
- * @param int    lastBars  - these "n" last bars must be repainted
- * @param double inputData - data array on which the FDI will be applied
- *
- */
-void computeFdi(int lastBars, double inputData[]) {
-   double diff, priorDiff, length, priceMax, priceMin, fdi;
-
-   for (int pos=lastBars; pos >= 0; pos--) {
-      priceMax = highest(e_period, pos, inputData);
-      priceMin = lowest (e_period, pos, inputData);
-      length   = 0;
-      priorDiff = 0;
-
-      for (int iteration=0; iteration < g_period_minus_1; iteration++) {
-         if (priceMax-priceMin > 0) {
-            diff = (inputData[pos+iteration]-priceMin) / (priceMax-priceMin);
-            if (iteration > 0) {
-               length += MathSqrt(MathPow(diff-priorDiff, 2) + 1/MathPow(e_period, 2));
-            }
-            priorDiff = diff;
-         }
-      }
-
-      if (length > 0) {
-         fdi = 1 + (MathLog(length)+LOG_2) / MathLog(2*e_period);
-      }
-      else {
-         // The FDI algorithm suggests a zero value. I prefer to use the previous FDI value.
-         fdi = 0;
-      }
-
-      if (fdi > e_random_line) {
-         ExtOutputBufferUp  [pos]   = fdi;
-         ExtOutputBufferUp  [pos+1] = MathMin(ExtOutputBufferUp[pos+1], ExtOutputBufferDown[pos+1]);
-         ExtOutputBufferDown[pos]   = EMPTY_VALUE;
-      }
-      else {
-         ExtOutputBufferDown[pos]   = fdi;
-         ExtOutputBufferDown[pos+1] = MathMin(ExtOutputBufferUp[pos+1], ExtOutputBufferDown[pos+1]);
-         ExtOutputBufferUp  [pos]   = EMPTY_VALUE;
-      }
-   }
-}
-
-
-/**
- * Search for the highest value in an array data
- *
- * @param int    n         - find the highest on these n data
- * @param int    pos       - begin to search for from this index
- * @param double inputData - data array on which the searching for is done
- *
- * @return double - the highest value
- */
-double highest(int n, int pos, double inputData[]) {
-   int length = pos+n;
-   double highest = 0;
-
-   for (int i=pos; i<length; i++) {
-      if (inputData[i] > highest) highest = inputData[i];
-   }
-   return(highest);
-}
-
-
-/**
- * Search for the lowest value in an array data
- *
- * @param int    n         - find the lowest on these n data
- * @param int    pos       - begin to search for from this index
- * @param double inputData - data array on which the searching for is done
- *
- * @return double - the lowest value
- */
-double lowest(int n, int pos, double inputData[]) {
-   int length = pos+n;
-   double lowest = 9999999999;
-
-   for (int i=pos; i<length; i++) {
-      if (inputData[i] < lowest) lowest = inputData[i];
-   }
-   return(lowest);
-}
-
