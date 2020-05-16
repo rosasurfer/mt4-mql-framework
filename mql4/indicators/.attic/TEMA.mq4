@@ -48,8 +48,7 @@ double secondEma[];                                      // second EMA(EMA): inv
 int    ma.appliedPrice;
 string ma.name;                                          // name for chart legend, "Data" window and context menues
 
-int    drawType      = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
-int    drawArrowSize = 1;                                // default symbol size for Draw.Type="dot"
+int    drawType;
 string legendLabel;
 
 
@@ -222,10 +221,9 @@ int onTick() {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
-   int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
+   int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_TEMA, draw_type, EMPTY, draw_width, MA.Color); SetIndexArrow(MODE_TEMA, 159);
+   SetIndexStyle(MODE_TEMA, draw_type, EMPTY, Draw.Width, MA.Color); SetIndexArrow(MODE_TEMA, 158);
 }
 
 
