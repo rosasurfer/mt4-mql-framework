@@ -1,46 +1,36 @@
 /**
  * FDI - Fractal Dimension Index
  *
- * The Fractal Dimension Index describes market volatility and trendiness. It oscillates between 1 (a 1-dimensional market)
- * and 2 (a 2-dimensional market). An FDI below 1.5 indicates a market with mainly trending behaviour. An FDI above 1.5
- * indicates a market with mainly cyclic behaviour. An FDI at 1.5 indicates a market with nearly random behaviour. The FDI
- * does not indicate market direction.
+ * The Fractal Dimension Index describes the state of randomness or the existence of a long-term memory in a timeseries.
+ * The FDI oscillates between 1 (1-dimensional behaviour) and 2 (2-dimensionalbehaviour). In financial contexts an FDI below
+ * 1.5 indicates a market with trending behaviour (the timeseries is persistent). An FDI above 1.5 indicates a market with
+ * ranging or cyclic behaviour (the timeseries is non-persistent). An FDI at 1.5 indicates a market with random behaviour
+ * (the timeseries has no long-term memory). The FDI does not indicate market direction.
  *
  * The index is computed using the Sevcik algorithm (3) which is an optimized estimation for the real fractal dimension of a
  * data set as described by Long (1). It holds:
  *
  *   Fractal Dimension (D) = 2 - Hurst exponent (H)
  *
- * The modification by Matulich (4) changes the interpretation of a data point in the context of financial timeseries.
+ * The modification by Matulich (4) changes the interpretation of an element of the set in the context of financial markets.
  * Matulich doesn't change the algorithm. It holds:
  *
  *   FDI(N, Matulich) = FDI(N+1, Sevcik)
  *
- * The similar named "Fractal Dimension" by Ehlers is not related to this indicator.
+ * The so-called "Fractal Graph Dimension Index" (FGDI) draws Bollinger bands in beautiful colors around the FDI but doesn't
+ * add any value. The similar named "Fractal Dimension" by Ehlers is not related to this indicator.
  *
  * Indicator buffers for iCustom():
  *  • FDI.MODE_MAIN: FDI values
  *
  *
+ *                                         [Long, 2003]
  * @see  (2) http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html          [Long, 2004]
  * @see  (3) http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html  [Estimation of Fractal Dimension, Sevcik, 1998]
  * @see  (4) http://unicorn.us.com/trading/el.html#FractalDim                                                [Fractal Dimension, Matulich, 2006]
  * @see  (5) http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use              [FDI Usage, JohnLast, 2010]
- */
-
-
-/**
- * Graphical Fractal Dimension Index
  *
- * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, jppoton]
- * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog post, jppoton]
- *
- * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, jppoton]
- * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog post, jppoton]
- *
- * @see  https://www.mql5.com/en/forum/176309/page4#comment_4308422                         [Tampa]
- * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
- * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on jppoton]
+ * @see  https://www.mql5.com/en/code/8997                                                                   [FGDI with fixed FDI issues, LastViking]
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -179,17 +169,18 @@ int onTick() {
  * @return bool - success status
  */
 bool UpdateChangedBars(int startBar) {
+   int periodsPlus1   = fdiPeriods + 1;
    double log2        = MathLog(2);
    double log2Periods = MathLog(2 * fdiPeriods);
    double periodsPow2 = MathPow(fdiPeriods, -2);                           // same as: 1/MathPow(fdiPeriods, 2)
 
    // Sevcik's algorithm (3) adapted to financial timeseries by Matulich (4). It holds:
    //
-   //  FDI(N, Matulich) = FDI(N+1, Sevcik)
+   //   FDI(N, Matulich) = FDI(N+1, Sevcik)
    //
    for (int bar=startBar; bar >= 0; bar--) {
-      double priceMax = Close[ArrayMaximum(Close, fdiPeriods+1, bar)];
-      double priceMin = Close[ArrayMinimum(Close, fdiPeriods+1, bar)];
+      double priceMax = Close[ArrayMaximum(Close, periodsPlus1, bar)];     // fixes a Matulich error
+      double priceMin = Close[ArrayMinimum(Close, periodsPlus1, bar)];
       double range    = NormalizeDouble(priceMax-priceMin, Digits), length=0, fdi=0;
 
       if (range > 0) {
