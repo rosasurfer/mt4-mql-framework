@@ -341,6 +341,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define Fisher.MODE_MAIN               0        // Fisher Transform main line
 #define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
 
+#define FDI.MODE_MAIN                  0        // Fractal Dimension main line
+
 #define HalfTrend.MODE_MAIN            0        // HalfTrend SR line
 #define HalfTrend.MODE_TREND           1        // HalfTrend trend direction and length
 
@@ -368,7 +370,7 @@ double  N_INF;                                              // -1.#INF: negative
 // Sorting modes, siehe ArraySort()
 #define MODE_ASC                       1        // aufsteigend
 #define MODE_DESC                      2        // absteigend
-#define MODE_ASCEND             MODE_ASC        // MetaQuotes-Aliasse
+#define MODE_ASCEND             MODE_ASC        // MetaQuotes aliases
 #define MODE_DESCEND           MODE_DESC
 
 

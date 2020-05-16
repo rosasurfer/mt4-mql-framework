@@ -644,6 +644,8 @@
 #define clrYellow                        Yellow
 #define clrYellowGreen                   YellowGreen
 
+#define clrNONE                          CLR_NONE
+
 
 // LFX trade commands
 #define TC_LFX_ORDER_CREATE              1

@@ -34,7 +34,7 @@ void @Bands.UpdateLegend(string label, string name, string status, color bandsCo
          sUpperValue = DoubleToStr(upperValue, digits);
          sLowerValue = DoubleToStr(lowerValue, digits);
       }
-      string text = StringConcatenate(name, "    ", sUpperValue, " / ", sLowerValue, "    ", status);
+      string text = StringConcatenate(name, "    ", sLowerValue, " : ", sUpperValue, "    ", status);
       color  textColor = bandsColor;
       if      (textColor == Yellow) textColor = Orange;
       else if (textColor == Gold  ) textColor = Orange;
