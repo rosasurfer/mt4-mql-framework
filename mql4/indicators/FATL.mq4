@@ -68,8 +68,7 @@ double uptrend2 [];                                      // single-bar uptrends:
 double filterWeights[];                                  // filter coefficients
 
 int    maxValues;
-int    drawType      = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
-int    drawArrowSize = 1;                                // default symbol size for Draw.Type="dot"
+int    drawType;
 
 string indicatorName;
 string chartLegendLabel;
@@ -341,16 +340,13 @@ bool InitFilter() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
-
-   int draw_type  = ifInt(Draw.Width, drawType, DRAW_NONE);
-   int draw_width = ifInt(drawType==DRAW_ARROW, drawArrowSize, Draw.Width);
+   int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, draw_width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, draw_width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
+   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
+   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
 }
 
 

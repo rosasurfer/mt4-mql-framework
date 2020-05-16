@@ -224,12 +224,13 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
+   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
-   int sigType  = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
-   int sigWidth = signalDrawWidth;
+   int ma2Type  = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
+   int ma2Width = signalDrawWidth;
 
    SetIndexStyle(MODE_STOCH_MA1, DRAW_LINE, EMPTY, EMPTY,    Main.Color);
-   SetIndexStyle(MODE_STOCH_MA2, sigType,   EMPTY, sigWidth, Signal.Color); SetIndexArrow(MODE_STOCH_MA2, 158);
+   SetIndexStyle(MODE_STOCH_MA2, ma2Type,   EMPTY, ma2Width, Signal.Color); SetIndexArrow(MODE_STOCH_MA2, 158);
 }
 
 
