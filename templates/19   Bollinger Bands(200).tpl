@@ -3,8 +3,8 @@ symbol=GBPUSD
 period=60
 leftpos=9229
 digits=5
-scale=4
-graph=0
+scale=2
+graph=1
 fore=0
 grid=0
 volume=0
@@ -35,6 +35,7 @@ stops_color=17919
 
 <window>
 height=300
+
 <indicator>
 name=main
 <object>
@@ -8768,8 +8769,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
@@ -8778,30 +8777,21 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=Bollinger Bands
 flags=339
 window_num=0
 <inputs>
-MA.Periods=23
+MA.Periods=200
+MA.Method=SMA | LWMA | EMA | ALMA*
+MA.AppliedPrice=Close
+MA.LineWidth=0
+MA.Color=3329330
+Bands.StdDevs=2.0
+Bands.LineWidth=1
+Bands.Color=14772545
+Max.Values=10000
 </inputs>
 </expert>
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Sadukey
-flags=339
-window_num=0
-<inputs>
-</inputs>
-</expert>
-color_0=16711680
-weight_0=5
-color_1=255
-weight_1=5
 period_flags=0
 show_data=1
 </indicator>
