@@ -54,14 +54,8 @@ double main [];                                          // all FDI values: invi
 double upper[];                                          // upper line:     visible (ranging)
 double lower[];                                          // lower line:     visible (trending)
 
-int    fdiPeriods;
-int    maxValues;
-
-double log2;                                             // MathLog(2)
-double log2FdiPeriods;                                   // MathLog(2 * fdiPeriods)
-double log2FdiPeriodsMinus1;                             // MathLog(2 * (fdiPeriods-1))
-double fdiPeriodsPow2;                                   // MathPow(fdiPeriods, 2)
-double fdiPeriodsMinus1Pow2;                             // MathPow(fdiPeriods-1, 2)
+int fdiPeriods;
+int maxValues;
 
 
 /**
@@ -90,13 +84,6 @@ int onInit() {
    SetIndexLabel(MODE_UPPER, NULL);
    SetIndexLabel(MODE_LOWER, NULL);
    SetIndicatorOptions();
-
-   // init global vars
-   log2                 = MathLog(2);
-   log2FdiPeriods       = MathLog(2 * fdiPeriods);
-   log2FdiPeriodsMinus1 = MathLog(2 * (fdiPeriods-1));
-   fdiPeriodsPow2       = MathPow(fdiPeriods, 2);
-   fdiPeriodsMinus1Pow2 = MathPow(fdiPeriods-1, 2);
 
    return(catch("onInit(3)"));
 }
@@ -132,11 +119,29 @@ int onTick() {
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
+   UpdateChangedBars(startBar);
+
+   return(last_error);
+}
+
+
+/**
+ * Update changed bars.
+ *
+ * @param  int startBar - index of the oldest changed bar
+ *
+ * @return bool - success status
+ */
+bool UpdateChangedBars(int startBar) {
+   double log2        = MathLog(2);
+   double log2Periods = MathLog(2 * fdiPeriods);
+   double periodsPow2 = MathPow(fdiPeriods, -2);                        // = 1/MathPow(fdiPeriods, 2)
+
+   // Sevcik's algorithm (3) adapted to financial timeseries by Matulich (4). It holds:
+   //
+   //  FDI(N, Matulich) = FDI(N+1, Sevcik)
+   //
    for (int bar=startBar; bar >= 0; bar--) {
-      // Sevcik's algorithm (3) adapted to financial markets by Matulich (4). We have:
-      //
-      //  FDI(N, Matulich) = FDI(N+1, Sevcik)
-      //
       double priceMax = Close[ArrayMaximum(Close, fdiPeriods+1, bar)];
       double priceMin = Close[ArrayMinimum(Close, fdiPeriods+1, bar)];
       double range    = NormalizeDouble(priceMax-priceMin, Digits), length=0, fdi=0;
@@ -144,14 +149,14 @@ int onTick() {
       if (range > 0) {
          for (int i=0; i < fdiPeriods; i++) {
             double diff = (Close[bar+i]-Close[bar+i+1]) / range;
-            length += MathSqrt(MathPow(diff, 2) + MathPow(fdiPeriods, -2));
+            length += MathSqrt(MathPow(diff, 2) + periodsPow2);
          }
-         fdi = 1 + (MathLog(length) + MathLog(2)) / MathLog(2*fdiPeriods);    // see (3): formula 6a for small values of N
+         fdi = 1 + (MathLog(length) + log2)/log2Periods;                // Sevcik formula (6a) for small values of N
 
-         if (fdi < 1 || fdi > 2) return(catch("onTick(3)  bar="+ bar +"  fdi="+ fdi, ERR_RUNTIME_ERROR));
+         if (fdi < 1 || fdi > 2) return(!catch("UpdateChangedBars(1)  bar="+ bar +"  fdi="+ fdi, ERR_RUNTIME_ERROR));
       }
       else {
-         fdi = main[bar+1];                                                   // D = 0
+         fdi = main[bar+1];                                             // no movement => Dimension = 0 (a point)
       }
 
       main[bar] = fdi;
@@ -167,8 +172,7 @@ int onTick() {
          if (lower[bar+1] == EMPTY_VALUE) lower[bar+1] = upper[bar+1];
       }
    }
-
-   return(catch("onTick(4)"));
+   return(true);
 }
 
 
