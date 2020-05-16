@@ -7,15 +7,36 @@
  * does not indicate market direction.
  *
  * The index is computed using the Sevcik algorithm (3) which is an optimized estimation for the real fractal dimension of a
- * data set as described by Long (1). The modification by Matulich (4) changes the interpretion of an element of the data set
- * in the context of financial timeseries. Matulich doesn't change the algorithm. It holds:
+ * data set as described by Long (1). It holds:
+ *
+ *   Fractal dimension = 2 - Hurst exponent (H)
+ *
+ * The modification by Matulich (4) changes the interpretion of an element of the data set in the context of financial
+ * timeseries. Matulich doesn't change the algorithm. It holds:
  *
  *   FDI(N, Matulich) = FDI(N+1, Sevcik)
+ *
  *
  * @see  (1) "etc/doc/fdi/Making Sense of Fractals [Long, 2003].pdf"
  * @see  (2) http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html          [Long, 2004]
  * @see  (3) http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html  [Estimation of Fractal Dimension, Sevcik, 1998]
  * @see  (4) http://unicorn.us.com/trading/el.html#FractalDim                                                [Fractal Dimension, Matulich, 2006]
+ * @see  (5) https://www.mql5.com/en/forum/180729/page2#comment_4447692                                      [FDI usage, JohnLast, 2010]
+ */
+
+
+/**
+ * Graphical Fractal Dimension Index
+ *
+ * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, jppoton]
+ * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog post, jppoton]
+ *
+ * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, jppoton]
+ * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog post, jppoton]
+ *
+ * @see  https://www.mql5.com/en/forum/176309/page4#comment_4308422                         [Tampa]
+ * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
+ * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on jppoton]
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -200,29 +221,3 @@ string InputsToStr() {
                             "Max.Values=", Max.Values, ";")
    );
 }
-
-
-
-
-/**
- * Fractal Dimension Index
- *
- * @source  https://www.mql5.com/en/code/7758                                               [iliko]
- * @see     https://www.mql5.com/en/forum/176309#comment_4308400                            [edited, Mladen]
- * @see     https://www.mql5.com/en/code/8844                                               [corrections, jjpoton]
- * @see     https://www.forexfactory.com/showthread.php?p=11504048#post11504048             [multiple mashed-up posts from JohnLast]
- *
- *
- *
- * Graphical Fractal Dimension Index
- *
- * @see  https://www.mql5.com/en/code/8844                                                  [Comparison to FDI, jppoton]
- * @see  http://fractalfinance.blogspot.com/2009/05/from-bollinger-to-fractal-bands.html    [Blog post, jppoton]
- *
- * @see  https://www.mql5.com/en/code/9604                                                  [Fractal Dispersion of FGDI, jppoton]
- * @see  http://fractalfinance.blogspot.com/2010/03/self-similarity-and-measure-of-it.html  [Blog post, jppoton]
- *
- * @see  https://www.mql5.com/en/forum/176309/page4#comment_4308422                         [Tampa]
- * @see  https://www.mql5.com/en/code/8997                                                  [Modification for small Periods, LastViking]
- * @see  https://www.mql5.com/en/code/16916                                                 [MT5-Version, Nikolay Kositsin, based on jppoton]
- */
