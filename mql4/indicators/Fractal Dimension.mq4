@@ -21,7 +21,7 @@
  * @see  (2) http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html          [Long, 2004]
  * @see  (3) http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html  [Estimation of Fractal Dimension, Sevcik, 1998]
  * @see  (4) http://unicorn.us.com/trading/el.html#FractalDim                                                [Fractal Dimension, Matulich, 2006]
- * @see  (5) https://www.mql5.com/en/forum/180729/page2#comment_4447692                                      [FDI usage, JohnLast, 2010]
+ * @see  (5) http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use              [FDI Usage, JohnLast, 2010]
  */
 
 
@@ -44,8 +44,10 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Periods    = 30;                              // number of periods (according to the average trend length?)
-extern int Max.Values = 1000;                            // max. amount of values to calculate (-1: all)
+extern int    Periods    = 30;                           // number of periods (according to average trend length?)
+extern string DrawType   = "Line* | Dot";
+extern int    DrawWidth  = 2;
+extern int    Max.Values = 1000;                         // max. amount of values to calculate (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,9 +66,6 @@ extern int Max.Values = 1000;                            // max. amount of value
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
 
-#property indicator_minimum   1
-#property indicator_maximum   2
-
 #property indicator_level1    1
 #property indicator_level2    1.5
 #property indicator_level3    2
@@ -76,6 +75,9 @@ double upper[];                                          // upper line:     visi
 double lower[];                                          // lower line:     visible (trending)
 
 int fdiPeriods;
+
+int drawType;
+int drawWidth;
 int maxValues;
 
 
@@ -89,8 +91,22 @@ int onInit() {
    // Periods
    if (Periods < 2)     return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    fdiPeriods = Periods;
+   // DrawType
+   string sValues[], sValue=StrToLower(DrawType);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  DrawType = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; DrawType = "Dot";  }
+   else                 return(catch("onInit(2)  Invalid input parameter DrawType = "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
+   // DrawWidth
+   if (DrawWidth < 0)   return(catch("onInit(3)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth > 5)   return(catch("onInit(4)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   drawWidth = DrawWidth;
    // Max.Values
-   if (Max.Values < -1) return(catch("onInit(2)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1) return(catch("onInit(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // buffer management
@@ -106,7 +122,7 @@ int onInit() {
    SetIndexLabel(MODE_LOWER, NULL);
    SetIndicatorOptions();
 
-   return(catch("onInit(3)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -203,10 +219,12 @@ bool UpdateChangedBars(int startBar) {
  */
 void SetIndicatorOptions() {
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
-   SetIndexStyle(MODE_MAIN,  DRAW_LINE);
 
-   SetIndexStyle(MODE_UPPER, DRAW_LINE, STYLE_SOLID, 1);
-   SetIndexStyle(MODE_LOWER, DRAW_LINE, STYLE_SOLID, 1);
+   int draw_type = ifInt(drawWidth, drawType, DRAW_NONE);
+
+   SetIndexStyle(MODE_MAIN,  draw_type, EMPTY, drawWidth, Blue    ); SetIndexArrow(MODE_MAIN,  158);
+   SetIndexStyle(MODE_UPPER, draw_type, EMPTY, drawWidth, CLR_NONE); SetIndexArrow(MODE_UPPER, 158);
+   SetIndexStyle(MODE_LOWER, draw_type, EMPTY, drawWidth, CLR_NONE); SetIndexArrow(MODE_LOWER, 158);
 
 }
 
@@ -217,7 +235,9 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Periods=",    Periods,    ";", NL,
-                            "Max.Values=", Max.Values, ";")
+   return(StringConcatenate("Periods=",    Periods,                  ";", NL,
+                            "DrawType=",   DoubleQuoteStr(DrawType), ";", NL,
+                            "DrawWidth=",  DrawWidth,                ";", NL,
+                            "Max.Values=", Max.Values,               ";")
    );
 }
