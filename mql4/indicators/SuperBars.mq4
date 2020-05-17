@@ -617,8 +617,8 @@ int CreateDescriptionLabel() {
 
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 196);                  // min. Distance für Platzierung neben One-Click-Trading-Widget ist 195
-      ObjectSet    (label, OBJPROP_YDISTANCE, 4  );
+      ObjectSet    (label, OBJPROP_XDISTANCE, 280);
+      ObjectSet    (label, OBJPROP_YDISTANCE,   4);
       ObjectSetText(label, " ", 1);
       ObjectRegister(label);
    }
