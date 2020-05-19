@@ -8806,8 +8806,8 @@ flags=339
 window_num=0
 <inputs>
 Periods=50
-Color.UpTrend=9639167
-Color.DownTrend=16711680
+Color.UpTrend=16711680
+Color.DownTrend=9639167
 </inputs>
 </expert>
 period_flags=0
