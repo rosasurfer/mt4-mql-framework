@@ -7,7 +7,7 @@
  * This EA is a re-implementation of the above concept. It can be used as a trade manager or as a complete trading system.
  * Once started the EA waits until one of the defined start conditions is fulfilled. It then manages the resulting trades in
  * a pyramiding way until one of the defined stop conditions is fulfilled. Start conditions can be price, time or a trend
- * change of one of the supported trend indicators. Stop conditions can be price, time, a trend change of one the supported
+ * change of one of the supported trend indicators. Stop conditions can be price, time, a trend change of one of the supported
  * trend indicators or an absolute or percentage stoploss or takeprofit amount. Multiple start and stop conditions may be
  * combined.
  *
