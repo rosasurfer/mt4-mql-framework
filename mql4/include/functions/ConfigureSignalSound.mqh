@@ -6,7 +6,7 @@
  *
  * @return bool - validation success status
  */
-bool Configure.Signal.Sound(string configValue, bool &enabled) {
+bool ConfigureSignalSound(string configValue, bool &enabled) {
    enabled = false;
 
    string sValue = StrToLower(configValue), values[];                // default: "on | off | auto*"
