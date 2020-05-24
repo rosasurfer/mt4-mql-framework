@@ -27,7 +27,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/ConfigureSignalSMS.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
@@ -50,7 +50,7 @@ int onInit() {
       return(last_error);
 
    // (2) SMS-Konfiguration des Accounts einlesen
-   if (!Configure.Signal.SMS("auto", __SMS.alerts, __SMS.receiver))
+   if (!ConfigureSignalSMS("auto", __SMS.alerts, __SMS.receiver))
       return(last_error);
 
    return(catch("onInit(3)"));
