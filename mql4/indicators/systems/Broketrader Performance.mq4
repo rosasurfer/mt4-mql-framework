@@ -70,7 +70,7 @@ int onInit() {
    SetIndexBuffer(MODE_MAIN, main);                      // PL line: visible
 
    // names, labels and display options
-   IndicatorShortName("Broketrader performance   ");     // indicator subwindow and context menu
+   IndicatorShortName("Broketrader performance  ");      // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN, "Broketrader perf.");        // "Data" window and tooltips
    IndicatorDigits(1);
    SetIndicatorOptions();

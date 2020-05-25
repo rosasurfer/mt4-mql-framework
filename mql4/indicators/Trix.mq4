@@ -68,7 +68,7 @@ double firstEma [];                                         // first intermediat
 double secondEma[];                                         // second intermediate EMA buffer: invisible
 double thirdEma [];                                         // third intermediate EMA buffer:  invisible
 
-int    ema.appliedPrice;
+int ema.appliedPrice;
 
 
 /**
@@ -132,19 +132,17 @@ int onInit() {
 
 
    // (3) data display configuration and names
-   string sAppliedPrice = "";
-      if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ema.appliedPrice);
-   string name = "Trix ("+ EMA.Periods + sAppliedPrice +")  ";
-   IndicatorShortName(name);                                // indicator subwindow and context menus
-
-   name = "Trix("+ EMA.Periods +")";                        // "Data" window and tooltips
-   SetIndexLabel(MODE_EMA_1,         NULL);
-   SetIndexLabel(MODE_EMA_2,         NULL);
-   SetIndexLabel(MODE_EMA_3,         NULL);
-   SetIndexLabel(MODE_MAIN,          name);
-   SetIndexLabel(MODE_UPPER_SECTION, NULL);
-   SetIndexLabel(MODE_LOWER_SECTION, NULL);
-   SetIndexLabel(MODE_TREND,         NULL);
+   string sAppliedPrice = ""; if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ema.appliedPrice);
+   string shortName = "Trix("+ EMA.Periods + sAppliedPrice +")";
+   string dataName = "Trix("+ EMA.Periods +")";
+   IndicatorShortName(shortName +"  ");                           // indicator subwindow and context menus
+   SetIndexLabel(MODE_EMA_1,         NULL    );
+   SetIndexLabel(MODE_EMA_2,         NULL    );
+   SetIndexLabel(MODE_EMA_3,         NULL    );
+   SetIndexLabel(MODE_MAIN,          dataName);                   // "Data" window and tooltips
+   SetIndexLabel(MODE_UPPER_SECTION, NULL    );
+   SetIndexLabel(MODE_LOWER_SECTION, NULL    );
+   SetIndexLabel(MODE_TREND,         NULL    );
    IndicatorDigits(3);
 
 
