@@ -57,8 +57,6 @@ double fisherLower     [];                                  // negative histogra
 double rawPrices       [];                                  // used raw prices:           invisible
 double normalizedPrices[];                                  // normalized prices:         invisible
 
-string fisher.name;                                         // indicator name
-
 
 /**
  * Initialization
@@ -93,9 +91,9 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   fisher.name = "Fisher Transform("+ Fisher.Periods +")";
-   IndicatorShortName(fisher.name +"  ");                   // subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          fisher.name);          // "Data" window and tooltips
+   string name = "Fisher Transform("+ Fisher.Periods +")";
+   IndicatorShortName(name +"  ");                          // subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          name);                 // "Data" window and tooltips
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);

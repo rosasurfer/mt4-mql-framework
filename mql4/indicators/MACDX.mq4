@@ -227,7 +227,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper  );                   // positive values:         visible
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
-   // names, labels and display options
+   // display options, names and labels
    string dataName, sAppliedPrice="";
    if (fastMA.appliedPrice!=slowMA.appliedPrice || fastMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(fastMA.appliedPrice);
    string fastMA.name = FastMA.Method +"("+ fastMA.periods + sAppliedPrice +")";
@@ -235,13 +235,13 @@ int onInit() {
    if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
    string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
 
-   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD  "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
-   else                                                                          indicatorName = "MACD  "+ fastMA.name +", "+ slowMA.name;
+   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
+   else                                                                          indicatorName = "MACD "+ fastMA.name +", "+ slowMA.name;
    if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
    else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
    string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
-   IndicatorShortName(indicatorName + signalInfo +"    ");              // indicator subwindow and context menu
+   IndicatorShortName(indicatorName + signalInfo +"  ");                // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // "Data" window and tooltips
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);

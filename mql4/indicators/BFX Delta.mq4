@@ -134,7 +134,7 @@ int onInit() {
    SetIndexBuffer(MODE_DELTA_SHORT,  bufferShort );            // short values:         visible
 
 
-   // (4) data display configuration and names
+   // (4) data display configuration, names and labels
    indicatorName = __NAME();
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), 2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // indicator subwindow and context menu
