@@ -113,17 +113,17 @@ int onTick() {
    for (int i=startBar; i >= 0; i--) {
       int position = GetBroketraderPosition(i); if (last_error || 0) return(last_error);
 
-      if (position > 0) {                 // long
+      if (position > 0) {                                         // long
          lastPl = main[i+position]; if (lastPl == EMPTY_VALUE) lastPl = 0;
          open   = Open[i+position-1];
          close  = Close[i];
-         pl     = (close - open) / Pip;   // PL of the current position
+         pl     = (close - open) / Pip;                           // PL of the current position
       }
-      else if (position < 0) {            // short
+      else if (position < 0) {                                    // short
          lastPl = main[i-position]; if (lastPl == EMPTY_VALUE) lastPl = 0;
          open   = Open[i-position-1];
          close  = Close[i];
-         pl     = (open - close) / Pip;   // PL of the current position
+         pl     = (open - close) / Pip;                           // PL of the current position
       }
       else {
          lastPl = 0;
@@ -148,7 +148,7 @@ int GetBroketraderPosition(int iBar) {
 
 
 /**
- * Load the "Broketrader Signal" indicator and return a value.
+ * Load the "Broketrader" indicator and return a value.
  *
  * @param  int timeframe            - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int smaPeriods           - indicator parameter
@@ -166,23 +166,23 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "systems/Broketrader",
-                          smaPeriods,                                      // int    SMA.Periods
-                          stochasticPeriods,                               // int    Stochastic.Periods
-                          stochasticMa1Periods,                            // int    Stochastic.MA1.Periods
-                          stochasticMa2Periods,                            // int    Stochastic.MA2.Periods
-                          rsiPeriods,                                      // int    RSI.Periods
-                          CLR_NONE,                                        // color  Color.Long
-                          CLR_NONE,                                        // color  Color.Short
-                          false,                                           // bool   FillSections
-                          1,                                               // int    SMA.DrawWidth
-                          -1,                                              // int    Max.Values
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onReversal
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
-                          "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          smaPeriods,                             // int    SMA.Periods
+                          stochasticPeriods,                      // int    Stochastic.Periods
+                          stochasticMa1Periods,                   // int    Stochastic.MA1.Periods
+                          stochasticMa2Periods,                   // int    Stochastic.MA2.Periods
+                          rsiPeriods,                             // int    RSI.Periods
+                          CLR_NONE,                               // color  Color.Long
+                          CLR_NONE,                               // color  Color.Short
+                          false,                                  // bool   FillSections
+                          1,                                      // int    SMA.DrawWidth
+                          -1,                                     // int    Max.Values
+                          "",                                     // string ____________________
+                          "off",                                  // string Signal.onReversal
+                          "off",                                  // string Signal.Sound
+                          "off",                                  // string Signal.Mail.Receiver
+                          "off",                                  // string Signal.SMS.Receiver
+                          "",                                     // string ____________________
+                          lpSuperContext,                         // int    __SuperContext__
 
                           iBuffer, iBar);
 
@@ -193,7 +193,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
       warn("iBroketrader(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -205,8 +205,6 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
-
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, EMPTY, Blue);
 }
 
