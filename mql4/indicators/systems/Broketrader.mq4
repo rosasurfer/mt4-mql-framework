@@ -262,9 +262,9 @@ int onTick() {
 
       // check previous bar and set trend
       if (!trend[bar+1]) {
-         // check start condition for new trend
-         if      (Close[bar] > sma && stoch > 40) trend[bar] =  1;                                 // long condition fulfilled
-         else if (Close[bar] < sma && stoch < 60) trend[bar] = -1;                                 // short condition fulfilled
+         // check start condition for first trend
+         if      (Close[bar] > sma && stoch > 40) trend[bar] =  2;                                 // long condition fulfilled but trend reversal time is unknown
+         else if (Close[bar] < sma && stoch < 60) trend[bar] = -2;                                 // short condition fulfilled but trend reversal time is unknown
       }
       else {
          // update existing trend
@@ -343,6 +343,7 @@ int onTick() {
          else if (iTrend == -1) onReversal(D_SHORT);
       }
    }
+
    return(catch("onTick(3)"));
 }
 
