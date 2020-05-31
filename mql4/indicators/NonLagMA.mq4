@@ -184,7 +184,7 @@ int onInit() {
        ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    string shortName = __NAME() +"("+ cycleLength +")";
    IndicatorShortName(shortName);                        // chart context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window

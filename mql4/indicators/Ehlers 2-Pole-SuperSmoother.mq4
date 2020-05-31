@@ -181,7 +181,7 @@ int onInit() {
        ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    string shortName = "2-Pole-Filter("+ Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window

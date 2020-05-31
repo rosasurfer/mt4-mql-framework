@@ -176,7 +176,7 @@ int onInit() {
       ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    string shortName = __NAME() +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart context menu
    SetIndexLabel(MODE_EMA_1,     NULL);
