@@ -1,6 +1,8 @@
 /**
- * Sadukey indicator - a filter with coefficients designed by a "Digital Filter Generator"
+ * Sadukey indicator - a filter with coefficients designed by the "Digital Filter Generator"
  *
+ *
+ * This indicator should be taken with a big grain of salt as coefficients are more than 10 years old.
  *
  * @see  http://www.finware.com/generator.html
  * @see  http://fx.qrz.ru/

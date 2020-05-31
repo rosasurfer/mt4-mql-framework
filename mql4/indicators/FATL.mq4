@@ -2,8 +2,7 @@
  * FATL - Fast Adaptive Trendline
  *
  *
- * At the moment this indicator serves for demonstration purposes only. Its filter coefficients are long expired and it must
- * not be used for real trade decisions.
+ * This indicator should be taken with a big grain of salt as coefficients are more than 10 years old.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -11,7 +10,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://www.finware.com/
+ * @see  http://www.finware.com/generator.html
+ * @see  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
