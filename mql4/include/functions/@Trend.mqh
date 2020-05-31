@@ -136,7 +136,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
  * @param  color    downtrendColor - the trendline's downtrend color
  * @param  double   value          - trendline value to display
  * @param  int      digits         - digits of the value to display
- * @param  double   dTrend         - trend direction of the value to display (double allows passing of odd indicator buffer value)
+ * @param  double   dTrend         - trend direction of the value to display (type double allows passing of odd indicator buffer value)
  * @param  datetime barOpenTime    - bar opentime of the value to display
  */
 void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime barOpenTime) {
