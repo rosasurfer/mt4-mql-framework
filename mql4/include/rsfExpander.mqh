@@ -8,13 +8,14 @@
 
    // terminal status/interaction
    int      FindInputDialog(int programType, string programName);
+   string   GetExpanderFileNameA();
    string   GetMqlDirectoryA();
    int      GetTerminalBuild();
    int      GetTerminalMainWindow();
    string   GetTerminalVersion();
    string   GetTerminalCommonDataPathA();
    string   GetTerminalDataPathA();
-   string   GetTerminalModuleFileNameA();
+   string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
    string   InputParamsDiff(string initial, string current);
