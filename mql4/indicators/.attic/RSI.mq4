@@ -49,10 +49,8 @@ double bufferSection[];                                     // RSI section and l
 double bufferUpper  [];                                     // positive histogram values: visible
 double bufferLower  [];                                     // negative histogram values: visible
 
-int    rsi.periods;
-int    rsi.appliedPrice;
-
-string ind.shortName;                                       // "Data" window and indicator subwindow
+int rsi.periods;
+int rsi.appliedPrice;
 
 
 /**
@@ -113,13 +111,11 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                // negative values:        visible
 
 
-   // (3) data display configuration and names
+   // (3) data display configuration, names and labels
    string strAppliedPrice = ifString(rsi.appliedPrice==PRICE_CLOSE, "", ","+ PriceTypeDescription(rsi.appliedPrice));
-   ind.shortName = "RSI("+ rsi.periods + strAppliedPrice +")";
-
-   // names and labels
-   IndicatorShortName(ind.shortName +"  ");                          // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          ind.shortName);                 // "Data" window and tooltips
+   string name = "RSI("+ rsi.periods + strAppliedPrice +")";
+   IndicatorShortName(name +"  ");                                   // indicator subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          name);                          // "Data" window and tooltips
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);

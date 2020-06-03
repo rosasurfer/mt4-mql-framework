@@ -32,7 +32,8 @@ extern int   Max.Values  = 5000;                            // max. amount of va
 #property indicator_color1    Blue
 
 double bufferMMI[];
-int    mmi.periods;
+
+int mmi.periods;
 
 
 /**
@@ -63,15 +64,15 @@ int onInit() {
 
    // (3) names, labels, data display
    string name = "Market Meanness("+ mmi.periods +")";
-   SetIndexLabel(MODE_MAIN, name);                                   // "Data" window and tooltips
    IndicatorShortName(name +"  ");                                   // indicator subwindow and context menu
+   SetIndexLabel(MODE_MAIN, name);                                   // "Data" window and tooltips
    IndicatorDigits(1);
 
 
    // (4) drawing options and styles
    int startDraw = 0;
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
+   if (startDraw < 0) startDraw = 0;
    SetIndexDrawBegin(MODE_MAIN, startDraw);
    SetLevelValue(0, 75);
    SetLevelValue(1, 50);

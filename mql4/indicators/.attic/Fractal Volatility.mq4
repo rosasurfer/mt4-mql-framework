@@ -34,10 +34,8 @@ extern string Vola.Type    = "Kaufman* | Intra-Bar";
 // buffers
 double bufferVola[];
 
-int    volaType;
-int    volaPeriods;
-
-string ind.shortName;
+int volaType;
+int volaPeriods;
 
 
 /**
@@ -70,9 +68,9 @@ int onInit() {
    SetIndexBuffer(0, bufferVola);
 
    // data display configuration, names, labels
-   ind.shortName = "Fractal Volatility("+ Vola.Periods +")  ";
-   IndicatorShortName(ind.shortName);                       // subwindow and context menu
-   SetIndexLabel(0, StrTrim(ind.shortName));                // "Data" window and tooltips
+   string name = "Fractal Volatility("+ Vola.Periods +")";
+   IndicatorShortName(name +"  ");                          // subwindow and context menu
+   SetIndexLabel(0, name);                                  // "Data" window and tooltips
    IndicatorDigits(1);
 
    // drawing options and styles
