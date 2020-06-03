@@ -42,10 +42,10 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
 #include <functions/BarOpenEvent.mqh>
-#include <functions/Configure.Signal.mqh>
-#include <functions/Configure.Signal.Mail.mqh>
-#include <functions/Configure.Signal.SMS.mqh>
-#include <functions/Configure.Signal.Sound.mqh>
+#include <functions/ConfigureSignal.mqh>
+#include <functions/ConfigureSignalMail.mqh>
+#include <functions/ConfigureSignalSMS.mqh>
+#include <functions/ConfigureSignalSound.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
@@ -137,11 +137,11 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
-   if (!Configure.Signal("Broketrader", Signal.onReversal, signals))                                            return(last_error);
+   if (!ConfigureSignal("Broketrader", Signal.onReversal, signals))                                           return(last_error);
    if (signals) {
-      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -262,9 +262,9 @@ int onTick() {
 
       // check previous bar and set trend
       if (!trend[bar+1]) {
-         // check start condition for new trend
-         if      (Close[bar] > sma && stoch > 40) trend[bar] =  1;                                 // long condition fulfilled
-         else if (Close[bar] < sma && stoch < 60) trend[bar] = -1;                                 // short condition fulfilled
+         // check start condition for first trend
+         if      (Close[bar] > sma && stoch > 40) trend[bar] =  2;                                 // long condition fulfilled but trend reversal time is unknown
+         else if (Close[bar] < sma && stoch < 60) trend[bar] = -2;                                 // short condition fulfilled but trend reversal time is unknown
       }
       else {
          // update existing trend
@@ -343,6 +343,7 @@ int onTick() {
          else if (iTrend == -1) onReversal(D_SHORT);
       }
    }
+
    return(catch("onTick(3)"));
 }
 

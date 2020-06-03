@@ -2,8 +2,7 @@
  * FATL - Fast Adaptive Trendline
  *
  *
- * At the moment this indicator serves for demonstration purposes only. Its filter coefficients are long expired and it must
- * not be used for real trade decisions.
+ * This indicator should be taken with a big grain of salt as coefficients are more than 10 years old.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -11,7 +10,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://www.finware.com/
+ * @see  http://www.finware.com/generator.html
+ * @see  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -38,10 +38,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
 #include <functions/BarOpenEvent.mqh>
-#include <functions/Configure.Signal.mqh>
-#include <functions/Configure.Signal.Mail.mqh>
-#include <functions/Configure.Signal.SMS.mqh>
-#include <functions/Configure.Signal.Sound.mqh>
+#include <functions/ConfigureSignal.mqh>
+#include <functions/ConfigureSignalMail.mqh>
+#include <functions/ConfigureSignalSMS.mqh>
+#include <functions/ConfigureSignalSound.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
@@ -120,11 +120,11 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
-   if (!Configure.Signal(__NAME(), Signal.onTrendChange, signals))                                              return(last_error);
+   if (!ConfigureSignal(__NAME(), Signal.onTrendChange, signals))                                             return(last_error);
    if (signals) {
-      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -145,7 +145,7 @@ int onInit() {
        ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    IndicatorShortName(indicatorName);
    SetIndexLabel(MODE_MA,        indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");

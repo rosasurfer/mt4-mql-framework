@@ -44,10 +44,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
 #include <functions/BarOpenEvent.mqh>
-#include <functions/Configure.Signal.mqh>
-#include <functions/Configure.Signal.Mail.mqh>
-#include <functions/Configure.Signal.SMS.mqh>
-#include <functions/Configure.Signal.Sound.mqh>
+#include <functions/ConfigureSignal.mqh>
+#include <functions/ConfigureSignalMail.mqh>
+#include <functions/ConfigureSignalSMS.mqh>
+#include <functions/ConfigureSignalSound.mqh>
 
 #define MODE_MAIN             MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
@@ -153,11 +153,11 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // signals
-   if (!Configure.Signal("2-Pole-Filter", Signal.onTrendChange, signals))                                       return(last_error);
+   if (!ConfigureSignal("2-Pole-Filter", Signal.onTrendChange, signals))                                      return(last_error);
    if (signals) {
-      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
 
       debug("onInit(0.1)  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
       if (signal.sound || signal.mail || signal.sms) {
@@ -181,7 +181,7 @@ int onInit() {
        ObjectRegister(chartLegendLabel);
    }
 
-   // names, labels, styles and display options
+   // names, labels and display options
    string shortName = "2-Pole-Filter("+ Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window

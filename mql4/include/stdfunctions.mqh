@@ -5464,7 +5464,7 @@ string PriceTypeDescription(int type) {
  *
  * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPeriod(string value, int execFlags=NULL) {
+int StrToPeriod(string value, int execFlags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))

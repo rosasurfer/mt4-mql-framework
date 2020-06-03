@@ -29,8 +29,6 @@ extern int Periods = 32;
 // buffers
 double bufferKER[];
 
-string ind.shortName;
-
 
 /**
  * Initialization
@@ -50,9 +48,9 @@ int onInit() {
    SetIndexBuffer(0, bufferKER);
 
    // data display configuration, names, labels
-   ind.shortName = "Kaufman Efficiency("+ Periods +")  ";
-   IndicatorShortName(ind.shortName);                       // subwindow and context menu
-   SetIndexLabel(0, StrTrim(ind.shortName));                // "Data" window and tooltips
+   string name = "Kaufman Efficiency("+ Periods +")";
+   IndicatorShortName(name +"  ");                          // subwindow and context menu
+   SetIndexLabel(0, name);                                  // "Data" window and tooltips
    IndicatorDigits(3);
 
    // drawing options and styles
