@@ -157,7 +157,7 @@
 #define YEARS                          YEAR
 
 
-// weekday constants based on Sunday=0; same behaviour as DayOfWeek() and TimeDayOfWeek()
+// weekday constants based on Sunday=0; same behavior as DayOfWeek() and TimeDayOfWeek()
 #define SUNDAY                            0
 #define MONDAY                            1
 #define TUESDAY                           2
@@ -203,7 +203,7 @@
 #define zDEC                      zDECEMBER
 
 
-// month constants based on January=1; same behaviour as Month() and TimeMonth()
+// month constants based on January=1; same behavior as Month() and TimeMonth()
 #define JANUARY                           1
 #define FEBRUARY                          2
 #define MARCH                             3

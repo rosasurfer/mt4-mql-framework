@@ -5627,7 +5627,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          // find the remaining position
          if (!EQ(lots, openLots, 2)) {
             string sValue1, sValue2;
-            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behaviour if current terminal builds fixed the comment issue
+            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
                // the Tester overwrites the comment with "partial close" instead of "to #2"
                if (OrderComment() != "partial close") return(_false(Order.HandleError("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(24)")));
                sValue1 = "split from #"+ ticket;
