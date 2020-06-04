@@ -453,7 +453,7 @@ string ErrorDescription(int error) {
       case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
-      case ERR_UNDEFINED_STATE            : return("undefined state or behaviour"                              );    //  65557
+      case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }

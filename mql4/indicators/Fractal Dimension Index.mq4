@@ -2,9 +2,9 @@
  * FDI - Fractal Dimension Index
  *
  * The Fractal Dimension Index describes the state of randomness or the existence of a long-term memory in a timeseries.
- * The FDI oscillates between 1 (1-dimensional behaviour) and 2 (2-dimensionalbehaviour). In financial contexts an FDI below
- * 1.5 indicates a market with trending behaviour (the timeseries is persistent). An FDI above 1.5 indicates a market with
- * ranging or cyclic behaviour (the timeseries is non-persistent). An FDI at 1.5 indicates a market with random behaviour
+ * The FDI oscillates between 1 (1-dimensional behavior) and 2 (2-dimensionalbehavior). In financial contexts an FDI below
+ * 1.5 indicates a market with trending behavior (the timeseries is persistent). An FDI above 1.5 indicates a market with
+ * ranging or cyclic behavior (the timeseries is non-persistent). An FDI at 1.5 indicates a market with random behavior
  * (the timeseries has no long-term memory). The FDI does not indicate market direction.
  *
  * The index is computed using the Sevcik algorithm (3) which is an optimized estimation for the real fractal dimension of a
