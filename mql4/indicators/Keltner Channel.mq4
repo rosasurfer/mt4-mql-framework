@@ -167,7 +167,6 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

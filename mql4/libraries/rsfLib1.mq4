@@ -4447,41 +4447,21 @@ int ObjectRegister(string label) {
 
 
 /**
- * Löscht alle zum automatischen Entfernen registrierten Chartobjekte, die mit dem angegebenen Prefix beginnen, aus dem Chart.
+ * Delete all chart objects created and registered by the current program. Automatically called when a program is removed.
  *
- * @param  string prefix - Prefix des Labels der zu löschenden Objekte (default: alle Objekte)
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
-int DeleteRegisteredObjects(string prefix/*=NULL*/) {
+int DeleteRegisteredObjects() {
    int size = ArraySize(chart.objects);
    if (!size) return(NO_ERROR);
 
-   bool filter=false, filtered=false;
-
-   if (StringLen(prefix) > 0)
-      filter = (prefix != "0");                                      // (string) NULL == "0"
-
-   if (filter) {
-      // Filter angegeben: nur die passenden Objekte löschen
-      for (int i=size-1; i >= 0; i--) {                              // wegen ArraySpliceStrings() rückwärts ierieren
-         if (StrStartsWith(chart.objects[i], prefix)) {
-            if (ObjectFind(chart.objects[i]) != -1)
-               if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
-            ArraySpliceStrings(chart.objects, i, 1);
-         }
-      }
+   for (int i=0; i < size; i++) {
+      if (ObjectFind(chart.objects[i]) != -1)
+         if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
    }
-   else {
-      // kein Filter angegeben: alle Objekte löschen
-      for (i=0; i < size; i++) {
-         if (ObjectFind(chart.objects[i]) != -1)
-            if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(2)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
-      }
-      ArrayResize(chart.objects, 0);
-   }
+   ArrayResize(chart.objects, 0);
 
-   return(catch("DeleteRegisteredObjects(3)"));
+   return(catch("DeleteRegisteredObjects(2)"));
 }
 
 
@@ -4500,7 +4480,7 @@ bool ObjectDeleteSilent(string label, string location) {
    if (ObjectDelete(label))
       return(true);
 
-   return(!catch("ObjectDeleteSilent()->"+ location));
+   return(!catch("ObjectDeleteSilent(1)->"+ location));
 }
 
 

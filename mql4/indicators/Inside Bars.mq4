@@ -29,17 +29,6 @@ int onInit() {
 
 
 /**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   DeleteRegisteredObjects(NULL);
-   return(catch("onDeinit(1)"));
-}
-
-
-/**
  * Main function
  *
  * @return int - error status

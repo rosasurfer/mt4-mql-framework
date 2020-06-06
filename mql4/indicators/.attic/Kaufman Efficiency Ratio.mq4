@@ -61,17 +61,6 @@ int onInit() {
 
 
 /**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   DeleteRegisteredObjects(NULL);
-   return(last_error);
-}
-
-
-/**
  * Called before recompilation.
  *
  * @return int - error status

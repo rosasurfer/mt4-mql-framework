@@ -13,7 +13,6 @@ int onDeinit() {
    // in allen deinit()-Szenarien Laufzeitstatus speichern
    if (!StoreRuntimeStatus()) return(last_error);
 
-   DeleteRegisteredObjects(NULL);
    QC.StopChannels();
    ScriptRunner.StopParamSender();
    return(last_error);

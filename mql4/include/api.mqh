@@ -398,7 +398,7 @@ string   CreateLegendLabel(string name);;
 string   CreateTempFile(string path, string prefix = "");;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;
-int      DeleteRegisteredObjects(string prefix = NULL);;
+int      DeleteRegisteredObjects();;
 bool     DoubleInArray(double &haystack[], double needle);;
 string   DoubleToStrEx(double value, int digits);;
 bool     EditFile(string filename);;

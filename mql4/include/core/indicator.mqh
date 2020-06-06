@@ -433,7 +433,7 @@ int deinit() {
 
 
    // User-spezifische deinit()-Routinen aufrufen                                //
-   error = onDeinit();                                                           // Preprocessing-Hook
+   error = onDeinit();                                                           // preprocessing hook
                                                                                  //
    if (!error) {                                                                 //
       switch (UninitializeReason()) {                                            //
@@ -454,12 +454,17 @@ int deinit() {
             return(last_error|LeaveContext(__ExecutionContext));                 //
       }                                                                          //
    }                                                                             //
-   if (error != -1)                                                              //
-      error = afterDeinit();                                                     // Postprocessing-Hook
+   if (error != -1) {                                                            //
+      error = afterDeinit();                                                     // postprocessing hook
+   }
 
-
-   // User-spezifische Deinit-Tasks ausführen
    if (!error) {
+      switch (UninitializeReason()) {
+         case UR_REMOVE:
+         case UR_CLOSE :
+            DeleteRegisteredObjects();
+            break;
+      }
    }
 
    CheckErrors("deinit(2)");
