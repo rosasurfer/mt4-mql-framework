@@ -1,8 +1,8 @@
 /**
  * SuperBars
  *
- * Draws bars of a higher timeframe on the chart. The active timeframe can be changed via chart commands sent by two
- * accompanied scripts. To improve usability the scripts may be assigned to keyboard hotkeys.
+ * Draws bars of higher timeframes on the chart. The currently active timeframe can be changed via chart commands sent by the
+ * two accompanying scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown" (should be called with keyboard hotkeys).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
