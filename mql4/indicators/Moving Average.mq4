@@ -182,14 +182,14 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel(indicatorName);
+       chartLegendLabel = CreateLegendLabel();
        ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = MA.Method +"("+ MA.Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window

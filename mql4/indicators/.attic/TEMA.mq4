@@ -116,13 +116,13 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
+   if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
+       legendLabel = CreateLegendLabel();
+       ObjectRegister(legendLabel);
+   }
    string shortName="TEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "TEMA("+ MA.Periods + strAppliedPrice +")";
-   if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
-       legendLabel = CreateLegendLabel(ma.name);
-       ObjectRegister(legendLabel);
-   }
    IndicatorShortName(shortName);                              // context menu
    SetIndexLabel(MODE_TEMA,  shortName);                       // "Data" window and tooltips
    SetIndexLabel(MODE_EMA_1, NULL);
