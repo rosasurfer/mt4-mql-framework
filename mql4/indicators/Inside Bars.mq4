@@ -1,6 +1,7 @@
 /**
  * Inside Bars
  *
+ * Marks inside bars of the specified timeframes and their SR levels in the chart.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
@@ -8,6 +9,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string Configuration = "manual | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,4 +37,14 @@ int onInit() {
  */
 int onTick() {
    return(last_error);
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("Configuration=", DoubleQuoteStr(Configuration), ";"));
 }
