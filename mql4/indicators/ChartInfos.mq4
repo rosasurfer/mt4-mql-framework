@@ -4843,7 +4843,7 @@ string InputsToStr() {
    int      ArrayPushDouble   (double array[], double value);
    int      ArraySpliceInts   (int    array[], int offset, int length);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   int      DeleteRegisteredObjects(string prefix);
+   int      DeleteRegisteredObjects();
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();

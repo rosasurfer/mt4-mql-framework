@@ -113,13 +113,13 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
+   if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
+       legendLabel = CreateLegendLabel();
+       ObjectRegister(legendLabel);
+   }
    string shortName="DEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "DEMA("+ MA.Periods + strAppliedPrice +")";
-   if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
-       legendLabel = CreateLegendLabel(ma.name);
-       ObjectRegister(legendLabel);
-   }
    IndicatorShortName(shortName);                              // context menu
    SetIndexLabel(MODE_DEMA,  shortName);                       // "Data" window and tooltips
    SetIndexLabel(MODE_EMA_1, NULL);
@@ -143,7 +143,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

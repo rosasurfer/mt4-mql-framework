@@ -120,11 +120,8 @@ int onInit() {
 
 
    // (2) Chart-Legende erzeugen
-   string strAtrTimeframe = "";
-   if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
-   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +")";
    if (!IsSuperContext()) {
-       legendLabel  = CreateLegendLabel(iDescription);
+       legendLabel  = CreateLegendLabel();
        ObjectRegister(legendLabel);
    }
 
@@ -140,6 +137,8 @@ int onInit() {
    SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                   // sichtbar
 
    // (4.2) Anzeigeoptionen
+   string strAtrTimeframe = ""; if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
+   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +")";
    string atrDescription = NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
    IndicatorShortName("Keltner Channel "+ atrDescription);              // Context Menu
    SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und Data window
@@ -167,7 +166,6 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }
