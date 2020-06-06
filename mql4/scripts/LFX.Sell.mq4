@@ -8,6 +8,7 @@ int __DEINIT_FLAGS__[];
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
 
 
 /**
