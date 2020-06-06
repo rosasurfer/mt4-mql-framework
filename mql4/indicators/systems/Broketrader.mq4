@@ -160,13 +160,13 @@ int onInit() {
    SetIndexEmptyValue(MODE_TREND, 0);
 
    // chart legend
-   indicatorName = "Broketrader SMA("+ smaPeriods +")";
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel(indicatorName);
+       chartLegendLabel = CreateLegendLabel();
        ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   indicatorName = "Broketrader SMA("+ smaPeriods +")";
    IndicatorShortName(indicatorName);
    SetIndexLabel(MODE_MA,            indicatorName);
    SetIndexLabel(MODE_MA_L,          NULL);
@@ -189,7 +189,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

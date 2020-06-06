@@ -72,18 +72,6 @@ int onDeinitUndefined() {
 
 
 /**
- * Online:    Called if an expert is manually removed (Chart -> Expert -> Remove) or replaced.
- * In tester: Never called.
- *
- * @return int - error status
- */
-int onDeinitRemove() {
-   DeleteRegisteredObjects(NULL);
-   return(NO_ERROR);
-}
-
-
-/**
  * Called before an expert is reloaded after recompilation.
  *
  * @return int - error status
