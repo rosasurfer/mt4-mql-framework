@@ -202,7 +202,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);                              // TODO: on UR_PARAMETERS the legend must be kept
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

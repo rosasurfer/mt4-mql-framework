@@ -72,10 +72,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
-
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }
