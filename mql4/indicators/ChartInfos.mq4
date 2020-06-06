@@ -254,8 +254,8 @@ int    orders.knownOrders.type  [];
 #define CLOSE_TYPE_SO               3                                // StopOut (Margin-Call)
 
 
-#include <apps/chartinfos/1-init.mqh>
-#include <apps/chartinfos/2-deinit.mqh>
+#include <apps/chartinfos/init.mqh>
+#include <apps/chartinfos/deinit.mqh>
 
 
 /**
@@ -4843,7 +4843,7 @@ string InputsToStr() {
    int      ArrayPushDouble   (double array[], double value);
    int      ArraySpliceInts   (int    array[], int offset, int length);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   int      DeleteRegisteredObjects(string prefix);
+   int      DeleteRegisteredObjects();
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();

@@ -826,53 +826,6 @@ int SortTicketsChronological(int &tickets[]) {
 
 
 /**
- * Erzeugt und positioniert ein neues Legendenlabel für den angegebenen Namen. Das erzeugte Label hat keinen Text.
- *
- * @param  string name - Indikatorname
- *
- * @return string - vollständiger Name des erzeugten Labels
- */
-string CreateLegendLabel(string name) {
-   if (IsSuperContext())
-      return("");
-
-   int totalObj = ObjectsTotal(),
-       labelObj = ObjectsTotal(OBJ_LABEL);
-
-   string substrings[0], objName;
-   int legendLabels, maxLegendId, maxYDistance=2;
-
-   for (int i=0; i < totalObj && labelObj > 0; i++) {
-      objName = ObjectName(i);
-      if (ObjectType(objName) == OBJ_LABEL) {
-         if (StrStartsWith(objName, "Legend.")) {
-            legendLabels++;
-            Explode(objName, ".", substrings);
-            maxLegendId  = Max(maxLegendId, StrToInteger(substrings[1]));
-            maxYDistance = Max(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));
-         }
-         labelObj--;
-      }
-   }
-
-   string label = StringConcatenate("Legend.", maxLegendId+1, ".", name);
-   if (ObjectFind(label) >= 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER   , CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE,               5);
-      ObjectSet(label, OBJPROP_YDISTANCE, maxYDistance+19);
-   }
-   else GetLastError();
-   ObjectSetText(label, " ");
-
-   if (!catch("CreateLegendLabel()"))
-      return(label);
-   return("");
-}
-
-
-/**
  * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
  *
  * @return int - Fehlerstatus
@@ -910,7 +863,7 @@ int RepositionLegend() {
          ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
       }
    }
-   return(catch("RepositionLegend()"));
+   return(catch("RepositionLegend(1)"));
 }
 
 
@@ -4447,41 +4400,21 @@ int ObjectRegister(string label) {
 
 
 /**
- * Löscht alle zum automatischen Entfernen registrierten Chartobjekte, die mit dem angegebenen Prefix beginnen, aus dem Chart.
+ * Delete all chart objects created and registered by the current program. Automatically called when a program is removed.
  *
- * @param  string prefix - Prefix des Labels der zu löschenden Objekte (default: alle Objekte)
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
-int DeleteRegisteredObjects(string prefix/*=NULL*/) {
+int DeleteRegisteredObjects() {
    int size = ArraySize(chart.objects);
    if (!size) return(NO_ERROR);
 
-   bool filter=false, filtered=false;
-
-   if (StringLen(prefix) > 0)
-      filter = (prefix != "0");                                      // (string) NULL == "0"
-
-   if (filter) {
-      // Filter angegeben: nur die passenden Objekte löschen
-      for (int i=size-1; i >= 0; i--) {                              // wegen ArraySpliceStrings() rückwärts ierieren
-         if (StrStartsWith(chart.objects[i], prefix)) {
-            if (ObjectFind(chart.objects[i]) != -1)
-               if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
-            ArraySpliceStrings(chart.objects, i, 1);
-         }
-      }
+   for (int i=0; i < size; i++) {
+      if (ObjectFind(chart.objects[i]) != -1)
+         if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
    }
-   else {
-      // kein Filter angegeben: alle Objekte löschen
-      for (i=0; i < size; i++) {
-         if (ObjectFind(chart.objects[i]) != -1)
-            if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(2)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
-      }
-      ArrayResize(chart.objects, 0);
-   }
+   ArrayResize(chart.objects, 0);
 
-   return(catch("DeleteRegisteredObjects(3)"));
+   return(catch("DeleteRegisteredObjects(2)"));
 }
 
 
@@ -4500,7 +4433,7 @@ bool ObjectDeleteSilent(string label, string location) {
    if (ObjectDelete(label))
       return(true);
 
-   return(!catch("ObjectDeleteSilent()->"+ location));
+   return(!catch("ObjectDeleteSilent(1)->"+ location));
 }
 
 
@@ -5627,7 +5560,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          // find the remaining position
          if (!EQ(lots, openLots, 2)) {
             string sValue1, sValue2;
-            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behaviour if current terminal builds fixed the comment issue
+            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
                // the Tester overwrites the comment with "partial close" instead of "to #2"
                if (OrderComment() != "partial close") return(_false(Order.HandleError("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(24)")));
                sValue1 = "split from #"+ ticket;

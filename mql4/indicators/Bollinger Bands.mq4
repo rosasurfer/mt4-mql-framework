@@ -164,14 +164,15 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
+   if (!IsSuperContext()) {
+       ind.legendLabel = CreateLegendLabel();                   // no chart legend if called by iCustom()
+       ObjectRegister(ind.legendLabel);
+   }
+
    // data display configuration, names and labels
    string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
    ind.shortName = __NAME() +"("+ MA.Periods +")";
    ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
-   if (!IsSuperContext()) {
-       ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
-       ObjectRegister(ind.legendLabel);
-   }
    IndicatorShortName(ind.shortName);                          // context menu
    if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
@@ -202,7 +203,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);                              // TODO: on UR_PARAMETERS the legend must be kept
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

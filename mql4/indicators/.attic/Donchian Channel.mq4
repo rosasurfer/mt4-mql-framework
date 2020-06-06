@@ -51,7 +51,7 @@ int onInit() {
 
    // Legende
    if (!IsSuperContext()) {
-       string legendLabel = CreateLegendLabel(indicatorName);
+       string legendLabel = CreateLegendLabel();
        ObjectRegister(legendLabel);
        ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);
        int error = GetLastError();
@@ -72,10 +72,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
-
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

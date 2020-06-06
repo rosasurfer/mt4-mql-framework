@@ -169,14 +169,14 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // single-bar uptrends:            visible
 
    // chart legend
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
-      chartLegendLabel = CreateLegendLabel(indicatorName);
+      chartLegendLabel = CreateLegendLabel();
       ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = __NAME() +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart context menu
    SetIndexLabel(MODE_EMA_1,     NULL);
@@ -199,7 +199,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
 }

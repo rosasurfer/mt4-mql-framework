@@ -178,16 +178,11 @@ int deinit() {
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
-   // Pre/Postprocessing-Hook
-   error = onDeinit();                                               // Preprocessing-Hook
-   if (error != -1) {
-      afterDeinit();                                                 // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
-   }                                                                 // nicht mit -1 zurückkehrt.
+   error = onDeinit();                                               // preprocessing hook
+   if (error != -1)                                                  //
+      afterDeinit();                                                 // postprocessing hook
 
-   // User-spezifische Deinit-Tasks
-   if (!error) {
-      // ...
-   }
+   DeleteRegisteredObjects();
 
    CheckErrors("deinit(2)");
    return(error|last_error|LeaveContext(__ExecutionContext));        // the very last statement
