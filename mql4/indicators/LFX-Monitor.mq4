@@ -218,7 +218,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects(NULL);
    QC.StopChannels();
    StoreRuntimeStatus();
 

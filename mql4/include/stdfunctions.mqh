@@ -453,7 +453,7 @@ string ErrorDescription(int error) {
       case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
-      case ERR_UNDEFINED_STATE            : return("undefined state or behaviour"                              );    //  65557
+      case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -3576,6 +3576,47 @@ bool Tester.IsStopped() {
 
 
 /**
+ * Create a new chart legend object for the current program. An existing legend object is reused.
+ *
+ * @return string - label name
+ */
+string CreateLegendLabel() {
+   if (IsSuperContext())
+      return("");
+
+   string label = "Legend."+ __ExecutionContext[EC.pid];
+   int xDistance =  5;
+   int yDistance = 21;
+
+   if (ObjectFind(label) >= 0) {
+      // reuse the existing label
+   }
+   else {
+      // create a new label
+      int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
+
+      for (int i=0; i < objects && labels; i++) {
+         string objName = ObjectName(i);
+         if (ObjectType(objName) == OBJ_LABEL) {
+            if (StrStartsWith(objName, "Legend."))
+               yDistance += 19;
+            labels--;
+         }
+      }
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xDistance);
+         ObjectSet(label, OBJPROP_YDISTANCE, yDistance);
+      }
+      else GetLastError();
+   }
+   ObjectSetText(label, " ");
+
+   return(ifString(catch("CreateLegendLabel(1)"), "", label));
+}
+
+
+/**
  * Erzeugt einen neuen String der gewünschten Länge.
  *
  * @param  int length - Länge
@@ -6680,6 +6721,7 @@ void __DummyCalls() {
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
+   CreateLegendLabel();
    CreateString(NULL);
    DateTime(NULL);
    debug(NULL);
