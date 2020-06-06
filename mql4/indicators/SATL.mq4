@@ -139,13 +139,13 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
-   indicatorName = __NAME();
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel(indicatorName);
+       chartLegendLabel = CreateLegendLabel();
        ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   indicatorName = __NAME();
    IndicatorShortName(indicatorName);
    SetIndexLabel(MODE_MA,        indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");

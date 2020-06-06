@@ -174,14 +174,14 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
-   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel(indicatorName);
+       chartLegendLabel = CreateLegendLabel();
        ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
+   indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    string shortName = "2-Pole-Filter("+ Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window

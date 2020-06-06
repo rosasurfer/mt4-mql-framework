@@ -144,13 +144,13 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);           // lower channel band: visible
 
    // chart legend
-   indicatorName = __NAME() +"("+ Periods +")";
    if (!IsSuperContext()) {
-      chartLegendLabel = CreateLegendLabel(indicatorName);
+      chartLegendLabel = CreateLegendLabel();
       ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   indicatorName = __NAME() +"("+ Periods +")";
    IndicatorShortName(indicatorName);                    // chart context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");

@@ -826,53 +826,6 @@ int SortTicketsChronological(int &tickets[]) {
 
 
 /**
- * Erzeugt und positioniert ein neues Legendenlabel für den angegebenen Namen. Das erzeugte Label hat keinen Text.
- *
- * @param  string name - Indikatorname
- *
- * @return string - vollständiger Name des erzeugten Labels
- */
-string CreateLegendLabel(string name) {
-   if (IsSuperContext())
-      return("");
-
-   int totalObj = ObjectsTotal(),
-       labelObj = ObjectsTotal(OBJ_LABEL);
-
-   string substrings[0], objName;
-   int legendLabels, maxLegendId, maxYDistance=2;
-
-   for (int i=0; i < totalObj && labelObj > 0; i++) {
-      objName = ObjectName(i);
-      if (ObjectType(objName) == OBJ_LABEL) {
-         if (StrStartsWith(objName, "Legend.")) {
-            legendLabels++;
-            Explode(objName, ".", substrings);
-            maxLegendId  = Max(maxLegendId, StrToInteger(substrings[1]));
-            maxYDistance = Max(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));
-         }
-         labelObj--;
-      }
-   }
-
-   string label = StringConcatenate("Legend.", maxLegendId+1, ".", name);
-   if (ObjectFind(label) >= 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER   , CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE,               5);
-      ObjectSet(label, OBJPROP_YDISTANCE, maxYDistance+19);
-   }
-   else GetLastError();
-   ObjectSetText(label, " ");
-
-   if (!catch("CreateLegendLabel()"))
-      return(label);
-   return("");
-}
-
-
-/**
  * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
  *
  * @return int - Fehlerstatus
@@ -910,7 +863,7 @@ int RepositionLegend() {
          ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
       }
    }
-   return(catch("RepositionLegend()"));
+   return(catch("RepositionLegend(1)"));
 }
 
 

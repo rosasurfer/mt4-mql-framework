@@ -170,15 +170,15 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
-   string sPhase = ifString(!Phase, "", ", Phase="+ Phase);
-   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName = "JMA("+ Periods + sPhase + sAppliedPrice +")";
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel(indicatorName);
-       ObjectRegister(chartLegendLabel);
+      chartLegendLabel = CreateLegendLabel();
+      ObjectRegister(chartLegendLabel);
    }
 
    // names, labels and display options
+   string sPhase = ifString(!Phase, "", ", Phase="+ Phase);
+   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
+   indicatorName = "JMA("+ Periods + sPhase + sAppliedPrice +")";
    string shortName = "JMA("+ Periods +")";
    IndicatorShortName(shortName);
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
