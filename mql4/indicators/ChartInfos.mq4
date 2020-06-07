@@ -15,7 +15,6 @@
  *  - The current account stopout level.
  *  - A warning when the account's open order limit is approached.
  *
- *
  * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
@@ -36,7 +35,6 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <functions/@ATR.mqh>
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
@@ -59,17 +57,11 @@ int displayedPrice = PRICE_MEDIAN;                                // price type:
 // money management
 bool   mm.isDone;                                                 // Flag
 double mm.lotValue;                                               // Value eines Lots in Account-Currency
-double mm.unleveragedLots;                                        // mögliche Lotsize bei Hebel von 1:1
-double mm.externalAssets;                                         // extern gehaltene zusätzlich zu berücksichtigende Assets
-
-double mm.ATRwAbs;                                                // wöchentliche ATR: absoluter Wert
-double mm.ATRwPct;                                                // wöchentliche ATR: prozentualer Wert
-
-double mm.vola = 10;                                              // Volatilität einer Unit in Prozent Equity je Woche (hardcoded default value if nothing is configured)
-double mm.leverage;                                               // Hebel für diese Volatilität
-double mm.unitSize;                                               // exakter Wert der resultierenden UnitSize
+double mm.unleveragedLots;                                        // Unitsize ohne Hebel
+double mm.usedLeverage = 1;                                       // angewandter Hebel
+double mm.unitSize;                                               // exakter Wert der berechneten UnitSize
 double mm.unitSize.normalized;                                    // auf MODE_LOTSTEP normalisierter Wert der UnitSize
-
+double mm.externalAssets;                                         // extern gehaltene zusätzlich zu berücksichtigende Assets
 double mm.equity;                                                 // als Equity zu verwendender Betrag
                                                                   //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
                                                                   //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)  !!! Commissions herausrechnen !!!
@@ -1181,26 +1173,23 @@ bool UpdateSpread() {
 
 
 /**
- * Aktualisiert die UnitSize-Anzeige unten rechts.
+ * Update the standard lotsize for the configured risk profile (displayed bottom-right).
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                     return(true);      // Anzeige wird im Tester nicht benötigt
+   if (IsTesting())                                     return(true);      // skip in tester
    if (!mm.isDone) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
    if (!mm.isDone)                                      return(true);
 
-   string sUnitSize;
+   // only with internal account:                  L - Leverage                                     Unitsize
+   string sUnitSize = "";
+   if (mode.intern) sUnitSize = StringConcatenate("L", DoubleToStr(mm.usedLeverage, 1), "        ", NumberToStr(mm.unitSize.normalized, ", .+"), " lot");
 
-   // Anzeige nur bei internem Account:                    V - Volatilität/Woche               L - Leverage                              Unitsize
-   if (mode.intern) sUnitSize = StringConcatenate("V", DoubleToStr(mm.vola, 1), "%     L", DoubleToStr(mm.leverage, 1), "  =  ", NumberToStr(mm.unitSize.normalized, ", .+"), " lot");
-   else             sUnitSize = " ";
-
-   // Anzeige aktualisieren (maxLen = 63 chars)
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error == ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1219,7 +1208,7 @@ bool UpdatePositions() {
    }
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string sCurrentVola, sCurrentLeverage, sCurrentPosition;
+   string sCurrentLeverage, sCurrentPosition;
    if      (!isPosition   ) sCurrentPosition = " ";
    else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
@@ -1228,12 +1217,7 @@ bool UpdatePositions() {
       if (!mm.equity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
       else            currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
       sCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
-
-      // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
-      if (mm.ATRwPct != 0)
-         sCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%     ");
-
-      sCurrentPosition = StringConcatenate("Position:   " , sCurrentVola, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      sCurrentPosition = StringConcatenate("Position:   " , sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
@@ -1829,19 +1813,14 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
+   if (mode.extern) return(true);                                    // only for internal account
    if (mm.isDone)   return(true);
-   if (mode.extern) return(true);
- //if (mode.extern) return(_true(debug("UpdateMoneyManagement(1)  feature not implemented for mode.extern=true")));
 
    mm.lotValue            = 0;
    mm.unleveragedLots     = 0;                                       // Lotsize bei Hebel 1:1
-   mm.ATRwAbs             = 0;                                       // wöchentliche ATR, absolut
-   mm.ATRwPct             = 0;                                       // wöchentliche ATR, prozentual
-   mm.equity              = 0;
-
-   mm.leverage            = 0;                                       // Hebel bei wöchentlicher Volatilität einer Unit von {mm.vola} Prozent
-   mm.unitSize            = 0;                                       // Lotsize für wöchentliche Volatilität einer Unit von {mm.vola} Prozent
+   mm.unitSize            = 0;                                       // Lotsize für angewandten Hebel
    mm.unitSize.normalized = 0;
+   mm.equity              = 0;
 
    // unleveraged Lots
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
@@ -1871,24 +1850,7 @@ bool UpdateMoneyManagement() {
 
    mm.lotValue        = Bid/tickSize * tickValue;                    // Value eines Lots in Account-Currency
    mm.unleveragedLots = mm.equity/mm.lotValue;                       // ungehebelte Lotsize (Leverage 1:1)
-
-   // Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 100, 1, F_ERS_HISTORY_UPDATE);   // ATR(100xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
-      if (last_error == ERS_HISTORY_UPDATE)
-         if (Period() != PERIOD_W1) SetLastError(NO_ERROR);          // ignore ERS_HISTORY_UPDATE in other timeframes as this is non-critical code
-      if (!a) return(false);
-   double b = @ATR(NULL, PERIOD_W1,  1, 1);                          // TrueRange letzte Woche
-      if (!b) return(false);
-   double c = @ATR(NULL, PERIOD_W1,  1, 0);                          // TrueRange aktuelle Woche
-      if (!c) return(false);
-   mm.ATRwAbs = MathMax(a, MathMax(b, c));
-   mm.ATRwPct = mm.ATRwAbs / Bid;
-   if (!mm.ATRwPct)
-      return(false);
-
-   // resulting leverage and unit size
-   mm.leverage = mm.vola/(mm.ATRwPct*100);
-   mm.unitSize = mm.unleveragedLots * mm.leverage;                   // auf wöchentliche Volatilität gehebelte UnitSize
+   mm.unitSize        = mm.unleveragedLots * mm.usedLeverage;        // auf angewandten Hebel gehebelte UnitSize
 
    // Lotsize runden
    if (mm.unitSize > 0) {                                                                                                        // Abstufung max. 6.7% je Schritt
@@ -1911,7 +1873,7 @@ bool UpdateMoneyManagement() {
    }
 
    mm.isDone = true;
-   return(!catch("UpdateMoneyManagement(5)"));
+   return(!catch("UpdateMoneyManagement(4)"));
 }
 
 
