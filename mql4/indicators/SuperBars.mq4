@@ -96,7 +96,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   if (!StoreRuntimeStatus())                                  // store runtime statis in all deinit scenarios
+   if (!StoreRuntimeStatus())                                  // store runtime status in all deinit scenarios
       return(last_error);
    return(catch("onDeinit(1)"));
 }
