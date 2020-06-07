@@ -121,7 +121,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             alerted = true;
          }
          if (IsExpert()) {
-            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
             if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
             if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
@@ -188,7 +188,7 @@ int warn(string message, int error = NO_ERROR) {
          alerted = true;
       }
       if (IsExpert()) {
-         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
          if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
@@ -4183,9 +4183,9 @@ bool IsShortAccountCompany(string value) {
  *
  * @return string - alias name or an empty string in case of errors or if the account number is unknown
  */
-string AccountAlias(string accountCompany, int accountNumber) {
-   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("AccountAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER)));
-   if (accountNumber <= 0)         return(_EMPTY_STR(catch("AccountAlias(2)  invalid parameter accountNumber: "+ accountNumber, ERR_INVALID_PARAMETER)));
+string GetAccountAlias(string accountCompany, int accountNumber) {
+   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER)));
+   if (accountNumber <= 0)         return(_EMPTY_STR(catch("GetAccountAlias(2)  invalid parameter accountNumber: "+ accountNumber, ERR_INVALID_PARAMETER)));
    return(GetGlobalConfigString("Accounts", accountNumber +".alias"));
 }
 
@@ -4198,9 +4198,9 @@ string AccountAlias(string accountCompany, int accountNumber) {
  *
  * @return int - account number or NULL in case of errors or if the account alias is unknown
  */
-int AccountNumberFromAlias(string accountCompany, string accountAlias) {
-   if (!StringLen(accountCompany)) return(!catch("AccountNumberFromAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER));
-   if (!StringLen(accountAlias))   return(!catch("AccountNumberFromAlias(2)  invalid parameter accountAlias: \"\"", ERR_INVALID_PARAMETER));
+int GetAccountNumberFromAlias(string accountCompany, string accountAlias) {
+   if (!StringLen(accountCompany)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(accountAlias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter accountAlias: \"\"", ERR_INVALID_PARAMETER));
 
    string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
    string section = "Accounts";
@@ -6634,11 +6634,8 @@ void __DummyCalls() {
    _string(NULL);
    _true();
    Abs(NULL);
-   AccountAlias(NULL, NULL);
    AccountCompanyId(NULL);
-   AccountNumberFromAlias(NULL, NULL);
    ArrayUnshiftString(sNulls, NULL);
-   catch(NULL, NULL, NULL);
    Ceil(NULL);
    Chart.DeleteValue(NULL);
    Chart.Expert.Properties();
@@ -6663,21 +6660,23 @@ void __DummyCalls() {
    CreateLegendLabel();
    CreateString(NULL);
    DateTime(NULL);
-   debug(NULL);
    DebugMarketInfo(NULL);
    DeinitReason();
    Div(NULL, NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
-   EnumChildWindows(NULL);
    EQ(NULL, NULL);
+   EnumChildWindows(NULL);
    ErrorDescription(NULL);
    EventListener.NewTick();
    FileAccessModeToStr(NULL);
    Floor(NULL);
    ForceAlert(NULL);
    GE(NULL, NULL);
+   GT(NULL, NULL);
+   GetAccountAlias(NULL, NULL);
    GetAccountConfigPath(NULL, NULL);
+   GetAccountNumberFromAlias(NULL, NULL);
    GetCommission();
    GetConfigBool(NULL, NULL);
    GetConfigColor(NULL, NULL);
@@ -6695,18 +6694,19 @@ void __DummyCalls() {
    GetIniInt(NULL, NULL, NULL);
    GetMqlFilesPath();
    GetServerTime();
-   GT(NULL, NULL);
    HandleCommands();
    HistoryFlagsToStr(NULL);
+   catch(NULL, NULL, NULL);
+   debug(NULL);
    iALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    iFATL(NULL, NULL, NULL);
+   iHalfTrend(NULL, NULL, NULL, NULL);
+   iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
+   iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   iHalfTrend(NULL, NULL, NULL, NULL);
-   iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
-   iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    iMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    init.IsLogEnabled();
    init.LogErrorsToMail();
