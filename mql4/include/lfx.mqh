@@ -122,7 +122,7 @@ bool InitTradeAccount(string accountKey="") {
          _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                                         return(_true(warn("InitTradeAccount(8)  invalid parameter accountKey = \""+ accountKey +"\"")));
       }
       else {
-         _accountNumber = AccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)              return(_true(warn("InitTradeAccount(9)  unsupported account key = \""+ accountKey +"\"")));
+         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)              return(_true(warn("InitTradeAccount(9)  unsupported account key = \""+ accountKey +"\"")));
       }
    }
 
@@ -133,7 +133,7 @@ bool InitTradeAccount(string accountKey="") {
 
 
    // Restliche Variablen ermitteln
-   _accountAlias = AccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))                  return(_true(warn("InitTradeAccount(10)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
+   _accountAlias = GetAccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))               return(_true(warn("InitTradeAccount(10)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
 
    // AccountCurrency
    section = "Accounts";

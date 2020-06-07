@@ -2,30 +2,21 @@
  * Displays additional market and trading infos in the chart.
  *
  *
- *  • on builds <= 509: the current symbol
- *  • the current price (configurable price type)
- *  • the current spread
- *  • the trade unitsize according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
- *  • open total position, current total risk according to the configured risk profile, current total leverage
- *  • the current stopout price level
- *  • warnings in different colors when the account's open order limit is close
- *  • P/L of open positions and/or trade history (configurable, format: see CustomPositions.ReadConfig())
+ *  - Symbol (builds <= 509), price and spread.
+ *  - The trade lotsize according to the configured risk profile.
+ *  - Total open position and risk according to the configured risk profile.
+ *  - P/L of open positions and/or trade history supporting two modes:
+ *     • internal: positions and/or history from the current account,
+ *                 P/L as provided by the current account,
+ *                 order execution notifications
+ *     • external: positions and/or history from an external account (e.g. synthetic instruments),
+ *                 P/L as provided by the external source,
+ *                 limit monitoring and notifications
+ *  - The current account stopout level.
+ *  - A warning when the account's open order limit is approached.
  *
- *    (1) internal positions: - positions hold in the current account
- *                            - position data and P/L as provided by the current account
- *                            - order event notification (onPositionOpen, onPositionClosed, onOrderFailed)
  *
- *    (2) external positions: - positions hold in another account not capable to provide P/L (e.g. a SimpleTrader account)
- *                            - position data as provided by the external source
- *                            - P/L is calculated using prices from the current account
- *                            - additionally the external account identifier is displayed
- *
- *    (2) remote positions:   - positions hold in another account capable to provide P/L (e.g. for synthetic instruments)
- *                            - position data and P/L as provided by the external source
- *                            - order limit monitoring and notification of the remote account
- *                            - additionally the remote account identifier is displayed
- *
- * TODO: Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
+ * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
