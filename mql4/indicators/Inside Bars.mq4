@@ -1,5 +1,5 @@
 /**
- * Inside Bars
+ * Inside Bars (work in progress)
  *
  * Marks inside bars of the specified timeframes and their SR levels in the chart.
  */
@@ -19,6 +19,8 @@ extern string Configuration = "manual | auto*";
 
 #property indicator_chart_window
 
+int timeframe;                                     // the currently active inside bar timeframe
+
 
 /**
  * Initialization
@@ -36,6 +38,17 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   timeframe = PERIOD_D1;
+
+   if (!UnchangedBars) {
+      // find last inside bar
+
+
+
+
+      // draw found inside bar
+   }
+
    return(last_error);
 }
 
