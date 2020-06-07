@@ -823,7 +823,7 @@ bool RecordIndices() {
  * @return bool - success status
  */
 bool UpdateAccountDisplay() {
-   if (mode.remote.trading) {
+   if (mode.extern) {
       string text = "Limits:  "+ tradeAccount.name +", "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
