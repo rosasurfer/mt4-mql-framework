@@ -4013,11 +4013,11 @@ string ShortAccountCompany() {
 
 
 /**
- * Gibt die ID einer Account-Company zurück.
+ * Return the identifier of an account company.
  *
- * @param string shortName - Kurzname der Account-Company
+ * @param string shortName - account company short name
  *
- * @return int - Company-ID oder NULL, falls der übergebene Wert keine bekannte Account-Company ist
+ * @return int - company identifier or NULL if the company name is unknown
  */
 int AccountCompanyId(string shortName) {
    if (!StringLen(shortName))
@@ -4092,8 +4092,7 @@ int AccountCompanyId(string shortName) {
       case 'Q': break;
       case 'R': break;
 
-      case 'S': if (shortName == StrToUpper(AC.SimpleTrader   )) return(AC_ID.SimpleTrader   );
-                if (shortName == StrToUpper(AC.STS            )) return(AC_ID.STS            );
+      case 'S': if (shortName == StrToUpper(AC.STS            )) return(AC_ID.STS            );
                 break;
 
       case 'T': if (shortName == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
@@ -4116,11 +4115,11 @@ int AccountCompanyId(string shortName) {
 
 
 /**
- * Gibt den Kurznamen der Firma mit der übergebenen Company-ID zurück.
+ * Return the short company name matching an account company identifier.
  *
- * @param int id - Company-ID
+ * @param int id
  *
- * @return string - Kurzname oder Leerstring, falls die übergebene ID unbekannt ist
+ * @return string - short name or an empty string if the identifier is unknown
  */
 string ShortAccountCompanyFromId(int id) {
    switch (id) {
@@ -4155,7 +4154,6 @@ string ShortAccountCompanyFromId(int id) {
       case AC_ID.Oanda          : return(AC.Oanda          );
       case AC_ID.Pepperstone    : return(AC.Pepperstone    );
       case AC_ID.PrimeXM        : return(AC.PrimeXM        );
-      case AC_ID.SimpleTrader   : return(AC.SimpleTrader   );
       case AC_ID.STS            : return(AC.STS            );
       case AC_ID.TeleTrade      : return(AC.TeleTrade      );
       case AC_ID.TickMill       : return(AC.TickMill       );
@@ -4178,105 +4176,46 @@ bool IsShortAccountCompany(string value) {
 
 
 /**
- * Gibt den Alias eines Accounts zurück.
+ * Return the account alias of an account number.
  *
  * @param  string accountCompany
  * @param  int    accountNumber
  *
- * @return string - Alias oder Leerstring, falls der Account unbekannt ist
+ * @return string - alias name or an empty string in case of errors or if the account number is unknown
  */
 string AccountAlias(string accountCompany, int accountNumber) {
-   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("AccountAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
-   if (accountNumber <= 0)         return(_EMPTY_STR(catch("AccountAlias(2)  invalid parameter accountNumber = "+ accountNumber, ERR_INVALID_PARAMETER)));
-
-   if (StrCompareI(accountCompany, AC.SimpleTrader)) {
-      // SimpleTrader-Account
-      switch (accountNumber) {
-         case STA_ID.AlexProfit      : return(STA_ALIAS.AlexProfit      );
-         case STA_ID.ASTA            : return(STA_ALIAS.ASTA            );
-         case STA_ID.Caesar2         : return(STA_ALIAS.Caesar2         );
-         case STA_ID.Caesar21        : return(STA_ALIAS.Caesar21        );
-         case STA_ID.ConsistentProfit: return(STA_ALIAS.ConsistentProfit);
-         case STA_ID.DayFox          : return(STA_ALIAS.DayFox          );
-         case STA_ID.FXViper         : return(STA_ALIAS.FXViper         );
-         case STA_ID.GCEdge          : return(STA_ALIAS.GCEdge          );
-         case STA_ID.GoldStar        : return(STA_ALIAS.GoldStar        );
-         case STA_ID.Kilimanjaro     : return(STA_ALIAS.Kilimanjaro     );
-         case STA_ID.NovoLRfund      : return(STA_ALIAS.NovoLRfund      );
-         case STA_ID.OverTrader      : return(STA_ALIAS.OverTrader      );
-         case STA_ID.Ryan            : return(STA_ALIAS.Ryan            );
-         case STA_ID.SmartScalper    : return(STA_ALIAS.SmartScalper    );
-         case STA_ID.SmartTrader     : return(STA_ALIAS.SmartTrader     );
-         case STA_ID.SteadyCapture   : return(STA_ALIAS.SteadyCapture   );
-         case STA_ID.Twilight        : return(STA_ALIAS.Twilight        );
-         case STA_ID.YenFortress     : return(STA_ALIAS.YenFortress     );
-      }
-   }
-   else {
-      // regulärer Account
-      string section = "Accounts";
-      string key     = accountNumber +".alias";
-      string value   = GetGlobalConfigString(section, key);
-      if (StringLen(value) > 0)
-         return(value);
-   }
-
-   return("");
+   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("AccountAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER)));
+   if (accountNumber <= 0)         return(_EMPTY_STR(catch("AccountAlias(2)  invalid parameter accountNumber: "+ accountNumber, ERR_INVALID_PARAMETER)));
+   return(GetGlobalConfigString("Accounts", accountNumber +".alias"));
 }
 
 
 /**
- * Gibt die Account-Nummer eines Accounts anhand seines Aliasses zurück.
+ * Return the account number of an account alias.
  *
  * @param  string accountCompany
  * @param  string accountAlias
  *
- * @return int - Account-Nummer oder NULL, falls der Account unbekannt ist oder ein Fehler auftrat
+ * @return int - account number or NULL in case of errors or if the account alias is unknown
  */
 int AccountNumberFromAlias(string accountCompany, string accountAlias) {
-   if (!StringLen(accountCompany)) return(_NULL(catch("AccountNumberFromAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountAlias))   return(_NULL(catch("AccountNumberFromAlias(2)  invalid parameter accountAlias = \"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountCompany)) return(!catch("AccountNumberFromAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(accountAlias))   return(!catch("AccountNumberFromAlias(2)  invalid parameter accountAlias: \"\"", ERR_INVALID_PARAMETER));
 
-   if (StrCompareI(accountCompany, AC.SimpleTrader)) {
-      // SimpleTrader-Account
-      accountAlias = StrToLower(accountAlias);
+   string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
+   string section = "Accounts";
+   string keys[], value, sAccount;
+   int keysSize = GetIniKeys(file, section, keys);
 
-      if (accountAlias == StrToLower(STA_ALIAS.AlexProfit      )) return(STA_ID.AlexProfit      );
-      if (accountAlias == StrToLower(STA_ALIAS.ASTA            )) return(STA_ID.ASTA            );
-      if (accountAlias == StrToLower(STA_ALIAS.Caesar2         )) return(STA_ID.Caesar2         );
-      if (accountAlias == StrToLower(STA_ALIAS.Caesar21        )) return(STA_ID.Caesar21        );
-      if (accountAlias == StrToLower(STA_ALIAS.ConsistentProfit)) return(STA_ID.ConsistentProfit);
-      if (accountAlias == StrToLower(STA_ALIAS.DayFox          )) return(STA_ID.DayFox          );
-      if (accountAlias == StrToLower(STA_ALIAS.FXViper         )) return(STA_ID.FXViper         );
-      if (accountAlias == StrToLower(STA_ALIAS.GCEdge          )) return(STA_ID.GCEdge          );
-      if (accountAlias == StrToLower(STA_ALIAS.GoldStar        )) return(STA_ID.GoldStar        );
-      if (accountAlias == StrToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
-      if (accountAlias == StrToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
-      if (accountAlias == StrToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
-      if (accountAlias == StrToLower(STA_ALIAS.Ryan            )) return(STA_ID.Ryan            );
-      if (accountAlias == StrToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
-      if (accountAlias == StrToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
-      if (accountAlias == StrToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
-      if (accountAlias == StrToLower(STA_ALIAS.Twilight        )) return(STA_ID.Twilight        );
-      if (accountAlias == StrToLower(STA_ALIAS.YenFortress     )) return(STA_ID.YenFortress     );
-   }
-   else {
-      // regulärer Account
-      string file    = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
-      string section = "Accounts";
-      string keys[], value, sAccount;
-      int keysSize = GetIniKeys(file, section, keys);
-
-      for (int i=0; i < keysSize; i++) {
-         if (StrEndsWithI(keys[i], ".alias")) {
-            value = GetGlobalConfigString(section, keys[i]);
-            if (StrCompareI(value, accountAlias)) {
-               sAccount = StringTrimRight(StrLeft(keys[i], -6));
-               value    = GetGlobalConfigString(section, sAccount +".company");
-               if (StrCompareI(value, accountCompany)) {
-                  if (StrIsDigit(sAccount))
-                     return(StrToInteger(sAccount));
-               }
+   for (int i=0; i < keysSize; i++) {
+      if (StrEndsWithI(keys[i], ".alias")) {
+         value = GetGlobalConfigString(section, keys[i]);
+         if (StrCompareI(value, accountAlias)) {
+            sAccount = StringTrimRight(StrLeft(keys[i], -6));
+            value    = GetGlobalConfigString(section, sAccount +".company");
+            if (StrCompareI(value, accountCompany)) {
+               if (StrIsDigit(sAccount))
+                  return(StrToInteger(sAccount));
             }
          }
       }
