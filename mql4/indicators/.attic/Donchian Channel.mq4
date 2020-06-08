@@ -55,7 +55,7 @@ int onInit() {
        ObjectRegister(legendLabel);
        ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);
        int error = GetLastError();
-       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)   // on Object::onDrag() or on opened dialog "Properties"
+       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)   // on Object::onDrag() or opened "Properties" dialog
           return(catch("onInit(2)", error));
    }
 
