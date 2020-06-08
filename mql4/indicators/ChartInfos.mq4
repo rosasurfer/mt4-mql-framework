@@ -1,11 +1,10 @@
 /**
- * Displays additional market and trading infos in the chart.
+ * Displays additional market and account infos in the chart.
  *
- *
- *  - Symbol (builds <= 509), price and spread.
- *  - The trade lotsize according to the configured risk profile.
+ *  - Symbol (in builds <= 509), price and spread.
+ *  - The calculated position size according to the configured risk profile.
  *  - Total open position and risk according to the configured risk profile.
- *  - P/L of open positions and/or trade history supporting two modes:
+ *  - P/L of open positions and/or trade history supporting two different modes:
  *     • internal: positions and/or history from the current account,
  *                 P/L as provided by the current account,
  *                 order execution notifications
@@ -61,12 +60,12 @@ double mm.unleveragedLots;                                        // Unitsize oh
 double mm.usedLeverage = 1;                                       // angewandter Hebel
 double mm.unitSize;                                               // exakter Wert der berechneten UnitSize
 double mm.unitSize.normalized;                                    // auf MODE_LOTSTEP normalisierter Wert der UnitSize
-double mm.externalAssets;                                         // extern gehaltene zusätzlich zu berücksichtigende Assets
+double mm.externalAssets;                                         // additional assets not hold in the broker's account
 double mm.equity;                                                 // als Equity zu verwendender Betrag
                                                                   //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
                                                                   //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)  !!! Commissions herausrechnen !!!
                                                                   //  - enthält offene Verluste ungehedgter Positionen
-                                                                  //  - enthält jedoch nicht offene Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
+                                                                  //  - enthält jedoch nicht offene Gewinne ungehedgter Positionen (unrealisiert)
 // configuration of custom positions
 #define POSITION_CONFIG_TERM.size      40                         // in Bytes
 #define POSITION_CONFIG_TERM.doubleSize 5                         // in Doubles
