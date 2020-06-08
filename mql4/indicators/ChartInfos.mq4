@@ -53,15 +53,17 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
 
 
-// money management
-bool   mm.isDone;                                                 // Flag
-double mm.lotValue;                                               // Value eines Lots in Account-Currency
-double mm.unleveragedLots;                                        // Unitsize ohne Hebel
-double mm.usedLeverage = 1;                                       // angewandter Hebel
-double mm.unitSize;                                               // exakter Wert der berechneten UnitSize
-double mm.unitSize.normalized;                                    // auf MODE_LOTSTEP normalisierter Wert der UnitSize
+// position size calculation
+bool   mm.done;                                                   // processing flag
+double mm.lotValue;                                               // value of 1 lot in account currency
+double mm.unleveragedLots;                                        // unleveraged position size
+double mm.risk         = 10;                                      // configured position risk in %
+int    mm.stopDistance = 100;                                     // configured stop distance in pip
+double mm.positionSize;                                           // calculated position size according to risk and stop distance
+double mm.normPositionSize;                                       // mm.positionSize normalized to MODE_LOTSTEP
+double mm.positionSizeLeverage;                                   // leverage of the calculated position size
 double mm.externalAssets;                                         // additional assets not hold in the broker's account
-double mm.equity;                                                 // als Equity zu verwendender Betrag
+double mm.equity;                                                 // total applied equity value
                                                                   //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
                                                                   //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)  !!! Commissions herausrechnen !!!
                                                                   //  - enthält offene Verluste ungehedgter Positionen
@@ -217,7 +219,7 @@ int    orders.knownOrders.type  [];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   mm.isDone          = false;
+   mm.done            = false;
    positions.analyzed = false;
 
    HandleCommands();                                                                               // ChartCommands verarbeiten
@@ -914,7 +916,7 @@ bool ToggleAuM() {
       mm.externalAssets = RefreshExternalAssets(tradeAccount.company, tradeAccount.number);
       string sExternalAsets = " ";
 
-      if (mode.intern) sExternalAsets = ifString(!mm.externalAssets, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + mm.externalAssets, 2) +" "+ AccountCurrency();
+      if (mode.intern) sExternalAsets = ifString(!mm.externalAssets, "Balance: ", "Assets: ") + DoubleToStr(AccountBalance() + mm.externalAssets, 2) +" "+ AccountCurrency();
       else { status = false; PlaySoundEx("Plonk.wav"); }             // not yet implemented
 
       ObjectSetText(label.externalAssets, sExternalAsets, 9, "Tahoma", SlateGray);
@@ -926,7 +928,7 @@ bool ToggleAuM() {
    }
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or on opened dialog "Properties"
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or opened "Properties" dialog
       return(!catch("ToggleAuM(1)", error));
 
    // Anzeigestatus im Chart speichern
@@ -993,7 +995,6 @@ bool CreateLabels() {
    label.tradeAccount   = StrReplace(label.tradeAccount,   "${__NAME__}", programName);
    label.stopoutLevel   = StrReplace(label.stopoutLevel,   "${__NAME__}", programName);
 
-
    // Instrument-Label: Anzeige wird sofort (und nur hier) gesetzt
    int build = GetTerminalBuild();
    if (build <= 509) {                                                                    // Builds größer 509 haben oben links eine {Symbol,Period}-Anzeige, die das
@@ -1012,7 +1013,6 @@ bool CreateLabels() {
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
 
-
    // OHLC-Label
    if (ObjectFind(label.ohlc) == 0)
       ObjectDelete(label.ohlc);
@@ -1024,7 +1024,6 @@ bool CreateLabels() {
       ObjectRegister(label.ohlc);
    }
    else GetLastError();
-
 
    // Price-Label
    if (ObjectFind(label.price) == 0)
@@ -1038,7 +1037,6 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-
    // Spread-Label
    if (ObjectFind(label.spread) == 0)
       ObjectDelete(label.spread);
@@ -1051,26 +1049,24 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-
    // OrderCounter-Label
    if (ObjectFind(label.orderCounter) == 0)
       ObjectDelete(label.orderCounter);
    if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 380);
+      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 440);
       ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.orderCounter, " ", 1);
       ObjectRegister(label.orderCounter);
    }
    else GetLastError();
 
-
    // Assets-under-Management-Label
    if (ObjectFind(label.externalAssets) == 0)
       ObjectDelete(label.externalAssets);
    if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 240);
+      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 270);
       ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.externalAssets, " ", 1);
       ObjectRegister(label.externalAssets);
@@ -1146,7 +1142,7 @@ bool UpdatePrice() {
    ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdatePrice(1)", error));
 }
@@ -1165,30 +1161,30 @@ bool UpdateSpread() {
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
 
 
 /**
- * Update the standard lotsize for the configured risk profile (displayed bottom-right).
+ * Update the display of the calculated position size for the configured risk profile (bottom-right).
  *
  * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                     return(true);      // skip in tester
-   if (!mm.isDone) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
-   if (!mm.isDone)                                      return(true);
+   if (IsTesting())                                   return(true);        // skip in tester
+   if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
+   if (!mm.done)                                      return(true);
 
-   // only with internal account:                  L - Leverage                                     Unitsize
+   // only with internal account:                  R - risk / stop distance                             L - leverage                                           position size
    string sUnitSize = "";
-   if (mode.intern) sUnitSize = StringConcatenate("L", DoubleToStr(mm.usedLeverage, 1), "        ", NumberToStr(mm.unitSize.normalized, ", .+"), " lot");
+   if (mode.intern) sUnitSize = StringConcatenate("R ", Round(mm.risk), "%/", mm.stopDistance, "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
 
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error == ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error == ERR_OBJECT_DOES_NOT_EXIST)                       // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1197,13 +1193,13 @@ bool UpdateUnitSize() {
 /**
  * Aktualisiert die Positionsanzeigen unten rechts (Gesamtposition) und unten links (detaillierte Einzelpositionen).
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdatePositions() {
-   if (!positions.analyzed ) /*&&*/ if (!AnalyzePositions()) return(false);
-   if (!mode.extern)         /*&&*/ if (!mm.isDone) {
-      if (!UpdateMoneyManagement())                          return(false);
-      if (!mm.isDone)                                        return(true);
+   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
+   if (mode.intern && !mm.done) {
+      if (!UpdateMoneyManagement())                         return(false);
+      if (!mm.done)                                         return(true);
    }
 
    // (1) Gesamtpositionsanzeige unten rechts
@@ -1215,13 +1211,13 @@ bool UpdatePositions() {
       double currentLeverage;
       if (!mm.equity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
       else            currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
-      sCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
-      sCurrentPosition = StringConcatenate("Position:   " , sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      sCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "    ");
+      sCurrentPosition = StringConcatenate("Position:    " , sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or on opened dialog "Properties"
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or opened "Properties" dialog
       return(!catch("UpdatePositions(1)", error));
 
 
@@ -1234,7 +1230,7 @@ bool UpdatePositions() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
          ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-         ObjectSetText(label, "n", 6, "Webdings", Orange);           // Webdings: runder Marker, orange="Notice"
+         ObjectSetText(label, "n", 6, "Webdings", Orange);              // Webdings: runder Marker, orange="Notice"
          ObjectRegister(label);
       }
    }
@@ -1444,7 +1440,7 @@ bool UpdateOrderCounter() {
    ObjectSetText(label.orderCounter, sText, 8, "Tahoma Fett", objectColor);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateOrderCounter(1)", error));
 }
@@ -1468,7 +1464,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
@@ -1486,7 +1482,7 @@ bool UpdateStopoutLevel() {
    if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on Object::onDrag() or on opened dialog "Properties"
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on Object::onDrag() or opened "Properties" dialog
          return(!catch("UpdateStopoutLevel(1)", error));
       return(true);
    }
@@ -1522,7 +1518,7 @@ bool UpdateStopoutLevel() {
 
 
    error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateStopoutLevel(2)", error));
 }
@@ -1578,7 +1574,7 @@ bool UpdateOHLC() {
    ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateOHLC(2)", error));
 }
@@ -1807,72 +1803,70 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
 
 
 /**
- * Aktualisiert die dynamischen Werte des Money-Managements.
+ * Calculate the position size according to the configured risk profile.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateMoneyManagement() {
-   if (mode.extern) return(true);                                    // only for internal account
-   if (mm.isDone)   return(true);
+   if (mode.extern || mm.done) return(true);                               // only for internal account
 
-   mm.lotValue            = 0;
-   mm.unleveragedLots     = 0;                                       // Lotsize bei Hebel 1:1
-   mm.unitSize            = 0;                                       // Lotsize für angewandten Hebel
-   mm.unitSize.normalized = 0;
-   mm.equity              = 0;
+   mm.lotValue             = 0;
+   mm.unleveragedLots      = 0;                                            // unleveraged position size
+   mm.positionSize         = 0;                                            // position size for the configured risk
+   mm.normPositionSize     = 0;                                            // normalized position size
+   mm.positionSizeLeverage = 0;                                            // leverage of the calculated position size
+   mm.equity               = 0;                                            // currently used equity value incl. extern assets
 
-   // unleveraged Lots
+   // calculate lot values and position sizes
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
    double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
       int error = GetLastError();
-      if (IsError(error)) {
-         if (error == ERR_SYMBOL_NOT_AVAILABLE) {
-            SetLastError(ERS_TERMINAL_NOT_YET_READY);
-            //debug("UpdateMoneyManagement(2)  MarketInfo(\""+ Symbol() +"\") => ERR_SYMBOL_NOT_AVAILABLE", last_error);
-            return(false);
-         }
-         return(!catch("UpdateMoneyManagement(3)", error));
+      if (error || !Bid || !tickSize || !tickValue || !marginRequired) {   // can happen on terminal start, on change of account or template, or in offline charts
+         if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
+            return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
+         return(!catch("UpdateMoneyManagement(1)", error));
       }
+   double pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
+   double pipValue       = PipPoints * pointValue;                         // pip value in account currency
    double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
    if (mode.intern) {
-      double visibleEquity = AccountEquity()-AccountCredit();        // bei negativer AccountBalance wird nur visibleEquity benutzt
-         if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
-      mm.equity = visibleEquity + externalAssets;
+      double accountEquity = AccountEquity()-AccountCredit();
+         if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
+      mm.equity = accountEquity + externalAssets;
    }
    else {
-      mm.equity = externalAssets;                                    // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
+      mm.equity = externalAssets;                                          // TODO: wrong, not updated as GetExternalAssets() caches the result
+   }
+   double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
+
+   mm.lotValue             = Bid/tickSize * tickValue;                     // value of 1 lot in account currency
+   mm.unleveragedLots      = mm.equity/mm.lotValue;                        // unleveraged position size
+   mm.positionSize         = risk/mm.stopDistance/pipValue;                // position size for risk and stop distance
+   mm.positionSizeLeverage = mm.positionSize/mm.unleveragedLots;           // leverage of the calculated position size
+
+   // normalize the calculated position size
+   if (mm.positionSize > 0) {                                                                                                          // Abstufung max. 6.7% je Schritt
+      if      (mm.positionSize <=    0.03) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.001) *   0.001, 3);     //     0-0.03: Vielfaches von   0.001
+      else if (mm.positionSize <=   0.075) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.002) *   0.002, 3);     // 0.03-0.075: Vielfaches von   0.002
+      else if (mm.positionSize <=    0.1 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.005) *   0.005, 3);     //  0.075-0.1: Vielfaches von   0.005
+      else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
+      else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
+      else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
+      else if (mm.positionSize <=    3.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //      1.2-3: Vielfaches von   0.1
+      else if (mm.positionSize <=    7.5 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.2  ) *   0.2  , 1);     //      3-7.5: Vielfaches von   0.2
+      else if (mm.positionSize <=   12.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.5  ) *   0.5  , 1);     //     7.5-12: Vielfaches von   0.5
+      else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
+      else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
+      else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
+      else if (mm.positionSize <=  300.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 10    ) *  10       );     //    120-300: Vielfaches von  10
+      else if (mm.positionSize <=  750.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 20    ) *  20       );     //    300-750: Vielfaches von  20
+      else if (mm.positionSize <= 1200.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 50    ) *  50       );     //   750-1200: Vielfaches von  50
+      else                                 mm.normPositionSize =       MathRound(MathRound(mm.positionSize/100    ) * 100       );     //   1200-...: Vielfaches von 100
    }
 
-   if (!Bid || !tickSize || !tickValue || !marginRequired)           // kann bei Start, Account-/Templatewechsel oder im Offline-Chart auftreten
-      return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-
-   mm.lotValue        = Bid/tickSize * tickValue;                    // Value eines Lots in Account-Currency
-   mm.unleveragedLots = mm.equity/mm.lotValue;                       // ungehebelte Lotsize (Leverage 1:1)
-   mm.unitSize        = mm.unleveragedLots * mm.usedLeverage;        // auf angewandten Hebel gehebelte UnitSize
-
-   // Lotsize runden
-   if (mm.unitSize > 0) {                                                                                                        // Abstufung max. 6.7% je Schritt
-      if      (mm.unitSize <=    0.03) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
-      else if (mm.unitSize <=   0.075) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
-      else if (mm.unitSize <=    0.1 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
-      else if (mm.unitSize <=    0.3 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
-      else if (mm.unitSize <=    0.75) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
-      else if (mm.unitSize <=    1.2 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
-      else if (mm.unitSize <=    3.  ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
-      else if (mm.unitSize <=    7.5 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
-      else if (mm.unitSize <=   12.  ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
-      else if (mm.unitSize <=   30.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );    //      12-30: Vielfaches von   1
-      else if (mm.unitSize <=   75.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );    //      30-75: Vielfaches von   2
-      else if (mm.unitSize <=  120.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );    //     75-120: Vielfaches von   5
-      else if (mm.unitSize <=  300.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );    //    120-300: Vielfaches von  10
-      else if (mm.unitSize <=  750.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );    //    300-750: Vielfaches von  20
-      else if (mm.unitSize <= 1200.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
-      else                             mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/100    ) * 100       );    //   1200-...: Vielfaches von 100
-   }
-
-   mm.isDone = true;
-   return(!catch("UpdateMoneyManagement(4)"));
+   mm.done = true;
+   return(!catch("UpdateMoneyManagement(2)"));
 }
 
 

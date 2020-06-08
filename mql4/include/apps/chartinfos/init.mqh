@@ -34,7 +34,6 @@ int onInit() {
       if (!OrderTracker.Configure()) return(last_error);
    }
 
-   SetIndexLabel(0, NULL);                                                    // Datenanzeige ausschalten
    return(catch("onInit(2)"));
 }
 
