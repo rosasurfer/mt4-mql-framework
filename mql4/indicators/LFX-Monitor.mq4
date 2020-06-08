@@ -832,7 +832,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                   // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                   // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
