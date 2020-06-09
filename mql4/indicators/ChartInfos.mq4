@@ -57,8 +57,8 @@ int displayedPrice = PRICE_MEDIAN;                                // price type:
 bool   mm.done;                                                   // processing flag
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged position size
-double mm.risk         = 10;                                      // configured position risk in %
-int    mm.stopDistance = 100;                                     // configured stop distance in pip
+double mm.risk;                                                   // configured position risk in %
+int    mm.stopDistance;                                           // configured stop distance in pip
 double mm.positionSize;                                           // calculated position size according to risk and stop distance
 double mm.normPositionSize;                                       // mm.positionSize normalized to MODE_LOTSTEP
 double mm.positionSizeLeverage;                                   // leverage of the calculated position size
@@ -234,7 +234,7 @@ int onTick() {
    else {
       if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
       if (!UpdateSpread())                 if (CheckLastError("onTick(6)"))  return(last_error);
-      if (!UpdateUnitSize())               if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositionSize())           if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
       if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
       if (!UpdateStopoutLevel())           if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
@@ -1172,21 +1172,21 @@ bool UpdateSpread() {
  *
  * @return bool - success status
  */
-bool UpdateUnitSize() {
+bool UpdatePositionSize() {
    if (IsTesting())                                   return(true);        // skip in tester
-   if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
+   if (!mm.done) /*&&*/ if (!CalculatePositionSize()) return(_false(CheckLastError("UpdatePositionSize(1)->CalculatePositionSize()")));
    if (!mm.done)                                      return(true);
 
-   // only with internal account:                  R - risk / stop distance                             L - leverage                                           position size
-   string sUnitSize = "";
-   if (mode.intern) sUnitSize = StringConcatenate("R ", Round(mm.risk), "%/", mm.stopDistance, "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
-
-   ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
+   string sPositionSize = "";         // R - risk / stop distance                             L - leverage                                           position size
+   if (mode.intern && mm.risk && mm.stopDistance) {
+      sPositionSize = StringConcatenate("R ", Round(mm.risk), "%/", mm.stopDistance, "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
+   }
+   ObjectSetText(label.unitSize, sPositionSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (!error || error == ERR_OBJECT_DOES_NOT_EXIST)                       // on Object::onDrag() or opened "Properties" dialog
       return(true);
-   return(!catch("UpdateUnitSize(1)", error));
+   return(!catch("UpdatePositionSize(2)", error));
 }
 
 
@@ -1198,7 +1198,7 @@ bool UpdateUnitSize() {
 bool UpdatePositions() {
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
    if (mode.intern && !mm.done) {
-      if (!UpdateMoneyManagement())                         return(false);
+      if (!CalculatePositionSize())                         return(false);
       if (!mm.done)                                         return(true);
    }
 
@@ -1452,7 +1452,7 @@ bool UpdateOrderCounter() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateAccountDisplay() {
-   string text;
+   string text = "";
 
    if (mode.intern) {
       ObjectSetText(label.tradeAccount, " ", 1);
@@ -1807,7 +1807,7 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
  *
  * @return bool - success status
  */
-bool UpdateMoneyManagement() {
+bool CalculatePositionSize() {
    if (mode.extern || mm.done) return(true);                               // only for internal account
 
    mm.lotValue             = 0;
@@ -1825,7 +1825,7 @@ bool UpdateMoneyManagement() {
       if (error || !Bid || !tickSize || !tickValue || !marginRequired) {   // can happen on terminal start, on change of account or template, or in offline charts
          if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
             return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-         return(!catch("UpdateMoneyManagement(1)", error));
+         return(!catch("CalculatePositionSize(1)", error));
       }
    double pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue       = PipPoints * pointValue;                         // pip value in account currency
@@ -1838,35 +1838,38 @@ bool UpdateMoneyManagement() {
    else {
       mm.equity = externalAssets;                                          // TODO: wrong, not updated as GetExternalAssets() caches the result
    }
-   double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
 
    mm.lotValue             = Bid/tickSize * tickValue;                     // value of 1 lot in account currency
    mm.unleveragedLots      = mm.equity/mm.lotValue;                        // unleveraged position size
-   mm.positionSize         = risk/mm.stopDistance/pipValue;                // position size for risk and stop distance
-   mm.positionSizeLeverage = mm.positionSize/mm.unleveragedLots;           // leverage of the calculated position size
 
-   // normalize the calculated position size
-   if (mm.positionSize > 0) {                                                                                                          // Abstufung max. 6.7% je Schritt
-      if      (mm.positionSize <=    0.03) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.001) *   0.001, 3);     //     0-0.03: Vielfaches von   0.001
-      else if (mm.positionSize <=   0.075) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.002) *   0.002, 3);     // 0.03-0.075: Vielfaches von   0.002
-      else if (mm.positionSize <=    0.1 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.005) *   0.005, 3);     //  0.075-0.1: Vielfaches von   0.005
-      else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
-      else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
-      else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
-      else if (mm.positionSize <=    3.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //      1.2-3: Vielfaches von   0.1
-      else if (mm.positionSize <=    7.5 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.2  ) *   0.2  , 1);     //      3-7.5: Vielfaches von   0.2
-      else if (mm.positionSize <=   12.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.5  ) *   0.5  , 1);     //     7.5-12: Vielfaches von   0.5
-      else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
-      else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
-      else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
-      else if (mm.positionSize <=  300.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 10    ) *  10       );     //    120-300: Vielfaches von  10
-      else if (mm.positionSize <=  750.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 20    ) *  20       );     //    300-750: Vielfaches von  20
-      else if (mm.positionSize <= 1200.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 50    ) *  50       );     //   750-1200: Vielfaches von  50
-      else                                 mm.normPositionSize =       MathRound(MathRound(mm.positionSize/100    ) * 100       );     //   1200-...: Vielfaches von 100
+   if (mm.risk && mm.stopDistance) {
+      double risk = mm.risk/100 * mm.equity;                               // risked amount in account currency
+      mm.positionSize         = risk/mm.stopDistance/pipValue;             // position size for risk and stop distance
+      mm.positionSizeLeverage = mm.positionSize/mm.unleveragedLots;        // leverage of the calculated position size
+
+      // normalize the calculated position size
+      if (mm.positionSize > 0) {                                                                                                          // Abstufung max. 6.7% je Schritt
+         if      (mm.positionSize <=    0.03) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.001) *   0.001, 3);     //     0-0.03: Vielfaches von   0.001
+         else if (mm.positionSize <=   0.075) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.002) *   0.002, 3);     // 0.03-0.075: Vielfaches von   0.002
+         else if (mm.positionSize <=    0.1 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.005) *   0.005, 3);     //  0.075-0.1: Vielfaches von   0.005
+         else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
+         else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
+         else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
+         else if (mm.positionSize <=    3.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //      1.2-3: Vielfaches von   0.1
+         else if (mm.positionSize <=    7.5 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.2  ) *   0.2  , 1);     //      3-7.5: Vielfaches von   0.2
+         else if (mm.positionSize <=   12.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.5  ) *   0.5  , 1);     //     7.5-12: Vielfaches von   0.5
+         else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
+         else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
+         else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
+         else if (mm.positionSize <=  300.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 10    ) *  10       );     //    120-300: Vielfaches von  10
+         else if (mm.positionSize <=  750.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 20    ) *  20       );     //    300-750: Vielfaches von  20
+         else if (mm.positionSize <= 1200.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 50    ) *  50       );     //   750-1200: Vielfaches von  50
+         else                                 mm.normPositionSize =       MathRound(MathRound(mm.positionSize/100    ) * 100       );     //   1200-...: Vielfaches von 100
+      }
    }
 
    mm.done = true;
-   return(!catch("UpdateMoneyManagement(2)"));
+   return(!catch("CalculatePositionSize(2)"));
 }
 
 

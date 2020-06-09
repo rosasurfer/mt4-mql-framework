@@ -1,26 +1,18 @@
 /**
- * Initialisierung Preprocessing-Hook
+ * Initialization preprocessing
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   // Textlabel zuerst erzeugen, RestoreRuntimeStatus() benötigt sie bereits
-   if (!CreateLabels())
-      return(last_error);
+   if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()
+   if (!RestoreRuntimeStatus()) return(last_error);                           // restores positions.absoluteProfits
+   if (!InitTradeAccount())     return(last_error);                           // set used trade account
+   if (!UpdateAccountDisplay()) return(last_error);
 
-   // Laufzeitstatus restaurieren
-   if (!RestoreRuntimeStatus())                                               // restauriert positions.absoluteProfits
-      return(last_error);
-
-   // TradeAccount initialisieren
-   if (!InitTradeAccount()) return(last_error);
-   if (mode.extern) /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
-
-   // Config-Parameter validieren
-   // DisplayedPrice
+   // read config: displayed price
    string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
-   if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
-      section = "Chart";
+   if (!IsVisualModeFix()) {                                                  // in tester is always bid displayed (sufficient and faster)
+      section = "ChartInfos";
       key     = "DisplayedPrice."+ stdSymbol;
       sValue  = StrToLower(GetConfigString(section, key, "median"));
    }
@@ -29,12 +21,39 @@ int onInit() {
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
-   // OrderTracker-Konfiguration validieren
    if (mode.intern) {
+      mm.risk         = 0;                                                    // default: position size calculator disabled
+      mm.stopDistance = 0;
+
+      // read config: position size calculation
+      section = "PositionSizeCalculator";
+      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".StopDistance";
+      string sDefaultRisk = GetConfigString(section, defaultRiskKey);
+      string sSymbolRisk  = GetConfigString(section, symbolRiskKey);
+      string sSymbolDist  = GetConfigString(section, symbolDistKey);
+
+      if ((StringLen(sDefaultRisk) || StringLen(sSymbolRisk)) && StringLen(sSymbolDist)) {
+         key    = ifString(StringLen(sSymbolRisk), symbolRiskKey, defaultRiskKey);
+         sValue = ifString(StringLen(sSymbolRisk), sSymbolRisk,   sDefaultRisk);
+
+         if (!StrIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (non-numeric value)", ERR_INVALID_CONFIG_VALUE));
+         double dValue = StrToDouble(sValue);
+         if (dValue <= 0)           return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (non-positive value)", ERR_INVALID_CONFIG_VALUE));
+         mm.risk = dValue;
+
+         key    = symbolDistKey;
+         sValue = sSymbolDist;
+         if (!StrIsDigit(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not a positive integer value)", ERR_INVALID_CONFIG_VALUE));
+         int iValue = StrToInteger(sValue);
+         if (iValue == 0)         return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not a positive integer value)", ERR_INVALID_CONFIG_VALUE));
+         mm.stopDistance = iValue;
+      }
+
+      // order tracker
       if (!OrderTracker.Configure()) return(last_error);
    }
 
-   return(catch("onInit(2)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -141,9 +160,10 @@ int afterInit() {
 /**
  * Konfiguriert den internen OrderTracker.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OrderTracker.Configure() {
+   if (!mode.intern) return(true);
    track.orders = false;
 
    string sValue = StrToLower(Track.Orders), values[];            // default: "on | off | auto*"
