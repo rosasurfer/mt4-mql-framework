@@ -1,8 +1,8 @@
 <chart>
-symbol=EURLFX
+symbol=XAUI
 period=60
 leftpos=0
-digits=5
+digits=2
 scale=1
 graph=1
 fore=0
