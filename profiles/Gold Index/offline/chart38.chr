@@ -1,9 +1,9 @@
 <chart>
-symbol=EURLFX
-period=1
+symbol=XAUI
+period=5
 leftpos=0
 offline=1
-digits=5
+digits=2
 scale=1
 graph=1
 fore=0

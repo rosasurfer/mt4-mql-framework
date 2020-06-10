@@ -355,7 +355,7 @@ int onTick() {
  * @return bool - success status
  */
 bool onReversal(int direction) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
    int error = 0;
 
    if (direction == D_LONG) {

@@ -823,7 +823,7 @@ bool RecordIndices() {
  * @return bool - success status
  */
 bool UpdateAccountDisplay() {
-   if (mode.remote.trading) {
+   if (mode.extern) {
       string text = "Limits:  "+ tradeAccount.name +", "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
@@ -832,7 +832,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                   // on Object::onDrag() or on opened dialog "Properties"
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                   // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
