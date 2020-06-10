@@ -1,7 +1,8 @@
 /**
  * Inside Bars (work in progress)
  *
- * Marks inside bars of the specified timeframes and their SR levels in the chart.
+ *
+ * Marks in the chart inside bars and SR levels of the specified timeframes.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
@@ -42,9 +43,6 @@ int onTick() {
 
    if (!UnchangedBars) {
       // find last inside bar
-
-
-
 
       // draw found inside bar
    }
