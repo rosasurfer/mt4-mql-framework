@@ -1,9 +1,9 @@
 <chart>
-symbol=EURLFX
+symbol=EURX
 period=1
 leftpos=0
 offline=1
-digits=5
+digits=3
 scale=1
 graph=1
 fore=0
