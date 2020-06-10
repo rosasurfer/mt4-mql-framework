@@ -170,7 +170,7 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
       ObjectSetText(label, text, 9, "Arial Fett", cColor);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or on opened dialog "Properties"
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or opened "Properties" dialog
          return(catch("@Trend.UpdateLegend(1)", error));
    }
 

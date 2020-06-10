@@ -1,26 +1,18 @@
 /**
- * Initialisierung Preprocessing-Hook
+ * Initialization preprocessing
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   // Textlabel zuerst erzeugen, RestoreRuntimeStatus() benötigt sie bereits
-   if (!CreateLabels())
-      return(last_error);
+   if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()
+   if (!RestoreRuntimeStatus()) return(last_error);                           // restores positions.absoluteProfits
+   if (!InitTradeAccount())     return(last_error);                           // set used trade account
+   if (!UpdateAccountDisplay()) return(last_error);
 
-   // Laufzeitstatus restaurieren
-   if (!RestoreRuntimeStatus())                                               // restauriert positions.absoluteProfits, mode.extern.notrading
-      return(last_error);
-
-   // TradeAccount initialisieren                                             // bei "mode.extern" schon in RestoreRuntimeStatus() geschehen
-   if (!mode.extern.notrading) /*&&*/ if (!InitTradeAccount())     return(last_error);
-   if (!mode.intern.trading)   /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
-
-   // Config-Parameter validieren
-   // DisplayedPrice
+   // read config: displayed price
    string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
-   if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
-      section = "Chart";
+   if (!IsVisualModeFix()) {                                                  // in tester is always bid displayed (sufficient and faster)
+      section = "ChartInfos";
       key     = "DisplayedPrice."+ stdSymbol;
       sValue  = StrToLower(GetConfigString(section, key, "median"));
    }
@@ -29,36 +21,38 @@ int onInit() {
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
-   // Moneymanagement
-   if (!mode.remote.trading) {
-      // Volatility: a symbol-specific configuration overrides the default configuration
-      section = "Moneymanagement";
-      key     = "Volatility."+ stdSymbol;
-      sValue  = GetConfigString(section, key);
+   if (mode.intern) {
+      mm.risk         = 0;                                                    // default: position size calculator disabled
+      mm.stopDistance = 0;
 
-      if (StringLen(sValue) > 0) {
-         if (!StrIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_VALUE));
+      // read config: position size calculation
+      section = "PositionSizeCalculator";
+      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".StopDistance";
+      string sDefaultRisk = GetConfigString(section, defaultRiskKey);
+      string sSymbolRisk  = GetConfigString(section, symbolRiskKey);
+      string sSymbolDist  = GetConfigString(section, symbolDistKey);
+
+      if ((StringLen(sDefaultRisk) || StringLen(sSymbolRisk)) && StringLen(sSymbolDist)) {
+         key    = ifString(StringLen(sSymbolRisk), symbolRiskKey, defaultRiskKey);
+         sValue = ifString(StringLen(sSymbolRisk), sSymbolRisk,   sDefaultRisk);
+
+         if (!StrIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (non-numeric value)", ERR_INVALID_CONFIG_VALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue <= 0)              return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_VALUE));
-         mm.vola = dValue;
+         if (dValue <= 0)           return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (non-positive value)", ERR_INVALID_CONFIG_VALUE));
+         mm.risk = dValue;
+
+         key    = symbolDistKey;
+         sValue = sSymbolDist;
+         if (!StrIsDigit(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not a positive integer value)", ERR_INVALID_CONFIG_VALUE));
+         int iValue = StrToInteger(sValue);
+         if (iValue == 0)         return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not a positive integer value)", ERR_INVALID_CONFIG_VALUE));
+         mm.stopDistance = iValue;
       }
-      else {
-         key = "Volatility.Default";
-         sValue = GetConfigString(section, key);
-         if (StringLen(sValue) > 0) {
-            if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_VALUE));
-            dValue = StrToDouble(sValue);
-            if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_VALUE));
-            mm.vola = dValue;
-         }
-      }
+
+      // order tracker
+      if (!OrderTracker.Configure()) return(last_error);
    }
 
-   // nur bei bei "mode.intern": OrderTracker-Konfiguration validieren
-   if (mode.intern.trading)
-      if (!OrderTracker.Configure()) return(last_error);
-
-   SetIndexLabel(0, NULL);                                                    // Datenanzeige ausschalten
    return(catch("onInit(6)"));
 }
 
@@ -69,9 +63,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInitUser() {
-   if (!mode.extern.notrading) {
-      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
-   }
+   if (!RestoreLfxOrders(false)) return(last_error);                          // LFX-Orders neu einlesen
    return(NO_ERROR);
 }
 
@@ -82,9 +74,7 @@ int onInitUser() {
  * @return int - Fehlerstatus
  */
 int onInitTemplate() {
-   if (!mode.extern.notrading) {
-      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
-   }
+   if (!RestoreLfxOrders(false)) return(last_error);                          // LFX-Orders neu einlesen
    return(NO_ERROR);
 }
 
@@ -95,9 +85,7 @@ int onInitTemplate() {
  * @return int - Fehlerstatus
  */
 int onInitParameters() {
-   if (!mode.extern.notrading) {
-      if (!RestoreLfxOrders(true)) return(last_error);                        // in Library gespeicherte LFX-Orders restaurieren
-   }
+   if (!RestoreLfxOrders(true)) return(last_error);                           // in Library gespeicherte LFX-Orders restaurieren
    return(NO_ERROR);
 }
 
@@ -108,9 +96,7 @@ int onInitParameters() {
  * @return int - Fehlerstatus
  */
 int onInitTimeframeChange() {
-   if (!mode.extern.notrading) {
-      if (!RestoreLfxOrders(true)) return(last_error);                        // in Library gespeicherte LFX-Orders restaurieren
-   }
+   if (!RestoreLfxOrders(true)) return(last_error);                           // in Library gespeicherte LFX-Orders restaurieren
    return(NO_ERROR);
 }
 
@@ -121,11 +107,9 @@ int onInitTimeframeChange() {
  * @return int - Fehlerstatus
  */
 int onInitSymbolChange() {
-   if (!mode.extern.notrading) {
-      if (!RestoreLfxOrders(true))  return(last_error);                       // LFX-Orderdaten des vorherigen Symbols speichern (liegen noch in Library)
-      if (!SaveLfxOrderCache())     return(last_error);
-      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders des aktuellen Symbols einlesen
-   }
+   if (!RestoreLfxOrders(true))  return(last_error);                          // LFX-Orderdaten des vorherigen Symbols speichern (liegen noch in Library)
+   if (!SaveLfxOrderCache())     return(last_error);
+   if (!RestoreLfxOrders(false)) return(last_error);                          // LFX-Orders des aktuellen Symbols einlesen
    return(NO_ERROR);
 }
 
@@ -136,7 +120,7 @@ int onInitSymbolChange() {
  * @return int - Fehlerstatus
  */
 int onInitRecompile() {
-   if (mode.remote.trading) {
+   if (mode.extern) {
       if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }
    return(NO_ERROR);
@@ -176,9 +160,10 @@ int afterInit() {
 /**
  * Konfiguriert den internen OrderTracker.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OrderTracker.Configure() {
+   if (!mode.intern) return(true);
    track.orders = false;
 
    string sValue = StrToLower(Track.Orders), values[];            // default: "on | off | auto*"

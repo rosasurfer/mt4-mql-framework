@@ -801,7 +801,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC.Oanda                         "Oanda"
 #define AC.Pepperstone                   "Pepperstone"
 #define AC.PrimeXM                       "PrimeXM"
-#define AC.SimpleTrader                  "SimpleTrader"
 #define AC.STS                           "STS"
 #define AC.TeleTrade                     "TeleTrade"
 #define AC.TickMill                      "TickMill"
@@ -840,50 +839,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC_ID.Oanda                      1029
 #define AC_ID.Pepperstone                1030
 #define AC_ID.PrimeXM                    1031
-#define AC_ID.SimpleTrader               1032
-#define AC_ID.STS                        1033
-#define AC_ID.TeleTrade                  1034
-#define AC_ID.TickMill                   1035
-#define AC_ID.XTrade                     1036
-
-
-// SimpleTrader Account-Aliasse
-#define STA_ALIAS.AlexProfit             "alexprofit"
-#define STA_ALIAS.ASTA                   "asta"
-#define STA_ALIAS.Caesar2                "caesar2"
-#define STA_ALIAS.Caesar21               "caesar21"
-#define STA_ALIAS.ConsistentProfit       "consistent"
-#define STA_ALIAS.DayFox                 "dayfox"
-#define STA_ALIAS.FXViper                "fxviper"
-#define STA_ALIAS.GCEdge                 "gcedge"
-#define STA_ALIAS.GoldStar               "goldstar"
-#define STA_ALIAS.Kilimanjaro            "kilimanjaro"
-#define STA_ALIAS.NovoLRfund             "novolr"
-#define STA_ALIAS.OverTrader             "overtrader"
-#define STA_ALIAS.Ryan                   "ryan"
-#define STA_ALIAS.SmartScalper           "smartscalper"
-#define STA_ALIAS.SmartTrader            "smarttrader"
-#define STA_ALIAS.SteadyCapture          "steadycapture"
-#define STA_ALIAS.Twilight               "twilight"
-#define STA_ALIAS.YenFortress            "yenfortress"
-
-
-// SimpleTrader Account-ID's (entsprechen den ID's der SimpleTrader-URLs)
-#define STA_ID.AlexProfit             2474
-#define STA_ID.ASTA                   2370
-#define STA_ID.Caesar2                1619
-#define STA_ID.Caesar21               1803
-#define STA_ID.ConsistentProfit       4351
-#define STA_ID.DayFox                 2465
-#define STA_ID.FXViper                 633
-#define STA_ID.GCEdge                  998
-#define STA_ID.GoldStar               2622
-#define STA_ID.Kilimanjaro            2905
-#define STA_ID.NovoLRfund             4322
-#define STA_ID.OverTrader             2973
-#define STA_ID.Ryan                   5611
-#define STA_ID.SmartScalper           1086
-#define STA_ID.SmartTrader            1081
-#define STA_ID.SteadyCapture          4023
-#define STA_ID.Twilight               3913
-#define STA_ID.YenFortress            2877
+#define AC_ID.STS                        1032
+#define AC_ID.TeleTrade                  1033
+#define AC_ID.TickMill                   1034
+#define AC_ID.XTrade                     1035

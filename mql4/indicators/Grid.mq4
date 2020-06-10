@@ -1,5 +1,5 @@
 /**
- * Chart-Grid
+ * Chart grid
  *
  * Die vertikalen Separatoren sind auf der ersten Bar der Session positioniert und tragen im Label das Datum der begonnenen
  * Session.
@@ -24,35 +24,41 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
    return(catch("onInit(1)"));
 }
 
 
 /**
- * Main-Funktion
+ * Deinitialization: Called before chart symbol or timeframe change.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
+ */
+int onDeinitChartChange() {
+   DeleteRegisteredObjects();
+   return(NO_ERROR);
+}
+
+
+/**
+ * Main function
+ *
+ * @return int - error status
  */
 int onTick() {
-   // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
-
-   // Grid zeichnen
    if (!UnchangedBars)
       DrawGrid();
-
    return(last_error);
 }
 
 
 /**
- * Zeichnet das Grid (ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen).
+ * Zeichnet das Grid.
  *
  * @return bool - success status
  */
