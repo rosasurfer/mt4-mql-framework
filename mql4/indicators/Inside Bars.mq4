@@ -2,7 +2,7 @@
  * Inside Bars (work in progress)
  *
  *
- * Marks in the chart inside bars and SR levels of the specified timeframes.
+ * Marks inside bars and SR levels of the specified timeframes in the chart.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
@@ -10,7 +10,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Configuration = "manual | auto*";
+extern string Configuration  = "manual | auto*";
+extern int    Max.InsideBars = 20;                    //  max. amount of inside bars to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,7 +21,7 @@ extern string Configuration = "manual | auto*";
 
 #property indicator_chart_window
 
-int timeframe;                                     // the currently active inside bar timeframe
+int maxInsideBars;
 
 
 /**
@@ -29,7 +30,14 @@ int timeframe;                                     // the currently active insid
  * @return int - error status
  */
 int onInit() {
-   return(catch("onInit(1)"));
+   // validate inputs
+   // Configuration                                   // TODO
+
+   // Max.InsideBars
+   if (Max.InsideBars < -1) return(catch("onInit(1)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
+   maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
+
+   return(catch("onInit(2)"));
 }
 
 
@@ -39,14 +47,20 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   timeframe = PERIOD_D1;
+   if (ChangedBars < Bars)
+      return(last_error);
 
-   if (!UnchangedBars) {
-      // find last inside bar
+   int    timeframe  = Period();
+   string sTimeframe = PeriodDescription(timeframe);
+   int    findMore   = maxInsideBars;
 
-      // draw found inside bar
+   // find the specified number of inside bars
+   for (int i=1; findMore && i < Bars; i++) {
+      if (High[i] >= High[i-1] && Low[i] <= Low[i-1]) {
+         debug("onTick(1)  "+ sTimeframe +" inside bar at "+ GmtTimeFormat(Time[i-1], "%a, %d.%m.%Y %H:%M"));
+         findMore--;
+      }
    }
-
    return(last_error);
 }
 
@@ -57,5 +71,7 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Configuration=", DoubleQuoteStr(Configuration), ";"));
+   return(StringConcatenate("Configuration=",  DoubleQuoteStr(Configuration), ";", NL,
+                            "Max.InsideBars=", Max.InsideBars, ";")
+   );
 }
