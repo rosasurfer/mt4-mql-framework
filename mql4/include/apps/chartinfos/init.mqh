@@ -26,7 +26,7 @@ int onInit() {
       mm.stopDistance = 0;
 
       // read config: position size calculation
-      section = "PositionSizeCalculator";
+      section = "PositionSize";
       string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".StopDistance";
       string sDefaultRisk = GetConfigString(section, defaultRiskKey);
       string sSymbolRisk  = GetConfigString(section, symbolRiskKey);
