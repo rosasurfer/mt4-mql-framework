@@ -35,13 +35,13 @@ int onInit() {
 
 
 /**
- * Deinitialization: Called before chart symbol or timeframe change.
+ * Deinitialization
  *
  * @return int - error status
  */
-int onDeinitChartChange() {
+int onDeinit() {
    DeleteRegisteredObjects();
-   return(NO_ERROR);
+   return(catch("onDeinit(1)"));
 }
 
 
