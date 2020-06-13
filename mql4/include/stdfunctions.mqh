@@ -6877,6 +6877,7 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
+   int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();

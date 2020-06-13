@@ -96,7 +96,8 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   if (!StoreRuntimeStatus())                                  // store runtime statis in all deinit scenarios
+   DeleteRegisteredObjects();
+   if (!StoreRuntimeStatus())                                  // store runtime status in all deinit scenarios
       return(last_error);
    return(catch("onDeinit(1)"));
 }
@@ -263,7 +264,7 @@ bool UpdateSuperBars() {
 
    if (timeframeChanged) {
       if (PERIOD_M1 <= static.lastTimeframe) /*&&*/ if (static.lastTimeframe <= PERIOD_Q1) {
-         DeleteRegisteredObjects();                                        // in all other cases previous suberbars have already beed deleted
+         DeleteRegisteredObjects();                                        // in all other cases previous suberbars are already deleted
          CreateDescriptionLabel();
       }
       UpdateDescription();
