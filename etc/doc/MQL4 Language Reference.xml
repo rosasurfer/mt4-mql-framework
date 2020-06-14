@@ -3724,11 +3724,11 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
       caption=ArrayCopyRates()
       type=int
       <content>
-<!-- 
+<!--
 Assigns a pointer to a wrapper around a RateInfo (HISTORY_BAR_400) array to the destination array and returns the number of contained bars or -1 on failure.
--->      
+-->
 
-Assigns the specified timeseries data to the destination array and returns the number of contained bars or -1 on failure. 
+Assigns the specified timeseries data to the destination array and returns the number of contained bars or -1 on failure.
 The first dimension of the destination array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
  <span class="code"> 0 </span>- open time<br/>
@@ -3747,14 +3747,14 @@ In this case data needs to be re-requested.<br/>
 <br/>
 <li>No data copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
 
-<li>After assignment in local scope the destination variable doesn't act like a typical array variable and <a href="help://basics_variables_static">static</a>  
-    behaviour needs to be explicitely declared.</li>
+<li>After assignment in local scope the destination variable doesn't act like a typical array variable and <a href="help://basics_variables_static">static</a>
+    behavior needs to be explicitely declared.</li>
 
 <li>The destination array is read-only.</li>
 
-<li>If the destination array is passed to a DLL, the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span> 
-    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more data arrives it is 
-    dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li> 
+<li>If the destination array is passed to a DLL, the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
+    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more data arrives it is
+    dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li>
 <br/>
 <br/>
 <span style="color:red">Bugs:</span>
@@ -3769,9 +3769,9 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
 <br/>
 <b>Changes in MQL4.5 (terminal builds > 509):</b>
 <br/>
-Calling the function with a destination parameter of type <span class="type">double[][]</span> now allocates additional memory and performs a deep copy of the 
-timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only programs compiled with 
-the new MQL4.5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>
+Calling the function with a destination parameter of type <span class="type">double[][]</span> now allocates additional memory and performs a deep copy of the
+timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only programs compiled with
+the new MQL4.5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
 <br/>
 <br/>
       </content>
