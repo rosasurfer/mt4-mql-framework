@@ -5196,13 +5196,13 @@ string NumberToStr(double value, string mask) {
 
 
 /**
- * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
+ * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
- * @param  int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
  *
- * @return int - Timeframe-Flag
+ * @return int - timeframe flag
  */
-int PeriodFlag(int period=NULL) {
+int PeriodFlag(int period = NULL) {
    if (period == NULL)
       period = Period();
 
@@ -5212,7 +5212,11 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_M15: return(F_PERIOD_M15);
       case PERIOD_M30: return(F_PERIOD_M30);
       case PERIOD_H1 : return(F_PERIOD_H1 );
+      case PERIOD_H2 : return(F_PERIOD_H2 );
+      case PERIOD_H3 : return(F_PERIOD_H3 );
       case PERIOD_H4 : return(F_PERIOD_H4 );
+      case PERIOD_H6 : return(F_PERIOD_H6 );
+      case PERIOD_H8 : return(F_PERIOD_H8 );
       case PERIOD_D1 : return(F_PERIOD_D1 );
       case PERIOD_W1 : return(F_PERIOD_W1 );
       case PERIOD_MN1: return(F_PERIOD_MN1);
@@ -5225,42 +5229,60 @@ int PeriodFlag(int period=NULL) {
 /**
  * Alias
  *
- * Gibt das Timeframe-Flag des angegebenen Timeframes zurück.
+ * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
- * @param  int timeframe - Timeframe-Identifier (default: Timeframe des aktuellen Charts)
+ * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
  *
- * @return int - Timeframe-Flag
+ * @return int - timeframe flag
  */
-int TimeframeFlag(int timeframe=NULL) {
+int TimeframeFlag(int timeframe = NULL) {
    return(PeriodFlag(timeframe));
 }
 
 
 /**
- * Gibt die lesbare Version ein oder mehrerer Timeframe-Flags zurück.
+ * Return a human-readable representation of a timeframe flag. Supports custom timeframes.
  *
- * @param  int flags - Kombination verschiedener Timeframe-Flags
+ * @param  int flag - combination of timeframe flags
  *
  * @return string
  */
-string PeriodFlagsToStr(int flags) {
+string PeriodFlagToStr(int flag) {
    string result = "";
 
-   if (!flags)                    result = StringConcatenate(result, "|NULL");
-   if (flags & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|M1"  );
-   if (flags & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|M5"  );
-   if (flags & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|M15" );
-   if (flags & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|M30" );
-   if (flags & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|H1"  );
-   if (flags & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|H4"  );
-   if (flags & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|D1"  );
-   if (flags & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|W1"  );
-   if (flags & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|MN1" );
-   if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
+   if (!flag)                    result = StringConcatenate(result, "|NULL");
+   if (flag & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|F_PERIOD_M1"  );
+   if (flag & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|F_PERIOD_M5"  );
+   if (flag & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|F_PERIOD_M15" );
+   if (flag & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|F_PERIOD_M30" );
+   if (flag & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|F_PERIOD_H1"  );
+   if (flag & F_PERIOD_H2  && 1) result = StringConcatenate(result, "|F_PERIOD_H2"  );
+   if (flag & F_PERIOD_H3  && 1) result = StringConcatenate(result, "|F_PERIOD_H3"  );
+   if (flag & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|F_PERIOD_H4"  );
+   if (flag & F_PERIOD_H6  && 1) result = StringConcatenate(result, "|F_PERIOD_H6"  );
+   if (flag & F_PERIOD_H8  && 1) result = StringConcatenate(result, "|F_PERIOD_H8"  );
+   if (flag & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|F_PERIOD_D1"  );
+   if (flag & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|F_PERIOD_W1"  );
+   if (flag & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|F_PERIOD_MN1" );
+   if (flag & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|F_PERIOD_Q1"  );
 
    if (StringLen(result) > 0)
       result = StrSubstr(result, 1);
    return(result);
+}
+
+
+/**
+ * Alias
+ *
+ * Return a human-readable representation of a timeframe flag. Supports custom timeframes.
+ *
+ * @param  int flag - combination of timeframe flags
+ *
+ * @return string
+ */
+string TimeframeFlagToStr(int flag) {
+   return(PeriodFlagToStr(flag));
 }
 
 
@@ -6773,7 +6795,7 @@ void __DummyCalls() {
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodFlag();
-   PeriodFlagsToStr(NULL);
+   PeriodFlagToStr(NULL);
    PipValue();
    PipValueEx(NULL);
    PlaySoundEx(NULL);
@@ -6850,6 +6872,7 @@ void __DummyCalls() {
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
    TimeframeFlag();
+   TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
    TimeServer();

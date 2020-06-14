@@ -12,7 +12,7 @@ int __DEINIT_FLAGS__[];
 
 extern string Configuration  = "manual | auto*";
 extern string Timeframe      = "H1 | D1* | ...";      // timeframe to analyze
-extern int    Max.InsideBars = 3;                    // max. amount of inside bars to find (-1: all)
+extern int    Max.InsideBars = 3;                     // max. amount of inside bars to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,9 +29,9 @@ extern int    Max.InsideBars = 3;                    // max. amount of inside ba
 #define CLOSE        4
 #define VOLUME       5
 
+int    srcTimeframe;                                  // timeframe used for computation
+double srcRates[][6];                                 // rates used for computation
 int    targetTimeframe;                               // target timeframe
-int    usedTimeframe;                                 // timeframe used for computation
-double usedRates[][6];                                // rates used for computation
 int    maxInsideBars;
 
 
@@ -52,15 +52,19 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    targetTimeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
-   if (targetTimeframe == -1)     return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   Timeframe     = PeriodDescription(targetTimeframe);
-   usedTimeframe = ifInt(targetTimeframe <= PERIOD_H1, targetTimeframe, PERIOD_H1);
+   if (targetTimeframe == -1)                         return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (targetTimeframe < PERIOD_M15)                  return(catch("onInit(2)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe) +" (min. M15)", ERR_INVALID_INPUT_PARAMETER));
+   if (targetTimeframe > PERIOD_W1)                   return(catch("onInit(3)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe) +" (max. W1)", ERR_INVALID_INPUT_PARAMETER));
+   int validTimeframes[] = { PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H3, PERIOD_H4, PERIOD_H6, PERIOD_H8, PERIOD_D1, PERIOD_W1 };
+   if (!IntInArray(validTimeframes, targetTimeframe)) return(catch("onInit(4)  Unsupported input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   Timeframe    = PeriodDescription(targetTimeframe);
+   srcTimeframe = ifInt(targetTimeframe <= PERIOD_H1, targetTimeframe, PERIOD_H1);
 
    // Max.InsideBars
-   if (Max.InsideBars < -1) return(catch("onInit(2)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.InsideBars < -1) return(catch("onInit(5)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
 
-   return(catch("onInit(3)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -70,22 +74,27 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (!CopyRates(usedTimeframe, usedRates))
+   if (!CopyRates(srcTimeframe, srcRates))
       return(last_error);
-   int bars = ArrayRange(usedRates, 0);
+   int bars = ArrayRange(srcRates, 0);
 
 
    static bool done = false;
    if (!done) {
       done = true;
-      debug("onTick(1)  ArrayCopyRates("+ Timeframe +") => "+ bars +" bars");
+      debug("onTick(1)  ArrayCopyRates("+ srcTimeframe +") => "+ bars +" bars");
 
       int findMore = maxInsideBars;
 
+      switch (targetTimeframe) {
+         case PERIOD_M15: break;
+      }
+
+
       // find the specified number of inside bars
       for (int i=2; findMore && i < bars; i++) {
-         if (usedRates[i][HIGH] >= usedRates[i-1][HIGH] && usedRates[i][LOW] <= usedRates[i-1][LOW]) {
-            if (!MarkInsideBar(usedRates[i-1][TIME], usedRates[i-1][HIGH], usedRates[i-1][LOW]))
+         if (srcRates[i][HIGH] >= srcRates[i-1][HIGH] && srcRates[i][LOW] <= srcRates[i-1][LOW]) {
+            if (!MarkInsideBar(srcRates[i-1][TIME], srcRates[i-1][HIGH], srcRates[i-1][LOW]))
                return(last_error);
             findMore--;
          }
@@ -116,7 +125,8 @@ bool MarkInsideBar(datetime time, double high, double low) {
    // draw horizontal line at target level long
    // draw horizontal line at target level short
 
-   string format = ifString(targetTimeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");
+   //string format = ifString(targetTimeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");
+   string format = "%a, %d.%m.%Y %H:%M";
    debug("MarkInsideBar(1)  "+ Timeframe +" inside bar at "+ GmtTimeFormat(time, format));
    return(true);
 }
