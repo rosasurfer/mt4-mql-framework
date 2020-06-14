@@ -11,7 +11,7 @@ extern double   Tester.StartPrice               = 0;                 // price to
 #include <functions/InitializeByteBuffer.mqh>
 
 
-double rates[][6];                                                   // current price series
+double __rates[][6];                                                 // current price series
 int    tickTimerId;                                                  // timer id for virtual ticks
 
 // test metadata
@@ -337,9 +337,9 @@ int start() {
       }
    }
 
-   ArrayCopyRates(rates);
+   ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(5)")) return(last_error);
    }
 
