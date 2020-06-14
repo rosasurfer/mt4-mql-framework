@@ -3724,10 +3724,6 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
       caption=ArrayCopyRates()
       type=int
       <content>
-<!--
-Assigns a pointer to a wrapper around a RateInfo (HISTORY_BAR_400) array to the destination array and returns the number of contained bars or -1 on failure.
--->
-
 Assigns the specified timeseries data to the destination array and returns the number of contained bars or -1 on failure.
 The first dimension of the destination array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
@@ -3770,8 +3766,8 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
 <b>Changes in MQL4.5 (terminal builds > 509):</b>
 <br/>
 Calling the function with a destination parameter of type <span class="type">double[][]</span> now allocates additional memory and performs a deep copy of the
-timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only programs compiled with
-the new MQL4.5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
+timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only MQL4 programs compiled 
+with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
 <br/>
 <br/>
       </content>
