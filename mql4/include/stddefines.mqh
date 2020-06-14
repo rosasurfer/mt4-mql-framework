@@ -278,7 +278,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define O_POP                          2
 
 
-// Series array identifier, siehe ArrayCopySeries(), iLowest(), iHighest()
+// timeseries type identifiers, see ArrayCopySeries(), iLowest(), iHighest()
 #define MODE_OPEN                      0        // open price
 #define MODE_LOW                       1        // low price
 #define MODE_HIGH                      2        // high price
