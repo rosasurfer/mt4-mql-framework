@@ -245,32 +245,18 @@ double  N_INF;                                              // -1.#INF: negative
 #define OBJPROP_FIRSTLEVEL31      241
 
 
-// Object visibility flags, siehe ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
-#define OBJ_PERIOD_M1          0x0001           //   1: object is shown on 1-minute charts
-#define OBJ_PERIOD_M5          0x0002           //   2: object is shown on 5-minute charts
-#define OBJ_PERIOD_M15         0x0004           //   4: object is shown on 15-minute charts
-#define OBJ_PERIOD_M30         0x0008           //   8: object is shown on 30-minute charts
-#define OBJ_PERIOD_H1          0x0010           //  16: object is shown on 1-hour charts
-#define OBJ_PERIOD_H4          0x0020           //  32: object is shown on 4-hour charts
-#define OBJ_PERIOD_D1          0x0040           //  64: object is shown on daily charts
-#define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
-#define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
-#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 (NULL hat denselben Effekt)
+// chart object visibility flags, see ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
+#define OBJ_PERIOD_M1          0x0001           //   1: object is shown on M1 charts
+#define OBJ_PERIOD_M5          0x0002           //   2: object is shown on M5 charts
+#define OBJ_PERIOD_M15         0x0004           //   4: object is shown on M15 charts
+#define OBJ_PERIOD_M30         0x0008           //   8: object is shown on M30 charts
+#define OBJ_PERIOD_H1          0x0010           //  16: object is shown on H1 charts
+#define OBJ_PERIOD_H4          0x0020           //  32: object is shown on H4 charts
+#define OBJ_PERIOD_D1          0x0040           //  64: object is shown on D1 charts
+#define OBJ_PERIOD_W1          0x0080           // 128: object is shown on W1 charts
+#define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on MN1 charts
+#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes (same as specifying NULL)
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
-
-
-// Timeframe-Flags, siehe EventListener.Baropen()
-#define F_PERIOD_M1            OBJ_PERIOD_M1    //    1
-#define F_PERIOD_M5            OBJ_PERIOD_M5    //    2
-#define F_PERIOD_M15           OBJ_PERIOD_M15   //    4
-#define F_PERIOD_M30           OBJ_PERIOD_M30   //    8
-#define F_PERIOD_H1            OBJ_PERIOD_H1    //   16
-#define F_PERIOD_H4            OBJ_PERIOD_H4    //   32
-#define F_PERIOD_D1            OBJ_PERIOD_D1    //   64
-#define F_PERIOD_W1            OBJ_PERIOD_W1    //  128
-#define F_PERIOD_MN1           OBJ_PERIOD_MN1   //  256
-#define F_PERIOD_Q1            0x0200           //  512
-#define F_PERIODS_ALL          0x03FF           // 1023: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1
 
 
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
