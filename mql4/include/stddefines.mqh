@@ -661,30 +661,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // checkmark symbol
 
 
-// flags marking errors handled by custom error handlers (the errors don't trigger a terminating ERROR alert)
-#define F_ERR_CONCURRENT_MODIFICATION  0x00000001  //      1
-#define F_ERS_EXECUTION_STOPPING       0x00000002  //      2   temporary state
-#define F_ERS_HISTORY_UPDATE           0x00000004  //      4   temporary state
-#define F_ERR_INVALID_PARAMETER        0x00000008  //      8
-#define F_ERR_INVALID_STOP             0x00000010  //     16
-#define F_ERR_INVALID_TICKET           0x00000020  //     32
-#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040  //     64
-#define F_ERR_MARKET_CLOSED            0x00000080  //    128
-#define F_ERR_NO_CONNECTION            0x00000100  //    256
-#define F_ERR_NO_RESULT                0x00000200  //    512
-#define F_ERR_OFF_QUOTES               0x00000400  //   1024
-#define F_ERR_ORDER_CHANGED            0x00000800  //   2048
-#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000  //   4096
-#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000  //   8192   temporary state
-#define F_ERR_TRADE_DISABLED           0x00004000  //  16384
-#define F_ERR_TRADE_MODIFY_DENIED      0x00008000  //  32768
-#define F_ERR_TRADESERVER_GONE         0x00010000  //  65536
-
-// flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00020000  // 131072 (don't hedge multiple positions on close)
-#define F_OE_DONT_CHECK_STATUS         0x00040000  // 262144 (don't check order status before proceeding)
-
-
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                         1
 #define STR_PAD_RIGHT                        2

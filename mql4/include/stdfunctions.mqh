@@ -5459,51 +5459,65 @@ string PriceTypeDescription(int type) {
 
 
 /**
- * Return the integer constant of a timeframe identifier.
+ * Return the integer constant of a timeframe identifier. Supports custom timeframes.
  *
- * @param  string value     - M1, M5, M15, M30 etc.
- * @param  int    execFlags - execution control: errors to set silently (default: none)
+ * @param  string value            - M1, M5, M15, M30 etc.
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_CUSTOM_TIMEFRAME:      enable support of custom timeframes
+ *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
  *
  * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPeriod(string value, int execFlags = NULL) {
+int StrToPeriod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
       str = StrSubstr(str, 7);
 
-   if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
-   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
-   if (str ==           "M5" ) return(PERIOD_M5 );    // 5 minutes
-   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );    //
-   if (str ==           "M15") return(PERIOD_M15);    // 15 minutes
-   if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);    //
-   if (str ==           "M30") return(PERIOD_M30);    // 30 minutes
-   if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);    //
-   if (str ==           "H1" ) return(PERIOD_H1 );    // 1 hour
-   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );    //
-   if (str ==           "H4" ) return(PERIOD_H4 );    // 4 hour
-   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );    //
-   if (str ==           "D1" ) return(PERIOD_D1 );    // 1 day
-   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );    //
-   if (str ==           "W1" ) return(PERIOD_W1 );    // 1 week
-   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
-   if (str ==           "MN1") return(PERIOD_MN1);    // 1 month
-   if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
-   if (str ==           "Q1" ) return(PERIOD_Q1 );    // 1 quarter
-   if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );    //
+   if (str ==           "M1" ) return(PERIOD_M1 );
+   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );
+   if (str ==           "M5" ) return(PERIOD_M5 );
+   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );
+   if (str ==           "M15") return(PERIOD_M15);
+   if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);
+   if (str ==           "M30") return(PERIOD_M30);
+   if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);
+   if (str ==           "H1" ) return(PERIOD_H1 );
+   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );
+   if (str ==           "H4" ) return(PERIOD_H4 );
+   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );
+   if (str ==           "D1" ) return(PERIOD_D1 );
+   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );
+   if (str ==           "W1" ) return(PERIOD_W1 );
+   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );
+   if (str ==           "MN1") return(PERIOD_MN1);
+   if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (flags & F_CUSTOM_TIMEFRAME && 1) {
+      if (str ==           "H2" ) return(PERIOD_H2 );
+      if (str == ""+ PERIOD_H2  ) return(PERIOD_H2 );
+      if (str ==           "H3" ) return(PERIOD_H3 );
+      if (str == ""+ PERIOD_H3  ) return(PERIOD_H3 );
+      if (str ==           "H6" ) return(PERIOD_H6 );
+      if (str == ""+ PERIOD_H6  ) return(PERIOD_H6 );
+      if (str ==           "H8" ) return(PERIOD_H8 );
+      if (str == ""+ PERIOD_H8  ) return(PERIOD_H8 );
+      if (str ==           "Q1" ) return(PERIOD_Q1 );
+      if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );
+   }
+
+   if (flags & F_ERR_INVALID_PARAMETER && 1) {
+      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   }
+   return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Alias
+ * Alias of StrToPeriod()
  */
-int StrToTimeframe(string timeframe, int execFlags=NULL) {
-   return(StrToPeriod(timeframe, execFlags));
+int StrToTimeframe(string timeframe, int flags = NULL) {
+   return(StrToPeriod(timeframe, flags));
 }
 
 
