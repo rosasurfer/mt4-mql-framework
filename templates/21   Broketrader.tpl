@@ -8797,21 +8797,5 @@ period_flags=0
 show_data=1
 </indicator>
 
-<indicator>
-name=Custom Indicator
-<expert>
-name=Jurik Moving Average
-flags=339
-window_num=0
-<inputs>
-Periods=50
-Color.UpTrend=16711680
-Color.DownTrend=9639167
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-
 </window>
 </chart>
