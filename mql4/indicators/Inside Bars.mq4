@@ -90,24 +90,14 @@ int onTick() {
          case PERIOD_H1:
             for (int i=2; findMore && i < bars; i++) {
                if (srcRates[i][HIGH] >= srcRates[i-1][HIGH] && srcRates[i][LOW] <= srcRates[i-1][LOW]) {
-                  if (!MarkInsideBar(srcRates[i-1][TIME], srcRates[i-1][HIGH], srcRates[i-1][LOW]))
-                     return(last_error);
+                  if (!MarkInsideBar(srcRates[i-1][TIME], srcRates[i-1][HIGH], srcRates[i-1][LOW])) return(last_error);
                   findMore--;
                }
             }
             break;
 
-         case PERIOD_H2:
-         case PERIOD_H3:
-         case PERIOD_H4:
-         case PERIOD_H6:
-         case PERIOD_H8:
-         case PERIOD_D1:
-         case PERIOD_W1:
-         case PERIOD_MN1:
          default:
-            catch("onTick(2)  inside bar timeframe "+ Timeframe +" not yet supported", ERR_NOT_IMPLEMENTED);
-            break;
+            return(catch("onTick(2)  timeframe "+ Timeframe +" not implemented", ERR_NOT_IMPLEMENTED));
       }
    }
    return(last_error);
@@ -124,16 +114,16 @@ int onTick() {
  * @return bool - success status
  */
 bool MarkInsideBar(datetime time, double high, double low) {
-   datetime openTime  = time;                                        // IB open time
-   datetime closeTime = openTime + targetTimeframe*MINUTES;          // IB close time
-   double barSize     = (high-low);
-   double longTarget  = NormalizeDouble(high + barSize, Digits);     // first long target
-   double shortTarget = NormalizeDouble(low  - barSize, Digits);     // first short target
-   string sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
+   datetime openTime    = time;
+   datetime closeTime   = openTime + targetTimeframe*MINUTES;
+   double   barSize     = (high-low);
+   double   longLevel1  = NormalizeDouble(high + barSize, Digits);
+   double   shortLevel1 = NormalizeDouble(low  - barSize, Digits);
+   string   sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
 
    // draw vertical line at IB open
    string label = Timeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +")";
-   if (ObjectCreate (label, OBJ_TREND, 0, openTime, longTarget, openTime, shortTarget)) {
+   if (ObjectCreate (label, OBJ_TREND, 0, openTime, longLevel1, openTime, shortLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -141,9 +131,9 @@ bool MarkInsideBar(datetime time, double high, double low) {
       ObjectRegister(label);
    } else debug("MarkInsideBar(1)", GetLastError());
 
-   // draw horizontal line at long target
-   label = Timeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat);
-   if (ObjectCreate (label, OBJ_TREND, 0, openTime, longTarget, closeTime, longTarget)) {
+   // draw horizontal line at long level 1
+   label = Timeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat);
+   if (ObjectCreate (label, OBJ_TREND, 0, openTime, longLevel1, closeTime, longLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -151,9 +141,9 @@ bool MarkInsideBar(datetime time, double high, double low) {
       ObjectRegister(label);
    } else debug("MarkInsideBar(2)", GetLastError());
 
-   // draw horizontal line at short target
-   label = Timeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat);
-   if (ObjectCreate (label, OBJ_TREND, 0, openTime, shortTarget, closeTime, shortTarget)) {
+   // draw horizontal line at short level 1
+   label = Timeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat);
+   if (ObjectCreate (label, OBJ_TREND, 0, openTime, shortLevel1, closeTime, shortLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -163,7 +153,7 @@ bool MarkInsideBar(datetime time, double high, double low) {
 
 
    string format = "%a, %d.%m.%Y %H:%M";  // ifString(targetTimeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");
-   debug("MarkInsideBar(4)  "+ Timeframe +" IB at "+ GmtTimeFormat(time, format) +"  L="+ NumberToStr(longTarget, PriceFormat) +"  S="+ NumberToStr(shortTarget, PriceFormat));
+   debug("MarkInsideBar(4)  "+ Timeframe +" IB at "+ GmtTimeFormat(time, format));
 
    return(true);
 }
