@@ -7171,26 +7171,26 @@ If the function succeeds the returned value will be <span class="const">true</sp
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 The object coordinates are numbered starting from 0.
      </content>
-      example=ObjectMove(&quot;MyTrend&quot;, 1, D<span class="string">'2005.02.25 12:30'</span>, 1.2345);
+      example=<span class="function">ObjectMove</span>(<span class="string code">"MyTrend"</span>, <span class="number code">1</span>, D<span class="string code">'2005.02.25 12:30'</span>, <span class="number code">1.2345</span>);
       <parameter>
         type=string
         name=name
-        description=Object name.
+        description=object name
       </parameter>
       <parameter>
         type=int
         name=point
-        description=Coordinate index (0-2).
+        description=coordinate index (0-2)
       </parameter>
       <parameter>
         type=datetime
         name=time1
-        description=New time value.
+        description=new time value
       </parameter>
       <parameter>
         type=double
         name=price1
-        description=New price value.
+        description=new price value
       </parameter>
     </function>
 
