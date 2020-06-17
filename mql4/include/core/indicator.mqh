@@ -5,7 +5,7 @@ extern string ___________________________;
 extern int    __lpSuperContext;
 
 // current price series
-double rates[][6];
+double __rates[][6];
 
 
 /**
@@ -379,9 +379,9 @@ int start() {
    __STATUS_HISTORY_UPDATE       = false;
    __STATUS_HISTORY_INSUFFICIENT = false;
 
-   ArrayCopyRates(rates);
+   ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(8)")) return(last_error);
    }
 
