@@ -13,13 +13,14 @@ int __DEINIT_FLAGS__[];
 
 extern string Configuration  = "manual | auto*";
 extern string Timeframe      = "H1";                  // timeframes to analyze
-extern int    Max.InsideBars = 3;                     // max. amount of inside bars to find (-1: all)
+extern int    Max.InsideBars = 4;                     // max. amount of inside bars to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/iBarShiftNext.mqh>
 
 #property indicator_chart_window
 
@@ -30,8 +31,12 @@ extern int    Max.InsideBars = 3;                     // max. amount of inside b
 #define CLOSE        4
 #define VOLUME       5
 
-int    srcTimeframe;                                  // timeframe used for computation
-double srcRates[][6];                                 // rates used for computation
+double ratesM1 [][6];                                 // M1 rates
+double ratesM5 [][6];                                 // M5 rates
+double ratesM15[][6];                                 // M15 rates
+double ratesM30[][6];                                 // M30 rates
+double ratesH1 [][6];                                 // H1 rates
+
 int    targetTimeframe;                               // target timeframe
 int    maxInsideBars;
 
@@ -55,8 +60,7 @@ int onInit() {
    targetTimeframe = StrToPeriod(sValue, F_CUSTOM_TIMEFRAME|F_ERR_INVALID_PARAMETER);
    if (targetTimeframe == -1)        return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
    if (targetTimeframe > PERIOD_MN1) return(catch("onInit(2)  Unsupported parameter Timeframe: "+ DoubleQuoteStr(Timeframe) +" (max. MN1)", ERR_INVALID_INPUT_PARAMETER));
-   Timeframe    = PeriodDescription(targetTimeframe);
-   srcTimeframe = ifInt(targetTimeframe < PERIOD_H1, targetTimeframe, PERIOD_H1);
+   Timeframe = PeriodDescription(targetTimeframe);
 
    // Max.InsideBars
    if (Max.InsideBars < -1) return(catch("onInit(3)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
@@ -72,58 +76,262 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (!CopyRates(srcTimeframe, srcRates))
-      return(last_error);
-   int bars=ArrayRange(srcRates, 0), findMore=maxInsideBars;
+   if (!CopyRates()) return(last_error);
 
    static bool done = false;
    if (!done) {
-      done = true;
-      debug("onTick(1)  CopyRates("+ srcTimeframe +") => "+ bars +" bars");
-
-      // find the specified number of inside bars
       switch (targetTimeframe) {
-         case PERIOD_M1:
-         case PERIOD_M5:
-         case PERIOD_M15:
-         case PERIOD_M30:
-         case PERIOD_H1:
-            for (int i=2; findMore && i < bars; i++) {
-               if (srcRates[i][HIGH] >= srcRates[i-1][HIGH] && srcRates[i][LOW] <= srcRates[i-1][LOW]) {
-                  if (!MarkInsideBar(srcRates[i-1][TIME], srcRates[i-1][HIGH], srcRates[i-1][LOW])) return(last_error);
-                  findMore--;
-               }
-            }
-            break;
-
+         case PERIOD_M1:  CheckInsideBarsM1();  break;
+         case PERIOD_M5:  CheckInsideBarsM5();  break;
+         case PERIOD_M15: CheckInsideBarsM15(); break;
+         case PERIOD_M30: CheckInsideBarsM30(); break;
+         case PERIOD_H1:  CheckInsideBarsH1();  break;
+         case PERIOD_H2:  CheckInsideBarsH2();  break;
+         case PERIOD_H3:  CheckInsideBarsH3();  break;
+         case PERIOD_H4:  CheckInsideBarsH4();  break;
          default:
             return(catch("onTick(2)  timeframe "+ Timeframe +" not implemented", ERR_NOT_IMPLEMENTED));
       }
+      done = true;
    }
    return(last_error);
 }
 
 
 /**
- * Mark the specified inside bar in the chart.
- *
- * @param  datetime time - inside bar open time
- * @param  double   high - inside bar high
- * @param  double   low  - inside bar low
+ * Check rates for M1 inside bars.
  *
  * @return bool - success status
  */
-bool MarkInsideBar(datetime time, double high, double low) {
-   datetime openTime    = time;
-   datetime closeTime   = openTime + targetTimeframe*MINUTES;
-   double   barSize     = (high-low);
-   double   longLevel1  = NormalizeDouble(high + barSize, Digits);
-   double   shortLevel1 = NormalizeDouble(low  - barSize, Digits);
-   string   sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
+bool CheckInsideBarsM1() {
+   int bars = ArrayRange(ratesM1, 0);
+   int more = maxInsideBars;
+
+   for (int i=2; more && i < bars; i++) {
+      if (ratesM1[i][HIGH] >= ratesM1[i-1][HIGH] && ratesM1[i][LOW] <= ratesM1[i-1][LOW]) {
+         if (!MarkInsideBar(PERIOD_M1, ratesM1[i-1][TIME], ratesM1[i-1][HIGH], ratesM1[i-1][LOW])) return(false);
+         more--;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for M5 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsM5() {
+   int bars = ArrayRange(ratesM5, 0);
+   int more = maxInsideBars;
+
+   for (int i=2; more && i < bars; i++) {
+      if (ratesM5[i][HIGH] >= ratesM5[i-1][HIGH] && ratesM5[i][LOW] <= ratesM5[i-1][LOW]) {
+         if (!MarkInsideBar(PERIOD_M5, ratesM5[i-1][TIME], ratesM5[i-1][HIGH], ratesM5[i-1][LOW])) return(false);
+         more--;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for M15 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsM15() {
+   int bars = ArrayRange(ratesM15, 0);
+   int more = maxInsideBars;
+
+   for (int i=2; more && i < bars; i++) {
+      if (ratesM15[i][HIGH] >= ratesM15[i-1][HIGH] && ratesM15[i][LOW] <= ratesM15[i-1][LOW]) {
+         if (!MarkInsideBar(PERIOD_M15, ratesM15[i-1][TIME], ratesM15[i-1][HIGH], ratesM15[i-1][LOW])) return(false);
+         more--;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for M30 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsM30() {
+   int bars = ArrayRange(ratesM30, 0);
+   int more = maxInsideBars;
+
+   for (int i=2; more && i < bars; i++) {
+      if (ratesM30[i][HIGH] >= ratesM30[i-1][HIGH] && ratesM30[i][LOW] <= ratesM30[i-1][LOW]) {
+         if (!MarkInsideBar(PERIOD_M30, ratesM30[i-1][TIME], ratesM30[i-1][HIGH], ratesM30[i-1][LOW])) return(false);
+         more--;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for H1 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsH1() {
+   int bars = ArrayRange(ratesH1, 0);
+   int more = maxInsideBars;
+
+   for (int i=2; more && i < bars; i++) {
+      if (ratesH1[i][HIGH] >= ratesH1[i-1][HIGH] && ratesH1[i][LOW] <= ratesH1[i-1][LOW]) {
+         if (!MarkInsideBar(PERIOD_H1, ratesH1[i-1][TIME], ratesH1[i-1][HIGH], ratesH1[i-1][LOW])) return(false);
+         more--;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for H2 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsH2() {
+   int bars = ArrayRange(ratesH1, 0);
+   int more = maxInsideBars;
+   int h2   = -1;                                              // H2 bar index
+
+   datetime openTimeH1, openTimeH2, pOpenTimeH2, ppOpenTimeH2;
+   double high, pHigh, low, pLow;
+
+   for (int i=0; more && i < bars; i++) {
+      openTimeH1 = ratesH1[i][TIME];
+      openTimeH2 = openTimeH1 - (openTimeH1 % (2*HOURS));      // opentime of the containing H2 bar
+
+      if (openTimeH2 == pOpenTimeH2) {                         // the current H1 bar belongs to the same H2 bar
+         high = MathMax(ratesH1[i][HIGH], high);
+         low  = MathMin(ratesH1[i][LOW], low);
+      }
+      else {                                                   // the current H1 bar belongs to a new H4 bar
+         if (h2 > 1 && high >= pHigh && low <= pLow) {
+            if (!MarkInsideBar(PERIOD_H2, ppOpenTimeH2, pHigh, pLow)) return(false);
+            more--;
+         }
+         ppOpenTimeH2 = pOpenTimeH2;
+         pOpenTimeH2  = openTimeH2;
+         pHigh        = high;
+         pLow         = low;
+         h2++;
+         high = ratesH1[i][HIGH];
+         low  = ratesH1[i][LOW];
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for H3 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsH3() {
+   int bars = ArrayRange(ratesH1, 0);
+   int more = maxInsideBars;
+   int h3   = -1;                                              // H3 bar index
+
+   datetime openTimeH1, openTimeH3, pOpenTimeH3, ppOpenTimeH3;
+   double high, pHigh, low, pLow;
+
+   for (int i=0; more && i < bars; i++) {
+      openTimeH1 = ratesH1[i][TIME];
+      openTimeH3 = openTimeH1 - (openTimeH1 % (3*HOURS));      // opentime of the containing H3 bar
+
+      if (openTimeH3 == pOpenTimeH3) {                         // the current H1 bar belongs to the same H3 bar
+         high = MathMax(ratesH1[i][HIGH], high);
+         low  = MathMin(ratesH1[i][LOW], low);
+      }
+      else {                                                   // the current H1 bar belongs to a new H4 bar
+         if (h3 > 1 && high >= pHigh && low <= pLow) {
+            if (!MarkInsideBar(PERIOD_H3, ppOpenTimeH3, pHigh, pLow)) return(false);
+            more--;
+         }
+         ppOpenTimeH3 = pOpenTimeH3;
+         pOpenTimeH3  = openTimeH3;
+         pHigh        = high;
+         pLow         = low;
+         h3++;
+         high = ratesH1[i][HIGH];
+         low  = ratesH1[i][LOW];
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for H4 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsH4() {
+   int bars = ArrayRange(ratesH1, 0);
+   int more = maxInsideBars;
+   int h4   = -1;                                              // H4 bar index
+
+   datetime openTimeH1, openTimeH4, pOpenTimeH4, ppOpenTimeH4;
+   double high, pHigh, low, pLow;
+
+   for (int i=0; more && i < bars; i++) {
+      openTimeH1 = ratesH1[i][TIME];
+      openTimeH4 = openTimeH1 - (openTimeH1 % (4*HOURS));      // opentime of the containing H4 bar
+
+      if (openTimeH4 == pOpenTimeH4) {                         // the current H1 bar belongs to the same H4 bar
+         high = MathMax(ratesH1[i][HIGH], high);
+         low  = MathMin(ratesH1[i][LOW], low);
+      }
+      else {                                                   // the current H1 bar belongs to a new H4 bar
+         if (h4 > 1 && high >= pHigh && low <= pLow) {
+            if (!MarkInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow)) return(false);
+            more--;
+         }
+         ppOpenTimeH4 = pOpenTimeH4;
+         pOpenTimeH4  = openTimeH4;
+         pHigh        = high;
+         pLow         = low;
+         h4++;
+         high = ratesH1[i][HIGH];
+         low  = ratesH1[i][LOW];
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Mark the specified inside bar in the chart.
+ *
+ * @param  int      timeframe - timeframe
+ * @param  datetime openTime  - bar open time
+ * @param  double   high      - bar high
+ * @param  double   low       - bar low
+ *
+ * @return bool - success status
+ */
+bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
+   datetime closeTime     = openTime + timeframe*MINUTES;
+   datetime chartOpenTime = Time[iBarShiftNext(NULL, NULL, openTime)];     // opentime of the first matching chart bar
+   double   barSize       = (high-low);
+   double   longLevel1    = NormalizeDouble(high + barSize, Digits);
+   double   shortLevel1   = NormalizeDouble(low  - barSize, Digits);
+   string   sOpenTime     = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
+   string   sTimeframe    = TimeframeDescription(timeframe);
 
    // draw vertical line at IB open
-   string label = Timeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +")";
-   if (ObjectCreate (label, OBJ_TREND, 0, openTime, longLevel1, openTime, shortLevel1)) {
+   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +")";
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, chartOpenTime, shortLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -132,8 +340,8 @@ bool MarkInsideBar(datetime time, double high, double low) {
    } else debug("MarkInsideBar(1)", GetLastError());
 
    // draw horizontal line at long level 1
-   label = Timeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat);
-   if (ObjectCreate (label, OBJ_TREND, 0, openTime, longLevel1, closeTime, longLevel1)) {
+   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat);
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, closeTime, longLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -142,8 +350,8 @@ bool MarkInsideBar(datetime time, double high, double low) {
    } else debug("MarkInsideBar(2)", GetLastError());
 
    // draw horizontal line at short level 1
-   label = Timeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat);
-   if (ObjectCreate (label, OBJ_TREND, 0, openTime, shortLevel1, closeTime, shortLevel1)) {
+   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat);
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortLevel1, closeTime, shortLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -152,30 +360,61 @@ bool MarkInsideBar(datetime time, double high, double low) {
    } else debug("MarkInsideBar(3)", GetLastError());
 
 
-   string format = "%a, %d.%m.%Y %H:%M";  // ifString(targetTimeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");
-   debug("MarkInsideBar(4)  "+ Timeframe +" IB at "+ GmtTimeFormat(time, format));
-
+   string format = "%a, %d.%m.%Y %H:%M";  // ifString(timeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");
+   debug("MarkInsideBar(4)  "+ sTimeframe +" at "+ GmtTimeFormat(openTime, format));
    return(true);
 }
 
 
 /**
- * Copy rates of the specified timeframe to the passed array.
- *
- * @param  int    timeframe - rates timeframe
- * @param  double rates[][] - destination array
+ * Copy rates of the required timeframes to the global rate arrays.
  *
  * @return bool - success status; FALSE on ERS_HISTORY_UPDATE
  */
-bool CopyRates(int timeframe, double rates[][]) {
-   int bars = ArrayCopyRates(rates, NULL, timeframe);
-
+bool CopyRates() {
+   int bars = ArrayCopyRates(ratesM1, NULL, PERIOD_M1);
    int error = GetLastError();
-   if (error || bars <= 0) error = ifInt(error, error, ERR_RUNTIME_ERROR);
+   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
    switch (error) {
       case NO_ERROR:           break;
-      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(1)->ArrayCopyRates("+ PeriodDescription(timeframe) +") => "+ bars +" bars copied", error));
-      default:                 return(!catch("CopyRates(2)->ArrayCopyRates("+ PeriodDescription(timeframe) +") => "+ bars +" bars copied", error));
+      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(3)->ArrayCopyRates(M1) => "+ bars +" bars copied", error));
+      default:                 return(!catch("CopyRates(4)->ArrayCopyRates(M1) => "+ bars +" bars copied", error));
+   }
+
+   bars = ArrayCopyRates(ratesM5, NULL, PERIOD_M5);
+   error = GetLastError();
+   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+   switch (error) {
+      case NO_ERROR:           break;
+      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(5)->ArrayCopyRates(M5) => "+ bars +" bars copied", error));
+      default:                 return(!catch("CopyRates(6)->ArrayCopyRates(M5) => "+ bars +" bars copied", error));
+   }
+
+   bars = ArrayCopyRates(ratesM15, NULL, PERIOD_M15);
+   error = GetLastError();
+   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+   switch (error) {
+      case NO_ERROR:           break;
+      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(7)->ArrayCopyRates(M15) => "+ bars +" bars copied", error));
+      default:                 return(!catch("CopyRates(8)->ArrayCopyRates(M15) => "+ bars +" bars copied", error));
+   }
+
+   bars = ArrayCopyRates(ratesM30, NULL, PERIOD_M30);
+   error = GetLastError();
+   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+   switch (error) {
+      case NO_ERROR:           break;
+      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(9)->ArrayCopyRates(M30) => "+ bars +" bars copied", error));
+      default:                 return(!catch("CopyRates(10)->ArrayCopyRates(M30) => "+ bars +" bars copied", error));
+   }
+
+   bars = ArrayCopyRates(ratesH1, NULL, PERIOD_H1);
+   error = GetLastError();
+   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+   switch (error) {
+      case NO_ERROR:           break;
+      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(11)->ArrayCopyRates(H1) => "+ bars +" bars copied", error));
+      default:                 return(!catch("CopyRates(12)->ArrayCopyRates(H1) => "+ bars +" bars copied", error));
    }
    return(true);
 }
