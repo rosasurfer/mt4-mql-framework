@@ -1,296 +1,347 @@
 /**
- * Constants shared by framework (MQL) and MT4Expander (C++)
+ * Constants shared by MQL framework and MT4Expander (C++).
  */
 
 
 // special constants
-#define EMPTY                    0xFFFFFFFF              // -1
-#define NaC                      0xFFFFFFFE              // Not-a-Color: invalid color value (-2)
-#define NaT                      0x80000000              // Not-a-Time: invalid datetime value (INT_MIN)
-#define MIN_VALID_POINTER        0x00010000              // minimum value of a valid 32 bit pointer (x86)
-#define MAX_ORDER_COMMENT_LENGTH         27
-#define MAX_SYMBOL_GROUP_LENGTH          15
-#define MAX_SYMBOL_LENGTH                11
+#define EMPTY                          0xFFFFFFFF        // -1
+#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)
+#define NaT                            0x80000000        // Not-a-Time: invalid datetime value (INT_MIN)
+#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32 bit pointer (x86)
+#define MAX_ORDER_COMMENT_LENGTH               27
+#define MAX_SYMBOL_GROUP_LENGTH                15
+#define MAX_SYMBOL_LENGTH                      11
 
-#define NL                             "\n"              // new line: 0x0A (MQL file functions auto-convert 0x0A to 0x0D0A)
-#define TAB                            "\t"              // tab: 0x09
+#define NL                                   "\n"        // new line: 0x0A (MQL file functions auto-convert 0x0A to 0x0D0A)
+#define TAB                                  "\t"        // tab: 0x09
 
 
 // log level
-#define L_OFF                    0x80000000              // same as INT_MIN which in C++ is internally defined
-#define L_FATAL                       10000              //
-#define L_ERROR                       20000              // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
-#define L_WARN                        30000              // or more simple:          if (__LOG_DEBUG)              debug(...);
-#define L_INFO                        40000              //
-#define L_NOTICE                      50000              //
-#define L_DEBUG                       60000              //
-#define L_ALL                    0x7FFFFFFF              // same as INT_MAX which in C++ is internally defined
+#define L_OFF                          0x80000000        // same as INT_MIN which in C++ is internally defined
+#define L_FATAL                             10000        //
+#define L_ERROR                             20000        // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
+#define L_WARN                              30000        // or more simple:          if (__LOG_DEBUG)              debug(...);
+#define L_INFO                              40000        //
+#define L_NOTICE                            50000        //
+#define L_DEBUG                             60000        //
+#define L_ALL                          0x7FFFFFFF        // same as INT_MAX which in C++ is internally defined
 
 
 // MQL module type flags
-#define MODULETYPE_INDICATOR              1
-#define MODULETYPE_EXPERT                 2
-#define MODULETYPE_SCRIPT                 4
-#define MODULETYPE_LIBRARY                8              // not an independent program
+#define MODULETYPE_INDICATOR                    1
+#define MODULETYPE_EXPERT                       2
+#define MODULETYPE_SCRIPT                       4
+#define MODULETYPE_LIBRARY                      8        // not an independent program
 
 
 // MQL program types
-#define PROGRAMTYPE_INDICATOR             MODULETYPE_INDICATOR
-#define PROGRAMTYPE_EXPERT                MODULETYPE_EXPERT
-#define PROGRAMTYPE_SCRIPT                MODULETYPE_SCRIPT
+#define PROGRAMTYPE_INDICATOR MODULETYPE_INDICATOR
+#define PROGRAMTYPE_EXPERT    MODULETYPE_EXPERT
+#define PROGRAMTYPE_SCRIPT    MODULETYPE_SCRIPT
 
 
 // MQL program launch types
-#define LAUNCHTYPE_TEMPLATE               1              // loaded by applying a template
-#define LAUNCHTYPE_PROGRAM                2              // loaded by iCustom()
-#define LAUNCHTYPE_MANUAL                 3              // loaded manually
+#define LAUNCHTYPE_TEMPLATE                     1        // loaded by applying a template
+#define LAUNCHTYPE_PROGRAM                      2        // loaded by iCustom()
+#define LAUNCHTYPE_MANUAL                       3        // loaded manually
 
 
 // MQL core function ids
-#define COREFUNCTION_INIT                 1
-#define COREFUNCTION_START                2
-#define COREFUNCTION_DEINIT               3
+#define COREFUNCTION_INIT                       1
+#define COREFUNCTION_START                      2
+#define COREFUNCTION_DEINIT                     3
                                                          // +--------------------------------------+----------------------------------+
                                                          // | builds <= 509                        | builds > 509                     |
 // built-in UninitializeReason() return values           // +--------------------------------------+----------------------------------+
-#define REASON_UNDEFINED                  0              // | no reason                            | -                                |
-#define REASON_PROGRAM     REASON_UNDEFINED              // | -                                    | expert removed by ExpertRemove() |
+#define REASON_UNDEFINED                        0        // | no reason                            | -                                |
+#define REASON_PROGRAM           REASON_UNDEFINED        // | -                                    | expert removed by ExpertRemove() |
                                                          // +--------------------------------------+----------------------------------+
-#define REASON_REMOVE                     1              // | program removed from chart                                              |
-#define REASON_RECOMPILE                  2              // | program recompiled                                                      |
-#define REASON_CHARTCHANGE                3              // | chart symbol or timeframe changed                                       |
+#define REASON_REMOVE                           1        // | program removed from chart                                              |
+#define REASON_RECOMPILE                        2        // | program recompiled                                                      |
+#define REASON_CHARTCHANGE                      3        // | chart symbol or timeframe changed                                       |
                                                          // +--------------------------------------+----------------------------------+
-#define REASON_CHARTCLOSE                 4              // | chart closed or new template applied | chart closed                     |
+#define REASON_CHARTCLOSE                       4        // | chart closed or new template applied | chart closed                     |
                                                          // +--------------------------------------+----------------------------------+
-#define REASON_PARAMETERS                 5              // | input parameters changed                                                |
-#define REASON_ACCOUNT                    6              // | reconnection due to a changed trading account                           |
+#define REASON_PARAMETERS                       5        // | input parameters changed                                                |
+#define REASON_ACCOUNT                          6        // | reconnection due to a changed trading account                           |
                                                          // +--------------------------------------+----------------------------------+
-#define REASON_TEMPLATE                   7              // | -                                    | new template applied             |
-#define REASON_INITFAILED                 8              // | -                                    | OnInit() returned an error       |
-#define REASON_CLOSE                      9              // | -                                    | terminal closed                  |
+#define REASON_TEMPLATE                         7        // | -                                    | new template applied             |
+#define REASON_INITFAILED                       8        // | -                                    | OnInit() returned an error       |
+#define REASON_CLOSE                            9        // | -                                    | terminal closed                  |
                                                          // +--------------------------------------+----------------------------------+
 
 // framework InitializeReason codes                      // +-- init reason --------------------------------+-- ui -----------+-- applies --+
-#define INITREASON_USER                   1              // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
-#define INITREASON_TEMPLATE               2              // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
-#define INITREASON_PROGRAM                3              // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
-#define INITREASON_PROGRAM_AFTERTEST      4              // | loaded by iCustom() after end of test         | no input dialog |   I         |
-#define INITREASON_PARAMETERS             5              // | input parameters changed                      |    input dialog |   I, E      |
-#define INITREASON_TIMEFRAMECHANGE        6              // | chart period changed                          | no input dialog |   I, E      |
-#define INITREASON_SYMBOLCHANGE           7              // | chart symbol changed                          | no input dialog |   I, E      |
-#define INITREASON_RECOMPILE              8              // | reloaded after recompilation                  | no input dialog |   I, E      |
-#define INITREASON_TERMINAL_FAILURE       9              // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+#define INITREASON_USER                         1        // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+#define INITREASON_TEMPLATE                     2        // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+#define INITREASON_PROGRAM                      3        // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+#define INITREASON_PROGRAM_AFTERTEST            4        // | loaded by iCustom() after end of test         | no input dialog |   I         |
+#define INITREASON_PARAMETERS                   5        // | input parameters changed                      |    input dialog |   I, E      |
+#define INITREASON_TIMEFRAMECHANGE              6        // | chart period changed                          | no input dialog |   I, E      |
+#define INITREASON_SYMBOLCHANGE                 7        // | chart symbol changed                          | no input dialog |   I, E      |
+#define INITREASON_RECOMPILE                    8        // | reloaded after recompilation                  | no input dialog |   I, E      |
+#define INITREASON_TERMINAL_FAILURE             9        // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
                                                          // +-----------------------------------------------+-----------------+-------------+
 
 // UninitializeReason codes (matching the MetaQuotes REASON_* codes)
-#define UNINITREASON_UNDEFINED            0
-#define UNINITREASON_REMOVE               1
-#define UNINITREASON_RECOMPILE            2
-#define UNINITREASON_CHARTCHANGE          3
-#define UNINITREASON_CHARTCLOSE           4
-#define UNINITREASON_PARAMETERS           5
-#define UNINITREASON_ACCOUNT              6
-#define UNINITREASON_TEMPLATE             7
-#define UNINITREASON_INITFAILED           8
-#define UNINITREASON_CLOSE                9
+#define UNINITREASON_UNDEFINED                  0
+#define UNINITREASON_REMOVE                     1
+#define UNINITREASON_RECOMPILE                  2
+#define UNINITREASON_CHARTCHANGE                3
+#define UNINITREASON_CHARTCLOSE                 4
+#define UNINITREASON_PARAMETERS                 5
+#define UNINITREASON_ACCOUNT                    6
+#define UNINITREASON_TEMPLATE                   7
+#define UNINITREASON_INITFAILED                 8
+#define UNINITREASON_CLOSE                      9
 
 
-// timeframe identifiers
-#define PERIOD_M1                         1              // 1 minute
-#define PERIOD_M5                         5              // 5 minutes
-#define PERIOD_M15                       15              // 15 minutes
-#define PERIOD_M30                       30              // 30 minutes
-#define PERIOD_H1                        60              // 1 hour
-#define PERIOD_H4                       240              // 4 hours
-#define PERIOD_D1                      1440              // 1 Tag
-#define PERIOD_W1                     10080              // 1 week (7 days)
-#define PERIOD_MN1                    43200              // 1 month (30 days)
-#define PERIOD_Q1                    129600              // 1 quarter (3 months)
+// timeframe identifiers (not to be combined)
+#define PERIOD_M1                               1        // 1 minute
+#define PERIOD_M5                               5        // 5 minutes
+#define PERIOD_M15                             15        // 15 minutes
+#define PERIOD_M30                             30        // 30 minutes
+#define PERIOD_H1                              60        // 1 hour
+#define PERIOD_H2                             120        // 2 hours (custom timeframe)
+#define PERIOD_H3                             180        // 3 hours (custom timeframe)
+#define PERIOD_H4                             240        // 4 hours
+#define PERIOD_H6                             360        // 6 hours (custom timeframe)
+#define PERIOD_H8                             480        // 8 hours (custom timeframe)
+#define PERIOD_D1                            1440        // 1 Tag
+#define PERIOD_W1                           10080        // 1 week (7 days)
+#define PERIOD_MN1                          43200        // 1 month (30 days)
+#define PERIOD_Q1                          129600        // 1 quarter (3 months, custom timeframe)
+
+
+// timeframe flags (to be combined)
+#define F_PERIOD_M1                        0x0001        //    1
+#define F_PERIOD_M5                        0x0002        //    2
+#define F_PERIOD_M15                       0x0004        //    4
+#define F_PERIOD_M30                       0x0008        //    8
+#define F_PERIOD_H1                        0x0010        //   16
+#define F_PERIOD_H2                        0x0020        //   32 (custom timeframe)
+#define F_PERIOD_H3                        0x0040        //   64 (custom timeframe)
+#define F_PERIOD_H4                        0x0080        //  128
+#define F_PERIOD_H6                        0x0100        //  256 (custom timeframe)
+#define F_PERIOD_H8                        0x0200        //  512 (custom timeframe)
+#define F_PERIOD_D1                        0x0400        // 1024
+#define F_PERIOD_W1                        0x0800        // 2048
+#define F_PERIOD_MN1                       0x1000        // 4096
+#define F_PERIOD_Q1                        0x2000        // 8192 (custom timeframe)
+#define F_PERIODS_ALL                  0x7FFFFFFF        // INT_MAX: covers all standard and custom timeframes
+
+
+// flags marking errors handled by custom error handlers (these errors don't trigger a terminating ERROR alert)
+#define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //      1
+#define F_ERS_EXECUTION_STOPPING       0x00000002        //      2   temporary state
+#define F_ERS_HISTORY_UPDATE           0x00000004        //      4   temporary state
+#define F_ERR_INVALID_PARAMETER        0x00000008        //      8
+#define F_ERR_INVALID_STOP             0x00000010        //     16
+#define F_ERR_INVALID_TICKET           0x00000020        //     32
+#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040        //     64
+#define F_ERR_MARKET_CLOSED            0x00000080        //    128
+#define F_ERR_NO_CONNECTION            0x00000100        //    256
+#define F_ERR_NO_RESULT                0x00000200        //    512
+#define F_ERR_OFF_QUOTES               0x00000400        //   1024
+#define F_ERR_ORDER_CHANGED            0x00000800        //   2048
+#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000        //   4096
+#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000        //   8192   temporary state
+#define F_ERR_TRADE_DISABLED           0x00004000        //  16384
+#define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //  32768
+#define F_ERR_TRADESERVER_GONE         0x00010000        //  65536
+
+
+// flags controlling order execution
+#define F_OE_DONT_HEDGE                0x00020000        // 131072 (don't hedge multiple positions on close)
+#define F_OE_DONT_CHECK_STATUS         0x00040000        // 262144 (don't check order status before proceeding)
+
+
+// flag enabling custom timeframe support
+#define F_CUSTOM_TIMEFRAME             0x00080000        // 524288
 
 
 // order and operation types
-#define OP_UNDEFINED                     -1              // custom: default value of a non-initialized type var
-#define OP_BUY                            0              // long position
-#define OP_LONG                      OP_BUY
-#define OP_SELL                           1              // short position
-#define OP_SHORT                    OP_SELL
-#define OP_BUYLIMIT                       2              // buy limit order
-#define OP_SELLLIMIT                      3              // sell limit order
-#define OP_BUYSTOP                        4              // stop buy order
-#define OP_SELLSTOP                       5              // stop sell order
-#define OP_BALANCE                        6              // account debit or credit transaction
-#define OP_CREDIT                         7              // margin credit facility (no transaction)
+#define OP_UNDEFINED                           -1        // custom: default value of a non-initialized type var
+#define OP_BUY                                  0        // long position
+#define OP_LONG                            OP_BUY
+#define OP_SELL                                 1        // short position
+#define OP_SHORT                          OP_SELL
+#define OP_BUYLIMIT                             2        // buy limit order
+#define OP_SELLLIMIT                            3        // sell limit order
+#define OP_BUYSTOP                              4        // stop buy order
+#define OP_SELLSTOP                             5        // stop sell order
+#define OP_BALANCE                              6        // account debit or credit transaction
+#define OP_CREDIT                               7        // margin credit facility (no transaction)
 
 
 // pending order activation types
-#define OA_LIMIT                          1
-#define OA_STOP                           2
+#define OA_LIMIT                                1
+#define OA_STOP                                 2
 
 
 // trade directions, may be used as flags
-#define TRADE_DIRECTION_LONG              1
-#define TRADE_DIRECTION_SHORT             2
-#define TRADE_DIRECTION_BOTH              3
+#define TRADE_DIRECTION_LONG                    1
+#define TRADE_DIRECTION_SHORT                   2
+#define TRADE_DIRECTION_BOTH                    3
 
 
 // file system related constants
-#define MKDIR_PARENT                      1              // create non-existing parent directories as needed => @see CreateDirectory()
+#define MKDIR_PARENT                            1        // create non-existing parent directories as needed => @see CreateDirectory()
 
 
 // time constants
-#define SECOND                            1
-#define MINUTE                           60              //  60 seconds
-#define HOUR                           3600              //  60 minutes
-#define DAY                           86400              //  24 hours
-#define WEEK                         604800              //   7 days
-#define MONTH                       2678400              //  31 days                   // Values cover the maximum possible range, so
-#define QUARTER                     8035200              //   3 months (3 x 31 days)   // results of date/time calculations are garantied
-#define YEAR                       31622400              // 366 days                   // to be in the next period.
+#define SECOND                                  1
+#define MINUTE                                 60        //  60 seconds
+#define HOUR                                 3600        //  60 minutes
+#define DAY                                 86400        //  24 hours
+#define WEEK                               604800        //   7 days
+#define MONTH                             2678400        //  31 days                   // Values cover the maximum possible range, so
+#define QUARTER                           8035200        //   3 months (3 x 31 days)   // results of date/time calculations are garantied
+#define YEAR                             31622400        // 366 days                   // to be in the next period.
 
-#define SECONDS                      SECOND
-#define MINUTES                      MINUTE
-#define HOURS                          HOUR
-#define DAYS                            DAY
-#define WEEKS                          WEEK
-#define MONTHS                        MONTH
-#define QUARTERS                    QUARTER
-#define YEARS                          YEAR
+#define SECONDS                            SECOND
+#define MINUTES                            MINUTE
+#define HOURS                                HOUR
+#define DAYS                                  DAY
+#define WEEKS                                WEEK
+#define MONTHS                              MONTH
+#define QUARTERS                          QUARTER
+#define YEARS                                YEAR
 
 
 // weekday constants based on Sunday=0; same behavior as DayOfWeek() and TimeDayOfWeek()
-#define SUNDAY                            0
-#define MONDAY                            1
-#define TUESDAY                           2
-#define WEDNESDAY                         3
-#define THURSDAY                          4
-#define FRIDAY                            5
-#define SATURDAY                          6
+#define SUNDAY                                  0
+#define MONDAY                                  1
+#define TUESDAY                                 2
+#define WEDNESDAY                               3
+#define THURSDAY                                4
+#define FRIDAY                                  5
+#define SATURDAY                                6
 
-#define SUN                          SUNDAY
-#define MON                          MONDAY
-#define TUE                         TUESDAY
-#define WED                       WEDNESDAY
-#define THU                        THURSDAY
-#define FRI                          FRIDAY
-#define SAT                        SATURDAY
+#define SUN                                SUNDAY
+#define MON                                MONDAY
+#define TUE                               TUESDAY
+#define WED                             WEDNESDAY
+#define THU                              THURSDAY
+#define FRI                                FRIDAY
+#define SAT                              SATURDAY
 
 
 // month constants based on January=0
-#define zJANUARY                          0
-#define zFEBRUARY                         1
-#define zMARCH                            2
-#define zAPRIL                            3
-#define zMAY                              4
-#define zJUNE                             5
-#define zJULY                             6
-#define zAUGUST                           7
-#define zSEPTEMBER                        8
-#define zOCTOBER                          9
-#define zNOVEMBER                        10
-#define zDECEMBER                        11
+#define zJANUARY                                0
+#define zFEBRUARY                               1
+#define zMARCH                                  2
+#define zAPRIL                                  3
+#define zMAY                                    4
+#define zJUNE                                   5
+#define zJULY                                   6
+#define zAUGUST                                 7
+#define zSEPTEMBER                              8
+#define zOCTOBER                                9
+#define zNOVEMBER                              10
+#define zDECEMBER                              11
 
-#define zJAN                       zJANUARY
-#define zFEB                      zFEBRUARY
-#define zMAR                         zMARCH
-#define zAPR                         zAPRIL
-//      zMAY                           zMAY              // short form equals long form
-#define zJUN                          zJUNE
-#define zJUL                          zJULY
-#define zAUG                        zAUGUST
-#define zSEP                     zSEPTEMBER
-#define zOCT                       zOCTOBER
-#define zNOV                      zNOVEMBER
-#define zDEC                      zDECEMBER
+#define zJAN                             zJANUARY
+#define zFEB                            zFEBRUARY
+#define zMAR                               zMARCH
+#define zAPR                               zAPRIL
+//      zMAY                                 zMAY        // short form equals long form
+#define zJUN                                zJUNE
+#define zJUL                                zJULY
+#define zAUG                              zAUGUST
+#define zSEP                           zSEPTEMBER
+#define zOCT                             zOCTOBER
+#define zNOV                            zNOVEMBER
+#define zDEC                            zDECEMBER
 
 
 // month constants based on January=1; same behavior as Month() and TimeMonth()
-#define JANUARY                           1
-#define FEBRUARY                          2
-#define MARCH                             3
-#define APRIL                             4
-#define MAY                               5
-#define JUNE                              6
-#define JULY                              7
-#define AUGUST                            8
-#define SEPTEMBER                         9
-#define OCTOBER                          10
-#define NOVEMBER                         11
-#define DECEMBER                         12
+#define JANUARY                                 1
+#define FEBRUARY                                2
+#define MARCH                                   3
+#define APRIL                                   4
+#define MAY                                     5
+#define JUNE                                    6
+#define JULY                                    7
+#define AUGUST                                  8
+#define SEPTEMBER                               9
+#define OCTOBER                                10
+#define NOVEMBER                               11
+#define DECEMBER                               12
 
-#define JAN                         JANUARY
-#define FEB                        FEBRUARY
-#define MAR                           MARCH
-#define APR                           APRIL
-//      MAY                             MAY              // short form equals long form
-#define JUN                            JUNE
-#define JUL                            JULY
-#define AUG                          AUGUST
-#define SEP                       SEPTEMBER
-#define OCT                         OCTOBER
-#define NOV                        NOVEMBER
-#define DEC                        DECEMBER
+#define JAN                               JANUARY
+#define FEB                              FEBRUARY
+#define MAR                                 MARCH
+#define APR                                 APRIL
+//      MAY                                   MAY        // short form equals long form
+#define JUN                                  JUNE
+#define JUL                                  JULY
+#define AUG                                AUGUST
+#define SEP                             SEPTEMBER
+#define OCT                               OCTOBER
+#define NOV                              NOVEMBER
+#define DEC                              DECEMBER
 
 
 // init() flags
-#define INIT_TIMEZONE                     1              // initialize/check the timezone configuration
-#define INIT_PIPVALUE                     2              // check availability of the current pip value (requires tick size and value)
-#define INIT_BARS_ON_HIST_UPDATE          4              //
-#define INIT_NO_BARS_REQUIRED             8              // executable without history (scripts only)
+#define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
+#define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
+#define INIT_BARS_ON_HIST_UPDATE                4        //
+#define INIT_NO_BARS_REQUIRED                   8        // executable without history (scripts only)
 
 
 // known timezones
-#define TIMEZONE_ALPARI                   "Alpari"             // until 03/2012 "Europe/Berlin", after "Europe/Kiev"
-#define TIMEZONE_AMERICA_NEW_YORK         "America/New_York"
-#define TIMEZONE_EUROPE_BERLIN            "Europe/Berlin"
-#define TIMEZONE_EUROPE_KIEV              "Europe/Kiev"
-#define TIMEZONE_EUROPE_LONDON            "Europe/London"
-#define TIMEZONE_EUROPE_MINSK             "Europe/Minsk"
-#define TIMEZONE_FXT                      "FXT"                // "Europe/Kiev"   with DST changes of "America/New_York"
-#define TIMEZONE_FXT_MINUS_0200           "FXT-0200"           // "Europe/London" with DST changes of "America/New_York"
-#define TIMEZONE_GLOBALPRIME              "GlobalPrime"        // until 24.10.2015 "FXT", then a single time "Europe/Kiev", then "FXT" again
-#define TIMEZONE_GMT                      "GMT"
+#define TIMEZONE_ALPARI           "Alpari"               // until 03/2012 "Europe/Berlin", after "Europe/Kiev"
+#define TIMEZONE_AMERICA_NEW_YORK "America/New_York"
+#define TIMEZONE_EUROPE_BERLIN    "Europe/Berlin"
+#define TIMEZONE_EUROPE_KIEV      "Europe/Kiev"
+#define TIMEZONE_EUROPE_LONDON    "Europe/London"
+#define TIMEZONE_EUROPE_MINSK     "Europe/Minsk"
+#define TIMEZONE_FXT              "FXT"                  // "Europe/Kiev"   with DST changes of "America/New_York"
+#define TIMEZONE_FXT_MINUS_0200   "FXT-0200"             // "Europe/London" with DST changes of "America/New_York"
+#define TIMEZONE_GLOBALPRIME      "GlobalPrime"          // until 24.10.2015 "FXT", then a single time "Europe/Kiev", then "FXT" again
+#define TIMEZONE_GMT              "GMT"
 
 
 // known timezone ids
-#define TIMEZONE_ID_ALPARI                1
-#define TIMEZONE_ID_AMERICA_NEW_YORK      2
-#define TIMEZONE_ID_EUROPE_BERLIN         3
-#define TIMEZONE_ID_EUROPE_KIEV           4
-#define TIMEZONE_ID_EUROPE_LONDON         5
-#define TIMEZONE_ID_EUROPE_MINSK          6
-#define TIMEZONE_ID_FXT                   7
-#define TIMEZONE_ID_FXT_MINUS_0200        8
-#define TIMEZONE_ID_GLOBALPRIME           9
-#define TIMEZONE_ID_GMT                  10
+#define TIMEZONE_ID_ALPARI                      1
+#define TIMEZONE_ID_AMERICA_NEW_YORK            2
+#define TIMEZONE_ID_EUROPE_BERLIN               3
+#define TIMEZONE_ID_EUROPE_KIEV                 4
+#define TIMEZONE_ID_EUROPE_LONDON               5
+#define TIMEZONE_ID_EUROPE_MINSK                6
+#define TIMEZONE_ID_FXT                         7
+#define TIMEZONE_ID_FXT_MINUS_0200              8
+#define TIMEZONE_ID_GLOBALPRIME                 9
+#define TIMEZONE_ID_GMT                        10
 
 
 // MT4 internal messages
-#define MT4_TICK                          2              // a virtual tick, triggers start()
+#define MT4_TICK                                2        // a virtual tick, triggers start()
 
-#define MT4_LOAD_STANDARD_INDICATOR      13
-#define MT4_LOAD_CUSTOM_INDICATOR        15
-#define MT4_LOAD_EXPERT                  14
-#define MT4_LOAD_SCRIPT                  16
+#define MT4_LOAD_STANDARD_INDICATOR            13
+#define MT4_LOAD_CUSTOM_INDICATOR              15
+#define MT4_LOAD_EXPERT                        14
+#define MT4_LOAD_SCRIPT                        16
 
-#define MT4_OPEN_CHART                   51
+#define MT4_OPEN_CHART                         51
 
-#define MT4_COMPILE_REQUEST           12345
-#define MT4_COMPILE_PERMISSION        12346
-#define MT4_MQL_REFRESH               12349              // rescan und reload modified .ex4 files
+#define MT4_COMPILE_REQUEST                 12345
+#define MT4_COMPILE_PERMISSION              12346
+#define MT4_MQL_REFRESH                     12349        // rescan und reload modified .ex4 files
 
 
 // bar model types in tester
-#define BARMODEL_EVERYTICK                0
-#define BARMODEL_CONTROLPOINTS            1
-#define BARMODEL_BAROPEN                  2
+#define BARMODEL_EVERYTICK                      0
+#define BARMODEL_CONTROLPOINTS                  1
+#define BARMODEL_BAROPEN                        2
 
 
 // configuration flags for synthetic ticks
-#define TICK_OFFLINE_EA                   1              // send a standard tick, triggers Expert::start() in offline charts if a server connection is established
-#define TICK_CHART_REFRESH                2              // send command ID_CHART_REFRESH instead of a standard tick (for offline charts and custom symbols)
-#define TICK_TESTER                       4              // send command ID_CHART_STEPFORWARD instead of a standard tick (for tester)
-#define TICK_IF_VISIBLE                   8              // send ticks only if the chart is at least partially visible (default: off)
-#define TICK_PAUSE_ON_WEEKEND            16              // send ticks only at regular session times (default: off)
+#define TICK_OFFLINE_EA                         1        // send a standard tick, triggers Expert::start() in offline charts if a server connection is established
+#define TICK_CHART_REFRESH                      2        // send command ID_CHART_REFRESH instead of a standard tick (for offline charts and custom symbols)
+#define TICK_TESTER                             4        // send command ID_CHART_STEPFORWARD instead of a standard tick (for tester)
+#define TICK_IF_VISIBLE                         8        // send ticks only if the chart is at least partially visible (default: off)
+#define TICK_PAUSE_ON_WEEKEND                  16        // send ticks only at regular session times (default: off)
 
 
 /**

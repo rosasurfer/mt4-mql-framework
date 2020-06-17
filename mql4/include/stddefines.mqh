@@ -245,32 +245,18 @@ double  N_INF;                                              // -1.#INF: negative
 #define OBJPROP_FIRSTLEVEL31      241
 
 
-// Object visibility flags, siehe ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
-#define OBJ_PERIOD_M1          0x0001           //   1: object is shown on 1-minute charts
-#define OBJ_PERIOD_M5          0x0002           //   2: object is shown on 5-minute charts
-#define OBJ_PERIOD_M15         0x0004           //   4: object is shown on 15-minute charts
-#define OBJ_PERIOD_M30         0x0008           //   8: object is shown on 30-minute charts
-#define OBJ_PERIOD_H1          0x0010           //  16: object is shown on 1-hour charts
-#define OBJ_PERIOD_H4          0x0020           //  32: object is shown on 4-hour charts
-#define OBJ_PERIOD_D1          0x0040           //  64: object is shown on daily charts
-#define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
-#define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
-#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 (NULL hat denselben Effekt)
+// chart object visibility flags, see ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
+#define OBJ_PERIOD_M1          0x0001           //   1: object is shown on M1 charts
+#define OBJ_PERIOD_M5          0x0002           //   2: object is shown on M5 charts
+#define OBJ_PERIOD_M15         0x0004           //   4: object is shown on M15 charts
+#define OBJ_PERIOD_M30         0x0008           //   8: object is shown on M30 charts
+#define OBJ_PERIOD_H1          0x0010           //  16: object is shown on H1 charts
+#define OBJ_PERIOD_H4          0x0020           //  32: object is shown on H4 charts
+#define OBJ_PERIOD_D1          0x0040           //  64: object is shown on D1 charts
+#define OBJ_PERIOD_W1          0x0080           // 128: object is shown on W1 charts
+#define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on MN1 charts
+#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes (same as specifying NULL)
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
-
-
-// Timeframe-Flags, siehe EventListener.Baropen()
-#define F_PERIOD_M1            OBJ_PERIOD_M1    //    1
-#define F_PERIOD_M5            OBJ_PERIOD_M5    //    2
-#define F_PERIOD_M15           OBJ_PERIOD_M15   //    4
-#define F_PERIOD_M30           OBJ_PERIOD_M30   //    8
-#define F_PERIOD_H1            OBJ_PERIOD_H1    //   16
-#define F_PERIOD_H4            OBJ_PERIOD_H4    //   32
-#define F_PERIOD_D1            OBJ_PERIOD_D1    //   64
-#define F_PERIOD_W1            OBJ_PERIOD_W1    //  128
-#define F_PERIOD_MN1           OBJ_PERIOD_MN1   //  256
-#define F_PERIOD_Q1            0x0200           //  512
-#define F_PERIODS_ALL          0x03FF           // 1023: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1
 
 
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
@@ -278,7 +264,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define O_POP                          2
 
 
-// Series array identifier, siehe ArrayCopySeries(), iLowest(), iHighest()
+// timeseries type identifiers, see ArrayCopySeries(), iLowest(), iHighest()
 #define MODE_OPEN                      0        // open price
 #define MODE_LOW                       1        // low price
 #define MODE_HIGH                      2        // high price
@@ -673,30 +659,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_ARROWDOWN                   242  // arrow down symbol
 #define SYMBOL_STOPSIGN                    251  // stop sign symbol
 #define SYMBOL_CHECKSIGN                   252  // checkmark symbol
-
-
-// flags marking errors handled by custom error handlers (the errors don't trigger a terminating ERROR alert)
-#define F_ERR_CONCURRENT_MODIFICATION  0x00000001  //      1
-#define F_ERS_EXECUTION_STOPPING       0x00000002  //      2   temporary state
-#define F_ERS_HISTORY_UPDATE           0x00000004  //      4   temporary state
-#define F_ERR_INVALID_PARAMETER        0x00000008  //      8
-#define F_ERR_INVALID_STOP             0x00000010  //     16
-#define F_ERR_INVALID_TICKET           0x00000020  //     32
-#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040  //     64
-#define F_ERR_MARKET_CLOSED            0x00000080  //    128
-#define F_ERR_NO_CONNECTION            0x00000100  //    256
-#define F_ERR_NO_RESULT                0x00000200  //    512
-#define F_ERR_OFF_QUOTES               0x00000400  //   1024
-#define F_ERR_ORDER_CHANGED            0x00000800  //   2048
-#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000  //   4096
-#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000  //   8192   temporary state
-#define F_ERR_TRADE_DISABLED           0x00004000  //  16384
-#define F_ERR_TRADE_MODIFY_DENIED      0x00008000  //  32768
-#define F_ERR_TRADESERVER_GONE         0x00010000  //  65536
-
-// flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00020000  // 131072 (don't hedge multiple positions on close)
-#define F_OE_DONT_CHECK_STATUS         0x00040000  // 262144 (don't check order status before proceeding)
 
 
 // String padding types, siehe StringPad()
