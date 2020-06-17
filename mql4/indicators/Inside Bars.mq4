@@ -90,7 +90,7 @@ int onTick() {
          case PERIOD_H3:  CheckInsideBarsH3();  break;
          case PERIOD_H4:  CheckInsideBarsH4();  break;
          default:
-            return(catch("onTick(2)  timeframe "+ Timeframe +" not implemented", ERR_NOT_IMPLEMENTED));
+            return(catch("onTick(1)  processing of timeframe "+ Timeframe +" not implemented", ERR_NOT_IMPLEMENTED));
       }
       done = true;
    }
@@ -346,6 +346,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
       ObjectSet     (label, OBJPROP_BACK,  true);
+      ObjectSetText (label, " "+ sTimeframe);
       ObjectRegister(label);
    } else debug("MarkInsideBar(2)", GetLastError());
 
