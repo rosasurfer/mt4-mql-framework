@@ -537,10 +537,10 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
                to.nextCloseTime   = to.closeTime   + periodSecs;
             }
             else if (timeframe == PERIOD_MN1) {
-               from.closeTime     = DateTime(TimeYearFix(from.openTime), TimeMonth(from.openTime)+1);    // 00:00, 1. des nächsten Monats
-               from.nextCloseTime = DateTime(TimeYearFix(from.openTime), TimeMonth(from.openTime)+2);    // 00:00, 1. des übernächsten Monats
-               to.closeTime       = DateTime(TimeYearFix(to.openTime  ), TimeMonth(to.openTime  )+1);    // 00:00, 1. des nächsten Monats
-               to.nextCloseTime   = DateTime(TimeYearFix(to.openTime  ), TimeMonth(to.openTime  )+2);    // 00:00, 1. des übernächsten Monats
+               from.closeTime     = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1);     // 00:00, 1. des nächsten Monats
+               from.nextCloseTime = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2);     // 00:00, 1. des übernächsten Monats
+               to.closeTime       = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1);     // 00:00, 1. des nächsten Monats
+               to.nextCloseTime   = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2);     // 00:00, 1. des übernächsten Monats
             }
          }
       }
@@ -827,8 +827,8 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
       nextCloseTime = closeTime + hf.periodSecs[hFile];
    }
    else if (hf.period[hFile] == PERIOD_MN1) {
-      closeTime     = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+1);    // 00:00, 1. des nächsten Monats
-      nextCloseTime = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+2);    // 00:00, 1. des übernächsten Monats
+      closeTime     = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+1);     // 00:00, 1. des nächsten Monats
+      nextCloseTime = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+2);     // 00:00, 1. des übernächsten Monats
    }
 
    hf.lastStoredBar.offset       [hFile]        = offset;
@@ -945,8 +945,8 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
          nextCloseTime = closeTime + hf.periodSecs[hFile];
       }
       else if (hf.period[hFile] == PERIOD_MN1) {
-         closeTime     = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+1); // 00:00, 1. des nächsten Monats
-         nextCloseTime = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+2); // 00:00, 1. des übernächsten Monats
+         closeTime     = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+1);  // 00:00, 1. des nächsten Monats
+         nextCloseTime = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+2);  // 00:00, 1. des übernächsten Monats
       }
       hf.lastStoredBar.offset       [hFile] = offset;
       hf.lastStoredBar.openTime     [hFile] = openTime;
@@ -1361,8 +1361,8 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       if (hf.bufferedBar.offset[hFile] < 0) {                                          // BufferedBar ist leer
          if (tick.offset == -1) {
             if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
-            else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekFix(tick.time)+6)%7*DAYS;       // 00:00, Montag
-            else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayFix(tick.time)-1)*DAYS;               // 00:00, 1. des Monats
+            else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;        // 00:00, Montag
+            else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                // 00:00, 1. des Monats
             tick.offset = HistoryFile.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
          }
          if (tick.offset < hf.full.bars[hFile]) {                                      // Tickbar existiert, laden
@@ -1386,8 +1386,8 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
                nextCloseTime = closeTime     + hf.periodSecs[hFile];
             }
             else if (hf.period[hFile] == PERIOD_MN1) {
-               closeTime     = DateTime(TimeYearFix(tick.openTime), TimeMonth(tick.openTime)+1);   // 00:00, 1. des nächsten Monats
-               nextCloseTime = DateTime(TimeYearFix(tick.openTime), TimeMonth(tick.openTime)+2);   // 00:00, 1. des übernächsten Monats
+               closeTime     = DateTime(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+1);    // 00:00, 1. des nächsten Monats
+               nextCloseTime = DateTime(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+2);    // 00:00, 1. des übernächsten Monats
             }
             hf.bufferedBar.offset       [hFile]        = tick.offset;
             hf.bufferedBar.openTime     [hFile]        = tick.openTime;
@@ -1448,8 +1448,8 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
    // (3.2) BufferedBar ist leer: Tickbar mit Tick aktualisieren oder neue Bar mit Tick zu History hinzufügen
    if (tick.offset == -1) {
       if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
-      else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekFix(tick.time)+6)%7*DAYS;       // 00:00, Montag
-      else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayFix(tick.time)-1)*DAYS;               // 00:00, 1. des Monats
+      else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;          // 00:00, Montag
+      else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                  // 00:00, 1. des Monats
       tick.offset = HistoryFile.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
    }
    if (tick.offset < hf.full.bars[hFile]) {

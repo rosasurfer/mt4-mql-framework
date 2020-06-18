@@ -29,7 +29,7 @@ bool IsBarOpenEvent(int timeframe = NULL) {
    if (__CoreFunction != CF_START)       return(!catch("IsBarOpenEvent(6)  can't be called in "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction) +"()", ERR_FUNC_NOT_ALLOWED));
 
 
-   static int i, timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
+   static int i, timeframes[] = { PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1 };
    static datetime barOpenTimes[], barCloseTimes[];                        // Open/CloseTimes of each timeframe
    if (!ArraySize(barOpenTimes)) {
       ArrayResize(barOpenTimes,  ArraySize(timeframes));

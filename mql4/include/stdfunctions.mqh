@@ -2403,53 +2403,47 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeDay()
+ * Return the day of the month of the specified time: 1...31
  *
- *
- * Gibt den Tag des Monats eines Zeitpunkts zurück (1-31).
+ * Fixes the broken builtin function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeDayFix(datetime time) {
-   if (!time)
-      return(1);
-   return(TimeDay(time));           // Fehler: 0 statt 1 für D'1970.01.01 00:00:00'
+int TimeDayEx(datetime time) {
+   if (!time) return(1);
+   return(TimeDay(time));
 }
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeDayOfWeek()
+ * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
  *
- *
- * Gibt den Wochentag eines Zeitpunkts zurück (0=Sunday ... 6=Saturday).
+ * Fixes the broken builtin function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeDayOfWeekFix(datetime time) {
-   if (!time)
-      return(3);
-   return(TimeDayOfWeek(time));     // Fehler: 0 (Sunday) statt 3 (Thursday) für D'1970.01.01 00:00:00'
+int TimeDayOfWeekEx(datetime time) {
+   if (!time) return(3);
+   return(TimeDayOfWeek(time));
 }
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeYear()
+ * Return the year of the specified time: 1970...2037
  *
- *
- * Gibt das Jahr eines Zeitpunkts zurück (1970-2037).
+ * Fixes the broken builtin function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeYearFix(datetime time) {
-   if (!time)
-      return(1970);
-   return(TimeYear(time));          // Fehler: 1900 statt 1970 für D'1970.01.01 00:00:00'
+int TimeYearEx(datetime time) {
+   if (!time) return(1970);
+   return(TimeYear(time));
 }
 
 
@@ -5196,13 +5190,13 @@ string NumberToStr(double value, string mask) {
 
 
 /**
- * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
+ * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
- * @param  int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
  *
- * @return int - Timeframe-Flag
+ * @return int - timeframe flag
  */
-int PeriodFlag(int period=NULL) {
+int PeriodFlag(int period = NULL) {
    if (period == NULL)
       period = Period();
 
@@ -5212,7 +5206,11 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_M15: return(F_PERIOD_M15);
       case PERIOD_M30: return(F_PERIOD_M30);
       case PERIOD_H1 : return(F_PERIOD_H1 );
+      case PERIOD_H2 : return(F_PERIOD_H2 );
+      case PERIOD_H3 : return(F_PERIOD_H3 );
       case PERIOD_H4 : return(F_PERIOD_H4 );
+      case PERIOD_H6 : return(F_PERIOD_H6 );
+      case PERIOD_H8 : return(F_PERIOD_H8 );
       case PERIOD_D1 : return(F_PERIOD_D1 );
       case PERIOD_W1 : return(F_PERIOD_W1 );
       case PERIOD_MN1: return(F_PERIOD_MN1);
@@ -5225,42 +5223,60 @@ int PeriodFlag(int period=NULL) {
 /**
  * Alias
  *
- * Gibt das Timeframe-Flag des angegebenen Timeframes zurück.
+ * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
- * @param  int timeframe - Timeframe-Identifier (default: Timeframe des aktuellen Charts)
+ * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
  *
- * @return int - Timeframe-Flag
+ * @return int - timeframe flag
  */
-int TimeframeFlag(int timeframe=NULL) {
+int TimeframeFlag(int timeframe = NULL) {
    return(PeriodFlag(timeframe));
 }
 
 
 /**
- * Gibt die lesbare Version ein oder mehrerer Timeframe-Flags zurück.
+ * Return a human-readable representation of a timeframe flag. Supports custom timeframes.
  *
- * @param  int flags - Kombination verschiedener Timeframe-Flags
+ * @param  int flag - combination of timeframe flags
  *
  * @return string
  */
-string PeriodFlagsToStr(int flags) {
+string PeriodFlagToStr(int flag) {
    string result = "";
 
-   if (!flags)                    result = StringConcatenate(result, "|NULL");
-   if (flags & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|M1"  );
-   if (flags & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|M5"  );
-   if (flags & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|M15" );
-   if (flags & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|M30" );
-   if (flags & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|H1"  );
-   if (flags & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|H4"  );
-   if (flags & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|D1"  );
-   if (flags & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|W1"  );
-   if (flags & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|MN1" );
-   if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
+   if (!flag)                    result = StringConcatenate(result, "|NULL");
+   if (flag & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|F_PERIOD_M1"  );
+   if (flag & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|F_PERIOD_M5"  );
+   if (flag & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|F_PERIOD_M15" );
+   if (flag & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|F_PERIOD_M30" );
+   if (flag & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|F_PERIOD_H1"  );
+   if (flag & F_PERIOD_H2  && 1) result = StringConcatenate(result, "|F_PERIOD_H2"  );
+   if (flag & F_PERIOD_H3  && 1) result = StringConcatenate(result, "|F_PERIOD_H3"  );
+   if (flag & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|F_PERIOD_H4"  );
+   if (flag & F_PERIOD_H6  && 1) result = StringConcatenate(result, "|F_PERIOD_H6"  );
+   if (flag & F_PERIOD_H8  && 1) result = StringConcatenate(result, "|F_PERIOD_H8"  );
+   if (flag & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|F_PERIOD_D1"  );
+   if (flag & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|F_PERIOD_W1"  );
+   if (flag & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|F_PERIOD_MN1" );
+   if (flag & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|F_PERIOD_Q1"  );
 
    if (StringLen(result) > 0)
       result = StrSubstr(result, 1);
    return(result);
+}
+
+
+/**
+ * Alias
+ *
+ * Return a human-readable representation of a timeframe flag. Supports custom timeframes.
+ *
+ * @param  int flag - combination of timeframe flags
+ *
+ * @return string
+ */
+string TimeframeFlagToStr(int flag) {
+   return(PeriodFlagToStr(flag));
 }
 
 
@@ -5437,51 +5453,65 @@ string PriceTypeDescription(int type) {
 
 
 /**
- * Return the integer constant of a timeframe identifier.
+ * Return the integer constant of a timeframe identifier. Supports custom timeframes.
  *
- * @param  string value     - M1, M5, M15, M30 etc.
- * @param  int    execFlags - execution control: errors to set silently (default: none)
+ * @param  string value            - M1, M5, M15, M30 etc.
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_CUSTOM_TIMEFRAME:      enable support of custom timeframes
+ *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
  *
  * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPeriod(string value, int execFlags = NULL) {
+int StrToPeriod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
       str = StrSubstr(str, 7);
 
-   if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
-   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
-   if (str ==           "M5" ) return(PERIOD_M5 );    // 5 minutes
-   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );    //
-   if (str ==           "M15") return(PERIOD_M15);    // 15 minutes
-   if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);    //
-   if (str ==           "M30") return(PERIOD_M30);    // 30 minutes
-   if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);    //
-   if (str ==           "H1" ) return(PERIOD_H1 );    // 1 hour
-   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );    //
-   if (str ==           "H4" ) return(PERIOD_H4 );    // 4 hour
-   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );    //
-   if (str ==           "D1" ) return(PERIOD_D1 );    // 1 day
-   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );    //
-   if (str ==           "W1" ) return(PERIOD_W1 );    // 1 week
-   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
-   if (str ==           "MN1") return(PERIOD_MN1);    // 1 month
-   if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
-   if (str ==           "Q1" ) return(PERIOD_Q1 );    // 1 quarter
-   if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );    //
+   if (str ==           "M1" ) return(PERIOD_M1 );
+   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );
+   if (str ==           "M5" ) return(PERIOD_M5 );
+   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );
+   if (str ==           "M15") return(PERIOD_M15);
+   if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);
+   if (str ==           "M30") return(PERIOD_M30);
+   if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);
+   if (str ==           "H1" ) return(PERIOD_H1 );
+   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );
+   if (str ==           "H4" ) return(PERIOD_H4 );
+   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );
+   if (str ==           "D1" ) return(PERIOD_D1 );
+   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );
+   if (str ==           "W1" ) return(PERIOD_W1 );
+   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );
+   if (str ==           "MN1") return(PERIOD_MN1);
+   if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (flags & F_CUSTOM_TIMEFRAME && 1) {
+      if (str ==           "H2" ) return(PERIOD_H2 );
+      if (str == ""+ PERIOD_H2  ) return(PERIOD_H2 );
+      if (str ==           "H3" ) return(PERIOD_H3 );
+      if (str == ""+ PERIOD_H3  ) return(PERIOD_H3 );
+      if (str ==           "H6" ) return(PERIOD_H6 );
+      if (str == ""+ PERIOD_H6  ) return(PERIOD_H6 );
+      if (str ==           "H8" ) return(PERIOD_H8 );
+      if (str == ""+ PERIOD_H8  ) return(PERIOD_H8 );
+      if (str ==           "Q1" ) return(PERIOD_Q1 );
+      if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );
+   }
+
+   if (flags & F_ERR_INVALID_PARAMETER && 1) {
+      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   }
+   return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Alias
+ * Alias of StrToPeriod()
  */
-int StrToTimeframe(string timeframe, int execFlags=NULL) {
-   return(StrToPeriod(timeframe, execFlags));
+int StrToTimeframe(string timeframe, int flags = NULL) {
+   return(StrToPeriod(timeframe, flags));
 }
 
 
@@ -6773,7 +6803,7 @@ void __DummyCalls() {
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodFlag();
-   PeriodFlagsToStr(NULL);
+   PeriodFlagToStr(NULL);
    PipValue();
    PipValueEx(NULL);
    PlaySoundEx(NULL);
@@ -6847,13 +6877,14 @@ void __DummyCalls() {
    Tester.Stop();
    This.IsTesting();
    TimeCurrentEx();
-   TimeDayFix(NULL);
-   TimeDayOfWeekFix(NULL);
+   TimeDayEx(NULL);
+   TimeDayOfWeekEx(NULL);
    TimeframeFlag();
+   TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
    TimeServer();
-   TimeYearFix(NULL);
+   TimeYearEx(NULL);
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
@@ -6877,6 +6908,7 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
+   int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();

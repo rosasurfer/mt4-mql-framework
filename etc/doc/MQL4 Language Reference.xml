@@ -53,7 +53,7 @@
     <content>
       <p>MetaQuotes Language 4 (MQL4) is a built-in language for development of trading strategies, trade management automation, custom indicators and scripts.
       Start learning the language using Sergey Kovalyov's book <i>Programming in Algorithmic Language MQL4</i> published by MetaQuotes Software Corp.<br/>
-      Download: <a href="http://www.mql4.com/files/mql4bookenglish.chm">http://www.mql4.com/files/mql4bookenglish.chm</a></p>
+      Download: <a target="_blank" href="http://www.mql4.com/files/mql4bookenglish.chm">http://www.mql4.com/files/mql4bookenglish.chm</a></p>
 
       <p>MQL4 offers a large amount of built-in functions for arithmetical and logical operations, price analysis and order management.</p>
 
@@ -260,10 +260,10 @@ bool c = 1;</pre>
         <br/>
         <span style="color:red">Bug:</span>
         <br/>
-        Ausdrücke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch für
-        die Übergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">true</span> oder
+        Ausdr&uuml;cke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch f&uuml;r
+        die &Uuml;bergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">true</span> oder
         <span class="const">false</span> schlagen immer fehl.<br/>
-        Workaround: Die Ausdrücke müssen bei der Zuweisung explizit gecastet werden.
+        Workaround: Die Ausdr&uuml;cke m&uuml;ssen bei der Zuweisung explizit gecastet werden.
       </content>
     </text>
 
@@ -1423,8 +1423,8 @@ cannot have default values.</p>
 
          <span style="color:red">Bug:</span>
          <br/>
-         Der MQL-Typ <span class="type">bool</span> wird an DLLs falsch übergeben, der übergebene Parameter ist immer <span class="type">BOOL</span> <span class="const">FALSE</span>
-         (betrifft nicht <span class="type">bool</span>-Arrays oder <span class="type">bool</span>-Rückgabewerte).<br/>
+         Der MQL-Typ <span class="type">bool</span> wird an DLLs falsch &uuml;bergeben, der &uuml;bergebene Parameter ist immer <span class="type">BOOL</span> <span class="const">FALSE</span>
+         (betrifft nicht <span class="type">bool</span>-Arrays oder <span class="type">bool</span>-R&uuml;ckgabewerte).<br/>
          Workaround: In der Funktionsdeklaration des Imports statt <span class="type">bool</span> den Typ <span class="type">int</span> verwenden.
       </content>
     </text>
@@ -2473,10 +2473,10 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
+      <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim &Ouml;ffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
           Nur ein Reload des Templates korrigiert die falschen Werte.</li>
       <li>Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
-      <li>Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
+      <li>Die Variablen Digits und Point k&ouml;nnen vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
       <br/>
       <br/>
       Workaround: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
@@ -2594,10 +2594,10 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
+      <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim &Ouml;ffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
           Nur ein Reload des Templates korrigiert die falschen Werte.</li>
       <li>Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
-      <li>Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
+      <li>Die Variablen Digits und Point k&ouml;nnen vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
       <br/>
       <br/>
       Workaround: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
@@ -3307,10 +3307,10 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zurückgesetzt wird.
-      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zurück (getested mit Build 225-670).<br/>
+      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zur&uuml;ckgesetzt wird.
+      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zur&uuml;ck (getested mit Build 225-670).<br/>
       <br/>
-      Workaround: Den VisualMode-Status aus dem Hauptmodul über den Execution-Context in die Library übermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
+      Workaround: Den VisualMode-Status aus dem Hauptmodul &uuml;ber den Execution-Context in die Library &uuml;bermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
       </content>
       <example>
   if (IsVisualModeFix()) Comment("Visual mode certainly turned on");
@@ -3629,7 +3629,7 @@ ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
 
 if (Time[shift] &gt;= daytimes[0]) {
    dayshift = 0;
-} 
+}
 else {
    dayshift = ArrayBsearch(daytimes, Time[shift], WHOLE_ARRAY, 0, MODE_DESCEND);
    if (Period() &lt; PERIOD_D1) dayshift++;
@@ -3677,8 +3677,8 @@ Search direction. It can be any of the following values:<br/>
       <content>
          Copies elements of one array to another one and returns the number of copied elements.<br/>
          <br/>
-         Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span> 
-         and <span class="type">color</span> are considered the same). Ranges of multidimensional arrays must match, the size of the first dimension 
+         Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
+         and <span class="type">color</span> are considered the same). Ranges of multidimensional arrays must match, the size of the first dimension
          (rows) may differ. If needed the size of the target array is automatically increased.<br/>
       </content>
       <example>
@@ -3724,67 +3724,58 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns a pointer to a wrapper around a <span class="type">RateInfo</span> (<span class="type">HISTORY_BAR_400</span>) array to the destination array and returns the number of contained
-bars or -1 on failure. The first dimension of the destination array holds the bar offset, the second dimension holds the 6 elements:<br/>
-0 - time<br/>
-1 - open<br/>
-2 - low<br/>
-3 - high<br/>
-4 - close<br/>
-5 - volume<br/>
+Assigns the specified timeseries data to the destination array and returns the number of contained bars or -1 on failure.
+The first dimension of the destination array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
-If data from another time series than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be set in the
-<a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
+ <span class="code"> 0 </span>- open time<br/>
+ <span class="code"> 1 </span>- open price<br/>
+ <span class="code"> 2 </span>- low price<br/>
+ <span class="code"> 3 </span>- high price<br/>
+ <span class="code"> 4 </span>- close price<br/>
+ <span class="code"> 5 </span>- volume (tick count)<br/>
 <br/>
 
-<span style="color:red">Notes:</span>
+If data from another timeseries than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> may be set.
+In this case data needs to be re-requested.<br/>
 <br/>
-<li>No additional memory is allocated for the target array and no real copying is performed. Instead a pointer to a wrapper of the internal rates array is assigned to the
-    target array and access is redirected.</li>
-<li>Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RateInfo</span>-Array (<span class="type">HISTORY_BAR_400</span>).
-    Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen
-    Zeiger auf das interne <span class="type">HISTORY_BAR_400</span>-Array. Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit
-    dynamisch bis <span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.</li>
-<li>Intern ist das Target-Array ein Zeiger (Integer) und damit nicht automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
-    Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basics_variables_static">static</a> deklariert werden.</li>
-<li>Das Target-Array kann nach Zuweisung nicht mehr mittels ArrayResize() oder ArrayInitialize() verändert werden.</li>
+
+<b>Notes:</b>
+<br/>
+<li>No data copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
+
+<li>After assignment in local scope the destination variable doesn't act like a typical array variable and <a href="help://basics_variables_static">static</a>
+    behavior needs to be explicitely declared.</li>
+
+<li>The destination array is read-only.</li>
+
+<li>If the destination array is passed to a DLL, the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
+    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more data arrives it is
+    dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li>
 <br/>
 <br/>
-<span style="color:red">Bug:</span>
+<span style="color:red">Bugs:</span>
 <br/>
-Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren
-bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span>
+Wird die Funktion w&auml;hrend des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgel&ouml;st, solange noch keine lokalen Kurse existieren
+bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall mu&szlig; der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span>
 interpretiert werden.<br/>
 <br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="const">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [<span class="const">ERR_ARRAY_ERROR</span>] - <span style="color:red">Fehler</span><br/>
 <br/>
 <br/>
-<span style="color:red">Änderungen seit Build 510++:</span>
+<b>Changes in MQL4.5 (terminal builds > 509):</b>
 <br/>
-Calling the function now leads to actual copying of the data into the array. When the values in the time series change you must re-copy the required data into the destination array.<br/>
-<b>Old EX4 applications and DLLs based on the old RateInfo format will not work in the new terminal. Conversion to the new format is required.</b><br/>
-<br/>
-@see <a href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>
+Calling the function with a destination parameter of type <span class="type">double[][]</span> now allocates additional memory and performs a deep copy of the
+timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only MQL4 programs compiled 
+with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
 <br/>
 <br/>
       </content>
-      <example>
-  double array[][6];             // Wrapper: sizeof(double[0]) = 48
-  ArrayCopyRates(array, "EURUSD", PERIOD_H1);
-  Print("Current bar: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1]);
-  .
-  .
-  struct RateInfo {              // intern: sizeof(RateInfo) = 44
-     UINT   time;                // 4 Bytes
-     double open;
-     double low;
-     double high;
-     double close;
-     double volume;
-  };
-
-      </example>
+<example>
+double array[][6];
+ArrayCopyRates(array, "EURUSD", PERIOD_H1);
+Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1]);
+</example>
       <parameter>
         type=double
         name=<nobr>dest[][6]</nobr>
@@ -3794,13 +3785,13 @@ Calling the function now leads to actual copying of the data into the array. Whe
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=symbol name (<span class="const">NULL</span>: the current symbol)
+        description=symbol name (<span class="const">NULL</span>: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=<span class="const">NULL</span>
-        description=timeframe, one of the <a href="help://constants_timeframes">predefined timeframes</a> values (<span class="const">NULL</span>: the current timeframe)
+        description=<a href="help://constants_timeframes">timeframe identifier</a> (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
     </function>
 
@@ -4523,11 +4514,11 @@ Sleep(10000);
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Die Funktion rundet falsch, wenn <i>digits</i> &lt; 2 ist und der übergebene Wert mehr als 7 Nachkommastellen hat, z.B:<br/>
+      Die Funktion rundet falsch, wenn <i>digits</i> &lt; 2 ist und der &uuml;bergebene Wert mehr als 7 Nachkommastellen hat, z.B:<br/>
       <span class="function">NormalizeDouble</span>(<span class="number">1.49999991</span>, <span class="number">0</span>) = <span class="number">2.0</span><br/>
       <span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
       <br/>
-      Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>(), für höhere Genauigkeit
+      Workaround: f&uuml;r <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>(), f&uuml;r h&ouml;here Genauigkeit
                   <span class="function">MT4Expander</span>::<span class="function">round</span>() verwenden<br/>
       <br/>
       </content>
@@ -4593,9 +4584,9 @@ Sleep(10000);
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Sind die einzelnen Werte nicht in voller Länge angegeben, werden teilweise (nicht immer) die Sekunden verschluckt:<br/>
+      Sind die einzelnen Werte nicht in voller L&auml;nge angegeben, werden teilweise (nicht immer) die Sekunden verschluckt:<br/>
       <span class="function">StrToTime</span>(<span class="string">"2014.4.23 14:2:50"</span>) => <span class="string">"2014.04.23 14:02:00"</span><br/>
-      Workaround: Werte in voller Länge formatieren
+      Workaround: Werte in voller L&auml;nge formatieren
       </content>
       <example>
   datetime value1 = StrToTime(<span class="string">&quot;2003.8.12 17:35&quot;</span>);
@@ -4718,10 +4709,10 @@ Optional data output mode can be one or combination of:<br/>
       <br/>
       Notes:<br/>
 
-      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zurück, deren Status seit dem letzten Tick unverändert ist. Abhängig vom konkreten Indikator
+      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom konkreten Indikator
           brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen <span class="globalvar">ValidBars</span>
           und <span class="globalvar">ChangedBars</span> definiert:<br/>
-          - <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unveränderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
+          - <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
           - <span class="globalvar">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
           Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="globalvar">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
           BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
@@ -4730,18 +4721,18 @@ Optional data output mode can be one or combination of:<br/>
           <br/>
           <br/>
 
-      <li>Data-Pumping (Laden von Historydaten) erfolgt in Blöcken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
+      <li>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
           <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
-          <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). Während des Pumpings können die Bars immer noch Lücken enthalten, da
-          <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Blöcke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
+          <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
+          <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Bl&ouml;cke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
           <span class="number">0</span> (alle Bars modifiziert).<br/>
-          Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zurück (alle Bars modifiziert), wenn mehr als die nächste neue Bar
+          Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
           (BarOpen-Event) im Chart erscheint.</li>
           <br/>
           <br/>
 
       <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren verwendet werden, nicht in Scripten, Experts oder Libraries. Dort gibt die Funktion
-          <span class="number">-1</span> zurück.<br/>
+          <span class="number">-1</span> zur&uuml;ck.<br/>
           siehe auch <span class="function">stdlib_onStart</span>()</li>
       </content>
       <example>
@@ -5335,19 +5326,19 @@ int init() {
       <br/>
       <span style="color:red">Bugs:</span>
       <li>Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
-          <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zurück.</li>
-      <li>Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zurück, ohne einen Fehler zu melden.</li>
+          <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zur&uuml;ck.</li>
+      <li>Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zur&uuml;ck, ohne einen Fehler zu melden.</li>
       <br/>
       <br/>
       <span style="color:green">Note:</span><br/>
-      Diese Funktion sollte niemals verwendet werden. Um bei Rückgabe von <span class="const">NULL</span> einen Fehler zu melden, kann <span class="function">TimeCurrentEx</span>()
+      Diese Funktion sollte niemals verwendet werden. Um bei R&uuml;ckgabe von <span class="const">NULL</span> einen Fehler zu melden, kann <span class="function">TimeCurrentEx</span>()
       verwendet werden. Um den Zeitpunkt des letzten Ticks zu ermitteln, sollte
       <nobr><span class="function">MarketInfo</span>(<span class="function">Symbol</span>(), <span class="const">MODE_TIME</span>)</nobr> verwendet werden. Um die Serverzeit
       zu ermitteln, sollte <span class="function">GetServerTime</span>() bzw. <span class="function">TimeServer</span>() verwendet werden.<br/>
 
       <br/>
       <span style="color:red">TODO:</span><br/>
-      Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
+      Standalone-Indikatoren m&uuml;ssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert &uuml;bernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
       in Standalone-Indikatoren unter Test).<br/>
       </content>
       <example>
@@ -5365,9 +5356,9 @@ if (TimeCurrent()-OrderOpenTime()&lt;360)
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 0 statt 1 zurück.<br/>
+      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 0 statt 1 zur&uuml;ck.<br/>
       <br/>
-      Workaround: <span class="function">TimeDayFix()</span> verwenden<br/>
+      Workaround: <span class="function">TimeDayEx()</span> verwenden<br/>
       <br/>
       </content>
       <example>
@@ -5390,9 +5381,9 @@ if (TimeCurrent()-OrderOpenTime()&lt;360)
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 0 (Sunday) statt 3 (Thursday) zurück.<br/>
+      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 0 (Sunday) statt 3 (Thursday) zur&uuml;ck.<br/>
       <br/>
-      Workaround: <span class="function">TimeDayOfWeekFix()</span> verwenden<br/>
+      Workaround: <span class="function">TimeDayOfWeekEx()</span> verwenden<br/>
       <br/>
       </content>
       <example>
@@ -5447,16 +5438,16 @@ if (TimeCurrent()-OrderOpenTime()&lt;360)
       <content>
       Returns local computer time as seconds since 00:00 January 1, 1970. In the Tester local time is modelled and is the same as the modelled server time.<br/>
       <br/>
-      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zurück, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On).
-      Je nach Terminalversion wird entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch übernommener Wert
-      (<span class="const">NULL</span>) zurückgegeben.<br/>
+      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zur&uuml;ck, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On).
+      Je nach Terminalversion wird entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch &uuml;bernommener Wert
+      (<span class="const">NULL</span>) zur&uuml;ckgegeben.<br/>
       Workaround: noch nicht implementiert (siehe Notes)<br/>
 
       <br/>
       <span style="color:red">Notes:</span> <br/>
-      <li>Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
+      <li>Standalone-Indikatoren m&uuml;ssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert &uuml;bernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
           in Standalone-Indikatoren unter Test).</li>
-      <li>Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tatsächlichen lokalen Zeitzone.
+      <li>Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tats&auml;chlichen lokalen Zeitzone.
           Dies <i>kann</i> Implikationen haben, wenn der Test mit der Umgebung interagiert.</li>
       </content>
       <example>
@@ -5525,9 +5516,9 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zurück.<br/>
+      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zur&uuml;ck.<br/>
       <br/>
-      Workaround: <span class="function">TimeYearFix()</span> verwenden<br/>
+      Workaround: <span class="function">TimeYearEx()</span> verwenden<br/>
       <br/>
       </content>
       <example>
@@ -5754,7 +5745,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          <br/>
          <span style="color:red">Bugs:</span><br/>
          <li>Ab Build 810 ist die Funktion im Tester blockiert.</li>
-         <li>Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.</li>
+         <li>Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht &ouml;ffnen.</li>
          <br/>
          Workaround: Dateifunktionen des MT4Expanders verwenden.<br/>
          <br/>
@@ -7180,26 +7171,26 @@ If the function succeeds the returned value will be <span class="const">true</sp
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 The object coordinates are numbered starting from 0.
      </content>
-      example=ObjectMove(&quot;MyTrend&quot;, 1, D<span class="string">'2005.02.25 12:30'</span>, 1.2345);
+      example=<span class="function">ObjectMove</span>(<span class="string code">"MyTrend"</span>, <span class="number code">1</span>, D<span class="string code">'2005.02.25 12:30'</span>, <span class="number code">1.2345</span>);
       <parameter>
         type=string
         name=name
-        description=Object name.
+        description=object name
       </parameter>
       <parameter>
         type=int
         name=point
-        description=Coordinate index (0-2).
+        description=coordinate index (0-2)
       </parameter>
       <parameter>
         type=datetime
         name=time1
-        description=New time value.
+        description=new time value
       </parameter>
       <parameter>
         type=double
         name=price1
-        description=New price value.
+        description=new price value
       </parameter>
     </function>
 
@@ -7484,7 +7475,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       Returns the character code at the specified position of the string.<br/>
       <br/>
       Note:<br/>
-      Weist der Parameter <i>pos</i> auf eine Position, die die Länge des Strings überschreitet, setzt die Funktion den Fehler
+      Weist der Parameter <i>pos</i> auf eine Position, die die L&auml;nge des Strings &uuml;berschreitet, setzt die Funktion den Fehler
       <span class="const">ERR_ARRAY_INDEX_OUT_OF_RANGE</span>.<br/>
       </content>
       <example>
@@ -7561,9 +7552,9 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
          <br/>
          <br/>
          <span style="color:red">Bugs:</span><br/>
-         <li>Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.</li>
-         <li>Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="const">NULL</span>).
-             StringSubstr(value, start, length=0) gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.</li>
+         <li>Wird als erster Parameter ein Wert anderen Typs &uuml;bergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.</li>
+         <li>Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdr&uuml;cklich angegebenem dritten Parameter 0 (<span class="const">NULL</span>).
+             StringSubstr(value, start, length=0) gibt dadurch statt des gew&uuml;nschten Leerstrings den kompletten String zur&uuml;ck.</li>
          <li>The sum of start + length must not be larger than <span class="const">INT_MAX</span>.</li>
          <br/>
          Workaround: <span style="color:blue">StringSubstrFix()</span> verwenden
@@ -7980,7 +7971,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </parameter>
       <parameter>
         type=int
@@ -8100,7 +8091,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </parameter>
       <parameter>
         type=int
@@ -8122,8 +8113,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       Loads a custom indicator and returns one of its calculated values.<br/>
       <br/>
       <span style="color:green">Notes:</span>
-      <li>Die Typen der Indikatorparameter müssen exakt der Indikatordeklaration entsprechen, um ein Neuinitialisieren des Indikators bei jedem Aufruf zu vermeiden
-          (implizites Casting ist nicht möglich).</li>
+      <li>Die Typen der Indikatorparameter m&uuml;ssen exakt der Indikatordeklaration entsprechen, um ein Neuinitialisieren des Indikators bei jedem Aufruf zu vermeiden
+          (implizites Casting ist nicht m&ouml;glich).</li>
       <li>Im Tester wird der aufgerufene Indikator nach Testende nur dann angezeigt, wenn der <span class="function">iCustom</span>()-Aufruf im Hauptmodul des Programms
           erfolgt (also im EA selbst), nicht jedoch bei Aufruf aus einer Library.</li>
       </content>
@@ -8276,7 +8267,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <parameter>
         type=int
         name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </parameter>
       <parameter>
         type=int
@@ -8583,7 +8574,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <parameter>
         type=int
         name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </parameter>
       <parameter>
         type=int
@@ -8677,9 +8668,9 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       caption=iMAOnArray() - Moving Average on custom data
       type=double
       <content>
-        Calculates the Moving Average indicator on custom data. To improve performance the calculated MA series is cached. 
+        Calculates the Moving Average indicator on custom data. To improve performance the calculated MA series is cached.
         Write access to the source array invalidates the cache.<br/><br/>
-        @see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>  
+        @see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </content>
       <example>
 <span class="type">double</span> maCurrent     = <span class="function">iMAOnArray</span>(buffer, <span class="const">WHOLE_ARRAY</span>, <span class="number">5</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">0</span>);
@@ -8938,7 +8929,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <parameter>
         type=int
         name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </parameter>
       <parameter>
         type=int
@@ -9051,7 +9042,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <parameter>
         type=int
         name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </parameter>
       <parameter>
         type=int
@@ -9188,12 +9179,12 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       For the current chart the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.<br/>
       <br/>
       Notes:<br/>
-      <li>Beim ersten Zugriff auf eine leere Datenreihe wird statt <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gewöhnlich <span class="const">ERS_HISTORY_UPDATE</span>
+      <li>Beim ersten Zugriff auf eine leere Datenreihe wird statt <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gew&ouml;hnlich <span class="const">ERS_HISTORY_UPDATE</span>
           gesetzt.</li>
       <li>Bei weiteren Zugriffen auf eine leere Datenreihe wird <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gesetzt.</li>
       <li>Ohne Verbindung zum Server ist nach Recompilation und bei fehlenden Daten u.U. gar kein Fehler gesetzt.</li>
-      <li>Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert. Ein Programm, das z.B. innerhalb
-          einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine konstante Anzahl Bars "sehen".</li>
+      <li>Die Anzahl der gemeldeten Bars einer Datenreihe &auml;ndert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich &auml;ndert. Ein Programm, das z.B. innerhalb
+          einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird w&auml;hrend eines Ticks immer eine konstante Anzahl Bars "sehen".</li>
       </content>
       <example>
   Print(&quot;The number of bars of 'EURUSD,PERIOD_H1' is&quot;, iBars(&quot;EURUSD&quot;, PERIOD_H1));
@@ -9220,12 +9211,12 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <br/>
       <span style="color:red">Notes:</span>
       <br/>
-      exact = <span class="const">true</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
+      exact = <span class="const">true</span>: Gibt den Index der Bar zur&uuml;ck, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
       <br/>
-      exact = <span class="const">false</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der
-      vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.<br/>
+      exact = <span class="const">false</span>: Gibt den Index der Bar zur&uuml;ck, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der
+      vorhergehenden, &auml;lteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zur&uuml;ckgegeben.<br/>
       <br/>
-      Existieren keine Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw", oder ist der Timeframe kein Standard-Timeframe,
+      Existieren keine Kursdaten, wird -1 zur&uuml;ckgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw", oder ist der Timeframe kein Standard-Timeframe,
       wird kein Fehler gemeldet.<br/>
       <br/>
       Ist das Symbol bekannt, wird u.U. der Status <span class="const">ERS_HISTORY_UPDATE</span> gemeldet.
@@ -9330,7 +9321,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Returns the offset of the maximum value over the specific number of periods.<br/>
       <br/>
       Note:<br/>
-      Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
+      Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zur&uuml;ckliegenden Bar zur&uuml;ckgegeben.<br/>
       </content>
       <example>
   // getting the highest High of 20 consecutive bars in the range from the 4th to the 23rd index
@@ -9404,7 +9395,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Returns the offset of the minimum value over the specific number of periods.<br/>
       <br/>
       Note:<br/>
-      Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
+      Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zur&uuml;ckliegenden Bar zur&uuml;ckgegeben.<br/>
       </content>
       <example>
 // getting the lowest Low of 10 consecutive bars in the range from the 10th to the 19th index
@@ -9512,8 +9503,8 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Der zurückgegebene Wert ist nicht exakt, wenn er sich auf eine andere als die aktuelle Periode bezieht. Trifft ein neuer Tick ein, kann die Funktion <i>für einen Moment</i>
-      noch den alten Wert zurückgeben, obwohl alle anderen Werte die Bar bereits korrekt beschreiben. <span class="function">iVolume</span>() einer anderen als der aktuellen Periode
+      Der zur&uuml;ckgegebene Wert ist nicht exakt, wenn er sich auf eine andere als die aktuelle Periode bezieht. Trifft ein neuer Tick ein, kann die Funktion <i>f&uuml;r einen Moment</i>
+      noch den alten Wert zur&uuml;ckgeben, obwohl alle anderen Werte die Bar bereits korrekt beschreiben. <span class="function">iVolume</span>() einer anderen als der aktuellen Periode
       kann deshalb nicht zur Unterscheidung einzelner Ticks verwendet werden.<br/>
       </content>
       <example>
@@ -10023,7 +10014,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
          <br/>
          <span style="color:red">Bug:</span>
          <br/>
-         <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ungültiger Ticket-Nummer <span class="const">false</span> zurück, setzt jedoch keinen Fehler-Code.<br/>
+         <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ung&uuml;ltiger Ticket-Nummer <span class="const">false</span> zur&uuml;ck, setzt jedoch keinen Fehler-Code.<br/>
          Workaround: <span class="function">OrderSelectByTicket</span>() verwenden<br/>
          <br/>
       </content>
@@ -10440,7 +10431,7 @@ for(int i=0; i&lt;bars_count; i++,bar--)
 Returns the name of the currently executed MQL module.<br/>
 <br/>
 <span style="color:red">Notes:</span> <br/>
-In Terminalversionen bis Build 4.??? gibt die Funktion den Namen des Moduls inklusive eines evt. Pfades zurück (z.B. <span class="string">"test/testlibrary"</span>).<br/>
+In Terminalversionen bis Build 4.??? gibt die Funktion den Namen des Moduls inklusive eines evt. Pfades zur&uuml;ck (z.B. <span class="string">"test/testlibrary"</span>).<br/>
       </content>
       <example>
 string name = WindowExpertName();
@@ -10492,16 +10483,16 @@ it means that the chart window has not been fully filled out and there is a spac
         Returns the handle of the system window containing the given chart.
         If no chart of <i>symbol</i> and <i>timeframe</i> is open, <span class="number">0</span> is returned.<br/>
       <br/>
-      Note: Das Fenster des eigenen Charts existiert immer, auch wenn <span class="function">WindowHandle</span>() <span class="number">0</span> zurück gibt (siehe Bugs).
+      Note: Das Fenster des eigenen Charts existiert immer, auch wenn <span class="function">WindowHandle</span>() <span class="number">0</span> zur&uuml;ck gibt (siehe Bugs).
       Ausnahme ist ein Test bei VisualMode=Off.<br/>
       <br/>
       <span style="color:red">Bugs:</span>
       <li>Indikatoren und Scripte: Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>()
-          <span class="number">0</span> zurück, solange das Terminal nicht endgültig initialisiert ist.</li>
+          <span class="number">0</span> zur&uuml;ck, solange das Terminal nicht endg&uuml;ltig initialisiert ist.</li>
       <li>Indikatoren: In einem von einem EA per <span class="function">iCustom</span>() geladenen Indikator wird im Tester bei VisualMode=On <span class="number">0</span>
-          zurückgegeben, wenn der Indikator einen anderen als den aktuellen Timeframe benutzt.</li>
-      <li>Indikatoren und Experts: Im Tester wird bei VisualMode=Off <span class="const">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> ausgelöst.</li>
-      <li>Alle: Ab Build 418 gibt die Funktion bei Terminal-Shutdown <span class="number">0</span> zurück. In Indikatoren tritt dies erst in <span class="function">deinit</span>()
+          zur&uuml;ckgegeben, wenn der Indikator einen anderen als den aktuellen Timeframe benutzt.</li>
+      <li>Indikatoren und Experts: Im Tester wird bei VisualMode=Off <span class="const">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> ausgel&ouml;st.</li>
+      <li>Alle: Ab Build 418 gibt die Funktion bei Terminal-Shutdown <span class="number">0</span> zur&uuml;ck. In Indikatoren tritt dies erst in <span class="function">deinit</span>()
           ein, in Scripten und Experts <i>kann</i> es bereits in <span class="function">start</span>() eintreten.</li>
       <br/>
       <br/>
@@ -10662,7 +10653,7 @@ Note: For custom indicators, this value is undefined.
       <br/>
       <br/>
       <span style="color:red">Bug:</span>
-      Funktioniert im Tester bei Aufruf durch Script nicht. Stattdessen muß das Win32-API zum Neuzeichnen des Fensters verwendet werden.
+      Funktioniert im Tester bei Aufruf durch Script nicht. Stattdessen mu&szlig; das Win32-API zum Neuzeichnen des Fensters verwendet werden.
       </content>
       <example>
   //---- set new properties for some objects
@@ -10870,7 +10861,7 @@ Note: For custom indicators, this value is undefined.
         <p>Neues History-Format</p>
 
         <ul>
-           <li>Alte MetaTrader-Versionen (bis Build 509), die auf eine Historydatei im neuen Format stoßen, löschen diese Datei beim Beenden.</li>
+           <li>Alte MetaTrader-Versionen (bis Build 509), die auf eine Historydatei im neuen Format sto&szlig;en, l&ouml;schen diese Datei beim Beenden.</li>
         </ul>
         </content>
       </group>

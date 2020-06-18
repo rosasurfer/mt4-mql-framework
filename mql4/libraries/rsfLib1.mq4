@@ -187,7 +187,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
     *  2 Wechsel:                          1975.04.01 00:00:00     DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Normalzeit -> DST -> Normalzeit
     */
    datetime toDST, toSTD;
-   int i, iMax=2037-1970, y=TimeYearFix(serverTime);
+   int i, iMax=2037-1970, y=TimeYearEx(serverTime);
 
 
    // letzter Wechsel
@@ -446,7 +446,7 @@ int __CheckLocks() {
 int GetGmtToFxtTimeOffset(datetime gmtTime) {
    if (gmtTime < 0) return(_EMPTY_VALUE(catch("GetGmtToFxtTimeOffset(1)  invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_PARAMETER)));
 
-   int offset, year=TimeYearFix(gmtTime)-1970;
+   int offset, year=TimeYearEx(gmtTime)-1970;
 
    // FXT
    if      (gmtTime < transitions.FXT[year][TR_TO_DST.gmt]) offset = -transitions.FXT[year][STD_OFFSET];
@@ -527,7 +527,7 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
       else                                     lTimezone = "europe/kiev";
    }
 
-   int offset, year=TimeYearFix(serverTime)-1970;
+   int offset, year=TimeYearEx(serverTime)-1970;
 
    if (lTimezone == "america/new_york") {
       if      (serverTime < transitions.America_New_York[year][TR_TO_DST.local]) offset = transitions.America_New_York[year][STD_OFFSET];
@@ -3517,7 +3517,7 @@ datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TI
    if (fxtTime < 0)
       return(_NaT(catch("GetSessionStartTime.srv(1)  illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
-   int dayOfWeek = TimeDayOfWeekFix(fxtTime);
+   int dayOfWeek = TimeDayOfWeekEx(fxtTime);
 
    if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
       return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
@@ -3702,7 +3702,7 @@ datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
       return(_NaT(catch("GetPrevSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekFix(startTime);
+   int dow = TimeDayOfWeekEx(startTime);
    if      (dow == SATURDAY) startTime -= 1*DAY;
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
@@ -3742,7 +3742,7 @@ datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
       return(_NaT(catch("GetSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekFix(startTime);
+   int dow = TimeDayOfWeekEx(startTime);
    if (dow == SATURDAY || dow == SUNDAY)
       return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
 
@@ -3779,7 +3779,7 @@ datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekFix(startTime);
+   int dow = TimeDayOfWeekEx(startTime);
    if      (dow == SATURDAY) startTime += 2*DAYS;
    else if (dow == SUNDAY  ) startTime += 1*DAY;
 
@@ -4104,7 +4104,7 @@ string GetHostName() {
 int GetFxtToGmtTimeOffset(datetime fxtTime) {
    if (fxtTime < 0) return(_EMPTY_VALUE(catch("GetFxtToGmtTimeOffset(1)  invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_PARAMETER)));
 
-   int offset, year=TimeYearFix(fxtTime)-1970;
+   int offset, year=TimeYearEx(fxtTime)-1970;
 
    // FXT
    if      (fxtTime < transitions.FXT[year][TR_TO_DST.local]) offset = transitions.FXT[year][STD_OFFSET];
@@ -4184,7 +4184,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       else                                  lTimezone = "europe/kiev";
    }
 
-   int offset, year=TimeYearFix(gmtTime)-1970;
+   int offset, year=TimeYearEx(gmtTime)-1970;
 
    if (lTimezone == "america/new_york") {
       if      (gmtTime < transitions.America_New_York[year][TR_TO_DST.gmt]) offset = -transitions.America_New_York[year][STD_OFFSET];
