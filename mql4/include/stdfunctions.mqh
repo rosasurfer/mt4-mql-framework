@@ -2403,53 +2403,47 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeDay()
+ * Return the day of the month of the specified time: 1...31
  *
- *
- * Gibt den Tag des Monats eines Zeitpunkts zurück (1-31).
+ * Fixes the broken builtin function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeDayFix(datetime time) {
-   if (!time)
-      return(1);
-   return(TimeDay(time));           // Fehler: 0 statt 1 für D'1970.01.01 00:00:00'
+int TimeDayEx(datetime time) {
+   if (!time) return(1);
+   return(TimeDay(time));
 }
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeDayOfWeek()
+ * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
  *
- *
- * Gibt den Wochentag eines Zeitpunkts zurück (0=Sunday ... 6=Saturday).
+ * Fixes the broken builtin function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeDayOfWeekFix(datetime time) {
-   if (!time)
-      return(3);
-   return(TimeDayOfWeek(time));     // Fehler: 0 (Sunday) statt 3 (Thursday) für D'1970.01.01 00:00:00'
+int TimeDayOfWeekEx(datetime time) {
+   if (!time) return(3);
+   return(TimeDayOfWeek(time));
 }
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeYear()
+ * Return the year of the specified time: 1970...2037
  *
- *
- * Gibt das Jahr eines Zeitpunkts zurück (1970-2037).
+ * Fixes the broken builtin function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeYearFix(datetime time) {
-   if (!time)
-      return(1970);
-   return(TimeYear(time));          // Fehler: 1900 statt 1970 für D'1970.01.01 00:00:00'
+int TimeYearEx(datetime time) {
+   if (!time) return(1970);
+   return(TimeYear(time));
 }
 
 
@@ -6883,14 +6877,14 @@ void __DummyCalls() {
    Tester.Stop();
    This.IsTesting();
    TimeCurrentEx();
-   TimeDayFix(NULL);
-   TimeDayOfWeekFix(NULL);
+   TimeDayEx(NULL);
+   TimeDayOfWeekEx(NULL);
    TimeframeFlag();
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
    TimeServer();
-   TimeYearFix(NULL);
+   TimeYearEx(NULL);
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
