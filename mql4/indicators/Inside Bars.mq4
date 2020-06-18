@@ -92,6 +92,8 @@ int onTick() {
          case PERIOD_H6:  CheckInsideBarsH6();  break;
          case PERIOD_H8:  CheckInsideBarsH8();  break;
          case PERIOD_D1:  CheckInsideBarsD1();  break;
+         case PERIOD_W1:  CheckInsideBarsW1();  break;
+         case PERIOD_MN1: CheckInsideBarsMN1(); break;
          default:
             return(catch("onTick(1)  processing of timeframe "+ Timeframe +" not implemented", ERR_NOT_IMPLEMENTED));
       }
@@ -217,7 +219,7 @@ bool CheckInsideBarsH2() {
          high = MathMax(ratesH1[i][HIGH], high);
          low  = MathMin(ratesH1[i][LOW], low);
       }
-      else {                                                   // the current H1 bar belongs to a new H4 bar
+      else {                                                   // the current H1 bar belongs to a new H2 bar
          if (h2 > 1 && high >= pHigh && low <= pLow) {
             if (!MarkInsideBar(PERIOD_H2, ppOpenTimeH2, pHigh, pLow)) return(false);
             more--;
@@ -256,7 +258,7 @@ bool CheckInsideBarsH3() {
          high = MathMax(ratesH1[i][HIGH], high);
          low  = MathMin(ratesH1[i][LOW], low);
       }
-      else {                                                   // the current H1 bar belongs to a new H4 bar
+      else {                                                   // the current H1 bar belongs to a new H3 bar
          if (h3 > 1 && high >= pHigh && low <= pLow) {
             if (!MarkInsideBar(PERIOD_H3, ppOpenTimeH3, pHigh, pLow)) return(false);
             more--;
@@ -334,7 +336,7 @@ bool CheckInsideBarsH6() {
          high = MathMax(ratesH1[i][HIGH], high);
          low  = MathMin(ratesH1[i][LOW], low);
       }
-      else {                                                   // the current H1 bar belongs to a new H4 bar
+      else {                                                   // the current H1 bar belongs to a new H6 bar
          if (h6 > 1 && high >= pHigh && low <= pLow) {
             if (!MarkInsideBar(PERIOD_H6, ppOpenTimeH6, pHigh, pLow)) return(false);
             more--;
@@ -373,7 +375,7 @@ bool CheckInsideBarsH8() {
          high = MathMax(ratesH1[i][HIGH], high);
          low  = MathMin(ratesH1[i][LOW], low);
       }
-      else {                                                   // the current H1 bar belongs to a new H4 bar
+      else {                                                   // the current H1 bar belongs to a new H8 bar
          if (h8 > 1 && high >= pHigh && low <= pLow) {
             if (!MarkInsideBar(PERIOD_H8, ppOpenTimeH8, pHigh, pLow)) return(false);
             more--;
@@ -406,13 +408,13 @@ bool CheckInsideBarsD1() {
 
    for (int i=0; more && i < bars; i++) {
       openTimeH1 = ratesH1[i][TIME];
-      openTimeD1 = openTimeH1 - (openTimeH1 % DAY);            // opentime of the containing D1 bar
+      openTimeD1 = openTimeH1 - (openTimeH1 % DAY);            // opentime of the containing D1 bar (Midnight)
 
       if (openTimeD1 == pOpenTimeD1) {                         // the current H1 bar belongs to the same D1 bar
          high = MathMax(ratesH1[i][HIGH], high);
          low  = MathMin(ratesH1[i][LOW], low);
       }
-      else {                                                   // the current H1 bar belongs to a new H4 bar
+      else {                                                   // the current H1 bar belongs to a new D1 bar
          if (d1 > 1 && high >= pHigh && low <= pLow) {
             if (!MarkInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow)) return(false);
             more--;
@@ -422,6 +424,88 @@ bool CheckInsideBarsD1() {
          pHigh        = high;
          pLow         = low;
          d1++;
+         high = ratesH1[i][HIGH];
+         low  = ratesH1[i][LOW];
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for W1 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsW1() {
+   int bars = ArrayRange(ratesH1, 0);
+   int more = maxInsideBars;
+   int w1 = -1;                                                // W1 bar index
+
+   datetime openTimeH1, openTimeD1, openTimeW1, pOpenTimeW1, ppOpenTimeW1;
+   double high, pHigh, low, pLow;
+
+   for (int i=0; more && i < bars; i++) {
+      openTimeH1 = ratesH1[i][TIME];
+      openTimeD1 = openTimeH1 - (openTimeH1 % DAY);            // opentime of the containing D1 bar (Midnight)
+      int dow    = TimeDayOfWeekEx(openTimeD1);
+      openTimeW1 = openTimeD1 - ((dow+6) % 7);                 // opentime of the containing W1 bar (Monday 00:00)
+
+      if (openTimeW1 == pOpenTimeW1) {                         // the current H1 bar belongs to the same W1 bar
+         high = MathMax(ratesH1[i][HIGH], high);
+         low  = MathMin(ratesH1[i][LOW], low);
+      }
+      else {                                                   // the current H1 bar belongs to a new W1 bar
+         if (w1 > 1 && high >= pHigh && low <= pLow) {
+            if (!MarkInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow)) return(false);
+            more--;
+         }
+         ppOpenTimeW1 = pOpenTimeW1;
+         pOpenTimeW1  = openTimeW1;
+         pHigh        = high;
+         pLow         = low;
+         w1++;
+         high = ratesH1[i][HIGH];
+         low  = ratesH1[i][LOW];
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for MN1 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsMN1() {
+   int bars = ArrayRange(ratesH1, 0);
+   int more = maxInsideBars;
+   int mn1 = -1;                                               // MN1 bar index
+
+   datetime openTimeH1, openTimeD1, openTimeMN1, pOpenTimeMN1, ppOpenTimeMN1;
+   double high, pHigh, low, pLow;
+
+   for (int i=0; more && i < bars; i++) {
+      openTimeH1  = ratesH1[i][TIME];
+      openTimeD1  = openTimeH1 - (openTimeH1 % DAY);           // opentime of the containing D1 bar (Midnight)
+      int day = TimeDayEx(openTimeD1);
+      openTimeMN1 = openTimeD1 - (day-1);                      // opentime of the containing MN1 bar (1st of month 00:00)
+
+      if (openTimeMN1 == pOpenTimeMN1) {                       // the current H1 bar belongs to the same MN1 bar
+         high = MathMax(ratesH1[i][HIGH], high);
+         low  = MathMin(ratesH1[i][LOW], low);
+      }
+      else {                                                   // the current H1 bar belongs to a new MN1 bar
+         if (mn1 > 1 && high >= pHigh && low <= pLow) {
+            if (!MarkInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow)) return(false);
+            more--;
+         }
+         ppOpenTimeMN1 = pOpenTimeMN1;
+         pOpenTimeMN1  = openTimeMN1;
+         pHigh         = high;
+         pLow          = low;
+         mn1++;
          high = ratesH1[i][HIGH];
          low  = ratesH1[i][LOW];
       }
