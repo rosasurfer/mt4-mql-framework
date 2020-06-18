@@ -344,8 +344,8 @@ bool UpdateSuperBars() {
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
       // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
       if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe >= PERIOD_MN1) {
-         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeekFix(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;  // Sonntagsbar: Server-Timezone westlich von FXT
-         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeekFix(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt; // Samstagsbar: Server-Timezone östlich von FXT
+         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeekEx(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;      // Sonntagsbar: Server-Timezone westlich von FXT
+         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeekEx(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;     // Samstagsbar: Server-Timezone östlich von FXT
       }
 
       openBar  = iBarShiftNext    (NULL, NULL, openTime.srv);           if (openBar  == EMPTY_VALUE) return(false);

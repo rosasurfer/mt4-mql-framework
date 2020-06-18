@@ -1361,7 +1361,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       if (hf.bufferedBar.offset[hFile] < 0) {                                          // BufferedBar ist leer
          if (tick.offset == -1) {
             if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
-            else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekFix(tick.time)+6)%7*DAYS;       // 00:00, Montag
+            else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;        // 00:00, Montag
             else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayFix(tick.time)-1)*DAYS;               // 00:00, 1. des Monats
             tick.offset = HistoryFile.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
          }
@@ -1448,8 +1448,8 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
    // (3.2) BufferedBar ist leer: Tickbar mit Tick aktualisieren oder neue Bar mit Tick zu History hinzufügen
    if (tick.offset == -1) {
       if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
-      else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekFix(tick.time)+6)%7*DAYS;       // 00:00, Montag
-      else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayFix(tick.time)-1)*DAYS;               // 00:00, 1. des Monats
+      else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;          // 00:00, Montag
+      else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayFix(tick.time)-1)*DAYS;                 // 00:00, 1. des Monats
       tick.offset = HistoryFile.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
    }
    if (tick.offset < hf.full.bars[hFile]) {

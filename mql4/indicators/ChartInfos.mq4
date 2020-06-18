@@ -2479,13 +2479,13 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
       datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentEx("CustomPositions.ParseHstTerm(6)");
       if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
-      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
+      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekEx(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
 
       if (!dtTo) {                                                                                       // {DateTime} - NULL
-         if      (groupByMonth) dtTo = DateTime(TimeYearFix(now), TimeMonth(now)+1)        - 1*SECOND;   // aktuelles Monatsende
-         else if (groupByWeek ) dtTo = now - now%DAYS + (7-TimeDayOfWeekFix(now))%7 * DAYS - 1*SECOND;   // aktuelles Wochenende
-         else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                              - 1*SECOND;   // aktuelles Tagesende
+         if      (groupByMonth) dtTo = DateTime(TimeYearFix(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
+         else if (groupByWeek ) dtTo = now - now%DAYS + (7-TimeDayOfWeekEx(now))%7 * DAYS - 1*SECOND;    // aktuelles Wochenende
+         else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                             - 1*SECOND;    // aktuelles Tagesende
       }
 
       for (bool firstGroup=true; groupFrom < dtTo; groupFrom=nextGroupFrom) {
@@ -2676,7 +2676,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          else if (value == "YESTERDAY") value = "LASTDAY";
 
          date = now;
-         dow  = TimeDayOfWeekFix(date);
+         dow  = TimeDayOfWeekEx(date);
          if      (dow == SATURDAY) date -= 1*DAY;                    // an Wochenenden Datum auf den vorherigen Freitag setzen
          else if (dow == SUNDAY  ) date -= 2*DAYS;
 
@@ -2692,7 +2692,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       }
 
       else if (StrEndsWith(value, "WEEK")) {
-         date = now - (TimeDayOfWeekFix(now)+6)%7 * DAYS;            // Datum auf Wochenbeginn setzen
+         date = now - (TimeDayOfWeekEx(now)+6)%7 * DAYS;             // Datum auf Wochenbeginn setzen
          if (value != "THISWEEK") {
             if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             date -= 1*WEEK;                                          // Datum auf die vorherige Woche setzen
@@ -2830,7 +2830,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
    // (2) DateTime aus geparsten Werten erzeugen
    datetime result = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
    if (isWeek)                                                       // wenn volle Woche, dann Zeit auf Wochenbeginn setzen
-      result -= (TimeDayOfWeekFix(result)+6)%7 * DAYS;
+      result -= (TimeDayOfWeekEx(result)+6)%7 * DAYS;
    return(result);
 }
 

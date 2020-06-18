@@ -33,7 +33,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%MINUTES + 1*MINUTE);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= (1*DAY  + openTime.fxt%DAYS - 23*HOURS - 59*MINUTES);    // Freitag 23:59
       else if (dow == SUNDAY  ) openTime.fxt -= (2*DAYS + openTime.fxt%DAYS - 23*HOURS - 59*MINUTES);
 
@@ -54,7 +54,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%(5*MINUTES) + 5*MINUTES);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= (1*DAY  + openTime.fxt%DAYS - 23*HOURS - 55*MINUTES);    // Freitag 23:55
       else if (dow == SUNDAY  ) openTime.fxt -= (2*DAYS + openTime.fxt%DAYS - 23*HOURS - 55*MINUTES);
 
@@ -75,7 +75,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%(15*MINUTES) + 15*MINUTES);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= (1*DAY  + openTime.fxt%DAYS - 23*HOURS - 45*MINUTES);    // Freitag 23:45
       else if (dow == SUNDAY  ) openTime.fxt -= (2*DAYS + openTime.fxt%DAYS - 23*HOURS - 45*MINUTES);
 
@@ -96,7 +96,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%(30*MINUTES) + 30*MINUTES);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= (1*DAY  + openTime.fxt%DAYS - 23*HOURS - 30*MINUTES);    // Freitag 23:30
       else if (dow == SUNDAY  ) openTime.fxt -= (2*DAYS + openTime.fxt%DAYS - 23*HOURS - 30*MINUTES);
 
@@ -117,7 +117,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%HOURS + 1*HOUR);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= (1*DAY  + openTime.fxt%DAYS - 23*HOURS);                 // Freitag 23:00
       else if (dow == SUNDAY  ) openTime.fxt -= (2*DAYS + openTime.fxt%DAYS - 23*HOURS);
 
@@ -138,7 +138,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%(4*HOURS) + 4*HOURS);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= (1*DAY  + openTime.fxt%DAYS - 20*HOURS);                 // Freitag 20:00
       else if (dow == SUNDAY  ) openTime.fxt -= (2*DAYS + openTime.fxt%DAYS - 20*HOURS);
 
@@ -159,7 +159,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (openTime.fxt%DAYS + 1*DAY);
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= 1*DAY;
       else if (dow == SUNDAY  ) openTime.fxt -= 2*DAYS;
 
@@ -178,7 +178,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
 
       // openTime.fxt auf Montag, 00:00 Uhr der vorherigen Woche setzen
       openTime.fxt -= openTime.fxt % DAYS;                                                               // 00:00 des aktuellen Tages
-      openTime.fxt -= (TimeDayOfWeekFix(openTime.fxt)+6)%7 * DAYS;                                       // Montag der aktuellen Woche
+      openTime.fxt -= (TimeDayOfWeekEx(openTime.fxt)+6)%7 * DAYS;                                        // Montag der aktuellen Woche
       openTime.fxt -= 7*DAYS;                                                                            // Montag der Vorwoche
 
       // closeTime.fxt auf 00:00 des folgenden Samstags setzen
@@ -212,12 +212,12 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= (TimeDayFix(openTime.fxt)-1)*DAYS;                                                 // erster Tag des vorherigen Monats
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt += 2*DAYS;
       else if (dow == SUNDAY  ) openTime.fxt += 1*DAY;
 
       // Wochenenden in closeTime.fxt überspringen
-      dow = TimeDayOfWeekFix(closeTime.fxt);
+      dow = TimeDayOfWeekEx(closeTime.fxt);
       if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
       else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
    }
@@ -266,12 +266,12 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       }
 
       // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeekFix(openTime.fxt);
+      dow = TimeDayOfWeekEx(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt += 2*DAYS;
       else if (dow == SUNDAY  ) openTime.fxt += 1*DAY;
 
       // Wochenenden in closeTime.fxt überspringen
-      dow = TimeDayOfWeekFix(closeTime.fxt);
+      dow = TimeDayOfWeekEx(closeTime.fxt);
       if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
       else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
    }
