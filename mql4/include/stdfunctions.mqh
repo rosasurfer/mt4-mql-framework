@@ -2405,7 +2405,7 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 /**
  * Return the day of the month of the specified time: 1...31
  *
- * Fixes the broken builtin function TimeDay() which returns 0 insetad of 1 for D'1970.01.01 00:00:00'.
+ * Fixes the broken builtin function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
