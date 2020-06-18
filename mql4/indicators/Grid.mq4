@@ -35,13 +35,13 @@ int onInit() {
 
 
 /**
- * Deinitialization: Called before chart symbol or timeframe change.
+ * Deinitialization
  *
  * @return int - error status
  */
-int onDeinitChartChange() {
+int onDeinit() {
    DeleteRegisteredObjects();
-   return(NO_ERROR);
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -76,18 +76,18 @@ int DrawGrid() {
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {                                                // fromFXT bleibt unverändert
-      toFXT += (8-TimeDayOfWeekFix(toFXT))%7 * DAYS;                          // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
+      toFXT += (8-TimeDayOfWeekEx(toFXT))%7 * DAYS;                           // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
    }
 
    // Wochenseparatoren
    else if (Period() == PERIOD_H4) {
-      fromFXT += (8-TimeDayOfWeekFix(fromFXT))%7 * DAYS;                      // fromFXT ist der erste Montag
-      toFXT   += (8-TimeDayOfWeekFix(toFXT))%7 * DAYS;                        // toFXT ist der nächste Montag
+      fromFXT += (8-TimeDayOfWeekEx(fromFXT))%7 * DAYS;                       // fromFXT ist der erste Montag
+      toFXT   += (8-TimeDayOfWeekEx(toFXT))%7 * DAYS;                         // toFXT ist der nächste Montag
    }
 
    // Monatsseparatoren
    else if (Period() == PERIOD_D1) {
-      yyyy = TimeYearFix(fromFXT);                                            // fromFXT ist der erste Wochentag des ersten vollen Monats
+      yyyy = TimeYearEx(fromFXT);                                             // fromFXT ist der erste Wochentag des ersten vollen Monats
       mm   = TimeMonth(fromFXT);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
@@ -97,7 +97,7 @@ int DrawGrid() {
       }
       fromFXT = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYearFix(toFXT);                                              // toFXT ist der erste Wochentag des nächsten Monats
+      yyyy = TimeYearEx(toFXT);                                               // toFXT ist der erste Wochentag des nächsten Monats
       mm   = TimeMonth(toFXT);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
@@ -110,13 +110,13 @@ int DrawGrid() {
 
    // Jahresseparatoren
    else if (Period() > PERIOD_D1) {
-      yyyy = TimeYearFix(fromFXT);                                            // fromFXT ist der erste Wochentag des ersten vollen Jahres
+      yyyy = TimeYearEx(fromFXT);                                             // fromFXT ist der erste Wochentag des ersten vollen Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
       if (firstWeekDay < fromFXT)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       fromFXT = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYearFix(toFXT);                                              // toFXT ist der erste Wochentag des nächsten Jahres
+      yyyy = TimeYearEx(toFXT);                                               // toFXT ist der erste Wochentag des nächsten Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
       if (firstWeekDay < toFXT)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
@@ -128,7 +128,7 @@ int DrawGrid() {
    // (2) Separatoren zeichnen
    for (time=fromFXT; time <= toFXT; time+=1*DAY) {
       separatorTime = FxtToServerTime(time);                                  // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
-      dow           = TimeDayOfWeekFix(time);
+      dow           = TimeDayOfWeekEx(time);
 
       // Bar und Chart-Time des Separators ermitteln
       if (Time[0] < separatorTime) {                                          // keine entsprechende Bar: aktuelle Session oder noch laufendes ERS_HISTORY_UPDATE
@@ -188,14 +188,14 @@ int DrawGrid() {
       }
       // Monatsseparatoren
       else if (Period() == PERIOD_D1) {                                       // erster Wochentag des Monats
-         yyyy = TimeYearFix(time);
+         yyyy = TimeYearEx(time);
          mm   = TimeMonth(time);
          if (mm == 12) { yyyy++; mm = 0; }
          time = GetFirstWeekdayOfMonth(yyyy, mm+1) - 1*DAY;
       }
       // Jahresseparatoren
       else if (Period() > PERIOD_D1) {                                        // erster Wochentag des Jahres
-         yyyy = TimeYearFix(time);
+         yyyy = TimeYearEx(time);
          time = GetFirstWeekdayOfMonth(yyyy+1, 1) - 1*DAY;
       }
    }
@@ -217,7 +217,7 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
 
    datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
 
-   int dow = TimeDayOfWeekFix(firstDayOfMonth);
+   int dow = TimeDayOfWeekEx(firstDayOfMonth);
    if (dow == SATURDAY) return(firstDayOfMonth + 2*DAYS);
    if (dow == SUNDAY  ) return(firstDayOfMonth + 1*DAY );
 

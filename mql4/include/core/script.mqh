@@ -3,7 +3,7 @@
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 // current price series
-double rates[][6];
+double __rates[][6];
 
 
 /**
@@ -129,9 +129,9 @@ int start() {
    UnchangedBars  = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
-   ArrayCopyRates(rates);
+   ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
    }
 
