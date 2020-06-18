@@ -2433,19 +2433,17 @@ int TimeDayOfWeekEx(datetime time) {
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeYear()
+ * Return the year of the specified time: 1970...2037
  *
- *
- * Gibt das Jahr eines Zeitpunkts zurück (1970-2037).
+ * Fixes the broken builtin function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeYearFix(datetime time) {
-   if (!time)
-      return(1970);
-   return(TimeYear(time));          // Fehler: 1900 statt 1970 für D'1970.01.01 00:00:00'
+int TimeYearEx(datetime time) {
+   if (!time) return(1970);
+   return(TimeYear(time));
 }
 
 
@@ -6886,7 +6884,7 @@ void __DummyCalls() {
    TimeFXT();
    TimeGMT();
    TimeServer();
-   TimeYearFix(NULL);
+   TimeYearEx(NULL);
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);

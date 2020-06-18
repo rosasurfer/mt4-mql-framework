@@ -87,7 +87,7 @@ int DrawGrid() {
 
    // Monatsseparatoren
    else if (Period() == PERIOD_D1) {
-      yyyy = TimeYearFix(fromFXT);                                            // fromFXT ist der erste Wochentag des ersten vollen Monats
+      yyyy = TimeYearEx(fromFXT);                                             // fromFXT ist der erste Wochentag des ersten vollen Monats
       mm   = TimeMonth(fromFXT);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
@@ -97,7 +97,7 @@ int DrawGrid() {
       }
       fromFXT = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYearFix(toFXT);                                              // toFXT ist der erste Wochentag des nächsten Monats
+      yyyy = TimeYearEx(toFXT);                                               // toFXT ist der erste Wochentag des nächsten Monats
       mm   = TimeMonth(toFXT);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
@@ -110,13 +110,13 @@ int DrawGrid() {
 
    // Jahresseparatoren
    else if (Period() > PERIOD_D1) {
-      yyyy = TimeYearFix(fromFXT);                                            // fromFXT ist der erste Wochentag des ersten vollen Jahres
+      yyyy = TimeYearEx(fromFXT);                                             // fromFXT ist der erste Wochentag des ersten vollen Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
       if (firstWeekDay < fromFXT)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       fromFXT = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYearFix(toFXT);                                              // toFXT ist der erste Wochentag des nächsten Jahres
+      yyyy = TimeYearEx(toFXT);                                               // toFXT ist der erste Wochentag des nächsten Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
       if (firstWeekDay < toFXT)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
@@ -188,14 +188,14 @@ int DrawGrid() {
       }
       // Monatsseparatoren
       else if (Period() == PERIOD_D1) {                                       // erster Wochentag des Monats
-         yyyy = TimeYearFix(time);
+         yyyy = TimeYearEx(time);
          mm   = TimeMonth(time);
          if (mm == 12) { yyyy++; mm = 0; }
          time = GetFirstWeekdayOfMonth(yyyy, mm+1) - 1*DAY;
       }
       // Jahresseparatoren
       else if (Period() > PERIOD_D1) {                                        // erster Wochentag des Jahres
-         yyyy = TimeYearFix(time);
+         yyyy = TimeYearEx(time);
          time = GetFirstWeekdayOfMonth(yyyy+1, 1) - 1*DAY;
       }
    }

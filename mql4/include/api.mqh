@@ -273,7 +273,7 @@ string   TimeframeFlagToStr(int flag);;
 datetime TimeFXT();;
 datetime TimeGMT();;
 datetime TimeServer();;
-int      TimeYearFix(datetime time);;
+int      TimeYearEx(datetime time);;
 int      Toolbar.Experts(bool enable);;
 string   TradeCommandToStr(int cmd);;
 string   UninitializeReasonDescription(int reason);;
