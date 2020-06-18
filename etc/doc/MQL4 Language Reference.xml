@@ -5518,7 +5518,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <br/>
       Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zur&uuml;ck.<br/>
       <br/>
-      Workaround: <span class="function">TimeYearFix()</span> verwenden<br/>
+      Workaround: <span class="function">TimeYearEx()</span> verwenden<br/>
       <br/>
       </content>
       <example>
