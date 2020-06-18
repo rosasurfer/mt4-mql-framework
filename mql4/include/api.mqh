@@ -266,7 +266,7 @@ int      Tester.Pause(string location = "");;
 int      Tester.Stop(string location = "");;
 bool     This.IsTesting();;
 datetime TimeCurrentEx(string location = "");;
-int      TimeDayFix(datetime time);;
+int      TimeDayEx(datetime time);;
 int      TimeDayOfWeekEx(datetime time);;
 int      TimeframeFlag(int timeframe = NULL);;
 string   TimeframeFlagToStr(int flag);;

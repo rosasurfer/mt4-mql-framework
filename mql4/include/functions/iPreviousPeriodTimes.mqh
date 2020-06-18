@@ -204,12 +204,12 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       openTime.fxt -= openTime.fxt % DAYS;                                                               // 00:00 des aktuellen Tages
 
       // closeTime.fxt auf den 1. des folgenden Monats, 00:00 setzen
-      dom = TimeDayFix(openTime.fxt);
+      dom = TimeDayEx(openTime.fxt);
       closeTime.fxt = openTime.fxt - (dom-1)*DAYS;                                                       // erster des aktuellen Monats
 
       // openTime.fxt auf den 1. des vorherigen Monats, 00:00 Uhr setzen
       openTime.fxt  = closeTime.fxt - 1*DAYS;                                                            // letzter Tag des vorherigen Monats
-      openTime.fxt -= (TimeDayFix(openTime.fxt)-1)*DAYS;                                                 // erster Tag des vorherigen Monats
+      openTime.fxt -= (TimeDayEx(openTime.fxt)-1)*DAYS;                                                  // erster Tag des vorherigen Monats
 
       // Wochenenden in openTime.fxt überspringen
       dow = TimeDayOfWeekEx(openTime.fxt);
@@ -244,25 +244,25 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       switch (TimeMonth(openTime.fxt)) {
          case JANUARY  :
          case FEBRUARY :
-         case MARCH    : closeTime.fxt = openTime.fxt -    (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;  // erster Tag des aktuellen Quartals (01.01.)
-         case APRIL    : closeTime.fxt = openTime.fxt -       (TimeDayFix(openTime.fxt)-1)*DAYS; break;
-         case MAY      : closeTime.fxt = openTime.fxt - (30+   TimeDayFix(openTime.fxt)-1)*DAYS; break;
-         case JUNE     : closeTime.fxt = openTime.fxt - (30+31+TimeDayFix(openTime.fxt)-1)*DAYS; break;  // erster Tag des aktuellen Quartals (01.04.)
-         case JULY     : closeTime.fxt = openTime.fxt -       (TimeDayFix(openTime.fxt)-1)*DAYS; break;
-         case AUGUST   : closeTime.fxt = openTime.fxt - (31+   TimeDayFix(openTime.fxt)-1)*DAYS; break;
-         case SEPTEMBER: closeTime.fxt = openTime.fxt - (31+31+TimeDayFix(openTime.fxt)-1)*DAYS; break;  // erster Tag des aktuellen Quartals (01.07.)
-         case OCTOBER  : closeTime.fxt = openTime.fxt -       (TimeDayFix(openTime.fxt)-1)*DAYS; break;
-         case NOVEMBER : closeTime.fxt = openTime.fxt - (31+   TimeDayFix(openTime.fxt)-1)*DAYS; break;
-         case DECEMBER : closeTime.fxt = openTime.fxt - (31+30+TimeDayFix(openTime.fxt)-1)*DAYS; break;  // erster Tag des aktuellen Quartals (01.10.)
+         case MARCH    : closeTime.fxt = openTime.fxt -   (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;   // erster Tag des aktuellen Quartals (01.01.)
+         case APRIL    : closeTime.fxt = openTime.fxt -       (TimeDayEx(openTime.fxt)-1)*DAYS; break;
+         case MAY      : closeTime.fxt = openTime.fxt - (30+   TimeDayEx(openTime.fxt)-1)*DAYS; break;
+         case JUNE     : closeTime.fxt = openTime.fxt - (30+31+TimeDayEx(openTime.fxt)-1)*DAYS; break;   // erster Tag des aktuellen Quartals (01.04.)
+         case JULY     : closeTime.fxt = openTime.fxt -       (TimeDayEx(openTime.fxt)-1)*DAYS; break;
+         case AUGUST   : closeTime.fxt = openTime.fxt - (31+   TimeDayEx(openTime.fxt)-1)*DAYS; break;
+         case SEPTEMBER: closeTime.fxt = openTime.fxt - (31+31+TimeDayEx(openTime.fxt)-1)*DAYS; break;   // erster Tag des aktuellen Quartals (01.07.)
+         case OCTOBER  : closeTime.fxt = openTime.fxt -       (TimeDayEx(openTime.fxt)-1)*DAYS; break;
+         case NOVEMBER : closeTime.fxt = openTime.fxt - (31+   TimeDayEx(openTime.fxt)-1)*DAYS; break;
+         case DECEMBER : closeTime.fxt = openTime.fxt - (31+30+TimeDayEx(openTime.fxt)-1)*DAYS; break;   // erster Tag des aktuellen Quartals (01.10.)
       }
 
       // openTime.fxt auf den ersten Tag des vorherigen Quartals, 00:00 Uhr setzen
       openTime.fxt = closeTime.fxt - 1*DAY;                                                              // letzter Tag des vorherigen Quartals
       switch (TimeMonth(openTime.fxt)) {
-         case MARCH    : openTime.fxt -=    (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                 // erster Tag des vorherigen Quartals (01.01.)
-         case JUNE     : openTime.fxt -= (30+31+TimeDayFix(openTime.fxt)-1)*DAYS; break;                 // erster Tag des vorherigen Quartals (01.04.)
-         case SEPTEMBER: openTime.fxt -= (31+31+TimeDayFix(openTime.fxt)-1)*DAYS; break;                 // erster Tag des vorherigen Quartals (01.07.)
-         case DECEMBER : openTime.fxt -= (31+30+TimeDayFix(openTime.fxt)-1)*DAYS; break;                 // erster Tag des vorherigen Quartals (01.10.)
+         case MARCH    : openTime.fxt -=   (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                  // erster Tag des vorherigen Quartals (01.01.)
+         case JUNE     : openTime.fxt -= (30+31+TimeDayEx(openTime.fxt)-1)*DAYS; break;                  // erster Tag des vorherigen Quartals (01.04.)
+         case SEPTEMBER: openTime.fxt -= (31+31+TimeDayEx(openTime.fxt)-1)*DAYS; break;                  // erster Tag des vorherigen Quartals (01.07.)
+         case DECEMBER : openTime.fxt -= (31+30+TimeDayEx(openTime.fxt)-1)*DAYS; break;                  // erster Tag des vorherigen Quartals (01.10.)
       }
 
       // Wochenenden in openTime.fxt überspringen
