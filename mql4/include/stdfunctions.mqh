@@ -2420,19 +2420,16 @@ int TimeDayFix(datetime time) {
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeDayOfWeek()
- *
- *
- * Gibt den Wochentag eines Zeitpunkts zurück (0=Sunday ... 6=Saturday).
+ * Return the zero-based weekday of a time: 0=Sunday...6=Saturday. Fixes the broken builtin function TimeDayOfWeek() which
+ * returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeDayOfWeekFix(datetime time) {
-   if (!time)
-      return(3);
-   return(TimeDayOfWeek(time));     // Fehler: 0 (Sunday) statt 3 (Thursday) für D'1970.01.01 00:00:00'
+int TimeDayOfWeekEx(datetime time) {
+   if (!time) return(3);
+   return(TimeDayOfWeek(time));
 }
 
 
@@ -6884,7 +6881,7 @@ void __DummyCalls() {
    This.IsTesting();
    TimeCurrentEx();
    TimeDayFix(NULL);
-   TimeDayOfWeekFix(NULL);
+   TimeDayOfWeekEx(NULL);
    TimeframeFlag();
    TimeframeFlagToStr(NULL);
    TimeFXT();

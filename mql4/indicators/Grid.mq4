@@ -76,13 +76,13 @@ int DrawGrid() {
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {                                                // fromFXT bleibt unverändert
-      toFXT += (8-TimeDayOfWeekFix(toFXT))%7 * DAYS;                          // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
+      toFXT += (8-TimeDayOfWeekEx(toFXT))%7 * DAYS;                           // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
    }
 
    // Wochenseparatoren
    else if (Period() == PERIOD_H4) {
-      fromFXT += (8-TimeDayOfWeekFix(fromFXT))%7 * DAYS;                      // fromFXT ist der erste Montag
-      toFXT   += (8-TimeDayOfWeekFix(toFXT))%7 * DAYS;                        // toFXT ist der nächste Montag
+      fromFXT += (8-TimeDayOfWeekEx(fromFXT))%7 * DAYS;                       // fromFXT ist der erste Montag
+      toFXT   += (8-TimeDayOfWeekEx(toFXT))%7 * DAYS;                         // toFXT ist der nächste Montag
    }
 
    // Monatsseparatoren
@@ -128,7 +128,7 @@ int DrawGrid() {
    // (2) Separatoren zeichnen
    for (time=fromFXT; time <= toFXT; time+=1*DAY) {
       separatorTime = FxtToServerTime(time);                                  // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
-      dow           = TimeDayOfWeekFix(time);
+      dow           = TimeDayOfWeekEx(time);
 
       // Bar und Chart-Time des Separators ermitteln
       if (Time[0] < separatorTime) {                                          // keine entsprechende Bar: aktuelle Session oder noch laufendes ERS_HISTORY_UPDATE
@@ -217,7 +217,7 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
 
    datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
 
-   int dow = TimeDayOfWeekFix(firstDayOfMonth);
+   int dow = TimeDayOfWeekEx(firstDayOfMonth);
    if (dow == SATURDAY) return(firstDayOfMonth + 2*DAYS);
    if (dow == SUNDAY  ) return(firstDayOfMonth + 1*DAY );
 

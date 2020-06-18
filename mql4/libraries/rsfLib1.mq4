@@ -3517,7 +3517,7 @@ datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TI
    if (fxtTime < 0)
       return(_NaT(catch("GetSessionStartTime.srv(1)  illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
-   int dayOfWeek = TimeDayOfWeekFix(fxtTime);
+   int dayOfWeek = TimeDayOfWeekEx(fxtTime);
 
    if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
       return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
@@ -3702,7 +3702,7 @@ datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
       return(_NaT(catch("GetPrevSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekFix(startTime);
+   int dow = TimeDayOfWeekEx(startTime);
    if      (dow == SATURDAY) startTime -= 1*DAY;
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
@@ -3742,7 +3742,7 @@ datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
       return(_NaT(catch("GetSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekFix(startTime);
+   int dow = TimeDayOfWeekEx(startTime);
    if (dow == SATURDAY || dow == SUNDAY)
       return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
 
@@ -3779,7 +3779,7 @@ datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekFix(startTime);
+   int dow = TimeDayOfWeekEx(startTime);
    if      (dow == SATURDAY) startTime += 2*DAYS;
    else if (dow == SUNDAY  ) startTime += 1*DAY;
 

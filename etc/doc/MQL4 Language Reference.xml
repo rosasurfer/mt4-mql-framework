@@ -5383,7 +5383,7 @@ if (TimeCurrent()-OrderOpenTime()&lt;360)
       <br/>
       Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 0 (Sunday) statt 3 (Thursday) zur&uuml;ck.<br/>
       <br/>
-      Workaround: <span class="function">TimeDayOfWeekFix()</span> verwenden<br/>
+      Workaround: <span class="function">TimeDayOfWeekEx()</span> verwenden<br/>
       <br/>
       </content>
       <example>

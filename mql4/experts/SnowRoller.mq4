@@ -1643,10 +1643,10 @@ bool IsSessionBreak() {
       datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
 
       // determine the next regular sessionbreak end time
-      int dow = TimeDayOfWeekFix(fxtTime);
+      int dow = TimeDayOfWeekEx(fxtTime);
       while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
          fxtTime += 1*DAY;
-         dow = TimeDayOfWeekFix(fxtTime);
+         dow = TimeDayOfWeekEx(fxtTime);
       }
       datetime fxtResumeTime = fxtTime;
       sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
@@ -1655,10 +1655,10 @@ bool IsSessionBreak() {
       datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
       fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
 
-      dow = TimeDayOfWeekFix(fxtTime);
+      dow = TimeDayOfWeekEx(fxtTime);
       while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
          fxtTime -= 1*DAY;
-         dow = TimeDayOfWeekFix(fxtTime);
+         dow = TimeDayOfWeekEx(fxtTime);
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
