@@ -2403,25 +2403,24 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 
 
 /**
- * Fix für fehlerhafte interne Funktion TimeDay()
+ * Return the day of the month of the specified time: 1...31
  *
- *
- * Gibt den Tag des Monats eines Zeitpunkts zurück (1-31).
+ * Fixes the broken builtin function TimeDay() which returns 0 insetad of 1 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
  * @return int
  */
-int TimeDayFix(datetime time) {
-   if (!time)
-      return(1);
-   return(TimeDay(time));           // Fehler: 0 statt 1 für D'1970.01.01 00:00:00'
+int TimeDayEx(datetime time) {
+   if (!time) return(1);
+   return(TimeDay(time));
 }
 
 
 /**
- * Return the zero-based weekday of a time: 0=Sunday...6=Saturday. Fixes the broken builtin function TimeDayOfWeek() which
- * returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
+ * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
+ *
+ * Fixes the broken builtin function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
  *
  * @param  datetime time
  *
@@ -6880,7 +6879,7 @@ void __DummyCalls() {
    Tester.Stop();
    This.IsTesting();
    TimeCurrentEx();
-   TimeDayFix(NULL);
+   TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeFlag();
    TimeframeFlagToStr(NULL);

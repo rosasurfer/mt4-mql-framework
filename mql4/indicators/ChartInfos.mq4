@@ -2687,7 +2687,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          }
          iYY   = TimeYearFix(date);
          iMM   = TimeMonth  (date);
-         iDD   = TimeDayFix (date);
+         iDD   = TimeDayEx  (date);
          isDay = true;
       }
 
@@ -2699,7 +2699,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          }
          iYY    = TimeYearFix(date);
          iMM    = TimeMonth  (date);
-         iDD    = TimeDayFix (date);
+         iDD    = TimeDayEx  (date);
          isWeek = true;
       }
 
