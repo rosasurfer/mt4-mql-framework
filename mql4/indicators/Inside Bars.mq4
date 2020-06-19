@@ -12,8 +12,8 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Configuration  = "manual | auto*";
-extern string Timeframe      = "H1";                  // timeframes to analyze
-extern int    Max.InsideBars = 4;                     // max. amount of inside bars to find (-1: all)
+extern string Timeframes     = "H1*, H4, D1...";         // one* or more comma-separated timeframes to analyze
+extern int    Max.InsideBars = 3;                        // max. number of inside bars per timeframe to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -21,24 +21,25 @@ extern int    Max.InsideBars = 4;                     // max. amount of inside b
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
+#include <functions/JoinStrings.mqh>
 
 #property indicator_chart_window
 
-#define TIME         0                                // rates array indexes
+#define TIME         0                                   // rates array indexes
 #define OPEN         1
 #define LOW          2
 #define HIGH         3
 #define CLOSE        4
 #define VOLUME       5
 
-double ratesM1 [][6];                                 // M1 rates
-double ratesM5 [][6];                                 // M5 rates
-double ratesM15[][6];                                 // M15 rates
-double ratesM30[][6];                                 // M30 rates
-double ratesH1 [][6];                                 // H1 rates
+double ratesM1 [][6];                                    // M1 rates
+double ratesM5 [][6];                                    // M5 rates
+double ratesM15[][6];                                    // M15 rates
+double ratesM30[][6];                                    // M30 rates
+double ratesH1 [][6];                                    // H1 rates
 
-int    targetTimeframe;                               // target timeframe
-int    maxInsideBars;
+int fTimeframes;                                         // flags of the timeframes to analyze
+int maxInsideBars;
 
 
 /**
@@ -48,19 +49,28 @@ int    maxInsideBars;
  */
 int onInit() {
    // validate inputs
-   // Configuration                                   // TODO
+   // Configuration
 
-   // Timeframe
-   string sValues[], sValue = Timeframe;
+   // Timeframes
+   string sValues[], sValue = Timeframes;
    if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+      int size = Explode(sValues[0], ",", sValues, NULL);
+      ArraySpliceStrings(sValues, 0, size-1);
+      size = 1;
    }
-   sValue = StrTrim(sValue);
-   targetTimeframe = StrToPeriod(sValue, F_CUSTOM_TIMEFRAME|F_ERR_INVALID_PARAMETER);
-   if (targetTimeframe == -1)        return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   if (targetTimeframe > PERIOD_MN1) return(catch("onInit(2)  Unsupported parameter Timeframe: "+ DoubleQuoteStr(Timeframe) +" (max. MN1)", ERR_INVALID_INPUT_PARAMETER));
-   Timeframe = PeriodDescription(targetTimeframe);
+   else {
+      size = Explode(sValue, ",", sValues, NULL);
+   }
+   fTimeframes = NULL;
+   for (int i=0; i < size; i++) {
+      sValue = sValues[i];
+      int timeframe = StrToTimeframe(sValue, F_CUSTOM_TIMEFRAME|F_ERR_INVALID_PARAMETER);
+      if (timeframe == -1)        return(catch("onInit(1)  Invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
+      if (timeframe > PERIOD_MN1) return(catch("onInit(2)  Unsupported timeframe "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes) +" (max. MN1)", ERR_INVALID_INPUT_PARAMETER));
+      fTimeframes |= TimeframeFlag(timeframe);
+      sValues[i] = TimeframeDescription(timeframe);
+   }
+   Timeframes = JoinStrings(sValues, ",");
 
    // Max.InsideBars
    if (Max.InsideBars < -1) return(catch("onInit(3)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
@@ -80,23 +90,19 @@ int onTick() {
 
    static bool done = false;
    if (!done) {
-      switch (targetTimeframe) {
-         case PERIOD_M1:  CheckInsideBarsM1();  break;
-         case PERIOD_M5:  CheckInsideBarsM5();  break;
-         case PERIOD_M15: CheckInsideBarsM15(); break;
-         case PERIOD_M30: CheckInsideBarsM30(); break;
-         case PERIOD_H1:  CheckInsideBarsH1();  break;
-         case PERIOD_H2:  CheckInsideBarsH2();  break;
-         case PERIOD_H3:  CheckInsideBarsH3();  break;
-         case PERIOD_H4:  CheckInsideBarsH4();  break;
-         case PERIOD_H6:  CheckInsideBarsH6();  break;
-         case PERIOD_H8:  CheckInsideBarsH8();  break;
-         case PERIOD_D1:  CheckInsideBarsD1();  break;
-         case PERIOD_W1:  CheckInsideBarsW1();  break;
-         case PERIOD_MN1: CheckInsideBarsMN1(); break;
-         default:
-            return(catch("onTick(1)  processing of timeframe "+ Timeframe +" not implemented", ERR_NOT_IMPLEMENTED));
-      }
+      if (fTimeframes & F_PERIOD_M1  && 1) CheckInsideBarsM1();
+      if (fTimeframes & F_PERIOD_M5  && 1) CheckInsideBarsM5();
+      if (fTimeframes & F_PERIOD_M15 && 1) CheckInsideBarsM15();
+      if (fTimeframes & F_PERIOD_M30 && 1) CheckInsideBarsM30();
+      if (fTimeframes & F_PERIOD_H1  && 1) CheckInsideBarsH1();
+      if (fTimeframes & F_PERIOD_H2  && 1) CheckInsideBarsH2();
+      if (fTimeframes & F_PERIOD_H3  && 1) CheckInsideBarsH3();
+      if (fTimeframes & F_PERIOD_H4  && 1) CheckInsideBarsH4();
+      if (fTimeframes & F_PERIOD_H6  && 1) CheckInsideBarsH6();
+      if (fTimeframes & F_PERIOD_H8  && 1) CheckInsideBarsH8();
+      if (fTimeframes & F_PERIOD_D1  && 1) CheckInsideBarsD1();
+      if (fTimeframes & F_PERIOD_W1  && 1) CheckInsideBarsW1();
+      if (fTimeframes & F_PERIOD_MN1 && 1) CheckInsideBarsMN1();
       done = true;
    }
    return(last_error);
@@ -632,7 +638,7 @@ bool CopyRates() {
  */
 string InputsToStr() {
    return(StringConcatenate("Configuration=",  DoubleQuoteStr(Configuration), ";", NL,
-                            "Timeframe=",      DoubleQuoteStr(Timeframe),     ";", NL,
+                            "Timeframes=",     DoubleQuoteStr(Timeframes),    ";", NL,
                             "Max.InsideBars=", Max.InsideBars,                ";")
    );
 }
