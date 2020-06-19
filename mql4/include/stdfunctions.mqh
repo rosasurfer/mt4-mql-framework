@@ -5221,7 +5221,7 @@ int PeriodFlag(int period = NULL) {
 
 
 /**
- * Alias
+ * Alias of PeriodFlag()
  *
  * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
@@ -5267,7 +5267,7 @@ string PeriodFlagToStr(int flag) {
 
 
 /**
- * Alias
+ * Alias of PeriodFlagToStr()
  *
  * Return a human-readable representation of a timeframe flag. Supports custom timeframes.
  *
