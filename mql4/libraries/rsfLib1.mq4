@@ -4400,21 +4400,21 @@ int RegisterObject(string label) {
 
 
 /**
- * Delete all chart objects created and registered by the current program. Automatically called when a program is removed.
+ * Delete all chart objects registered for auto-removal by the current program. Called on Program::deinit().
  *
  * @return int - error status
  */
-int DeleteRegisteredObjects() {
+int RemoveObjects() {
    int size = ArraySize(registeredObjects);
    if (!size) return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
       if (ObjectFind(registeredObjects[i]) != -1)
-         if (!ObjectDelete(registeredObjects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+         if (!ObjectDelete(registeredObjects[i])) warn("RemoveObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
    }
    ArrayResize(registeredObjects, 0);
 
-   return(catch("DeleteRegisteredObjects(2)"));
+   return(catch("RemoveObjects(2)"));
 }
 
 

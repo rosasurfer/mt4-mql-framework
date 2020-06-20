@@ -4206,7 +4206,6 @@ string InputsToStr() {
    int      ArrayPushDouble   (double array[], double value);
    int      ArraySpliceInts   (int    array[], int offset, int length);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   int      DeleteRegisteredObjects();
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
@@ -4217,6 +4216,7 @@ string InputsToStr() {
    string   GetSymbolName(string symbol);
    int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);
+   int      RemoveObjects();
    int      SearchStringArrayI(string haystack[], string needle);
 
 #import "rsfLib2.ex4"

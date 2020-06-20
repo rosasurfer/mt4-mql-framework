@@ -439,7 +439,7 @@ int deinit() {
       switch (UninitializeReason()) {
          case UR_REMOVE:
          case UR_CLOSE :
-            DeleteRegisteredObjects();
+            RemoveObjects();
             break;
       }
    }
