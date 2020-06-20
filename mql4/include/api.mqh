@@ -188,6 +188,7 @@ color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
 double   NormalizeLots(double lots, string symbol = "");;
 string   NumberToStr(double value, string mask);;
+bool     ObjectDeleteEx(string label, string location = "");;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
 bool     OrderPop(string location);;
@@ -471,7 +472,6 @@ int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[])
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
 int      MergeStringArrays(string &array1[], string &array2[], string &merged[]);;
 color    ModifyColor(color rgb, double hue, double saturation, double lightness);;
-bool     ObjectDeleteSilent(string label, string location);;
 bool     onBarOpen();;
 bool     onCommand(string &data[]);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int &oe[]);;
