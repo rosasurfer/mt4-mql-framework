@@ -531,8 +531,11 @@ bool CheckInsideBarsMN1() {
  * @return bool - success status
  */
 bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
+   datetime chartOpenTime = openTime;
+   int chartOffset = iBarShiftNext(NULL, NULL, openTime);            // offset of the first matching chart bar
+   if (chartOffset >= 0) chartOpenTime = Time[chartOffset];
+
    datetime closeTime     = openTime + timeframe*MINUTES;
-   datetime chartOpenTime = Time[iBarShiftNext(NULL, NULL, openTime)];     // opentime of the first matching chart bar
    double   barSize       = (high-low);
    double   longLevel1    = NormalizeDouble(high + barSize, Digits);
    double   shortLevel1   = NormalizeDouble(low  - barSize, Digits);
@@ -583,49 +586,61 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
  * @return bool - success status; FALSE on ERS_HISTORY_UPDATE
  */
 bool CopyRates() {
-   int bars = ArrayCopyRates(ratesM1, NULL, PERIOD_M1);
-   int error = GetLastError();
-   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
-   switch (error) {
-      case NO_ERROR:           break;
-      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(3)->ArrayCopyRates(M1) => "+ bars +" bars copied", error));
-      default:                 return(!catch("CopyRates(4)->ArrayCopyRates(M1) => "+ bars +" bars copied", error));
+   int bars, error;
+
+   if (fTimeframes & F_PERIOD_M1 && 1) {
+      bars = ArrayCopyRates(ratesM1, NULL, PERIOD_M1);
+      error = GetLastError();
+      if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+      switch (error) {
+         case NO_ERROR:           break;
+         case ERS_HISTORY_UPDATE: return(!debug("CopyRates(1)->ArrayCopyRates(M1) => "+ bars +" bars copied", error));
+         default:                 return(!catch("CopyRates(2)->ArrayCopyRates(M1) => "+ bars +" bars copied", error));
+      }
    }
 
-   bars = ArrayCopyRates(ratesM5, NULL, PERIOD_M5);
-   error = GetLastError();
-   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
-   switch (error) {
-      case NO_ERROR:           break;
-      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(5)->ArrayCopyRates(M5) => "+ bars +" bars copied", error));
-      default:                 return(!catch("CopyRates(6)->ArrayCopyRates(M5) => "+ bars +" bars copied", error));
+   if (fTimeframes & F_PERIOD_M5 && 1) {
+      bars = ArrayCopyRates(ratesM5, NULL, PERIOD_M5);
+      error = GetLastError();
+      if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+      switch (error) {
+         case NO_ERROR:           break;
+         case ERS_HISTORY_UPDATE: return(!debug("CopyRates(3)->ArrayCopyRates(M5) => "+ bars +" bars copied", error));
+         default:                 return(!catch("CopyRates(4)->ArrayCopyRates(M5) => "+ bars +" bars copied", error));
+      }
    }
 
-   bars = ArrayCopyRates(ratesM15, NULL, PERIOD_M15);
-   error = GetLastError();
-   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
-   switch (error) {
-      case NO_ERROR:           break;
-      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(7)->ArrayCopyRates(M15) => "+ bars +" bars copied", error));
-      default:                 return(!catch("CopyRates(8)->ArrayCopyRates(M15) => "+ bars +" bars copied", error));
+   if (fTimeframes & F_PERIOD_M15 && 1) {
+      bars = ArrayCopyRates(ratesM15, NULL, PERIOD_M15);
+      error = GetLastError();
+      if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+      switch (error) {
+         case NO_ERROR:           break;
+         case ERS_HISTORY_UPDATE: return(!debug("CopyRates(5)->ArrayCopyRates(M15) => "+ bars +" bars copied", error));
+         default:                 return(!catch("CopyRates(6)->ArrayCopyRates(M15) => "+ bars +" bars copied", error));
+      }
    }
 
-   bars = ArrayCopyRates(ratesM30, NULL, PERIOD_M30);
-   error = GetLastError();
-   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
-   switch (error) {
-      case NO_ERROR:           break;
-      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(9)->ArrayCopyRates(M30) => "+ bars +" bars copied", error));
-      default:                 return(!catch("CopyRates(10)->ArrayCopyRates(M30) => "+ bars +" bars copied", error));
+   if (fTimeframes & F_PERIOD_M30 && 1) {
+      bars = ArrayCopyRates(ratesM30, NULL, PERIOD_M30);
+      error = GetLastError();
+      if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+      switch (error) {
+         case NO_ERROR:           break;
+         case ERS_HISTORY_UPDATE: return(!debug("CopyRates(7)->ArrayCopyRates(M30) => "+ bars +" bars copied", error));
+         default:                 return(!catch("CopyRates(8)->ArrayCopyRates(M30) => "+ bars +" bars copied", error));
+      }
    }
 
-   bars = ArrayCopyRates(ratesH1, NULL, PERIOD_H1);
-   error = GetLastError();
-   if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
-   switch (error) {
-      case NO_ERROR:           break;
-      case ERS_HISTORY_UPDATE: return(!debug("CopyRates(11)->ArrayCopyRates(H1) => "+ bars +" bars copied", error));
-      default:                 return(!catch("CopyRates(12)->ArrayCopyRates(H1) => "+ bars +" bars copied", error));
+   if (fTimeframes & (F_PERIOD_H1|F_PERIOD_H2|F_PERIOD_H3|F_PERIOD_H4|F_PERIOD_H6|F_PERIOD_H8|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
+      bars = ArrayCopyRates(ratesH1, NULL, PERIOD_H1);
+      error = GetLastError();
+      if (!error && bars <= 0) error = ERR_RUNTIME_ERROR;
+      switch (error) {
+         case NO_ERROR:           break;
+         case ERS_HISTORY_UPDATE: return(!debug("CopyRates(9)->ArrayCopyRates(H1) => "+ bars +" bars copied", error));
+         default:                 return(!catch("CopyRates(10)->ArrayCopyRates(H1) => "+ bars +" bars copied", error));
+      }
    }
    return(true);
 }
