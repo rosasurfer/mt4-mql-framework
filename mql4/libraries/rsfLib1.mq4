@@ -4400,7 +4400,7 @@ int RegisterObject(string label) {
 
 
 /**
- * Delete all chart objects registered for auto-removal by the current program. Called on Program::deinit().
+ * Delete all chart objects registered for auto-removal. Called on Program::deinit().
  *
  * @return int - error status
  */
