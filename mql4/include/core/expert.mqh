@@ -431,18 +431,8 @@ int deinit() {
             return(last_error|LeaveContext(__ExecutionContext));           //
       }                                                                    //
    }                                                                       //
-   if (!error) {                                                           //
-      error = afterDeinit();                                               // postprocessing hook
-   }
-
-   if (!error) {
-      switch (UninitializeReason()) {
-         case UR_REMOVE:
-         case UR_CLOSE :
-            DeleteRegisteredObjects();
-            break;
-      }
-   }
+   if (!error) error = afterDeinit();                                      // postprocessing hook
+   RemoveObjects();
 
    CheckErrors("deinit(4)");
    return(last_error|LeaveContext(__ExecutionContext));

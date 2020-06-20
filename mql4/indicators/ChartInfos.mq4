@@ -1004,7 +1004,7 @@ bool CreateLabels() {
          ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // Builds größer 478 haben oben links einen Pfeil fürs One-Click-Trading,
          ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));   // das Instrument-Label wird dort entsprechend versetzt positioniert.
-         ObjectRegister(label.instrument);
+         RegisterObject(label.instrument);
       }
       else GetLastError();
       string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
@@ -1021,7 +1021,7 @@ bool CreateLabels() {
       ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 110);
       ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
       ObjectSetText(label.ohlc, " ", 1);
-      ObjectRegister(label.ohlc);
+      RegisterObject(label.ohlc);
    }
    else GetLastError();
 
@@ -1033,7 +1033,7 @@ bool CreateLabels() {
       ObjectSet    (label.price, OBJPROP_XDISTANCE, 14);
       ObjectSet    (label.price, OBJPROP_YDISTANCE, 15);
       ObjectSetText(label.price, " ", 1);
-      ObjectRegister(label.price);
+      RegisterObject(label.price);
    }
    else GetLastError();
 
@@ -1045,7 +1045,7 @@ bool CreateLabels() {
       ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
       ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
       ObjectSetText(label.spread, " ", 1);
-      ObjectRegister(label.spread);
+      RegisterObject(label.spread);
    }
    else GetLastError();
 
@@ -1057,7 +1057,7 @@ bool CreateLabels() {
       ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 440);
       ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.orderCounter, " ", 1);
-      ObjectRegister(label.orderCounter);
+      RegisterObject(label.orderCounter);
    }
    else GetLastError();
 
@@ -1069,7 +1069,7 @@ bool CreateLabels() {
       ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 270);
       ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.externalAssets, " ", 1);
-      ObjectRegister(label.externalAssets);
+      RegisterObject(label.externalAssets);
    }
    else GetLastError();
 
@@ -1082,7 +1082,7 @@ bool CreateLabels() {
       ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
       ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
       ObjectSetText(label.position, " ", 1);
-      ObjectRegister(label.position);
+      RegisterObject(label.position);
    }
    else GetLastError();
 
@@ -1095,7 +1095,7 @@ bool CreateLabels() {
       ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
       ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
       ObjectSetText(label.unitSize, " ", 1);
-      ObjectRegister(label.unitSize);
+      RegisterObject(label.unitSize);
    }
    else GetLastError();
 
@@ -1108,7 +1108,7 @@ bool CreateLabels() {
       ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
       ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
       ObjectSetText(label.tradeAccount, " ", 1);
-      ObjectRegister(label.tradeAccount);
+      RegisterObject(label.tradeAccount);
    }
    else GetLastError();
 
@@ -1231,7 +1231,7 @@ bool UpdatePositions() {
          ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
          ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
          ObjectSetText(label, "n", 6, "Webdings", Orange);              // Webdings: runder Marker, orange="Notice"
-         ObjectRegister(label);
+         RegisterObject(label);
       }
    }
 
@@ -1294,7 +1294,7 @@ bool UpdatePositions() {
             ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
             ObjectSet    (label, OBJPROP_YDISTANCE, yDist + (lines-1)*(positions.fontSize+8));
             ObjectSetText(label, " ", 1);
-            ObjectRegister(label);
+            RegisterObject(label);
          }
          else GetLastError();
       }
@@ -1512,7 +1512,7 @@ bool UpdateStopoutLevel() {
          if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
          else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
       ObjectSetText(label.stopoutLevel, text);
-      ObjectRegister(label.stopoutLevel);
+      RegisterObject(label.stopoutLevel);
    }
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
 
@@ -4206,7 +4206,6 @@ string InputsToStr() {
    int      ArrayPushDouble   (double array[], double value);
    int      ArraySpliceInts   (int    array[], int offset, int length);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   int      DeleteRegisteredObjects();
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
@@ -4215,8 +4214,9 @@ string InputsToStr() {
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
-   int      ObjectRegister(string label);
+   int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);
+   int      RemoveObjects();
    int      SearchStringArrayI(string haystack[], string needle);
 
 #import "rsfLib2.ex4"
