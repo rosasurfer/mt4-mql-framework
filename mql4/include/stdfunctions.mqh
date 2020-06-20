@@ -890,6 +890,25 @@ bool WaitForTicket(int ticket, bool select = false) {
 
 
 /**
+ * Delete a chart object and suppress an error if the object cannot be found.
+ *
+ * @param  string label               - object label
+ * @param  string location [optional] - identifier for other errors (default: none)
+ *
+ * @return bool - success status
+ */
+bool ObjectDeleteEx(string label, string location = "") {
+   if (ObjectFind(label) == -1)
+      return(true);
+
+   if (ObjectDelete(label))
+      return(true);
+
+   return(!catch("ObjectDeleteEx(1)->"+ location));
+}
+
+
+/**
  * Gibt den PipValue des aktuellen Symbols für die angegebene Lotsize zurück.
  *
  * @param  double lots           [optional] - Lotsize (default: 1 lot)
@@ -6800,6 +6819,7 @@ void __DummyCalls() {
    NE(NULL, NULL);
    NormalizeLots(NULL);
    NumberToStr(NULL, NULL);
+   ObjectDeleteEx(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodFlag();

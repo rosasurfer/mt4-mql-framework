@@ -4419,25 +4419,6 @@ int RemoveObjects() {
 
 
 /**
- * Löscht ein Chartobjekt, ohne einen Fehler zu melden, falls das Objekt nicht gefunden wurde.
- *
- * @param  string label    - Object-Label
- * @param  string location - Bezeichner für evt. Fehlermeldung
- *
- * @return bool - Erfolgsstatus
- */
-bool ObjectDeleteSilent(string label, string location) {
-   if (ObjectFind(label) == -1)
-      return(true);
-
-   if (ObjectDelete(label))
-      return(true);
-
-   return(!catch("ObjectDeleteSilent(1)->"+ location));
-}
-
-
-/**
  * Konvertiert die angegebene Serverzeit nach FXT (Forex Time).
  *
  * @param  datetime serverTime - Serverzeit
