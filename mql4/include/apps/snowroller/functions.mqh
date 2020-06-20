@@ -600,7 +600,7 @@ int CreateStatusBox() {
       label = __NAME() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-         ObjectRegister(label);
+         RegisterObject(label);
       }
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);

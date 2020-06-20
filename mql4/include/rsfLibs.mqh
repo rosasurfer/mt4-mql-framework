@@ -227,8 +227,8 @@
    int      DecreasePeriod(int period);
 
    int      RepositionLegend();
+   int      RegisterObject(string label);
    bool     ObjectDeleteSilent(string label, string location);
-   int      ObjectRegister(string label);
    int      DeleteRegisteredObjects();
 
 

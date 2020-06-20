@@ -150,7 +150,7 @@ int afterInit() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 38);
          ObjectSet    (label, OBJPROP_YDISTANCE, 38);
          ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder Marker, grün="Online"
-         ObjectRegister(label);
+         RegisterObject(label);
       }
    }
    return(catch("afterInit(2)"));

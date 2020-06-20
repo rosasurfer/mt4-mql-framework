@@ -4384,18 +4384,18 @@ int IncreasePeriod(int period = 0) {
 }
 
 
-string chart.objects[];
+string registeredObjects[];
 
 
 /**
- * Fügt ein Object-Label zu den bei Programmende oder Bedarf automatisch zu entfernenden Chartobjekten hinzu.
+ * Register a chart object for auto-removal on Program::deinit().
  *
- * @param  string label - Object-Label
+ * @param  string label - object label
  *
- * @return int - Anzahl der gespeicherten Label oder -1, falls ein Fehler auftrat
+ * @return int - number of registered objects or -1 in case of errors
  */
-int ObjectRegister(string label) {
-   return(ArrayPushString(chart.objects, label));
+int RegisterObject(string label) {
+   return(ArrayPushString(registeredObjects, label));
 }
 
 
@@ -4405,14 +4405,14 @@ int ObjectRegister(string label) {
  * @return int - error status
  */
 int DeleteRegisteredObjects() {
-   int size = ArraySize(chart.objects);
+   int size = ArraySize(registeredObjects);
    if (!size) return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      if (ObjectFind(chart.objects[i]) != -1)
-         if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
+      if (ObjectFind(registeredObjects[i]) != -1)
+         if (!ObjectDelete(registeredObjects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
    }
-   ArrayResize(chart.objects, 0);
+   ArrayResize(registeredObjects, 0);
 
    return(catch("DeleteRegisteredObjects(2)"));
 }

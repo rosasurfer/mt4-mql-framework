@@ -549,7 +549,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
       ObjectSet     (label, OBJPROP_BACK,  true);
-      ObjectRegister(label);
+      RegisterObject(label);
    } else debug("MarkInsideBar(1)", GetLastError());
 
    // draw horizontal line at long level 1
@@ -560,7 +560,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_RAY,   false);
       ObjectSet     (label, OBJPROP_BACK,  true);
       ObjectSetText (label, " "+ sTimeframe);
-      ObjectRegister(label);
+      RegisterObject(label);
    } else debug("MarkInsideBar(2)", GetLastError());
 
    // draw horizontal line at short level 1
@@ -570,7 +570,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
       ObjectSet     (label, OBJPROP_BACK,  true);
-      ObjectRegister(label);
+      RegisterObject(label);
    } else debug("MarkInsideBar(3)", GetLastError());
 
 

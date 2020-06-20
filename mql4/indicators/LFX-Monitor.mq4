@@ -354,7 +354,7 @@ int CreateLabels() {
       ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
       ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
       ObjectSetText(label.tradeAccount, " ", 1);
-      ObjectRegister(label.tradeAccount);
+      RegisterObject(label.tradeAccount);
    }
    else GetLastError();
 
@@ -369,7 +369,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 7);
       ObjectSet    (label, OBJPROP_YDISTANCE, 7);
       ObjectSetText(label, "g", 128, "Webdings", bgColor);
-      ObjectRegister(label);
+      RegisterObject(label);
    }
    else GetLastError();
 
@@ -382,7 +382,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE,  7);
       ObjectSet    (label, OBJPROP_YDISTANCE, 81);
       ObjectSetText(label, "g", 128, "Webdings", bgColor);
-      ObjectRegister(label);
+      RegisterObject(label);
    }
    else GetLastError();
 
@@ -399,7 +399,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 165   );
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, label.animation.chars[0], fontSize, fontName, fontColor);
-      ObjectRegister(label);
+      RegisterObject(label);
       label.animation = label;
    }
    else GetLastError();
@@ -414,7 +414,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
          string text = ifString(Recording.Enabled, "Recording to "+ serverName, "Recording:  off");
       ObjectSetText(label, text, fontSize, fontName, fontColor);
-      ObjectRegister(label);
+      RegisterObject(label);
    }
    else GetLastError();
 
@@ -433,7 +433,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 129          );
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
          ObjectSetText(label, symbols[i] +":", fontSize, fontName, fontColor);
-         ObjectRegister(label);
+         RegisterObject(label);
          labels[i] = label;
       }
       else GetLastError();
@@ -448,7 +448,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
             text = ifString(!isEnabled[i], "off", "n/a");
          ObjectSetText(label, text, fontSize, fontName, fontColor.recordingOff);
-         ObjectRegister(label);
+         RegisterObject(label);
       }
       else GetLastError();
 
@@ -461,7 +461,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 15);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
          ObjectSetText(label, " ");
-         ObjectRegister(label);
+         RegisterObject(label);
       }
       else GetLastError();
    }
