@@ -399,7 +399,6 @@ bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor,
 string   CreateTempFile(string path, string prefix = "");;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;
-int      DeleteRegisteredObjects();;
 bool     DoubleInArray(double &haystack[], double needle);;
 string   DoubleToStrEx(double value, int digits);;
 bool     EditFile(string filename);;
@@ -486,6 +485,7 @@ int      OrdersHedge(int &tickets[], double slippage, int oeFlags, int &oes[][])
 bool     OrdersCloseHedged(int &tickets[], color markerColor, int oeFlags, int &oes[][]);;
 int      RegisterObject(string label);;
 bool     ReleaseLock(string mutexName);;
+int      RemoveObjects();;
 int      RepositionLegend();;
 bool     ReverseBoolArray(bool &array[]);;
 bool     ReverseDoubleArray(double &array[]);;

@@ -226,10 +226,10 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
-   int      RepositionLegend();
-   int      RegisterObject(string label);
    bool     ObjectDeleteSilent(string label, string location);
-   int      DeleteRegisteredObjects();
+   int      RegisterObject(string label);
+   int      RemoveObjects();
+   int      RepositionLegend();
 
 
    // toString-Funktionen
