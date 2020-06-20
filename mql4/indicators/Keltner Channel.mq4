@@ -122,7 +122,7 @@ int onInit() {
    // (2) Chart-Legende erzeugen
    if (!IsSuperContext()) {
        legendLabel  = CreateLegendLabel();
-       ObjectRegister(legendLabel);
+       RegisterObject(legendLabel);
    }
 
 

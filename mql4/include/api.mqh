@@ -188,6 +188,7 @@ color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
 double   NormalizeLots(double lots, string symbol = "");;
 string   NumberToStr(double value, string mask);;
+bool     ObjectDeleteEx(string label, string location = "");;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
 bool     OrderPop(string location);;
@@ -399,7 +400,6 @@ bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor,
 string   CreateTempFile(string path, string prefix = "");;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;
-int      DeleteRegisteredObjects();;
 bool     DoubleInArray(double &haystack[], double needle);;
 string   DoubleToStrEx(double value, int digits);;
 bool     EditFile(string filename);;
@@ -472,8 +472,6 @@ int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[])
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
 int      MergeStringArrays(string &array1[], string &array2[], string &merged[]);;
 color    ModifyColor(color rgb, double hue, double saturation, double lightness);;
-bool     ObjectDeleteSilent(string label, string location);;
-int      ObjectRegister(string label);;
 bool     onBarOpen();;
 bool     onCommand(string &data[]);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int &oe[]);;
@@ -485,7 +483,9 @@ bool     OrdersClose(int &tickets[], double slippage, color markerColor, int oeF
 bool     OrdersCloseSameSymbol(int &tickets[], double slippage, color markerColor, int oeFlags, int &oes[][]);;
 int      OrdersHedge(int &tickets[], double slippage, int oeFlags, int &oes[][]);;
 bool     OrdersCloseHedged(int &tickets[], color markerColor, int oeFlags, int &oes[][]);;
+int      RegisterObject(string label);;
 bool     ReleaseLock(string mutexName);;
+int      RemoveObjects();;
 int      RepositionLegend();;
 bool     ReverseBoolArray(bool &array[]);;
 bool     ReverseDoubleArray(double &array[]);;
