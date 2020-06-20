@@ -91,7 +91,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, x);
       ObjectSet    (label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
-      ObjectRegister(label);
+      RegisterObject(label);
    }
    else GetLastError();
 
@@ -104,7 +104,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, x    );
       ObjectSet    (label, OBJPROP_YDISTANCE, y+196);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
-      ObjectRegister(label);
+      RegisterObject(label);
    }
    else GetLastError();
 
@@ -124,7 +124,7 @@ int CreateLabels() {
                yCoord += 8;
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", fg.fontSize, fg.fontName);
-         ObjectRegister(label);
+         RegisterObject(label);
          labels[i] = label;
       }
       else GetLastError();
