@@ -96,7 +96,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects();
+   RemoveObjects();
    if (!StoreRuntimeStatus())                                  // store runtime status in all deinit scenarios
       return(last_error);
    return(catch("onDeinit(1)"));
@@ -264,7 +264,7 @@ bool UpdateSuperBars() {
 
    if (timeframeChanged) {
       if (PERIOD_M1 <= static.lastTimeframe) /*&&*/ if (static.lastTimeframe <= PERIOD_Q1) {
-         DeleteRegisteredObjects();                                        // in all other cases previous suberbars are already deleted
+         RemoveObjects();                                                  // in all other cases previous suberbars are already deleted
          CreateDescriptionLabel();
       }
       UpdateDescription();
@@ -414,7 +414,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
    if (ObjectCreate (label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet     (label, OBJPROP_COLOR, barColor);
       ObjectSet     (label, OBJPROP_BACK , true    );
-      ObjectRegister(label);
+      RegisterObject(label);
    }
    else GetLastError();
 
@@ -436,7 +436,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
          if (ObjectCreate (labelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet     (labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
             ObjectSetText (labelWithoutPrice, labelWithPrice);
-            ObjectRegister(labelWithoutPrice);
+            RegisterObject(labelWithoutPrice);
          } else GetLastError();
 
          if (ObjectCreate (labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
@@ -444,7 +444,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
             ObjectSet     (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
             ObjectSet     (labelWithPrice, OBJPROP_COLOR, Color.CloseMarker);
             ObjectSet     (labelWithPrice, OBJPROP_BACK , true);
-            ObjectRegister(labelWithPrice);
+            RegisterObject(labelWithPrice);
          } else GetLastError();
       }
    }
@@ -488,7 +488,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
       if (ObjectCreate(eth.bg.label, OBJ_RECTANGLE, 0, Time[eth.openBar], eth.high, Time[eth.closeBar], eth.low)) {
          ObjectSet     (eth.bg.label, OBJPROP_COLOR, barColor);                        // NOTE: Die Farben sich überlappender Shape-Bereiche werden mit der Charthintergrundfarbe
          ObjectSet     (eth.bg.label, OBJPROP_BACK , true);                            //       gemäß gdi32::SetROP2(HDC hdc, R2_NOTXORPEN) gemischt (siehe Beispiel am Funktionsende).
-         ObjectRegister(eth.bg.label);                                                 //       Da wir die Charthintergrundfarbe im Moment noch nicht ermitteln können, benutzen wir
+         RegisterObject(eth.bg.label);                                                 //       Da wir die Charthintergrundfarbe im Moment noch nicht ermitteln können, benutzen wir
       }                                                                                //       einen Trick: Eine Farbe mit sich selbst gemischt ergibt immer Weiß, Weiß mit einer
                                                                                        //       anderen Farbe gemischt ergibt wieder die andere Farbe.
       // (2.4) ETH-Bar zeichnen (füllt das Loch mit der ETH-Farbe)                     //       Damit erzeugen wir ein "Loch" in der Farbe des Charthintergrunds in der Superbar.
@@ -497,7 +497,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
       if (ObjectCreate(eth.label, OBJ_RECTANGLE, 0, Time[eth.openBar], eth.high, Time[eth.closeBar], eth.low)) {
          ObjectSet     (eth.label, OBJPROP_COLOR, Color.ETH);
          ObjectSet     (eth.label, OBJPROP_BACK , true     );
-         ObjectRegister(eth.label);
+         RegisterObject(eth.label);
       }
 
       // (2.5) ETH-Rahmen zeichnen
@@ -520,7 +520,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
             if (ObjectCreate(eth.labelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
                ObjectSet    (eth.labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
                ObjectSetText(eth.labelWithoutPrice, eth.labelWithPrice);
-               ObjectRegister(eth.labelWithoutPrice);
+               RegisterObject(eth.labelWithoutPrice);
             } else GetLastError();
 
             if (ObjectCreate(eth.labelWithPrice, OBJ_TREND, 0, Time[eth.centerBar], eth.close, Time[eth.closeBar], eth.close)) {
@@ -528,7 +528,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
                ObjectSet    (eth.labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
                ObjectSet    (eth.labelWithPrice, OBJPROP_COLOR, Color.CloseMarker);
                ObjectSet    (eth.labelWithPrice, OBJPROP_BACK , true);
-               ObjectRegister(eth.labelWithPrice);
+               RegisterObject(eth.labelWithPrice);
             } else GetLastError();
          }
       }
@@ -620,7 +620,7 @@ int CreateDescriptionLabel() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 280);
       ObjectSet    (label, OBJPROP_YDISTANCE,   4);
       ObjectSetText(label, " ", 1);
-      ObjectRegister(label);
+      RegisterObject(label);
    }
 
    return(catch("CreateDescriptionLabel(1)"));

@@ -166,7 +166,7 @@ int onInit() {
 
    if (!IsSuperContext()) {
        ind.legendLabel = CreateLegendLabel();                   // no chart legend if called by iCustom()
-       ObjectRegister(ind.legendLabel);
+       RegisterObject(ind.legendLabel);
    }
 
    // data display configuration, names and labels
