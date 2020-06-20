@@ -40,7 +40,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   DeleteRegisteredObjects();
+   RemoveObjects();
    return(catch("onDeinit(1)"));
 }
 
@@ -169,7 +169,7 @@ int DrawGrid() {
          ObjectSet(label, OBJPROP_STYLE, sepStyle);
          ObjectSet(label, OBJPROP_COLOR, sepColor);
          ObjectSet(label, OBJPROP_BACK , true  );
-         ObjectRegister(label);
+         RegisterObject(label);
       }
       else GetLastError();
       lastChartTime = chartTime;

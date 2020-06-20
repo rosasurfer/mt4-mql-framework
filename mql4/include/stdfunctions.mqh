@@ -890,6 +890,25 @@ bool WaitForTicket(int ticket, bool select = false) {
 
 
 /**
+ * Delete a chart object and suppress an error if the object cannot be found.
+ *
+ * @param  string label               - object label
+ * @param  string location [optional] - identifier for other errors (default: none)
+ *
+ * @return bool - success status
+ */
+bool ObjectDeleteEx(string label, string location = "") {
+   if (ObjectFind(label) == -1)
+      return(true);
+
+   if (ObjectDelete(label))
+      return(true);
+
+   return(!catch("ObjectDeleteEx(1)->"+ location));
+}
+
+
+/**
  * Gibt den PipValue des aktuellen Symbols für die angegebene Lotsize zurück.
  *
  * @param  double lots           [optional] - Lotsize (default: 1 lot)
@@ -5221,7 +5240,7 @@ int PeriodFlag(int period = NULL) {
 
 
 /**
- * Alias
+ * Alias of PeriodFlag()
  *
  * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
@@ -5267,7 +5286,7 @@ string PeriodFlagToStr(int flag) {
 
 
 /**
- * Alias
+ * Alias of PeriodFlagToStr()
  *
  * Return a human-readable representation of a timeframe flag. Supports custom timeframes.
  *
@@ -6800,6 +6819,7 @@ void __DummyCalls() {
    NE(NULL, NULL);
    NormalizeLots(NULL);
    NumberToStr(NULL, NULL);
+   ObjectDeleteEx(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodFlag();
@@ -6908,7 +6928,6 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
-   int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
@@ -6921,6 +6940,7 @@ void __DummyCalls() {
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ReleaseLock(string mutexName);
+   int      RemoveObjects();
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
