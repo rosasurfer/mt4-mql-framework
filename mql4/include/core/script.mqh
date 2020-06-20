@@ -178,10 +178,8 @@ int deinit() {
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
-   error = onDeinit();                                               // preprocessing hook
-   if (error != -1)                                                  //
-      afterDeinit();                                                 // postprocessing hook
-
+   error     = onDeinit();                                           // preprocessing hook
+   if (!error) afterDeinit();                                        // postprocessing hook
    RemoveObjects();
 
    CheckErrors("deinit(2)");
