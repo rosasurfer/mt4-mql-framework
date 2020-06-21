@@ -2,21 +2,23 @@
  * Return the number of changed bars since the last tick for the identified timeseries. Equivalent to resolving the number of
  * changed bars for the current chart in indicators by computing:
  *
- *   ChangedBars = Bars - IndicatorCounted()
+ *   UnchangedBars = IndicatorCounted()
+ *   ChangedBars   = Bars - UnchangedBars
  *
- * This function can be used in cases where IndicatorCounted() is not available, i.e. in experts or in indicators for
- * timeseries different from the current one.
+ * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with a timeseries
+ * different from the current one.
  *
- * @param  string symbol           - symbol of the timeseries (NULL: the current chart symbol)
- * @param  int    timeframe        - timeframe of the timeseries (NULL: the current chart timeframe)
- * @param  int    flags [optional] - execution control flags (default: none)
- *                                   F_ERR_SERIES_NOT_AVAILABLE: silently handle ERR_SERIES_NOT_AVAILABLE
+ * @param  string symbol    [optional] - symbol of the timeseries (NULL: the current chart symbol)
+ * @param  int    timeframe [optional] - timeframe of the timeseries (NULL: the current chart timeframe)
+ * @param  int    flags     [optional] - execution control flags (default: none)
+ *                                       F_ERR_SERIES_NOT_AVAILABLE: silently handle ERR_SERIES_NOT_AVAILABLE
  *
  * @return int - number of changed bars or -1 (EMPTY) in case of errors
  */
-int iChangedBars(string symbol, int timeframe, int flags = NULL) {
+int iChangedBars(string symbol="0", int timeframe=NULL, int flags=NULL) {
    if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(0);  // init() or deinit()
    if (symbol == "0") symbol = Symbol();                                   // (string) NULL
+   if (!timeframe) timeframe = Period();
 
    // Während der Verarbeitung eines Ticks geben die Bar-Funktionen und Bar-Variablen immer dieselbe Anzahl zurück, auch wenn die reale
    // Datenreihe sich bereits geändert haben sollte (in einem anderen Thread).
