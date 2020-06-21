@@ -36,13 +36,14 @@
   .code           { font-family:monospace;            }
   .const          { color:#980000;                    }
   .function       { color:#000093;                    }  <!-- same as <a/>    -->
-  .globalvar      { color:#980000; font-style:italic; }
+  .global         { color:#980000; font-style:italic; }  <!-- global variable -->
   .keyword        { color:#D000D0;                    }
   .number         { color:#7070FF;                    }
   .preproc        { color:#008000;                    }
   .string         { color:#008080;                    }
   .char           { color:#008080;                    }  <!-- same as .string -->
   .type           { color:#808000;                    }
+  .comment        { color:Blue;                       }
   </styles>
 
 
@@ -4709,44 +4710,37 @@ Optional data output mode can be one or combination of:<br/>
       <br/>
       Notes:<br/>
 
-      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom konkreten Indikator
-          brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen <span class="globalvar">ValidBars</span>
-          und <span class="globalvar">ChangedBars</span> definiert:<br/>
-          - <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
-          - <span class="globalvar">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
-          Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="globalvar">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
+      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom 
+          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen 
+          <span class="global">UnchangedBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
+          - <span class="global">UnchangedBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
+          - <span class="global">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
+          Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="global">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
           BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
-          (<span class="globalvar">ChangedBars</span> ist dann <span class="number">2</span>).<br/>
-          Es gilt: <span class="globalvar">Bars</span> = <span class="globalvar">ValidBars</span> + <span class="globalvar">ChangedBars</span>.</li>
+          (<span class="global">ChangedBars</span> ist dann <span class="number">2</span>).<br/>
           <br/>
-          <br/>
+          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span><br/><br/></li>
 
       <li>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
           <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
-          <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
+          <span class="global">ChangedBars</span> = <span class="global">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
           <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Bl&ouml;cke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
           <span class="number">0</span> (alle Bars modifiziert).<br/>
           Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
-          (BarOpen-Event) im Chart erscheint.</li>
-          <br/>
-          <br/>
+          (BarOpen-Event) im Chart erscheint.<br/><br/></li>
 
-      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren verwendet werden, nicht in Scripten, Experts oder Libraries. Dort gibt die Funktion
-          <span class="number">-1</span> zur&uuml;ck.<br/>
-          siehe auch <span class="function">stdlib_onStart</span>()</li>
+      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und für die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in 
+          Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
       </content>
       <example>
-int start() {
-   int ValidBars = IndicatorCounted();
-   int ChangedBars = Bars - ValidBars;
-
-   // main loop
-   for (int i=ChangedBars-1; i &gt;= 0; i--) {
-      ExtBlueBuffer[i] = iMA(NULL, 0, JawsPeriod,  0, MODE_SMMA, PRICE_MEDIAN, i);
-      ExtRedBuffer [i] = iMA(NULL, 0, TeethPeriod, 0, MODE_SMMA, PRICE_MEDIAN, i);
-      ExtLimeBuffer[i] = iMA(NULL, 0, LipsPeriod,  0, MODE_SMMA, PRICE_MEDIAN, i);
+<span class="type code">int</span> start() {
+   <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
+   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
+   <span class="comment">// main loop</span>
+   <span class="keyword code">for</span> (int i=ChangedBars-1; i &gt;= 0; i--) {
+      buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
    }
-   return(last_error);
+   <span class="keyword code">return</span>(<span class="global code">last_error</span>);
 }
       </example>
     </function>

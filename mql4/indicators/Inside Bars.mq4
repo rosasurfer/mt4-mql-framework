@@ -535,12 +535,12 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
    int chartOffset = iBarShiftNext(NULL, NULL, openTime);            // offset of the first matching chart bar
    if (chartOffset >= 0) chartOpenTime = Time[chartOffset];
 
-   datetime closeTime     = openTime + timeframe*MINUTES;
-   double   barSize       = (high-low);
-   double   longLevel1    = NormalizeDouble(high + barSize, Digits);
-   double   shortLevel1   = NormalizeDouble(low  - barSize, Digits);
-   string   sOpenTime     = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
-   string   sTimeframe    = TimeframeDescription(timeframe);
+   datetime closeTime   = openTime + timeframe*MINUTES;
+   double   barSize     = (high-low);
+   double   longLevel1  = NormalizeDouble(high + barSize, Digits);
+   double   shortLevel1 = NormalizeDouble(low  - barSize, Digits);
+   string   sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
+   string   sTimeframe  = TimeframeDescription(timeframe);
 
    // draw vertical line at IB open
    string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +")";

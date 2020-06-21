@@ -1,24 +1,29 @@
 /**
- * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung
- * der Variable ChangedBars für eine andere als die aktuelle Datenreihe.
+ * Return the number of changed bars since the last tick for the identified timeseries. Equivalent to resolving the number of
+ * changed bars for the current chart in indicators by computing:
  *
- * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (NULL = aktuelles Symbol)
- * @param  int    period    - Periode der zu untersuchenden Zeitreihe (NULL = aktuelle Periode)
- * @param  int    muteFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
+ *   ChangedBars = Bars - IndicatorCounted()
  *
- * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
+ * This function can be used in cases where IndicatorCounted() is not available, i.e. in experts or in indicators for
+ * timeseries different from the current one.
+ *
+ * @param  string symbol           - symbol of the timeseries (NULL: the current chart symbol)
+ * @param  int    timeframe        - timeframe of the timeseries (NULL: the current chart timeframe)
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_ERR_SERIES_NOT_AVAILABLE: silently handle ERR_SERIES_NOT_AVAILABLE
+ *
+ * @return int - number of changed bars or -1 (EMPTY) in case of errors
  */
-int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL) {
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(0);     // in init() oder deinit()
-   if (symbol == "0")                                                         // (string) NULL
-      symbol = Symbol();
+int iChangedBars(string symbol, int timeframe, int flags = NULL) {
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(0);  // init() or deinit()
+   if (symbol == "0") symbol = Symbol();                                   // (string) NULL
 
    // Während der Verarbeitung eines Ticks geben die Bar-Funktionen und Bar-Variablen immer dieselbe Anzahl zurück, auch wenn die reale
    // Datenreihe sich bereits geändert haben sollte (in einem anderen Thread).
    // Ein Programm, das während desselben Ticks mehrmals iBars() aufruft, wird während dieses Ticks also immer dieselbe Anzahl Bars "sehen".
 
-   // TODO: - statische Variablen in Library speichern, um Timeframewechsel zu überdauern
-   //       - statische Variablen bei Accountwechsel zurücksetzen
+   // TODO: statische Variablen in Library speichern, um Timeframewechsel zu überdauern
+   //       statische Variablen bei Accountwechsel zurücksetzen
 
    #define CB.tick               0                                   // Tick                     (beim letzten Aufruf)
    #define CB.bars               1                                   // Anzahl aller Bars        (beim letzten Aufruf)
@@ -31,7 +36,7 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL
    string keys[];
    int    last[][5];
    int    keysSize = ArraySize(keys);
-   string key = StringConcatenate(symbol, ",", period);              // "Hash" der aktuellen Parameterkombination
+   string key = StringConcatenate(symbol, ",", timeframe);           // "Hash" der aktuellen Parameterkombination
 
    for (int i=0; i < keysSize; i++) {
       if (keys[i] == key)
@@ -56,7 +61,7 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL
 
 
    /*
-   int iBars(symbol, period);
+   int iBars(symbol, timeframe);
 
       - Beim ersten Zugriff auf eine leere Datenreihe wird statt ERR_SERIES_NOT_AVAILABLE gewöhnlich ERS_HISTORY_UPDATE gesetzt.
       - Bei weiteren Zugriffen auf eine leere Datenreihe wird ERR_SERIES_NOT_AVAILABLE gesetzt.
@@ -64,22 +69,22 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL
    */
 
    // (3) ChangedBars ermitteln
-   int bars  = iBars(symbol, period);
+   int bars  = iBars(symbol, timeframe);
    int error = GetLastError();
 
-   if (!bars || error) {                                             // Da immer beide Bedingungen geprüft werden müssen, braucht das ODER nicht optimiert werden.
+   if (!bars || error) {
       if (!bars || error!=ERS_HISTORY_UPDATE) {
          if (!error || error==ERS_HISTORY_UPDATE)
             error = ERR_SERIES_NOT_AVAILABLE;
-         if (error==ERR_SERIES_NOT_AVAILABLE && muteFlags & F_ERR_SERIES_NOT_AVAILABLE)
-            return(_EMPTY(SetLastError(error)));                                                                           // leise
-         return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));   // laut
+         if (error==ERR_SERIES_NOT_AVAILABLE && flags & F_ERR_SERIES_NOT_AVAILABLE)
+            return(_EMPTY(SetLastError(error)));                                                                              // leise
+         return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, error)));   // laut
       }
    }
    // bars ist hier immer größer 0
 
-   datetime oldestBarTime = iTime(symbol, period, bars-1);
-   datetime newestBarTime = iTime(symbol, period, 0     );
+   datetime oldestBarTime = iTime(symbol, timeframe, bars-1);
+   datetime newestBarTime = iTime(symbol, timeframe, 0     );
    int      changedBars;
 
    if (last[i][CB.bars]==-1) {                        changedBars = bars;                          // erster Zugriff auf die Zeitreihe
