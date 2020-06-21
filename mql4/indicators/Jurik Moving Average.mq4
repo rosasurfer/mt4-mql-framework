@@ -245,10 +245,10 @@ int onTick() {
 
    // calculate start bar
    if (Bars < 32) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-   int validBars = IndicatorCounted(), error;
+   int validBars = UnchangedBars, error;
    if (validBars > 0) validBars--;
    int oldestBar = Bars-1;
-   int startBar  = oldestBar - validBars;          // TODO: startBar is 1 (one) too big
+   int startBar  = oldestBar - validBars;                // TODO: startBar is 1 too big
 
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
