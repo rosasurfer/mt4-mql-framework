@@ -21,6 +21,7 @@ extern int    Max.InsideBars = 3;                        // max. number of insid
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
+#include <functions/iCopyRates.mqh>
 #include <functions/JoinStrings.mqh>
 
 #property indicator_chart_window
@@ -106,6 +107,9 @@ int onTick() {
       done = true;
    }
    return(last_error);
+
+   double dNull[];
+   iCopyRates(dNull);
 }
 
 

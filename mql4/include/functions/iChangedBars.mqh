@@ -1,6 +1,6 @@
 /**
  * Return the number of changed bars since the last tick for the identified timeseries. Equivalent to resolving the number of
- * changed bars for the current chart in indicators by computing:
+ * changed bars in indicators for the current chart by computing:
  *
  *   UnchangedBars = IndicatorCounted()
  *   ChangedBars   = Bars - UnchangedBars
@@ -10,105 +10,101 @@
  *
  * @param  string symbol    [optional] - symbol of the timeseries (NULL: the current chart symbol)
  * @param  int    timeframe [optional] - timeframe of the timeseries (NULL: the current chart timeframe)
- * @param  int    flags     [optional] - execution control flags (default: none)
- *                                       F_ERR_SERIES_NOT_AVAILABLE: silently handle ERR_SERIES_NOT_AVAILABLE
  *
  * @return int - number of changed bars or -1 (EMPTY) in case of errors
  */
-int iChangedBars(string symbol="0", int timeframe=NULL, int flags=NULL) {
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(0);  // init() or deinit()
-   if (symbol == "0") symbol = Symbol();                                   // (string) NULL
+int iChangedBars(string symbol="0", int timeframe=NULL) {
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(_EMPTY(catch("iChangedBars(1)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_FUNC_NOT_ALLOWED)));
+
+   if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (!timeframe) timeframe = Period();
 
-   // Während der Verarbeitung eines Ticks geben die Bar-Funktionen und Bar-Variablen immer dieselbe Anzahl zurück, auch wenn die reale
-   // Datenreihe sich bereits geändert haben sollte (in einem anderen Thread).
-   // Ein Programm, das während desselben Ticks mehrmals iBars() aufruft, wird während dieses Ticks also immer dieselbe Anzahl Bars "sehen".
+   // maintain a map "symbol,timeframe" => data[] to enable parallel usage with multiple timeseries
+   #define CB.Tick            0                                // last value of global var Tick for detecting multiple calls during the same price tick
+   #define CB.Bars            1                                // last number of bars of the timeseries
+   #define CB.ChangedBars     2                                // last returned value of ChangedBars
+   #define CB.FirstBarTime    3                                // opentime of the first bar of the timeseries (newest bar)
+   #define CB.LastBarTime     4                                // opentime of the last bar of the timeseries (oldest bar)
 
-   // TODO: statische Variablen in Library speichern, um Timeframewechsel zu überdauern
-   //       statische Variablen bei Accountwechsel zurücksetzen
+   string keys[];                                              // TODO: store all data elsewhere to survive indicator init cycles
+   int    data[][5];                                           // TODO: reset data on account change
+   int    size = ArraySize(keys);
+   string key = StringConcatenate(symbol, ",", timeframe);     // mapping key
 
-   #define CB.tick               0                                   // Tick                     (beim letzten Aufruf)
-   #define CB.bars               1                                   // Anzahl aller Bars        (beim letzten Aufruf)
-   #define CB.changedBars        2                                   // Anzahl der ChangedBars   (beim letzten Aufruf)
-   #define CB.oldestBarTime      3                                   // Zeit der ältesten Bar    (beim letzten Aufruf)
-   #define CB.newestBarTime      4                                   // Zeit der neuesten Bar    (beim letzten Aufruf)
-
-
-   // (1) Die Speicherung der statischen Daten je Parameterkombination "Symbol,Periode" ermöglicht den parallelen Aufruf für mehrere Datenreihen.
-   string keys[];
-   int    last[][5];
-   int    keysSize = ArraySize(keys);
-   string key = StringConcatenate(symbol, ",", timeframe);           // "Hash" der aktuellen Parameterkombination
-
-   for (int i=0; i < keysSize; i++) {
+   for (int i=0; i < size; i++) {
       if (keys[i] == key)
          break;
    }
-   if (i == keysSize) {                                              // Schlüssel nicht gefunden: erster Aufruf für Symbol,Periode
-      ArrayResize(keys, keysSize+1);
-      ArrayResize(last, keysSize+1);
-      keys[i] = key;                                                 // Schlüssel hinzufügen
-      last[i][CB.tick         ] = -1;                                // last[] initialisieren
-      last[i][CB.bars         ] = -1;
-      last[i][CB.changedBars  ] = -1;
-      last[i][CB.oldestBarTime] =  0;
-      last[i][CB.newestBarTime] =  0;
+   if (i == size) {                                            // add the key if not found
+      ArrayResize(keys, size+1); keys[i] = key;
+      ArrayResize(data, size+1);
    }
-   // Index i zeigt hier immer auf den aktuellen Datensatz
 
-
-   // (2) Mehrfachaufruf für eine Datenreihe innerhalb desselben Ticks
-   if (Tick == last[i][CB.tick])
-      return(last[i][CB.changedBars]);
-
+   // return the same result for the same tick
+   if (Tick == data[i][CB.Tick])
+      return(data[i][CB.ChangedBars]);
 
    /*
-   int iBars(symbol, timeframe);
-
-      - Beim ersten Zugriff auf eine leere Datenreihe wird statt ERR_SERIES_NOT_AVAILABLE gewöhnlich ERS_HISTORY_UPDATE gesetzt.
-      - Bei weiteren Zugriffen auf eine leere Datenreihe wird ERR_SERIES_NOT_AVAILABLE gesetzt.
-      - Ohne Server-Connection ist nach Recompilation und bei fehlenden Daten u.U. gar kein Fehler gesetzt.
+   - When a timeseries is accessed the first time iBars() typically sets the status ERS_HISTORY_UPDATE and new data may
+     arrive later.
+   - If an empty timeseries is re-accessed before new data has arrived iBars() sets the error ERR_SERIES_NOT_AVAILABLE.
+     Here the error is suppressed and 0 is returned.
+   - If an empty timeseries is accessed after recompilation or without a server connection no error may be set.
+   - iBars() doesn't set an error if the timeseries (i.e. symbol or timeframe) is unknown.
    */
 
-   // (3) ChangedBars ermitteln
+   // get current number of bars
    int bars  = iBars(symbol, timeframe);
    int error = GetLastError();
 
-   if (!bars || error) {
-      if (!bars || error!=ERS_HISTORY_UPDATE) {
-         if (!error || error==ERS_HISTORY_UPDATE)
-            error = ERR_SERIES_NOT_AVAILABLE;
-         if (error==ERR_SERIES_NOT_AVAILABLE && flags & F_ERR_SERIES_NOT_AVAILABLE)
-            return(_EMPTY(SetLastError(error)));                                                                              // leise
-         return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, error)));   // laut
+   if (bars < 0) {                                                               // never encountered
+      return(_EMPTY(catch("iChangedBars(2)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, ifInt(error, error, ERR_RUNTIME_ERROR))));
+   }
+   if (error && error!=ERS_HISTORY_UPDATE && error!=ERR_SERIES_NOT_AVAILABLE) {
+      return(_EMPTY(catch("iChangedBars(3)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, error)));
+   }
+
+   datetime firstBarTime=0, lastBarTime=0;
+   int changedBars = 0;
+
+   // resolve the number of changed bars
+   if (bars > 0) {
+      firstBarTime = iTime(symbol, timeframe, 0);
+      lastBarTime  = iTime(symbol, timeframe, bars-1);
+
+      if (!data[i][CB.Tick]) {                                                   // first call for the timeseries
+         changedBars = bars;
+      }
+      else if (bars==data[i][CB.Bars] && lastBarTime==data[i][CB.LastBarTime]) { // number of bars is unchanged and last bar is still the same
+         changedBars = 1;                                                        // a regular tick
+      }
+      else {
+         if (bars==data[i][CB.Bars]) {
+            // the last bar changed but the number of bars not => the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
+            // TODO: lookup the bar in data[i][CB.FirstBarTime] and compute ChangedBars from there
+            changedBars = bars;                                                  // mark all bars as changed until the lookup is implemented
+         }
+         else {
+            // the number of bars changed
+            if (bars < data[i][CB.Bars]) {
+               changedBars = bars;                                               // the account has been changed: mark all bars as changed
+            }
+            else if (firstBarTime == data[i][CB.FirstBarTime]) {
+               changedBars = bars;                                               // a data gap has been filled: ambiguous => mark all bars as changed
+            }
+            else {
+               changedBars = bars - data[i][CB.Bars] + 1;                        // new bars at the beginning: +1 to cover BarOpen events
+            }
+         }
       }
    }
-   // bars ist hier immer größer 0
 
-   datetime oldestBarTime = iTime(symbol, timeframe, bars-1);
-   datetime newestBarTime = iTime(symbol, timeframe, 0     );
-   int      changedBars;
-
-   if (last[i][CB.bars]==-1) {                        changedBars = bars;                          // erster Zugriff auf die Zeitreihe
-   }
-   else if (bars==last[i][CB.bars] && oldestBarTime==last[i][CB.oldestBarTime]) {                  // Baranzahl gleich und älteste Bar noch dieselbe
-                                                      changedBars = 1;                             // normaler Tick (mit/ohne Lücke) oder synthetischer/sonstiger Tick: iVolume()
-   }                                                                                               // kann nicht zur Unterscheidung zwischen changedBars=0|1 verwendet werden
-   else {
-    //if (bars == last[i][CB.bars])                                                                // Die letzte Bar hat sich geändert, Bars wurden hinten "hinausgeschoben".
-    //   warn("iChangedBars(2)  bars==lastBars = "+ bars +" (did we hit MAX_CHART_BARS?)");        // (*) In diesem Fall muß die Bar mit last.newestBarTime gesucht und der Wert
-                                                                                                   //     von changedBars daraus abgeleitet werden.
-      if (newestBarTime != last[i][CB.newestBarTime]) changedBars = bars - last[i][CB.bars] + 1;   // neue Bars zu Beginn hinzugekommen
-      else                                            changedBars = bars;                          // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
-
-      if (bars == last[i][CB.bars])                   changedBars = bars;                          // solange die Suche (*) noch nicht implementiert ist
-   }
-
-   last[i][CB.tick         ] = Tick;
-   last[i][CB.bars         ] = bars;
-   last[i][CB.changedBars  ] = changedBars;
-   last[i][CB.oldestBarTime] = oldestBarTime;
-   last[i][CB.newestBarTime] = newestBarTime;
+   // store all data
+   data[i][CB.Tick        ] = Tick;
+   data[i][CB.Bars        ] = bars;
+   data[i][CB.ChangedBars ] = changedBars;
+   data[i][CB.FirstBarTime] = firstBarTime;
+   data[i][CB.LastBarTime ] = lastBarTime;
 
    return(changedBars);
 }

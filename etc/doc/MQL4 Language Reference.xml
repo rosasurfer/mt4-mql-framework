@@ -3725,8 +3725,8 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns the specified timeseries to the target array and returns the number of contained bars or -1 on failure.
-The first dimension of the target array holds the bar offset, the second dimension holds the elements:<br/>
+Assigns the specified timeseries to the target array and returns the number of contained bars or -1 on failure. The function supports loading of 
+custom or non-standard timeseries. The first dimension of the target array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
  <span class="code"> 0 </span>- open time<br/>
  <span class="code"> 1 </span>- open price<br/>
@@ -3746,15 +3746,15 @@ The first dimension of the target array holds the bar offset, the second dimensi
 
 <li>The assigned array is read-only.</li>
 
+<li>When a timeseries is accessed the first time typically the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> is set and new data may arrive later.</li>
+
+<li>If an empty timeseries is re-requested due to <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> and before new data has arrived the function 
+    returns -1 and sets the error <a href="help://constants_errors">ERR_ARRAY_ERROR</a> (also in tester). The error should be handled like 
+    <a href="help://constants_errors">ERR_SERIES_NOT_AVAILABLE</a> (i.e. returned bars = 0).</li>
+
 <li>If the array is passed to a DLL the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
     (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more rates arrive it is
     dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li>
-
-<li>When a timeseries is accessed the first time the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> may be set and new data may arrive later.</li>
-
-<li>If an empty timeseries is re-requested before new data arrived the function returns -1 and sets the error <a href="help://constants_errors">ERR_ARRAY_ERROR</a> 
-    (also in tester). The error should be handled like <a href="help://constants_errors">ERR_SERIES_NOT_AVAILABLE</a>. 
-</li>
 
 <br/>
 <br/>
