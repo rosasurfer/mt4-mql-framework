@@ -3725,8 +3725,8 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns the specified timeseries data to the destination array and returns the number of contained bars or -1 on failure.
-The first dimension of the destination array holds the bar offset, the second dimension holds the elements:<br/>
+Assigns the specified timeseries to the target array and returns the number of contained bars or -1 on failure.
+The first dimension of the target array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
  <span class="code"> 0 </span>- open time<br/>
  <span class="code"> 1 </span>- open price<br/>
@@ -3736,39 +3736,33 @@ The first dimension of the destination array holds the bar offset, the second di
  <span class="code"> 5 </span>- volume (tick count)<br/>
 <br/>
 
-If data from another timeseries than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> may be set.
-In this case data needs to be re-requested.<br/>
-<br/>
 
 <b>Notes:</b>
 <br/>
-<li>No data copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
+<li>No real copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
 
-<li>After assignment in local scope the destination variable doesn't act like a typical array variable and <a href="help://basics_variables_static">static</a>
-    behavior needs to be explicitely declared.</li>
+<li>When assigning to a local variable the target array doesn't act like regular arrays. <a href="help://basics_variables_static">Static</a> behavior needs 
+    to be explicitely declared if needed.</li>
 
-<li>The destination array is read-only.</li>
+<li>The assigned array is read-only.</li>
 
-<li>If the destination array is passed to a DLL, the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
-    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more data arrives it is
+<li>If the array is passed to a DLL the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
+    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more rates arrive it is
     dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li>
-<br/>
-<br/>
-<span style="color:red">Bugs:</span>
-<br/>
-Wird die Funktion w&auml;hrend des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgel&ouml;st, solange noch keine lokalen Kurse existieren
-bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall mu&szlig; der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span>
-interpretiert werden.<br/>
-<br/>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="const">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [<span class="const">ERR_ARRAY_ERROR</span>] - <span style="color:red">Fehler</span><br/>
+
+<li>When a timeseries is accessed the first time the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> may be set and new data may arrive later.</li>
+
+<li>If an empty timeseries is re-requested before new data arrived the function returns -1 and sets the error <a href="help://constants_errors">ERR_ARRAY_ERROR</a> 
+    (also in tester). The error should be handled like <a href="help://constants_errors">ERR_SERIES_NOT_AVAILABLE</a>. 
+</li>
+
 <br/>
 <br/>
 <b>Changes in MQL4.5 (terminal builds > 509):</b>
 <br/>
-Calling the function with a destination parameter of type <span class="type">double[][]</span> now allocates additional memory and performs a deep copy of the
-timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only MQL4 programs compiled 
-with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
+Calling the function with a target parameter of type <span class="type">double[][]</span> now allocates new memory and performs a deep copy of the
+timeseries. Newly arriving data in the timeseries is not automatically reflected in the target array anymore. This change affects only MQL4 programs 
+compiled with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
 <br/>
 <br/>
       </content>
@@ -3779,20 +3773,20 @@ Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1])
 </example>
       <parameter>
         type=double
-        name=<nobr>dest[][6]</nobr>
-        description=destination array
+        name=<nobr>target[][6]</nobr>
+        description=target array
       </parameter>
       <parameter>
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=symbol name (<span class="const">NULL</span>: the current chart symbol)
+        description=symbol name (default: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=<span class="const">NULL</span>
-        description=<a href="help://constants_timeframes">timeframe identifier</a> (<span class="const">NULL</span>: the current chart timeframe)
+        description=<a href="help://constants_timeframes">timeframe identifier</a> (default: the current chart timeframe)
       </parameter>
     </function>
 
