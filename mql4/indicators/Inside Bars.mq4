@@ -12,7 +12,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Configuration  = "manual | auto*";
-extern string Timeframes     = "H1*, H4, D1...";         // one* or more comma-separated timeframes to analyze
+extern string Timeframes     = "W1*, H1, H4, D1...";         // one* or more comma-separated timeframes to analyze
 extern int    Max.InsideBars = 3;                        // max. number of inside bars per timeframe to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -477,7 +477,7 @@ bool CheckInsideBarsW1() {
       openTimeH1 = ratesH1[i][TIME];
       openTimeD1 = openTimeH1 - (openTimeH1 % DAY);            // opentime of the containing D1 bar (Midnight)
       int dow    = TimeDayOfWeekEx(openTimeD1);
-      openTimeW1 = openTimeD1 - ((dow+6) % 7);                 // opentime of the containing W1 bar (Monday 00:00)
+      openTimeW1 = openTimeD1 - ((dow+6) % 7) * DAYS;          // opentime of the containing W1 bar (Monday 00:00)
 
       if (openTimeW1 == pOpenTimeW1) {                         // the current H1 bar belongs to the same W1 bar
          high = MathMax(ratesH1[i][HIGH], high);
@@ -596,8 +596,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       RegisterObject(label);
    } else debug("MarkInsideBar(3)", GetLastError());
 
-
-   string format = "%a, %d.%m.%Y %H:%M";  // ifString(timeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");
+   string format = ifString(timeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");    // "%a, %d.%m.%Y %H:%M:%S"
    debug("MarkInsideBar(4)  "+ sTimeframe +" at "+ GmtTimeFormat(openTime, format));
    return(true);
 }
@@ -615,35 +614,35 @@ bool GetRates() {
       changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
       if (changed < 0) return(false);
       changedBarsM1 = changed;
-      debug("GetRates(1)  M1 => "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
+      //debug("GetRates(1)  M1 => "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
    }
 
    if (fTimeframes & F_PERIOD_M5 && 1) {
       changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
       if (changed < 0) return(false);
       changedBarsM5 = changed;
-      debug("GetRates(2)  M5 => "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
+      //debug("GetRates(2)  M5 => "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
    }
 
    if (fTimeframes & F_PERIOD_M15 && 1) {
       changed = iCopyRates(ratesM15, NULL, PERIOD_M15);
       if (changed < 0) return(false);
       changedBarsM15 = changed;
-      debug("GetRates(3)  M15 => "+ changed +" of "+ ArrayRange(ratesM15, 0) +" bars changed");
+      //debug("GetRates(3)  M15 => "+ changed +" of "+ ArrayRange(ratesM15, 0) +" bars changed");
    }
 
    if (fTimeframes & F_PERIOD_M30 && 1) {
       changed = iCopyRates(ratesM30, NULL, PERIOD_M30);
       if (changed < 0) return(false);
       changedBarsM30 = changed;
-      debug("GetRates(4)  M30 => "+ changed +" of "+ ArrayRange(ratesM30, 0) +" bars changed");
+      //debug("GetRates(4)  M30 => "+ changed +" of "+ ArrayRange(ratesM30, 0) +" bars changed");
    }
 
    if (fTimeframes & (F_PERIOD_H1|F_PERIOD_H2|F_PERIOD_H3|F_PERIOD_H4|F_PERIOD_H6|F_PERIOD_H8|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
       changed = iCopyRates(ratesH1, NULL, PERIOD_H1);
       if (changed < 0) return(false);
       changedBarsH1 = changed;
-      debug("GetRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
+      //debug("GetRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
    }
    return(true);
 }
