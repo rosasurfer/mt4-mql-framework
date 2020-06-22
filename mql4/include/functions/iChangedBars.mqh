@@ -78,7 +78,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
       else if (bars==data[i][CB.Bars] && lastBarTime==data[i][CB.LastBarTime]) { // number of bars is unchanged and last bar is still the same
          changedBars = 1;                                                        // a regular tick
       }
-      else if (bars==data[i][CB.Bars]) {                                         // number of bars is unchanged and last bar changed => the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
+      else if (bars==data[i][CB.Bars]) {                                         // number of bars is unchanged but last bar changed: the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
          // find the bar stored in data[i][CB.FirstBarTime]
          int offset = iBarShift(symbol, timeframe, data[i][CB.FirstBarTime], true);
          if (offset == -1) changedBars = bars;                                   // CB.FirstBarTime not found: mark all bars as changed

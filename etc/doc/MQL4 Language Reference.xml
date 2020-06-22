@@ -3754,7 +3754,7 @@ custom or non-standard timeseries. The first dimension of the target array holds
 
 <li>If the array is passed to a DLL the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
     (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more rates arrive it is
-    dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li>
+    dynamically extended.</li>
 
 <br/>
 <br/>
