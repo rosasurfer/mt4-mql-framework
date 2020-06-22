@@ -36,13 +36,14 @@
   .code           { font-family:monospace;            }
   .const          { color:#980000;                    }
   .function       { color:#000093;                    }  <!-- same as <a/>    -->
-  .globalvar      { color:#980000; font-style:italic; }
+  .global         { color:#980000; font-style:italic; }  <!-- global variable -->
   .keyword        { color:#D000D0;                    }
   .number         { color:#7070FF;                    }
   .preproc        { color:#008000;                    }
   .string         { color:#008080;                    }
   .char           { color:#008080;                    }  <!-- same as .string -->
   .type           { color:#808000;                    }
+  .comment        { color:Blue;                       }
   </styles>
 
 
@@ -3724,8 +3725,8 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns the specified timeseries data to the destination array and returns the number of contained bars or -1 on failure.
-The first dimension of the destination array holds the bar offset, the second dimension holds the elements:<br/>
+Assigns the specified timeseries to the target array and returns the number of contained bars or -1 on failure. The function supports loading of 
+custom or non-standard timeseries. The first dimension of the target array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
  <span class="code"> 0 </span>- open time<br/>
  <span class="code"> 1 </span>- open price<br/>
@@ -3735,39 +3736,33 @@ The first dimension of the destination array holds the bar offset, the second di
  <span class="code"> 5 </span>- volume (tick count)<br/>
 <br/>
 
-If data from another timeseries than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> may be set.
-In this case data needs to be re-requested.<br/>
-<br/>
 
 <b>Notes:</b>
 <br/>
-<li>No data copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
+<li>No real copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
 
-<li>After assignment in local scope the destination variable doesn't act like a typical array variable and <a href="help://basics_variables_static">static</a>
-    behavior needs to be explicitely declared.</li>
+<li>When assigning to a local variable the target array doesn't act like regular arrays. <a href="help://basics_variables_static">Static</a> behavior needs 
+    to be explicitely declared if needed.</li>
 
-<li>The destination array is read-only.</li>
+<li>The assigned array is read-only.</li>
 
-<li>If the destination array is passed to a DLL, the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
-    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more data arrives it is
-    dynamically extended up to a size of <span class="const">MAX_CHART_BARS</span>.</li>
-<br/>
-<br/>
-<span style="color:red">Bugs:</span>
-<br/>
-Wird die Funktion w&auml;hrend des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgel&ouml;st, solange noch keine lokalen Kurse existieren
-bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall mu&szlig; der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span>
-interpretiert werden.<br/>
-<br/>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="const">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [<span class="const">ERR_ARRAY_ERROR</span>] - <span style="color:red">Fehler</span><br/>
+<li>When a timeseries is accessed the first time typically the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> is set and new data may arrive later.</li>
+
+<li>If an empty timeseries is re-requested due to <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> and before new data has arrived the function 
+    returns -1 and sets the error <a href="help://constants_errors">ERR_ARRAY_ERROR</a> (also in tester). The error should be handled like 
+    <a href="help://constants_errors">ERR_SERIES_NOT_AVAILABLE</a> (i.e. returned bars = 0).</li>
+
+<li>If the array is passed to a DLL the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
+    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more rates arrive it is
+    dynamically extended.</li>
+
 <br/>
 <br/>
 <b>Changes in MQL4.5 (terminal builds > 509):</b>
 <br/>
-Calling the function with a destination parameter of type <span class="type">double[][]</span> now allocates additional memory and performs a deep copy of the
-timeseries data. Changing data in the timeseries is not automatically reflected anymore in the destination array. This change affects only MQL4 programs compiled 
-with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
+Calling the function with a target parameter of type <span class="type">double[][]</span> now allocates new memory and performs a deep copy of the
+timeseries. Newly arriving data in the timeseries is not automatically reflected in the target array anymore. This change affects only MQL4 programs 
+compiled with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
 <br/>
 <br/>
       </content>
@@ -3778,20 +3773,20 @@ Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1])
 </example>
       <parameter>
         type=double
-        name=<nobr>dest[][6]</nobr>
-        description=destination array
+        name=<nobr>target[][6]</nobr>
+        description=target array
       </parameter>
       <parameter>
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=symbol name (<span class="const">NULL</span>: the current chart symbol)
+        description=symbol name (default: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=<span class="const">NULL</span>
-        description=<a href="help://constants_timeframes">timeframe identifier</a> (<span class="const">NULL</span>: the current chart timeframe)
+        description=<a href="help://constants_timeframes">timeframe identifier</a> (default: the current chart timeframe)
       </parameter>
     </function>
 
@@ -4709,44 +4704,37 @@ Optional data output mode can be one or combination of:<br/>
       <br/>
       Notes:<br/>
 
-      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom konkreten Indikator
-          brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen <span class="globalvar">ValidBars</span>
-          und <span class="globalvar">ChangedBars</span> definiert:<br/>
-          - <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
-          - <span class="globalvar">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
-          Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="globalvar">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
+      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom 
+          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen 
+          <span class="global">UnchangedBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
+          - <span class="global">UnchangedBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
+          - <span class="global">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
+          Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="global">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
           BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
-          (<span class="globalvar">ChangedBars</span> ist dann <span class="number">2</span>).<br/>
-          Es gilt: <span class="globalvar">Bars</span> = <span class="globalvar">ValidBars</span> + <span class="globalvar">ChangedBars</span>.</li>
+          (<span class="global">ChangedBars</span> ist dann <span class="number">2</span>).<br/>
           <br/>
-          <br/>
+          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span><br/><br/></li>
 
       <li>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
           <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
-          <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
+          <span class="global">ChangedBars</span> = <span class="global">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
           <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Bl&ouml;cke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
           <span class="number">0</span> (alle Bars modifiziert).<br/>
           Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
-          (BarOpen-Event) im Chart erscheint.</li>
-          <br/>
-          <br/>
+          (BarOpen-Event) im Chart erscheint.<br/><br/></li>
 
-      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren verwendet werden, nicht in Scripten, Experts oder Libraries. Dort gibt die Funktion
-          <span class="number">-1</span> zur&uuml;ck.<br/>
-          siehe auch <span class="function">stdlib_onStart</span>()</li>
+      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und für die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in 
+          Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
       </content>
       <example>
-int start() {
-   int ValidBars = IndicatorCounted();
-   int ChangedBars = Bars - ValidBars;
-
-   // main loop
-   for (int i=ChangedBars-1; i &gt;= 0; i--) {
-      ExtBlueBuffer[i] = iMA(NULL, 0, JawsPeriod,  0, MODE_SMMA, PRICE_MEDIAN, i);
-      ExtRedBuffer [i] = iMA(NULL, 0, TeethPeriod, 0, MODE_SMMA, PRICE_MEDIAN, i);
-      ExtLimeBuffer[i] = iMA(NULL, 0, LipsPeriod,  0, MODE_SMMA, PRICE_MEDIAN, i);
+<span class="type code">int</span> start() {
+   <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
+   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
+   <span class="comment">// main loop</span>
+   <span class="keyword code">for</span> (int i=ChangedBars-1; i &gt;= 0; i--) {
+      buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
    }
-   return(last_error);
+   <span class="keyword code">return</span>(<span class="global code">last_error</span>);
 }
       </example>
     </function>

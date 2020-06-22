@@ -1022,13 +1022,9 @@ bool BarRangeSignal.Check(int index) {
 
 
    // (2) changedBars(testTimeframe) für die Testdatenreihe ermitteln
-   int oldError    = last_error;
-   int changedBars = iChangedBars(NULL, testTimeframe, F_ERR_SERIES_NOT_AVAILABLE);
-   if (changedBars == -1) {                                                               // Fehler
-      if (last_error == ERR_SERIES_NOT_AVAILABLE)
-         return(_true(SetLastError(oldError)));                                           // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
-      return(false);
-   }
+   int changedBars = iChangedBars(NULL, testTimeframe);
+   if (changedBars == -1) return(false);
+
    if (!changedBars)                                                                      // z.B. bei Aufruf in init() oder deinit()
       return(true);
    //debug("BarRangeSignal.Check(2)       changedBars="+ changedBars +"  tick.new="+ tick.new);
