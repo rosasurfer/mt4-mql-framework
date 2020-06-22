@@ -33,11 +33,17 @@ extern int    Max.InsideBars = 3;                        // max. number of insid
 #define CLOSE        4
 #define VOLUME       5
 
-double ratesM1 [][6];                                    // M1 rates
-double ratesM5 [][6];                                    // M5 rates
-double ratesM15[][6];                                    // M15 rates
-double ratesM30[][6];                                    // M30 rates
-double ratesH1 [][6];                                    // H1 rates
+double ratesM1 [][6];                                    // rates for each required timeframe
+double ratesM5 [][6];
+double ratesM15[][6];
+double ratesM30[][6];
+double ratesH1 [][6];
+
+int changedBarsM1;                                       // ChangedBars for each required timeframe
+int changedBarsM5;
+int changedBarsM15;
+int changedBarsM30;
+int changedBarsH1;
 
 int fTimeframes;                                         // flags of the timeframes to analyze
 int maxInsideBars;
@@ -87,7 +93,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (!CopyRates()) return(last_error);
+   if (!GetRates()) return(last_error);
 
    static bool done = false;
    if (!done) {
@@ -120,6 +126,7 @@ int onTick() {
  */
 bool CheckInsideBarsM1() {
    int bars = ArrayRange(ratesM1, 0);
+   int changedBars = changedBarsM1;
    int more = maxInsideBars;
 
    for (int i=2; more && i < bars; i++) {
@@ -139,6 +146,7 @@ bool CheckInsideBarsM1() {
  */
 bool CheckInsideBarsM5() {
    int bars = ArrayRange(ratesM5, 0);
+   int changedBars = changedBarsM5;
    int more = maxInsideBars;
 
    for (int i=2; more && i < bars; i++) {
@@ -158,6 +166,7 @@ bool CheckInsideBarsM5() {
  */
 bool CheckInsideBarsM15() {
    int bars = ArrayRange(ratesM15, 0);
+   int changedBars = changedBarsM15;
    int more = maxInsideBars;
 
    for (int i=2; more && i < bars; i++) {
@@ -177,6 +186,7 @@ bool CheckInsideBarsM15() {
  */
 bool CheckInsideBarsM30() {
    int bars = ArrayRange(ratesM30, 0);
+   int changedBars = changedBarsM30;
    int more = maxInsideBars;
 
    for (int i=2; more && i < bars; i++) {
@@ -196,6 +206,7 @@ bool CheckInsideBarsM30() {
  */
 bool CheckInsideBarsH1() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
 
    for (int i=2; more && i < bars; i++) {
@@ -215,6 +226,7 @@ bool CheckInsideBarsH1() {
  */
 bool CheckInsideBarsH2() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int h2   = -1;                                              // H2 bar index
 
@@ -254,6 +266,7 @@ bool CheckInsideBarsH2() {
  */
 bool CheckInsideBarsH3() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int h3   = -1;                                              // H3 bar index
 
@@ -293,6 +306,7 @@ bool CheckInsideBarsH3() {
  */
 bool CheckInsideBarsH4() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int h4   = -1;                                              // H4 bar index
 
@@ -332,6 +346,7 @@ bool CheckInsideBarsH4() {
  */
 bool CheckInsideBarsH6() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int h6   = -1;                                              // H6 bar index
 
@@ -371,6 +386,7 @@ bool CheckInsideBarsH6() {
  */
 bool CheckInsideBarsH8() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int h8   = -1;                                              // H8 bar index
 
@@ -410,6 +426,7 @@ bool CheckInsideBarsH8() {
  */
 bool CheckInsideBarsD1() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int d1   = -1;                                              // D1 bar index
 
@@ -449,6 +466,7 @@ bool CheckInsideBarsD1() {
  */
 bool CheckInsideBarsW1() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int w1 = -1;                                                // W1 bar index
 
@@ -490,6 +508,7 @@ bool CheckInsideBarsW1() {
  */
 bool CheckInsideBarsMN1() {
    int bars = ArrayRange(ratesH1, 0);
+   int changedBars = changedBarsH1;
    int more = maxInsideBars;
    int mn1 = -1;                                               // MN1 bar index
 
@@ -585,41 +604,46 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 
 
 /**
- * Copy rates of the required timeframes to the global rate arrays.
+ * Get rates and number of changed bars per required timeframe.
  *
- * @return bool - success status; FALSE on ERS_HISTORY_UPDATE
+ * @return bool - success status
  */
-bool CopyRates() {
+bool GetRates() {
    int changed;
 
    if (fTimeframes & F_PERIOD_M1 && 1) {
       changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
       if (changed < 0) return(false);
-      debug("CopyRates(1)  M1 => "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
+      changedBarsM1 = changed;
+      debug("GetRates(1)  M1 => "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
    }
 
    if (fTimeframes & F_PERIOD_M5 && 1) {
       changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
       if (changed < 0) return(false);
-      debug("CopyRates(2)  M5 => "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
+      changedBarsM5 = changed;
+      debug("GetRates(2)  M5 => "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
    }
 
    if (fTimeframes & F_PERIOD_M15 && 1) {
       changed = iCopyRates(ratesM15, NULL, PERIOD_M15);
       if (changed < 0) return(false);
-      debug("CopyRates(3)  M15 => "+ changed +" of "+ ArrayRange(ratesM15, 0) +" bars changed");
+      changedBarsM15 = changed;
+      debug("GetRates(3)  M15 => "+ changed +" of "+ ArrayRange(ratesM15, 0) +" bars changed");
    }
 
    if (fTimeframes & F_PERIOD_M30 && 1) {
       changed = iCopyRates(ratesM30, NULL, PERIOD_M30);
       if (changed < 0) return(false);
-      debug("CopyRates(4)  M30 => "+ changed +" of "+ ArrayRange(ratesM30, 0) +" bars changed");
+      changedBarsM30 = changed;
+      debug("GetRates(4)  M30 => "+ changed +" of "+ ArrayRange(ratesM30, 0) +" bars changed");
    }
 
    if (fTimeframes & (F_PERIOD_H1|F_PERIOD_H2|F_PERIOD_H3|F_PERIOD_H4|F_PERIOD_H6|F_PERIOD_H8|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
       changed = iCopyRates(ratesH1, NULL, PERIOD_H1);
       if (changed < 0) return(false);
-      debug("CopyRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
+      changedBarsH1 = changed;
+      debug("GetRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
    }
    return(true);
 }
