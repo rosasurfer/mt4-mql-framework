@@ -7331,9 +7331,9 @@ void Library.ResetGlobalVars() {
 }
 
 
-// abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen()              { return(!catch("onBarOpen(1)", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onCommand(string data[]) { return(!catch("onCommand(1)", ERR_NOT_IMPLEMENTED)); }
+// catch non-implemented event handlers (if used the functions must be implemented in the program main module)
+bool onBarOpen()              { return(!catch("onBarOpen()  must be implemented in the program main module", ERR_NOT_IMPLEMENTED)); }
+bool onCommand(string data[]) { return(!catch("onCommand()  must be implemented in the program main module", ERR_NOT_IMPLEMENTED)); }
 
 
 #import "rsfLib2.ex4"
