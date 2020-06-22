@@ -307,12 +307,8 @@ bool UpdateSuperBars() {
       // TODO: Wenn timeframeChanged=TRUE läßt sich der gesamte folgende Block sparen, es gilt immer: changedBars = Bars
       //       Allerdings müssen dann in DrawSuperBar() nochmal ERS_HISTORY_UPDATE und ERR_SERIES_NOT_AVAILABLE behandelt werden.
 
-      int oldError        = last_error;
-      int changedBars.M15 = iChangedBars(NULL, PERIOD_M15, F_ERR_SERIES_NOT_AVAILABLE);
-      if (changedBars.M15 == -1) {
-         if (last_error != ERR_SERIES_NOT_AVAILABLE) return(false);
-         SetLastError(oldError);                                           // ERR_SERIES_NOT_AVAILABLE unterdrücken
-      }
+      int changedBars.M15 = iChangedBars(NULL, PERIOD_M15);
+      if (changedBars.M15 == -1) return(false);
 
       if (changedBars.M15 > 0) {
          datetime lastBarTime.M15 = iTime(NULL, PERIOD_M15, changedBars.M15-1);
