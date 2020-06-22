@@ -40,7 +40,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
       ArrayResize(data, size+1);
    }
 
-   // return the same result for the same tick
+   // always return the same result for the same tick
    if (Tick == data[i][CB.Tick])
       return(data[i][CB.ChangedBars]);
 
@@ -78,23 +78,21 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
       else if (bars==data[i][CB.Bars] && lastBarTime==data[i][CB.LastBarTime]) { // number of bars is unchanged and last bar is still the same
          changedBars = 1;                                                        // a regular tick
       }
-      else {
-         if (bars==data[i][CB.Bars]) {
-            // the last bar changed but the number of bars not => the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
-            // TODO: lookup the bar in data[i][CB.FirstBarTime] and compute ChangedBars from there
-            changedBars = bars;                                                  // mark all bars as changed until the lookup is implemented
+      else if (bars==data[i][CB.Bars]) {                                         // number of bars is unchanged and last bar changed => the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
+         // find the bar stored in data[i][CB.FirstBarTime]
+         int offset = iBarShift(symbol, timeframe, data[i][CB.FirstBarTime], true);
+         if (offset == -1) changedBars = bars;                                   // CB.FirstBarTime not found: mark all bars as changed
+         else              changedBars = offset + 1;                             // +1 to cover a simultaneous BarOpen event
+      }
+      else {                                                                     // the number of bars changed
+         if (bars < data[i][CB.Bars]) {
+            changedBars = bars;                                                  // the account changed: mark all bars as changed
+         }
+         else if (firstBarTime == data[i][CB.FirstBarTime]) {
+            changedBars = bars;                                                  // a data gap was filled: ambiguous => mark all bars as changed
          }
          else {
-            // the number of bars changed
-            if (bars < data[i][CB.Bars]) {
-               changedBars = bars;                                               // the account has been changed: mark all bars as changed
-            }
-            else if (firstBarTime == data[i][CB.FirstBarTime]) {
-               changedBars = bars;                                               // a data gap has been filled: ambiguous => mark all bars as changed
-            }
-            else {
-               changedBars = bars - data[i][CB.Bars] + 1;                        // new bars at the beginning: +1 to cover BarOpen events
-            }
+            changedBars = bars - data[i][CB.Bars] + 1;                           // new bars at the beginning: +1 to cover BarOpen events
          }
       }
    }
