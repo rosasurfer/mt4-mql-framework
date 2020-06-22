@@ -519,7 +519,7 @@ bool CheckInsideBarsMN1() {
       openTimeH1  = ratesH1[i][TIME];
       openTimeD1  = openTimeH1 - (openTimeH1 % DAY);           // opentime of the containing D1 bar (Midnight)
       int day = TimeDayEx(openTimeD1);
-      openTimeMN1 = openTimeD1 - (day-1);                      // opentime of the containing MN1 bar (1st of month 00:00)
+      openTimeMN1 = openTimeD1 - (day-1) * DAYS;               // opentime of the containing MN1 bar (1st of month 00:00)
 
       if (openTimeMN1 == pOpenTimeMN1) {                       // the current H1 bar belongs to the same MN1 bar
          high = MathMax(ratesH1[i][HIGH], high);
