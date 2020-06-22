@@ -295,11 +295,12 @@ bool     ConfigureSignalMail(string configValue, bool &enabled, string &sender, 
 bool     ConfigureSignalSMS(string configValue, bool &enabled, string &receiver);;
 bool     ConfigureSignalSound(string configValue, bool &enabled);;
 int      ExplodeStrings(int &buffer[], string &results[]);;
-int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
-int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
-int      iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
+int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
+int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
+int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
+int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);;
 int      InitializeByteBuffer(int &buffer[], int bytes);;
-bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
+bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTimeFxt=NULL, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv);;
 bool     IsBarOpenEvent(int timeframe = NULL);;
 double   JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar);;
 string   JoinBools(bool &values[], string separator = ", ");;
