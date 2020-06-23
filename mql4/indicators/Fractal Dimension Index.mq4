@@ -2,7 +2,7 @@
  * FDI - Fractal Dimension Index
  *
  * The Fractal Dimension Index describes the state of randomness or the existence of a long-term memory in a timeseries.
- * The FDI oscillates between 1 (1-dimensional behavior) and 2 (2-dimensionalbehavior). In financial contexts an FDI below
+ * The FDI oscillates between 1 (1-dimensional behavior) and 2 (2-dimensional behavior). In financial contexts an FDI below
  * 1.5 indicates a market with trending behavior (the timeseries is persistent). An FDI above 1.5 indicates a market with
  * ranging or cyclic behavior (the timeseries is non-persistent). An FDI at 1.5 indicates a market with random behavior
  * (the timeseries has no long-term memory). The FDI does not indicate market direction.
@@ -17,8 +17,8 @@
  *
  *   FDI(N, Matulich) = FDI(N+1, Sevcik)
  *
- * The so-called "Fractal Graph Dimension Index" (FGDI) draws Bollinger bands in beautiful colors around the FDI but doesn't
- * add any value. The similar named "Fractal Dimension" by Ehlers is not related to this indicator.
+ * The so-called "Fractal Graph Dimension Index" (FGDI) draws colored Bollinger Bands around the FDI but doesn't add any
+ * value. The similar named "Fractal Dimension" by Ehlers is not related to this indicator.
  *
  * Indicator buffers for iCustom():
  *  • FDI.MODE_MAIN: FDI values
