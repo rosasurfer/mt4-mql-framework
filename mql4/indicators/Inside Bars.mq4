@@ -1,6 +1,5 @@
 /**
- * Inside Bars (work in progress)
- *
+ * Inside Bars
  *
  * Marks inside bars and SR levels of the specified timeframes in the chart. Additionally to the standard MT4 timeframes the
  * indicator supports the timeframes H2, H3, H6 and H8.
@@ -11,7 +10,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes     = "H1*, H4, D1...";         // one* or more comma-separated timeframes to analyze
+extern string Timeframes     = "H1*, ...";               // one* or more comma-separated timeframes to analyze
 extern int    Max.InsideBars = 5;                        // max. number of inside bars per timeframe to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,12 +25,12 @@ extern int    Max.InsideBars = 5;                        // max. number of insid
 
 #property indicator_chart_window
 
-#define TIME         0                                   // rates array indexes
-#define OPEN         1
-#define LOW          2
-#define HIGH         3
-#define CLOSE        4
-#define VOLUME       5
+#define TIME      0                                      // rates array indexes
+#define OPEN      1
+#define LOW       2
+#define HIGH      3
+#define CLOSE     4
+#define VOLUME    5
 
 double ratesM1 [][6];                                    // rates for each required timeframe
 double ratesM5 [][6];
