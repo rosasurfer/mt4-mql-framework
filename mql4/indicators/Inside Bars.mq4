@@ -12,8 +12,8 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Configuration  = "manual | auto*";
-extern string Timeframes     = "W1*, H1, H4, D1...";         // one* or more comma-separated timeframes to analyze
-extern int    Max.InsideBars = 3;                        // max. number of inside bars per timeframe to find (-1: all)
+extern string Timeframes     = "M1*, H1, H4, D1...";         // one* or more comma-separated timeframes to analyze
+extern int    Max.InsideBars = 4;                        // max. number of inside bars per timeframe to find (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,14 +39,16 @@ double ratesM15[][6];
 double ratesM30[][6];
 double ratesH1 [][6];
 
-int changedBarsM1;                                       // ChangedBars for each required timeframe
-int changedBarsM5;
-int changedBarsM15;
-int changedBarsM30;
-int changedBarsH1;
+int    changedBarsM1;                                    // ChangedBars for each required timeframe
+int    changedBarsM5;
+int    changedBarsM15;
+int    changedBarsM30;
+int    changedBarsH1;
 
-int fTimeframes;                                         // flags of the timeframes to analyze
-int maxInsideBars;
+int    fTimeframes;                                      // flags of the timeframes to analyze
+int    maxInsideBars;
+
+string labels[];                                         // object labels of existing IB chart markers
 
 
 /**
@@ -95,13 +97,14 @@ int onInit() {
 int onTick() {
    if (!GetRates()) return(last_error);
 
+   if (fTimeframes & F_PERIOD_M1  && 1) CheckInsideBarsM1();
+   if (fTimeframes & F_PERIOD_M5  && 1) CheckInsideBarsM5();
+   if (fTimeframes & F_PERIOD_M15 && 1) CheckInsideBarsM15();
+   if (fTimeframes & F_PERIOD_M30 && 1) CheckInsideBarsM30();
+   if (fTimeframes & F_PERIOD_H1  && 1) CheckInsideBarsH1();
+
    static bool done = false;
    if (!done) {
-      if (fTimeframes & F_PERIOD_M1  && 1) CheckInsideBarsM1();
-      if (fTimeframes & F_PERIOD_M5  && 1) CheckInsideBarsM5();
-      if (fTimeframes & F_PERIOD_M15 && 1) CheckInsideBarsM15();
-      if (fTimeframes & F_PERIOD_M30 && 1) CheckInsideBarsM30();
-      if (fTimeframes & F_PERIOD_H1  && 1) CheckInsideBarsH1();
       if (fTimeframes & F_PERIOD_H2  && 1) CheckInsideBarsH2();
       if (fTimeframes & F_PERIOD_H3  && 1) CheckInsideBarsH3();
       if (fTimeframes & F_PERIOD_H4  && 1) CheckInsideBarsH4();
@@ -113,9 +116,6 @@ int onTick() {
       done = true;
    }
    return(last_error);
-
-   double dNull[];
-   iCopyRates(dNull);
 }
 
 
@@ -126,13 +126,23 @@ int onTick() {
  */
 bool CheckInsideBarsM1() {
    int bars = ArrayRange(ratesM1, 0);
-   int changedBars = changedBarsM1;
-   int more = maxInsideBars;
+   int changedBars = changedBarsM1, more;
 
-   for (int i=2; more && i < bars; i++) {
-      if (ratesM1[i][HIGH] >= ratesM1[i-1][HIGH] && ratesM1[i][LOW] <= ratesM1[i-1][LOW]) {
-         if (!MarkInsideBar(PERIOD_M1, ratesM1[i-1][TIME], ratesM1[i-1][HIGH], ratesM1[i-1][LOW])) return(false);
-         more--;
+   if (changedBars > 1) {
+      if (changedBars == 2) {                         // check BarOpen event only
+         bars = 3;
+         more = 1;
+      }
+      else {                                          // update history
+         DeleteInsideBars(PERIOD_M1);                 // delete existing bars
+         more = maxInsideBars;
+      }
+      for (int i=2; i < bars; i++) {
+         if (ratesM1[i][HIGH] >= ratesM1[i-1][HIGH] && ratesM1[i][LOW] <= ratesM1[i-1][LOW]) {
+            MarkInsideBar(PERIOD_M1, ratesM1[i-1][TIME], ratesM1[i-1][HIGH], ratesM1[i-1][LOW]);
+            more--;
+            if (!more) break;
+         }
       }
    }
    return(true);
@@ -146,13 +156,23 @@ bool CheckInsideBarsM1() {
  */
 bool CheckInsideBarsM5() {
    int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5;
-   int more = maxInsideBars;
+   int changedBars = changedBarsM5, more;
 
-   for (int i=2; more && i < bars; i++) {
-      if (ratesM5[i][HIGH] >= ratesM5[i-1][HIGH] && ratesM5[i][LOW] <= ratesM5[i-1][LOW]) {
-         if (!MarkInsideBar(PERIOD_M5, ratesM5[i-1][TIME], ratesM5[i-1][HIGH], ratesM5[i-1][LOW])) return(false);
-         more--;
+   if (changedBars > 1) {
+      if (changedBars == 2) {                         // check BarOpen event only
+         bars = 3;
+         more = 1;
+      }
+      else {                                          // update history
+         DeleteInsideBars(PERIOD_M5);                 // delete existing bars
+         more = maxInsideBars;
+      }
+      for (int i=2; i < bars; i++) {
+         if (ratesM5[i][HIGH] >= ratesM5[i-1][HIGH] && ratesM5[i][LOW] <= ratesM5[i-1][LOW]) {
+            MarkInsideBar(PERIOD_M5, ratesM5[i-1][TIME], ratesM5[i-1][HIGH], ratesM5[i-1][LOW]);
+            more--;
+            if (!more) break;
+         }
       }
    }
    return(true);
@@ -166,13 +186,23 @@ bool CheckInsideBarsM5() {
  */
 bool CheckInsideBarsM15() {
    int bars = ArrayRange(ratesM15, 0);
-   int changedBars = changedBarsM15;
-   int more = maxInsideBars;
+   int changedBars = changedBarsM15, more;
 
-   for (int i=2; more && i < bars; i++) {
-      if (ratesM15[i][HIGH] >= ratesM15[i-1][HIGH] && ratesM15[i][LOW] <= ratesM15[i-1][LOW]) {
-         if (!MarkInsideBar(PERIOD_M15, ratesM15[i-1][TIME], ratesM15[i-1][HIGH], ratesM15[i-1][LOW])) return(false);
-         more--;
+   if (changedBars > 1) {
+      if (changedBars == 2) {                         // check BarOpen event only
+         bars = 3;
+         more = 1;
+      }
+      else {                                          // update history
+         DeleteInsideBars(PERIOD_M15);                // delete existing bars
+         more = maxInsideBars;
+      }
+      for (int i=2; i < bars; i++) {
+         if (ratesM15[i][HIGH] >= ratesM15[i-1][HIGH] && ratesM15[i][LOW] <= ratesM15[i-1][LOW]) {
+            MarkInsideBar(PERIOD_M15, ratesM15[i-1][TIME], ratesM15[i-1][HIGH], ratesM15[i-1][LOW]);
+            more--;
+            if (!more) break;
+         }
       }
    }
    return(true);
@@ -186,13 +216,23 @@ bool CheckInsideBarsM15() {
  */
 bool CheckInsideBarsM30() {
    int bars = ArrayRange(ratesM30, 0);
-   int changedBars = changedBarsM30;
-   int more = maxInsideBars;
+   int changedBars = changedBarsM30, more;
 
-   for (int i=2; more && i < bars; i++) {
-      if (ratesM30[i][HIGH] >= ratesM30[i-1][HIGH] && ratesM30[i][LOW] <= ratesM30[i-1][LOW]) {
-         if (!MarkInsideBar(PERIOD_M30, ratesM30[i-1][TIME], ratesM30[i-1][HIGH], ratesM30[i-1][LOW])) return(false);
-         more--;
+   if (changedBars > 1) {
+      if (changedBars == 2) {                         // check BarOpen event only
+         bars = 3;
+         more = 1;
+      }
+      else {                                          // update history
+         DeleteInsideBars(PERIOD_M30);                // delete existing bars
+         more = maxInsideBars;
+      }
+      for (int i=2; i < bars; i++) {
+         if (ratesM30[i][HIGH] >= ratesM30[i-1][HIGH] && ratesM30[i][LOW] <= ratesM30[i-1][LOW]) {
+            MarkInsideBar(PERIOD_M30, ratesM30[i-1][TIME], ratesM30[i-1][HIGH], ratesM30[i-1][LOW]);
+            more--;
+            if (!more) break;
+         }
       }
    }
    return(true);
@@ -206,13 +246,23 @@ bool CheckInsideBarsM30() {
  */
 bool CheckInsideBarsH1() {
    int bars = ArrayRange(ratesH1, 0);
-   int changedBars = changedBarsH1;
-   int more = maxInsideBars;
+   int changedBars = changedBarsH1, more;
 
-   for (int i=2; more && i < bars; i++) {
-      if (ratesH1[i][HIGH] >= ratesH1[i-1][HIGH] && ratesH1[i][LOW] <= ratesH1[i-1][LOW]) {
-         if (!MarkInsideBar(PERIOD_H1, ratesH1[i-1][TIME], ratesH1[i-1][HIGH], ratesH1[i-1][LOW])) return(false);
-         more--;
+   if (changedBars > 1) {
+      if (changedBars == 2) {                         // check BarOpen event only
+         bars = 3;
+         more = 1;
+      }
+      else {                                          // update history
+         DeleteInsideBars(PERIOD_H1);                 // delete existing bars
+         more = maxInsideBars;
+      }
+      for (int i=2; i < bars; i++) {
+         if (ratesH1[i][HIGH] >= ratesH1[i-1][HIGH] && ratesH1[i][LOW] <= ratesH1[i-1][LOW]) {
+            MarkInsideBar(PERIOD_H1, ratesH1[i-1][TIME], ratesH1[i-1][HIGH], ratesH1[i-1][LOW]);
+            more--;
+            if (!more) break;
+         }
       }
    }
    return(true);
@@ -564,19 +614,21 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
    double   shortLevel1 = NormalizeDouble(low  - barSize, Digits);
    string   sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
    string   sTimeframe  = TimeframeDescription(timeframe);
+   static int counter = 0; counter++;
 
    // draw vertical line at IB open
-   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +")";
+   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
    if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, chartOpenTime, shortLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
       ObjectSet     (label, OBJPROP_BACK,  true);
       RegisterObject(label);
-   } else debug("MarkInsideBar(1)", GetLastError());
+      ArrayPushString(labels, label);
+   } else debug("MarkInsideBar(1)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // draw horizontal line at long level 1
-   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat);
+   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat) +" ["+ counter +"]";
    if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, closeTime, longLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
@@ -584,20 +636,48 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_BACK,  true);
       ObjectSetText (label, " "+ sTimeframe);
       RegisterObject(label);
-   } else debug("MarkInsideBar(2)", GetLastError());
+      ArrayPushString(labels, label);
+   } else debug("MarkInsideBar(2)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // draw horizontal line at short level 1
-   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat);
+   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat) +" ["+ counter +"]";
    if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortLevel1, closeTime, shortLevel1)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
       ObjectSet     (label, OBJPROP_BACK,  true);
       RegisterObject(label);
-   } else debug("MarkInsideBar(3)", GetLastError());
+      ArrayPushString(labels, label);
+   } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   string format = ifString(timeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");    // "%a, %d.%m.%Y %H:%M:%S"
-   debug("MarkInsideBar(4)  "+ sTimeframe +" at "+ GmtTimeFormat(openTime, format));
+   if (false) {
+      string format = ifString(timeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");    // "%a, %d.%m.%Y %H:%M:%S"
+      debug("MarkInsideBar(4)  "+ sTimeframe +" at "+ GmtTimeFormat(openTime, format));
+   }
+   return(true);
+}
+
+
+/**
+ * Delete inside bar markers of the specified timeframe from the chart.
+ *
+ * @param  int timeframe
+ *
+ * @return bool - success status
+ */
+bool DeleteInsideBars(int timeframe) {
+   string prefix = TimeframeDescription(timeframe) +" inside bar";
+   int size = ArraySize(labels);
+
+   for (int i=size-1; i >= 0; i--) {
+      if (StrStartsWith(labels[i], prefix)) {
+         if (!ObjectDelete(labels[i])) {
+            int error = GetLastError();
+            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", ifInt(error, error, ERR_RUNTIME_ERROR)));
+         }
+         ArraySpliceStrings(labels, i, 1);
+      }
+   }
    return(true);
 }
 
