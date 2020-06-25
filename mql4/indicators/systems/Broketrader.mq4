@@ -30,7 +30,7 @@ extern int    SMA.DrawWidth          = 2;
 extern int    Max.Values             = 10000;               //  max. amount of values to calculate (-1: all)
 extern string __________________________;
 
-extern string Signal.onReversal      = "on | off | auto*";  // auto: configuration key "Broketrader"
+extern string Signal.onReversal      = "on | off | auto*";
 extern string Signal.Sound           = "on | off | auto*";
 extern string Signal.Mail.Receiver   = "on | off | auto* | {email-address}";
 extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";

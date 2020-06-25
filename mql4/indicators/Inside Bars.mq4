@@ -10,8 +10,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes     = "H1*, ...";               // one* or more comma-separated timeframes to analyze
-extern int    Max.InsideBars = 5;                        // max. number of inside bars per timeframe to find (-1: all)
+extern string Timeframes           = "H1*, ...";         // one* or more comma-separated timeframes to analyze
+extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all)
+extern string __________________________;
+
+extern string Signal.onInsideBar   = "on | off | auto*";
+extern string Signal.Sound         = "on | off | auto*";
+extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
+extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -19,6 +25,10 @@ extern int    Max.InsideBars = 5;                        // max. number of insid
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/BarOpenEvent.mqh>
+#include <functions/ConfigureSignal.mqh>
+#include <functions/ConfigureSignalMail.mqh>
+#include <functions/ConfigureSignalSMS.mqh>
+#include <functions/ConfigureSignalSound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/JoinStrings.mqh>
@@ -48,6 +58,16 @@ int    fTimeframes;                                      // flags of the timefra
 int    maxInsideBars;
 
 string labels[];                                         // object labels of existing IB chart markers
+
+bool   signals;
+bool   signal.sound;
+string signal.sound.file = "Siren.wav";
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+bool   signal.sms;
+string signal.sms.receiver = "";
+string signal.info = "";                                 // additional chart legend info
 
 
 /**
@@ -81,6 +101,27 @@ int onInit() {
    // Max.InsideBars
    if (Max.InsideBars < -1) return(catch("onInit(3)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
+
+   // signals
+   string signalInfo = "";
+   if (!ConfigureSignal("Inside Bars", Signal.onInsideBar, signals))                                          return(last_error);
+   if (signals) {
+      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (signal.sound || signal.mail || signal.sms) {
+         signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
+      }
+      else signals = false;
+   }
+
+   // display options
+   SetIndexLabel(0, NULL);                                     // disable "Data" window display
+   string label = CreateStatusLabel();
+   string fontName = "";                                       // "" => menu font family
+   int    fontSize = 8;                                        // 8  => menu font size
+   string text = __NAME() +": "+ Timeframes + signalInfo;
+   ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(4)"));
 }
@@ -731,11 +772,35 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ArrayPushString(labels, label);
    } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   if (false) {
-      string format = ifString(timeframe < PERIOD_D1, "%a, %d.%m.%Y %H:%M", "%a, %d.%m.%Y");    // "%a, %d.%m.%Y %H:%M:%S"
-      debug("MarkInsideBar(4)  "+ sTimeframe +" at "+ GmtTimeFormat(openTime, format));
-   }
+   // signal new inside bars
+   if (!IsSuperContext() && IsBarOpenEvent(timeframe) && signals)
+      return(onInsideBar(timeframe, high, low));
    return(true);
+}
+
+
+/**
+ * Signal event handler for new inside bars.
+ *
+ * @param  int    timeframe - timeframe
+ * @param  double high      - bar high
+ * @param  double low       - bar low
+ *
+ * @return bool - success status
+ */
+bool onInsideBar(int timeframe, double high, double low) {
+   double barSize     = (high-low);
+   string message     = TimeframeDescription(timeframe) +" inside bar (High: "+ NumberToStr(high, PriceFormat) +", Low: "+ NumberToStr(low, PriceFormat) +", size: "+ DoubleToStr(barSize/Pip, Digits & 1) +" pip)";
+   string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+
+   if (__LOG()) log("onInsideBar(1)  "+ message);
+   message = Symbol() +","+ message;
+
+   int error = 0;
+   if (signal.sound) error |= !PlaySoundEx(signal.sound.file);
+   if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
+   if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
+   return(!error);
 }
 
 
@@ -810,12 +875,43 @@ bool GetRates() {
 
 
 /**
+ * Create a text label for the status display.
+ *
+ * @return string - the label or an empty string in case of errors
+ */
+string CreateStatusLabel() {
+   string label = __NAME() +" status ["+ __ExecutionContext[EC.pid] +"]";
+
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 280);
+      ObjectSet    (label, OBJPROP_YDISTANCE,  26);         // below/aligned to the SuperBars label
+      ObjectSetText(label, " ", 1);
+      RegisterObject(label);
+   }
+
+   if (!catch("CreateStatusLabel(1)"))
+      return(label);
+   return("");
+}
+
+
+/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframes=",     DoubleQuoteStr(Timeframes), ";", NL,
-                            "Max.InsideBars=", Max.InsideBars,             ";")
+   return(StringConcatenate("Timeframes=",           DoubleQuoteStr(Timeframes),           ";", NL,
+                            "Max.InsideBars=",       Max.InsideBars,                       ";", NL,
+                            "Signal.onInsideBar=",   DoubleQuoteStr(Signal.onInsideBar),   ";", NL,
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+
+
    );
 }
