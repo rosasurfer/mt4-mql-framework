@@ -103,16 +103,25 @@ int onInit() {
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
 
    // signals
+   string signalInfo = "";
    if (!ConfigureSignal("Inside Bars", Signal.onInsideBar, signals))                                          return(last_error);
    if (signals) {
       if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = __NAME() +"="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
       }
       else signals = false;
    }
+
+   // display options
+   SetIndexLabel(0, NULL);                                     // disable "Data" window display
+   string label = CreateStatusLabel();
+   string fontName = "";                                       // "" => menu font family
+   int    fontSize = 8;                                        // 8  => menu font size
+   string text = __NAME() +": "+ Timeframes + signalInfo;
+   ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(4)"));
 }
@@ -862,6 +871,31 @@ bool GetRates() {
       //debug("GetRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
    }
    return(true);
+}
+
+
+/**
+ * Create a text label for the status display.
+ *
+ * @return string - the label or an empty string in case of errors
+ */
+string CreateStatusLabel() {
+   string label = __NAME() +" status ["+ __ExecutionContext[EC.pid] +"]";
+
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 280);
+      ObjectSet    (label, OBJPROP_YDISTANCE,  26);         // below/aligned to the SuperBars label
+      ObjectSetText(label, " ", 1);
+      RegisterObject(label);
+   }
+
+   if (!catch("CreateStatusLabel(1)"))
+      return(label);
+   return("");
 }
 
 
