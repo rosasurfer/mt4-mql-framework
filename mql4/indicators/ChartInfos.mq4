@@ -58,7 +58,7 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged position size
 double mm.risk;                                                   // configured position risk in %
-int    mm.stopDistance;                                           // configured stop distance in pip
+double mm.stopDistance;                                           // configured stop distance in pip
 double mm.positionSize;                                           // calculated position size according to risk and stop distance
 double mm.normPositionSize;                                       // mm.positionSize normalized to MODE_LOTSTEP
 double mm.positionSizeLeverage;                                   // leverage of the calculated position size
@@ -1177,14 +1177,14 @@ bool UpdatePositionSize() {
    if (!mm.done) /*&&*/ if (!CalculatePositionSize()) return(_false(CheckLastError("UpdatePositionSize(1)->CalculatePositionSize()")));
    if (!mm.done)                                      return(true);
 
-   string sPositionSize = "";         // R - risk / stop distance                             L - leverage                                           position size
+   string sPositionSize = "";         // R - risk / stop distance                                    L - leverage                                           position size
    if (mode.intern && mm.risk && mm.stopDistance) {
-      sPositionSize = StringConcatenate("R ", Round(mm.risk), "%/", mm.stopDistance, "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
+      sPositionSize = StringConcatenate("R ", Round(mm.risk), "%/", Round(mm.stopDistance), "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sPositionSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error == ERR_OBJECT_DOES_NOT_EXIST)                       // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdatePositionSize(2)", error));
 }
