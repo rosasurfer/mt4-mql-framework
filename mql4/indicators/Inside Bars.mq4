@@ -774,7 +774,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 
    // signal new inside bars
    if (!IsSuperContext() && IsBarOpenEvent(timeframe) && signals)
-      return(onInsideBar(timeframe, high, low));
+      return(onInsideBar(timeframe));
    return(true);
 }
 
@@ -782,15 +782,12 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 /**
  * Signal event handler for new inside bars.
  *
- * @param  int    timeframe - timeframe
- * @param  double high      - bar high
- * @param  double low       - bar low
+ * @param  int timeframe
  *
  * @return bool - success status
  */
-bool onInsideBar(int timeframe, double high, double low) {
-   double barSize     = (high-low);
-   string message     = TimeframeDescription(timeframe) +" inside bar (High: "+ NumberToStr(high, PriceFormat) +", Low: "+ NumberToStr(low, PriceFormat) +", size: "+ DoubleToStr(barSize/Pip, Digits & 1) +" pip)";
+bool onInsideBar(int timeframe) {
+   string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
 
    if (__LOG()) log("onInsideBar(1)  "+ message);
