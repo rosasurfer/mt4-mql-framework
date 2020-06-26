@@ -17,8 +17,9 @@ extern int    Stochastic.MA1.Periods = 10;
 extern int    Stochastic.MA2.Periods = 6;
 extern int    RSI.Periods            = 96;
 
-extern string MTF                    = "M1 | M5 | M15 | ... | current*";   // timeframe to display (empty: current)
-extern int    Max.Values             = 10000;                              //  max. amount of current bars to display (-1: all)
+extern string MTF                    = "M1 | M5 | M15 | ... | H1* | current";   // timeframe to display (empty: current)
+extern string StartDate              = "";
+extern int    Max.Values             = 10000;                              // max. amount of current bars to display (-1: all)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -84,9 +85,9 @@ int onInit() {
       MTF = "current";
    }
    else {
-      targetTimeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
+      targetTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
       if (targetTimeframe == -1)   return(catch("onInit(6)  Invalid input parameter MTF: "+ DoubleQuoteStr(MTF), ERR_INVALID_INPUT_PARAMETER));
-      MTF = PeriodDescription(targetTimeframe);
+      MTF = TimeframeDescription(targetTimeframe);
    }
    currentTimeframe = Period();
    // Max.Values
@@ -99,8 +100,7 @@ int onInit() {
    SetIndexBuffer(MODE_TOTAL,  bufferTotalPL );                // total PL:  visible
 
    // names, labels and display options
-   //IndicatorShortName("Broketrader performance  ");          // indicator subwindow and context menu
-   IndicatorShortName("Broketrader open/closed/total PL  ");
+   IndicatorShortName("Broketrader open/closed/total PL  ");   // indicator subwindow and context menu
    SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );        // "Data" window
    SetIndexLabel(MODE_CLOSED, "Broketrader closed PL");
    SetIndexLabel(MODE_TOTAL,  "Broketrader total PL" );
@@ -178,62 +178,27 @@ int onTick() {
          openPL = 0;
       }
 
-      bufferOpenPL  [i]                              = openPL;
-      bufferClosedPL[i]                              = closedPL;
-      if (closedPL == EMPTY_VALUE) bufferTotalPL [i] = EMPTY_VALUE;     // trading hasn't yet started
-      else                         bufferTotalPL [i] = closedPL + openPL;
+      bufferOpenPL  [i] = openPL;
+      bufferClosedPL[i] = closedPL;                                     // on EMPTY_VALUE trading hasn't yet started
+      bufferTotalPL [i] = ifDouble(closedPL==EMPTY_VALUE, EMPTY_VALUE, closedPL + openPL);
    }
    return(catch("onTick(3)"));
 }
 
 
 /**
- * Compute the PL of an open position at the specified bar.
+ * MTF main function
  *
- * @param  int position - direction and duration of the position
- * @param  int bar      - bar index of the position
- *
- * @return double - PL in pip
+ * @return int - error status
  */
-double GetOpenPL(int position, int bar) {
-   double open, close;
-
-   if (position > 0) {                 // long
-      open  = Open[bar+position-1];
-      close = Close[bar];
-      return((close-open) / Pip);
+int onMTF() {
+   if (targetTimeframe < currentTimeframe) {
+      debug("onMTF(1)  requested timeframe: "+ TimeframeDescription(targetTimeframe));
    }
-   if (position < 0) {                 // short
-      open  = Open[bar-position-1];
-      close = Close[bar];
-      return((open-close) / Pip);
+   else {
+      debug("onMTF(2)  requested timeframe: "+ TimeframeDescription(targetTimeframe));
    }
-   return(0);
-}
-
-
-/**
- * Compute the PL of a position closed at the Open of the specified bar.
- *
- * @param  int bar - bar index of the position
- *
- * @return double - PL in pip
- */
-double GetClosedPL(int bar) {
-   double open, close;
-   int position = GetBroketraderPosition(bar+1);
-
-   if (position > 0) {                 // long
-      open  = Open[bar+position];
-      close = Open[bar];
-      return((close-open) / Pip);
-   }
-   if (position < 0) {                 // short
-      open  = Open[bar-position];
-      close = Open[bar];
-      return((open-close) / Pip);
-   }
-   return(0);
+   return(catch("onMTF(3)"));
 }
 
 
@@ -303,12 +268,52 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
 
 
 /**
- * MTF main function
+ * Compute the PL of an open position at the specified bar.
  *
- * @return int - error status
+ * @param  int position - direction and duration of the position
+ * @param  int bar      - bar index of the position
+ *
+ * @return double - PL in pip
  */
-int onMTF() {
-   return(catch("onMTF(1)"));
+double GetOpenPL(int position, int bar) {
+   double open, close;
+
+   if (position > 0) {                 // long
+      open  = Open[bar+position-1];
+      close = Close[bar];
+      return((close-open) / Pip);
+   }
+   if (position < 0) {                 // short
+      open  = Open[bar-position-1];
+      close = Close[bar];
+      return((open-close) / Pip);
+   }
+   return(0);
+}
+
+
+/**
+ * Compute the PL of a position closed at the Open of the specified bar.
+ *
+ * @param  int bar - bar index of the position
+ *
+ * @return double - PL in pip
+ */
+double GetClosedPL(int bar) {
+   double open, close;
+   int position = GetBroketraderPosition(bar+1);
+
+   if (position > 0) {                 // long
+      open  = Open[bar+position];
+      close = Open[bar];
+      return((close-open) / Pip);
+   }
+   if (position < 0) {                 // short
+      open  = Open[bar-position];
+      close = Open[bar];
+      return((open-close) / Pip);
+   }
+   return(0);
 }
 
 
@@ -337,6 +342,7 @@ string InputsToStr() {
                             "Stochastic.MA2.Periods=", Stochastic.MA2.Periods, ";", NL,
                             "RSI.Periods=",            RSI.Periods,            ";", NL,
                             "MTF=",                    DoubleQuoteStr(MTF),    ";", NL,
+                            "StartDate=",              StartDate,              ";", NL,
                             "Max.Values=",             Max.Values,             ";")
    );
 }
