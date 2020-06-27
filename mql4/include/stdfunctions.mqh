@@ -6013,7 +6013,7 @@ double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distrib
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6056,7 +6056,7 @@ double iFATL(int timeframe, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6103,7 +6103,7 @@ double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           CLR_NONE,                                        // color  Color.Channel
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6153,7 +6153,7 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6211,7 +6211,7 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
@@ -6261,7 +6261,7 @@ double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAp
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6309,7 +6309,7 @@ double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffe
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6358,7 +6358,7 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           Blue,                                            // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           0,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
                           lpSuperContext,                                  // int    __SuperContext__
 
@@ -6396,7 +6396,7 @@ double iSATL(int timeframe, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6447,7 +6447,7 @@ double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1P
                           DodgerBlue,                                      // color  Signal.Color
                           "Line",                                          // string Signal.DrawType
                           1,                                               // int    Signal.DrawWidth
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ______________________
                           lpSuperContext,                                  // int    __SuperContext__
 
@@ -6490,7 +6490,7 @@ double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuff
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6540,7 +6540,7 @@ double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, i
                           CLR_NONE,                                        // color  Color.MovingAverage
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6588,7 +6588,7 @@ double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
@@ -6637,7 +6637,7 @@ double iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
                           lpSuperContext,                                  // int    __SuperContext__
 

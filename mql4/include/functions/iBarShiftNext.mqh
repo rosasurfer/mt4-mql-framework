@@ -11,7 +11,6 @@
  *               EMPTY_VALUE, falls ein Fehler auftrat
  *
  * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergeleitet.
- *       Er ist nicht relevant für die momentan vorhandenen Daten.
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, int muteFlags=NULL) {
    if (symbol == "0")                                       // (string) NULL

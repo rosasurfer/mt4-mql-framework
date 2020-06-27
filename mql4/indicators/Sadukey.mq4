@@ -2,7 +2,7 @@
  * Sadukey indicator - a filter with coefficients designed by the "Digital Filter Generator"
  *
  *
- * This indicator should be taken with a big grain of salt as coefficients are more than 10 years old.
+ * Coefficients are more than 10 years old, so the indicator should be taken with a grain of salt.
  *
  * @see  http://www.finware.com/generator.html
  * @see  http://fx.qrz.ru/
@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
 
 extern color Color.UpTrend   = Blue;
 extern color Color.DownTrend = Red;
-extern int   Max.Values      = 10000;                 //  max. amount of values to calculate (-1: all)
+extern int   Max.Bars        = 10000;                 // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,9 +54,9 @@ int onInit() {
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-   // Max.Values
-   if (Max.Values < -1) return(catch("onInit(1)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1) return(catch("onInit(1)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
    SetIndexBuffer(MODE_BUFFER1, buffer1);             // buffer 1: visible
@@ -100,7 +100,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(buffer1)) return(log("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(buffer1, EMPTY_VALUE);
       ArrayInitialize(buffer2, EMPTY_VALUE);
@@ -119,10 +119,10 @@ int onTick() {
    int startBar     = Min(bars-1, Bars-filterLength);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   // recalculate changed bars:                 Sadukey-Median = (O+H+L+C)/4
+   // recalculate changed bars:
    for (int i=startBar; i >= 0; i--) {
 
-      // buffer1 = (Sadukey-Median + Close)/2
+      // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
       buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
                  + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
                  + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Close[i+ 2])/2
@@ -190,7 +190,7 @@ int onTick() {
                  - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Close[i+64])/2
                  + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Close[i+65])/2;
 
-      // buffer2 = (Sadukey-Median + Open)/2
+      // buffer2 = (Sadukey-Median + Open)/2                                                                // Sadukey-Median = (O+H+L+C)/4
       buffer2[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Open[i+ 0])/2
                  + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Open[i+ 1])/2
                  + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Open[i+ 2])/2
@@ -286,6 +286,6 @@ void SetIndicatorOptions() {
 string InputsToStr() {
    return(StringConcatenate("Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
                             "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,
-                            "Max.Values=",      Max.Values,                  ";")
+                            "Max.Bars=",        Max.Bars,                    ";")
    );
 }

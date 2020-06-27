@@ -17,7 +17,7 @@
  *
  * TODO:
  *    - implement customizable moving averages for Stochastic and Fisher Transform
- *    - implement Max.Values
+ *    - implement Max.Bars
  *    - implement PRICE_* types
  *    - check required run-up period
  */

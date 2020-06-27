@@ -17,7 +17,7 @@ extern int   MMI.Periods = 100;
 extern color Line.Color  = Blue;
 extern int   Line.Width  = 1;
 
-extern int   Max.Values  = 5000;                            // max. amount of values to calculate (-1: all)
+extern int   Max.Bars    = 5000;                            // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,8 +54,8 @@ int onInit() {
    if (Line.Width < 0)  return(catch("onInit(2)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Line.Width > 5)  return(catch("onInit(3)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1) return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)   return(catch("onInit(4)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) indicator buffer management
@@ -71,7 +71,7 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (Max.Bars >= 0) startDraw += Bars - Max.Bars;
    if (startDraw < 0) startDraw = 0;
    SetIndexDrawBegin(MODE_MAIN, startDraw);
    SetLevelValue(0, 75);
@@ -91,7 +91,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferMMI)) return(log("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
       SetIndicatorOptions();
@@ -105,8 +105,8 @@ int onTick() {
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (ChangedBars > Max.Values)
-      changedBars = Max.Values;
+   if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
+      changedBars = Max.Bars;
    int startBar = Min(changedBars-1, Bars-mmi.periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -148,10 +148,8 @@ void SetIndicatorOptions() {
  */
 string InputsToStr() {
    return(StringConcatenate("MMI.Periods=", MMI.Periods,            ";", NL,
-
                             "Line.Color=",  ColorToStr(Line.Color), ";", NL,
                             "Line.Width=",  Line.Width,             ";", NL,
-
-                            "Max.Values=",  Max.Values,             ";")
+                            "Max.Bars=",    Max.Bars,               ";")
    );
 }
