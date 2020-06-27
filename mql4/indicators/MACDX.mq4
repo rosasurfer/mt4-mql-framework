@@ -37,7 +37,7 @@ extern int    Histogram.Style.Width = 2;
 extern color  MainLine.Color        = DodgerBlue;
 extern int    MainLine.Width        = 1;
 
-extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
+extern int    Max.Bars              = 5000;                 // max. number of bars to display (-1: all available)
 
 extern string __________________________;
 
@@ -207,9 +207,9 @@ int onInit() {
    if (MainLine.Width < 0)              return(catch("onInit(11)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
    if (MainLine.Width > 5)              return(catch("onInit(12)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)                 return(catch("onInit(13)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1)                   return(catch("onInit(13)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
    if (!ConfigureSignal("MACD", Signal.onCross, signals))                                                     return(last_error);
@@ -277,7 +277,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferMACD)) return(log("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferMACD,  EMPTY_VALUE);
       ArrayInitialize(bufferSection,         0);
@@ -427,7 +427,7 @@ bool StoreInputParameters() {
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
    Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
    Chart.StoreString(name +".input.Signal.onCross",        Signal.onCross       );
    Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
    Chart.StoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
@@ -454,7 +454,7 @@ bool RestoreInputParameters() {
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
    Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
-   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
    Chart.RestoreString(name +".input.Signal.onCross",        Signal.onCross       );
    Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
    Chart.RestoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
@@ -480,10 +480,10 @@ string InputsToStr() {
                             "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
                             "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
                             "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
-                            "Max.Values=",            Max.Values,                           ";"+ NL,
+                            "Max.Bars=",              Max.Bars,                             ";"+ NL,
                             "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       ";"+ NL,
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";"+ NL,
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";"+ NL,
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";"+ NL)
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

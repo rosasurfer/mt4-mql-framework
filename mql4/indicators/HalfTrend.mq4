@@ -23,7 +23,7 @@ extern color  Color.DownTrend      = Red;
 extern color  Color.Channel        = CLR_NONE;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
-extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
+extern int    Max.Bars             = 5000;               // max. number of bars to display (-1: all available)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -97,7 +97,7 @@ int onInit() {
 
    // validate inputs
    // Periods
-   if (Periods < 1)     return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 1)    return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -113,15 +113,15 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                 return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.Width
-   if (Draw.Width < 0)  return(catch("onInit(3)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5)  return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0) return(catch("onInit(3)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5) return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1) return(catch("onInit(5)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1)  return(catch("onInit(5)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
    if (!ConfigureSignal(__NAME(), Signal.onTrendChange, signals))                                             return(last_error);
@@ -367,7 +367,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Color.Channel",        Color.Channel       );
    Chart.StoreString(name +".input.Draw.Type",            Draw.Type           );
    Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.StoreInt   (name +".input.Max.Values",           Max.Values          );
+   Chart.StoreInt   (name +".input.Max.Bars",             Max.Bars            );
    Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
    Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound        );
    Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
@@ -389,7 +389,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Color.Channel",        Color.Channel       );
    Chart.RestoreString(name +".input.Draw.Type",            Draw.Type           );
    Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.RestoreInt   (name +".input.Max.Values",           Max.Values          );
+   Chart.RestoreInt   (name +".input.Max.Bars",             Max.Bars            );
    Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
    Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound        );
    Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
@@ -410,7 +410,7 @@ string InputsToStr() {
                             "Color.Channel=",        ColorToStr(Color.Channel),            ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
                             "Draw.Width=",           Draw.Width,                           ";", NL,
-                            "Max.Values=",           Max.Values,                           ";", NL,
+                            "Max.Bars=",             Max.Bars,                             ";", NL,
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
