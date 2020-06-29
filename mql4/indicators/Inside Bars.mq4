@@ -791,7 +791,7 @@ bool onInsideBar(int timeframe) {
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
 
    if (__LOG()) log("onInsideBar(1)  "+ message);
-   message = Symbol() +","+ message;
+   message = Symbol() +": "+ message;
 
    int error = 0;
    if (signal.sound) error |= !PlaySoundEx(signal.sound.file);

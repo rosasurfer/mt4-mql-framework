@@ -6020,7 +6020,7 @@ double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distrib
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6063,7 +6063,7 @@ double iFATL(int timeframe, int iBuffer, int iBar) {
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6110,7 +6110,7 @@ double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6160,7 +6160,7 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6218,7 +6218,7 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6268,7 +6268,7 @@ double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAp
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6316,7 +6316,7 @@ double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffe
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6360,7 +6360,7 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           0,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6403,7 +6403,7 @@ double iSATL(int timeframe, int iBuffer, int iBar) {
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6449,7 +6449,7 @@ double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1P
                           1,                                               // int    Signal.DrawWidth
                           -1,                                              // int    Max.Bars
                           "",                                              // string ______________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6497,7 +6497,7 @@ double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuff
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6547,7 +6547,7 @@ double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, i
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6595,7 +6595,7 @@ double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6639,7 +6639,7 @@ double iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
