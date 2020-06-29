@@ -10,12 +10,12 @@
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für die Datenreihe);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  *
- * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergeleitet.
+ * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht gemeldet.
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, int muteFlags=NULL) {
    if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
-   if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftNext(1)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER)));
+   if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftNext(1)  invalid parameter time: "+ time, ERR_INVALID_PARAMETER)));
 
    /*
    int iBarShift(symbol, period, time, exact=[true|false]);
@@ -24,10 +24,10 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, in
                      der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
 
       - Existieren keine entsprechenden Daten, gibt iBarShift() -1 zurück.
-      - Ist das Symbol unbekannt (existiert nicht in "symbols.raw") oder ist der Timeframe kein Standard-Timeframe, meldet iBarShift() keinen Fehler.
+      - Sind Symbol oder Timeframe unbekannt, meldet iBarShift() keinen Fehler.
       - Ist das Symbol bekannt, wird ggf. der Status ERS_HISTORY_UPDATE gemeldet.
    */
-   int bar   = iBarShift(symbol, period, time, true);
+   int bar = iBarShift(symbol, period, time, true);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)
       return(_EMPTY_VALUE(catch("iBarShiftNext(2)->iBarShift("+ symbol +","+ PeriodDescription(period) +") => "+ bar, error)));
@@ -39,8 +39,8 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, in
    // exact war TRUE und bar==-1: keine abdeckende Bar gefunden
    // Datenreihe holen
    datetime times[];
-   int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);//throws ERR_ARRAY_ERROR, wenn solche Daten (noch) nicht existieren
-   error    = GetLastError();
+   int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);     // throws ERR_ARRAY_ERROR, wenn solche Daten (noch) nicht existieren
+   error = GetLastError();
 
    if (bars<=0 || error) {                                           // Da immer beide Bedingungen geprüft werden müssen, braucht das ODER nicht optimiert werden.
       if (bars<=0 || error!=ERS_HISTORY_UPDATE) {

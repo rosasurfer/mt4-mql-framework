@@ -13,15 +13,21 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color Color.UpTrend   = Blue;
-extern color Color.DownTrend = Red;
-extern int   Max.Bars        = 10000;                 // max. number of bars to display (-1: all available)
+extern string Timeframe       = "H1";                 // empty: current
+extern color  Color.UpTrend   = Blue;
+extern color  Color.DownTrend = Red;
+
+extern string StartDate       = "2020.05.01";         // "yyyy.mm.dd"   start date/time of the indicator
+extern int    Max.Bars        = 400;                  // 10000          max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
+#include <functions/iChangedBars.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_BUFFER1         0                        // indicator buffer ids
@@ -35,13 +41,16 @@ extern int   Max.Bars        = 10000;                 // max. number of bars to 
 #property indicator_color2   CLR_NONE
 #property indicator_width2   5
 
-double buffer1[];
-double buffer2[];
+double   buffer1[];
+double   buffer2[];
 
-int    maxValues;
+int      chartTimeframe;
+int      dataTimeframe;
+datetime startTime;
+int      maxValues;
 
-string indicatorName;
-string chartLegendLabel;
+string   indicatorName;
+string   legendLabel;
 
 
 /**
@@ -51,11 +60,34 @@ string chartLegendLabel;
  */
 int onInit() {
    // validate inputs
+   // Timeframe
+   string sValues[], sValue = Timeframe;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if (sValue=="" || sValue=="current") {
+      dataTimeframe = Period();
+      Timeframe = "current";
+   }
+   else {
+      dataTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+      if (dataTimeframe == -1) return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      Timeframe = TimeframeDescription(dataTimeframe);
+   }
+   chartTimeframe = Period();
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   // StartDate
+   sValue = StrTrim(StartDate);
+   if (StringLen(sValue) > 0) {
+      startTime = ParseDateTime(sValue);
+      if (IsNaT(startTime))    return(catch("onInit(2)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   }
    // Max.Bars
-   if (Max.Bars < -1) return(catch("onInit(1)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)          return(catch("onInit(2)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -64,8 +96,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-      chartLegendLabel = CreateLegendLabel();
-      RegisterObject(chartLegendLabel);
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -76,7 +108,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(2)"));
+   return(catch("onInit(3)"));
 }
 
 
@@ -113,15 +145,15 @@ int onTick() {
       ShiftIndicatorBuffer(buffer2, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
+   // process MTF condition
+   if (dataTimeframe != chartTimeframe)
+      return(onMTF());
+
    // calculate start bar
-   int filterLength = 66;
-   int bars         = Min(ChangedBars, maxValues);
-   int startBar     = Min(bars-1, Bars-filterLength);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   int startBar = ComputeChangedBars() - 1;
 
    // recalculate changed bars:
    for (int i=startBar; i >= 0; i--) {
-
       // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
       buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
                  + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
@@ -259,11 +291,208 @@ int onTick() {
                  + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Open[i+65])/2;
    }
 
-   if (!IsSuperContext()) {
+   if (!UnchangedBars && (startBar+1)) {
+      debug("onTick(0.1)  calculating "+ (startBar+1) +" "+ TimeframeDescription(dataTimeframe) +" bars starting at "+ TimeToStr(Time[startBar], TIME_DATE|TIME_MINUTES));
+      //debug("onTick(0.2)  buffer1[10]="+ ifString(IsEmptyValue(buffer1[10]), "EMPTY_VALUE", ""+ buffer1[10]) +"  buffer2[10]="+ ifString(IsEmptyValue(buffer2[10]), "EMPTY_VALUE", ""+buffer2[10]) );
+   }
+
+   if (!IsSuperContext() && (startBar+1)) {
       double avg = (buffer1[0]+buffer2[0]) / 2;
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, avg, Digits, NULL, Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, avg, Digits, NULL, Time[0]);
    }
    return(last_error);
+}
+
+
+/**
+ * MTF main function
+ *
+ * @return int - error status
+ */
+int onMTF() {
+   if (dataTimeframe < chartTimeframe) {                          // e.g. display H1 data on H4
+      if (!UnchangedBars) {
+         debug("onMTF(0.1)  calculating "+ Timeframe +" on a higher timeframe not yet implemented");
+      }
+      // calculate start bar
+      //if (startDate > 0) {
+      //   int startBar = iBarShiftNext(NULL, NULL, startDate);
+      //   if (startBar >= maxValues)
+      //      startBar = maxValues - 1;
+      //}
+   }
+   else {                                                         // e.g. display H1 data on M15
+      if (!UnchangedBars) {
+         // calculate start bar
+         int startBar = ComputeChangedBars(dataTimeframe) - 1;
+         debug("onMTF(0.2)  updating "+ (startBar+1) +" "+ TimeframeDescription(chartTimeframe) +" bar"+ Pluralize(startBar+1) +" starting at "+ TimeToStr(Time[startBar], TIME_DATE|TIME_MINUTES));
+
+         for (int i=startBar; i >= 0; i--) {
+            int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]);
+            buffer1[i] = iMTF(MODE_BUFFER1, offset);
+            buffer2[i] = iMTF(MODE_BUFFER2, offset);
+         }
+      }
+   }
+   return(catch("onMTF(1)"));
+
+}
+
+
+/**
+ * Compute the bars to update (considered changed) of the current timeframe when using data of the specified timeframe.
+ *
+ * @param  int timeframe [optional] - used data timeframe default: the current timeframe
+ *
+ * @return int - changed bars or -1 in case of errors, i.e. ERR_HISTORY_INSUFFICIENT
+ */
+int ComputeChangedBars(int timeframe = NULL) {
+   int currentTimeframe = Period();
+   if (!timeframe) timeframe = currentTimeframe;
+
+   int bars, changedBars, startBar, filterLength = 66;
+
+   // resolve changed bars of the current timeframe
+   if (timeframe == currentTimeframe) {
+      changedBars = Min(ChangedBars, maxValues * ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1));
+      startBar    = Min(changedBars-1, Bars-filterLength);
+      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe "+ TimeframeDescription(timeframe), ERR_HISTORY_INSUFFICIENT)));
+      if (Time[startBar] < startTime)
+         startBar = iBarShiftNext(NULL, NULL, startTime);
+      return(startBar + 1);
+   }
+
+   // resolve changed bars of a lower timeframe, e.g. displaying H1 data on H4
+   if (timeframe < currentTimeframe) {
+      return(-1);
+   }
+
+   // resolve changed bars of a higher timeframe, e.g. displaying H1 data on M15
+   if (timeframe > currentTimeframe) {
+      // resolve startbar to update in the data timeframe
+      bars        = iBars(NULL, timeframe);
+      changedBars = Min(iChangedBars(NULL, timeframe), maxValues);
+      startBar    = Min(changedBars-1, bars-filterLength);
+      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe "+ TimeframeDescription(timeframe), ERR_HISTORY_INSUFFICIENT)));
+      if (iTime(NULL, timeframe, startBar) < startTime)
+         startBar = iBarShiftNext(NULL, timeframe, startTime);
+
+      // resolve corresponding bar offset in the current timeframe
+      startBar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startBar));
+
+      // cross-check changed bars of current against data timeframe
+      changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe));
+      startBar    = changedBars - 1;
+      if (Time[startBar] < startTime)
+         startBar = iBarShiftNext(NULL, NULL, startTime);
+      return(startBar + 1);
+   }
+}
+
+
+/**
+ * Load the indicator again and return a value from another timeframe.
+ *
+ * @param  int iBuffer   - indicator buffer index of the value to return
+ * @param  int iBar      - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double iMTF(int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, dataTimeframe, WindowExpertName(),
+                          "current",                              // string Timeframe
+                          CLR_NONE,                               // color  Color.UpTrend
+                          CLR_NONE,                               // color  Color.DownTrend
+                          StartDate,                              // string StartDate
+                          Max.Bars,                               // int    Max.Bars
+                          "",                                     // string ________________
+                          lpSuperContext,                         // int    __lpSuperContext
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("iMTF(1)", error));
+      warn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Parse the string representation of a date or datetime value.
+ *
+ * @param  string value - format: "yyyy.mm.dd [hh:ii[:ss]]" (the time part is optional)
+ *
+ * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
+ */
+datetime ParseDateTime(string value) {
+   string sValues[], origValue=value;
+   value = StrTrim(value);
+   if (!StringLen(value))                                  return(_NaT(catch("ParseDateTime(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int sizeOfValues = Explode(value, ".", sValues, NULL);
+   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDateTime(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   // parse year: yyyy
+   string sYY = StrTrim(sValues[0]);
+   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDateTime(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDateTime(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   // parse month: mm
+   string sMM = StrTrim(sValues[1]);
+   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDateTime(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDateTime(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   sValues[2]   = StrTrim(sValues[2]);
+   string sDD   = StrLeftTo(sValues[2], " ");
+   string sTime = StrTrim(StrRight(sValues[2], -StringLen(sDD)));
+
+   // parse day: dd
+   sDD = StrTrim(sDD);
+   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDateTime(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDateTime(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDateTime(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+      else if (iDD == 31) {
+         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDateTime(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+   }
+
+   // parse time: hh:ii[:ss]
+   int iHH=0, iII=0, iSS=0;
+   if (StringLen(sTime) > 0) {
+      sizeOfValues = Explode(sTime, ":", sValues, NULL);
+      if (sizeOfValues < 2 || sizeOfValues > 3)            return(_NaT(catch("ParseDateTime(11)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+      string sHH = StrTrim(sValues[0]);
+      if (StringLen(sHH) > 2 || !StrIsDigit(sHH))          return(_NaT(catch("ParseDateTime(12)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      iHH = StrToInteger(sHH);
+      if (iHH < 0 || iHH > 23)                             return(_NaT(catch("ParseDateTime(13)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+      string sII = StrTrim(sValues[1]);
+      if (StringLen(sII) > 2 || !StrIsDigit(sII))          return(_NaT(catch("ParseDateTime(14)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      iII = StrToInteger(sII);
+      if (iII < 0 || iII > 59)                             return(_NaT(catch("ParseDateTime(15)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      if (sizeOfValues == 3) {
+         string sSS = StrTrim(sValues[2]);
+         if (StringLen(sSS) > 2 || !StrIsDigit(sSS))       return(_NaT(catch("ParseDateTime(16)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+         iSS = StrToInteger(sSS);
+         if (iSS < 0 || iSS > 59)                          return(_NaT(catch("ParseDateTime(17)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+   }
+   return(DateTime(iYY, iMM, iDD, iHH, iII, iSS));
 }
 
 
@@ -272,7 +501,6 @@ int onTick() {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    SetIndexStyle(MODE_BUFFER1, DRAW_HISTOGRAM, EMPTY, 5, Color.UpTrend  );
    SetIndexStyle(MODE_BUFFER2, DRAW_HISTOGRAM, EMPTY, 5, Color.DownTrend);
 }
@@ -284,8 +512,10 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
+   return(StringConcatenate("Timeframe=",       DoubleQuoteStr(Timeframe),   ";", NL,
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
                             "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,
+                            "StartDate=",       DoubleQuoteStr(StartDate),   ";", NL,
                             "Max.Bars=",        Max.Bars,                    ";")
    );
 }

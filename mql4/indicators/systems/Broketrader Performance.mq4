@@ -1,8 +1,9 @@
 /**
  * Broketrader Performance
  *
- * Visualizes the performance of the Broketrader system.
+ * Visualizes the PL performance of the Broketrader system.
  *
+ * @see  mql4/indicators/systems/Broketrader.mq4
  * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
 #include <stddefines.mqh>
@@ -16,16 +17,17 @@ extern int    Stochastic.Periods     = 96;
 extern int    Stochastic.MA1.Periods = 10;
 extern int    Stochastic.MA2.Periods = 6;
 extern int    RSI.Periods            = 96;
+extern string MTF                    = "H1* | current";  // empty: current
 
-extern string MTF                    = "M1 | M5 | M15 | ... | H1* | current";   // timeframe to display (empty: current)
-extern string StartDate              = "";
-extern int    Max.Values             = 10000;                              // max. amount of current bars to display (-1: all)
+extern string StartDate              = "2020.01.01";     // "yyyy.mm.dd" start date of the indicator
+extern int    Max.Bars               = 10000;            // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/iBarShiftNext.mqh>
 
 #define MODE_OPEN             0                          // indicator buffer ids
 #define MODE_CLOSED           1
@@ -50,9 +52,10 @@ int stochMa1Periods;
 int stochMa2Periods;
 int rsiPeriods;
 
-int currentTimeframe;
-int targetTimeframe;
-int maxValues;
+int      currentTimeframe;
+int      targetTimeframe;
+datetime startDate;
+int      maxValues;
 
 
 /**
@@ -90,9 +93,15 @@ int onInit() {
       MTF = TimeframeDescription(targetTimeframe);
    }
    currentTimeframe = Period();
-   // Max.Values
-   if (Max.Values < -1)            return(catch("onInit(7)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // StartDate
+   sValue = StrTrim(StartDate);
+   if (StringLen(sValue) > 0) {
+      startDate = ParseDate(sValue);
+      if (IsNaT(startDate))        return(catch("onInit(7)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   }
+   // Max.Bars
+   if (Max.Bars < -1)              return(catch("onInit(8)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
    SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                // open PL:   invisible
@@ -107,7 +116,7 @@ int onInit() {
    IndicatorDigits(1);
    SetIndicatorOptions();
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -120,7 +129,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferTotalPL)) return(log("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferOpenPL,   EMPTY_VALUE);
       ArrayInitialize(bufferClosedPL, EMPTY_VALUE);
@@ -141,7 +150,7 @@ int onTick() {
 
    // calculate start bar
    int maxSMAValues   = Bars - smaPeriods + 1;                                                     // max. possible SMA values
-   int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values
+   int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values (see Broketrader)
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
@@ -192,12 +201,22 @@ int onTick() {
  * @return int - error status
  */
 int onMTF() {
+   debug("onMTF(1)  requested timeframe: "+ TimeframeDescription(targetTimeframe));
+
    if (targetTimeframe < currentTimeframe) {
-      debug("onMTF(1)  requested timeframe: "+ TimeframeDescription(targetTimeframe));
+      // e.g. Broketrader,H1 on Performance,H4
+
+      // calculate start bar
+      if (startDate > 0) {
+         int startBar = iBarShiftNext(NULL, NULL, startDate);
+         if (startBar >= maxValues)
+            startBar = maxValues - 1;
+      }
    }
    else {
-      debug("onMTF(2)  requested timeframe: "+ TimeframeDescription(targetTimeframe));
+      // e.g. Broketrader,H1 on Performance,M15
    }
+
    return(catch("onMTF(3)"));
 }
 
@@ -242,14 +261,14 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
                           CLR_NONE,                               // color  Color.Short
                           false,                                  // bool   FillSections
                           1,                                      // int    SMA.DrawWidth
-                          -1,                                     // int    Max.Values                // all values to prevent MTF issues
+                          -1,                                     // int    Max.Bars                  // all values to prevent MTF issues
                           "",                                     // string ____________________
                           "off",                                  // string Signal.onReversal
                           "off",                                  // string Signal.Sound
                           "off",                                  // string Signal.Mail.Receiver
                           "off",                                  // string Signal.SMS.Receiver
                           "",                                     // string ____________________
-                          lpSuperContext,                         // int    __SuperContext__
+                          lpSuperContext,                         // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -318,6 +337,49 @@ double GetClosedPL(int bar) {
 
 
 /**
+ * Parse the string representation of a date to a datetime value.
+ *
+ * @param  string value - string in format "YYYY.MM.DD"
+ *
+ * @return datetime - datetime value or NaT (not-a-time) in case of errors
+ */
+datetime ParseDate(string value) {
+   string sValues[], origValue=value;
+   value = StrTrim(value);
+   if (!StringLen(value))                                  return(_NaT(catch("ParseDate(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int sizeOfValues = Explode(value, ".", sValues, NULL);
+   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDate(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse year: YYYY
+   string sYY = StrTrim(sValues[0]);
+   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDate(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDate(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse month: MM
+   string sMM = StrTrim(sValues[1]);
+   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDate(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDate(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse day: DD
+   string sDD = StrTrim(sValues[2]);
+   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDate(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDate(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDate(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+      }
+      else if (iDD == 31) {
+         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDate(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+      }
+   }
+   return(DateTime(iYY, iMM, iDD));
+}
+
+
+/**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
  * recompilation options must be set in start() to not get ignored.
  */
@@ -343,6 +405,6 @@ string InputsToStr() {
                             "RSI.Periods=",            RSI.Periods,            ";", NL,
                             "MTF=",                    DoubleQuoteStr(MTF),    ";", NL,
                             "StartDate=",              StartDate,              ";", NL,
-                            "Max.Values=",             Max.Values,             ";")
+                            "Max.Bars=",               Max.Bars,               ";")
    );
 }
