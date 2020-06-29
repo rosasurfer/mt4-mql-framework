@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Timeframes           = "H1*, ...";         // one* or more comma-separated timeframes to analyze
-extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all)
+extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all available)
 extern string __________________________;
 
 extern string Signal.onInsideBar   = "on | off | auto*";
@@ -791,7 +791,7 @@ bool onInsideBar(int timeframe) {
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
 
    if (__LOG()) log("onInsideBar(1)  "+ message);
-   message = Symbol() +","+ message;
+   message = Symbol() +": "+ message;
 
    int error = 0;
    if (signal.sound) error |= !PlaySoundEx(signal.sound.file);
