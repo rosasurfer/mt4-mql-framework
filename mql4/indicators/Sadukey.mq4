@@ -149,11 +149,10 @@ int onTick() {
    if (dataTimeframe != chartTimeframe)
       return(onMTF());
 
-   // calculate start bar
-   int startBar = ComputeChangedBars() - 1;
-
    // recalculate changed bars:
-   for (int i=startBar; i >= 0; i--) {
+   int changedBars = ComputeChangedBars();
+
+   for (int i=changedBars-1; i >= 0; i--) {
       // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
       buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
                  + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
@@ -291,12 +290,11 @@ int onTick() {
                  + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Open[i+65])/2;
    }
 
-   if (!UnchangedBars && (startBar+1)) {
-      debug("onTick(0.1)  calculating "+ (startBar+1) +" "+ TimeframeDescription(dataTimeframe) +" bars starting at "+ TimeToStr(Time[startBar], TIME_DATE|TIME_MINUTES));
-      //debug("onTick(0.2)  buffer1[10]="+ ifString(IsEmptyValue(buffer1[10]), "EMPTY_VALUE", ""+ buffer1[10]) +"  buffer2[10]="+ ifString(IsEmptyValue(buffer2[10]), "EMPTY_VALUE", ""+buffer2[10]) );
+   if (!UnchangedBars && changedBars) {
+      debug("onTick(0.1)  calculating "+ changedBars +" "+ TimeframeDescription(dataTimeframe) +" bars starting at "+ TimeToStr(Time[changedBars-1], TIME_DATE|TIME_MINUTES));
    }
 
-   if (!IsSuperContext() && (startBar+1)) {
+   if (!IsSuperContext() && changedBars) {
       double avg = (buffer1[0]+buffer2[0]) / 2;
       @Trend.UpdateLegend(legendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, avg, Digits, NULL, Time[0]);
    }
@@ -322,16 +320,13 @@ int onMTF() {
       //}
    }
    else {                                                         // e.g. display H1 data on M15
-      if (!UnchangedBars) {
-         // calculate start bar
-         int startBar = ComputeChangedBars(dataTimeframe) - 1;
-         debug("onMTF(0.2)  updating "+ (startBar+1) +" "+ TimeframeDescription(chartTimeframe) +" bar"+ Pluralize(startBar+1) +" starting at "+ TimeToStr(Time[startBar], TIME_DATE|TIME_MINUTES));
+      // recalculate changed bar
+      int changedBars = ComputeChangedBars(dataTimeframe);
 
-         for (int i=startBar; i >= 0; i--) {
-            int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]);
-            buffer1[i] = iMTF(MODE_BUFFER1, offset);
-            buffer2[i] = iMTF(MODE_BUFFER2, offset);
-         }
+      for (int i=changedBars-1; i >= 0; i--) {
+         int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]);
+         buffer1[i] = iMTF(MODE_BUFFER1, offset);
+         buffer2[i] = iMTF(MODE_BUFFER2, offset);
       }
    }
    return(catch("onMTF(1)"));
@@ -354,9 +349,16 @@ int ComputeChangedBars(int timeframe = NULL) {
 
    // resolve changed bars of the current timeframe
    if (timeframe == currentTimeframe) {
-      changedBars = Min(ChangedBars, maxValues * ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1));
+      int _maxValues = maxValues;
+      if (dataTimeframe > currentTimeframe) {
+         int multiplier = dataTimeframe/currentTimeframe;
+         _maxValues *= multiplier;
+         if (_maxValues/multiplier != maxValues)
+            _maxValues = INT_MAX;                        // @see https://www.geeksforgeeks.org/check-integer-overflow-multiplication/
+      }
+      changedBars = Min(ChangedBars, _maxValues);
       startBar    = Min(changedBars-1, Bars-filterLength);
-      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe "+ TimeframeDescription(timeframe), ERR_HISTORY_INSUFFICIENT)));
+      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
       if (Time[startBar] < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
       return(startBar + 1);
@@ -373,7 +375,7 @@ int ComputeChangedBars(int timeframe = NULL) {
       bars        = iBars(NULL, timeframe);
       changedBars = Min(iChangedBars(NULL, timeframe), maxValues);
       startBar    = Min(changedBars-1, bars-filterLength);
-      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe "+ TimeframeDescription(timeframe), ERR_HISTORY_INSUFFICIENT)));
+      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe="+ TimeframeDescription(timeframe) +"  bars="+ bars +"  changedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
       if (iTime(NULL, timeframe, startBar) < startTime)
          startBar = iBarShiftNext(NULL, timeframe, startTime);
 

@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes           = "H1*, ...";         // one* or more comma-separated timeframes to analyze
+extern string Timeframes           = "H1, D1";           // one or more comma-separated timeframes to analyze
 extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all available)
 extern string __________________________;
 
