@@ -8,8 +8,8 @@
  * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with a timeseries
  * different from the current one.
  *
- * @param  string symbol    [optional] - symbol of the timeseries (NULL: the current chart symbol)
- * @param  int    timeframe [optional] - timeframe of the timeseries (NULL: the current chart timeframe)
+ * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
+ * @param  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
  *
  * @return int - number of changed bars or -1 (EMPTY) in case of errors
  */
