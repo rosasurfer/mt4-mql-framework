@@ -1177,9 +1177,9 @@ bool UpdatePositionSize() {
    if (!mm.done) /*&&*/ if (!CalculatePositionSize()) return(_false(CheckLastError("UpdatePositionSize(1)->CalculatePositionSize()")));
    if (!mm.done)                                      return(true);
 
-   string sPositionSize = "";         // R - risk / stop distance                                    L - leverage                                           position size
+   string sPositionSize = "";         // R - risk / stop distance                                                      L - leverage                                           position size
    if (mode.intern && mm.risk && mm.stopDistance) {
-      sPositionSize = StringConcatenate("R ", Round(mm.risk), "%/", Round(mm.stopDistance), "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
+      sPositionSize = StringConcatenate("R ", Round(mm.risk), "%/", DoubleToStr(mm.stopDistance, Digits & 1), "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sPositionSize, 9, "Tahoma", SlateGray);
 
