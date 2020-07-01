@@ -1684,6 +1684,8 @@ int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int valu
  * @return int
  */
 int Abs(int value) {
+   if (value == INT_MIN)
+      return(INT_MAX);
    if (value < 0)
       return(-value);
    return(value);
@@ -1691,15 +1693,15 @@ int Abs(int value) {
 
 
 /**
- * Gibt das Vorzeichen einer Zahl zurück.
+ * Return the sign of a numerical value.
  *
- * @param  double number - Zahl
+ * @param  double value
  *
- * @return int - Vorzeichen (+1, 0, -1)
+ * @return int - sign (+1, 0, -1)
  */
-int Sign(double number) {
-   if (GT(number, 0)) return( 1);
-   if (LT(number, 0)) return(-1);
+int Sign(double value) {
+   if (value > 0) return( 1);
+   if (value < 0) return(-1);
    return(0);
 }
 
@@ -1844,11 +1846,39 @@ double RoundCeil(double number, int decimals = 0) {
 
 
 /**
- * Dividiert zwei Doubles und fängt dabei eine Division durch 0 ab.
+ * Multiply two integer values and prevent an integer overflow.
  *
- * @param  double a                 - Divident
- * @param  double b                 - Divisor
- * @param  double onZero [optional] - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
+ * @param  int a - first operand
+ * @param  int b - second operand
+ *
+ * @return int - multiplication result or maximum value in direction of the overflow (INT_MIN or INT_MAX)
+ */
+int Mul(int a, int b) {
+   // @see  https://www.geeksforgeeks.org/check-integer-overflow-multiplication/
+   if ( !a  ||  !b ) return(0);
+   if (a==1 || b==1) return(a * b);
+
+   int result = a * b;
+
+   if (Sign(a) == Sign(b)) {              // positive result
+      if (result > 0 && result/a == b)
+         return(result);
+      return(INT_MAX);
+   }
+   else {                                 // negative result
+      if (result < 0 && result/a == b)
+         return(result);
+      return(INT_MIN);
+   }
+}
+
+
+/**
+ * Divide two doubles and prevent a division by 0 (zero).
+ *
+ * @param  double a                 - divident
+ * @param  double b                 - divisor
+ * @param  double onZero [optional] - value to return if the the divisor is zero (default: 0)
  *
  * @return double
  */
@@ -6815,6 +6845,7 @@ void __DummyCalls() {
    MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
+   Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
    NormalizeLots(NULL);
