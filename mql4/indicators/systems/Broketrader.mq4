@@ -389,15 +389,16 @@ bool onReversal(int direction) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    SetIndexStyle(MODE_MA,    DRAW_NONE);
    SetIndexStyle(MODE_TREND, DRAW_NONE);
 
-   int maType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
+   int   maType        = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
+   color darkenedLong  = ModifyColor(Color.Long,  NULL, NULL, -30);
+   color darkenedShort = ModifyColor(Color.Short, NULL, NULL, -30);
 
    if (FillSections) {
-      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Long,  NULL, NULL, -30));
-      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Short, NULL, NULL, -30));
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, darkenedLong );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, darkenedShort);
 
       SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
       SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
@@ -405,8 +406,8 @@ void SetIndicatorOptions() {
       SetIndexStyle(MODE_HIST_S_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
    }
    else {
-      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, Color.Long );
-      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, Color.Short);
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, darkenedLong );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, darkenedShort);
 
       SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_NONE);
       SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_NONE);
