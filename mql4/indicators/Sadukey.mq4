@@ -13,12 +13,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframe       = "H1";                 // empty: current
+extern string Timeframe       = "current";            // empty: current
 extern color  Color.UpTrend   = Blue;
 extern color  Color.DownTrend = Red;
 
-extern string StartDate       = "2020.05.01";         // "yyyy.mm.dd"   start date/time of the indicator
-extern int    Max.Bars        = 400;                  // 10000          max. number of bars to display (-1: all available)
+extern string StartDate       = "yyyy.mm.dd";         // start date/time of the indicator
+extern int    Max.Bars        = 10000;                // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,6 @@ extern int    Max.Bars        = 400;                  // 10000          max. num
 double   buffer1[];
 double   buffer2[];
 
-int      chartTimeframe;
 int      dataTimeframe;
 datetime startTime;
 int      maxValues;
@@ -76,13 +75,12 @@ int onInit() {
       if (dataTimeframe == -1) return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
       Timeframe = TimeframeDescription(dataTimeframe);
    }
-   chartTimeframe = Period();
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // StartDate
-   sValue = StrTrim(StartDate);
-   if (StringLen(sValue) > 0) {
+   sValue = StrToLower(StrTrim(StartDate));
+   if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
       startTime = ParseDateTime(sValue);
       if (IsNaT(startTime))    return(catch("onInit(2)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
    }
@@ -107,7 +105,6 @@ int onInit() {
    SetIndexLabel(MODE_BUFFER2, indicatorName +" 2");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
-
    return(catch("onInit(3)"));
 }
 
@@ -145,153 +142,158 @@ int onTick() {
       ShiftIndicatorBuffer(buffer2, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-   // process MTF condition
-   if (dataTimeframe != chartTimeframe)
-      return(onMTF());
+   // recalculate changed bars
+   int changedBars = ComputeChangedBars(dataTimeframe);
 
-   // recalculate changed bars:
-   int changedBars = ComputeChangedBars();
+   if (dataTimeframe == Period()) {
+      // data timeframe = chart timeframe
+      for (int i=changedBars-1; i >= 0; i--) {
+         // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
+         buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
+                    + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
+                    + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Close[i+ 2])/2
+                    + 0.11166411 * ((Open[i+ 3] + High[i+ 3] + Low[i+ 3] + Close[i+ 3])/4 + Close[i+ 3])/2
+                    + 0.10645106 * ((Open[i+ 4] + High[i+ 4] + Low[i+ 4] + Close[i+ 4])/4 + Close[i+ 4])/2
+                    + 0.09997253 * ((Open[i+ 5] + High[i+ 5] + Low[i+ 5] + Close[i+ 5])/4 + Close[i+ 5])/2
+                    + 0.09238688 * ((Open[i+ 6] + High[i+ 6] + Low[i+ 6] + Close[i+ 6])/4 + Close[i+ 6])/2
+                    + 0.08387751 * ((Open[i+ 7] + High[i+ 7] + Low[i+ 7] + Close[i+ 7])/4 + Close[i+ 7])/2
+                    + 0.07464713 * ((Open[i+ 8] + High[i+ 8] + Low[i+ 8] + Close[i+ 8])/4 + Close[i+ 8])/2
+                    + 0.06491178 * ((Open[i+ 9] + High[i+ 9] + Low[i+ 9] + Close[i+ 9])/4 + Close[i+ 9])/2
+                    + 0.05489443 * ((Open[i+10] + High[i+10] + Low[i+10] + Close[i+10])/4 + Close[i+10])/2
+                    + 0.04481833 * ((Open[i+11] + High[i+11] + Low[i+11] + Close[i+11])/4 + Close[i+11])/2
+                    + 0.03490071 * ((Open[i+12] + High[i+12] + Low[i+12] + Close[i+12])/4 + Close[i+12])/2
+                    + 0.02534672 * ((Open[i+13] + High[i+13] + Low[i+13] + Close[i+13])/4 + Close[i+13])/2
+                    + 0.01634375 * ((Open[i+14] + High[i+14] + Low[i+14] + Close[i+14])/4 + Close[i+14])/2
+                    + 0.00805678 * ((Open[i+15] + High[i+15] + Low[i+15] + Close[i+15])/4 + Close[i+15])/2
+                    + 0.00062421 * ((Open[i+16] + High[i+16] + Low[i+16] + Close[i+16])/4 + Close[i+16])/2
+                    - 0.00584512 * ((Open[i+17] + High[i+17] + Low[i+17] + Close[i+17])/4 + Close[i+17])/2
+                    - 0.01127391 * ((Open[i+18] + High[i+18] + Low[i+18] + Close[i+18])/4 + Close[i+18])/2
+                    - 0.01561738 * ((Open[i+19] + High[i+19] + Low[i+19] + Close[i+19])/4 + Close[i+19])/2
+                    - 0.01886307 * ((Open[i+20] + High[i+20] + Low[i+20] + Close[i+20])/4 + Close[i+20])/2
+                    - 0.02102974 * ((Open[i+21] + High[i+21] + Low[i+21] + Close[i+21])/4 + Close[i+21])/2
+                    - 0.02216516 * ((Open[i+22] + High[i+22] + Low[i+22] + Close[i+22])/4 + Close[i+22])/2
+                    - 0.02234315 * ((Open[i+23] + High[i+23] + Low[i+23] + Close[i+23])/4 + Close[i+23])/2
+                    - 0.02165992 * ((Open[i+24] + High[i+24] + Low[i+24] + Close[i+24])/4 + Close[i+24])/2
+                    - 0.02022973 * ((Open[i+25] + High[i+25] + Low[i+25] + Close[i+25])/4 + Close[i+25])/2
+                    - 0.01818026 * ((Open[i+26] + High[i+26] + Low[i+26] + Close[i+26])/4 + Close[i+26])/2
+                    - 0.01564777 * ((Open[i+27] + High[i+27] + Low[i+27] + Close[i+27])/4 + Close[i+27])/2
+                    - 0.01277219 * ((Open[i+28] + High[i+28] + Low[i+28] + Close[i+28])/4 + Close[i+28])/2
+                    - 0.00969230 * ((Open[i+29] + High[i+29] + Low[i+29] + Close[i+29])/4 + Close[i+29])/2
+                    - 0.00654127 * ((Open[i+30] + High[i+30] + Low[i+30] + Close[i+30])/4 + Close[i+30])/2
+                    - 0.00344276 * ((Open[i+31] + High[i+31] + Low[i+31] + Close[i+31])/4 + Close[i+31])/2
+                    - 0.00050728 * ((Open[i+32] + High[i+32] + Low[i+32] + Close[i+32])/4 + Close[i+32])/2
+                    + 0.00217042 * ((Open[i+33] + High[i+33] + Low[i+33] + Close[i+33])/4 + Close[i+33])/2
+                    + 0.00451354 * ((Open[i+34] + High[i+34] + Low[i+34] + Close[i+34])/4 + Close[i+34])/2
+                    + 0.00646441 * ((Open[i+35] + High[i+35] + Low[i+35] + Close[i+35])/4 + Close[i+35])/2
+                    + 0.00798513 * ((Open[i+36] + High[i+36] + Low[i+36] + Close[i+36])/4 + Close[i+36])/2
+                    + 0.00905725 * ((Open[i+37] + High[i+37] + Low[i+37] + Close[i+37])/4 + Close[i+37])/2
+                    + 0.00968091 * ((Open[i+38] + High[i+38] + Low[i+38] + Close[i+38])/4 + Close[i+38])/2
+                    + 0.00987326 * ((Open[i+39] + High[i+39] + Low[i+39] + Close[i+39])/4 + Close[i+39])/2
+                    + 0.00966639 * ((Open[i+40] + High[i+40] + Low[i+40] + Close[i+40])/4 + Close[i+40])/2
+                    + 0.00910488 * ((Open[i+41] + High[i+41] + Low[i+41] + Close[i+41])/4 + Close[i+41])/2
+                    + 0.00824306 * ((Open[i+42] + High[i+42] + Low[i+42] + Close[i+42])/4 + Close[i+42])/2
+                    + 0.00714199 * ((Open[i+43] + High[i+43] + Low[i+43] + Close[i+43])/4 + Close[i+43])/2
+                    + 0.00586655 * ((Open[i+44] + High[i+44] + Low[i+44] + Close[i+44])/4 + Close[i+44])/2
+                    + 0.00448255 * ((Open[i+45] + High[i+45] + Low[i+45] + Close[i+45])/4 + Close[i+45])/2
+                    + 0.00305396 * ((Open[i+46] + High[i+46] + Low[i+46] + Close[i+46])/4 + Close[i+46])/2
+                    + 0.00164061 * ((Open[i+47] + High[i+47] + Low[i+47] + Close[i+47])/4 + Close[i+47])/2
+                    + 0.00029596 * ((Open[i+48] + High[i+48] + Low[i+48] + Close[i+48])/4 + Close[i+48])/2
+                    - 0.00093445 * ((Open[i+49] + High[i+49] + Low[i+49] + Close[i+49])/4 + Close[i+49])/2
+                    - 0.00201426 * ((Open[i+50] + High[i+50] + Low[i+50] + Close[i+50])/4 + Close[i+50])/2
+                    - 0.00291701 * ((Open[i+51] + High[i+51] + Low[i+51] + Close[i+51])/4 + Close[i+51])/2
+                    - 0.00362661 * ((Open[i+52] + High[i+52] + Low[i+52] + Close[i+52])/4 + Close[i+52])/2
+                    - 0.00413703 * ((Open[i+53] + High[i+53] + Low[i+53] + Close[i+53])/4 + Close[i+53])/2
+                    - 0.00445206 * ((Open[i+54] + High[i+54] + Low[i+54] + Close[i+54])/4 + Close[i+54])/2
+                    - 0.00458437 * ((Open[i+55] + High[i+55] + Low[i+55] + Close[i+55])/4 + Close[i+55])/2
+                    - 0.00455457 * ((Open[i+56] + High[i+56] + Low[i+56] + Close[i+56])/4 + Close[i+56])/2
+                    - 0.00439006 * ((Open[i+57] + High[i+57] + Low[i+57] + Close[i+57])/4 + Close[i+57])/2
+                    - 0.00412379 * ((Open[i+58] + High[i+58] + Low[i+58] + Close[i+58])/4 + Close[i+58])/2
+                    - 0.00379323 * ((Open[i+59] + High[i+59] + Low[i+59] + Close[i+59])/4 + Close[i+59])/2
+                    - 0.00343966 * ((Open[i+60] + High[i+60] + Low[i+60] + Close[i+60])/4 + Close[i+60])/2
+                    - 0.00310850 * ((Open[i+61] + High[i+61] + Low[i+61] + Close[i+61])/4 + Close[i+61])/2
+                    - 0.00285188 * ((Open[i+62] + High[i+62] + Low[i+62] + Close[i+62])/4 + Close[i+62])/2
+                    - 0.00273508 * ((Open[i+63] + High[i+63] + Low[i+63] + Close[i+63])/4 + Close[i+63])/2
+                    - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Close[i+64])/2
+                    + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Close[i+65])/2;
 
-   for (int i=changedBars-1; i >= 0; i--) {
-      // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
-      buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
-                 + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
-                 + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Close[i+ 2])/2
-                 + 0.11166411 * ((Open[i+ 3] + High[i+ 3] + Low[i+ 3] + Close[i+ 3])/4 + Close[i+ 3])/2
-                 + 0.10645106 * ((Open[i+ 4] + High[i+ 4] + Low[i+ 4] + Close[i+ 4])/4 + Close[i+ 4])/2
-                 + 0.09997253 * ((Open[i+ 5] + High[i+ 5] + Low[i+ 5] + Close[i+ 5])/4 + Close[i+ 5])/2
-                 + 0.09238688 * ((Open[i+ 6] + High[i+ 6] + Low[i+ 6] + Close[i+ 6])/4 + Close[i+ 6])/2
-                 + 0.08387751 * ((Open[i+ 7] + High[i+ 7] + Low[i+ 7] + Close[i+ 7])/4 + Close[i+ 7])/2
-                 + 0.07464713 * ((Open[i+ 8] + High[i+ 8] + Low[i+ 8] + Close[i+ 8])/4 + Close[i+ 8])/2
-                 + 0.06491178 * ((Open[i+ 9] + High[i+ 9] + Low[i+ 9] + Close[i+ 9])/4 + Close[i+ 9])/2
-                 + 0.05489443 * ((Open[i+10] + High[i+10] + Low[i+10] + Close[i+10])/4 + Close[i+10])/2
-                 + 0.04481833 * ((Open[i+11] + High[i+11] + Low[i+11] + Close[i+11])/4 + Close[i+11])/2
-                 + 0.03490071 * ((Open[i+12] + High[i+12] + Low[i+12] + Close[i+12])/4 + Close[i+12])/2
-                 + 0.02534672 * ((Open[i+13] + High[i+13] + Low[i+13] + Close[i+13])/4 + Close[i+13])/2
-                 + 0.01634375 * ((Open[i+14] + High[i+14] + Low[i+14] + Close[i+14])/4 + Close[i+14])/2
-                 + 0.00805678 * ((Open[i+15] + High[i+15] + Low[i+15] + Close[i+15])/4 + Close[i+15])/2
-                 + 0.00062421 * ((Open[i+16] + High[i+16] + Low[i+16] + Close[i+16])/4 + Close[i+16])/2
-                 - 0.00584512 * ((Open[i+17] + High[i+17] + Low[i+17] + Close[i+17])/4 + Close[i+17])/2
-                 - 0.01127391 * ((Open[i+18] + High[i+18] + Low[i+18] + Close[i+18])/4 + Close[i+18])/2
-                 - 0.01561738 * ((Open[i+19] + High[i+19] + Low[i+19] + Close[i+19])/4 + Close[i+19])/2
-                 - 0.01886307 * ((Open[i+20] + High[i+20] + Low[i+20] + Close[i+20])/4 + Close[i+20])/2
-                 - 0.02102974 * ((Open[i+21] + High[i+21] + Low[i+21] + Close[i+21])/4 + Close[i+21])/2
-                 - 0.02216516 * ((Open[i+22] + High[i+22] + Low[i+22] + Close[i+22])/4 + Close[i+22])/2
-                 - 0.02234315 * ((Open[i+23] + High[i+23] + Low[i+23] + Close[i+23])/4 + Close[i+23])/2
-                 - 0.02165992 * ((Open[i+24] + High[i+24] + Low[i+24] + Close[i+24])/4 + Close[i+24])/2
-                 - 0.02022973 * ((Open[i+25] + High[i+25] + Low[i+25] + Close[i+25])/4 + Close[i+25])/2
-                 - 0.01818026 * ((Open[i+26] + High[i+26] + Low[i+26] + Close[i+26])/4 + Close[i+26])/2
-                 - 0.01564777 * ((Open[i+27] + High[i+27] + Low[i+27] + Close[i+27])/4 + Close[i+27])/2
-                 - 0.01277219 * ((Open[i+28] + High[i+28] + Low[i+28] + Close[i+28])/4 + Close[i+28])/2
-                 - 0.00969230 * ((Open[i+29] + High[i+29] + Low[i+29] + Close[i+29])/4 + Close[i+29])/2
-                 - 0.00654127 * ((Open[i+30] + High[i+30] + Low[i+30] + Close[i+30])/4 + Close[i+30])/2
-                 - 0.00344276 * ((Open[i+31] + High[i+31] + Low[i+31] + Close[i+31])/4 + Close[i+31])/2
-                 - 0.00050728 * ((Open[i+32] + High[i+32] + Low[i+32] + Close[i+32])/4 + Close[i+32])/2
-                 + 0.00217042 * ((Open[i+33] + High[i+33] + Low[i+33] + Close[i+33])/4 + Close[i+33])/2
-                 + 0.00451354 * ((Open[i+34] + High[i+34] + Low[i+34] + Close[i+34])/4 + Close[i+34])/2
-                 + 0.00646441 * ((Open[i+35] + High[i+35] + Low[i+35] + Close[i+35])/4 + Close[i+35])/2
-                 + 0.00798513 * ((Open[i+36] + High[i+36] + Low[i+36] + Close[i+36])/4 + Close[i+36])/2
-                 + 0.00905725 * ((Open[i+37] + High[i+37] + Low[i+37] + Close[i+37])/4 + Close[i+37])/2
-                 + 0.00968091 * ((Open[i+38] + High[i+38] + Low[i+38] + Close[i+38])/4 + Close[i+38])/2
-                 + 0.00987326 * ((Open[i+39] + High[i+39] + Low[i+39] + Close[i+39])/4 + Close[i+39])/2
-                 + 0.00966639 * ((Open[i+40] + High[i+40] + Low[i+40] + Close[i+40])/4 + Close[i+40])/2
-                 + 0.00910488 * ((Open[i+41] + High[i+41] + Low[i+41] + Close[i+41])/4 + Close[i+41])/2
-                 + 0.00824306 * ((Open[i+42] + High[i+42] + Low[i+42] + Close[i+42])/4 + Close[i+42])/2
-                 + 0.00714199 * ((Open[i+43] + High[i+43] + Low[i+43] + Close[i+43])/4 + Close[i+43])/2
-                 + 0.00586655 * ((Open[i+44] + High[i+44] + Low[i+44] + Close[i+44])/4 + Close[i+44])/2
-                 + 0.00448255 * ((Open[i+45] + High[i+45] + Low[i+45] + Close[i+45])/4 + Close[i+45])/2
-                 + 0.00305396 * ((Open[i+46] + High[i+46] + Low[i+46] + Close[i+46])/4 + Close[i+46])/2
-                 + 0.00164061 * ((Open[i+47] + High[i+47] + Low[i+47] + Close[i+47])/4 + Close[i+47])/2
-                 + 0.00029596 * ((Open[i+48] + High[i+48] + Low[i+48] + Close[i+48])/4 + Close[i+48])/2
-                 - 0.00093445 * ((Open[i+49] + High[i+49] + Low[i+49] + Close[i+49])/4 + Close[i+49])/2
-                 - 0.00201426 * ((Open[i+50] + High[i+50] + Low[i+50] + Close[i+50])/4 + Close[i+50])/2
-                 - 0.00291701 * ((Open[i+51] + High[i+51] + Low[i+51] + Close[i+51])/4 + Close[i+51])/2
-                 - 0.00362661 * ((Open[i+52] + High[i+52] + Low[i+52] + Close[i+52])/4 + Close[i+52])/2
-                 - 0.00413703 * ((Open[i+53] + High[i+53] + Low[i+53] + Close[i+53])/4 + Close[i+53])/2
-                 - 0.00445206 * ((Open[i+54] + High[i+54] + Low[i+54] + Close[i+54])/4 + Close[i+54])/2
-                 - 0.00458437 * ((Open[i+55] + High[i+55] + Low[i+55] + Close[i+55])/4 + Close[i+55])/2
-                 - 0.00455457 * ((Open[i+56] + High[i+56] + Low[i+56] + Close[i+56])/4 + Close[i+56])/2
-                 - 0.00439006 * ((Open[i+57] + High[i+57] + Low[i+57] + Close[i+57])/4 + Close[i+57])/2
-                 - 0.00412379 * ((Open[i+58] + High[i+58] + Low[i+58] + Close[i+58])/4 + Close[i+58])/2
-                 - 0.00379323 * ((Open[i+59] + High[i+59] + Low[i+59] + Close[i+59])/4 + Close[i+59])/2
-                 - 0.00343966 * ((Open[i+60] + High[i+60] + Low[i+60] + Close[i+60])/4 + Close[i+60])/2
-                 - 0.00310850 * ((Open[i+61] + High[i+61] + Low[i+61] + Close[i+61])/4 + Close[i+61])/2
-                 - 0.00285188 * ((Open[i+62] + High[i+62] + Low[i+62] + Close[i+62])/4 + Close[i+62])/2
-                 - 0.00273508 * ((Open[i+63] + High[i+63] + Low[i+63] + Close[i+63])/4 + Close[i+63])/2
-                 - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Close[i+64])/2
-                 + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Close[i+65])/2;
-
-      // buffer2 = (Sadukey-Median + Open)/2                                                                // Sadukey-Median = (O+H+L+C)/4
-      buffer2[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Open[i+ 0])/2
-                 + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Open[i+ 1])/2
-                 + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Open[i+ 2])/2
-                 + 0.11166411 * ((Open[i+ 3] + High[i+ 3] + Low[i+ 3] + Close[i+ 3])/4 + Open[i+ 3])/2
-                 + 0.10645106 * ((Open[i+ 4] + High[i+ 4] + Low[i+ 4] + Close[i+ 4])/4 + Open[i+ 4])/2
-                 + 0.09997253 * ((Open[i+ 5] + High[i+ 5] + Low[i+ 5] + Close[i+ 5])/4 + Open[i+ 5])/2
-                 + 0.09238688 * ((Open[i+ 6] + High[i+ 6] + Low[i+ 6] + Close[i+ 6])/4 + Open[i+ 6])/2
-                 + 0.08387751 * ((Open[i+ 7] + High[i+ 7] + Low[i+ 7] + Close[i+ 7])/4 + Open[i+ 7])/2
-                 + 0.07464713 * ((Open[i+ 8] + High[i+ 8] + Low[i+ 8] + Close[i+ 8])/4 + Open[i+ 8])/2
-                 + 0.06491178 * ((Open[i+ 9] + High[i+ 9] + Low[i+ 9] + Close[i+ 9])/4 + Open[i+ 9])/2
-                 + 0.05489443 * ((Open[i+10] + High[i+10] + Low[i+10] + Close[i+10])/4 + Open[i+10])/2
-                 + 0.04481833 * ((Open[i+11] + High[i+11] + Low[i+11] + Close[i+11])/4 + Open[i+11])/2
-                 + 0.03490071 * ((Open[i+12] + High[i+12] + Low[i+12] + Close[i+12])/4 + Open[i+12])/2
-                 + 0.02534672 * ((Open[i+13] + High[i+13] + Low[i+13] + Close[i+13])/4 + Open[i+13])/2
-                 + 0.01634375 * ((Open[i+14] + High[i+14] + Low[i+14] + Close[i+14])/4 + Open[i+14])/2
-                 + 0.00805678 * ((Open[i+15] + High[i+15] + Low[i+15] + Close[i+15])/4 + Open[i+15])/2
-                 + 0.00062421 * ((Open[i+16] + High[i+16] + Low[i+16] + Close[i+16])/4 + Open[i+16])/2
-                 - 0.00584512 * ((Open[i+17] + High[i+17] + Low[i+17] + Close[i+17])/4 + Open[i+17])/2
-                 - 0.01127391 * ((Open[i+18] + High[i+18] + Low[i+18] + Close[i+18])/4 + Open[i+18])/2
-                 - 0.01561738 * ((Open[i+19] + High[i+19] + Low[i+19] + Close[i+19])/4 + Open[i+19])/2
-                 - 0.01886307 * ((Open[i+20] + High[i+20] + Low[i+20] + Close[i+20])/4 + Open[i+20])/2
-                 - 0.02102974 * ((Open[i+21] + High[i+21] + Low[i+21] + Close[i+21])/4 + Open[i+21])/2
-                 - 0.02216516 * ((Open[i+22] + High[i+22] + Low[i+22] + Close[i+22])/4 + Open[i+22])/2
-                 - 0.02234315 * ((Open[i+23] + High[i+23] + Low[i+23] + Close[i+23])/4 + Open[i+23])/2
-                 - 0.02165992 * ((Open[i+24] + High[i+24] + Low[i+24] + Close[i+24])/4 + Open[i+24])/2
-                 - 0.02022973 * ((Open[i+25] + High[i+25] + Low[i+25] + Close[i+25])/4 + Open[i+25])/2
-                 - 0.01818026 * ((Open[i+26] + High[i+26] + Low[i+26] + Close[i+26])/4 + Open[i+26])/2
-                 - 0.01564777 * ((Open[i+27] + High[i+27] + Low[i+27] + Close[i+27])/4 + Open[i+27])/2
-                 - 0.01277219 * ((Open[i+28] + High[i+28] + Low[i+28] + Close[i+28])/4 + Open[i+28])/2
-                 - 0.00969230 * ((Open[i+29] + High[i+29] + Low[i+29] + Close[i+29])/4 + Open[i+29])/2
-                 - 0.00654127 * ((Open[i+30] + High[i+30] + Low[i+30] + Close[i+30])/4 + Open[i+30])/2
-                 - 0.00344276 * ((Open[i+31] + High[i+31] + Low[i+31] + Close[i+31])/4 + Open[i+31])/2
-                 - 0.00050728 * ((Open[i+32] + High[i+32] + Low[i+32] + Close[i+32])/4 + Open[i+32])/2
-                 + 0.00217042 * ((Open[i+33] + High[i+33] + Low[i+33] + Close[i+33])/4 + Open[i+33])/2
-                 + 0.00451354 * ((Open[i+34] + High[i+34] + Low[i+34] + Close[i+34])/4 + Open[i+34])/2
-                 + 0.00646441 * ((Open[i+35] + High[i+35] + Low[i+35] + Close[i+35])/4 + Open[i+35])/2
-                 + 0.00798513 * ((Open[i+36] + High[i+36] + Low[i+36] + Close[i+36])/4 + Open[i+36])/2
-                 + 0.00905725 * ((Open[i+37] + High[i+37] + Low[i+37] + Close[i+37])/4 + Open[i+37])/2
-                 + 0.00968091 * ((Open[i+38] + High[i+38] + Low[i+38] + Close[i+38])/4 + Open[i+38])/2
-                 + 0.00987326 * ((Open[i+39] + High[i+39] + Low[i+39] + Close[i+39])/4 + Open[i+39])/2
-                 + 0.00966639 * ((Open[i+40] + High[i+40] + Low[i+40] + Close[i+40])/4 + Open[i+40])/2
-                 + 0.00910488 * ((Open[i+41] + High[i+41] + Low[i+41] + Close[i+41])/4 + Open[i+41])/2
-                 + 0.00824306 * ((Open[i+42] + High[i+42] + Low[i+42] + Close[i+42])/4 + Open[i+42])/2
-                 + 0.00714199 * ((Open[i+43] + High[i+43] + Low[i+43] + Close[i+43])/4 + Open[i+43])/2
-                 + 0.00586655 * ((Open[i+44] + High[i+44] + Low[i+44] + Close[i+44])/4 + Open[i+44])/2
-                 + 0.00448255 * ((Open[i+45] + High[i+45] + Low[i+45] + Close[i+45])/4 + Open[i+45])/2
-                 + 0.00305396 * ((Open[i+46] + High[i+46] + Low[i+46] + Close[i+46])/4 + Open[i+46])/2
-                 + 0.00164061 * ((Open[i+47] + High[i+47] + Low[i+47] + Close[i+47])/4 + Open[i+47])/2
-                 + 0.00029596 * ((Open[i+48] + High[i+48] + Low[i+48] + Close[i+48])/4 + Open[i+48])/2
-                 - 0.00093445 * ((Open[i+49] + High[i+49] + Low[i+49] + Close[i+49])/4 + Open[i+49])/2
-                 - 0.00201426 * ((Open[i+50] + High[i+50] + Low[i+50] + Close[i+50])/4 + Open[i+50])/2
-                 - 0.00291701 * ((Open[i+51] + High[i+51] + Low[i+51] + Close[i+51])/4 + Open[i+51])/2
-                 - 0.00362661 * ((Open[i+52] + High[i+52] + Low[i+52] + Close[i+52])/4 + Open[i+52])/2
-                 - 0.00413703 * ((Open[i+53] + High[i+53] + Low[i+53] + Close[i+53])/4 + Open[i+53])/2
-                 - 0.00445206 * ((Open[i+54] + High[i+54] + Low[i+54] + Close[i+54])/4 + Open[i+54])/2
-                 - 0.00458437 * ((Open[i+55] + High[i+55] + Low[i+55] + Close[i+55])/4 + Open[i+55])/2
-                 - 0.00455457 * ((Open[i+56] + High[i+56] + Low[i+56] + Close[i+56])/4 + Open[i+56])/2
-                 - 0.00439006 * ((Open[i+57] + High[i+57] + Low[i+57] + Close[i+57])/4 + Open[i+57])/2
-                 - 0.00412379 * ((Open[i+58] + High[i+58] + Low[i+58] + Close[i+58])/4 + Open[i+58])/2
-                 - 0.00379323 * ((Open[i+59] + High[i+59] + Low[i+59] + Close[i+59])/4 + Open[i+59])/2
-                 - 0.00343966 * ((Open[i+60] + High[i+60] + Low[i+60] + Close[i+60])/4 + Open[i+60])/2
-                 - 0.00310850 * ((Open[i+61] + High[i+61] + Low[i+61] + Close[i+61])/4 + Open[i+61])/2
-                 - 0.00285188 * ((Open[i+62] + High[i+62] + Low[i+62] + Close[i+62])/4 + Open[i+62])/2
-                 - 0.00273508 * ((Open[i+63] + High[i+63] + Low[i+63] + Close[i+63])/4 + Open[i+63])/2
-                 - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Open[i+64])/2
-                 + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Open[i+65])/2;
+         // buffer2 = (Sadukey-Median + Open)/2                                                                // Sadukey-Median = (O+H+L+C)/4
+         buffer2[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Open[i+ 0])/2
+                    + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Open[i+ 1])/2
+                    + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Open[i+ 2])/2
+                    + 0.11166411 * ((Open[i+ 3] + High[i+ 3] + Low[i+ 3] + Close[i+ 3])/4 + Open[i+ 3])/2
+                    + 0.10645106 * ((Open[i+ 4] + High[i+ 4] + Low[i+ 4] + Close[i+ 4])/4 + Open[i+ 4])/2
+                    + 0.09997253 * ((Open[i+ 5] + High[i+ 5] + Low[i+ 5] + Close[i+ 5])/4 + Open[i+ 5])/2
+                    + 0.09238688 * ((Open[i+ 6] + High[i+ 6] + Low[i+ 6] + Close[i+ 6])/4 + Open[i+ 6])/2
+                    + 0.08387751 * ((Open[i+ 7] + High[i+ 7] + Low[i+ 7] + Close[i+ 7])/4 + Open[i+ 7])/2
+                    + 0.07464713 * ((Open[i+ 8] + High[i+ 8] + Low[i+ 8] + Close[i+ 8])/4 + Open[i+ 8])/2
+                    + 0.06491178 * ((Open[i+ 9] + High[i+ 9] + Low[i+ 9] + Close[i+ 9])/4 + Open[i+ 9])/2
+                    + 0.05489443 * ((Open[i+10] + High[i+10] + Low[i+10] + Close[i+10])/4 + Open[i+10])/2
+                    + 0.04481833 * ((Open[i+11] + High[i+11] + Low[i+11] + Close[i+11])/4 + Open[i+11])/2
+                    + 0.03490071 * ((Open[i+12] + High[i+12] + Low[i+12] + Close[i+12])/4 + Open[i+12])/2
+                    + 0.02534672 * ((Open[i+13] + High[i+13] + Low[i+13] + Close[i+13])/4 + Open[i+13])/2
+                    + 0.01634375 * ((Open[i+14] + High[i+14] + Low[i+14] + Close[i+14])/4 + Open[i+14])/2
+                    + 0.00805678 * ((Open[i+15] + High[i+15] + Low[i+15] + Close[i+15])/4 + Open[i+15])/2
+                    + 0.00062421 * ((Open[i+16] + High[i+16] + Low[i+16] + Close[i+16])/4 + Open[i+16])/2
+                    - 0.00584512 * ((Open[i+17] + High[i+17] + Low[i+17] + Close[i+17])/4 + Open[i+17])/2
+                    - 0.01127391 * ((Open[i+18] + High[i+18] + Low[i+18] + Close[i+18])/4 + Open[i+18])/2
+                    - 0.01561738 * ((Open[i+19] + High[i+19] + Low[i+19] + Close[i+19])/4 + Open[i+19])/2
+                    - 0.01886307 * ((Open[i+20] + High[i+20] + Low[i+20] + Close[i+20])/4 + Open[i+20])/2
+                    - 0.02102974 * ((Open[i+21] + High[i+21] + Low[i+21] + Close[i+21])/4 + Open[i+21])/2
+                    - 0.02216516 * ((Open[i+22] + High[i+22] + Low[i+22] + Close[i+22])/4 + Open[i+22])/2
+                    - 0.02234315 * ((Open[i+23] + High[i+23] + Low[i+23] + Close[i+23])/4 + Open[i+23])/2
+                    - 0.02165992 * ((Open[i+24] + High[i+24] + Low[i+24] + Close[i+24])/4 + Open[i+24])/2
+                    - 0.02022973 * ((Open[i+25] + High[i+25] + Low[i+25] + Close[i+25])/4 + Open[i+25])/2
+                    - 0.01818026 * ((Open[i+26] + High[i+26] + Low[i+26] + Close[i+26])/4 + Open[i+26])/2
+                    - 0.01564777 * ((Open[i+27] + High[i+27] + Low[i+27] + Close[i+27])/4 + Open[i+27])/2
+                    - 0.01277219 * ((Open[i+28] + High[i+28] + Low[i+28] + Close[i+28])/4 + Open[i+28])/2
+                    - 0.00969230 * ((Open[i+29] + High[i+29] + Low[i+29] + Close[i+29])/4 + Open[i+29])/2
+                    - 0.00654127 * ((Open[i+30] + High[i+30] + Low[i+30] + Close[i+30])/4 + Open[i+30])/2
+                    - 0.00344276 * ((Open[i+31] + High[i+31] + Low[i+31] + Close[i+31])/4 + Open[i+31])/2
+                    - 0.00050728 * ((Open[i+32] + High[i+32] + Low[i+32] + Close[i+32])/4 + Open[i+32])/2
+                    + 0.00217042 * ((Open[i+33] + High[i+33] + Low[i+33] + Close[i+33])/4 + Open[i+33])/2
+                    + 0.00451354 * ((Open[i+34] + High[i+34] + Low[i+34] + Close[i+34])/4 + Open[i+34])/2
+                    + 0.00646441 * ((Open[i+35] + High[i+35] + Low[i+35] + Close[i+35])/4 + Open[i+35])/2
+                    + 0.00798513 * ((Open[i+36] + High[i+36] + Low[i+36] + Close[i+36])/4 + Open[i+36])/2
+                    + 0.00905725 * ((Open[i+37] + High[i+37] + Low[i+37] + Close[i+37])/4 + Open[i+37])/2
+                    + 0.00968091 * ((Open[i+38] + High[i+38] + Low[i+38] + Close[i+38])/4 + Open[i+38])/2
+                    + 0.00987326 * ((Open[i+39] + High[i+39] + Low[i+39] + Close[i+39])/4 + Open[i+39])/2
+                    + 0.00966639 * ((Open[i+40] + High[i+40] + Low[i+40] + Close[i+40])/4 + Open[i+40])/2
+                    + 0.00910488 * ((Open[i+41] + High[i+41] + Low[i+41] + Close[i+41])/4 + Open[i+41])/2
+                    + 0.00824306 * ((Open[i+42] + High[i+42] + Low[i+42] + Close[i+42])/4 + Open[i+42])/2
+                    + 0.00714199 * ((Open[i+43] + High[i+43] + Low[i+43] + Close[i+43])/4 + Open[i+43])/2
+                    + 0.00586655 * ((Open[i+44] + High[i+44] + Low[i+44] + Close[i+44])/4 + Open[i+44])/2
+                    + 0.00448255 * ((Open[i+45] + High[i+45] + Low[i+45] + Close[i+45])/4 + Open[i+45])/2
+                    + 0.00305396 * ((Open[i+46] + High[i+46] + Low[i+46] + Close[i+46])/4 + Open[i+46])/2
+                    + 0.00164061 * ((Open[i+47] + High[i+47] + Low[i+47] + Close[i+47])/4 + Open[i+47])/2
+                    + 0.00029596 * ((Open[i+48] + High[i+48] + Low[i+48] + Close[i+48])/4 + Open[i+48])/2
+                    - 0.00093445 * ((Open[i+49] + High[i+49] + Low[i+49] + Close[i+49])/4 + Open[i+49])/2
+                    - 0.00201426 * ((Open[i+50] + High[i+50] + Low[i+50] + Close[i+50])/4 + Open[i+50])/2
+                    - 0.00291701 * ((Open[i+51] + High[i+51] + Low[i+51] + Close[i+51])/4 + Open[i+51])/2
+                    - 0.00362661 * ((Open[i+52] + High[i+52] + Low[i+52] + Close[i+52])/4 + Open[i+52])/2
+                    - 0.00413703 * ((Open[i+53] + High[i+53] + Low[i+53] + Close[i+53])/4 + Open[i+53])/2
+                    - 0.00445206 * ((Open[i+54] + High[i+54] + Low[i+54] + Close[i+54])/4 + Open[i+54])/2
+                    - 0.00458437 * ((Open[i+55] + High[i+55] + Low[i+55] + Close[i+55])/4 + Open[i+55])/2
+                    - 0.00455457 * ((Open[i+56] + High[i+56] + Low[i+56] + Close[i+56])/4 + Open[i+56])/2
+                    - 0.00439006 * ((Open[i+57] + High[i+57] + Low[i+57] + Close[i+57])/4 + Open[i+57])/2
+                    - 0.00412379 * ((Open[i+58] + High[i+58] + Low[i+58] + Close[i+58])/4 + Open[i+58])/2
+                    - 0.00379323 * ((Open[i+59] + High[i+59] + Low[i+59] + Close[i+59])/4 + Open[i+59])/2
+                    - 0.00343966 * ((Open[i+60] + High[i+60] + Low[i+60] + Close[i+60])/4 + Open[i+60])/2
+                    - 0.00310850 * ((Open[i+61] + High[i+61] + Low[i+61] + Close[i+61])/4 + Open[i+61])/2
+                    - 0.00285188 * ((Open[i+62] + High[i+62] + Low[i+62] + Close[i+62])/4 + Open[i+62])/2
+                    - 0.00273508 * ((Open[i+63] + High[i+63] + Low[i+63] + Close[i+63])/4 + Open[i+63])/2
+                    - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Open[i+64])/2
+                    + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Open[i+65])/2;
+      }
    }
+   else {
+      // data timeframe != chart timeframe: MTF version
+      int barLength = Period()*MINUTES - 1;
 
-   if (!UnchangedBars && changedBars) {
-      debug("onTick(0.1)  calculating "+ changedBars +" "+ TimeframeDescription(dataTimeframe) +" bars starting at "+ TimeToStr(Time[changedBars-1], TIME_DATE|TIME_MINUTES));
+      for (i=changedBars-1; i >= 0; i--) {
+         int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]+barLength);
+         buffer1[i] = iMTF(MODE_BUFFER1, offset);
+         buffer2[i] = iMTF(MODE_BUFFER2, offset);
+      }
    }
 
    if (!IsSuperContext() && changedBars) {
@@ -303,92 +305,49 @@ int onTick() {
 
 
 /**
- * MTF main function
+ * Compute the bars to update (i.e. considered changed) of the current timeframe when using data of the specified timeframe.
  *
- * @return int - error status
+ * @param  int  timeframe      [optional] - data timeframe (default: the current timeframe)
+ * @param  bool limitStartTime [optional] - whether to limit the result to a configured starttime (default: yes)
+ *
+ * @return int - changed bars or -1 in case of errors
  */
-int onMTF() {
-   if (dataTimeframe < chartTimeframe) {                          // e.g. display H1 data on H4
-      if (!UnchangedBars) {
-         debug("onMTF(0.1)  calculating "+ Timeframe +" on a higher timeframe not yet implemented");
-      }
-      // calculate start bar
-      //if (startDate > 0) {
-      //   int startBar = iBarShiftNext(NULL, NULL, startDate);
-      //   if (startBar >= maxValues)
-      //      startBar = maxValues - 1;
-      //}
-   }
-   else {                                                         // e.g. display H1 data on M15
-      // recalculate changed bar
-      int changedBars = ComputeChangedBars(dataTimeframe);
-
-      for (int i=changedBars-1; i >= 0; i--) {
-         int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]);
-         buffer1[i] = iMTF(MODE_BUFFER1, offset);
-         buffer2[i] = iMTF(MODE_BUFFER2, offset);
-      }
-   }
-   return(catch("onMTF(1)"));
-
-}
-
-
-/**
- * Compute the bars to update (considered changed) of the current timeframe when using data of the specified timeframe.
- *
- * @param  int timeframe [optional] - used data timeframe default: the current timeframe
- *
- * @return int - changed bars or -1 in case of errors, i.e. ERR_HISTORY_INSUFFICIENT
- */
-int ComputeChangedBars(int timeframe = NULL) {
+int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
+   limitStartTime = limitStartTime!=0;
    int currentTimeframe = Period();
    if (!timeframe) timeframe = currentTimeframe;
 
    int bars, changedBars, startBar, filterLength = 66;
 
-   // resolve changed bars of the current timeframe
    if (timeframe == currentTimeframe) {
-      int _maxValues = maxValues;
-      if (dataTimeframe > currentTimeframe) {
-         int multiplier = dataTimeframe/currentTimeframe;
-         _maxValues *= multiplier;
-         if (_maxValues/multiplier != maxValues)
-            _maxValues = INT_MAX;                        // @see https://www.geeksforgeeks.org/check-integer-overflow-multiplication/
+      // the displayed timeframe equals the chart timeframe
+      static int _maxValues = -1; if (_maxValues < 0) {
+         _maxValues = Mul(maxValues, ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1));
       }
       changedBars = Min(ChangedBars, _maxValues);
       startBar    = Min(changedBars-1, Bars-filterLength);
       if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
-      if (Time[startBar] < startTime)
+      if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
-      return(startBar + 1);
    }
-
-   // resolve changed bars of a lower timeframe, e.g. displaying H1 data on H4
-   if (timeframe < currentTimeframe) {
-      return(-1);
-   }
-
-   // resolve changed bars of a higher timeframe, e.g. displaying H1 data on M15
-   if (timeframe > currentTimeframe) {
+   else {
+      // the displayed timeframe is different from the chart timeframe
       // resolve startbar to update in the data timeframe
       bars        = iBars(NULL, timeframe);
       changedBars = Min(iChangedBars(NULL, timeframe), maxValues);
       startBar    = Min(changedBars-1, bars-filterLength);
       if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe="+ TimeframeDescription(timeframe) +"  bars="+ bars +"  changedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
-      if (iTime(NULL, timeframe, startBar) < startTime)
-         startBar = iBarShiftNext(NULL, timeframe, startTime);
 
       // resolve corresponding bar offset in the current timeframe
       startBar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startBar));
 
-      // cross-check changed bars of current against data timeframe
-      changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe));
+      // cross-check the changed bars of the current timeframe against the data timeframe
+      changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe, false));
       startBar    = changedBars - 1;
-      if (Time[startBar] < startTime)
+      if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
-      return(startBar + 1);
    }
+   return(startBar + 1);
 }
 
 
