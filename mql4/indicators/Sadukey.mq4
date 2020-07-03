@@ -329,6 +329,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
       if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
+      changedBars = startBar + 1;
    }
    else {
       // the displayed timeframe is different from the chart timeframe
@@ -346,8 +347,9 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       startBar    = changedBars - 1;
       if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
+      changedBars = startBar + 1;
    }
-   return(startBar + 1);
+   return(changedBars);
 }
 
 
