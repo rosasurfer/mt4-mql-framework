@@ -26,7 +26,7 @@ extern double Bands.StdDevs     = 2;
 extern color  Bands.Color       = RoyalBlue;
 extern int    Bands.LineWidth   = 1;
 
-extern int    Max.Values        = 5000;               // max. amount of values to calculate (-1: all)
+extern int    Max.Bars          = 10000;              // max. number of bars to display (-1: all available)
 
 extern string __________________________;
 
@@ -144,8 +144,8 @@ int onInit() {
    if (Bands.LineWidth < 0) return(catch("onInit(7)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    if (Bands.LineWidth > 5) return(catch("onInit(8)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)     return(catch("onInit(9)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)       return(catch("onInit(9)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (!ConfigureSignal("BollingerBand", Signal.onTouchBand, signals))                                        return(last_error);
@@ -182,8 +182,8 @@ int onInit() {
 
    // drawing options and styles
    int startDraw = MA.Periods;
-   if (Max.Values >= 0)
-      startDraw = Max(startDraw, Bars-Max.Values);
+   if (Max.Bars >= 0)
+      startDraw = Max(startDraw, Bars-Max.Bars);
    SetIndexDrawBegin(MODE_MA,    startDraw);
    SetIndexDrawBegin(MODE_UPPER, startDraw);
    SetIndexDrawBegin(MODE_LOWER, startDraw);
@@ -228,7 +228,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferMa)) return(log("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferMa,    EMPTY_VALUE);
       ArrayInitialize(bufferUpper, EMPTY_VALUE);
@@ -246,8 +246,8 @@ int onTick() {
 
    // calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (changedBars > Max.Values)
-      changedBars = Max.Values;
+   if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
+      changedBars = Max.Bars;
    int startBar = Min(changedBars-1, Bars-MA.Periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -321,7 +321,7 @@ bool StoreInputParameters() {
    Chart.StoreDouble(name +".input.Bands.StdDevs",   Bands.StdDevs  );
    Chart.StoreColor (name +".input.Bands.Color",     Bands.Color    );
    Chart.StoreInt   (name +".input.Bands.LineWidth", Bands.LineWidth);
-   Chart.StoreInt   (name +".input.Max.Values",      Max.Values     );
+   Chart.StoreInt   (name +".input.Max.Bars",        Max.Bars       );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -341,7 +341,7 @@ bool RestoreInputParameters() {
    Chart.RestoreDouble(name +".input.Bands.StdDevs",   Bands.StdDevs  );
    Chart.RestoreColor (name +".input.Bands.Color",     Bands.Color    );
    Chart.RestoreInt   (name +".input.Bands.LineWidth", Bands.LineWidth);
-   Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
+   Chart.RestoreInt   (name +".input.Max.Bars",        Max.Bars       );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -357,11 +357,9 @@ string InputsToStr() {
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   ";", NL,
                             "MA.Color=",        ColorToStr(MA.Color),              ";", NL,
                             "MA.LineWidth=",    MA.LineWidth,                      ";", NL,
-
                             "Bands.StdDevs=",   NumberToStr(Bands.StdDevs, ".1+"), ";", NL,
                             "Bands.Color=",     ColorToStr(Bands.Color),           ";", NL,
                             "Bands.LineWidth=", Bands.LineWidth,                   ";", NL,
-
-                            "Max.Values=",      Max.Values,                        ";")
+                            "Max.Bars=",        Max.Bars,                          ";")
    );
 }

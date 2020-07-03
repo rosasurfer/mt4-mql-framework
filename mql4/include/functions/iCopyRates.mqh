@@ -4,7 +4,7 @@
  *
  * Extended version of the built-in function ArrayCopyRates() with a different return value and better error handling.
  * This function should be used when a timeseries is requested and IndicatorCounted() is not available, i.e. in experts or in
- * indicators with the requested timeseries different then the current one.
+ * indicators with the requested timeseries different from the current chart timeseries.
  *
  * The first dimension of the target array holds the bar offset, the second dimension holds the elements:
  *   0 - open time
@@ -29,8 +29,8 @@
  *        (4) If the timeseries is empty 0 is returned and no error is set. This is different to the implementation of the
  *            built-in function ArrayCopyRates().
  *        (5) If the array is passed to a DLL the DLL receives a pointer to the internal data array of type HISTORY_BAR_400[]
- *            (MetaQuotes alias: RateInfo). This array is reverse-indexed (index 0 points to the oldest bar). As more rates
- *            arrive it is dynamically extended.
+ *            (MetaQuotes alias: RateInfo). This array is reverse-indexed (index 0 holds the oldest bar). As more rates
+ *            arrive the array is dynamically extended.
  */
 int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    if (ArrayDimension(target) != 2)                            return(_EMPTY(catch("iCopyRates(1)  invalid parameter target[] (illegal number of dimensions: "+ ArrayDimension(target) +")", ERR_INCOMPATIBLE_ARRAYS)));
@@ -60,8 +60,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    string key = StringConcatenate(symbol, ",", timeframe);     // mapping key
 
    for (int i=0; i < size; i++) {
-      if (keys[i] == key)
-         break;
+      if (keys[i] == key) break;
    }
    if (i == size) {                                            // add the key if not found
       ArrayResize(keys, size+1); keys[i] = key;
@@ -74,7 +73,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    - If an empty timeseries is re-requested before new data has arrived ArrayCopyRates() returns -1 and sets the error
      ERR_ARRAY_ERROR (also in tester). Here the error is interpreted as ERR_SERIES_NOT_AVAILABLE, suppressed and 0 is returned.
    - If an empty timeseries is requested after recompilation or without a server connection no error may be set.
-   - ArrayCopyRates() doesn't set an error if the timeseries (i.e. symbol or timeframe) is unknown.
+   - ArrayCopyRates() doesn't set an error if the timeseries is unknown (symbol or timeframe).
    */
 
    int bars = ArrayCopyRates(target, symbol, timeframe);

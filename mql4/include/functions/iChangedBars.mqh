@@ -1,5 +1,5 @@
 /**
- * Return the number of changed bars since the last tick for the identified timeseries. Equivalent to resolving the number of
+ * Return the number of changed bars since the last tick for the specified timeseries. Equivalent to resolving the number of
  * changed bars in indicators for the current chart by computing:
  *
  *   UnchangedBars = IndicatorCounted()
@@ -8,8 +8,8 @@
  * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with a timeseries
  * different from the current one.
  *
- * @param  string symbol    [optional] - symbol of the timeseries (NULL: the current chart symbol)
- * @param  int    timeframe [optional] - timeframe of the timeseries (NULL: the current chart timeframe)
+ * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
+ * @param  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
  *
  * @return int - number of changed bars or -1 (EMPTY) in case of errors
  */
@@ -50,7 +50,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
    - If an empty timeseries is re-accessed before new data has arrived iBars() sets the error ERR_SERIES_NOT_AVAILABLE.
      Here the error is suppressed and 0 is returned.
    - If an empty timeseries is accessed after recompilation or without a server connection no error may be set.
-   - iBars() doesn't set an error if the timeseries (i.e. symbol or timeframe) is unknown.
+   - iBars() doesn't set an error if the timeseries is unknown (symbol or timeframe).
    */
 
    // get current number of bars

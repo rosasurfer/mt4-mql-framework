@@ -23,7 +23,7 @@ extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                    // max. amount of values to calculate (-1: all)
+extern int    Max.Bars              = 5000;                    // max. number of bars to display (-1: all available)
 
 extern string __________________________;
 
@@ -100,8 +100,8 @@ int onInit() {
    if (Histogram.Style.Width < 0) return(catch("onInit(1)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)             return(catch("onInit(3)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.Level
    if (Signal.Level <    0)       return(catch("onInit(4)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
@@ -147,8 +147,8 @@ int onInit() {
 
    // (5) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0)
-      startDraw = Max(startDraw, Bars-Max.Values);
+   if (Max.Bars >= 0)
+      startDraw = Max(startDraw, Bars-Max.Bars);
    SetIndexDrawBegin(MODE_DELTA_LONG,  startDraw);
    SetIndexDrawBegin(MODE_DELTA_SHORT, startDraw);
    SetIndicatorOptions();
@@ -181,7 +181,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferMain)) return(log("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferMain,   EMPTY_VALUE);
       ArrayInitialize(bufferSignal,           0);
@@ -201,8 +201,8 @@ int onTick() {
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (changedBars > Max.Values)
-      changedBars = Max.Values;
+   if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
+      changedBars = Max.Bars;
    int startBar = changedBars-1;
    if (startBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
 
@@ -372,7 +372,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
    Chart.StoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
    Chart.StoreInt   (name +".input.Signal.Level",          Signal.Level         );
    Chart.StoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
    Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
@@ -392,7 +392,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
    Chart.RestoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
    Chart.RestoreInt   (name +".input.Signal.Level",          Signal.Level         );
    Chart.RestoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
    Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
@@ -411,9 +411,7 @@ string InputsToStr() {
    return(StringConcatenate("Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     ";", NL,
                             "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    ";", NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,                ";", NL,
-
-                            "Max.Values=",            Max.Values,                           ";", NL,
-
+                            "Max.Bars=",              Max.Bars,                             ";", NL,
                             "Signal.Level=",          Signal.Level,                         ";", NL,
                             "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  ";", NL,
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";", NL,
