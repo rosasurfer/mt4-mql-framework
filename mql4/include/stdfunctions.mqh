@@ -6223,11 +6223,11 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
+double iMACDEx(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACDX",
+   double value = iCustom(NULL, timeframe, "MACD",
                           fastMaPeriods,                                   // int    Fast.MA.Periods
                           fastMaMethod,                                    // string Fast.MA.Method
                           fastMaAppliedPrice,                              // string Fast.MA.AppliedPrice
@@ -6255,8 +6255,8 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iMACDX(1)", error));
-      warn("iMACDX(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("iMACDEx(1)", error));
+      warn("iMACDEx(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6781,7 +6781,7 @@ void __DummyCalls() {
    iFATL(NULL, NULL, NULL);
    iHalfTrend(NULL, NULL, NULL, NULL);
    iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
-   iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   iMACDEx(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
