@@ -27,7 +27,7 @@ extern color  Histogram.Color.Upper = Blue;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
+extern int    Max.Bars              = 5000;                 // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -100,8 +100,8 @@ int onInit() {
    if (Histogram.Style.Width < 0) return(catch("onInit(5)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(6)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)           return(catch("onInit(7)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)             return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
@@ -124,8 +124,8 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
+   if (Max.Bars >= 0) startDraw += Bars - Max.Bars;
+   if (startDraw < 0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_SECTION,       INT_MAX  );                 // work around scaling bug in terminals <=509
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
@@ -155,7 +155,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferRSI)) return(log("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferRSI,     EMPTY_VALUE);
       ArrayInitialize(bufferSection,           0);
@@ -175,8 +175,8 @@ int onTick() {
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (ChangedBars > Max.Values)
-      changedBars = Max.Values;
+   if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
+      changedBars = Max.Bars;
    int startBar = Min(changedBars-1, Bars-rsi.periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -238,7 +238,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -257,7 +257,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -270,14 +270,11 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("RSI.Periods=",           RSI.Periods,                       ";"+ NL,
                             "RSI.AppliedPrice=",      DoubleQuoteStr(RSI.AppliedPrice),  ";"+ NL,
-
                             "MainLine.Color=",        ColorToStr(MainLine.Color),        ";"+ NL,
                             "MainLine.Width=",        MainLine.Width,                    ";"+ NL,
-
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";"+ NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";"+ NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,             ";"+ NL,
-
-                            "Max.Values=",            Max.Values,                        ";"+ NL)
+                            "Max.Bars=",              Max.Bars,                          ";"+ NL)
    );
 }

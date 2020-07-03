@@ -8788,7 +8788,6 @@ MA.Color=3329330
 Bands.StdDevs=2.0
 Bands.LineWidth=1
 Bands.Color=14772545
-Max.Values=10000
 </inputs>
 </expert>
 period_flags=0

@@ -23,7 +23,7 @@ extern color  MA.Color        = OrangeRed;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.Width      = 2;
 
-extern int    Max.Values      = 5000;                    // max. amount of values to calculate (-1: all)
+extern int    Max.Bars        = 5000;                    // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +64,7 @@ int onInit() {
 
    // (1) validate inputs
    // MA.Periods
-   if (MA.Periods < 1)  return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1) return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
    string values[], sValue = StrToLower(MA.AppliedPrice);
@@ -83,7 +83,7 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else              return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else             return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
@@ -99,14 +99,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                 return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.Width
-   if (Draw.Width < 0)  return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5)  return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0) return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5) return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1) return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)  return(catch("onInit(6)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
@@ -132,8 +132,8 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw = Bars - Max.Values;
-   if (startDraw  <  0) startDraw = 0;
+   if (Max.Bars >= 0) startDraw = Bars - Max.Bars;
+   if (startDraw < 0) startDraw = 0;
    SetIndexDrawBegin(MODE_TEMA, startDraw);
    SetIndicatorOptions();
 
@@ -172,7 +172,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(tema)) return(log("onTick(1)  size(tema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(tema,      EMPTY_VALUE);
       ArrayInitialize(firstEma,  EMPTY_VALUE);
@@ -190,8 +190,8 @@ int onTick() {
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (Max.Values < ChangedBars)
-      changedBars = Max.Values;                                      // Because EMA(EMA(EMA)) is used in the calculation, TEMA needs 3*<period>-2 samples
+   if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)
+      changedBars = Max.Bars;                                        // Because EMA(EMA(EMA)) is used in the calculation, TEMA needs 3*<period>-2 samples
    int bar, startBar = Min(changedBars-1, Bars - (3*MA.Periods-2));  // to start producing values in contrast to <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -238,7 +238,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.MA.Color",        MA.Color       );
    Chart.StoreString(name +".input.Draw.Type",       Draw.Type      );
    Chart.StoreInt   (name +".input.Draw.Width",      Draw.Width     );
-   Chart.StoreInt   (name +".input.Max.Values",      Max.Values     );
+   Chart.StoreInt   (name +".input.Max.Bars",        Max.Bars       );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -255,7 +255,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
    Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
    Chart.RestoreInt   (name +".input.Draw.Width",      Draw.Width     );
-   Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
+   Chart.RestoreInt   (name +".input.Max.Bars",        Max.Bars       );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -271,6 +271,6 @@ string InputsToStr() {
                             "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
                             "Draw.Type=",       DoubleQuoteStr(Draw.Type),       ";", NL,
                             "Draw.Width=",      Draw.Width,                      ";", NL,
-                            "Max.Values=",      Max.Values,                      ";")
+                            "Max.Bars=",        Max.Bars,                        ";")
    );
 }

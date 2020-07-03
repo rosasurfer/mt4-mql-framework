@@ -2142,7 +2142,7 @@ int Grid.TrailPendingOrder(int i) {
    int      level        = orders.level[i];
    double   gridbase     = GetGridbase();
    datetime pendingTime;
-   double   pendingPrice = NormalizeDouble(gridbase +           level * GridSize * Pips, Digits);
+   double   pendingPrice = NormalizeDouble(gridbase +          level  * GridSize * Pips, Digits);
    double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
 
    if (!SelectTicket(ticket, "Grid.TrailPendingOrder(4)", true)) return(NULL);

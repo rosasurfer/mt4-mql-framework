@@ -1684,6 +1684,8 @@ int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int valu
  * @return int
  */
 int Abs(int value) {
+   if (value == INT_MIN)
+      return(INT_MAX);
    if (value < 0)
       return(-value);
    return(value);
@@ -1691,15 +1693,15 @@ int Abs(int value) {
 
 
 /**
- * Gibt das Vorzeichen einer Zahl zurück.
+ * Return the sign of a numerical value.
  *
- * @param  double number - Zahl
+ * @param  double value
  *
- * @return int - Vorzeichen (+1, 0, -1)
+ * @return int - sign (+1, 0, -1)
  */
-int Sign(double number) {
-   if (GT(number, 0)) return( 1);
-   if (LT(number, 0)) return(-1);
+int Sign(double value) {
+   if (value > 0) return( 1);
+   if (value < 0) return(-1);
    return(0);
 }
 
@@ -1844,11 +1846,39 @@ double RoundCeil(double number, int decimals = 0) {
 
 
 /**
- * Dividiert zwei Doubles und fängt dabei eine Division durch 0 ab.
+ * Multiply two integer values and prevent an integer overflow.
  *
- * @param  double a                 - Divident
- * @param  double b                 - Divisor
- * @param  double onZero [optional] - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
+ * @param  int a - first operand
+ * @param  int b - second operand
+ *
+ * @return int - multiplication result or maximum value in direction of the overflow (INT_MIN or INT_MAX)
+ */
+int Mul(int a, int b) {
+   // @see  https://www.geeksforgeeks.org/check-integer-overflow-multiplication/
+   if ( !a  ||  !b ) return(0);
+   if (a==1 || b==1) return(a * b);
+
+   int result = a * b;
+
+   if (Sign(a) == Sign(b)) {              // positive result
+      if (result > 0 && result/a == b)
+         return(result);
+      return(INT_MAX);
+   }
+   else {                                 // negative result
+      if (result < 0 && result/a == b)
+         return(result);
+      return(INT_MIN);
+   }
+}
+
+
+/**
+ * Divide two doubles and prevent a division by 0 (zero).
+ *
+ * @param  double a                 - divident
+ * @param  double b                 - divisor
+ * @param  double onZero [optional] - value to return if the the divisor is zero (default: 0)
  *
  * @return double
  */
@@ -6013,14 +6043,14 @@ double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distrib
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6056,14 +6086,14 @@ double iFATL(int timeframe, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6103,14 +6133,14 @@ double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           CLR_NONE,                                        // color  Color.Channel
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6153,14 +6183,14 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6211,14 +6241,14 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6261,14 +6291,14 @@ double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAp
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6309,14 +6339,14 @@ double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffe
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6358,9 +6388,9 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           Blue,                                            // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           0,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6396,14 +6426,14 @@ double iSATL(int timeframe, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6447,9 +6477,9 @@ double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1P
                           DodgerBlue,                                      // color  Signal.Color
                           "Line",                                          // string Signal.DrawType
                           1,                                               // int    Signal.DrawWidth
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ______________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6490,14 +6520,14 @@ double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuff
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6540,14 +6570,14 @@ double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, i
                           CLR_NONE,                                        // color  Color.MovingAverage
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6588,14 +6618,14 @@ double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6637,9 +6667,9 @@ double iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6815,6 +6845,7 @@ void __DummyCalls() {
    MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
+   Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
    NormalizeLots(NULL);

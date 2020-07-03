@@ -32,7 +32,7 @@ extern color  Signal.Color           = DodgerBlue;
 extern string Signal.DrawType        = "Line* | Dot";
 extern int    Signal.DrawWidth       = 2;
 
-extern int    Max.Values             = 10000;            // max. amount of values to calculate (-1: all)
+extern int    Max.Bars               = 10000;            // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -102,16 +102,16 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { signalDrawType = DRAW_LINE;  Signal.DrawType = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { signalDrawType = DRAW_ARROW; Signal.DrawType = "Dot";  }
-   else                       return(catch("onInit(5)  Invalid input parameter Signal.DrawType = "+ DoubleQuoteStr(Signal.DrawType), ERR_INVALID_INPUT_PARAMETER));
+   else                            return(catch("onInit(5)  Invalid input parameter Signal.DrawType = "+ DoubleQuoteStr(Signal.DrawType), ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.DrawWidth
-   if (Signal.DrawWidth < 0)  return(catch("onInit(6)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Signal.DrawWidth > 5)  return(catch("onInit(7)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.DrawWidth < 0)       return(catch("onInit(6)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.DrawWidth > 5)       return(catch("onInit(7)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    signalDrawWidth = Signal.DrawWidth;
 
-   // Max.Values
-   if (Max.Values < -1)       return(catch("onInit(8)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1)              return(catch("onInit(8)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
    SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:            invisible
@@ -153,7 +153,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(bufferRsi)) return(log("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferRsi,   EMPTY_VALUE);
       ArrayInitialize(bufferStoch, EMPTY_VALUE);
@@ -248,6 +248,6 @@ string InputsToStr() {
                             "Signal.Color=",           ColorToStr(Signal.Color), ";"+ NL,
                             "Signal.DrawType=",        Signal.DrawType,          ";"+ NL,
                             "Signal.DrawWidth=",       Signal.DrawWidth,         ";"+ NL,
-                            "Max.Values=",             Max.Values,               ";"+ NL)
+                            "Max.Bars=",               Max.Bars,                 ";")
    );
 }

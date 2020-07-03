@@ -18,7 +18,7 @@ extern double ATR.Multiplier  = 1;
 extern color  Color.Bands     = Blue;                                // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA        = CLR_NONE;
 
-extern int    Max.Values      = 5000;                                // max. amount of values to calculate (-1: all)
+extern int    Max.Bars        = 5000;                                // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +63,7 @@ string legendLabel, iDescription;
 int onInit() {
    // (1) Validierung
    // MA.Periods
-   if (MA.Periods < 2)                                          return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 2)      return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
    // MA.Method
@@ -74,7 +74,7 @@ int onInit() {
    }
    else sValue = MA.Method;
    ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)                                         return(catch("onInit(7)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == -1)     return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
@@ -94,29 +94,29 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                                                      return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                  return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // ATR.Periods
-   if (ATR.Periods < 1)                                         return(catch("onInit(9)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)     return(catch("onInit(4)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // ATR.Timeframe
    ATR.Timeframe = StrToUpper(StrTrim(ATR.Timeframe));
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (atr.timeframe == -1)                                     return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (atr.timeframe == -1) return(catch("onInit(5)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
 
    // ATR.Multiplier
-   if (ATR.Multiplier < 0)                                      return(catch("onInit(11)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)  return(catch("onInit(6)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // Max.Values
-   if (Max.Values < -1)                                         return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)       return(catch("onInit(7)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Chart-Legende erzeugen
@@ -149,14 +149,14 @@ int onInit() {
 
    // (4.3) Zeichenoptionen
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw = Bars - Max.Values;
-   if (startDraw  <  0) startDraw = 0;
+   if (Max.Bars >= 0) startDraw = Bars - Max.Bars;
+   if (startDraw < 0) startDraw = 0;
    SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
    SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
    SetIndicatorOptions();
 
-   return(catch("onInit(13)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -203,8 +203,8 @@ int onTick() {
 
 
    // (2) Startbar der Berechnung ermitteln
-   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
-      ChangedBars = Max.Values;
+   if (ChangedBars > Max.Bars) /*&&*/ if (Max.Bars >= 0)
+      ChangedBars = Max.Bars;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -278,14 +278,11 @@ string InputsToStr() {
    return(StringConcatenate("MA.Periods=",      DoubleQuoteStr(MA.Periods),                         ";", NL,
                             "MA.Method=",       DoubleQuoteStr(MA.Method),                          ";", NL,
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),                    ";", NL,
-
                             "ATR.Periods=",     ATR.Periods,                                        ";", NL,
                             "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe),                      ";", NL,
                             "ATR.Multiplier=",  DoubleQuoteStr(NumberToStr(ATR.Multiplier, ".1+")), ";", NL,
-
                             "Color.Bands=",     ColorToStr(Color.Bands),                            ";", NL,
                             "Color.MA=",        ColorToStr(Color.MA),                               ";", NL,
-
-                            "Max.Values=",      Max.Values,                                         ";")
+                            "Max.Bars=",        Max.Bars,                                           ";")
    );
 }

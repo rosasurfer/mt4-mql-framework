@@ -84,9 +84,8 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
-
    // (4) before onInit(): if loaded by iCustom() log original input parameters
-   string initialInput;
+   string initialInput = "";
    if (IsSuperContext() && __LOG()) {
       //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
@@ -94,7 +93,6 @@ int init() {
          log("init()  input: "+ initialInput);
       }
    }
-
 
    /*
    (5) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
@@ -141,7 +139,6 @@ int init() {
    if (error != -1)                                                                    //
       error = afterInit();                                                             // Postprocessing-Hook
 
-
    // (6) after onInit(): if loaded by iCustom() log modified input parameters
    if (IsSuperContext() && __LOG()) {
       string modifiedInput = InputsToStr();
@@ -152,7 +149,6 @@ int init() {
             log("init()  input: "+ modifiedInput);
       }
    }
-
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {

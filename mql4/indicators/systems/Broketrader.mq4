@@ -27,7 +27,7 @@ extern color  Color.Long             = GreenYellow;
 extern color  Color.Short            = C'81,211,255';       // lightblue-ish
 extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
-extern int    Max.Values             = 10000;               //  max. amount of values to calculate (-1: all)
+extern int    Max.Bars               = 10000;               //  max. number of bars to display (-1: all available)
 extern string __________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
@@ -132,9 +132,9 @@ int onInit() {
    if (SMA.DrawWidth < 0)          return(catch("onInit(6)  Invalid input parameter SMA.DrawWidth = "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    if (SMA.DrawWidth > 5)          return(catch("onInit(7)  Invalid input parameter SMA.DrawWidth = "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)            return(catch("onInit(8)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1)              return(catch("onInit(8)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
    if (!ConfigureSignal("Broketrader", Signal.onReversal, signals))                                           return(last_error);
@@ -203,7 +203,7 @@ int onTick() {
    // a not initialized buffer can happen on terminal start under specific circumstances
    if (!ArraySize(maLong)) return(log("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(ma,              EMPTY_VALUE);
       ArrayInitialize(maLong,          EMPTY_VALUE);
@@ -231,7 +231,7 @@ int onTick() {
 
    // calculate start bar
    int maxSMAValues   = Bars - smaPeriods + 1;                                                     // max. possible SMA values
-   int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values
+   int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values (see Stochastic of RSI)
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
@@ -389,15 +389,16 @@ bool onReversal(int direction) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    SetIndexStyle(MODE_MA,    DRAW_NONE);
    SetIndexStyle(MODE_TREND, DRAW_NONE);
 
-   int maType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
+   int   maType        = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
+   color darkenedLong  = ModifyColor(Color.Long,  NULL, NULL, -30);
+   color darkenedShort = ModifyColor(Color.Short, NULL, NULL, -30);
 
    if (FillSections) {
-      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Long,  NULL, NULL, -30));
-      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Short, NULL, NULL, -30));
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, darkenedLong );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, darkenedShort);
 
       SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
       SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
@@ -405,8 +406,8 @@ void SetIndicatorOptions() {
       SetIndexStyle(MODE_HIST_S_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
    }
    else {
-      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, Color.Long );
-      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, Color.Short);
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, darkenedLong );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, darkenedShort);
 
       SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_NONE);
       SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_NONE);
@@ -443,7 +444,7 @@ string InputsToStr() {
                             "Color.Short=",            ColorToStr(Color.Short),              ";", NL,
                             "FillSections=",           BoolToStr(FillSections),              ";", NL,
                             "SMA.DrawWidth=",          SMA.DrawWidth,                        ";", NL,
-                            "Max.Values=",             Max.Values,                           ";", NL,
+                            "Max.Bars=",               Max.Bars,                             ";", NL,
                             "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal),    ";", NL,
                             "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=",   DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
