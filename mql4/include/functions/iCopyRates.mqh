@@ -73,7 +73,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    - If an empty timeseries is re-requested before new data has arrived ArrayCopyRates() returns -1 and sets the error
      ERR_ARRAY_ERROR (also in tester). Here the error is interpreted as ERR_SERIES_NOT_AVAILABLE, suppressed and 0 is returned.
    - If an empty timeseries is requested after recompilation or without a server connection no error may be set.
-   - ArrayCopyRates() doesn't set an error if the timeseries (i.e. symbol or timeframe) is unknown.
+   - ArrayCopyRates() doesn't set an error if the timeseries is unknown (symbol or timeframe).
    */
 
    int bars = ArrayCopyRates(target, symbol, timeframe);
