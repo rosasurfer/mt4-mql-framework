@@ -135,7 +135,7 @@ int      ifInt(bool condition, int thenValue, int elseValue);;
 string   ifString(bool condition, string thenValue, string elseValue);;
 double   iHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
-double   iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
+double   iMACDEx(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
 double   iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
 string   InitReasonDescription(int reason);;
 double   iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar);;
