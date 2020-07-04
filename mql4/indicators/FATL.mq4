@@ -156,8 +156,8 @@ int onInit() {
    SetIndicatorOptions();
 
    // initialize filter settings
-   if (!InitFilter())
-      return(last_error);
+   InitFilter();
+
    return(catch("onInit(5)"));
 }
 
