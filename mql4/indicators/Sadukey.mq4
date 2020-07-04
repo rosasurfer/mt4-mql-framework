@@ -147,6 +147,7 @@ int onTick() {
 
    if (dataTimeframe == Period()) {
       // data timeframe = chart timeframe
+
       for (int i=changedBars-1; i >= 0; i--) {
          // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
          buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
@@ -297,8 +298,9 @@ int onTick() {
    }
 
    if (!IsSuperContext() && changedBars) {
-      double avg = (buffer1[0]+buffer2[0]) / 2;
-      @Trend.UpdateLegend(legendLabel, indicatorName, "", Color.UpTrend, Color.DownTrend, avg, Digits, NULL, Time[0]);
+      double value = (buffer1[0]+buffer2[0]) / 2;
+      color  clr   = ifInt(buffer1[0] > buffer2[0], Color.UpTrend, Color.DownTrend);
+      @Trend.UpdateLegend(legendLabel, indicatorName, "", clr, clr, value, Digits, NULL, Time[0]);
    }
    return(last_error);
 }
