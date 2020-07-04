@@ -4,15 +4,15 @@
  * @see  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//define NO_ERROR                                          ERR_NO_ERROR
-// To prevent the C++ warning "C4005: macro redefinition" this constant is define in "include/mqldefines.mqh"
+//define NO_ERROR                                          ERR_NO_ERROR    // framework name
+// To prevent the C++ warning "C4005: macro redefinition" NO_ERROR is defined in "include/mqldefines.mqh"
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1
 //      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
 //      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
 //      OrderModify().
-#define ERR_TRADESERVER_GONE                                          2
+#define ERR_TRADESERVER_GONE                                          2    // framework name
 #define ERR_COMMON_ERROR                           ERR_TRADESERVER_GONE    // MetaQuotes alias
 //      The trade request failed. A trade server related execution error.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
@@ -180,7 +180,7 @@
 #define ERR_FILE_BIN_STRINGSIZE                                    5017    // string size must be specified for binary file
 #define ERR_FILE_INCOMPATIBLE                                      5018    // incompatible file (for string arrays-TXT, for others-BIN)
 #define ERR_FILE_IS_DIRECTORY                                      5019    // file is a directory
-#define ERR_FILE_NOT_FOUND                                         5020    // file not found
+#define ERR_FILE_NOT_FOUND                                         5020    // file not found (framework name)
 #define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MetaQuotes alias
 #define ERR_FILE_CANNOT_REWRITE                                    5021    // file cannot be rewritten
 #define ERR_FILE_WRONG_DIRECTORYNAME                               5022    // wrong directory name
