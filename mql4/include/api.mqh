@@ -196,6 +196,8 @@ bool     OrderPop(string location);;
 bool     OrderPush(string location);;
 string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
+datetime ParseDate(string value);;
+datetime ParseDateTime(string value);;
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
