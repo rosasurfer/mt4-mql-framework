@@ -425,7 +425,7 @@ void SetIndicatorOptions() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetStochasticOfRSI(int iBar) {
-   return(iStochasticOfRSI(NULL, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Stochastic.MODE_SIGNAL, iBar));
+   return(icStochasticOfRSI(NULL, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Stochastic.MODE_SIGNAL, iBar));
 }
 
 

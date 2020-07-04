@@ -4496,7 +4496,7 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 4)                 return(!catch("GetALMA(7)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
+   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
 }
 
 
@@ -4540,7 +4540,7 @@ double GetEMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetEMA(6)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iMovingAverage(timeframe, periods, "EMA", appliedPrice, iBuffer, iBar));
+   return(icMovingAverage(timeframe, periods, "EMA", appliedPrice, iBuffer, iBar));
 }
 
 
@@ -4565,7 +4565,7 @@ double GetHalfTrend(int timeframe, string params, int iBuffer, int iBar) {
       periods    = StrToInteger(params);
       lastParams = params;
    }
-   return(iHalfTrend(timeframe, periods, iBuffer, iBar));
+   return(icHalfTrend(timeframe, periods, iBuffer, iBar));
 }
 
 
@@ -4620,7 +4620,7 @@ double GetJMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 3)                 return(!catch("GetJMA(6)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iJMA(timeframe, periods, phase, appliedPrice, iBuffer, iBar));
+   return(icJMA(timeframe, periods, phase, appliedPrice, iBuffer, iBar));
 }
 
 
@@ -4664,7 +4664,7 @@ double GetLWMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetLWMA(6)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iMovingAverage(timeframe, periods, "LWMA", appliedPrice, iBuffer, iBar));
+   return(icMovingAverage(timeframe, periods, "LWMA", appliedPrice, iBuffer, iBar));
 }
 
 
@@ -4708,7 +4708,7 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetNonLagMA(5)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iNonLagMA(timeframe, cycleLength, appliedPrice, iBuffer, iBar));
+   return(icNonLagMA(timeframe, cycleLength, appliedPrice, iBuffer, iBar));
 }
 
 
@@ -4725,7 +4725,7 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
 double GetSATL(int timeframe, string params, int iBuffer, int iBar) {
    if (StringLen(params) != 0) return(!catch("GetSATL(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
-   return(iSATL(timeframe, iBuffer, iBar));
+   return(icSATL(timeframe, iBuffer, iBar));
 }
 
 
@@ -4769,7 +4769,7 @@ double GetSMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetSMA(6)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iMovingAverage(timeframe, periods, "SMA", appliedPrice, iBuffer, iBar));
+   return(icMovingAverage(timeframe, periods, "SMA", appliedPrice, iBuffer, iBar));
 }
 
 
@@ -4813,7 +4813,7 @@ double GetSuperSmoother(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetSuperSmoother(5)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iSuperSmoother(timeframe, periods, appliedPrice, iBuffer, iBar));
+   return(icSuperSmoother(timeframe, periods, appliedPrice, iBuffer, iBar));
 }
 
 
@@ -4852,7 +4852,7 @@ double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
 
       lastParams = params;
    }
-   return(iSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
+   return(icSuperTrend(timeframe, atrPeriods, smaPeriods, iBuffer, iBar));
 }
 
 
@@ -4896,7 +4896,7 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetTriEMA(5)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(iTriEMA(timeframe, periods, appliedPrice, iBuffer, iBar));
+   return(icTriEMA(timeframe, periods, appliedPrice, iBuffer, iBar));
 }
 
 
