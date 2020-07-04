@@ -13,12 +13,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframe       = "current";            // empty: current
 extern color  Color.UpTrend   = Blue;
 extern color  Color.DownTrend = Red;
 
-extern string StartDate       = "yyyy.mm.dd";         // start date/time of the indicator
-extern int    Max.Bars        = 10000;                // max. number of bars to display (-1: all available)
+extern string MTF.Timeframe   = "current* | M15 | M30 | H1 | ...";   // empty: current
+extern string StartDate       = "yyyy.mm.dd";                        // start datetime of calculated values
+extern int    Max.Bars        = 10000;                               // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,25 +59,25 @@ string   legendLabel;
  */
 int onInit() {
    // validate inputs
-   // Timeframe
-   string sValues[], sValue = Timeframe;
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   // MTF.Timeframe
+   string sValues[], sValue = MTF.Timeframe;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if (sValue=="" || sValue=="current") {
+   if (sValue=="" || sValue=="0" || sValue=="current") {
       dataTimeframe = Period();
-      Timeframe = "current";
+      MTF.Timeframe = "current";
    }
    else {
       dataTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (dataTimeframe == -1) return(catch("onInit(1)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
-      Timeframe = TimeframeDescription(dataTimeframe);
+      if (dataTimeframe == -1) return(catch("onInit(1)  Invalid input parameter MTF.Timeframe: "+ DoubleQuoteStr(MTF.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      MTF.Timeframe = TimeframeDescription(dataTimeframe);
    }
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // StartDate
    sValue = StrToLower(StrTrim(StartDate));
    if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
@@ -475,10 +475,10 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframe=",       DoubleQuoteStr(Timeframe),   ";", NL,
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,
-                            "StartDate=",       DoubleQuoteStr(StartDate),   ";", NL,
-                            "Max.Bars=",        Max.Bars,                    ";")
+   return(StringConcatenate("Color.UpTrend=",   ColorToStr(Color.UpTrend),     ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,
+                            "MTF.Timeframe=",   DoubleQuoteStr(MTF.Timeframe), ";", NL,
+                            "StartDate=",       DoubleQuoteStr(StartDate),     ";", NL,
+                            "Max.Bars=",        Max.Bars,                      ";")
    );
 }
