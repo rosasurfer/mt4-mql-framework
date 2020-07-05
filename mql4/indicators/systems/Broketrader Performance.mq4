@@ -19,7 +19,7 @@ extern int    Stochastic.MA2.Periods = 6;                   //
 extern int    RSI.Periods            = 96;                  //
 extern string __________________________;                   //
 extern string Timeframe              = "H1";                // Broketrader timeframe
-extern string StartDate              = "1970.01.01";        // Broketrader start date
+extern string StartDate              = "2019.01.01";        // Broketrader start date
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
