@@ -2,7 +2,7 @@
  * Trix - Slope of Triple Smoothed Exponential Moving Average
  *
  *
- * The Trix calculates the 1-period percent change (aka slope, momentum or rate of change) of a triple smoothed EMA (TriEMA).
+ * The Trix calculates the 1-period percent change (aka rate of change) of a triple smoothed EMA (TriEMA).
  * The display unit is "base points" (1 bps = 1/100th %).
  *
  * Example:
@@ -32,7 +32,7 @@ extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                 // max. amount of values to calculate (-1: all)
+extern int    Max.Bars              = 5000;                 // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -117,8 +117,8 @@ int onInit() {
    if (Histogram.Style.Width < 0) return(catch("onInit(5)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(6)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)           return(catch("onInit(7)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // Max.Bars
+   if (Max.Bars < -1)             return(catch("onInit(7)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
@@ -148,8 +148,8 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
+   if (Max.Bars >= 0) startDraw += Bars - Max.Bars;
+   if (startDraw < 0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
@@ -176,10 +176,10 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // a not initialized buffer can happen on terminal start under specific circumstances
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
    if (!ArraySize(trixMain)) return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(firstEma,  EMPTY_VALUE);
       ArrayInitialize(secondEma, EMPTY_VALUE);
@@ -205,8 +205,8 @@ int onTick() {
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (Max.Values < ChangedBars)         // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
-      changedBars = Max.Values;                                      // 3*<period>-2 samples to start producing values in contrast to
+   if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)             // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
+      changedBars = Max.Bars;                                        // 3*<period>-2 samples to start producing values in contrast to
    int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -267,7 +267,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -286,7 +286,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -299,14 +299,11 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("EMA.Periods=",           EMA.Periods,                       ";", NL,
                             "EMA.AppliedPrice=",      DoubleQuoteStr(EMA.AppliedPrice),  ";", NL,
-
                             "MainLine.Color=",        ColorToStr(MainLine.Color),        ";", NL,
                             "MainLine.Width=",        MainLine.Width,                    ";", NL,
-
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";", NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";", NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,             ";", NL,
-
-                            "Max.Values=",            Max.Values,                        ";")
+                            "Max.Bars=",              Max.Bars,                          ";")
    );
 }

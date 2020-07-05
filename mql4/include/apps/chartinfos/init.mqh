@@ -43,10 +43,10 @@ int onInit() {
 
          key    = symbolDistKey;
          sValue = sSymbolDist;
-         if (!StrIsDigit(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not a positive integer value)", ERR_INVALID_CONFIG_VALUE));
-         int iValue = StrToInteger(sValue);
-         if (iValue == 0)         return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not a positive integer value)", ERR_INVALID_CONFIG_VALUE));
-         mm.stopDistance = iValue;
+         if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (non-numeric value)", ERR_INVALID_CONFIG_VALUE));
+         dValue = StrToDouble(sValue);
+         if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (non-positive value)", ERR_INVALID_CONFIG_VALUE));
+         mm.stopDistance = dValue;
       }
 
       // order tracker

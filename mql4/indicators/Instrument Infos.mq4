@@ -204,8 +204,8 @@ int UpdateInfos() {
       if (swapMode != -1) {
          if (!swapLong)  strSwapLong  = "none";
          else {
-            if (MathAbs(swapLongDaily ) <= 0.05) swapLongDaily  = Sign(swapLongDaily ) * 0.1;
-            strSwapLong  = NumberToStr(swapLongDaily,  "+.1R") +" pip = "+ NumberToStr(swapLongYearly,  "+.1R") +"% p.a.";
+            if (MathAbs(swapLongDaily ) <= 0.05) swapLongDaily = Sign(swapLongDaily) * 0.1;
+            strSwapLong  = NumberToStr(swapLongDaily, "+.1R") +" pip = "+ NumberToStr(swapLongYearly, "+.1R") +"% p.a.";
          }
          if (!swapShort) strSwapShort = "none";
          else {

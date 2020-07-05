@@ -43,7 +43,7 @@ extern color  Color.Ranging  = Blue;
 extern color  Color.Trending = Red;
 extern string DrawType       = "Line* | Dot";
 extern int    DrawWidth      = 1;
-extern int    Max.Values     = 10000;                    // max. amount of values to calculate (-1: all)
+extern int    Max.Bars       = 10000;                    // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -85,7 +85,7 @@ int maxValues;
 int onInit() {
    // validate inputs
    // Periods
-   if (Periods < 2)     return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 2)   return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    fdiPeriods = Periods;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Ranging  == 0xFF000000) Color.Ranging  = CLR_NONE;
@@ -99,14 +99,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  DrawType = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; DrawType = "Dot";  }
-   else                 return(catch("onInit(2)  Invalid input parameter DrawType = "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
+   else               return(catch("onInit(2)  Invalid input parameter DrawType = "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
    // DrawWidth
-   if (DrawWidth < 0)   return(catch("onInit(3)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (DrawWidth > 5)   return(catch("onInit(4)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth < 0) return(catch("onInit(3)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth > 5) return(catch("onInit(4)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    drawWidth = DrawWidth;
-   // Max.Values
-   if (Max.Values < -1) return(catch("onInit(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1) return(catch("onInit(5)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
    SetIndexBuffer(MODE_MAIN,  main );                    // all FDI values: invisible
@@ -131,10 +131,10 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // a not initialized buffer can happen on terminal start under specific circumstances
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(main,  EMPTY_VALUE);
       ArrayInitialize(upper, EMPTY_VALUE);
@@ -246,6 +246,6 @@ string InputsToStr() {
                             "Color.Trending=", ColorToStr(Color.Trending), ";", NL,
                             "DrawType=",       DoubleQuoteStr(DrawType),   ";", NL,
                             "DrawWidth=",      DrawWidth,                  ";", NL,
-                            "Max.Values=",     Max.Values,                 ";")
+                            "Max.Bars=",       Max.Bars,                   ";")
    );
 }

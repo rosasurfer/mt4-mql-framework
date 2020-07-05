@@ -1684,6 +1684,8 @@ int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int valu
  * @return int
  */
 int Abs(int value) {
+   if (value == INT_MIN)
+      return(INT_MAX);
    if (value < 0)
       return(-value);
    return(value);
@@ -1691,15 +1693,15 @@ int Abs(int value) {
 
 
 /**
- * Gibt das Vorzeichen einer Zahl zurück.
+ * Return the sign of a numerical value.
  *
- * @param  double number - Zahl
+ * @param  double value
  *
- * @return int - Vorzeichen (+1, 0, -1)
+ * @return int - sign (+1, 0, -1)
  */
-int Sign(double number) {
-   if (GT(number, 0)) return( 1);
-   if (LT(number, 0)) return(-1);
+int Sign(double value) {
+   if (value > 0) return( 1);
+   if (value < 0) return(-1);
    return(0);
 }
 
@@ -1844,11 +1846,39 @@ double RoundCeil(double number, int decimals = 0) {
 
 
 /**
- * Dividiert zwei Doubles und fängt dabei eine Division durch 0 ab.
+ * Multiply two integer values and prevent an integer overflow.
  *
- * @param  double a                 - Divident
- * @param  double b                 - Divisor
- * @param  double onZero [optional] - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
+ * @param  int a - first operand
+ * @param  int b - second operand
+ *
+ * @return int - multiplication result or maximum value in direction of the overflow (INT_MIN or INT_MAX)
+ */
+int Mul(int a, int b) {
+   // @see  https://www.geeksforgeeks.org/check-integer-overflow-multiplication/
+   if ( !a  ||  !b ) return(0);
+   if (a==1 || b==1) return(a * b);
+
+   int result = a * b;
+
+   if (Sign(a) == Sign(b)) {              // positive result
+      if (result > 0 && result/a == b)
+         return(result);
+      return(INT_MAX);
+   }
+   else {                                 // negative result
+      if (result < 0 && result/a == b)
+         return(result);
+      return(INT_MIN);
+   }
+}
+
+
+/**
+ * Divide two doubles and prevent a division by 0 (zero).
+ *
+ * @param  double a                 - divident
+ * @param  double b                 - divisor
+ * @param  double onZero [optional] - value to return if the the divisor is zero (default: 0)
  *
  * @return double
  */
@@ -5209,6 +5239,118 @@ string NumberToStr(double value, string mask) {
 
 
 /**
+ * Parse the string representation of a date value.
+ *
+ * @param  string value - format: "yyyy.mm.dd"
+ *
+ * @return datetime - datetime value or NaT (not-a-time) in case of errors
+ */
+datetime ParseDate(string value) {
+   string sValues[], origValue=value;
+   value = StrTrim(value);
+   if (!StringLen(value))                                  return(_NaT(catch("ParseDate(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int sizeOfValues = Explode(value, ".", sValues, NULL);
+   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDate(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse year: YYYY
+   string sYY = StrTrim(sValues[0]);
+   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDate(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDate(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse month: MM
+   string sMM = StrTrim(sValues[1]);
+   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDate(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDate(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse day: DD
+   string sDD = StrTrim(sValues[2]);
+   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDate(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDate(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDate(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+      }
+      else if (iDD == 31) {
+         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDate(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+      }
+   }
+   return(DateTime(iYY, iMM, iDD));
+}
+
+
+/**
+ * Parse the string representation of a date or datetime value.
+ *
+ * @param  string value - format: "yyyy.mm.dd [hh:ii[:ss]]" with optional time part
+ *
+ * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
+ */
+datetime ParseDateTime(string value) {
+   string sValues[], origValue=value;
+   value = StrTrim(value);
+   if (!StringLen(value))                                  return(_NaT(catch("ParseDateTime(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int sizeOfValues = Explode(value, ".", sValues, NULL);
+   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDateTime(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   // parse year: yyyy
+   string sYY = StrTrim(sValues[0]);
+   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDateTime(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDateTime(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   // parse month: mm
+   string sMM = StrTrim(sValues[1]);
+   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDateTime(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDateTime(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   sValues[2]   = StrTrim(sValues[2]);
+   string sDD   = StrLeftTo(sValues[2], " ");
+   string sTime = StrTrim(StrRight(sValues[2], -StringLen(sDD)));
+
+   // parse day: dd
+   sDD = StrTrim(sDD);
+   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDateTime(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDateTime(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDateTime(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+      else if (iDD == 31) {
+         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDateTime(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+   }
+
+   // parse time: hh:ii[:ss]
+   int iHH=0, iII=0, iSS=0;
+   if (StringLen(sTime) > 0) {
+      sizeOfValues = Explode(sTime, ":", sValues, NULL);
+      if (sizeOfValues < 2 || sizeOfValues > 3)            return(_NaT(catch("ParseDateTime(11)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+      string sHH = StrTrim(sValues[0]);
+      if (StringLen(sHH) > 2 || !StrIsDigit(sHH))          return(_NaT(catch("ParseDateTime(12)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      iHH = StrToInteger(sHH);
+      if (iHH < 0 || iHH > 23)                             return(_NaT(catch("ParseDateTime(13)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+      string sII = StrTrim(sValues[1]);
+      if (StringLen(sII) > 2 || !StrIsDigit(sII))          return(_NaT(catch("ParseDateTime(14)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      iII = StrToInteger(sII);
+      if (iII < 0 || iII > 59)                             return(_NaT(catch("ParseDateTime(15)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      if (sizeOfValues == 3) {
+         string sSS = StrTrim(sValues[2]);
+         if (StringLen(sSS) > 2 || !StrIsDigit(sSS))       return(_NaT(catch("ParseDateTime(16)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+         iSS = StrToInteger(sSS);
+         if (iSS < 0 || iSS > 59)                          return(_NaT(catch("ParseDateTime(17)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+   }
+   return(DateTime(iYY, iMM, iDD, iHH, iII, iSS));
+}
+
+
+/**
  * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
  * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
@@ -5999,7 +6141,7 @@ bool init.LogErrorsToSMS() {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
+double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6013,22 +6155,22 @@ double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distrib
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iALMA(1)", error));
-      warn("iALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icALMA(1)", error));
+      warn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6047,7 +6189,7 @@ double iALMA(int timeframe, int maPeriods, string maAppliedPrice, double distrib
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iFATL(int timeframe, int iBuffer, int iBar) {
+double icFATL(int timeframe, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6056,22 +6198,22 @@ double iFATL(int timeframe, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iFATL(1)", error));
-      warn("iFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icFATL(1)", error));
+      warn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6091,7 +6233,7 @@ double iFATL(int timeframe, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
+double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6103,22 +6245,22 @@ double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           CLR_NONE,                                        // color  Color.Channel
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iHalfTrend(1)", error));
-      warn("iHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icHalfTrend(1)", error));
+      warn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6140,7 +6282,7 @@ double iHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar) {
+double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6153,22 +6295,22 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iJMA(1)", error));
-      warn("iJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icJMA(1)", error));
+      warn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6193,11 +6335,11 @@ double iJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuf
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
+double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACDX",
+   double value = iCustom(NULL, timeframe, "MACD",
                           fastMaPeriods,                                   // int    Fast.MA.Periods
                           fastMaMethod,                                    // string Fast.MA.Method
                           fastMaAppliedPrice,                              // string Fast.MA.AppliedPrice
@@ -6211,22 +6353,22 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iMACDX(1)", error));
-      warn("iMACDX(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icMACD(1)", error));
+      warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6248,7 +6390,7 @@ double iMACDX(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
+double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6261,22 +6403,22 @@ double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAp
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iMovingAverage(1)", error));
-      warn("iMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icMovingAverage(1)", error));
+      warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6297,7 +6439,7 @@ double iMovingAverage(int timeframe, int maPeriods, string maMethod, string maAp
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
+double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6309,22 +6451,22 @@ double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffe
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iNonLagMA(1)", error));
-      warn("iNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icNonLagMA(1)", error));
+      warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6345,7 +6487,7 @@ double iNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffe
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6358,17 +6500,17 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           Blue,                                            // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           0,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iRSIX(1)", error));
-      warn("iRSIX(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icRSI(1)", error));
+      warn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6387,7 +6529,7 @@ double iRSIX(int timeframe, int periods, string appliedPrice, int iBuffer, int i
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iSATL(int timeframe, int iBuffer, int iBar) {
+double icSATL(int timeframe, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6396,22 +6538,22 @@ double iSATL(int timeframe, int iBuffer, int iBar) {
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iSATL(1)", error));
-      warn("iSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icSATL(1)", error));
+      warn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6434,7 +6576,7 @@ double iSATL(int timeframe, int iBuffer, int iBar) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar) {
+double icStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6447,17 +6589,17 @@ double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1P
                           DodgerBlue,                                      // color  Signal.Color
                           "Line",                                          // string Signal.DrawType
                           1,                                               // int    Signal.DrawWidth
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ______________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iStochasticOfRSI(1)", error));
-      warn("iStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icStochasticOfRSI(1)", error));
+      warn("icStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6478,7 +6620,7 @@ double iStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1P
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6490,22 +6632,22 @@ double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuff
                           Orange,                                          // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iSuperSmoother(1)", error));
-      warn("iSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icSuperSmoother(1)", error));
+      warn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6526,7 +6668,7 @@ double iSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuff
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar) {
+double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6540,22 +6682,22 @@ double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, i
                           CLR_NONE,                                        // color  Color.MovingAverage
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iSuperTrend(1)", error));
-      warn("iSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icSuperTrend(1)", error));
+      warn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6576,7 +6718,7 @@ double iSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, i
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6588,22 +6730,22 @@ double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string ____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iTriEMA(1)", error));
-      warn("iTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icTriEMA(1)", error));
+      warn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6624,7 +6766,7 @@ double iTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
+double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6637,17 +6779,17 @@ double iTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           LimeGreen,                                       // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Values
+                          -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
-                          lpSuperContext,                                  // int    __SuperContext__
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("iTrix(1)", error));
-      warn("iTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+         return(!catch("icTrix(1)", error));
+      warn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6685,6 +6827,7 @@ void __DummyCalls() {
    Abs(NULL);
    AccountCompanyId(NULL);
    ArrayUnshiftString(sNulls, NULL);
+   catch(NULL, NULL, NULL);
    Ceil(NULL);
    Chart.DeleteValue(NULL);
    Chart.Expert.Properties();
@@ -6709,20 +6852,20 @@ void __DummyCalls() {
    CreateLegendLabel();
    CreateString(NULL);
    DateTime(NULL);
+   debug(NULL);
    DebugMarketInfo(NULL);
    DeinitReason();
    Div(NULL, NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
-   EQ(NULL, NULL);
    EnumChildWindows(NULL);
+   EQ(NULL, NULL);
    ErrorDescription(NULL);
    EventListener.NewTick();
    FileAccessModeToStr(NULL);
    Floor(NULL);
    ForceAlert(NULL);
    GE(NULL, NULL);
-   GT(NULL, NULL);
    GetAccountAlias(NULL, NULL);
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
@@ -6743,31 +6886,35 @@ void __DummyCalls() {
    GetIniInt(NULL, NULL, NULL);
    GetMqlFilesPath();
    GetServerTime();
+   GT(NULL, NULL);
    HandleCommands();
    HistoryFlagsToStr(NULL);
-   catch(NULL, NULL, NULL);
-   debug(NULL);
-   iALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-   iFATL(NULL, NULL, NULL);
-   iHalfTrend(NULL, NULL, NULL, NULL);
-   iJMA(NULL, NULL, NULL, NULL, NULL, NULL);
-   iMACDX(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icFATL(NULL, NULL, NULL);
+   icHalfTrend(NULL, NULL, NULL, NULL);
+   icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
+   icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
+   icNonLagMA(NULL, NULL, NULL, NULL, NULL);
+   icRSI(NULL, NULL, NULL, NULL, NULL);
+   icSATL(NULL, NULL, NULL);
+   icStochasticOfRSI(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
+   icSuperTrend(NULL, NULL, NULL, NULL, NULL);
+   icTriEMA(NULL, NULL, NULL, NULL, NULL);
+   icTrix(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   iMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    init.IsLogEnabled();
    init.LogErrorsToMail();
    init.LogErrorsToSMS();
    init.LogWarningsToMail();
    init.LogWarningsToSMS();
    InitReasonDescription(NULL);
-   iNonLagMA(NULL, NULL, NULL, NULL, NULL);
    IntegerToHexString(NULL);
-   iRSIX(NULL, NULL, NULL, NULL, NULL);
    IsAccountConfigKey(NULL, NULL);
-   iSATL(NULL, NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();
@@ -6790,14 +6937,9 @@ void __DummyCalls() {
    IsScript();
    IsShortAccountCompany(NULL);
    IsShortOrderType(NULL);
-   iStochasticOfRSI(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);
-   iSuperSmoother(NULL, NULL, NULL, NULL, NULL);
-   iSuperTrend(NULL, NULL, NULL, NULL, NULL);
-   iTriEMA(NULL, NULL, NULL, NULL, NULL);
-   iTrix(NULL, NULL, NULL, NULL, NULL);
    LE(NULL, NULL);
    log(NULL);
    LogTicket(NULL);
@@ -6815,6 +6957,7 @@ void __DummyCalls() {
    MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
+   Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
    NormalizeLots(NULL);
@@ -6822,6 +6965,8 @@ void __DummyCalls() {
    ObjectDeleteEx(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
+   ParseDate(NULL);
+   ParseDateTime(NULL);
    PeriodFlag();
    PeriodFlagToStr(NULL);
    PipValue();
