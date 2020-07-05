@@ -143,13 +143,13 @@ int onTick() {
    }
 
    // recalculate changed bars
-   int changedBars = ComputeChangedBars(dataTimeframe);
+   int changedBars = ComputeChangedBars(dataTimeframe);                       // changed bars considering two timeframes
 
    if (dataTimeframe == Period()) {
       // data timeframe = chart timeframe
 
       for (int i=changedBars-1; i >= 0; i--) {
-         // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
+         // buffer1 = (Sadukey-Median + Close)/2                              // Sadukey-Median = (O+H+L+C)/4
          buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
                     + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
                     + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Close[i+ 2])/2
@@ -217,7 +217,7 @@ int onTick() {
                     - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Close[i+64])/2
                     + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Close[i+65])/2;
 
-         // buffer2 = (Sadukey-Median + Open)/2                                                                // Sadukey-Median = (O+H+L+C)/4
+         // buffer2 = (Sadukey-Median + Open)/2                               // Sadukey-Median = (O+H+L+C)/4
          buffer2[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Open[i+ 0])/2
                     + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Open[i+ 1])/2
                     + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Open[i+ 2])/2
@@ -287,13 +287,13 @@ int onTick() {
       }
    }
    else {
-      // data timeframe != chart timeframe: MTF version
+      // data timeframe != chart timeframe
       int barLength = Period()*MINUTES - 1;
 
       for (i=changedBars-1; i >= 0; i--) {
          int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]+barLength);
-         buffer1[i] = iMTF(MODE_BUFFER1, offset);
-         buffer2[i] = iMTF(MODE_BUFFER2, offset);
+         buffer1[i] = iMTF(MODE_BUFFER1, offset); if (last_error != 0) return(last_error);
+         buffer2[i] = iMTF(MODE_BUFFER2, offset); if (last_error != 0) return(last_error);
       }
    }
 
@@ -307,7 +307,7 @@ int onTick() {
 
 
 /**
- * Compute the bars to update (i.e. considered changed) of the current timeframe when using data of the specified timeframe.
+ * Compute the bars to update of the current timeframe when using data of the specified other timeframe.
  *
  * @param  int  timeframe      [optional] - data timeframe (default: the current timeframe)
  * @param  bool limitStartTime [optional] - whether to limit the result to a configured starttime (default: yes)
@@ -329,7 +329,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       changedBars = Min(ChangedBars, _maxValues);
       startBar    = Min(changedBars-1, Bars-filterLength);
       if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
-      if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
+      if (limitStartTime) /*&&*/ if (Time[startBar]+currentTimeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
       changedBars = startBar + 1;
    }
@@ -347,7 +347,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       // cross-check the changed bars of the current timeframe against the data timeframe
       changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe, false));
       startBar    = changedBars - 1;
-      if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
+      if (limitStartTime) /*&&*/ if (Time[startBar]+currentTimeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
       changedBars = startBar + 1;
    }
@@ -358,8 +358,8 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
 /**
  * Load the indicator again and return a value from another timeframe.
  *
- * @param  int iBuffer   - indicator buffer index of the value to return
- * @param  int iBar      - bar index of the value to return
+ * @param  int iBuffer - indicator buffer index of the value to return
+ * @param  int iBar    - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
