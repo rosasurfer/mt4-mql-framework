@@ -36,6 +36,7 @@
   .code           { font-family:monospace;            }
   .const          { color:#980000;                    }
   .function       { color:#000093;                    }  <!-- same as <a/>    -->
+  .core           { color:Red;                        }
   .global         { color:#980000; font-style:italic; }  <!-- global variable -->
   .keyword        { color:#D000D0;                    }
   .number         { color:#7070FF;                    }
@@ -4702,8 +4703,7 @@ Optional data output mode can be one or combination of:<br/>
       Returns the number of unmodified bars after the last execution of <span class="function">Indicator::start</span>(). The latest bar is always considered modified.<br/>
       <br/>
       <br/>
-      Notes:<br/>
-
+      <b>Notes:</b><br/>
       <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom 
           Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen 
           <span class="global">UnchangedBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
@@ -4723,15 +4723,24 @@ Optional data output mode can be one or combination of:<br/>
           Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
           (BarOpen-Event) im Chart erscheint.<br/><br/></li>
 
-      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und für die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in 
+      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in 
           Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
+<br/>
+<b>Changes in MQL4.5 (terminal builds > 509):</b><br/>
+For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>(int rates_total, int prev_calculated, ...) see 
+<a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and 
+<a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.
+<br/>
+<br/>
       </content>
       <example>
-<span class="type code">int</span> start() {
+<span class="keyword code">extern</span> <span class="type code">int</span> Periods = 20;
+...      
+<span class="type code">int</span> <span class="core code">start</span>() {
    <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
    <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
    <span class="comment">// main loop</span>
-   <span class="keyword code">for</span> (int i=ChangedBars-1; i &gt;= 0; i--) {
+   <span class="keyword code">for</span> (<span class="type code">int</span> i=ChangedBars-1; i &gt;= 0; i--) {
       buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
    }
    <span class="keyword code">return</span>(<span class="global code">last_error</span>);

@@ -2,7 +2,7 @@
  * SATL - Slow Adaptive Trendline
  *
  *
- * This indicator should be taken with a big grain of salt as coefficients are more than 10 years old.
+ * Coefficients are more than 10 years old, so the indicator should be taken with a grain of salt.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -23,7 +23,7 @@ extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
-extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
+extern int    Max.Bars             = 5000;               // max. number of bars to display (-1: all available)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -91,10 +91,6 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -109,15 +105,15 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                 return(catch("onInit(1)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                return(catch("onInit(1)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.Width
-   if (Draw.Width < 0)  return(catch("onInit(2)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5)  return(catch("onInit(3)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0) return(catch("onInit(2)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5) return(catch("onInit(3)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1) return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1)  return(catch("onInit(4)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
    if (!ConfigureSignal(__NAME(), Signal.onTrendChange, signals))                                             return(last_error);
@@ -156,8 +152,8 @@ int onInit() {
    SetIndicatorOptions();
 
    // initialize filter settings
-   if (!InitFilter())
-      return(last_error);
+   InitFilter();
+
    return(catch("onInit(5)"));
 }
 
@@ -174,26 +170,15 @@ int onDeinit() {
 
 
 /**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(catch("onDeinitRecompile(1)"));
-}
-
-
-/**
  * Main function
  *
  * @return int - error status
  */
 int onTick() {
-   // a not initialized buffer can happen on terminal start under specific circumstances
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
@@ -376,46 +361,6 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = __NAME();
-   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.StoreInt   (name +".input.Max.Values",           Max.Values           );
-   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = __NAME();
-   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.RestoreInt   (name +".input.Max.Values",           Max.Values           );
-   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-   return(!catch("RestoreInputParameters(1)"));
-}
-
-
-/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
@@ -425,7 +370,7 @@ string InputsToStr() {
                             "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
                             "Draw.Width=",           Draw.Width,                           ";", NL,
-                            "Max.Values=",           Max.Values,                           ";", NL,
+                            "Max.Bars=",             Max.Bars,                             ";", NL,
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,

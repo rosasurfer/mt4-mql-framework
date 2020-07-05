@@ -30,7 +30,7 @@ extern color  Color.UpTrend        = RoyalBlue;
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line | Dot*";
 extern int    Draw.Width           = 3;
-extern int    Max.Values           = 5000;               // max. amount of values to calculate (-1: all)
+extern int    Max.Bars             = 5000;               // max. number of bars to display (-1: all available)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -153,9 +153,9 @@ int onInit() {
    if (Draw.Width < 0)   return(catch("onInit(4)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Draw.Width > 5)   return(catch("onInit(5)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Values
-   if (Max.Values < -1)  return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   // Max.Bars
+   if (Max.Bars < -1)    return(catch("onInit(6)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
    if (!ConfigureSignal(__NAME(), Signal.onTrendChange, signals))                                             return(last_error);
@@ -230,10 +230,10 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // a not initialized buffer can happen on terminal start under specific circumstances
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
@@ -345,7 +345,7 @@ bool StoreInputParameters() {
    Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
    Chart.StoreString(name +".input.Draw.Type",            Draw.Type           );
    Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.StoreInt   (name +".input.Max.Values",           Max.Values          );
+   Chart.StoreInt   (name +".input.Max.Bars",             Max.Bars            );
    Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
    Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound        );
    Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
@@ -367,7 +367,7 @@ bool RestoreInputParameters() {
    Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
    Chart.RestoreString(name +".input.Draw.Type",            Draw.Type           );
    Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.RestoreInt   (name +".input.Max.Values",           Max.Values          );
+   Chart.RestoreInt   (name +".input.Max.Bars",             Max.Bars            );
    Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
    Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound        );
    Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
@@ -388,7 +388,7 @@ string InputsToStr() {
                             "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
                             "Draw.Width=",           Draw.Width,                           ";", NL,
-                            "Max.Values=",           Max.Values,                           ";", NL,
+                            "Max.Bars=",             Max.Bars,                             ";", NL,
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,

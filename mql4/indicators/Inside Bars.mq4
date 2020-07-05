@@ -10,8 +10,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes           = "H1*, ...";         // one* or more comma-separated timeframes to analyze
-extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all)
+extern string Timeframes           = "H1, D1";           // one or more comma-separated timeframes to analyze
+extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all available)
 extern string __________________________;
 
 extern string Signal.onInsideBar   = "on | off | auto*";
@@ -774,7 +774,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 
    // signal new inside bars
    if (!IsSuperContext() && IsBarOpenEvent(timeframe) && signals)
-      return(onInsideBar(timeframe, high, low));
+      return(onInsideBar(timeframe));
    return(true);
 }
 
@@ -782,19 +782,16 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 /**
  * Signal event handler for new inside bars.
  *
- * @param  int    timeframe - timeframe
- * @param  double high      - bar high
- * @param  double low       - bar low
+ * @param  int timeframe
  *
  * @return bool - success status
  */
-bool onInsideBar(int timeframe, double high, double low) {
-   double barSize     = (high-low);
-   string message     = TimeframeDescription(timeframe) +" inside bar (High: "+ NumberToStr(high, PriceFormat) +", Low: "+ NumberToStr(low, PriceFormat) +", size: "+ DoubleToStr(barSize/Pip, Digits & 1) +" pip)";
+bool onInsideBar(int timeframe) {
+   string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
 
    if (__LOG()) log("onInsideBar(1)  "+ message);
-   message = Symbol() +","+ message;
+   message = Symbol() +": "+ message;
 
    int error = 0;
    if (signal.sound) error |= !PlaySoundEx(signal.sound.file);

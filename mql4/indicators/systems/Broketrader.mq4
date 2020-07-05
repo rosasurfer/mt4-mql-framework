@@ -3,7 +3,6 @@
  *
  * Marks long and short position periods of the Broketrader EURUSD-H1 swing trading system.
  *
- *
  * Indicator buffers for iCustom():
  *  • Broketrader.MODE_TREND: trend direction and length
  *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
@@ -27,7 +26,8 @@ extern color  Color.Long             = GreenYellow;
 extern color  Color.Short            = C'81,211,255';       // lightblue-ish
 extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
-extern int    Max.Values             = 10000;               //  max. amount of values to calculate (-1: all)
+extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
+extern int    Max.Bars               = 10000;               // max. number of bars to display (-1: all available)
 extern string __________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
@@ -40,12 +40,13 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/@Trend.mqh>
 #include <functions/BarOpenEvent.mqh>
 #include <functions/ConfigureSignal.mqh>
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/@Trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
@@ -68,39 +69,41 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #property indicator_color7    CLR_NONE
 #property indicator_color8    CLR_NONE
 
-double ma             [];                                   // MA main values:         invisible, displayed in legend and "Data" window
-double maLong         [];                                   // MA long:                visible
-double maShort        [];                                   // MA short:               visible
-double histLongPrice1 [];                                   // long histogram price1:  visible
-double histLongPrice2 [];                                   // long histogram price2:  visible
-double histShortPrice1[];                                   // short histogram price1: visible
-double histShortPrice2[];                                   // short histogram price2: visible
-double trend          [];                                   // trend direction:        invisible (-n..+n), displayed in "Data" window
+double   ma             [];                                 // MA main values:         invisible, displayed in legend and "Data" window
+double   maLong         [];                                 // MA long:                visible
+double   maShort        [];                                 // MA short:               visible
+double   histLongPrice1 [];                                 // long histogram price1:  visible
+double   histLongPrice2 [];                                 // long histogram price2:  visible
+double   histShortPrice1[];                                 // short histogram price1: visible
+double   histShortPrice2[];                                 // short histogram price2: visible
+double   trend          [];                                 // trend direction:        invisible (-n..+n), displayed in "Data" window
 
-int    smaPeriods;
-int    stochPeriods;
-int    stochMa1Periods;
-int    stochMa2Periods;
-int    rsiPeriods;
-int    maxValues;
+int      smaPeriods;
+int      stochPeriods;
+int      stochMa1Periods;
+int      stochMa2Periods;
+int      rsiPeriods;
 
-bool   prevReversal;                                        // trend reversal state of the previous bar
-bool   currentReversal;                                     // trend reversal state of the current bar
-bool   reversalInitialized;                                 // whether the reversal states are initialized
+datetime startTime;
+int      maxValues;
 
-string indicatorName;
-string chartLegendLabel;
+bool     prevReversal;                                      // trend reversal state of the previous bar
+bool     currentReversal;                                   // trend reversal state of the current bar
+bool     reversalInitialized;                               // whether the reversal states are initialized
 
-bool   signals;
-bool   signal.sound;
-string signal.sound.trendChange_up   = "Signal-Up.wav";
-string signal.sound.trendChange_down = "Signal-Down.wav";
-bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
-bool   signal.sms;
-string signal.sms.receiver = "";
-string signal.info = "";                                    // additional chart legend info
+string   indicatorName;
+string   chartLegendLabel;
+
+bool     signals;
+bool     signal.sound;
+string   signal.sound.trendChange_up   = "Signal-Up.wav";
+string   signal.sound.trendChange_down = "Signal-Down.wav";
+bool     signal.mail;
+string   signal.mail.sender   = "";
+string   signal.mail.receiver = "";
+bool     signal.sms;
+string   signal.sms.receiver = "";
+string   signal.info = "";                                  // additional chart legend info
 
 #define D_LONG   TRADE_DIRECTION_LONG                       // 1
 #define D_SHORT TRADE_DIRECTION_SHORT                       // 2
@@ -123,18 +126,21 @@ int onInit() {
    stochMa1Periods = Stochastic.MA1.Periods;
    stochMa2Periods = Stochastic.MA2.Periods;
    rsiPeriods      = RSI.Periods;
-
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Long  == 0xFF000000) Color.Long  = CLR_NONE;
    if (Color.Short == 0xFF000000) Color.Short = CLR_NONE;
-
    // SMA.DrawWidth
-   if (SMA.DrawWidth < 0)          return(catch("onInit(6)  Invalid input parameter SMA.DrawWidth = "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  Invalid input parameter SMA.DrawWidth = "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-
-   // Max.Values
-   if (Max.Values < -1)            return(catch("onInit(8)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+   if (SMA.DrawWidth < 0)          return(catch("onInit(6)  Invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  Invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   // StartDate
+   string sValue = StrToLower(StrTrim(StartDate));
+   if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
+      startTime = ParseDateTime(sValue);
+      if (IsNaT(startTime))        return(catch("onInit(8)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   }
+   // Max.Bars
+   if (Max.Bars < -1)              return(catch("onInit(9)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
    if (!ConfigureSignal("Broketrader", Signal.onReversal, signals))                                           return(last_error);
@@ -179,7 +185,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -200,10 +206,10 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // a not initialized buffer can happen on terminal start under specific circumstances
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
    if (!ArraySize(maLong)) return(log("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(ma,              EMPTY_VALUE);
       ArrayInitialize(maLong,          EMPTY_VALUE);
@@ -231,11 +237,13 @@ int onTick() {
 
    // calculate start bar
    int maxSMAValues   = Bars - smaPeriods + 1;                                                     // max. possible SMA values
-   int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values
+   int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values (see Stochastic of RSI)
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (Time[startBar]+Period()*MINUTES-1 < startTime)
+      startBar = iBarShiftNext(NULL, NULL, startTime);
 
    double sma, stoch, price1, price2;
 
@@ -389,15 +397,16 @@ bool onReversal(int direction) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    SetIndexStyle(MODE_MA,    DRAW_NONE);
    SetIndexStyle(MODE_TREND, DRAW_NONE);
 
-   int maType = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
+   int   maType        = ifInt(SMA.DrawWidth, DRAW_LINE, DRAW_NONE);
+   color darkenedLong  = ModifyColor(Color.Long,  NULL, NULL, -30);
+   color darkenedShort = ModifyColor(Color.Short, NULL, NULL, -30);
 
    if (FillSections) {
-      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Long,  NULL, NULL, -30));
-      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, ModifyColor(Color.Short, NULL, NULL, -30));
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, darkenedLong );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, darkenedShort);
 
       SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
       SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Long );
@@ -405,8 +414,8 @@ void SetIndicatorOptions() {
       SetIndexStyle(MODE_HIST_S_PRICE2, DRAW_HISTOGRAM, EMPTY, 5, Color.Short);
    }
    else {
-      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, Color.Long );
-      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, Color.Short);
+      SetIndexStyle(MODE_MA_L, maType,  EMPTY, SMA.DrawWidth, darkenedLong );
+      SetIndexStyle(MODE_MA_S, maType,  EMPTY, SMA.DrawWidth, darkenedShort);
 
       SetIndexStyle(MODE_HIST_L_PRICE1, DRAW_NONE);
       SetIndexStyle(MODE_HIST_L_PRICE2, DRAW_NONE);
@@ -424,7 +433,7 @@ void SetIndicatorOptions() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetStochasticOfRSI(int iBar) {
-   return(iStochasticOfRSI(NULL, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Stochastic.MODE_SIGNAL, iBar));
+   return(icStochasticOfRSI(NULL, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Stochastic.MODE_SIGNAL, iBar));
 }
 
 
@@ -443,7 +452,8 @@ string InputsToStr() {
                             "Color.Short=",            ColorToStr(Color.Short),              ";", NL,
                             "FillSections=",           BoolToStr(FillSections),              ";", NL,
                             "SMA.DrawWidth=",          SMA.DrawWidth,                        ";", NL,
-                            "Max.Values=",             Max.Values,                           ";", NL,
+                            "StartDate=",              DoubleQuoteStr(StartDate),            ";", NL,
+                            "Max.Bars=",               Max.Bars,                             ";", NL,
                             "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal),    ";", NL,
                             "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=",   DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
