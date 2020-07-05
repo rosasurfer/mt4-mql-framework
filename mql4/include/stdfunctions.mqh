@@ -5239,6 +5239,118 @@ string NumberToStr(double value, string mask) {
 
 
 /**
+ * Parse the string representation of a date value.
+ *
+ * @param  string value - format: "yyyy.mm.dd"
+ *
+ * @return datetime - datetime value or NaT (not-a-time) in case of errors
+ */
+datetime ParseDate(string value) {
+   string sValues[], origValue=value;
+   value = StrTrim(value);
+   if (!StringLen(value))                                  return(_NaT(catch("ParseDate(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int sizeOfValues = Explode(value, ".", sValues, NULL);
+   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDate(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse year: YYYY
+   string sYY = StrTrim(sValues[0]);
+   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDate(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDate(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse month: MM
+   string sMM = StrTrim(sValues[1]);
+   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDate(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDate(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+
+   // parse day: DD
+   string sDD = StrTrim(sValues[2]);
+   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDate(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   int iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDate(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDate(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+      }
+      else if (iDD == 31) {
+         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDate(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
+      }
+   }
+   return(DateTime(iYY, iMM, iDD));
+}
+
+
+/**
+ * Parse the string representation of a date or datetime value.
+ *
+ * @param  string value - format: "yyyy.mm.dd [hh:ii[:ss]]" with optional time part
+ *
+ * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
+ */
+datetime ParseDateTime(string value) {
+   string sValues[], origValue=value;
+   value = StrTrim(value);
+   if (!StringLen(value))                                  return(_NaT(catch("ParseDateTime(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int sizeOfValues = Explode(value, ".", sValues, NULL);
+   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDateTime(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   // parse year: yyyy
+   string sYY = StrTrim(sValues[0]);
+   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDateTime(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDateTime(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+   // parse month: mm
+   string sMM = StrTrim(sValues[1]);
+   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDateTime(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDateTime(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   sValues[2]   = StrTrim(sValues[2]);
+   string sDD   = StrLeftTo(sValues[2], " ");
+   string sTime = StrTrim(StrRight(sValues[2], -StringLen(sDD)));
+
+   // parse day: dd
+   sDD = StrTrim(sDD);
+   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDateTime(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   int iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDateTime(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDateTime(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+      else if (iDD == 31) {
+         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDateTime(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+   }
+
+   // parse time: hh:ii[:ss]
+   int iHH=0, iII=0, iSS=0;
+   if (StringLen(sTime) > 0) {
+      sizeOfValues = Explode(sTime, ":", sValues, NULL);
+      if (sizeOfValues < 2 || sizeOfValues > 3)            return(_NaT(catch("ParseDateTime(11)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+      string sHH = StrTrim(sValues[0]);
+      if (StringLen(sHH) > 2 || !StrIsDigit(sHH))          return(_NaT(catch("ParseDateTime(12)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      iHH = StrToInteger(sHH);
+      if (iHH < 0 || iHH > 23)                             return(_NaT(catch("ParseDateTime(13)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+
+      string sII = StrTrim(sValues[1]);
+      if (StringLen(sII) > 2 || !StrIsDigit(sII))          return(_NaT(catch("ParseDateTime(14)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      iII = StrToInteger(sII);
+      if (iII < 0 || iII > 59)                             return(_NaT(catch("ParseDateTime(15)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      if (sizeOfValues == 3) {
+         string sSS = StrTrim(sValues[2]);
+         if (StringLen(sSS) > 2 || !StrIsDigit(sSS))       return(_NaT(catch("ParseDateTime(16)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+         iSS = StrToInteger(sSS);
+         if (iSS < 0 || iSS > 59)                          return(_NaT(catch("ParseDateTime(17)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
+      }
+   }
+   return(DateTime(iYY, iMM, iDD, iHH, iII, iSS));
+}
+
+
+/**
  * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
  * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
@@ -6853,6 +6965,8 @@ void __DummyCalls() {
    ObjectDeleteEx(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
+   ParseDate(NULL);
+   ParseDateTime(NULL);
    PeriodFlag();
    PeriodFlagToStr(NULL);
    PipValue();
