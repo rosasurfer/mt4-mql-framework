@@ -17,7 +17,7 @@ extern color  Color.UpTrend   = Blue;
 extern color  Color.DownTrend = Red;
 
 extern string MTF.Timeframe   = "current* | M15 | M30 | H1 | ...";   // empty: current
-extern string StartDate       = "yyyy.mm.dd";                        // start datetime of calculated values
+extern string StartDate       = "yyyy.mm.dd";                        // start date of calculated values
 extern int    Max.Bars        = 10000;                               // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,7 +30,7 @@ extern int    Max.Bars        = 10000;                               // max. num
 #include <functions/iChangedBars.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_BUFFER1         0                        // indicator buffer ids
+#define MODE_BUFFER1         0                                       // indicator buffer ids
 #define MODE_BUFFER2         1
 
 #property indicator_chart_window
@@ -126,7 +126,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // a not initialized buffer can happen on terminal start under specific circumstances
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
    if (!ArraySize(buffer1)) return(log("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -143,13 +143,13 @@ int onTick() {
    }
 
    // recalculate changed bars
-   int changedBars = ComputeChangedBars(dataTimeframe);
+   int changedBars = ComputeChangedBars(dataTimeframe);                       // changed bars considering two timeframes
 
    if (dataTimeframe == Period()) {
       // data timeframe = chart timeframe
 
       for (int i=changedBars-1; i >= 0; i--) {
-         // buffer1 = (Sadukey-Median + Close)/2                                                               // Sadukey-Median = (O+H+L+C)/4
+         // buffer1 = (Sadukey-Median + Close)/2                              // Sadukey-Median = (O+H+L+C)/4
          buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
                     + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
                     + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Close[i+ 2])/2
@@ -217,7 +217,7 @@ int onTick() {
                     - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Close[i+64])/2
                     + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Close[i+65])/2;
 
-         // buffer2 = (Sadukey-Median + Open)/2                                                                // Sadukey-Median = (O+H+L+C)/4
+         // buffer2 = (Sadukey-Median + Open)/2                               // Sadukey-Median = (O+H+L+C)/4
          buffer2[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Open[i+ 0])/2
                     + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Open[i+ 1])/2
                     + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Open[i+ 2])/2
@@ -287,13 +287,13 @@ int onTick() {
       }
    }
    else {
-      // data timeframe != chart timeframe: MTF version
+      // data timeframe != chart timeframe
       int barLength = Period()*MINUTES - 1;
 
       for (i=changedBars-1; i >= 0; i--) {
          int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]+barLength);
-         buffer1[i] = iMTF(MODE_BUFFER1, offset);
-         buffer2[i] = iMTF(MODE_BUFFER2, offset);
+         buffer1[i] = iMTF(MODE_BUFFER1, offset); if (last_error != 0) return(last_error);
+         buffer2[i] = iMTF(MODE_BUFFER2, offset); if (last_error != 0) return(last_error);
       }
    }
 
@@ -307,7 +307,7 @@ int onTick() {
 
 
 /**
- * Compute the bars to update (i.e. considered changed) of the current timeframe when using data of the specified timeframe.
+ * Compute the bars to update of the current timeframe when using data of the specified other timeframe.
  *
  * @param  int  timeframe      [optional] - data timeframe (default: the current timeframe)
  * @param  bool limitStartTime [optional] - whether to limit the result to a configured starttime (default: yes)
@@ -329,7 +329,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       changedBars = Min(ChangedBars, _maxValues);
       startBar    = Min(changedBars-1, Bars-filterLength);
       if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
-      if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
+      if (limitStartTime) /*&&*/ if (Time[startBar]+currentTimeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
       changedBars = startBar + 1;
    }
@@ -347,7 +347,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       // cross-check the changed bars of the current timeframe against the data timeframe
       changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe, false));
       startBar    = changedBars - 1;
-      if (limitStartTime) /*&&*/ if (Time[startBar]+timeframe*MINUTES-1 < startTime)
+      if (limitStartTime) /*&&*/ if (Time[startBar]+currentTimeframe*MINUTES-1 < startTime)
          startBar = iBarShiftNext(NULL, NULL, startTime);
       changedBars = startBar + 1;
    }
@@ -358,8 +358,8 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
 /**
  * Load the indicator again and return a value from another timeframe.
  *
- * @param  int iBuffer   - indicator buffer index of the value to return
- * @param  int iBar      - bar index of the value to return
+ * @param  int iBuffer - indicator buffer index of the value to return
+ * @param  int iBar    - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
@@ -388,76 +388,6 @@ double iMTF(int iBuffer, int iBar) {
    if (!error)
       return(value);
    return(!SetLastError(error));
-}
-
-
-/**
- * Parse the string representation of a date or datetime value.
- *
- * @param  string value - format: "yyyy.mm.dd [hh:ii[:ss]]" (the time part is optional)
- *
- * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
- */
-datetime ParseDateTime(string value) {
-   string sValues[], origValue=value;
-   value = StrTrim(value);
-   if (!StringLen(value))                                  return(_NaT(catch("ParseDateTime(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int sizeOfValues = Explode(value, ".", sValues, NULL);
-   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDateTime(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-   // parse year: yyyy
-   string sYY = StrTrim(sValues[0]);
-   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDateTime(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int iYY = StrToInteger(sYY);
-   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDateTime(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-   // parse month: mm
-   string sMM = StrTrim(sValues[1]);
-   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDateTime(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int iMM = StrToInteger(sMM);
-   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDateTime(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-   sValues[2]   = StrTrim(sValues[2]);
-   string sDD   = StrLeftTo(sValues[2], " ");
-   string sTime = StrTrim(StrRight(sValues[2], -StringLen(sDD)));
-
-   // parse day: dd
-   sDD = StrTrim(sDD);
-   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDateTime(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int iDD = StrToInteger(sDD);
-   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDateTime(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   if (iDD > 28) {
-      if (iMM == FEB) {
-         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDateTime(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      }
-      else if (iDD == 31) {
-         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDateTime(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      }
-   }
-
-   // parse time: hh:ii[:ss]
-   int iHH=0, iII=0, iSS=0;
-   if (StringLen(sTime) > 0) {
-      sizeOfValues = Explode(sTime, ":", sValues, NULL);
-      if (sizeOfValues < 2 || sizeOfValues > 3)            return(_NaT(catch("ParseDateTime(11)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-      string sHH = StrTrim(sValues[0]);
-      if (StringLen(sHH) > 2 || !StrIsDigit(sHH))          return(_NaT(catch("ParseDateTime(12)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      iHH = StrToInteger(sHH);
-      if (iHH < 0 || iHH > 23)                             return(_NaT(catch("ParseDateTime(13)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-      string sII = StrTrim(sValues[1]);
-      if (StringLen(sII) > 2 || !StrIsDigit(sII))          return(_NaT(catch("ParseDateTime(14)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      iII = StrToInteger(sII);
-      if (iII < 0 || iII > 59)                             return(_NaT(catch("ParseDateTime(15)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      if (sizeOfValues == 3) {
-         string sSS = StrTrim(sValues[2]);
-         if (StringLen(sSS) > 2 || !StrIsDigit(sSS))       return(_NaT(catch("ParseDateTime(16)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-         iSS = StrToInteger(sSS);
-         if (iSS < 0 || iSS > 59)                          return(_NaT(catch("ParseDateTime(17)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      }
-   }
-   return(DateTime(iYY, iMM, iDD, iHH, iII, iSS));
 }
 
 
