@@ -12,14 +12,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    SMA.Periods            = 96;                     // Broketrader configuration
-extern int    Stochastic.Periods     = 96;                     //
-extern int    Stochastic.MA1.Periods = 10;                     //
-extern int    Stochastic.MA2.Periods = 6;                      //
-extern int    RSI.Periods            = 96;                     //
-extern string __________________________;                      //
-extern string Timeframe              = "H1";                   // Broketrader timeframe
-extern string StartDate              = "2020.01.01";           // "yyyy.mm.dd" Broketrader start date
+extern int    SMA.Periods            = 96;                  // Broketrader configuration
+extern int    Stochastic.Periods     = 96;                  //
+extern int    Stochastic.MA1.Periods = 10;                  //
+extern int    Stochastic.MA2.Periods = 6;                   //
+extern int    RSI.Periods            = 96;                  //
+extern string __________________________;                   //
+extern string Timeframe              = "H1";                // Broketrader timeframe
+extern string StartDate              = "1970.01.01";        // Broketrader start date
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +30,7 @@ extern string StartDate              = "2020.01.01";           // "yyyy.mm.dd" B
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 
-#define MODE_OPEN            0                                 // indicator buffer ids
+#define MODE_OPEN            0                              // indicator buffer ids
 #define MODE_CLOSED          1
 #define MODE_TOTAL           2
 
@@ -43,9 +43,9 @@ extern string StartDate              = "2020.01.01";           // "yyyy.mm.dd" B
 
 #property indicator_level1   0
 
-double   bufferOpenPL  [];                                     // open PL:   invisible
-double   bufferClosedPL[];                                     // closed PL: invisible
-double   bufferTotalPL [];                                     // total PL:  visible
+double   bufferOpenPL  [];                                  // open PL:   invisible
+double   bufferClosedPL[];                                  // closed PL: invisible
+double   bufferTotalPL [];                                  // total PL:  visible
 
 int      smaPeriods;
 int      stochPeriods;
@@ -83,13 +83,13 @@ int onInit() {
    if (IsNaT(systemStartDate))     return(catch("onInit(7)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
-   SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                // open PL:   invisible
-   SetIndexBuffer(MODE_CLOSED, bufferClosedPL);                // closed PL: invisible
-   SetIndexBuffer(MODE_TOTAL,  bufferTotalPL );                // total PL:  visible
+   SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                               // open PL:   invisible
+   SetIndexBuffer(MODE_CLOSED, bufferClosedPL);                               // closed PL: invisible
+   SetIndexBuffer(MODE_TOTAL,  bufferTotalPL );                               // total PL:  visible
 
    // names, labels and display options
-   IndicatorShortName("Broketrader open/closed/total PL  ");   // indicator subwindow and context menu
-   SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );        // "Data" window
+   IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // indicator subwindow and context menu
+   SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // "Data" window
    SetIndexLabel(MODE_CLOSED, "Broketrader closed PL");
    SetIndexLabel(MODE_TOTAL,  "Broketrader total PL" );
    IndicatorDigits(1);
@@ -300,6 +300,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
                           CLR_NONE,                               // color  Color.Short
                           false,                                  // bool   FillSections
                           1,                                      // int    SMA.DrawWidth
+                          StartDate,                              // string StartDate
                           -1,                                     // int    Max.Bars
                           "",                                     // string ____________________
                           "off",                                  // string Signal.onReversal
