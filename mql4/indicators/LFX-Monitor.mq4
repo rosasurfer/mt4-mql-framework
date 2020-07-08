@@ -850,14 +850,14 @@ bool StoreRuntimeStatus() {
    // Company-ID im Fenster speichern
    int    hWnd = __ExecutionContext[EC.hChart];
    string key  = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
+   SetWindowProperty(hWnd, key, GetAccountCompanyId(tradeAccount.company));
 
    // Company-ID im Chart speichern
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, ""+ AccountCompanyId(tradeAccount.company));
+   ObjectSetText(key, ""+ GetAccountCompanyId(tradeAccount.company));
 
    // AccountNumber im Fenster speichern
    key = __NAME() +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren

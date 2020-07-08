@@ -76,7 +76,6 @@ int      _NULL       (int    param1=NULL, int param2=NULL, int param3=NULL, int 
 string   _string     (string param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 bool     _true       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 int      Abs(int value);;
-int      AccountCompanyId(string alias);;
 int      ArrayUnshiftString(string &array[], string value);;
 int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
 int      Ceil(double value);;
@@ -115,6 +114,7 @@ int      Floor(double value);;
 void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetAccountAlias(string accountCompany, int accountNumber);;
+int      GetAccountCompanyId(string alias);;
 int      GetAccountNumberFromAlias(string accountCompany, string accountAlias);;
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots = 1.0);;

@@ -4043,7 +4043,7 @@ string ShortAccountCompany() {
  *
  * @return int - account company identifier or NULL if the alias is unknown
  */
-int AccountCompanyId(string alias) {
+int GetAccountCompanyId(string alias) {
    if (!StringLen(alias)) return(NULL);
 
    alias = StrToUpper(alias);
@@ -4194,7 +4194,7 @@ string ShortAccountCompanyFromId(int id) {
  * @return bool
  */
 bool IsAccountCompanyAlias(string value) {
-   return(AccountCompanyId(value) != 0);
+   return(GetAccountCompanyId(value) != 0);
 }
 
 
@@ -6805,7 +6805,6 @@ void __DummyCalls() {
    _string(NULL);
    _true();
    Abs(NULL);
-   AccountCompanyId(NULL);
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
@@ -6847,6 +6846,7 @@ void __DummyCalls() {
    ForceAlert(NULL);
    GE(NULL, NULL);
    GetAccountAlias(NULL, NULL);
+   GetAccountCompanyId(NULL);
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
    GetCommission();
