@@ -913,13 +913,13 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      mm.externalAssets = RefreshExternalAssets(tradeAccount.company, tradeAccount.number);
-      string sExternalAsets = " ";
+      mm.externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number, /*refresh=*/true);
+      string sExternalAssets = " ";
 
-      if (mode.intern) sExternalAsets = ifString(!mm.externalAssets, "Balance: ", "Assets: ") + DoubleToStr(AccountBalance() + mm.externalAssets, 2) +" "+ AccountCurrency();
+      if (mode.intern) sExternalAssets = ifString(!mm.externalAssets, "Balance: ", "Assets: ") + DoubleToStr(AccountBalance() + mm.externalAssets, 2) +" "+ AccountCurrency();
       else { status = false; PlaySoundEx("Plonk.wav"); }             // not yet implemented
 
-      ObjectSetText(label.externalAssets, sExternalAsets, 9, "Tahoma", SlateGray);
+      ObjectSetText(label.externalAssets, sExternalAssets, 9, "Tahoma", SlateGray);
    }
 
    // Status OFF
@@ -2238,8 +2238,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearEx(dtTo)+1)                  - 1*SECOND;    // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;    // Monatsende
@@ -2252,8 +2252,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
    else {
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
-      dtFrom = ParseDateTime(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                         if (!dtFrom)  return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
+      dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+                                                                                                                      if (!dtFrom)  return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
       if      (isFullYear1  ) dtTo = DateTime(TimeYearEx(dtFrom)+1)                    - 1*SECOND;    // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;    // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                   - 1*SECOND;    // Wochenende
@@ -2442,8 +2442,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearEx(dtTo)+1)                  - 1*SECOND;    // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;    // Monatsende
@@ -2456,8 +2456,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    else {
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
-      dtFrom = ParseDateTime(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                         if (!dtFrom)  return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
+      dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+                                                                                                                      if (!dtFrom)       return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
       if      (isFullYear1  ) dtTo = DateTime(TimeYearEx(dtFrom)+1)                    - 1*SECOND;    // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;    // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                   - 1*SECOND;    // Wochenende
@@ -2648,7 +2648,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
  *  {value} = Today                                • Synonym für ThisDay
  *  {value} = Yesterday                            • Synonym für LastDay
  */
-datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
+datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
    string   value.orig=value, values[], sYY, sMM, sDD, sTime, sHH, sII, sSS;
    int      valuesSize, iYY, iMM, iDD, iHH, iII, iSS, dow;
 

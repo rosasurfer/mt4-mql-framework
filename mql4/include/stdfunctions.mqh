@@ -3937,53 +3937,34 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Gibt den Wert der extern verwalteten Assets eines Accounts zurück.
+ * Get the configured value of externally hold assets of an account. The returned value can be negative to scale-down an
+ * account's size (e.g. for testing in a real account).
  *
- * @param  string companyId - AccountCompany-Identifier
- * @param  string accountId - Account-Identifier
+ * @param  string companyId          - account company identifier
+ * @param  string accountId          - account identifier
+ * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
  *
- * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalAssets(string companyId, string accountId) {
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
+double GetExternalAssets(string companyId, string accountId, bool refresh = false) {
+   refresh = refresh!=0;
+   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId: "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
-   static string lastCompanyId;
-   static string lastAccountId;
-   static double lastAuM;
+   static string lastCompanyId = "";
+   static string lastAccountId = "";
+   static double lastResult;
 
-   if (companyId!=lastCompanyId || accountId!=lastAccountId) {
-      double aum = RefreshExternalAssets(companyId, accountId);
-      if (IsEmptyValue(aum))
-         return(EMPTY_VALUE);
+   if (refresh || companyId!=lastCompanyId || accountId!=lastAccountId) {
+      string file  = GetAccountConfigPath(companyId, accountId);
+      double value = GetIniDouble(file, "General", "ExternalAssets");
+      if (IsEmptyValue(value)) return(EMPTY_VALUE);
 
       lastCompanyId = companyId;
       lastAccountId = accountId;
-      lastAuM       = aum;
+      lastResult    = value;
    }
-   return(lastAuM);
-}
-
-
-/**
- * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.  Der konfigurierte Wert kann negativ
- * sein, um die Accountgröße herunterzuskalieren (z.B. zum Testen einer Strategie im Real-Account).
- *
- * @param  string companyId - AccountCompany-Identifier
- * @param  string accountId - Account-Identifier
- *
- * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
- */
-double RefreshExternalAssets(string companyId, string accountId) {
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
-
-   string file    = GetAccountConfigPath(companyId, accountId);
-   string section = "General";
-   string key     = "AuM.Value";
-   double value   = GetIniDouble(file, section, key);
-
-   return(value);
+   return(lastResult);
 }
 
 
@@ -6978,7 +6959,6 @@ void __DummyCalls() {
    PriceTypeToStr(NULL);
    ProgramInitReason();
    QuoteStr(NULL);
-   RefreshExternalAssets(NULL, NULL);
    ResetLastError();
    RGBStrToColor(NULL);
    Round(NULL);
