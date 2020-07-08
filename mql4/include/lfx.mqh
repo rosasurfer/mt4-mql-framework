@@ -1214,7 +1214,7 @@ bool QC.StartLfxSender(int cid) {
    if (hQC.TradeToLfxSenders[cid] > 0)
       return(true);
                                                                      // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
-   qc.TradeToLfxChannels[cid] = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
+   qc.TradeToLfxChannels[cid] = GetAccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
    hQC.TradeToLfxSenders[cid] = QC_StartSender(qc.TradeToLfxChannels[cid]);
    if (!hQC.TradeToLfxSenders[cid])
       return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel="+ DoubleQuoteStr(qc.TradeToLfxChannels[cid]) +")", ERR_WIN32_ERROR));
@@ -1253,7 +1253,7 @@ bool QC.StartLfxReceiver() {
    if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
    int hWnd = __ExecutionContext[EC.hChart];                         // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
-   qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
+   qc.TradeToLfxChannel = GetAccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
 
    hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
    if (!hQC.TradeToLfxReceiver)
