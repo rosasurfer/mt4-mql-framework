@@ -4037,97 +4037,96 @@ string ShortAccountCompany() {
 
 
 /**
- * Return the identifier of an account company.
+ * Return the numeric identifier of an account company alias.
  *
- * @param string shortName - account company short name
+ * @param string alias - account company alias
  *
- * @return int - company identifier or NULL if the company name is unknown
+ * @return int - account company identifier or NULL if the alias is unknown
  */
-int AccountCompanyId(string shortName) {
-   if (!StringLen(shortName))
-      return(NULL);
+int AccountCompanyId(string alias) {
+   if (!StringLen(alias)) return(NULL);
 
-   shortName = StrToUpper(shortName);
+   alias = StrToUpper(alias);
 
-   switch (StringGetChar(shortName, 0)) {
-      case 'A': if (shortName == StrToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
-                if (shortName == StrToUpper(AC.APBG           )) return(AC_ID.APBG           );
-                if (shortName == StrToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
-                if (shortName == StrToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
+   switch (StringGetChar(alias, 0)) {
+      case 'A': if (alias == StrToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
+                if (alias == StrToUpper(AC.APBG           )) return(AC_ID.APBG           );
+                if (alias == StrToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
+                if (alias == StrToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
                 break;
 
-      case 'B': if (shortName == StrToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
+      case 'B': if (alias == StrToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
                 break;
 
-      case 'C': if (shortName == StrToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
+      case 'C': if (alias == StrToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
                 break;
 
-      case 'D': if (shortName == StrToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
+      case 'D': if (alias == StrToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
                 break;
 
-      case 'E': if (shortName == StrToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
+      case 'E': if (alias == StrToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
                 break;
 
-      case 'F': if (shortName == StrToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
-                if (shortName == StrToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
-                if (shortName == StrToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
-                if (shortName == StrToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
-                if (shortName == StrToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
-                if (shortName == StrToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
-                if (shortName == StrToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
+      case 'F': if (alias == StrToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
+                if (alias == StrToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
+                if (alias == StrToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
+                if (alias == StrToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
+                if (alias == StrToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
+                if (alias == StrToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
+                if (alias == StrToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
                 break;
 
-      case 'G': if (shortName == StrToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
-                if (shortName == StrToUpper(AC.GCI            )) return(AC_ID.GCI            );
-                if (shortName == StrToUpper(AC.GFT            )) return(AC_ID.GFT            );
-                if (shortName == StrToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
+      case 'G': if (alias == StrToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
+                if (alias == StrToUpper(AC.GCI            )) return(AC_ID.GCI            );
+                if (alias == StrToUpper(AC.GFT            )) return(AC_ID.GFT            );
+                if (alias == StrToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
                 break;
 
       case 'H': break;
 
-      case 'I': if (shortName == StrToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
-                if (shortName == StrToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
-                if (shortName == StrToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
+      case 'I': if (alias == StrToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
+                if (alias == StrToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
+                if (alias == StrToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
                 break;
 
-      case 'J': if (shortName == StrToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
+      case 'J': if (alias == StrToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
                 break;
 
       case 'K': break;
 
-      case 'L': if (shortName == StrToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
-                if (shortName == StrToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
+      case 'L': if (alias == StrToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
+                if (alias == StrToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
                 break;
 
-      case 'M': if (shortName == StrToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
-                if (shortName == StrToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
-                if (shortName == StrToUpper(AC.MIG            )) return(AC_ID.MIG            );
+      case 'M': if (alias == StrToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
+                if (alias == StrToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
+                if (alias == StrToUpper(AC.MIG            )) return(AC_ID.MIG            );
                 break;
 
       case 'N': break;
 
-      case 'O': if (shortName == StrToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
+      case 'O': if (alias == StrToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
                 break;
 
-      case 'P': if (shortName == StrToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
-                if (shortName == StrToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
+      case 'P': if (alias == StrToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
+                if (alias == StrToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
                 break;
 
       case 'Q': break;
       case 'R': break;
 
-      case 'S': if (shortName == StrToUpper(AC.STS            )) return(AC_ID.STS            );
+      case 'S': if (alias == StrToUpper(AC.STS            )) return(AC_ID.STS            );
                 break;
 
-      case 'T': if (shortName == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
-                if (shortName == StrToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
+      case 'T': if (alias == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
+                if (alias == StrToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
                 break;
 
       case 'U': break;
       case 'V': break;
       case 'W': break;
 
-      case 'X': if (shortName == StrToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
+      case 'X': if (alias == StrToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
                 break;
 
       case 'Y': break;
@@ -4188,13 +4187,13 @@ string ShortAccountCompanyFromId(int id) {
 
 
 /**
- * Ob der übergebene Wert einen bekannten Kurznamen einer AccountCompany darstellt.
+ * Whether a value value is a known account company alias.
  *
  * @param string value
  *
  * @return bool
  */
-bool IsShortAccountCompany(string value) {
+bool IsAccountCompanyAlias(string value) {
    return(AccountCompanyId(value) != 0);
 }
 
@@ -6895,6 +6894,7 @@ void __DummyCalls() {
    init.LogWarningsToSMS();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
+   IsAccountCompanyAlias(NULL);
    IsAccountConfigKey(NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
@@ -6916,7 +6916,6 @@ void __DummyCalls() {
    IsOrderType(NULL);
    IsPendingOrderType(NULL);
    IsScript();
-   IsShortAccountCompany(NULL);
    IsShortOrderType(NULL);
    IsStopOrderType(NULL);
    IsSuperContext();
