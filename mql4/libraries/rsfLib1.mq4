@@ -636,7 +636,6 @@ int GetIniSections(string fileName, string &names[]) {
 }
 
 
-
 /**
  * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück. Der Name ist bei bestehender Verbindung identisch mit
  * dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel
@@ -661,7 +660,7 @@ string GetServerName() {
    static.lastTick = tick;
 
    if (!StringLen(static.serverName[0])) {
-      string serverName=AccountServer(), tmpFilename="", fullTmpFilename;
+      string serverName=AccountServer(), tmpFilename="", fullTmpFilename="";
 
       if (!StringLen(serverName)) {
          // create temporary file

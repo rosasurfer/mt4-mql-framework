@@ -114,7 +114,7 @@ bool InitTradeAccount(string accountKey="") {
          _accountCompany = ShortAccountCompanyFromId(StrToInteger(sCompanyKey)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(6)  unsupported account key = \""+ accountKey +"\"")));
       }
       else {
-         _accountCompany = sCompanyKey; if (!IsShortAccountCompany(_accountCompany))                              return(_true(warn("InitTradeAccount(7)  unsupported account key = \""+ accountKey +"\"")));
+         _accountCompany = sCompanyKey; if (!IsAccountCompanyAlias(_accountCompany))                              return(_true(warn("InitTradeAccount(7)  unsupported account key = \""+ accountKey +"\"")));
       }
 
       // sAccountKey zuordnen
@@ -122,7 +122,7 @@ bool InitTradeAccount(string accountKey="") {
          _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                                         return(_true(warn("InitTradeAccount(8)  invalid parameter accountKey = \""+ accountKey +"\"")));
       }
       else {
-         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)              return(_true(warn("InitTradeAccount(9)  unsupported account key = \""+ accountKey +"\"")));
+         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)           return(_true(warn("InitTradeAccount(9)  unsupported account key = \""+ accountKey +"\"")));
       }
    }
 
