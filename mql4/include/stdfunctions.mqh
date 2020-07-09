@@ -121,7 +121,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             alerted = true;
          }
          if (IsExpert()) {
-            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompanyAlias(), GetAccountNumber()) +")";
             if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
             if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
@@ -188,7 +188,7 @@ int warn(string message, int error = NO_ERROR) {
          alerted = true;
       }
       if (IsExpert()) {
-         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompanyAlias(), GetAccountNumber()) +")";
          if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
@@ -1098,9 +1098,9 @@ double GetCommission(double lots = 1.0) {
       }
       else {
          // TODO: if (is_CFD) rate = 0;
-         string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
+         string company  = GetAccountCompanyAlias(); if (!StringLen(company)) return(EMPTY);
          string currency = AccountCurrency();
-         int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
+         int    account  = GetAccountNumber(); if (!account) return(EMPTY);
 
          string section = "Commissions";
          string key     = company +"."+ currency +"."+ account;
@@ -3969,12 +3969,13 @@ double GetExternalAssets(string companyId, string accountId, bool refresh = fals
 
 
 /**
- * Ermittelt den Kurznamen der Firma des aktuellen Accounts. Der Name wird vom Namen des Trade-Servers abgeleitet, nicht vom
- * Rückgabewert von AccountCompany().
+ * Resolve the alias name of the account company. The alias name is derived from the prefix of the account's trade server,
+ * not from the built-in function AccountCompany(). Different trade server prefixes can be mapped via the configuration to
+ * the same account company alias. If no mapping for a prefix is found the prefix is the resulting alias name.
  *
- * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
+ * @return string - alias name or an empty string in case of errors
  */
-string ShortAccountCompany() {
+string GetAccountCompanyAlias() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
@@ -4031,7 +4032,7 @@ string ShortAccountCompany() {
    if (lName == "tickmill"          ) return(AC.TickMill        );
    if (lName == "xtrade"            ) return(AC.XTrade          );
 
-   debug("ShortAccountCompany(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
+   debug("GetAccountCompanyAlias(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
    return(name);
 }
 
@@ -4187,7 +4188,7 @@ string ShortAccountCompanyFromId(int id) {
 
 
 /**
- * Whether a value value is a known account company alias.
+ * Whether a value is a known account company alias.
  *
  * @param string value
  *
@@ -4199,12 +4200,12 @@ bool IsAccountCompanyAlias(string value) {
 
 
 /**
- * Return the account alias of an account number.
+ * Return the alias name of an account number.
  *
  * @param  string accountCompany
  * @param  int    accountNumber
  *
- * @return string - alias name or an empty string in case of errors or if the account number is unknown
+ * @return string - alias name or an empty string in case of errors (e.g. if the account number is unknown)
  */
 string GetAccountAlias(string accountCompany, int accountNumber) {
    if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER)));
@@ -6846,6 +6847,7 @@ void __DummyCalls() {
    ForceAlert(NULL);
    GE(NULL, NULL);
    GetAccountAlias(NULL, NULL);
+   GetAccountCompanyAlias();
    GetAccountCompanyId(NULL);
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
@@ -6970,7 +6972,6 @@ void __DummyCalls() {
    SendSMS(NULL, NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
-   ShortAccountCompany();
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();

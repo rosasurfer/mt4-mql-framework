@@ -788,7 +788,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
  */
 bool onInsideBar(int timeframe) {
    string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
-   string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+   string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias(GetAccountCompanyAlias(), GetAccountNumber()) +")";
 
    if (__LOG()) log("onInsideBar(1)  "+ message);
    message = Symbol() +": "+ message;
