@@ -294,7 +294,7 @@ int onTick() {
  * @return bool - success status
  */
 bool onTrendChange(int trend) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompanyAlias(), GetAccountNumber()) +")";
    int error = 0;
 
    if (trend == MODE_UPTREND) {

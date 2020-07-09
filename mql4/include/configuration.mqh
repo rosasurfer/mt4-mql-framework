@@ -14,8 +14,8 @@
  */
 string GetAccountConfigPath(string companyId="", string accountId="") {
    if (!StringLen(companyId) && !StringLen(accountId)) {
-      companyId = ShortAccountCompany(); if (!StringLen(companyId)) return(EMPTY_STR);
-      accountId = GetAccountNumber();    if (accountId == "0")      return(EMPTY_STR);
+      companyId = GetAccountCompanyAlias(); if (!StringLen(companyId)) return(EMPTY_STR);
+      accountId = GetAccountNumber();       if (accountId == "0")      return(EMPTY_STR);
    }
    else {
       if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
