@@ -4139,13 +4139,13 @@ int GetAccountCompanyId(string alias) {
 
 
 /**
- * Return the short company name matching an account company identifier.
+ * Return the account company alias for the specified numeric account company identifier.
  *
  * @param int id
  *
- * @return string - short name or an empty string if the identifier is unknown
+ * @return string - account company alias or an empty string if the identifier is unknown
  */
-string ShortAccountCompanyFromId(int id) {
+string GetAccountCompanyAliasFromId(int id) {
    switch (id) {
       case AC_ID.Alpari         : return(AC.Alpari         );
       case AC_ID.APBG           : return(AC.APBG           );
@@ -6848,6 +6848,7 @@ void __DummyCalls() {
    GE(NULL, NULL);
    GetAccountAlias(NULL, NULL);
    GetAccountCompanyAlias();
+   GetAccountCompanyAliasFromId(NULL);
    GetAccountCompanyId(NULL);
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
@@ -6972,7 +6973,6 @@ void __DummyCalls() {
    SendSMS(NULL, NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
-   ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
    StrCapitalize(NULL);
