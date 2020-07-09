@@ -2920,7 +2920,7 @@ bool SaveStatus() {
    string file = GetStatusFileName();
 
    string section = "Common";
-   WriteIniString(file, section, "Account",                  string   GetAccountCompanyAlias();;() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account",                  GetAccountCompanyAlias() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",                   Symbol());
    WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
    WriteIniString(file, section, "GridDirection",            sGridDirection);

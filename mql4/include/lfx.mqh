@@ -111,7 +111,7 @@ bool InitTradeAccount(string accountKey="") {
 
       // sCompanyKey zuordnen
       if (sCompanyKey.isDigit) {
-         _accountCompany = ShortAccountCompanyFromId(StrToInteger(sCompanyKey)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(6)  unsupported account key = \""+ accountKey +"\"")));
+         _accountCompany = GetAccountCompanyAliasFromId(StrToInteger(sCompanyKey)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(6)  unsupported account key = \""+ accountKey +"\"")));
       }
       else {
          _accountCompany = sCompanyKey; if (!IsAccountCompanyAlias(_accountCompany))                              return(_true(warn("InitTradeAccount(7)  unsupported account key = \""+ accountKey +"\"")));
