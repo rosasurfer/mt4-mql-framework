@@ -3863,7 +3863,7 @@ bool StoreRuntimeStatus() {
    int   hWnd = __ExecutionContext[EC.hChart];
    string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int  value = ifInt(positions.absoluteProfits, 1, -1);
-   SetWindowProperty(hWnd, key, value);
+   SetWindowIntegerA(hWnd, key, value);
 
    // Konfiguration im Chart speichern
    if (ObjectFind(key) == 0)
@@ -3887,7 +3887,7 @@ bool RestoreRuntimeStatus() {
    // Konfiguration im Fenster suchen
    int   hWnd = __ExecutionContext[EC.hChart];
    string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int value  = GetWindowProperty(hWnd, key);
+   int value  = GetWindowIntegerA(hWnd, key);
    bool success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
    if (!success) {
