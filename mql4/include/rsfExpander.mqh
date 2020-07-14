@@ -42,7 +42,9 @@
    //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
-   // chart status/interaction
+   // charts and timeframes
+   bool     IsCustomTimeframe(int timeframe);
+   bool     IsStdTimeframe(int timeframe);
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
@@ -80,7 +82,7 @@
    // logging
    bool     LogMessageA(int ec[], string message, int error);
 
-   // pointer utlities
+   // pointer and memory functions
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
@@ -135,15 +137,21 @@
    string   UninitializeReasonToStr(int reason);      // alias of UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
-   // other
-   bool     IsCustomTimeframe(int timeframe);
-   bool     IsStdTimeframe(int timeframe);
+   // window property management
+   bool     SetWindowIntegerA   (int hWnd, string name, int value);
+   int      GetWindowIntegerA   (int hWnd, string name);
+   int      RemoveWindowIntegerA(int hWnd, string name);
+
+   bool     SetWindowDoubleA   (int hWnd, string name, double value);
+   double   GetWindowDoubleA   (int hWnd, string name);
+   double   RemoveWindowDoubleA(int hWnd, string name);
+
+   bool     SetWindowStringA   (int hWnd, string name, string value);
+   string   GetWindowStringA   (int hWnd, string name);
+   string   RemoveWindowStringA(int hWnd, string name);
 
    // Win32 helpers
    int      GetLastWin32Error();
-   int      GetWindowProperty(int hWnd, string name);
-   bool     SetWindowProperty(int hWnd, string name, int value);
-   int      RemoveWindowProperty(int hWnd, string name);
 
    // Empty stubs of optional functions. May be overwritten by custom MQL implementations.
    int      onInit();

@@ -850,7 +850,7 @@ bool StoreRuntimeStatus() {
    // Company-ID im Fenster speichern
    int    hWnd = __ExecutionContext[EC.hChart];
    string key  = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   SetWindowProperty(hWnd, key, GetAccountCompanyId(tradeAccount.company));
+   SetWindowIntegerA(hWnd, key, GetAccountCompanyId(tradeAccount.company));
 
    // Company-ID im Chart speichern
    if (ObjectFind(key) == 0)
@@ -861,7 +861,7 @@ bool StoreRuntimeStatus() {
 
    // AccountNumber im Fenster speichern
    key = __NAME() +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   SetWindowProperty(hWnd, key, tradeAccount.number);
+   SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
    // AccountNumber im Chart speichern
    if (ObjectFind(key) == 0)
@@ -887,7 +887,7 @@ bool RestoreRuntimeStatus() {
    // Company-ID im Fenster suchen
    int    hWnd    = __ExecutionContext[EC.hChart];
    string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int    value   = GetWindowProperty(hWnd, key);
+   int    value   = GetWindowIntegerA(hWnd, key);
    bool   success = (value != 0);
    // bei Mißerfolg Company-ID im Chart suchen
    if (!success) {
@@ -900,7 +900,7 @@ bool RestoreRuntimeStatus() {
 
    // AccountNumber im Fenster suchen
    key     = __NAME() +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   value   = GetWindowProperty(hWnd, key);
+   value   = GetWindowIntegerA(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg AccountNumber im Chart suchen
    if (!success) {
