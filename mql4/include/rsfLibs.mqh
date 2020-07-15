@@ -1,9 +1,11 @@
 /**
- * Letzte Version mit vollständigem Funktions-Listing: git commit deaf9a4 (2015.06.14 10:29:29 GMT)
+ * For the last version with a complete function listing
+ *
+ *
  */
 #import "rsfLib1.ex4"
 
-   // Arrays
+   // arrays
    bool     ArrayAddInt         (int    array[],   int value);
    int      ArraySetInts        (int    array[][], int i, int values[]);
 
@@ -80,7 +82,7 @@
    double   SumDoubles(double array[]);
 
 
-   // Buffer-Funktionen
+   // buffer functions
    int      InitializeDoubleBuffer(double buffer[], int size);
 
    string   BufferToStr   (int buffer[]);
@@ -89,14 +91,14 @@
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int char);
 
-   string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
+   string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // alias
 
 
    // configuration
    int      GetIniSections(string fileName, string &names[]);
 
 
-   // Date/Time
+   // date/time
    datetime FxtToGmtTime   (datetime fxtTime);
    datetime FxtToServerTime(datetime fxtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
 
@@ -143,19 +145,19 @@
    datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
-   // Event-Listener/Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung müssen die Handler im Programm implementiert werden.
+   // Empty stubs of event listeners/handlers. If needed the functions must be implemented in the using module.
    bool     onBarOpen();
    bool     onCommand(string data[]);
 
 
-   // Farben
+   // colors
    color    RGB(int red, int green, int blue);
    int      RGBToHSL(color rgb, double hsl[], bool human = false);
    color    HSLToRGB(double hsl[3]);
    color    ModifyColor(color rgb, double hue, double saturation, double lightness);
 
 
-   // Files, I/O
+   // files, i/o
    string   CreateTempFile(string path, string prefix="");
    string   GetTempPath();
 
@@ -166,20 +168,20 @@
    bool     EditFiles(string filenames[]);
 
 
-   // Locks
+   // locking
    bool     AquireLock(string mutexName, bool wait);
    bool     ReleaseLock(string mutexName);
 
 
-   // Strings
+   // strings
    bool     SortStrings(string &values[]);
    string   StringPad(string input, int length, string pad_string, int pad_type);
 
 
-   // Tradefunktionen, Orderhandling
+   // trade functions and order handling
    bool     IsTemporaryTradeError(int error);
 
-   // s: StopDistance/FreezeDistance integriert
+   // s: StopDistance/FreezeDistance check integrated
    int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
@@ -203,23 +205,23 @@
    bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
 
 
-   // sonstiges
+   // other
    int      SortTicketsChronological(int tickets[]);
 #import "rsfLib2.ex4"
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets(int keys[][]);
 
 #import "rsfLib1.ex4"
-   string   StdSymbol();                                                            // Alias für GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                                       // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   StdSymbol();                                                            // alias of GetStandardSymbol(Symbol())
+   string   GetStandardSymbol(string symbol);                                       // alias of GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
-   string   GetSymbolName(string symbol);                                           // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                                           // alias of GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
 
-   string   GetLongSymbolName(string symbol);                                       // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                                       // alias of GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
 
@@ -231,7 +233,7 @@
    int      RepositionLegend();
 
 
-   // toString-Funktionen
+   // toString helpers
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
 
    string   IntegerToBinaryStr(int integer);
@@ -254,7 +256,7 @@
    string   DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);
    string   iBufferToStr         (double array[], string separator);
    string   MoneysToStr          (double array[], string separator);
-   string   RatesToStr           (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
+   string   RatesToStr           (double array[], string separator); string PricesToStr(double array[], string separator);   // alias
    string   StringsToStr         (string array[], string separator);
 
 #import "rsfLib1.ex4"
@@ -267,7 +269,7 @@
 #import
 
 
-// ShowWindow()-Konstanten für WinExecWait(), Details siehe win32api.mqh
+// ShowWindow() constants for WinExecWait(), @see win32api.mqh
 #define SW_SHOW                  5
 #define SW_SHOWNA                8
 #define SW_HIDE                  0

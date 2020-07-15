@@ -2,8 +2,8 @@
  * MT4Expander import declarations
  *
  * Note: MQL4.0 supports up to 512 arrays per MQL module, in MQL4.5 and MQL5 this limitation was removed. To prevent hitting
- *       this limit all functions with array parameters are commented out in this file. Import them manually per module if
- *       you want to use them.
+ *       that limit here all functions with array parameters are commented out. Import them manually per module if you want
+ *       to use them.
  */
 #import "rsfExpander.dll"
 
@@ -86,11 +86,10 @@
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
-   int      GetDoublesAddress(double values[]);       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
-   int      GetStringAddress (string value   );       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
-   int      GetStringsAddress(string values[]);       //          Adresse ist ungültig und kann einen Crash auslösen.
-
-   string   GetStringA(int address);
+   int      GetDoublesAddress(double values[]);
+   int      GetStringAddress (string value   );       // Warning: GetStringAddress() must be used with string array elements only.
+   int      GetStringsAddress(string values[]);       //          Simple strings are passed to DLLs as copies. The resulting address
+   string   GetStringA(int address);                  //          is a dangling pointer and accessing it may cause a terminal crash.
    //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
@@ -132,7 +131,7 @@
    string   ProgramTypeToStr(int type);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TimeframeDescription(int timeframe);      // alias of PeriodDescription()
-   string   TimeframeToStr(int timeframe);            // alias of PeriodToStr();
+   string   TimeframeToStr(int timeframe);            // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
    string   UninitializeReasonToStr(int reason);      // alias of UninitReasonToStr()
@@ -154,7 +153,7 @@
    // Win32 helpers
    int      GetLastWin32Error();
 
-   // Empty stubs of optional functions. May be overwritten by custom MQL implementations.
+   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();
@@ -177,9 +176,9 @@
    int      onDeinitRecompile();
    int      onDeinitRemove();
    int      onDeinitUndefined();
-   int      onDeinitClose();              // builds > 509
-   int      onDeinitFailed();             // ...
-   int      onDeinitTemplate();           // ...
+   int      onDeinitClose();                          // builds > 509
+   int      onDeinitFailed();                         // ...
+   int      onDeinitTemplate();                       // ...
    int      afterDeinit();
 
    void     DummyCalls();
