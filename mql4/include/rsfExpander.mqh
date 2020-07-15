@@ -1,12 +1,13 @@
 /**
- * Importdeklarationen
+ * MT4Expander import declarations
  *
- * Note: Je MQL-Modul können bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden, müssen die
- *       auskommentierten Funktionen (die mit Array-Parametern) manuell importiert werden.
+ * Note: MQL4.0 supports up to 512 arrays per MQL module, in MQL4.5 and MQL5 this limitation was removed. To prevent hitting
+ *       this limit all functions with array parameters are commented out in this file. Import them manually per module if
+ *       you want to use them.
  */
 #import "rsfExpander.dll"
 
-   // terminal status/interaction
+   // terminal status, terminal interaction
    int      FindInputDialog(int programType, string programName);
    string   GetExpanderFileNameA();
    string   GetMqlDirectoryA();
@@ -82,7 +83,7 @@
    // logging
    bool     LogMessageA(int ec[], string message, int error);
 
-   // pointer and memory functions
+   // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
