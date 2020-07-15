@@ -4038,55 +4038,6 @@ string GetAccountCompanyAlias() {
 
 
 /**
- * Return the account company alias for the specified numeric account company identifier.
- *
- * @param int id
- *
- * @return string - account company alias or an empty string if the identifier is unknown
- */
-string GetAccountCompanyAliasFromId(int id) {
-   switch (id) {
-      case AC_ID.Alpari         : return(AC.Alpari         );
-      case AC_ID.APBG           : return(AC.APBG           );
-      case AC_ID.ATCBrokers     : return(AC.ATCBrokers     );
-      case AC_ID.AxiTrader      : return(AC.AxiTrader      );
-      case AC_ID.BroCo          : return(AC.BroCo          );
-      case AC_ID.CollectiveFX   : return(AC.CollectiveFX   );
-      case AC_ID.Dukascopy      : return(AC.Dukascopy      );
-      case AC_ID.EasyForex      : return(AC.EasyForex      );
-      case AC_ID.FBCapital      : return(AC.FBCapital      );
-      case AC_ID.FinFX          : return(AC.FinFX          );
-      case AC_ID.ForexLtd       : return(AC.ForexLtd       );
-      case AC_ID.FXPrimus       : return(AC.FXPrimus       );
-      case AC_ID.FXDD           : return(AC.FXDD           );
-      case AC_ID.FXOpen         : return(AC.FXOpen         );
-      case AC_ID.FxPro          : return(AC.FxPro          );
-      case AC_ID.Gallant        : return(AC.Gallant        );
-      case AC_ID.GCI            : return(AC.GCI            );
-      case AC_ID.GFT            : return(AC.GFT            );
-      case AC_ID.GlobalPrime    : return(AC.GlobalPrime    );
-      case AC_ID.ICMarkets      : return(AC.ICMarkets      );
-      case AC_ID.InovaTrade     : return(AC.InovaTrade     );
-      case AC_ID.InvestorsEurope: return(AC.InvestorsEurope);
-      case AC_ID.JFDBrokers     : return(AC.JFDBrokers     );
-      case AC_ID.LiteForex      : return(AC.LiteForex      );
-      case AC_ID.LondonCapital  : return(AC.LondonCapital  );
-      case AC_ID.MBTrading      : return(AC.MBTrading      );
-      case AC_ID.MetaQuotes     : return(AC.MetaQuotes     );
-      case AC_ID.MIG            : return(AC.MIG            );
-      case AC_ID.Oanda          : return(AC.Oanda          );
-      case AC_ID.Pepperstone    : return(AC.Pepperstone    );
-      case AC_ID.PrimeXM        : return(AC.PrimeXM        );
-      case AC_ID.STS            : return(AC.STS            );
-      case AC_ID.TeleTrade      : return(AC.TeleTrade      );
-      case AC_ID.TickMill       : return(AC.TickMill       );
-      case AC_ID.XTrade         : return(AC.XTrade         );
-   }
-   return("");
-}
-
-
-/**
  * Return the alias name of an account number.
  *
  * @param  string accountCompany
@@ -6735,7 +6686,6 @@ void __DummyCalls() {
    GE(NULL, NULL);
    GetAccountAlias(NULL, NULL);
    GetAccountCompanyAlias();
-   GetAccountCompanyAliasFromId(NULL);
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
    GetCommission();
