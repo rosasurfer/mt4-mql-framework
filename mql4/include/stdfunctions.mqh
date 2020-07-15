@@ -4188,18 +4188,6 @@ string GetAccountCompanyAliasFromId(int id) {
 
 
 /**
- * Whether a value is a known account company alias.
- *
- * @param string value
- *
- * @return bool
- */
-bool IsAccountCompanyAlias(string value) {
-   return(GetAccountCompanyId(value) != 0);
-}
-
-
-/**
  * Return the alias name of an account number.
  *
  * @param  string accountCompany
@@ -6897,7 +6885,6 @@ void __DummyCalls() {
    init.LogWarningsToSMS();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
-   IsAccountCompanyAlias(NULL);
    IsAccountConfigKey(NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
