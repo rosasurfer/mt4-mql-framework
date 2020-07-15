@@ -1,5 +1,5 @@
 /**
- * For the last version with a complete function listing
+ * Functions already imported in the core are removed from this file. For the last version with a complete function listing
  *
  * @see  git commit deaf9a4 (2015.06.14 10:29:29 GMT)
  */
