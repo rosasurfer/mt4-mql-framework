@@ -103,26 +103,26 @@ bool InitTradeAccount(string accountKey="") {
    }
    else {
       // Account-Parameter validieren und Account ermitteln
-      string sCompanyKey = StrLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                            return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
-      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                            return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sCompanyKey = StrLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                            return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey \""+ accountKey +"\"")));
+      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                            return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey \""+ accountKey +"\"")));
 
       bool sCompanyKey.isDigit = StrIsDigit(sCompanyKey);
       bool sAccountKey.isDigit = StrIsDigit(sAccountKey);
 
       // sCompanyKey zuordnen
       if (sCompanyKey.isDigit) {
-         _accountCompany = GetAccountCompanyAliasFromId(StrToInteger(sCompanyKey)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(6)  unsupported account key = \""+ accountKey +"\"")));
+         _accountCompany = GetAccountCompanyAliasFromId(StrToInteger(sCompanyKey)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(6)  unsupported account key \""+ accountKey +"\"")));
       }
       else {
-         _accountCompany = sCompanyKey; if (!IsAccountCompanyAlias(_accountCompany))                              return(_true(warn("InitTradeAccount(7)  unsupported account key = \""+ accountKey +"\"")));
+         _accountCompany = sCompanyKey;
       }
 
       // sAccountKey zuordnen
       if (sAccountKey.isDigit) {
-         _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                                         return(_true(warn("InitTradeAccount(8)  invalid parameter accountKey = \""+ accountKey +"\"")));
+         _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                                         return(_true(warn("InitTradeAccount(7)  invalid parameter accountKey \""+ accountKey +"\"")));
       }
       else {
-         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)           return(_true(warn("InitTradeAccount(9)  unsupported account key = \""+ accountKey +"\"")));
+         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)           return(_true(warn("InitTradeAccount(8)  unsupported account key \""+ accountKey +"\"")));
       }
    }
 
@@ -133,26 +133,26 @@ bool InitTradeAccount(string accountKey="") {
 
 
    // Restliche Variablen ermitteln
-   _accountAlias = GetAccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))               return(_true(warn("InitTradeAccount(10)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
+   _accountAlias = GetAccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))               return(_true(warn("InitTradeAccount(9)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
 
    // AccountCurrency
    section = "Accounts";
    key     = _accountNumber +".currency";
-   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key)));
-   if (!IsCurrency(sValue))                                                                                       return(_true(warn("InitTradeAccount(12)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
+   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(10)  missing global account setting ["+ section +"]->"+ key)));
+   if (!IsCurrency(sValue))                                                                                       return(_true(warn("InitTradeAccount(11)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
    _accountCurrency = StrToUpper(sValue);
 
    // AccountType
    section = "Accounts";
    key     = _accountNumber +".type";
-   sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                             return(_true(warn("InitTradeAccount(13)  missing global account setting ["+ section +"]->"+ key)));
+   sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                             return(_true(warn("InitTradeAccount(12)  missing global account setting ["+ section +"]->"+ key)));
    if      (sValue == "demo") _accountType = ACCOUNT_TYPE_DEMO;
-   else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                              return(_true(warn("InitTradeAccount(14)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
+   else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                              return(_true(warn("InitTradeAccount(13)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
 
    // AccountName
    section = "Accounts";
    key     = _accountNumber +".name";
-   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(15)  missing global account setting ["+ section +"]->"+ key)));
+   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(14)  missing global account setting ["+ section +"]->"+ key)));
    _accountName = sValue;
 
 
