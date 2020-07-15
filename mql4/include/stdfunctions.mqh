@@ -4038,107 +4038,6 @@ string GetAccountCompanyAlias() {
 
 
 /**
- * Return the numeric identifier of an account company alias.
- *
- * @param string alias - account company alias
- *
- * @return int - account company identifier or NULL if the alias is unknown
- */
-int GetAccountCompanyId(string alias) {
-   if (!StringLen(alias)) return(NULL);
-
-   alias = StrToUpper(alias);
-
-   switch (StringGetChar(alias, 0)) {
-      case 'A': if (alias == StrToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
-                if (alias == StrToUpper(AC.APBG           )) return(AC_ID.APBG           );
-                if (alias == StrToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
-                if (alias == StrToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
-                break;
-
-      case 'B': if (alias == StrToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
-                break;
-
-      case 'C': if (alias == StrToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
-                break;
-
-      case 'D': if (alias == StrToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
-                break;
-
-      case 'E': if (alias == StrToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
-                break;
-
-      case 'F': if (alias == StrToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
-                if (alias == StrToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
-                if (alias == StrToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
-                if (alias == StrToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
-                if (alias == StrToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
-                if (alias == StrToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
-                if (alias == StrToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
-                break;
-
-      case 'G': if (alias == StrToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
-                if (alias == StrToUpper(AC.GCI            )) return(AC_ID.GCI            );
-                if (alias == StrToUpper(AC.GFT            )) return(AC_ID.GFT            );
-                if (alias == StrToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
-                break;
-
-      case 'H': break;
-
-      case 'I': if (alias == StrToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
-                if (alias == StrToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
-                if (alias == StrToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
-                break;
-
-      case 'J': if (alias == StrToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
-                break;
-
-      case 'K': break;
-
-      case 'L': if (alias == StrToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
-                if (alias == StrToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
-                break;
-
-      case 'M': if (alias == StrToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
-                if (alias == StrToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
-                if (alias == StrToUpper(AC.MIG            )) return(AC_ID.MIG            );
-                break;
-
-      case 'N': break;
-
-      case 'O': if (alias == StrToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
-                break;
-
-      case 'P': if (alias == StrToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
-                if (alias == StrToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
-                break;
-
-      case 'Q': break;
-      case 'R': break;
-
-      case 'S': if (alias == StrToUpper(AC.STS            )) return(AC_ID.STS            );
-                break;
-
-      case 'T': if (alias == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
-                if (alias == StrToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
-                break;
-
-      case 'U': break;
-      case 'V': break;
-      case 'W': break;
-
-      case 'X': if (alias == StrToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
-                break;
-
-      case 'Y': break;
-      case 'Z': break;
-   }
-
-   return(NULL);
-}
-
-
-/**
  * Return the account company alias for the specified numeric account company identifier.
  *
  * @param int id
@@ -6837,7 +6736,6 @@ void __DummyCalls() {
    GetAccountAlias(NULL, NULL);
    GetAccountCompanyAlias();
    GetAccountCompanyAliasFromId(NULL);
-   GetAccountCompanyId(NULL);
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
    GetCommission();
