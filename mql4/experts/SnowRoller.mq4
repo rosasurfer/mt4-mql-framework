@@ -2920,7 +2920,7 @@ bool SaveStatus() {
    string file = GetStatusFileName();
 
    string section = "Common";
-   WriteIniString(file, section, "Account",                  GetAccountCompanyAlias() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account",                  GetAccountCompany() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",                   Symbol());
    WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
    WriteIniString(file, section, "GridDirection",            sGridDirection);
@@ -3136,7 +3136,7 @@ bool ReadStatus() {
    string sGridDirection       = GetIniStringA(file, section, "GridDirection",       "");
    string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");
 
-   string sAccountRequired = GetAccountCompanyAlias() +":"+ GetAccountNumber();
+   string sAccountRequired = GetAccountCompany() +":"+ GetAccountNumber();
    if (sAccount != sAccountRequired) return(!catch("ReadStatus(3)  account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (sSymbol  != Symbol())         return(!catch("ReadStatus(4)  symbol mis-match "+ DoubleQuoteStr(sSymbol) +"/"+ DoubleQuoteStr(Symbol()) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    string sValue = sSequenceId;

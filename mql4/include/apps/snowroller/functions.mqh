@@ -642,7 +642,7 @@ string GetStatusFileName() {
    string directory, baseName=StrToLower(Symbol()) +"."+ sSID + sequence.id +".set";
 
    if (IsTestSequence()) directory = "\\presets\\";
-   else                  directory = "\\presets\\"+ GetAccountCompanyAlias() +"\\";
+   else                  directory = "\\presets\\"+ GetAccountCompany() +"\\";
 
    return(GetMqlFilesPath() + directory + baseName);
 }
