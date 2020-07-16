@@ -3969,15 +3969,14 @@ double GetExternalAssets(string companyId, string accountId, bool refresh = fals
 
 
 /**
- * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numeric
+ * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only.
  *
+ * Among others the identifier is used for reading/writing company-wide configurations and for composing log messages. It is
+ * derived from the name of the current trade server. If the trade server is not explicitely mapped to a different company
+ * identifier (see below) the returned default identifier matches the first word of the current trade server name.
+ *
  * @return string - company identifier or an empty string in case of errors
- *
- *
- * Among others the identifier is used for reading/writing company-wide configurations and log messages. It is derived from
- * the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
- * (see below) the returned default identifier matches the first word of the current trade server name.
  *
  * Example:
  * +--------------------+----------------------------+
@@ -4005,63 +4004,15 @@ string GetAccountCompany() {
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    //
    string server = GetAccountServer(); if (!StringLen(server)) return("");
-   string name = StrLeftTo(server, "-"), lName = StrToLower(name);
+   string name = StrLeftTo(server, "-");
 
-   if (lName == "alpari"            ) return("Alpari"         );
-   if (lName == "alparibroker"      ) return("Alpari"         );
-   if (lName == "alpariuk"          ) return("Alpari"         );
-   if (lName == "alparius"          ) return("Alpari"         );
-   if (lName == "apbgtrading"       ) return("APBG"           );
-   if (lName == "atcbrokers"        ) return("ATCBrokers"     );
-   if (lName == "atcbrokersest"     ) return("ATCBrokers"     );
-   if (lName == "atcbrokersliq1"    ) return("ATCBrokers"     );
-   if (lName == "axitrader"         ) return("AxiTrader"      );
-   if (lName == "axitraderusa"      ) return("AxiTrader"      );
-   if (lName == "broco"             ) return("BroCo"          );
-   if (lName == "brocoinvestments"  ) return("BroCo"          );
-   if (lName == "cmap"              ) return("ICMarkets"      );     // demo
-   if (lName == "collectivefx"      ) return("CollectiveFX"   );
-   if (lName == "dukascopy"         ) return("Dukascopy"      );
-   if (lName == "easyforex"         ) return("EasyForex"      );
-   if (lName == "finfx"             ) return("FinFX"          );
-   if (lName == "forex"             ) return("ForexLtd"       );
-   if (lName == "forexbaltic"       ) return("FBCapital"      );
-   if (lName == "fxopen"            ) return("FXOpen"         );
-   if (lName == "fxprimus"          ) return("FXPrimus"       );
-   if (lName == "fxpro.com"         ) return("FxPro"          );
-   if (lName == "fxdd"              ) return("FXDD"           );
-   if (lName == "gci"               ) return("GCI"            );
-   if (lName == "gcmfx"             ) return("Gallant"        );
-   if (lName == "gftforex"          ) return("GFT"            );
-   if (lName == "globalprime"       ) return("GlobalPrime"    );
-   if (lName == "icmarkets"         ) return("ICMarkets"      );
-   if (lName == "inovatrade"        ) return("InovaTrade"     );
-   if (lName == "integral"          ) return("GlobalPrime"    );     // demo
-   if (lName == "investorseurope"   ) return("InvestorsEurope");
-   if (lName == "jfd"               ) return("JFDBrokers"     );
-   if (lName == "liteforex"         ) return("LiteForex"      );
-   if (lName == "londoncapitalgr"   ) return("LondonCapital"  );
-   if (lName == "londoncapitalgroup") return("LondonCapital"  );
-   if (lName == "mbtrading"         ) return("MBTrading"      );
-   if (lName == "metaquotes"        ) return("MetaQuotes"     );
-   if (lName == "migbank"           ) return("MIG"            );
-   if (lName == "oanda"             ) return("Oanda"          );
-   if (lName == "pepperstone"       ) return("Pepperstone"    );
-   if (lName == "primexm"           ) return("PrimeXM"        );
-   if (lName == "sig"               ) return("LiteForex"      );
-   if (lName == "sts"               ) return("STS"            );
-   if (lName == "teletrade"         ) return("TeleTrade"      );
-   if (lName == "teletradecy"       ) return("TeleTrade"      );
-   if (lName == "tickmill"          ) return("TickMill"       );
-   if (lName == "xtrade"            ) return("XTrade"         );
-
-   return(name);
+   return(GetGlobalConfigString("AccountCompanies", name, name));
 }
 
 
 /**
- * Return the alias of an account. The alias is configurable via the global framework configuration and used in outgoing log
- * messages (SMS, email, chat) to obfuscate an actual account number. If no alias is configured the function returns the
+ * Return the alias of an account. The alias is configurable via the global framework configuration and is used in outgoing
+ * log messages (SMS, email, chat) to obfuscate an actual account number. If no alias is configured the function returns the
  * actual account number with all characters except the last 4 digits replaced by wildcards.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
@@ -4087,14 +4038,14 @@ string GetAccountAlias(string company="", int number=NULL) {
 /**
  * Return the account number of an account alias.
  *
- * @param  string accountCompany
- * @param  string accountAlias
+ * @param  string company - account company
+ * @param  string alias   - account alias
  *
  * @return int - account number or NULL in case of errors or if the account alias is unknown
  */
-int GetAccountNumberFromAlias(string accountCompany, string accountAlias) {
-   if (!StringLen(accountCompany)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER));
-   if (!StringLen(accountAlias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter accountAlias: \"\"", ERR_INVALID_PARAMETER));
+int GetAccountNumberFromAlias(string company, string alias) {
+   if (!StringLen(company)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter company: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(alias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter alias: \"\"", ERR_INVALID_PARAMETER));
 
    string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
    string section = "Accounts";
@@ -4104,10 +4055,10 @@ int GetAccountNumberFromAlias(string accountCompany, string accountAlias) {
    for (int i=0; i < keysSize; i++) {
       if (StrEndsWithI(keys[i], ".alias")) {
          value = GetGlobalConfigString(section, keys[i]);
-         if (StrCompareI(value, accountAlias)) {
+         if (StrCompareI(value, alias)) {
             sAccount = StringTrimRight(StrLeft(keys[i], -6));
             value    = GetGlobalConfigString(section, sAccount +".company");
-            if (StrCompareI(value, accountCompany)) {
+            if (StrCompareI(value, company)) {
                if (StrIsDigit(sAccount))
                   return(StrToInteger(sAccount));
             }
@@ -4618,7 +4569,7 @@ int GetCurrencyId(string currency) {
    if (value == C_USD) return(CID_USD);
    if (value == C_ZAR) return(CID_ZAR);
 
-   return(_NULL(catch("GetCurrencyId(1)  unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR)));
+   return(_NULL(catch("GetCurrencyId(1)  unknown currency: \""+ currency +"\"", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -4660,7 +4611,7 @@ string GetCurrency(int id) {
       case CID_USD: return(C_USD);
       case CID_ZAR: return(C_ZAR);
    }
-   return(_EMPTY_STR(catch("GetCurrency(1)  unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
+   return(_EMPTY_STR(catch("GetCurrency(1)  unknown currency id: "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
