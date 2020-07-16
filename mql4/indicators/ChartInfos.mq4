@@ -1242,28 +1242,28 @@ bool UpdatePositions() {
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
       if (positions.absoluteProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    142, 167,      233,    268,   355,      416};
+         // col.xShifts[] = {20,   66,    149, 174,      240,    275,   362,      423};
          ArrayResize(col.xShifts, 8);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
-         col.xShifts[2] = 142;
-         col.xShifts[3] = 167;
-         col.xShifts[4] = 233;
-         col.xShifts[5] = 268;
-         col.xShifts[6] = 355;
-         col.xShifts[7] = 416;
+         col.xShifts[2] = 149;
+         col.xShifts[3] = 174;
+         col.xShifts[4] = 240;
+         col.xShifts[5] = 275;
+         col.xShifts[6] = 362;
+         col.xShifts[7] = 423;
       }
       else {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    142, 167,      233,    268,      329};
+         // col.xShifts[] = {20,   66,    149, 174,      240,    275,      336};
          ArrayResize(col.xShifts, 7);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
-         col.xShifts[2] = 142;
-         col.xShifts[3] = 167;
-         col.xShifts[4] = 233;
-         col.xShifts[5] = 268;
-         col.xShifts[6] = 329;
+         col.xShifts[2] = 149;
+         col.xShifts[3] = 174;
+         col.xShifts[4] = 240;
+         col.xShifts[5] = 275;
+         col.xShifts[6] = 336;
       }
       cols                = ArraySize(col.xShifts);
       percentCol          = cols - 2;
