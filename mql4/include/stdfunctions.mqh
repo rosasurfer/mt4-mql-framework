@@ -121,7 +121,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             alerted = true;
          }
          if (IsExpert()) {
-            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompany(), GetAccountNumber()) +")";
+            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
             if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
             if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
@@ -188,7 +188,7 @@ int warn(string message, int error = NO_ERROR) {
          alerted = true;
       }
       if (IsExpert()) {
-         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompany(), GetAccountNumber()) +")";
+         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
          if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
@@ -2091,7 +2091,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
          return(StrSubstr(value, start-1 + StringLen(substring)));
       }
 
-      return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY_STR(catch("StrRightFrom(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
       //pos = StringFindEx(value, substring, count);
       //return(StrSubstr(value, pos + StringLen(substring)));
    }
@@ -3975,7 +3975,7 @@ double GetExternalAssets(string companyId, string accountId, bool refresh = fals
  * @return string - company identifier or an empty string in case of errors
  *
  *
- * Among others the identifier is used for reading/writing company-wide configurations or log messages. It is derived from
+ * Among others the identifier is used for reading/writing company-wide configurations and log messages. It is derived from
  * the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
  * (see below) the returned default identifier matches the first word of the current trade server name.
  *
@@ -3986,7 +3986,7 @@ double GetExternalAssets(string companyId, string accountId, bool refresh = fals
  * | Alpari-Standard1   | Alpari                     |
  * +--------------------+----------------------------+
  *
- * Via the framework configuration a default company indentifier can be mapped to a different identifier.
+ * Via the global framework configuration a default company indentifier can be mapped to a different one.
  *
  * Example:
  * +--------------------+----------------------------+---------------------------+
@@ -4055,23 +4055,32 @@ string GetAccountCompany() {
    if (lName == "tickmill"          ) return("TickMill"       );
    if (lName == "xtrade"            ) return("XTrade"         );
 
-   debug("GetAccountCompany(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
    return(name);
 }
 
 
 /**
- * Return the alias name of an account number.
+ * Return the alias of an account. The alias is configurable via the global framework configuration and used in outgoing log
+ * messages (SMS, email, chat) to obfuscate an actual account number. If no alias is configured the function returns the
+ * actual account number with all characters except the last 4 digits replaced by wildcards.
  *
- * @param  string accountCompany
- * @param  int    accountNumber
+ * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  int    number  [optional] - account number (default: the current account number)
  *
- * @return string - alias name or an empty string in case of errors (e.g. if the account number is unknown)
+ * @return string - account alias or an empty string in case of errors
  */
-string GetAccountAlias(string accountCompany, int accountNumber) {
-   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER)));
-   if (accountNumber <= 0)         return(_EMPTY_STR(catch("GetAccountAlias(2)  invalid parameter accountNumber: "+ accountNumber, ERR_INVALID_PARAMETER)));
-   return(GetGlobalConfigString("Accounts", accountNumber +".alias"));
+string GetAccountAlias(string company="", int number=NULL) {
+   if (number < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter number: "+ number, ERR_INVALID_PARAMETER)));
+   if (!StringLen(company) || company=="0") company = GetAccountCompany();
+   if (!number)                             number = GetAccountNumber();
+
+   string result = GetGlobalConfigString("Accounts", number +".alias");
+   if (!StringLen(result)) {
+      debug("GetAccountAlias(2)  alias not found for account \""+ company +":"+ number +"\"");
+      result = ""+ number;
+      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
+   }
+   return(result);
 }
 
 
@@ -4552,16 +4561,14 @@ color NameToColor(string name) {
 /**
  * Repeats a string.
  *
- * @param  string input - The string to be repeated.
- * @param  int    times - Number of times the input string should be repeated.
+ * @param  string input - string to be repeated
+ * @param  int    times - number of times to repeat the string
  *
- * @return string - the repeated string
+ * @return string - the repeated string or an empty string in case of errors
  */
 string StrRepeat(string input, int times) {
-   if (times < 0)
-      return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
-
-   if (times ==  0)       return("");
+   if (times < 0)         return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times: "+ times, ERR_INVALID_PARAMETER)));
+   if (!times)            return("");
    if (!StringLen(input)) return("");
 
    string output = input;
@@ -6707,7 +6714,7 @@ void __DummyCalls() {
    Floor(NULL);
    ForceAlert(NULL);
    GE(NULL, NULL);
-   GetAccountAlias(NULL, NULL);
+   GetAccountAlias();
    GetAccountCompany();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);

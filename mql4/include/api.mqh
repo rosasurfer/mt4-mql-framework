@@ -113,7 +113,7 @@ string   FileAccessModeToStr(int mode);;
 int      Floor(double value);;
 void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
-string   GetAccountAlias(string accountCompany, int accountNumber);;
+string   GetAccountAlias(string company="", int number=NULL);;
 string   GetAccountCompany();;
 int      GetAccountNumberFromAlias(string accountCompany, string accountAlias);;
 string   GetClassName(int hWnd);;
