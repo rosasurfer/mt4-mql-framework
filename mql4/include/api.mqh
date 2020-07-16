@@ -115,7 +115,7 @@ void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetAccountAlias(string company="", int number=NULL);;
 string   GetAccountCompany();;
-int      GetAccountNumberFromAlias(string accountCompany, string accountAlias);;
+int      GetAccountNumberFromAlias(string company, string alias);;
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots = 1.0);;
 string   GetCurrency(int id);;
