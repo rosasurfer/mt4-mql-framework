@@ -643,7 +643,7 @@ int GetIniSections(string fileName, string &names[]) {
  *
  * @return string - directory name or an empty string in case of errors
  */
-string GetServerName() {
+string GetAccountServer() {
    // Der Servername wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
@@ -664,20 +664,20 @@ string GetServerName() {
 
       if (!StringLen(serverName)) {
          // create temporary file
-         tmpFilename = "~GetServerName~"+ GetCurrentThreadId() +".tmp";
+         tmpFilename = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
          int hFile = FileOpenHistory(tmpFilename, FILE_BIN|FILE_WRITE);
 
          if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
             int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) log("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                               catch("GetServerName(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
+            if (error == ERR_CANNOT_OPEN_FILE) log("GetAccountServer(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                               catch("GetAccountServer(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
             return(EMPTY_STR);
          }
          FileClose(hFile);
 
          // search the created file
          string pattern = GetTerminalDataPathA() +"\\history\\*";
-         //debug("GetServerName(3)  searching "+ DoubleQuoteStr(pattern));
+         //debug("GetAccountServer(3)  searching "+ DoubleQuoteStr(pattern));
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
@@ -695,14 +695,14 @@ string GetServerName() {
             }
             next = FindNextFileA(hFindDir, wfd);
          }
-         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
+         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServer(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
       }
 
-      if (IsError(catch("GetServerName(5)"))) return( EMPTY_STR);
-      if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
+      if (IsError(catch("GetAccountServer(5)"))) return( EMPTY_STR);
+      if (!StringLen(serverName))                return(_EMPTY_STR(catch("GetAccountServer(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
       static.serverName[0] = serverName;
    }
@@ -4266,7 +4266,7 @@ string GetServerTimezone() {
    // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
    // aktiv ist.
    //
-   // @see  analoge Logik in GetServerName()
+   // @see  analoge Logik in GetAccountServer()
    //
    static string static.timezone[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
@@ -4279,7 +4279,7 @@ string GetServerTimezone() {
 
 
    if (!StringLen(static.timezone[0])) {
-      string server = GetServerName(); if (!StringLen(server)) return("");
+      string server = GetAccountServer(); if (!StringLen(server)) return("");
 
       // look-up server name
       string timezone = GetGlobalConfigString("Timezones", server);

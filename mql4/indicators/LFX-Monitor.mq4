@@ -198,7 +198,7 @@ int onInit() {
    }
 
    // setup the chart ticker
-   if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetServerName(), "XTrade-")) {
+   if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetAccountServer(), "XTrade-")) {
       int hWnd = __ExecutionContext[EC.hChart];
       int milliseconds = 500;
       int timerId = SetupTickTimer(hWnd, milliseconds, NULL);
