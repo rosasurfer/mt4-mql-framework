@@ -3969,11 +3969,34 @@ double GetExternalAssets(string companyId, string accountId, bool refresh = fals
 
 
 /**
- * Resolve the alias name of the account company. The alias name is derived from the prefix of the account's trade server,
- * not from the built-in function AccountCompany(). Different trade server prefixes can be mapped via the configuration to
- * the same account company alias. If no mapping for a prefix is found the prefix is the resulting alias name.
+ * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numeric
+ * characters only.
  *
- * @return string - alias name or an empty string in case of errors
+ * @return string - company identifier or an empty string in case of errors
+ *
+ *
+ * Among others the identifier is used for reading/writing company-wide configurations or log messages. It is derived from
+ * the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
+ * (see below) the returned default identifier matches the first word of the current trade server name.
+ *
+ * Example:
+ * +--------------------+----------------------------+
+ * | Trade server name  | Default company identifier |
+ * +--------------------+----------------------------+
+ * | Alpari-Standard1   | Alpari                     |
+ * +--------------------+----------------------------+
+ *
+ * Via the framework configuration a default company indentifier can be mapped to a different identifier.
+ *
+ * Example:
+ * +--------------------+----------------------------+---------------------------+
+ * | Trade server name  | Default company identifier | Mapped company identifier |
+ * +--------------------+----------------------------+---------------------------+
+ * | Alpari-Standard1   | Alpari                     | -                         |
+ * | AlpariUK-Classic-1 | AlpariUK                   | Alpari                    |
+ * +--------------------+----------------------------+---------------------------+
+ *
+ * Note: For the long and elaborated company name use the built-in function AccountCompany().
  */
 string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
@@ -3984,53 +4007,53 @@ string GetAccountCompany() {
    string server = GetServerName(); if (!StringLen(server)) return("");
    string name = StrLeftTo(server, "-"), lName = StrToLower(name);
 
-   if (lName == "alpari"            ) return(AC.Alpari          );
-   if (lName == "alparibroker"      ) return(AC.Alpari          );
-   if (lName == "alpariuk"          ) return(AC.Alpari          );
-   if (lName == "alparius"          ) return(AC.Alpari          );
-   if (lName == "apbgtrading"       ) return(AC.APBG            );
-   if (lName == "atcbrokers"        ) return(AC.ATCBrokers      );
-   if (lName == "atcbrokersest"     ) return(AC.ATCBrokers      );
-   if (lName == "atcbrokersliq1"    ) return(AC.ATCBrokers      );
-   if (lName == "axitrader"         ) return(AC.AxiTrader       );
-   if (lName == "axitraderusa"      ) return(AC.AxiTrader       );
-   if (lName == "broco"             ) return(AC.BroCo           );
-   if (lName == "brocoinvestments"  ) return(AC.BroCo           );
-   if (lName == "cmap"              ) return(AC.ICMarkets       );     // demo
-   if (lName == "collectivefx"      ) return(AC.CollectiveFX    );
-   if (lName == "dukascopy"         ) return(AC.Dukascopy       );
-   if (lName == "easyforex"         ) return(AC.EasyForex       );
-   if (lName == "finfx"             ) return(AC.FinFX           );
-   if (lName == "forex"             ) return(AC.ForexLtd        );
-   if (lName == "forexbaltic"       ) return(AC.FBCapital       );
-   if (lName == "fxopen"            ) return(AC.FXOpen          );
-   if (lName == "fxprimus"          ) return(AC.FXPrimus        );
-   if (lName == "fxpro.com"         ) return(AC.FxPro           );
-   if (lName == "fxdd"              ) return(AC.FXDD            );
-   if (lName == "gci"               ) return(AC.GCI             );
-   if (lName == "gcmfx"             ) return(AC.Gallant         );
-   if (lName == "gftforex"          ) return(AC.GFT             );
-   if (lName == "globalprime"       ) return(AC.GlobalPrime     );
-   if (lName == "icmarkets"         ) return(AC.ICMarkets       );
-   if (lName == "inovatrade"        ) return(AC.InovaTrade      );
-   if (lName == "integral"          ) return(AC.GlobalPrime     );     // demo
-   if (lName == "investorseurope"   ) return(AC.InvestorsEurope );
-   if (lName == "jfd"               ) return(AC.JFDBrokers      );
-   if (lName == "liteforex"         ) return(AC.LiteForex       );
-   if (lName == "londoncapitalgr"   ) return(AC.LondonCapital   );
-   if (lName == "londoncapitalgroup") return(AC.LondonCapital   );
-   if (lName == "mbtrading"         ) return(AC.MBTrading       );
-   if (lName == "metaquotes"        ) return(AC.MetaQuotes      );
-   if (lName == "migbank"           ) return(AC.MIG             );
-   if (lName == "oanda"             ) return(AC.Oanda           );
-   if (lName == "pepperstone"       ) return(AC.Pepperstone     );
-   if (lName == "primexm"           ) return(AC.PrimeXM         );
-   if (lName == "sig"               ) return(AC.LiteForex       );
-   if (lName == "sts"               ) return(AC.STS             );
-   if (lName == "teletrade"         ) return(AC.TeleTrade       );
-   if (lName == "teletradecy"       ) return(AC.TeleTrade       );
-   if (lName == "tickmill"          ) return(AC.TickMill        );
-   if (lName == "xtrade"            ) return(AC.XTrade          );
+   if (lName == "alpari"            ) return("Alpari"         );
+   if (lName == "alparibroker"      ) return("Alpari"         );
+   if (lName == "alpariuk"          ) return("Alpari"         );
+   if (lName == "alparius"          ) return("Alpari"         );
+   if (lName == "apbgtrading"       ) return("APBG"           );
+   if (lName == "atcbrokers"        ) return("ATCBrokers"     );
+   if (lName == "atcbrokersest"     ) return("ATCBrokers"     );
+   if (lName == "atcbrokersliq1"    ) return("ATCBrokers"     );
+   if (lName == "axitrader"         ) return("AxiTrader"      );
+   if (lName == "axitraderusa"      ) return("AxiTrader"      );
+   if (lName == "broco"             ) return("BroCo"          );
+   if (lName == "brocoinvestments"  ) return("BroCo"          );
+   if (lName == "cmap"              ) return("ICMarkets"      );     // demo
+   if (lName == "collectivefx"      ) return("CollectiveFX"   );
+   if (lName == "dukascopy"         ) return("Dukascopy"      );
+   if (lName == "easyforex"         ) return("EasyForex"      );
+   if (lName == "finfx"             ) return("FinFX"          );
+   if (lName == "forex"             ) return("ForexLtd"       );
+   if (lName == "forexbaltic"       ) return("FBCapital"      );
+   if (lName == "fxopen"            ) return("FXOpen"         );
+   if (lName == "fxprimus"          ) return("FXPrimus"       );
+   if (lName == "fxpro.com"         ) return("FxPro"          );
+   if (lName == "fxdd"              ) return("FXDD"           );
+   if (lName == "gci"               ) return("GCI"            );
+   if (lName == "gcmfx"             ) return("Gallant"        );
+   if (lName == "gftforex"          ) return("GFT"            );
+   if (lName == "globalprime"       ) return("GlobalPrime"    );
+   if (lName == "icmarkets"         ) return("ICMarkets"      );
+   if (lName == "inovatrade"        ) return("InovaTrade"     );
+   if (lName == "integral"          ) return("GlobalPrime"    );     // demo
+   if (lName == "investorseurope"   ) return("InvestorsEurope");
+   if (lName == "jfd"               ) return("JFDBrokers"     );
+   if (lName == "liteforex"         ) return("LiteForex"      );
+   if (lName == "londoncapitalgr"   ) return("LondonCapital"  );
+   if (lName == "londoncapitalgroup") return("LondonCapital"  );
+   if (lName == "mbtrading"         ) return("MBTrading"      );
+   if (lName == "metaquotes"        ) return("MetaQuotes"     );
+   if (lName == "migbank"           ) return("MIG"            );
+   if (lName == "oanda"             ) return("Oanda"          );
+   if (lName == "pepperstone"       ) return("Pepperstone"    );
+   if (lName == "primexm"           ) return("PrimeXM"        );
+   if (lName == "sig"               ) return("LiteForex"      );
+   if (lName == "sts"               ) return("STS"            );
+   if (lName == "teletrade"         ) return("TeleTrade"      );
+   if (lName == "teletradecy"       ) return("TeleTrade"      );
+   if (lName == "tickmill"          ) return("TickMill"       );
+   if (lName == "xtrade"            ) return("XTrade"         );
 
    debug("GetAccountCompany(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
    return(name);
