@@ -114,7 +114,7 @@ int      Floor(double value);;
 void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetAccountAlias(string accountCompany, int accountNumber);;
-string   GetAccountCompanyAlias();;
+string   GetAccountCompany();;
 int      GetAccountNumberFromAlias(string accountCompany, string accountAlias);;
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots = 1.0);;

@@ -121,7 +121,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             alerted = true;
          }
          if (IsExpert()) {
-            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompanyAlias(), GetAccountNumber()) +")";
+            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompany(), GetAccountNumber()) +")";
             if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
             if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
@@ -188,7 +188,7 @@ int warn(string message, int error = NO_ERROR) {
          alerted = true;
       }
       if (IsExpert()) {
-         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompanyAlias(), GetAccountNumber()) +")";
+         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(GetAccountCompany(), GetAccountNumber()) +")";
          if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
@@ -1098,7 +1098,7 @@ double GetCommission(double lots = 1.0) {
       }
       else {
          // TODO: if (is_CFD) rate = 0;
-         string company  = GetAccountCompanyAlias(); if (!StringLen(company)) return(EMPTY);
+         string company  = GetAccountCompany(); if (!StringLen(company)) return(EMPTY);
          string currency = AccountCurrency();
          int    account  = GetAccountNumber(); if (!account) return(EMPTY);
 
@@ -3975,7 +3975,7 @@ double GetExternalAssets(string companyId, string accountId, bool refresh = fals
  *
  * @return string - alias name or an empty string in case of errors
  */
-string GetAccountCompanyAlias() {
+string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
@@ -4032,7 +4032,7 @@ string GetAccountCompanyAlias() {
    if (lName == "tickmill"          ) return(AC.TickMill        );
    if (lName == "xtrade"            ) return(AC.XTrade          );
 
-   debug("GetAccountCompanyAlias(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
+   debug("GetAccountCompany(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
    return(name);
 }
 
@@ -6685,7 +6685,7 @@ void __DummyCalls() {
    ForceAlert(NULL);
    GE(NULL, NULL);
    GetAccountAlias(NULL, NULL);
-   GetAccountCompanyAlias();
+   GetAccountCompany();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
    GetCommission();

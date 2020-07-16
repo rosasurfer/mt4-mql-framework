@@ -83,8 +83,8 @@ bool InitTradeAccount(string accountKey="") {
 
    if (!StringLen(accountKey)) {
       // kein Account-Parameter angegeben: aktuellen Account bestimmen und durch einen ggf. konfigurierten TradeAccount ersetzen
-      _accountCompany = GetAccountCompanyAlias(); if (!StringLen(_accountCompany)) return(false);
-      _accountNumber  = GetAccountNumber();       if (!_accountNumber)             return(false);
+      _accountCompany = GetAccountCompany(); if (!StringLen(_accountCompany)) return(false);
+      _accountNumber  = GetAccountNumber();  if (!_accountNumber)             return(false);
 
       string file    = GetAccountConfigPath();
       string section = "General";
@@ -146,7 +146,7 @@ bool InitTradeAccount(string accountKey="") {
 
 
    // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   mode.intern = (_accountCompany==GetAccountCompanyAlias() && _accountNumber==GetAccountNumber());
+   mode.intern = (_accountCompany==GetAccountCompany() && _accountNumber==GetAccountNumber());
    mode.extern = !mode.intern;
 
    tradeAccount.company  = _accountCompany;
