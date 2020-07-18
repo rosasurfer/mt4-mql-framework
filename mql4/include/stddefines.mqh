@@ -70,10 +70,7 @@ string   __Timezones[] = {
 
 // special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // -2147483648: kleinster negativer Integer-Value (signed)               (datetime)(uint)INT_MIN = '1901-12-13 20:45:52'
-#define INT_MAX            0x7FFFFFFF                       //  2147483647: größter positiver Integer-Value (signed)                 (datetime)(uint)INT_MAX = '2038-01-19 03:14:07'
-#define EMPTY_STR                  ""                       //                                                                                 min(datetime) = '1970-01-01 00:00:00'
-#define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                 max(datetime) = '2037-12-31 23:59:59'
+#define EMPTY_STR                  ""
 #define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
@@ -729,79 +726,3 @@ double  N_INF;                                              // -1.#INF: negative
 #define STAT_PROFIT_LONGTRADES           99999  // Profitable long trades int
 #define STAT_PROFITTRADES_AVGCON         99999  // Average length of a profitable series of trades int
 #define STAT_LOSSTRADES_AVGCON           99999  // Average length of a losing series of trades int
-
-
-// AccountCompany-ShortNames
-#define AC.Alpari                        "Alpari"
-#define AC.APBG                          "APBG"
-#define AC.ATCBrokers                    "ATCBrokers"
-#define AC.AxiTrader                     "AxiTrader"
-#define AC.BroCo                         "BroCo"
-#define AC.CollectiveFX                  "CollectiveFX"
-#define AC.Dukascopy                     "Dukascopy"
-#define AC.EasyForex                     "EasyForex"
-#define AC.FBCapital                     "FBCapital"
-#define AC.FinFX                         "FinFX"
-#define AC.ForexLtd                      "ForexLtd"
-#define AC.FXPrimus                      "FXPrimus"
-#define AC.FXDD                          "FXDD"
-#define AC.FXOpen                        "FXOpen"
-#define AC.FxPro                         "FxPro"
-#define AC.Gallant                       "Gallant"
-#define AC.GCI                           "GCI"
-#define AC.GFT                           "GFT"
-#define AC.GlobalPrime                   "GlobalPrime"
-#define AC.ICMarkets                     "ICMarkets"
-#define AC.InovaTrade                    "InovaTrade"
-#define AC.InvestorsEurope               "InvestorsEurope"
-#define AC.JFDBrokers                    "JFDBrokers"
-#define AC.LiteForex                     "LiteForex"
-#define AC.LondonCapital                 "LondonCapital"
-#define AC.MBTrading                     "MBTrading"
-#define AC.MetaQuotes                    "MetaQuotes"
-#define AC.MIG                           "MIG"
-#define AC.Oanda                         "Oanda"
-#define AC.Pepperstone                   "Pepperstone"
-#define AC.PrimeXM                       "PrimeXM"
-#define AC.STS                           "STS"
-#define AC.TeleTrade                     "TeleTrade"
-#define AC.TickMill                      "TickMill"
-#define AC.XTrade                        "XTrade"
-
-
-// AccountCompany-ID's
-#define AC_ID.Alpari                     1001
-#define AC_ID.APBG                       1002
-#define AC_ID.ATCBrokers                 1003
-#define AC_ID.AxiTrader                  1004
-#define AC_ID.BroCo                      1005
-#define AC_ID.CollectiveFX               1006
-#define AC_ID.Dukascopy                  1007
-#define AC_ID.EasyForex                  1008
-#define AC_ID.FBCapital                  1009
-#define AC_ID.FinFX                      1010
-#define AC_ID.ForexLtd                   1011
-#define AC_ID.FXPrimus                   1012
-#define AC_ID.FXDD                       1013
-#define AC_ID.FXOpen                     1014
-#define AC_ID.FxPro                      1015
-#define AC_ID.Gallant                    1016
-#define AC_ID.GCI                        1017
-#define AC_ID.GFT                        1018
-#define AC_ID.GlobalPrime                1019
-#define AC_ID.ICMarkets                  1020
-#define AC_ID.InovaTrade                 1021
-#define AC_ID.InvestorsEurope            1022
-#define AC_ID.JFDBrokers                 1023
-#define AC_ID.LiteForex                  1024
-#define AC_ID.LondonCapital              1025
-#define AC_ID.MBTrading                  1026
-#define AC_ID.MetaQuotes                 1027
-#define AC_ID.MIG                        1028
-#define AC_ID.Oanda                      1029
-#define AC_ID.Pepperstone                1030
-#define AC_ID.PrimeXM                    1031
-#define AC_ID.STS                        1032
-#define AC_ID.TeleTrade                  1033
-#define AC_ID.TickMill                   1034
-#define AC_ID.XTrade                     1035

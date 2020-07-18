@@ -134,7 +134,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    if (digits < 0)                            return(!catch("HistorySet.Create(4)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(5)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
-   if (!StringLen(server)) server = GetServerName();
+   if (!StringLen(server)) server = GetAccountServer();
 
 
    // (1) offene Set-Handles durchsuchen und Sets schließen
@@ -265,7 +265,7 @@ int HistorySet.Get(string symbol, string server="") {
    if (StrContains(symbol, " "))              return(!catch("HistorySet.Get(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
    if (server == "0")      server = "";                                 // (string) NULL
-   if (!StringLen(server)) server = GetServerName();
+   if (!StringLen(server)) server = GetAccountServer();
 
 
    // (1) offene Set-Handles durchsuchen
@@ -458,7 +458,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    bool read_write =  (mode & FILE_READ) && (mode & FILE_WRITE);
 
    if (server == "0")      server = "";                                             // (string) NULL
-   if (!StringLen(server)) server = GetServerName();
+   if (!StringLen(server)) server = GetAccountServer();
 
 
    // (1) Datei öffnen
@@ -1671,7 +1671,7 @@ int CreateSymbol(string symbol, string description, string group, int digits, st
  */
 int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(EMPTY);
+   if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(EMPTY);
 
    ArrayResize(sgs, 0);
 
@@ -1766,7 +1766,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (byteSize % SYMBOL_GROUP.size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR));
    if (byteSize > 32*SYMBOL_GROUP.size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(false);
+   if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
 
    // "symgroups.raw" muß immer 32 Gruppen enthalten (ggf. undefiniert)
    int sgs.copy[]; ArrayResize(sgs.copy, 0);
@@ -1849,7 +1849,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string name, newName=symbol_Name(symbol);
    if (!StringLen(newName))                                                        return(!catch("InsertSymbol(2)  invalid parameter symbol[], SYMBOL.name = "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
-   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(false);
+   if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
 
 
    // (1.1) Symboldatei öffnen und Größe validieren

@@ -198,7 +198,7 @@ int onInit() {
    }
 
    // setup the chart ticker
-   if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetServerName(), "XTrade-")) {
+   if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetAccountServer(), "XTrade-")) {
       int hWnd = __ExecutionContext[EC.hChart];
       int milliseconds = 500;
       int timerId = SetupTickTimer(hWnd, milliseconds, NULL);
@@ -839,31 +839,31 @@ bool UpdateAccountDisplay() {
 
 
 /**
- * Speichert die Laufzeitkonfiguration im Fenster (für init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
+ * Store the runtime configuration in the chart window (init cycles and template reload) and in the chart (terminal restart).
  *
- *  (1) string tradeAccount.company, int tradeAccount.number
+ * vars: string tradeAccount.company
+ *       int    tradeAccount.number
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool StoreRuntimeStatus() {
-   // (1) string tradeAccount.company, int tradeAccount.number
-   // Company-ID im Fenster speichern
+   // store company alias in chart window
    int    hWnd = __ExecutionContext[EC.hChart];
-   string key  = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
+   string key  = __NAME() +".runtime.tradeAccount.company";       // TODO: add program pid and manage keys globally
+   SetWindowStringA(hWnd, key, tradeAccount.company);
 
-   // Company-ID im Chart speichern
+   // store company alias in chart
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, ""+ AccountCompanyId(tradeAccount.company));
+   ObjectSetText(key, tradeAccount.company);
 
-   // AccountNumber im Fenster speichern
-   key = __NAME() +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   SetWindowProperty(hWnd, key, tradeAccount.number);
+   // store account number in chart window
+   key = __NAME() +".runtime.tradeAccount.number";                // TODO: add program pid and manage keys globally
+   SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
-   // AccountNumber im Chart speichern
+   // store account number in chart
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
@@ -875,51 +875,42 @@ bool StoreRuntimeStatus() {
 
 
 /**
- * Restauriert eine im Fenster oder im Chart gespeicherte Laufzeitkonfiguration.
+ * Restore the runtime configuration from the chart and/or chart window.
  *
- *  (1) string tradeAccount.company, int tradeAccount.number
+ * vars: string tradeAccount.company
+ *       int    tradeAccount.number
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool RestoreRuntimeStatus() {
-   // (1) string tradeAccount.company, int tradeAccount.number
-   int companyId, accountNumber;
-   // Company-ID im Fenster suchen
-   int    hWnd    = __ExecutionContext[EC.hChart];
-   string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int    value   = GetWindowProperty(hWnd, key);
-   bool   success = (value != 0);
-   // bei Mißerfolg Company-ID im Chart suchen
-   if (!success) {
-      if (ObjectFind(key) == 0) {
-         value   = StrToInteger(ObjectDescription(key));
-         success = (value != 0);
-      }
+   // lookup company alias in chart window
+   int    hWnd = __ExecutionContext[EC.hChart];
+   string key  = __NAME() +".runtime.tradeAccount.company";       // TODO: add program pid and manage keys globally
+   string company = GetWindowStringA(hWnd, key);
+   if (!StringLen(company)) {
+      // lookup company alias in chart
+      if (ObjectFind(key) == 0)
+         company = ObjectDescription(key);
    }
-   if (success) companyId = value;
 
-   // AccountNumber im Fenster suchen
-   key     = __NAME() +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   value   = GetWindowProperty(hWnd, key);
-   success = (value != 0);
-   // bei Mißerfolg AccountNumber im Chart suchen
-   if (!success) {
-      if (ObjectFind(key) == 0) {
-         value   = StrToInteger(ObjectDescription(key));
-         success = (value != 0);
-      }
+   // lookup account number in chart window
+   key = __NAME() +".runtime.tradeAccount.number";                // TODO: add program pid and manage keys globally
+   int accountNumber = GetWindowIntegerA(hWnd, key);
+   if (!accountNumber) {
+      // lookup account number in chart
+      if (ObjectFind(key) == 0)
+         accountNumber = StrToInteger(ObjectDescription(key));
    }
-   if (success) accountNumber = value;
 
-   // Account restaurieren
-   if (companyId && accountNumber) {
-      string company = tradeAccount.company;
-      int    number  = tradeAccount.number;
+   // restore account data
+   if (StringLen(company) && accountNumber) {
+      string oldCompany    = tradeAccount.company;
+      int oldAccountNumber = tradeAccount.number;
 
-      if (!InitTradeAccount(companyId +":"+ accountNumber)) return(false);
-      if (tradeAccount.company!=company || tradeAccount.number!=number) {
-         if (!UpdateAccountDisplay())                       return(false);
-         if (!RefreshLfxOrders())                           return(false);
+      if (!InitTradeAccount(company +":"+ accountNumber)) return(false);
+      if (tradeAccount.company!=oldCompany || tradeAccount.number!=oldAccountNumber) {
+         if (!UpdateAccountDisplay())                     return(false);
+         if (!RefreshLfxOrders())                         return(false);
       }
    }
    return(!catch("RestoreRuntimeStatus(1)"));

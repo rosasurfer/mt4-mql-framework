@@ -1,13 +1,15 @@
 /**
- * Constants shared by MQL framework and MT4Expander (C++).
+ * Constants shared by MQL4 and the MT4Expander (C++).
  */
 
 
 // special constants
 #define EMPTY                          0xFFFFFFFF        // -1
-#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)
-#define NaT                            0x80000000        // Not-a-Time: invalid datetime value (INT_MIN)
-#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32 bit pointer (x86)
+#define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)           min(datetime) = '1970-01-01 00:00:00'
+#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)                        max(datetime) = '2037-12-31 23:59:59'
+#define NaT                               INT_MIN        // Not-a-Time: invalid datetime value                       (datetime)INT_MIN = '1901-12-13 20:45:52'
+#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32 bit pointer (x86)            (datetime)INT_MAX = '2038-01-19 03:14:07'
+
 #define MAX_ORDER_COMMENT_LENGTH               27
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11

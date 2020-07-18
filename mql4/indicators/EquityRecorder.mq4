@@ -133,7 +133,7 @@ bool CollectAccountData() {
 
    // calculate resulting equity values
    double fullPL          = SumDoubles(symbolProfits);
-   double externalAssets  = GetExternalAssets(ShortAccountCompany(), GetAccountNumber()); if (IsEmptyValue(externalAssets)) return(false);
+   double externalAssets  = GetExternalAssets(GetAccountCompany(), GetAccountNumber()); if (IsEmptyValue(externalAssets)) return(false);
 
    currentEquity[I_ACCOUNT            ] = NormalizeDouble(AccountBalance()         + fullPL,         2);
    currentEquity[I_ACCOUNT_PLUS_ASSETS] = NormalizeDouble(currentEquity[I_ACCOUNT] + externalAssets, 2);

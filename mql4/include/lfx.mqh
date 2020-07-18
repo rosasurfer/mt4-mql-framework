@@ -61,8 +61,8 @@ bool InitTradeAccount(string accountKey="") {
    if (accountKey == "0")                                            // (string) NULL
       accountKey = "";
 
-   // Im Verlauf modifizierte (globale) Variablen
-   // -------------------------------------------
+   // Im Verlauf modifizierte globale Variablen
+   // -----------------------------------------
    // bool   mode.intern;
    // bool   mode.extern;
    //
@@ -83,8 +83,8 @@ bool InitTradeAccount(string accountKey="") {
 
    if (!StringLen(accountKey)) {
       // kein Account-Parameter angegeben: aktuellen Account bestimmen und durch einen ggf. konfigurierten TradeAccount ersetzen
-      _accountCompany = ShortAccountCompany(); if (!StringLen(_accountCompany))                                   return(false);
-      _accountNumber  = GetAccountNumber();    if (!_accountNumber)                                               return(false);
+      _accountCompany = GetAccountCompany(); if (!StringLen(_accountCompany)) return(false);
+      _accountNumber  = GetAccountNumber();  if (!_accountNumber)             return(false);
 
       string file    = GetAccountConfigPath();
       string section = "General";
@@ -92,37 +92,26 @@ bool InitTradeAccount(string accountKey="") {
 
       string sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue))                                                                                 return(_true(warn("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
-         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                                              return(_true(warn("InitTradeAccount(2)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
+         if (!StrIsDigit(sValue))                                                                       return(_true(warn("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
+         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                                    return(_true(warn("InitTradeAccount(2)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
 
          section = "Accounts";
          key     = _accountNumber +".company";
-         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                   return(_true(warn("InitTradeAccount(3)  missing global account setting ["+ section +"]->"+ key)));
+         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                         return(_true(warn("InitTradeAccount(3)  missing global account setting ["+ section +"]->"+ key)));
          _accountCompany = sValue;
       }
    }
    else {
       // Account-Parameter validieren und Account ermitteln
-      string sCompanyKey = StrLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                            return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
-      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                            return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
-
-      bool sCompanyKey.isDigit = StrIsDigit(sCompanyKey);
-      bool sAccountKey.isDigit = StrIsDigit(sAccountKey);
-
-      // sCompanyKey zuordnen
-      if (sCompanyKey.isDigit) {
-         _accountCompany = ShortAccountCompanyFromId(StrToInteger(sCompanyKey)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(6)  unsupported account key = \""+ accountKey +"\"")));
-      }
-      else {
-         _accountCompany = sCompanyKey; if (!IsShortAccountCompany(_accountCompany))                              return(_true(warn("InitTradeAccount(7)  unsupported account key = \""+ accountKey +"\"")));
-      }
+      _accountCompany = StrLeftTo(accountKey, ":"); if (!StringLen(_accountCompany))                    return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey \""+ accountKey +"\"")));
 
       // sAccountKey zuordnen
-      if (sAccountKey.isDigit) {
-         _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                                         return(_true(warn("InitTradeAccount(8)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                  return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey \""+ accountKey +"\"")));
+      if (StrIsDigit(sAccountKey)) {
+         _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                               return(_true(warn("InitTradeAccount(6)  invalid parameter accountKey \""+ accountKey +"\"")));
       }
       else {
-         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber)              return(_true(warn("InitTradeAccount(9)  unsupported account key = \""+ accountKey +"\"")));
+         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber) return(_true(warn("InitTradeAccount(7)  unsupported account key \""+ accountKey +"\"")));
       }
    }
 
@@ -133,31 +122,31 @@ bool InitTradeAccount(string accountKey="") {
 
 
    // Restliche Variablen ermitteln
-   _accountAlias = GetAccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))               return(_true(warn("InitTradeAccount(10)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
+   _accountAlias = GetAccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))     return(_true(warn("InitTradeAccount(8)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
 
    // AccountCurrency
    section = "Accounts";
    key     = _accountNumber +".currency";
-   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key)));
-   if (!IsCurrency(sValue))                                                                                       return(_true(warn("InitTradeAccount(12)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
+   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                               return(_true(warn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key)));
+   if (!IsCurrency(sValue))                                                                             return(_true(warn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
    _accountCurrency = StrToUpper(sValue);
 
    // AccountType
    section = "Accounts";
    key     = _accountNumber +".type";
-   sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                             return(_true(warn("InitTradeAccount(13)  missing global account setting ["+ section +"]->"+ key)));
+   sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                   return(_true(warn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key)));
    if      (sValue == "demo") _accountType = ACCOUNT_TYPE_DEMO;
-   else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                              return(_true(warn("InitTradeAccount(14)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
+   else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                    return(_true(warn("InitTradeAccount(12)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
 
    // AccountName
    section = "Accounts";
    key     = _accountNumber +".name";
-   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(15)  missing global account setting ["+ section +"]->"+ key)));
+   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                               return(_true(warn("InitTradeAccount(13)  missing global account setting ["+ section +"]->"+ key)));
    _accountName = sValue;
 
 
    // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   mode.intern = (_accountCompany==ShortAccountCompany() && _accountNumber==GetAccountNumber());
+   mode.intern = (_accountCompany==GetAccountCompany() && _accountNumber==GetAccountNumber());
    mode.extern = !mode.intern;
 
    tradeAccount.company  = _accountCompany;
@@ -1213,8 +1202,8 @@ bool QC.StartLfxSender(int cid) {
       return(!catch("QC.StartLfxSender(1)  illegal parameter cid = "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
    if (hQC.TradeToLfxSenders[cid] > 0)
       return(true);
-                                                                     // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
-   qc.TradeToLfxChannels[cid] = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
+                                                                     // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"
+   qc.TradeToLfxChannels[cid] = tradeAccount.company +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
    hQC.TradeToLfxSenders[cid] = QC_StartSender(qc.TradeToLfxChannels[cid]);
    if (!hQC.TradeToLfxSenders[cid])
       return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel="+ DoubleQuoteStr(qc.TradeToLfxChannels[cid]) +")", ERR_WIN32_ERROR));
@@ -1252,8 +1241,8 @@ bool QC.StartLfxReceiver() {
    if (!__CHART())                       return(false);
    if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
-   int hWnd = __ExecutionContext[EC.hChart];                         // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
-   qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
+   int hWnd = __ExecutionContext[EC.hChart];                         // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"
+   qc.TradeToLfxChannel = tradeAccount.company +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
 
    hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
    if (!hQC.TradeToLfxReceiver)
