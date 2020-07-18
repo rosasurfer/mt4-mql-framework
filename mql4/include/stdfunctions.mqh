@@ -121,7 +121,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             alerted = true;
          }
          if (IsExpert()) {
-            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
             if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
             if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
@@ -188,7 +188,7 @@ int warn(string message, int error = NO_ERROR) {
          alerted = true;
       }
       if (IsExpert()) {
-         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
          if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
@@ -1098,9 +1098,9 @@ double GetCommission(double lots = 1.0) {
       }
       else {
          // TODO: if (is_CFD) rate = 0;
-         string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
+         string company  = GetAccountCompany(); if (!StringLen(company)) return(EMPTY);
          string currency = AccountCurrency();
-         int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
+         int    account  = GetAccountNumber(); if (!account) return(EMPTY);
 
          string section = "Commissions";
          string key     = company +"."+ currency +"."+ account;
@@ -2091,7 +2091,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
          return(StrSubstr(value, start-1 + StringLen(substring)));
       }
 
-      return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY_STR(catch("StrRightFrom(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
       //pos = StringFindEx(value, substring, count);
       //return(StrSubstr(value, pos + StringLen(substring)));
    }
@@ -3937,313 +3937,115 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Gibt den Wert der extern verwalteten Assets eines Accounts zurück.
+ * Get the configured value of externally hold assets of an account. The returned value can be negative to scale-down an
+ * account's size (e.g. for testing in a real account).
  *
- * @param  string companyId - AccountCompany-Identifier
- * @param  string accountId - Account-Identifier
+ * @param  string companyId          - account company identifier
+ * @param  string accountId          - account identifier
+ * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
  *
- * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalAssets(string companyId, string accountId) {
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
+double GetExternalAssets(string companyId, string accountId, bool refresh = false) {
+   refresh = refresh!=0;
+   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId: "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
-   static string lastCompanyId;
-   static string lastAccountId;
-   static double lastAuM;
+   static string lastCompanyId = "";
+   static string lastAccountId = "";
+   static double lastResult;
 
-   if (companyId!=lastCompanyId || accountId!=lastAccountId) {
-      double aum = RefreshExternalAssets(companyId, accountId);
-      if (IsEmptyValue(aum))
-         return(EMPTY_VALUE);
+   if (refresh || companyId!=lastCompanyId || accountId!=lastAccountId) {
+      string file  = GetAccountConfigPath(companyId, accountId);
+      double value = GetIniDouble(file, "General", "ExternalAssets");
+      if (IsEmptyValue(value)) return(EMPTY_VALUE);
 
       lastCompanyId = companyId;
       lastAccountId = accountId;
-      lastAuM       = aum;
+      lastResult    = value;
    }
-   return(lastAuM);
+   return(lastResult);
 }
 
 
 /**
- * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.  Der konfigurierte Wert kann negativ
- * sein, um die Accountgröße herunterzuskalieren (z.B. zum Testen einer Strategie im Real-Account).
+ * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
+ * characters only.
  *
- * @param  string companyId - AccountCompany-Identifier
- * @param  string accountId - Account-Identifier
+ * Among others the identifier is used for reading/writing company-wide configurations and for composing log messages. It is
+ * derived from the name of the current trade server. If the trade server is not explicitely mapped to a different company
+ * identifier (see below) the returned default identifier matches the first word of the current trade server name.
  *
- * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return string - company identifier or an empty string in case of errors
+ *
+ * Example:
+ * +--------------------+----------------------------+
+ * | Trade server name  | Default company identifier |
+ * +--------------------+----------------------------+
+ * | Alpari-Standard1   | Alpari                     |
+ * +--------------------+----------------------------+
+ *
+ * Via the global framework configuration a default company indentifier can be mapped to a different one.
+ *
+ * Example:
+ * +--------------------+----------------------------+---------------------------+
+ * | Trade server name  | Default company identifier | Mapped company identifier |
+ * +--------------------+----------------------------+---------------------------+
+ * | Alpari-Standard1   | Alpari                     | -                         |
+ * | AlpariUK-Classic-1 | AlpariUK                   | Alpari                    |
+ * +--------------------+----------------------------+---------------------------+
+ *
+ * Note: For the long and elaborated company name use the built-in function AccountCompany().
  */
-double RefreshExternalAssets(string companyId, string accountId) {
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
-
-   string file    = GetAccountConfigPath(companyId, accountId);
-   string section = "General";
-   string key     = "AuM.Value";
-   double value   = GetIniDouble(file, section, key);
-
-   return(value);
-}
-
-
-/**
- * Ermittelt den Kurznamen der Firma des aktuellen Accounts. Der Name wird vom Namen des Trade-Servers abgeleitet, nicht vom
- * Rückgabewert von AccountCompany().
- *
- * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
- */
-string ShortAccountCompany() {
+string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
+   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    //
-   string server = GetServerName(); if (!StringLen(server)) return("");
-   string name = StrLeftTo(server, "-"), lName = StrToLower(name);
+   string server = GetAccountServer(); if (!StringLen(server)) return("");
+   string name = StrLeftTo(server, "-");
 
-   if (lName == "alpari"            ) return(AC.Alpari          );
-   if (lName == "alparibroker"      ) return(AC.Alpari          );
-   if (lName == "alpariuk"          ) return(AC.Alpari          );
-   if (lName == "alparius"          ) return(AC.Alpari          );
-   if (lName == "apbgtrading"       ) return(AC.APBG            );
-   if (lName == "atcbrokers"        ) return(AC.ATCBrokers      );
-   if (lName == "atcbrokersest"     ) return(AC.ATCBrokers      );
-   if (lName == "atcbrokersliq1"    ) return(AC.ATCBrokers      );
-   if (lName == "axitrader"         ) return(AC.AxiTrader       );
-   if (lName == "axitraderusa"      ) return(AC.AxiTrader       );
-   if (lName == "broco"             ) return(AC.BroCo           );
-   if (lName == "brocoinvestments"  ) return(AC.BroCo           );
-   if (lName == "cmap"              ) return(AC.ICMarkets       );     // demo
-   if (lName == "collectivefx"      ) return(AC.CollectiveFX    );
-   if (lName == "dukascopy"         ) return(AC.Dukascopy       );
-   if (lName == "easyforex"         ) return(AC.EasyForex       );
-   if (lName == "finfx"             ) return(AC.FinFX           );
-   if (lName == "forex"             ) return(AC.ForexLtd        );
-   if (lName == "forexbaltic"       ) return(AC.FBCapital       );
-   if (lName == "fxopen"            ) return(AC.FXOpen          );
-   if (lName == "fxprimus"          ) return(AC.FXPrimus        );
-   if (lName == "fxpro.com"         ) return(AC.FxPro           );
-   if (lName == "fxdd"              ) return(AC.FXDD            );
-   if (lName == "gci"               ) return(AC.GCI             );
-   if (lName == "gcmfx"             ) return(AC.Gallant         );
-   if (lName == "gftforex"          ) return(AC.GFT             );
-   if (lName == "globalprime"       ) return(AC.GlobalPrime     );
-   if (lName == "icmarkets"         ) return(AC.ICMarkets       );
-   if (lName == "inovatrade"        ) return(AC.InovaTrade      );
-   if (lName == "integral"          ) return(AC.GlobalPrime     );     // demo
-   if (lName == "investorseurope"   ) return(AC.InvestorsEurope );
-   if (lName == "jfd"               ) return(AC.JFDBrokers      );
-   if (lName == "liteforex"         ) return(AC.LiteForex       );
-   if (lName == "londoncapitalgr"   ) return(AC.LondonCapital   );
-   if (lName == "londoncapitalgroup") return(AC.LondonCapital   );
-   if (lName == "mbtrading"         ) return(AC.MBTrading       );
-   if (lName == "metaquotes"        ) return(AC.MetaQuotes      );
-   if (lName == "migbank"           ) return(AC.MIG             );
-   if (lName == "oanda"             ) return(AC.Oanda           );
-   if (lName == "pepperstone"       ) return(AC.Pepperstone     );
-   if (lName == "primexm"           ) return(AC.PrimeXM         );
-   if (lName == "sig"               ) return(AC.LiteForex       );
-   if (lName == "sts"               ) return(AC.STS             );
-   if (lName == "teletrade"         ) return(AC.TeleTrade       );
-   if (lName == "teletradecy"       ) return(AC.TeleTrade       );
-   if (lName == "tickmill"          ) return(AC.TickMill        );
-   if (lName == "xtrade"            ) return(AC.XTrade          );
-
-   debug("ShortAccountCompany(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
-   return(name);
+   return(GetGlobalConfigString("AccountCompanies", name, name));
 }
 
 
 /**
- * Return the identifier of an account company.
+ * Return the alias of an account. The alias is configurable via the global framework configuration and is used in outgoing
+ * log messages (SMS, email, chat) to obfuscate an actual account number. If no alias is configured the function returns the
+ * actual account number with all characters except the last 4 digits replaced by wildcards.
  *
- * @param string shortName - account company short name
+ * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  int    number  [optional] - account number (default: the current account number)
  *
- * @return int - company identifier or NULL if the company name is unknown
+ * @return string - account alias or an empty string in case of errors
  */
-int AccountCompanyId(string shortName) {
-   if (!StringLen(shortName))
-      return(NULL);
+string GetAccountAlias(string company="", int number=NULL) {
+   if (number < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter number: "+ number, ERR_INVALID_PARAMETER)));
+   if (!StringLen(company) || company=="0") company = GetAccountCompany();
+   if (!number)                             number = GetAccountNumber();
 
-   shortName = StrToUpper(shortName);
-
-   switch (StringGetChar(shortName, 0)) {
-      case 'A': if (shortName == StrToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
-                if (shortName == StrToUpper(AC.APBG           )) return(AC_ID.APBG           );
-                if (shortName == StrToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
-                if (shortName == StrToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
-                break;
-
-      case 'B': if (shortName == StrToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
-                break;
-
-      case 'C': if (shortName == StrToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
-                break;
-
-      case 'D': if (shortName == StrToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
-                break;
-
-      case 'E': if (shortName == StrToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
-                break;
-
-      case 'F': if (shortName == StrToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
-                if (shortName == StrToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
-                if (shortName == StrToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
-                if (shortName == StrToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
-                if (shortName == StrToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
-                if (shortName == StrToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
-                if (shortName == StrToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
-                break;
-
-      case 'G': if (shortName == StrToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
-                if (shortName == StrToUpper(AC.GCI            )) return(AC_ID.GCI            );
-                if (shortName == StrToUpper(AC.GFT            )) return(AC_ID.GFT            );
-                if (shortName == StrToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
-                break;
-
-      case 'H': break;
-
-      case 'I': if (shortName == StrToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
-                if (shortName == StrToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
-                if (shortName == StrToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
-                break;
-
-      case 'J': if (shortName == StrToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
-                break;
-
-      case 'K': break;
-
-      case 'L': if (shortName == StrToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
-                if (shortName == StrToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
-                break;
-
-      case 'M': if (shortName == StrToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
-                if (shortName == StrToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
-                if (shortName == StrToUpper(AC.MIG            )) return(AC_ID.MIG            );
-                break;
-
-      case 'N': break;
-
-      case 'O': if (shortName == StrToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
-                break;
-
-      case 'P': if (shortName == StrToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
-                if (shortName == StrToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
-                break;
-
-      case 'Q': break;
-      case 'R': break;
-
-      case 'S': if (shortName == StrToUpper(AC.STS            )) return(AC_ID.STS            );
-                break;
-
-      case 'T': if (shortName == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
-                if (shortName == StrToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
-                break;
-
-      case 'U': break;
-      case 'V': break;
-      case 'W': break;
-
-      case 'X': if (shortName == StrToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
-                break;
-
-      case 'Y': break;
-      case 'Z': break;
+   string result = GetGlobalConfigString("Accounts", number +".alias");
+   if (!StringLen(result)) {
+      debug("GetAccountAlias(2)  alias not found for account \""+ company +":"+ number +"\"");
+      result = ""+ number;
+      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
    }
-
-   return(NULL);
-}
-
-
-/**
- * Return the short company name matching an account company identifier.
- *
- * @param int id
- *
- * @return string - short name or an empty string if the identifier is unknown
- */
-string ShortAccountCompanyFromId(int id) {
-   switch (id) {
-      case AC_ID.Alpari         : return(AC.Alpari         );
-      case AC_ID.APBG           : return(AC.APBG           );
-      case AC_ID.ATCBrokers     : return(AC.ATCBrokers     );
-      case AC_ID.AxiTrader      : return(AC.AxiTrader      );
-      case AC_ID.BroCo          : return(AC.BroCo          );
-      case AC_ID.CollectiveFX   : return(AC.CollectiveFX   );
-      case AC_ID.Dukascopy      : return(AC.Dukascopy      );
-      case AC_ID.EasyForex      : return(AC.EasyForex      );
-      case AC_ID.FBCapital      : return(AC.FBCapital      );
-      case AC_ID.FinFX          : return(AC.FinFX          );
-      case AC_ID.ForexLtd       : return(AC.ForexLtd       );
-      case AC_ID.FXPrimus       : return(AC.FXPrimus       );
-      case AC_ID.FXDD           : return(AC.FXDD           );
-      case AC_ID.FXOpen         : return(AC.FXOpen         );
-      case AC_ID.FxPro          : return(AC.FxPro          );
-      case AC_ID.Gallant        : return(AC.Gallant        );
-      case AC_ID.GCI            : return(AC.GCI            );
-      case AC_ID.GFT            : return(AC.GFT            );
-      case AC_ID.GlobalPrime    : return(AC.GlobalPrime    );
-      case AC_ID.ICMarkets      : return(AC.ICMarkets      );
-      case AC_ID.InovaTrade     : return(AC.InovaTrade     );
-      case AC_ID.InvestorsEurope: return(AC.InvestorsEurope);
-      case AC_ID.JFDBrokers     : return(AC.JFDBrokers     );
-      case AC_ID.LiteForex      : return(AC.LiteForex      );
-      case AC_ID.LondonCapital  : return(AC.LondonCapital  );
-      case AC_ID.MBTrading      : return(AC.MBTrading      );
-      case AC_ID.MetaQuotes     : return(AC.MetaQuotes     );
-      case AC_ID.MIG            : return(AC.MIG            );
-      case AC_ID.Oanda          : return(AC.Oanda          );
-      case AC_ID.Pepperstone    : return(AC.Pepperstone    );
-      case AC_ID.PrimeXM        : return(AC.PrimeXM        );
-      case AC_ID.STS            : return(AC.STS            );
-      case AC_ID.TeleTrade      : return(AC.TeleTrade      );
-      case AC_ID.TickMill       : return(AC.TickMill       );
-      case AC_ID.XTrade         : return(AC.XTrade         );
-   }
-   return("");
-}
-
-
-/**
- * Ob der übergebene Wert einen bekannten Kurznamen einer AccountCompany darstellt.
- *
- * @param string value
- *
- * @return bool
- */
-bool IsShortAccountCompany(string value) {
-   return(AccountCompanyId(value) != 0);
-}
-
-
-/**
- * Return the account alias of an account number.
- *
- * @param  string accountCompany
- * @param  int    accountNumber
- *
- * @return string - alias name or an empty string in case of errors or if the account number is unknown
- */
-string GetAccountAlias(string accountCompany, int accountNumber) {
-   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER)));
-   if (accountNumber <= 0)         return(_EMPTY_STR(catch("GetAccountAlias(2)  invalid parameter accountNumber: "+ accountNumber, ERR_INVALID_PARAMETER)));
-   return(GetGlobalConfigString("Accounts", accountNumber +".alias"));
+   return(result);
 }
 
 
 /**
  * Return the account number of an account alias.
  *
- * @param  string accountCompany
- * @param  string accountAlias
+ * @param  string company - account company
+ * @param  string alias   - account alias
  *
  * @return int - account number or NULL in case of errors or if the account alias is unknown
  */
-int GetAccountNumberFromAlias(string accountCompany, string accountAlias) {
-   if (!StringLen(accountCompany)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter accountCompany: \"\"", ERR_INVALID_PARAMETER));
-   if (!StringLen(accountAlias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter accountAlias: \"\"", ERR_INVALID_PARAMETER));
+int GetAccountNumberFromAlias(string company, string alias) {
+   if (!StringLen(company)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter company: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(alias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter alias: \"\"", ERR_INVALID_PARAMETER));
 
    string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
    string section = "Accounts";
@@ -4253,10 +4055,10 @@ int GetAccountNumberFromAlias(string accountCompany, string accountAlias) {
    for (int i=0; i < keysSize; i++) {
       if (StrEndsWithI(keys[i], ".alias")) {
          value = GetGlobalConfigString(section, keys[i]);
-         if (StrCompareI(value, accountAlias)) {
+         if (StrCompareI(value, alias)) {
             sAccount = StringTrimRight(StrLeft(keys[i], -6));
             value    = GetGlobalConfigString(section, sAccount +".company");
-            if (StrCompareI(value, accountCompany)) {
+            if (StrCompareI(value, company)) {
                if (StrIsDigit(sAccount))
                   return(StrToInteger(sAccount));
             }
@@ -4710,16 +4512,14 @@ color NameToColor(string name) {
 /**
  * Repeats a string.
  *
- * @param  string input - The string to be repeated.
- * @param  int    times - Number of times the input string should be repeated.
+ * @param  string input - string to be repeated
+ * @param  int    times - number of times to repeat the string
  *
- * @return string - the repeated string
+ * @return string - the repeated string or an empty string in case of errors
  */
 string StrRepeat(string input, int times) {
-   if (times < 0)
-      return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
-
-   if (times ==  0)       return("");
+   if (times < 0)         return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times: "+ times, ERR_INVALID_PARAMETER)));
+   if (!times)            return("");
    if (!StringLen(input)) return("");
 
    string output = input;
@@ -4769,7 +4569,7 @@ int GetCurrencyId(string currency) {
    if (value == C_USD) return(CID_USD);
    if (value == C_ZAR) return(CID_ZAR);
 
-   return(_NULL(catch("GetCurrencyId(1)  unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR)));
+   return(_NULL(catch("GetCurrencyId(1)  unknown currency: \""+ currency +"\"", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -4811,7 +4611,7 @@ string GetCurrency(int id) {
       case CID_USD: return(C_USD);
       case CID_ZAR: return(C_ZAR);
    }
-   return(_EMPTY_STR(catch("GetCurrency(1)  unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
+   return(_EMPTY_STR(catch("GetCurrency(1)  unknown currency id: "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -6339,7 +6139,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD",
+   double value = iCustom(NULL, timeframe, "MACD ",
                           fastMaPeriods,                                   // int    Fast.MA.Periods
                           fastMaMethod,                                    // string Fast.MA.Method
                           fastMaAppliedPrice,                              // string Fast.MA.AppliedPrice
@@ -6825,7 +6625,6 @@ void __DummyCalls() {
    _string(NULL);
    _true();
    Abs(NULL);
-   AccountCompanyId(NULL);
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
@@ -6866,7 +6665,8 @@ void __DummyCalls() {
    Floor(NULL);
    ForceAlert(NULL);
    GE(NULL, NULL);
-   GetAccountAlias(NULL, NULL);
+   GetAccountAlias();
+   GetAccountCompany();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
    GetCommission();
@@ -6935,7 +6735,6 @@ void __DummyCalls() {
    IsOrderType(NULL);
    IsPendingOrderType(NULL);
    IsScript();
-   IsShortAccountCompany(NULL);
    IsShortOrderType(NULL);
    IsStopOrderType(NULL);
    IsSuperContext();
@@ -6978,7 +6777,6 @@ void __DummyCalls() {
    PriceTypeToStr(NULL);
    ProgramInitReason();
    QuoteStr(NULL);
-   RefreshExternalAssets(NULL, NULL);
    ResetLastError();
    RGBStrToColor(NULL);
    Round(NULL);
@@ -6991,8 +6789,6 @@ void __DummyCalls() {
    SendSMS(NULL, NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
-   ShortAccountCompany();
-   ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
    StrCapitalize(NULL);
@@ -7078,7 +6874,7 @@ void __DummyCalls() {
    int      GetAccountNumber();
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetServerName();
+   string   GetAccountServer();
    string   GetServerTimezone();
    string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);

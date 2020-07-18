@@ -636,7 +636,7 @@ bool StoreRuntimeStatus() {
 
    // Konfiguration im Chartfenster speichern
    int hWnd = __ExecutionContext[EC.hChart];
-   SetWindowProperty(hWnd, "rsf.SuperBars.Timeframe", superBars.timeframe);   // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
+   SetWindowIntegerA(hWnd, "rsf.SuperBars.Timeframe", superBars.timeframe);   // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    // Konfiguration im Chart speichern                                        // TODO: nur bei Terminal-Shutdown
    string label = __NAME() +".runtime.timeframe";
@@ -659,7 +659,7 @@ bool StoreRuntimeStatus() {
 bool RestoreRuntimeStatus() {
    // Konfiguration im Chartfenster suchen
    int hWnd   = __ExecutionContext[EC.hChart];
-   int result = RemoveWindowProperty(hWnd, "rsf.SuperBars.Timeframe");        // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
+   int result = RemoveWindowIntegerA(hWnd, "rsf.SuperBars.Timeframe");        // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    if (!result) {
       // Konfiguration im Chart suchen

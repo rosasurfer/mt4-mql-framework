@@ -1,12 +1,13 @@
 /**
- * Importdeklarationen
+ * MT4Expander import declarations
  *
- * Note: Je MQL-Modul können bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden, müssen die
- *       auskommentierten Funktionen (die mit Array-Parametern) manuell importiert werden.
+ * Note: MQL4.0 supports up to 512 arrays per MQL module, in MQL4.5 and MQL5 this limitation was removed. To prevent hitting
+ *       that limit here all functions with array parameters are commented out. Import them manually per module if you want
+ *       to use them.
  */
 #import "rsfExpander.dll"
 
-   // terminal status/interaction
+   // terminal status, terminal interaction
    int      FindInputDialog(int programType, string programName);
    string   GetExpanderFileNameA();
    string   GetMqlDirectoryA();
@@ -42,7 +43,9 @@
    //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
-   // chart status/interaction
+   // charts and timeframes
+   bool     IsCustomTimeframe(int timeframe);
+   bool     IsStdTimeframe(int timeframe);
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
@@ -80,14 +83,13 @@
    // logging
    bool     LogMessageA(int ec[], string message, int error);
 
-   // pointer utlities
+   // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
-   int      GetDoublesAddress(double values[]);       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
-   int      GetStringAddress (string value   );       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
-   int      GetStringsAddress(string values[]);       //          Adresse ist ungültig und kann einen Crash auslösen.
-
-   string   GetStringA(int address);
+   int      GetDoublesAddress(double values[]);
+   int      GetStringAddress (string value   );       // Warning: GetStringAddress() must be used with string array elements only.
+   int      GetStringsAddress(string values[]);       //          Simple strings are passed to DLLs as copies. The resulting address
+   string   GetStringA(int address);                  //          is a dangling pointer and accessing it may cause a terminal crash.
    //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
@@ -129,23 +131,29 @@
    string   ProgramTypeToStr(int type);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TimeframeDescription(int timeframe);      // alias of PeriodDescription()
-   string   TimeframeToStr(int timeframe);            // alias of PeriodToStr();
+   string   TimeframeToStr(int timeframe);            // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
    string   UninitializeReasonToStr(int reason);      // alias of UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
-   // other
-   bool     IsCustomTimeframe(int timeframe);
-   bool     IsStdTimeframe(int timeframe);
+   // window property management
+   bool     SetWindowIntegerA   (int hWnd, string name, int value);
+   int      GetWindowIntegerA   (int hWnd, string name);
+   int      RemoveWindowIntegerA(int hWnd, string name);
+
+   bool     SetWindowDoubleA   (int hWnd, string name, double value);
+   double   GetWindowDoubleA   (int hWnd, string name);
+   double   RemoveWindowDoubleA(int hWnd, string name);
+
+   bool     SetWindowStringA   (int hWnd, string name, string value);
+   string   GetWindowStringA   (int hWnd, string name);
+   string   RemoveWindowStringA(int hWnd, string name);
 
    // Win32 helpers
    int      GetLastWin32Error();
-   int      GetWindowProperty(int hWnd, string name);
-   bool     SetWindowProperty(int hWnd, string name, int value);
-   int      RemoveWindowProperty(int hWnd, string name);
 
-   // Empty stubs of optional functions. May be overwritten by custom MQL implementations.
+   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();
@@ -168,9 +176,9 @@
    int      onDeinitRecompile();
    int      onDeinitRemove();
    int      onDeinitUndefined();
-   int      onDeinitClose();              // builds > 509
-   int      onDeinitFailed();             // ...
-   int      onDeinitTemplate();           // ...
+   int      onDeinitClose();                          // builds > 509
+   int      onDeinitFailed();                         // ...
+   int      onDeinitTemplate();                       // ...
    int      afterDeinit();
 
    void     DummyCalls();

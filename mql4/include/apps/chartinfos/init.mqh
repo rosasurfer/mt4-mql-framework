@@ -134,7 +134,7 @@ int onInitRecompile() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetAccountServer(), "XTrade-Synthetic")) {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 1000;
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);
