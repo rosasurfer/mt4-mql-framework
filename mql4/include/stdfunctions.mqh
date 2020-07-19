@@ -3190,20 +3190,20 @@ int Chart.Expert.Properties() {
 
 
 /**
- * Schickt dem aktuellen Chart einen künstlichen Tick.
+ * Send a virtual tick to the current chart.
  *
- * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
+ * @param  bool sound [optional] - whether to audibly confirm the tick (default: no)
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
-int Chart.SendTick(bool sound=false) {
+int Chart.SendTick(bool sound = false) {
    sound = sound!=0;
 
    int hWnd = __ExecutionContext[EC.hChart];
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - Expert::start() wird in Offline-Charts nicht getriggert
-   }                                                              //                1 - Expert::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - doesn't trigger Expert::start() in offline charts
+   }                                                              //                1 - triggers Expert::start() in offline charts (if a server connection is established)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
