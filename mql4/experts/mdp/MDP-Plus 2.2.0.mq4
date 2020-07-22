@@ -1,514 +1,778 @@
-#property copyright "Copyright ? 2011"
-#property link      "http://www.metaquotes.net"
+// -------------------------------------------------------------------------------------------------
+// MDP-Plus v. 2.2
+//
+// Based on MillionDollarPips - (ANY PAIR + NO DLL) - ver 1.1.0
+//
+// Someone at a russian forum fixed a Stack Overflow problem, added NDD-mode (ECN-mode)
+// and moved the DLL-functions in the mql4-code.
+//
+// Sept-2011 by Capella
+// - Cleaned code from unused code, proper variable names and sub-names.
+//
+// Ver. 1.0 - 2011-09-24 by Capella
+// - Added Print lines for STOPLEVEL when errors (for debugging purposes)
+// - Removed unused externals and variables
+// - Moved dynamic TP/SL and trading signals constants to externals,
+//   as VolatilityLimit and Scalpfactor.
+// - Forced TrailingStop
+//
+// Ver. 2.0 - 2011-10-19 by Capella
+// - Fixing bugs, and removed unused code.
+// - Forced Trailing, as no-trailing cannot generate profit
+// - Forced HighSpeed, as false mode cannot give good result
+// - Added additional settings for scalping - UseMovingAverage,
+//   UseBollingerBands, and OrderExpireSeconds
+// - Automatic adjusted to broker STOPLEVEL, to avoid OrderSend error 130
+// Ver 2.1 - 2011-11-91 by Capella
+// - Added Indicatorperiod as external
+// - Modified calculation of variable that triggers trade (local_pricedirection)
+// - Removed Distance as an external, and automatically adjust Distance to be the same as stoplevel
+// - Removed call for sub_moveandfillarrays as it doesn't make any difference
+// Ver 2.1.1 - 2011-11-05 by Capella
+// - Fixed a bug in the calculation of highest and lowest that caused wrong call for
+//   OrderModify.
+// - Changed the calculation of STOPLEVEL to also consider FREEZELEVEL
+// Ver 2.1.2 - 2011-11-06 by Capella
+// - Changed default settings according to optimized backtests
+// - Added external parameter Deviation for iBands, default 0
+// Ver 2.1.3 - 2011-11-07 by Capella
+// - Fixed a bug for calculation of local_isbidgreaterthanindy
+// Ver 2.1.4 - 2011-11-09 by Capella
+// - Fixed a bug that only made the robot trade on SELL and SELLSTOP
+// - Put back the call for the sub "sub_moveandfillarrays" except the last nonsense part of it.
+// - Changed the default settings and re-ordered the global variables
+// Ver 2.1.5 - 2011-11-10 by Capella
+// - Fixed a bug that caused the robot to not trade for some brokers (if variable "local_scalpsize" was 0.0)
+// - Fixed a bug that could cause the lot-size to be calculated wrongly
+// - Better output of debug information (more information)
+// - Moved a fixed internal Max Spread to an external. The default internal value was 40 (4 pips), which is too high IMHI
+// - Renamed some local variables to more proper names in order to make the code more readable
+// - Cleaaned code further by removing unused code, etc.
+// Ver 2.1.5a - 2011-11-15 by blueprint1972
+// - Added Execution time in log files, to measure how fast orders are executed at the broker server
+//
+// Ver 2.2 - 2011-11-17 by Capella
+// - An option to calculate VelocityLimit dynamically based on the spread
+// - Removed parameter Scalpfactor as it had no impact on the trading conditions, only on lotsize
+// - Better lot calculation, now entirely based on FreeMargin, Risk and StopLoss
+// - A new scalp factor called VolatilityPercentageLimit based on the difference between VolatilityLimit and iHigh / iLow for triggering trades
+// - Can now trade automatically on all currency pairs within spread limit from one single chart
+// - Works on 4-digit brokers as well. Note: Performance on 4-digit brokers is worse than on 5-digit brokers, and there are much less trades
+
+// -------------------------------------------------------------------------------------------------
+
 #property show_inputs
 
 #include <stdlib.mqh>
 
-extern string Configuration = "================ Configuration";
-extern bool Show_Debug = false;
-extern bool Verbose = false;
-extern bool Mode_HighSpeed = true;
-extern bool Mode_Safe = false;
-extern bool Mode_MaxOrders = true;
-bool gi_104 = false;
-extern string Username = "Traders-Shop";
-extern int Magic = 112226;
-extern string OrderCmt = "MDP_2";
-extern double TakeProfit = 10.0;
-extern double StopLoss = 60.0;
-extern double distance = 30.0;
-extern string Money_Management = "---------------- Money Management";
-double gd_136 = 0.1;
-bool gi_144 = true;
-extern double Min_Lots = 0.01;
-extern double Max_Lots = 1000.0;
-extern double Risk = 1000.0;
-double gd_172 = 0.0;
-string gs_unused_180 = "---------------- Scalping Factors";
-double gd_188 = 15.0;
-double gd_196 = 40.0;
-double gd_204 = 145.0;
-double gd_212 = 270.0;
-double gd_220 = 0.4;
-double gd_228 = 0.3333333333;
-double gd_236 = 0.0;
-extern string SL_TP_Trailing = "---------------- SL / TP / Trailing";
-extern double Trailing_Resolution = 0.0;
-double gd_260 = 0.0;
-double gd_268 = 20.0;
-extern bool Trailing_Stop = true;
-bool gi_280 = true;
-string gs_304;
-int gi_312 = 0;
-double gd_316 = 0.0;
-int g_slippage_324 = 3;
-double gda_328[30];
-double gda_332[30];
-int gia_336[30];
-double gd_340 = 1.0;
-double gd_348;
-bool gi_356;
-double gd_360;
-bool gi_368 = false;
-double gd_372 = 1.0;
-double gd_380 = 0.0;
-int gi_388 = 0;
-int g_time_392 = 0;
-int g_count_396 = 0;
-double gda_400[30];
-int gi_404 = 0;
-bool gi_408 = true;
-double gd_412 = 5.0;
-double gd_420 = 10.0;
-double gd_428 = 40.0;
-bool gi_436 = false;
-double gd_440 = 5.0;
-double gd_448 = 10.0;
-double gd_456 = 40.0;
-bool gi_464 = false;
-bool gi_unused_468 = false;
-string gs_472 = "Valid user";
-string gs_480;
-int gia_488[] = {0};
-int gia_492[] = {0};
-int AccNum;
+//----------------------- Externals ----------------------------------------------------------------
+// All externals here have their name starting with a CAPITAL character
 
-int init() {
-   ArrayInitialize(gda_400, 0);
-   gi_312 = 5;
-   gd_316 = 0.00001;
-   if (Digits < 5) g_slippage_324 = 0;
-   else gi_388 = -1;
-   gia_492[0]=1;
+extern string Configuration = "==== Configuration ====";
+extern int Magic = 0;                               // Any number that differs from other EA's numbers running at the same time
+extern string OrderCmt = "";                        // Trade comments that appears in the Trade and Account History tab
+extern string Suffix = "";                      // Common (broker specific) suffix for currencypair symbols (e.g.: "m" for "EURUSDm", "ifx", for "EURUSDifx" etc.)
+extern bool NDDmode = FALSE;                        // For brokers that don't accept SL and TP to be sent at the same time as the order
+extern bool Show_Debug = FALSE;                 // Print huge log files with info, only for debugging purposes
+extern bool Verbose = FALSE;                        // Additional information printed in the chart
+extern string TradingSettings = "==== Trade settings ====";
+extern bool TradeALLCurrencyPairs = FALSE;  // If set to TRUE it weill trade on all pairs automatically, otherwise only on the chart pair
+extern double MaxSpread = 26.0;             // Max allowed spread in points (1 / 10 pip)
+extern double TakeProfit = 10.0;                    // TakeProfit from as many points. Default 10 (= 1 pip)
+extern double StopLoss = 60.0;                  // StopLoss from as many points. Default 60 (= 6 pips)
+extern double TrailingStart = 0;                    // Start trailing profit from as so many pips. Default 0
+extern bool UseDynamicVolatilityLimit = TRUE;// Calculate VolatilityLimit based on INT (spread * VolatilityMultiplier)
+extern double VolatilityMultiplier = 125;    // Only used if UseDynamicVolatilityLimit is set to TRUE
+extern double VolatilityLimit = 180;            // Only used if UseDynamicVolatilityLimit is set to FALSE
+extern bool UseVolatilityPercentage = FALSE;    // If true, then price must break out more than a specific percentage
+extern double VolatilityPercentageLimit = 60;// Percentage of how much iHigh-iLow difference must differ from VolatilityLimit
+extern bool UseMovingAverage = TRUE;            // User two iMA as channel
+extern bool UseBollingerBands = TRUE;       // Use iBands as channel
+//extern int IndicatorPeriod = 3;               // Period for iMA and iBands
+extern double Deviation = 1.50;                     // Deviation for iBands
+extern int OrderExpireSeconds = 3600;           // Orders are deleted after so many seconds
+extern string Money_Management = "==== Money Management ====";
+extern double MinLots = 0.01;                       // Minimum lot-size to trade with
+extern double MaxLots = 1000.0;                 // Maximum allowed lot-size to trade with
+extern double Risk = 2.0;                           // Risk setting in percentage, For 10.000 in Balance 10% Risk and 60 StopLoss lotsize = 16.66
+
+//--------------------------- Globals --------------------------------------------------------------
+// All globals have their name written in lower case characters
+
+string allpairs[26] = {"EURUSD","USDJPY","GBPUSD","USDCHF","USDCAD","AUDUSD","NZDUSD","EURJPY","GBPJPY","CHFJPY","CADJPY","AUDJPY","NZDJPY","EURCHF","EURGBP","EURCAD","EURAUD","EURNZD","GBPCHF","GBPAUD","GBPCAD","GBPNZD","AUDCHF","AUDCAD","AUDNZD","NZDCHF","NZDCAD","CADCHF"};                                                                                    // Currency pairs to be watched
+string tradablepairs[];  // Of the above 27 possible pairs, store all pairs that the broker support for trading here
+
+bool condition5;
+bool condition2 = FALSE;
+bool trailingstop = TRUE;
+
+int indicatorperiod = 3;
+int distance = 0;
+int brokerdigits = 0;
+int slippage = 3;
+int array_tickcounts[30];
+int globalerror = 0;
+int lasttime = 0;
+int tickcounter = 0;
+int upto30counter = 0;
+int execution = 0;
+int paircount = 0;          // number of currency pairs 27 (0 - 26)
+
+double zero = 0.0;
+double pipette = 0.0;
+double maxamount = 0.0;
+double minmaxlot = 0.1;
+double zeropointfour = 0.4;
+double one = 1.0;
+double five = 5.0;
+double ten = 10.0;
+double twenty = 20.0;
+double array_bid[30];
+double array_ask[30];
+double array_spread[30];
+double highest;
+double lowest;
+
+//======================= Program initialization ===================================================
+
+int init()
+{
+   int stoplevel;
+
+    VolatilityPercentageLimit = VolatilityPercentageLimit / 100 + 1;
+   VolatilityMultiplier = VolatilityMultiplier / 10;
+   ArrayInitialize(array_spread, 0);
+    VolatilityLimit = VolatilityLimit * Point;
+   brokerdigits = Digits;
+   pipette = Point;
+
+    // Adjust TP, ST and distance to boker stoplevel if they are less than this stoplevel
+    stoplevel = MathMax(MarketInfo(Symbol(), MODE_FREEZELEVEL), MarketInfo(Symbol(), MODE_STOPLEVEL));
+    if (TakeProfit < stoplevel)
+        TakeProfit = stoplevel;
+    if (StopLoss < stoplevel)
+        StopLoss = stoplevel;
+    if (distance < stoplevel)
+        distance = stoplevel;
+
+    if (MathMod(Digits, 2) == 0)
+        slippage = 0;
+   else
+        globalerror = -1;
+
+    // If we have set MaxLot to more than what the broker allows, then adjust it accordingly
+    if (MaxLots > MarketInfo(Symbol(), MODE_MAXLOT))
+        MaxLots = MarketInfo(Symbol(), MODE_MAXLOT);
+
+    // If we should trade on all currency pairs, then pick out the ones trhat the broker supports
+    if (TradeALLCurrencyPairs == TRUE)
+        sub_preparecurrencypairs();
+
+    // Finally call the main trading subroutine
    start();
+
    return (0);
 }
 
-int start() {
-   if (gi_312 == 0) {
+//==================================== Program start ===============================================
+
+int start()
+{
+   if (brokerdigits == 0)
+    {
       init();
       return;
    }
-   if (gia_492[0] == true) {
-         f0_2(gda_328, gda_332, gia_336, gd_340);
-         f0_0(Period());
-   }
+    sub_moveandfillarrays(array_bid, array_ask, array_tickcounts, one);
+    sub_trade();
    return (0);
 }
 
-void f0_0(int a_timeframe_0) {
-   int ticket_16;
-   int li_24;
-   double ld_28;
-   double ld_30;
-   bool bool_28;
-   double ld_92;
-   bool li_116;
-   double ld_120;
-   double ld_136;
-   double ld_220;
-   int datetime_236;
-   int li_240;
-   double ld_244;
-   double order_stoploss_260;
-   double order_takeprofit_268;
-   double ld_276;
-   int li_292;
-   int li_296;
-   string ls_300;
-   bool li_308;
-   if (g_time_392 < Time[0]) {
-      g_time_392 = Time[0];
-      g_count_396 = 0;
-   } else g_count_396++;
-   double ihigh_64 = iHigh(Symbol(), a_timeframe_0, 0);
-   double ilow_72 = iLow(Symbol(), a_timeframe_0, 0);
-   double icustom_32 =  iMA(NULL, a_timeframe_0, 3, 0, MODE_LWMA, PRICE_LOW, 0);
-   double icustom_40 =  iMA(NULL, a_timeframe_0, 3, 0, MODE_LWMA, PRICE_HIGH, 0);
-   double ld_80 = icustom_32 - icustom_40;
-   bool li_88 = Bid >= icustom_40 + ld_80 / 2.0;
-   if (!gi_368) {
-      for (int pos_4 = OrdersTotal() - 1; pos_4 >= 0; pos_4--) {
-         OrderSelect(pos_4, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol() == Symbol() && OrderCloseTime() != 0 && OrderClosePrice() != OrderOpenPrice() && OrderProfit() != 0.0 && OrderComment() != "partial close" && StringFind(OrderComment(), "[sl]from #") == -1 &&
-            StringFind(OrderComment(), "[tp]from #") == -1) {
-            gi_368 = true;
-            ld_92 = MathAbs(OrderProfit() / (OrderClosePrice() - OrderOpenPrice()));
-            gd_372 = ld_92 / OrderLots() / MarketInfo(Symbol(), MODE_LOTSIZE);
-            gd_380 = (-OrderCommission()) / ld_92;
-            Print("Commission_Rate : " + f0_3(gd_380));
-            break;
-         }
-      }
-   }
-   if (!gi_368) {
-      for (pos_4 = OrdersHistoryTotal() - 1; pos_4 >= 0; pos_4--) {
-         OrderSelect(pos_4, SELECT_BY_POS, MODE_HISTORY);
-         if (OrderSymbol() == Symbol() && OrderCloseTime() != 0 && OrderClosePrice() != OrderOpenPrice() && OrderProfit() != 0.0 && OrderComment() != "partial close" && StringFind(OrderComment(), "[sl]from #") == -1 &&
-            StringFind(OrderComment(), "[tp]from #") == -1) {
-            gi_368 = true;
-            ld_92 = MathAbs(OrderProfit() / (OrderClosePrice() - OrderOpenPrice()));
-            gd_372 = ld_92 / OrderLots() / MarketInfo(Symbol(), MODE_LOTSIZE);
-            gd_380 = (-OrderCommission()) / ld_92;
-            Print("Commission_Rate : " + f0_3(gd_380));
-            break;
-         }
-      }
-   }
-   double ld_100 = MarketInfo(Symbol(), MODE_STOPLEVEL) * Point;
-   double ld_108 = Ask - Bid;
-   double ld_128 = 0.5;
-   if (ld_128 < ld_100 - 5.0 * gd_316) {
-      li_116 = gi_436;
-      ld_120 = gd_428 * gd_316;
-      ld_128 = gd_420 * gd_316;
-      ld_136 = gd_412 * gd_316;
-   } else {
-      if (!Mode_HighSpeed) {
-         li_116 = gi_464;
-         ld_120 = gd_456 * gd_316;
-         ld_128 = gd_448 * gd_316;
-         ld_136 = gd_440 * gd_316;
-      } else {
-         li_116 = gi_280;
-         ld_120 = gd_268 * gd_316;
-         ld_128 = gd_260 * gd_316;
-         ld_136 = Trailing_Resolution * gd_316;
-      }
-   }
-   ld_120 = MathMax(ld_120, ld_100);
-   if (li_116) ld_128 = MathMax(ld_128, ld_100);
-   double ld_unused_144 = gda_400[0];
-   ArrayCopy(gda_400, gda_400, 0, 1, 29);
-   gda_400[29] = ld_108;
-   if (gi_404 < 30) gi_404++;
-   double ld_152 = 0;
-   pos_4 = 29;
-   for (int count_8 = 0; count_8 < gi_404; count_8++) {
-      ld_152 += gda_400[pos_4];
-      pos_4--;
-   }
-   double ld_160 = ld_152 / gi_404;
-   if (!gi_368 && ld_160 < 15.0 * gd_316) gd_380 = 15.0 * gd_316 - ld_160;
-   double ld_168 = f0_5(Ask + gd_380);
-   double ld_176 = f0_5(Bid - gd_380);
-   double ld_184 = ld_160 + gd_380;
 
-   double ld_192;
-   double ld_200;
-   double ld_208 = ihigh_64 - ilow_72;
+//================================ Subroutines starts here =========================================
+// All subs have their names starting with sub_
+// Exception are the standard routines init() and start()
+//
+// Notation:
+// All actual and formal parameters in subs have their names starting with par_
+// All local variables in subs have thewir names starting with local_
 
-   double limitTe;
-   string mode=Mode_HighSpeed+"-"+Mode_Safe+"-0";
-        if(mode=="0-0-0") { ld_192=0.24; ld_200=0.0018; limitTe=0.00250; }
-   else if(mode=="0-1-0") { ld_192=0.68; ld_200=0.0023; limitTe=0.00300; }
-   else if(mode=="1-0-0") { ld_192=0.28; ld_200=0.0018; limitTe=0.00100; }
-   else if(mode=="1-1-0") { ld_192=0.56; ld_200=0.0022; limitTe=0.00250; }
+void sub_trade()
+{
+   string local_textstring;
+    string local_pair;
 
-   if(ld_208>limitTe) {
-   if (Bid < icustom_40)   int li_216=-1;
-   else if (Bid > icustom_32) li_216=1;
+   bool local_wasordermodified;
+   bool local_usestoporders;
+    bool local_ordersenderror;
+    bool local_isbidgreaterthanima;
+    bool local_isbidgreaterthanibands;
+    bool local_isbidgreaterthanindy;
+
+   int local_orderticket;
+   int local_orderexpiretime;
+   int local_lotstep;
+   int local_bidpart;
+   int local_askpart;
+    int local_loopcount2;
+    int local_loopcount1;
+    int local_pricedirection;
+   int local_counter1;
+   int local_counter2;
+    int local_paircounter;
+
+   double local_askplusdistance;
+   double local_bidminusdistance;
+    double local_commissionpips;
+   double local_commissionfactor;
+    double local_volatilitypercentage;
+   double local_trailingdistance;
+   double local_c;
+   double local_scalpsize;
+   double local_d;
+   double local_orderstoploss;
+   double local_ordertakeprofit;
+   double local_tpadjust;
+    double local_ihigh;
+   double local_ilow;
+    double local_imalow;
+   double local_imahigh;
+   double local_imadiff;
+   double local_ibandsupper;
+   double local_ibandslower;
+   double local_ibandsdiff;
+   double local_volatility;
+    double local_stoplevel;
+   double local_spread;
+   double local_adjuststoplevel;
+    double local_e;
+   double local_avgspread;
+    double local_f;
+   double local_g;
+   double local_realavgspread;
+    double local_i;
+
+   if (lasttime < Time[0])
+    {
+      lasttime = Time[0];
+      tickcounter = 0;
+   }
+    else
+        tickcounter++;
+
+    // If we only are going to trade on this chart currency pair, then reset the counter to 0, meaning EURUSD
+    if (TradeALLCurrencyPairs == FALSE)
+    {
+        paircount = 1;
+        local_pair = Symbol();
     }
-   if (gd_236 == 0.0) ld_220 = gd_228 * ld_200;
-   else ld_220 = gd_236 * gd_316;
-   ld_220 = MathMax(ld_100, ld_220);
-   if (Bid == 0.0 || MarketInfo(Symbol(), MODE_LOTSIZE) == 0.0) ld_220 = 0;
-   double ld_228 = ld_220 + ld_160 + gd_380;
-   if (gi_408) datetime_236 = TimeCurrent() + 60.0 * MathMax(10 * a_timeframe_0, 60);
-   else datetime_236 = 0;
-   if (MarketInfo(Symbol(), MODE_LOTSTEP) == 0.0) li_240 = 5;
-   else li_240 = f0_7(0.1, MarketInfo(Symbol(), MODE_LOTSTEP));
-   if (gi_144) {
-      if (Risk < 0.001 || Risk > 1000.0) {
-         Comment("ERROR -- Invalid Risk Value.");
+
+    for (local_paircounter = 0; local_paircounter != paircount; local_paircounter++)
+    {
+        local_pair = tradablepairs[local_counter1];
+        // Calculate the channel of Volatility based on the difference of iHigh and iLow during current bar
+        local_ihigh = iHigh(local_pair, PERIOD_M1, 0);
+        local_ilow = iLow(local_pair, PERIOD_M1, 0);
+        local_volatility = local_ihigh - local_ilow;
+
+        // Calculate a channel on MovingAverage, and check if the price is outside of this channel
+        local_imalow = iMA(local_pair, PERIOD_M1, indicatorperiod, 0, MODE_LWMA, PRICE_LOW, 0);
+        local_imahigh = iMA(local_pair, PERIOD_M1, indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0);
+        local_imadiff = local_imahigh - local_imalow;
+        local_isbidgreaterthanima = Bid >= local_imalow + local_imadiff / 2.0;
+
+        // Calculate a channel on BollingerBands, and check if the prcice is outside of this channel
+        local_ibandsupper = iBands(local_pair, PERIOD_M1, indicatorperiod, Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
+        local_ibandslower = iBands(local_pair, PERIOD_M1, indicatorperiod, Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
+
+        local_ibandsdiff = local_ibandsupper - local_ibandslower;
+        local_isbidgreaterthanibands = Bid >= local_ibandslower + local_ibandsdiff / 2.0;
+
+        // Calculate the highest and lowest values depending on which indicators to be used
+        local_isbidgreaterthanindy = FALSE;
+        if (UseMovingAverage == FALSE && UseBollingerBands == TRUE && local_isbidgreaterthanibands == TRUE)
+        {
+            local_isbidgreaterthanindy = TRUE;
+            highest = local_ibandsupper;
+            lowest = local_ibandslower;
+        }
+        else if (UseMovingAverage == TRUE && UseBollingerBands == FALSE && local_isbidgreaterthanima == TRUE)
+        {
+            local_isbidgreaterthanindy = TRUE;
+            highest = local_imahigh;
+            lowest = local_imalow;
+        }
+        else if (UseMovingAverage == TRUE && UseBollingerBands == TRUE && local_isbidgreaterthanima == TRUE && local_isbidgreaterthanibands == TRUE)
+        {
+            local_isbidgreaterthanindy = TRUE;
+            highest = MathMax(local_ibandsupper, local_imahigh);
+            lowest = MathMin(local_ibandslower, local_imalow);
+        }
+
+        if (!condition2)
+        {
+            for (local_loopcount2 = OrdersTotal() - 1; local_loopcount2 >= 0; local_loopcount2--)
+            {
+                OrderSelect(local_loopcount2, SELECT_BY_POS, MODE_TRADES);
+                if (OrderSymbol() == local_pair && OrderCloseTime() != 0 && OrderClosePrice() != OrderOpenPrice() && OrderProfit() != 0.0 && OrderComment() != "partial close" && StringFind(OrderComment(), "[sl]from #") == -1 && StringFind(OrderComment(), "[tp]from #") == -1)
+                {
+                    condition2 = TRUE;
+                    local_commissionfactor = MathAbs(OrderProfit() / (OrderClosePrice() - OrderOpenPrice()));
+                    local_commissionpips = (-OrderCommission()) / local_commissionfactor;
+                    Print("Commission_Rate : " + sub_dbl2strbrokerdigits(local_commissionpips));
+                    break;
+                }
+            }
+        }
+
+        if (!condition2)
+        {
+            for (local_loopcount2 = OrdersHistoryTotal() - 1; local_loopcount2 >= 0; local_loopcount2--)
+            {
+                OrderSelect(local_loopcount2, SELECT_BY_POS, MODE_HISTORY);
+                if (OrderSymbol() == local_pair && OrderCloseTime() != 0 && OrderClosePrice() != OrderOpenPrice() && OrderProfit() != 0.0 && OrderComment() != "partial close" && StringFind(OrderComment(), "[sl]from #") == -1 &&
+                    StringFind(OrderComment(), "[tp]from #") == -1)
+                {
+                    condition2 = TRUE;
+                    local_commissionfactor = MathAbs(OrderProfit() / (OrderClosePrice() - OrderOpenPrice()));
+                    local_commissionpips = (-OrderCommission()) / local_commissionfactor;
+                    Print("Commission_Rate : " + sub_dbl2strbrokerdigits(local_commissionpips));
+                    break;
+                }
+            }
+        }
+
+        local_stoplevel = MathMax(MarketInfo(local_pair, MODE_FREEZELEVEL), MarketInfo(local_pair, MODE_STOPLEVEL) ) * Point;
+        local_spread = Ask - Bid;
+
+        local_adjuststoplevel = 0.5;
+        if (local_adjuststoplevel < local_stoplevel - 5.0 * pipette)
+        {
+            local_usestoporders = FALSE;
+            local_trailingdistance = MaxSpread * pipette;
+            local_adjuststoplevel = ten * pipette;
+            local_c = five * pipette;
+        }
+        else
+        {
+            local_usestoporders = TRUE;
+            local_trailingdistance = twenty * pipette;
+            local_adjuststoplevel = zero * pipette;
+            local_c = TrailingStart * pipette;
+        }
+
+        local_trailingdistance = MathMax(local_trailingdistance, local_stoplevel);
+        if (local_usestoporders)
+            local_adjuststoplevel = MathMax(local_adjuststoplevel, local_stoplevel);
+        ArrayCopy(array_spread, array_spread, 0, 1, 29);
+        array_spread[29] = local_spread;
+        if (upto30counter < 30)
+            upto30counter++;
+        local_e = 0;
+        local_loopcount2 = 29;
+        for (local_loopcount1 = 0; local_loopcount1 < upto30counter; local_loopcount1++)
+        {
+            local_e += array_spread[local_loopcount2];
+            local_loopcount2--;
+        }
+
+        // Calculate an average of spreads based on the spread from the last 30 tics
+        local_avgspread = local_e / upto30counter;
+
+        // Calculate price and spread considering commission
+        local_f = sub_normalizebrokerdigits(Ask + local_commissionpips);
+        local_g = sub_normalizebrokerdigits(Bid - local_commissionpips);
+        local_realavgspread = local_avgspread + local_commissionpips;
+
+        // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads + commission
+        if (UseDynamicVolatilityLimit == TRUE)
+            VolatilityLimit = local_realavgspread * VolatilityMultiplier;
+
+        local_pricedirection = 0;
+
+        // If the variables below have values it means that we have enough of data from broker server
+        if(local_volatility && VolatilityLimit && lowest && highest)
+        {
+            // The Volatility is outside of the VolatilityLimit, so we now have  to open a trade
+            if (local_volatility > VolatilityLimit)
+            {
+                // Calculate how much it differs
+                local_volatilitypercentage = local_volatility / VolatilityLimit;
+                // In case of UseVolatilityPercentage == TRUE then also check if it differ enough of percentage
+                if ((UseVolatilityPercentage == FALSE) || (UseVolatilityPercentage == TRUE && local_volatilitypercentage > VolatilityPercentageLimit))
+                {
+                    if (Bid < lowest)
+                        local_pricedirection = -1; // BUY or BUYSTOP
+                    else if (Bid > highest)
+                        local_pricedirection = 1;  // SELL or SELLSTOP
+                }
+            }
+            else
+                local_volatilitypercentage = 0;
+        }
+
+        local_scalpsize = MathMax(local_stoplevel, local_scalpsize);
+
+        if (Bid == 0.0 || MarketInfo(local_pair, MODE_LOTSIZE) == 0.0)
+            local_scalpsize = 0;
+
+        local_orderexpiretime = TimeCurrent() + OrderExpireSeconds;
+
+        if (MarketInfo(local_pair, MODE_LOTSTEP) == 0.0)
+            local_lotstep = 5;
+        else
+            local_lotstep = sub_logarithm(0.1, MarketInfo(local_pair, MODE_LOTSTEP));
+
+        if (Risk < 0.001 || Risk > 100.0)
+        {
+            Comment("ERROR -- Invalid Risk Value.");
+            return;
+        }
+
+        if (AccountBalance() <= 0.0)
+        {
+            Comment("ERROR -- Account Balance is " + DoubleToStr(MathRound(AccountBalance()), 0));
+            return;
+        }
+
+        // Calculate lotsize based on FreeMargin, Risk in % and StopLoss
+        minmaxlot = NormalizeDouble(AccountFreeMargin() * Risk / 100 / StopLoss, 2);
+
+        // Lotsize is higher that the max allowed lotsized, so reduce lotsize to maximum allowed lotsize
+        if (minmaxlot > MaxLots)
+            minmaxlot = MaxLots;
+
+        // Reset counters
+        local_counter1 = 0;
+        local_counter2 = 0;
+        // Loop through all open orders (if any)
+        for (local_loopcount2 = 0; local_loopcount2 < OrdersTotal(); local_loopcount2++)
+        {
+            OrderSelect(local_loopcount2, SELECT_BY_POS, MODE_TRADES);
+            if (OrderMagicNumber() == Magic && OrderCloseTime() == 0)
+            {
+                if (OrderSymbol() != local_pair)
+                {
+                    local_counter2++;
+                    continue;
+                }
+                switch (OrderType())
+                {
+                case OP_BUY:
+                    while (trailingstop)
+                    {
+                        local_orderstoploss = OrderStopLoss();
+                        local_ordertakeprofit = OrderTakeProfit();
+                        if (!(local_ordertakeprofit < sub_normalizebrokerdigits(local_f + local_trailingdistance) && local_f + local_trailingdistance - local_ordertakeprofit > local_c))
+                            break;
+                        local_orderstoploss = sub_normalizebrokerdigits(Bid - local_trailingdistance);
+                        local_ordertakeprofit = sub_normalizebrokerdigits(local_f + local_trailingdistance);
+                        execution = GetTickCount();
+                        local_wasordermodified = OrderModify(OrderTicket(), 0, local_orderstoploss, local_ordertakeprofit, local_orderexpiretime, Lime);
+                        execution = GetTickCount() - execution;
+                        break;
+                    }
+                    local_counter1++;
+                    break;
+                case OP_SELL:
+                    while (trailingstop)
+                    {
+                        local_orderstoploss = OrderStopLoss();
+                        local_ordertakeprofit = OrderTakeProfit();
+                        if (!(local_ordertakeprofit > sub_normalizebrokerdigits(local_g - local_trailingdistance) && local_ordertakeprofit - local_g + local_trailingdistance > local_c))
+                            break;
+                        local_orderstoploss = sub_normalizebrokerdigits(Ask + local_trailingdistance);
+                        local_ordertakeprofit = sub_normalizebrokerdigits(local_g - local_trailingdistance);
+                        execution = GetTickCount();
+                        local_wasordermodified = OrderModify(OrderTicket(), 0, local_orderstoploss, local_ordertakeprofit, local_orderexpiretime, Orange);
+                        execution = GetTickCount() - execution;
+                        break;
+                    }
+                    local_counter1++;
+                    break;
+                case OP_BUYSTOP:
+                    if (!local_isbidgreaterthanima)
+                    {
+                        local_tpadjust = OrderTakeProfit() - OrderOpenPrice() - local_commissionpips;
+                        while (true)
+                        {
+                            if (!(sub_normalizebrokerdigits(Ask + local_adjuststoplevel) < OrderOpenPrice() && OrderOpenPrice() - Ask - local_adjuststoplevel > local_c))
+                                break;
+                            execution = GetTickCount();
+                            local_wasordermodified = OrderModify(OrderTicket(), sub_normalizebrokerdigits(Ask + local_adjuststoplevel), sub_normalizebrokerdigits(Bid + local_adjuststoplevel - local_tpadjust), sub_normalizebrokerdigits(local_f + local_adjuststoplevel + local_tpadjust), 0, Lime);
+                            execution = GetTickCount() - execution;
+                            break;
+                        }
+                        local_counter1++;
+                    }
+                    else
+                        OrderDelete(OrderTicket());
+                    break;
+                case OP_SELLSTOP:
+                    if (local_isbidgreaterthanima)
+                    {
+                        local_tpadjust = OrderOpenPrice() - OrderTakeProfit() - local_commissionpips;
+                        while (true)
+                        {
+                            if (!(sub_normalizebrokerdigits(Bid - local_adjuststoplevel) > OrderOpenPrice() && Bid - local_adjuststoplevel - OrderOpenPrice() > local_c))
+                                break;
+                            execution = GetTickCount();
+                            local_wasordermodified = OrderModify(OrderTicket(), sub_normalizebrokerdigits(Bid - local_adjuststoplevel), sub_normalizebrokerdigits(Ask - local_adjuststoplevel + local_tpadjust), sub_normalizebrokerdigits(local_g - local_adjuststoplevel - local_tpadjust), 0, Orange);
+                            execution = GetTickCount() - execution;
+                            break;
+                        }
+                        local_counter1++;
+                    }
+                    else
+                        OrderDelete(OrderTicket());
+                } // end of switch
+            }  // end if OrderMagicNumber
+        } // end for loopcount2
+        local_ordersenderror = FALSE;
+        if (globalerror >= 0 || globalerror == -2)
+        {
+            local_bidpart = NormalizeDouble(Bid / pipette, 0);
+            local_askpart = NormalizeDouble(Ask / pipette, 0);
+            if (local_bidpart % 10 != 0 || local_askpart % 10 != 0)
+                globalerror = -1;
+            else
+            {
+                if (globalerror >= 0 && globalerror < 10)
+                    globalerror++;
+                else
+                    globalerror = -2;
+            }
+        }
+        if (local_counter1 == 0 && local_pricedirection != 0 && sub_normalizebrokerdigits(local_realavgspread) <= sub_normalizebrokerdigits(MaxSpread * pipette) && globalerror == -1)
+        {
+            if (local_pricedirection < 0)
+            {
+                execution = GetTickCount();
+                if (local_usestoporders)
+                {
+                local_askplusdistance = Ask + distance * Point;
+                    if (NDDmode)
+                    {
+                        local_orderticket = OrderSend(local_pair, OP_BUYSTOP, minmaxlot, local_askplusdistance, slippage, 0, 0, OrderCmt, Magic, 0, Lime);
+                        if (OrderSelect(local_orderticket, SELECT_BY_TICKET))
+                            OrderModify(OrderTicket(), OrderOpenPrice(), local_askplusdistance - StopLoss * Point, local_askplusdistance + TakeProfit * Point, local_orderexpiretime, Lime);
+                    }
+                    else
+                        local_orderticket = OrderSend(local_pair, OP_BUYSTOP, minmaxlot, local_askplusdistance, slippage, local_askplusdistance - StopLoss * Point, local_askplusdistance + TakeProfit * Point, OrderCmt, Magic, local_orderexpiretime, Lime);
+                    if (local_orderticket < 0)
+                    {
+                        local_ordersenderror = TRUE;
+                        Print("ERROR BUYSTOP : " + sub_dbl2strbrokerdigits(Ask + local_adjuststoplevel) + " SL:" + sub_dbl2strbrokerdigits(Bid + local_adjuststoplevel - local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_f + local_adjuststoplevel + local_scalpsize));
+                        execution = 0;
+                    }
+                    else
+                    {
+                        execution = GetTickCount() - execution;
+                        PlaySound("news.wav");
+                        Print("BUYSTOP : " + sub_dbl2strbrokerdigits(Ask + local_adjuststoplevel) + " SL:" + sub_dbl2strbrokerdigits(Bid + local_adjuststoplevel - local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_f + local_adjuststoplevel + local_scalpsize));
+                    }
+                }
+                else
+                {
+                    if (Bid - local_ilow > 0.0)
+                    {
+                        local_orderticket = OrderSend(local_pair, OP_BUY, minmaxlot, Ask, slippage, 0, 0, OrderCmt, Magic, local_orderexpiretime, Lime);
+                        if (local_orderticket < 0)
+                        {
+                            local_ordersenderror = TRUE;
+                            Print("ERROR BUY Ask:" + sub_dbl2strbrokerdigits(Ask) + " SL:" + sub_dbl2strbrokerdigits(Bid - local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_f + local_scalpsize));
+                            execution = 0;
+                        }
+                        else
+                        {
+                            while (true)
+                            {
+                                local_wasordermodified = OrderModify(local_orderticket, 0, sub_normalizebrokerdigits(Bid - local_scalpsize), sub_normalizebrokerdigits(local_f + local_scalpsize), local_orderexpiretime, Lime);
+                                break;
+                            }
+                            execution = GetTickCount() - execution;
+                            PlaySound("news.wav");
+                            Print("BUY Ask:" + sub_dbl2strbrokerdigits(Ask) + " SL:" + sub_dbl2strbrokerdigits(Bid - local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_f + local_scalpsize));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (local_pricedirection > 0)
+                {
+                    if (local_usestoporders)
+                    {
+                        local_bidminusdistance = Bid - distance * Point;
+                        execution = GetTickCount();
+                        if (NDDmode)
+                        {
+                            local_orderticket = OrderSend(local_pair, OP_SELLSTOP, minmaxlot, local_bidminusdistance, slippage, 0, 0, OrderCmt, Magic, 0, Orange);
+                            if (OrderSelect(local_orderticket, SELECT_BY_TICKET))
+                                OrderModify(OrderTicket(), OrderOpenPrice(), local_bidminusdistance + StopLoss * Point, local_bidminusdistance - TakeProfit * Point, local_orderexpiretime, Orange);
+                        }
+                        else
+                            local_orderticket = OrderSend(local_pair, OP_SELLSTOP, minmaxlot, local_bidminusdistance, slippage, local_bidminusdistance + StopLoss * Point, local_bidminusdistance - TakeProfit * Point, OrderCmt, Magic, local_orderexpiretime, Orange);
+                        if (local_orderticket < 0)
+                        {
+                            local_ordersenderror = TRUE;
+                            Print("ERROR SELLSTOP : " + sub_dbl2strbrokerdigits(Bid - local_adjuststoplevel) + " SL:" + sub_dbl2strbrokerdigits(Ask - local_adjuststoplevel + local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_g - local_adjuststoplevel - local_scalpsize));
+                            execution = 0;
+                        }
+                        else
+                        {
+                            execution = GetTickCount() - execution;
+                            PlaySound("news.wav");
+                            Print("SELLSTOP : " + sub_dbl2strbrokerdigits(Bid - local_adjuststoplevel) + " SL:" + sub_dbl2strbrokerdigits(Ask - local_adjuststoplevel + local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_g - local_adjuststoplevel - local_scalpsize));
+                        }
+                    }
+                    else
+                    {
+                        if (local_ihigh - Bid < 0.0)
+                        {
+                            local_orderticket = OrderSend(local_pair, OP_SELL, minmaxlot, Bid, slippage, 0, 0, OrderCmt, Magic, local_orderexpiretime, Orange);
+                            if (local_orderticket < 0)
+                            {
+                                local_ordersenderror = TRUE;
+                                Print("ERROR SELL Bid:" + sub_dbl2strbrokerdigits(Bid) + " SL:" + sub_dbl2strbrokerdigits(Ask + local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_g - local_scalpsize));
+                                execution = 0;
+                            }
+                            else
+                            {
+                                while (true)
+                                {
+                                    local_wasordermodified = OrderModify(local_orderticket, 0, sub_normalizebrokerdigits(Ask + local_scalpsize), sub_normalizebrokerdigits(local_g - local_scalpsize), local_orderexpiretime, Orange);
+                                    break;
+                                }
+                                execution = GetTickCount() - execution;
+                                PlaySound("news.wav");
+                                Print("SELL Bid:" + sub_dbl2strbrokerdigits(Bid) + " SL:" + sub_dbl2strbrokerdigits(Ask + local_scalpsize) + " TP:" + sub_dbl2strbrokerdigits(local_g - local_scalpsize));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (globalerror >= 0)
+            Comment("Robot is initializing...");
+        else
+        {
+            if (globalerror == -2)
+                Comment("ERROR -- Instrument " + local_pair + " prices should have " + brokerdigits + " fraction digits on broker account");
+            else
+            {
+                local_textstring = TimeToStr(TimeCurrent()) + " Tick: " + sub_adjust00instring(tickcounter);
+                if (Show_Debug || Verbose)
+                {
+                    local_textstring = local_textstring + "\n*** DEBUG MODE *** \nVolatility: " + sub_dbl2strbrokerdigits(local_volatility) + ", VolatilityLimit: " + sub_dbl2strbrokerdigits(VolatilityLimit) + ", VolatilityPercentage: " + sub_dbl2strbrokerdigits(local_volatilitypercentage);
+                    local_textstring = local_textstring + "\nPriceDirection: " + StringSubstr("BUY NULLSELL", 5 * local_pricedirection, 4) + ", ImaHigh: " + sub_dbl2strbrokerdigits(local_imahigh) + ", ImaLow: " + sub_dbl2strbrokerdigits(local_imalow) + ", BBandUpper: " + sub_dbl2strbrokerdigits(local_ibandsupper);
+                    local_textstring = local_textstring + ", BBandLower: " + sub_dbl2strbrokerdigits(local_ibandslower) + ", Expire: " + TimeToStr(local_orderexpiretime, TIME_MINUTES) + ", NnumOrders: " + local_counter1;
+                    local_textstring = local_textstring + "\nTrailingLimit: " + sub_dbl2strbrokerdigits(local_adjuststoplevel) + ", TrailingDist: " + sub_dbl2strbrokerdigits(local_trailingdistance) + "; TrailingStart: " + sub_dbl2strbrokerdigits(local_c) + ", UseStopOrders: " + local_usestoporders;
+                }
+                local_textstring = local_textstring + "\nBid: " + sub_dbl2strbrokerdigits(Bid) + ", Ask: " + sub_dbl2strbrokerdigits(Ask) + ", AvgSpread: " + sub_dbl2strbrokerdigits(local_avgspread) + ", Commission: " + sub_dbl2strbrokerdigits(local_commissionpips) + ", RealAvgSpread: " + sub_dbl2strbrokerdigits(local_realavgspread) + ", Lots: " + sub_dbl2strparb(minmaxlot, local_lotstep) + ", Execution: " + execution + " ms";
+                if (sub_normalizebrokerdigits(local_realavgspread) > sub_normalizebrokerdigits(MaxSpread * pipette))
+                {
+                    local_textstring = local_textstring + "\n" + "The current spread (" + sub_dbl2strbrokerdigits(local_realavgspread) +") is higher than what has been set as MaxSpread (" + sub_dbl2strbrokerdigits(MaxSpread * pipette) + ") so no trading is allowed right now on this currency pair!";
+                }
+                Comment(local_textstring);
+                if (local_counter1 != 0 || local_pricedirection != 0 || Verbose)
+                    sub_printformattedstring(local_textstring);
+            }
+        } // end else
+    }   // end for
+} // end sub
+
+void sub_moveandfillarrays (double& par_reference_a[30], double& par_reference_b[30], int& par_reference_c[30], double par_d)
+{
+    int local_counter;
+
+   if (par_reference_c[0] == 0 || MathAbs (Bid - par_reference_a[0]) >= par_d * pipette)
+    {
+      for (local_counter = 29; local_counter > 0; local_counter--)
+        {
+         par_reference_a[local_counter] = par_reference_a[local_counter - 1];
+         par_reference_b[local_counter] = par_reference_b[local_counter - 1];
+         par_reference_c[local_counter] = par_reference_c[local_counter - 1];
+      }
+      par_reference_a[0] = Bid;
+      par_reference_b[0] = Ask;
+      par_reference_c[0] = GetTickCount();
+   }
+}
+
+string sub_dbl2strbrokerdigits(double par_a)
+{
+   return (DoubleToStr(par_a, brokerdigits));
+}
+
+string sub_dbl2strparb(double par_a, int par_b)
+{
+   return (DoubleToStr(par_a, par_b));
+}
+
+double sub_normalizebrokerdigits(double par_a)
+{
+   return (NormalizeDouble(par_a, brokerdigits));
+}
+
+string sub_adjust00instring(int par_a)
+{
+   if (par_a < 10)
+        return ("00" + par_a);
+   if (par_a < 100)
+        return ("0" + par_a);
+   return ("" + par_a);
+}
+
+double sub_logarithm(double par_a, double par_b)
+{
+   return (MathLog(par_b) / MathLog(par_a));
+}
+
+void sub_printformattedstring(string par_a)
+{
+   int local_difference;
+   int local_a = -1;
+
+   while (local_a < StringLen(par_a))
+    {
+      local_difference = local_a + 1;
+      local_a = StringFind(par_a, "\n", local_difference);
+      if (local_a == -1)
+        {
+         Print(StringSubstr(par_a, local_difference));
          return;
       }
-      if (AccountBalance() <= 0.0) {
-         Comment("ERROR -- Account Balance is " + DoubleToStr(MathRound(AccountBalance()), 0));
-         return;
-      }
-      if (ld_220 != 0.0) {
-         gd_172 = MathMax(AccountBalance(), gd_172);
-         ld_244 = MathMin(AccountFreeMargin() * AccountLeverage() / 2.0, gd_172 * Risk / 100.0 * Bid / ld_228);
-         gd_136 = ld_244 / MarketInfo(Symbol(), MODE_LOTSIZE);
-         gd_136 = NormalizeDouble(gd_136, li_240);
-         gd_136 = MathMax(Min_Lots, gd_136);
-         gd_136 = MathMax(MarketInfo(Symbol(), MODE_MINLOT), gd_136);
-         gd_136 = MathMin(Max_Lots, gd_136);
-         gd_136 = MathMin(MarketInfo(Symbol(), MODE_MAXLOT), gd_136);
-      }
-   }
-   int count_252 = 0;
-   int count_256 = 0;
-   for (pos_4 = 0; pos_4 < OrdersTotal(); pos_4++) {
-      OrderSelect(pos_4, SELECT_BY_POS, MODE_TRADES);
-      if (OrderMagicNumber() == Magic && OrderCloseTime() == 0) {
-         if (OrderSymbol() != Symbol()) {
-            count_256++;
-            continue;
-         }
-         switch (OrderType()) {
-         case OP_BUY:
-            while (Trailing_Stop) {
-               order_stoploss_260 = OrderStopLoss();
-               order_takeprofit_268 = OrderTakeProfit();
-               if (!(order_takeprofit_268 < f0_5(ld_168 + ld_120) && ld_168 + ld_120 - order_takeprofit_268 > ld_136)) break;
-               order_stoploss_260 = f0_5(Bid - ld_120);
-               order_takeprofit_268 = f0_5(ld_168 + ld_120);
-               bool_28 = OrderModify(OrderTicket(), 0, order_stoploss_260, order_takeprofit_268, datetime_236, Lime);
-               if (bool_28) break;
-               li_24 = f0_1();
-               if (!(li_24)) break;
-            }
-            count_252++;
-            break;
-         case OP_SELL:
-            while (Trailing_Stop) {
-               order_stoploss_260 = OrderStopLoss();
-               order_takeprofit_268 = OrderTakeProfit();
-               if (!(order_takeprofit_268 > f0_5(ld_176 - ld_120) && order_takeprofit_268 - ld_176 + ld_120 > ld_136)) break;
-               order_stoploss_260 = f0_5(Ask + ld_120);
-               order_takeprofit_268 = f0_5(ld_176 - ld_120);
-               bool_28 = OrderModify(OrderTicket(), 0, order_stoploss_260, order_takeprofit_268, datetime_236, Orange);
-               if (bool_28) break;
-               li_24 = f0_1();
-               if (!(li_24)) break;
-            }
-            count_252++;
-            break;
-         case OP_BUYSTOP:
-            if (!li_88) {
-               ld_276 = OrderTakeProfit() - OrderOpenPrice() - gd_380;
-               while (true) {
-                  if (!(f0_5(Ask + ld_128) < OrderOpenPrice() && OrderOpenPrice() - Ask - ld_128 > ld_136)) break;
-                  bool_28 = OrderModify(OrderTicket(), f0_5(Ask + ld_128), f0_5(Bid + ld_128 - ld_276), f0_5(ld_168 + ld_128 + ld_276), 0, Lime);
-                  if (bool_28) break;
-                  li_24 = f0_1();
-                  if (!(li_24)) break;
-               }
-               count_252++;
-            } else OrderDelete(OrderTicket());
-            break;
-         case OP_SELLSTOP:
-            if (li_88) {
-               ld_276 = OrderOpenPrice() - OrderTakeProfit() - gd_380;
-               while (true) {
-                  if (!(f0_5(Bid - ld_128) > OrderOpenPrice() && Bid - ld_128 - OrderOpenPrice() > ld_136)) break;
-                  bool_28 = OrderModify(OrderTicket(), f0_5(Bid - ld_128), f0_5(Ask - ld_128 + ld_276), f0_5(ld_176 - ld_128 - ld_276), 0, Orange);
-                  if (bool_28) break;
-                  li_24 = f0_1();
-                  if (!(li_24)) break;
-               }
-               count_252++;
-            } else OrderDelete(OrderTicket());
-         }
-      }
-   }
-   bool li_288 = false;
-   if (gi_388 >= 0 || gi_388 == -2) {
-      li_292 = NormalizeDouble(Bid / gd_316, 0);
-      li_296 = NormalizeDouble(Ask / gd_316, 0);
-      if (li_292 % 10 != 0 || li_296 % 10 != 0) gi_388 = -1;
-      else {
-         if (gi_388 >= 0 && gi_388 < 10) gi_388++;
-         else gi_388 = -2;
-      }
-   }
-   if (ld_220 != 0.0 && count_252 == 0 && li_216 != 0 && f0_5(ld_184) <= f0_5(gd_196 * gd_316) && gi_388 == -1) {
-      if (li_216 < 0) {
-         if (li_116) {
-         ld_28 = Ask + distance * Point;
-            ticket_16 = OrderSend(Symbol(), OP_BUYSTOP, gd_136, ld_28, g_slippage_324, ld_28 - StopLoss * Point, ld_28 + TakeProfit * Point, OrderCmt, Magic, datetime_236, Lime);
-            if (ticket_16 < 0) {
-               li_288 = true;
-               Print("ERROR BUYSTOP : " + f0_3(Ask + ld_128) + " SL:" + f0_3(Bid + ld_128 - ld_220) + " TP:" + f0_3(ld_168 + ld_128 + ld_220));
-            } else {
-               PlaySound("news.wav");
-               Print("BUYSTOP : " + f0_3(Ask + ld_128) + " SL:" + f0_3(Bid + ld_128 - ld_220) + " TP:" + f0_3(ld_168 + ld_128 + ld_220));
-            }
-         } else {
-            if (Bid - ilow_72  && gd_348 > 0.0) {
-               ticket_16 = OrderSend(Symbol(), OP_BUY, gd_136, Ask, g_slippage_324, 0, 0, OrderCmt, Magic, datetime_236, Lime);
-               if (ticket_16 < 0) {
-                  li_288 = true;
-                  Print("ERROR BUY Ask:" + f0_3(Ask) + " SL:" + f0_3(Bid - ld_220) + " TP:" + f0_3(ld_168 + ld_220));
-               } else {
-                  while (true) {
-                     bool_28 = OrderModify(ticket_16, 0, f0_5(Bid - ld_220), f0_5(ld_168 + ld_220), datetime_236, Lime);
-                     if (bool_28) break;
-                     li_24 = f0_1();
-                     if (!(li_24)) break;
-                  }
-                  PlaySound("news.wav");
-                  Print("BUY Ask:" + f0_3(Ask) + " SL:" + f0_3(Bid - ld_220) + " TP:" + f0_3(ld_168 + ld_220));
-               }
-            }
-         }
-      } else {
-         if (li_216 > 0) {
-            if (li_116) {
-            ld_30 =Bid - distance * Point;
-               ticket_16 = OrderSend(Symbol(), OP_SELLSTOP, gd_136, ld_30, g_slippage_324, ld_30 + StopLoss * Point, ld_30 - TakeProfit * Point, OrderCmt, Magic, datetime_236, Orange);
-               if (ticket_16 < 0) {
-                  li_288 = true;
-                  Print("ERROR SELLSTOP : " + f0_3(Bid - ld_128) + " SL:" + f0_3(Ask - ld_128 + ld_220) + " TP:" + f0_3(ld_176 - ld_128 - ld_220));
-               } else {
-                  PlaySound("news.wav");
-                  Print("SELLSTOP : " + f0_3(Bid - ld_128) + " SL:" + f0_3(Ask - ld_128 + ld_220) + " TP:" + f0_3(ld_176 - ld_128 - ld_220));
-               }
-            } else {
-               if (ihigh_64 - Bid  && gd_348 < 0.0) {
-                  ticket_16 = OrderSend(Symbol(), OP_SELL, gd_136, Bid, g_slippage_324, 0, 0, OrderCmt, Magic, datetime_236, Orange);
-                  if (ticket_16 < 0) {
-                     li_288 = true;
-                     Print("ERROR SELL Bid:" + f0_3(Bid) + " SL:" + f0_3(Ask + ld_220) + " TP:" + f0_3(ld_176 - ld_220));
-                  } else {
-                     while (true) {
-                        bool_28 = OrderModify(ticket_16, 0, f0_5(Ask + ld_220), f0_5(ld_176 - ld_220), datetime_236, Orange);
-                        if (bool_28) break;
-                        li_24 = f0_1();
-                        if (!(li_24)) break;
-                     }
-                     PlaySound("news.wav");
-                     Print("SELL Bid:" + f0_3(Bid) + " SL:" + f0_3(Ask + ld_220) + " TP:" + f0_3(ld_176 - ld_220));
-                  }
-               }
-            }
-         }
-      }
-   }
-   if (gi_388 >= 0) Comment("Robot is initializing...");
-   else {
-      if (gi_388 == -2) Comment("ERROR -- Instrument " + Symbol() + " prices should have " + gi_312 + " fraction digits on broker account");
-      else {
-         ls_300 = TimeToStr(TimeCurrent()) + " tick:" + f0_6(g_count_396);
-         if (Show_Debug || Verbose) {
-            ls_300 = ls_300
-               + "\n"
-            + f0_3(ld_200) + " " + f0_3(ld_220) + " digits:" + gi_312 + " " + gi_388 + " stopLevel:" + f0_3(ld_100);
-            ls_300 = ls_300
-               + "\n"
-            + li_216 + " " + f0_3(icustom_40) + " " + f0_3(icustom_32) + " " + f0_3(gd_220) + " exp:" + TimeToStr(datetime_236, TIME_MINUTES) + " numOrders:" + count_252 + " shouldRepeat:" + li_288;
-            ls_300 = ls_300
-            + "\ntrailingLimit:" + f0_3(ld_128) + " trailingDist:" + f0_3(ld_120) + " trailingResolution:" + f0_3(ld_136) + " useStopOrders:" + li_116;
-         }
-         ls_300 = ls_300
-         + "\nBid:" + f0_3(Bid) + " Ask:" + f0_3(Ask) + " avgSpread:" + f0_3(ld_160) + "  Commission rate:" + f0_3(gd_380) + "  Real avg. spread:" + f0_3(ld_184) + "  Lots:" + f0_4(gd_136, li_240);
-         if (Mode_HighSpeed) ls_300 = ls_300 + "   HIGH SPEED";
-         if (Mode_Safe) ls_300 = ls_300 + "   SAFE";
-         if (Mode_MaxOrders) ls_300 = ls_300 + "   MAX";
-         if (f0_5(ld_184) > f0_5(gd_196 * gd_316)) {
-            ls_300 = ls_300
-               + "\n"
-            + "Robot is OFF :: Real avg. spread is too high for this scalping strategy ( " + f0_3(ld_184) + " > " + f0_3(gd_196 * gd_316) + " )";
-         }
-         Comment(ls_300);
-         if (count_252 != 0 || li_216 != 0 || Verbose) f0_8(ls_300);
-      }
-   }
-   if (li_288) {
-      li_308 = f0_1();
-      if (li_308) f0_0(a_timeframe_0);
+      Print(StringSubstr(par_a, local_difference, local_a - local_difference));
    }
 }
 
-int f0_1() {
-   return (0);
-}
+void sub_preparecurrencypairs()
+{
+   string local_list;
+   string local_pair;
 
-void f0_2(double &ada_0[30], double &ada_4[30], int &aia_8[30], double ad_12) {
-   double ld_52;
-   if (aia_8[0] == 0 || MathAbs(Bid - ada_0[0]) >= ad_12 * gd_316) {
-      for (int li_20 = 29; li_20 > 0; li_20--) {
-         ada_0[li_20] = ada_0[li_20 - 1];
-         ada_4[li_20] = ada_4[li_20 - 1];
-         aia_8[li_20] = aia_8[li_20 - 1];
+    int local_counter1;
+    int local_counter2;
+   int local_position;
+
+    double local_price;
+
+    // Loop through all 27 possible currency pairs to pick out the ones that the broker offers
+    paircount = 0;
+   for (local_counter1 = 0; local_counter1 != paircount; local_counter1++)
+    {
+      local_pair = allpairs[local_counter1];
+        local_price = MarketInfo(local_pair + Suffix, MODE_ASK);
+      if (local_price != 0)     //  Check if broker support this pair
+        {
+         paircount++;
+         ArrayResize(tradablepairs, paircount);
+         tradablepairs[paircount - 1] = local_pair;
       }
-      ada_0[0] = Bid;
-      ada_4[0] = Ask;
-      aia_8[0] = GetTickCount();
-   }
-   gd_348 = 0;
-   gi_356 = false;
-   double ld_24 = 0;
-   int li_32 = 0;
-   double ld_36 = 0;
-   int li_44 = 0;
-   int li_unused_48 = 0;
-   for (li_20 = 1; li_20 < 30; li_20++) {
-      if (aia_8[li_20] == 0) break;
-      ld_52 = ada_0[0] - ada_0[li_20];
-      if (ld_52 < ld_24) {
-         ld_24 = ld_52;
-         li_32 = aia_8[0] - aia_8[li_20];
-      }
-      if (ld_52 > ld_36) {
-         ld_36 = ld_52;
-         li_44 = aia_8[0] - aia_8[li_20];
-      }
-      if (ld_24 < 0.0 && ld_36 > 0.0 && ld_24 < 3.0 * ((-ad_12) * gd_316) || ld_36 > 3.0 * (ad_12 * gd_316)) {
-         if ((-ld_24) / ld_36 < 0.5) {
-            gd_348 = ld_36;
-            gi_356 = li_44;
-            break;
-         }
-         if ((-ld_36) / ld_24 < 0.5) {
-            gd_348 = ld_24;
-            gi_356 = li_32;
-         }
-      } else {
-         if (ld_36 > 5.0 * (ad_12 * gd_316)) {
-            gd_348 = ld_36;
-            gi_356 = li_44;
-         } else {
-            if (ld_24 < 5.0 * ((-ad_12) * gd_316)) {
-               gd_348 = ld_24;
-               gi_356 = li_32;
-               break;
-            }
-         }
-      }
-   }
-   if (gi_356 == false) {
-      gd_360 = 0;
-      return;
-   }
-   gd_360 = 1000.0 * gd_348 / gi_356;
-}
+        else
+           Print ("The broker does not support ", local_pair);
+    }
 
-string f0_3(double ad_0) {
-   return (DoubleToStr(ad_0, gi_312));
-}
-
-string f0_4(double ad_0, int ai_8) {
-   return (DoubleToStr(ad_0, ai_8));
-}
-
-double f0_5(double ad_0) {
-   return (NormalizeDouble(ad_0, gi_312));
-}
-
-string f0_6(int ai_0) {
-   if (ai_0 < 10) return ("00" + ai_0);
-   if (ai_0 < 100) return ("0" + ai_0);
-   return ("" + ai_0);
-}
-
-double f0_7(double ad_0, double ad_8) {
-   return (MathLog(ad_8) / MathLog(ad_0));
-}
-
-void f0_8(string as_0) {
-   int li_12;
-   int li_8 = -1;
-   while (li_8 < StringLen(as_0)) {
-      li_12 = li_8 + 1;
-      li_8 = StringFind(as_0,
-      "\n", li_12);
-      if (li_8 == -1) {
-         Print(StringSubstr(as_0, li_12));
-         return;
-      }
-      Print(StringSubstr(as_0, li_12, li_8 - li_12));
-   }
 }
