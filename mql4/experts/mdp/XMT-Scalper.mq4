@@ -1,261 +1,14 @@
-//--------------------------------------------------------------------------------------------------
-//           P L E A S E   -   D O    N O T    D E L E T E    T H I S   H E A D E R ! ! !
-//  D E L E T I N G   T H I S   H E A D E R   I S   C O P Y R I G H T   I N F R I G H M E N T
-// -------------------------------------------------------------------------------------------------
-//                                   XMT-Scalper v. 2.522
-//
-//                                       by Capella
-//                             http://www.worldwide-invest.org
-//                                  Copyright 2011 - 2015
-//
-//--------------------------------------------------------------------------------------------------
-//   THIS EA IS SHAREWARE, WHICH MEANS THAT IT'S NOT A COMMERCIAL PRODUCT, BUT STILL COPYRIGHTED
-// -------------------------------------------------------------------------------------------------
-//
-// About Capella:
-//
-// I'm a professional system analyst / computer programmer + fund manager and fx trader living
-// in Sweden, with a background as a teacher in computer science, programming and mathematics, etc.
-// I can be reached at the above financial forum.
-//
-// Editing:
-//
-// Note: For readability in MetaEditor, set Tools > Options > General, Tab size = 3 spaces and
-// Font = Courier New 10. BTW, I use Notepad++ as the editor (highly recommended).
-//
-// Your suggestions:
-//
-// If you're a programmer and have suggestions for improvements, then please have the courtesy to
-// share this and upload the new mq4-file to the above forum. Add a letter "a", "b", etc. to the
-// version number to distinguish it from the official releases, but do not change version number,
-// All added code should be written in separate lines with indentations in the same way as I
-// have written the code, this to enhance readability. Be sure to comment every line of code, and
-// add your version comment at the end of the version list. Your contribution will be honored. All
-// further releases will be posted on the above forum, as well as all feedback from users.
-//
-// Origin:
-//
-// The EA was originally based on the EA MillionDollarPips - but now totally rewritten from scratch.
-// Not much remains from the original, except the core idea of the trading strategy (tick scalping
-// based on a reversal from a breakout from a channel).
-//
-//--------------------------------------------------------------------------------------------------
-//
-// Version history:
-//
-// Someone at a russian forum fixed a Stack Overflow problem, added NDD-mode (ECN-mode)
-// and moved the DLL-functions in the mql4-code, and uploaded "MillionDollarPips -
-// (ANY PAIR + NO DLL) - ver 1.1.0". This was trrhe version I started to look at.
-//
-// Sept-2011 by Capella
-// - Cleaned code from unused code, proper variable names and sub-names.
-//
-// Ver. 1.0 - 2011-09-24 by Capella
-// - Added Print lines for STOPLEVEL when errors (for debugging purposes)
-// - Removed unused externals and variables
-// - Moved dynamic TP/SL and trading signals constants to externals,
-//   as VolatilityLimit and Scalpfactor.
-// - Forced TrailingStop
-//
-// Ver. 2.0 - 2011-10-19  by Capella
-// - Fixing bugs, and removed unused code.
-// - Forced Trailing, as no-trailing cannot generate profit
-// - Forced HighSpeed, as false mode cannot give good result
-// - Added additional settings for scalping - UseMovingAverage,
-//   UseBollingerBands, and OrderExpireSeconds
-// - Automatic adjusted to broker STOPLEVEL, to avoid OrderSend error 130
-//
-// Ver 2.1 - 2011-11-91 by Capella
-// - Added Indicatorperiod as external
-// - Modified calculation of variable that triggers trade (pricedirection)
-// - Removed Distance as an external, and automatically adjust Distance to be the same as stoplevel
-// - Removed call for sub_moveandfillarrays as it doesn't make any difference
-// Ver 2.1.1 - 2011-11-05 by Capella
-// - Fixed a bug in the calculation of highest and lowest that caused wrong call for
-//   OrderModify.
-// - Changed the calculation of STOPLEVEL to also consider FREEZELEVEL
-// Ver 2.1.2 - 2011-11-06 by Capella
-// - Changed default settings according to optimized backtests
-// - Added external parameter Deviation for iBands, default 0
-// Ver 2.1.3 - 2011-11-07 by Capella
-// - Fixed a bug for calculation of isbidgreaterthanindy
-// Ver 2.1.4 - 2011-11-09 by Capella
-// - Fixed a bug that only made the robot trade on SELL and SELLSTOP
-// - Put back the call for the sub "sub_moveandfillarrays" except the last nonsense part of it.
-// - Changed the default settings and re-ordered the global variables
-// Ver 2.1.5 - 2011-11-10 by Capella
-// - Fixed a bug that caused the robot to not trade for some brokers (if variable "scalpsize"
-//   was 0.0)
-// - Fixed a bug that could cause the lot-size to be calculated wrongly
-// - Better output of debug information (more information)
-// - Moved a fixed internal Max Spread to an external. The default internal value was 40 (4 pips),
-//   which is too high IMHI
-// - Renamed some local variables to more proper names in order to make the code more readable
-// - Cleaaned code further by removing unused code, etc.
-// Ver 2.1.5a - 2011-11-15 by blueprint1972
-// - Added Execution time in log files, to measure how fast orders are executed at the broker server
-//
-// Ver 2.2 - 2011-11-17 by Capella
-// - An option to calculate VelocityLimit dynamically based on the spread
-// - Removed parameter Scalpfactor as it had no impact on the trading conditions, only on lotsize
-// - Better lot calculation, now entirely based on FreeMargin, Risk and StopLoss
-// - A new scalp factor called VolatilityPercentageLimit based on the difference between
-//   VolatilityLimit and iHigh / iLow for triggering trades
-// - Can now trade automatically on all currency pairs within spread limit from one single chart
-// - Works on 4-digit brokers as well. Note: Performance on 4-digit brokers is worse than on
-//   5-digit brokers, and there are much less trades
-// Ver 2.2.1 - 2011-11-18 by Capella
-// - Fixed a bug for calculation of Commission. The variables "commissionpips" and
-//   "commissionfactor" moved from locals to globals.
-// Ver 2.2.1.2 - 2011-11-18 by Sonik
-// - Added Screenshot Functionality (Tested and Working So Far)
-// Ver 2.2.2 - 2011-11-19 by Capella
-// - Added automatic calculation of MagicNumber as an option
-// - Adjust MinLot to broker minimum
-// - Correction of lotsize calculation according to broker lotstep
-// Ver 2.2.3 - 2011-11-21 by Capella
-// - Fixed bug for calculation of lotsize calculation according to broker lotstep
-// - Added broker Comission as an external parameter, and corected the calculation
-// - Re-arrranged some code - moving parts to subroutines
-// Ver 2.2.4 - 2011-11-23 by Capella
-// - Improved performance for higher spreads
-// - Cleaned code further and moved parts of code to subroutines
-// Ver 2.2.4a - 2011-11-24 by blueprint
-// - Added execution control
-// Ver 2.2.4b - 2011-11-24 by Pannik
-// - Added possibility to use manual fixed lots
-// Ver 2.2.5 - 2011-11-25 by Capella
-// - Fixed bug for too small lotsize and wrong Risk settings
-// - Changed randomized execution time for backtests to be within 0 and MaxExecution
-// - Cleaned the code further
-// Ver 2.2.6 - 2011-11-25 by Capella
-// - Fixed bug for too large lotsize.
-// - Fixed the bug for TradeALLCurrencyPairs
-// - Moved broker suffix from external parameter to automatically calculated in a subroutine
-// - Removed unnecessary program code, cleaned and organized the code further
-// Ver 2.2.7 - 2011-11-30 by Capella
-// - Fixed a bug for the broker Commission
-//
-// Ver 2.3 - 2011-12-08 by Capella
-// - Changed name of the EA (from MDP-Plus) as the thread in the forum once again was deleted.
-//   This EA is now a copyrighted shareware; a non-commercial product free to use.
-// - Removed TradeALLCurrencyPairs as it was too buggy and could not cope with the fast trades,
-//   better attach on separate charts
-// - Fixed bug where iMA was used instead of either/or iMA/iBands for modifying BUYSTOP and SELLSTOP
-//   orders
-// - Rewrote some of the code to make it easier to follow and understand.
-// - Rewrote subs to check lotsize and risk settings, and adjust them accordingly
-// - Added more comments to program code
-// - Added time for how often fake orders should be sent in order to calculate execution speed
-// - Removed unused variables and code
-// - Added check so no trading can start before we have gathered enough of Bar-data
-// - Moved Slippage to an external parameter so it can be changed
-// - Added summation of broker error codes
-// Ver 2.3.1 - 2011-12-08 by Capella
-// - Fixed a bug that could cause lotsize to be greater than MaxLots
-// Ver 2.3.2 - 2011-12-09 by blueprint1972
-// - Added option for simulated latency during backtests
-// Ver 2.3.2b - 2011-12-09 by derox
-// - Added iEnvelopes and iATR as indicators
-// Ver 2.3.2c - 2011-12-10 by Pannik
-// - Added "UseIndicatorSwitch" for choosing indicator to use
-// Ver 2.3.2d - 2011-12-12 by derox
-// - Added AllAverages as indicator. Note: This requires external indicator
-// Ver 2.3.3 - 2011-12-12 by Capella
-// - Added AddPriceGap as an external parameter to increase SL and TP in order to decrease number of error 130
-// - Replaced iMA with AllAverages
-// - Removed iMA AND iBands combination
-// - Fixed minor bugs
-// - Cleaned up the code further
-// Ver 2.3.4 - 2011-12-13 by Capella
-// - Removed AllAverages as it didn't make any difference compared to standard Moving Average
-// - Fixed bug for iATR indicator.
-// - Added dual-trade as an option for iATR
-//
-// Ver 2.4 - 2012-09-06 by Capella
-// - Removed some external settings incl. ATR and its settings
-// - Added external setting MinumumUseStopLevel
-// - Fixed bugs, so it works better with different brokers withhout error 130
-// Ver 2.4.1 - 2012-10-23 by Capella
-// - Added check for when ECN_Mode == TRUE and BUY/SELL orders have not yet been modified, to
-//   prevent running orders without SL. Wait 1 second and then modify the order with a SL
-//   that is 3 pip from current price.
-// - Changed default settings after extensive backtests using 99% tick-data
-// Ver 2.4.2 - 2013-07 by Capella
-// - Added lot-size re-calculation if Account Currency is not USD but either EUR, GBP, CHF or JPY
-// - Added ReverseTrade as an option
-// - Changed algorithm for automatically calculation of magicnumber
-// - Added printout info if there was no errors reported from the broker server
-// Ver 2.4.3 - 2014-05 by Capella
-// - Fixed bug - BBDeviation is INT not Double (wrong fix, see 2.461 below)
-// - Moved IndicatorPeriod to externals
-// - Minor bugs fixed
-// - Compilation test on both MT4 Build 509 as well as on latest MT4 Build (currently 670)
-// - Changed calculations from Balance to Equity (2014-08-05)
-// Ver 2.44 - 2014-08/09 by Capella
-// - Changed version presentation to only one point ( . ), i.e. 2.4.4. becomes 2.44
-// - Added control of stray trades (trades without SL and TP).
-//   If it finds a stray order it will try to add a SL 10 points from current price.
-// - Changed how MinimumUseStopLevel is calculated and used. Now the StopLevel is the highest value of
-//   either this value or the Broker StopLevel. This StopLevel is then added/substracted from the current
-//   price for BuyStop and SellStop orders. The value expressed in Points.
-// - Added spaces around ( and ) and after commas , to enhance readability
-// - Added AUD and NZD as possible account currencies for calculation of multiplicator (used to correct lotsize),
-//   and moved it to a subroutine.
-// Ver 2.45 - 2014-09-30 by Capella
-// - Fixed a bug for OrderExpireSeconds
-// Ver 2.451 - 2014-11-14 by Capella
-// - Fixed a bug for printout of BBands in Debug mode
-// Ver 2.452 - 2014-11-15 by Capella
-// - Fixed a bug for Magic (did not return a calculated value)
-// Ver 2.46 - 2014-11-24 by Capella
-// - Added the setting MinMarginLevel. No trading is allowed if free margin is below this percentage.
-// - Added graphic trading presentation
-// - Renamed variables names (globals starting with upper case, locals in lower case)
-// - Adding spaced within parenthesis ( ... ) to enhance readability
-// Ver 2.461 - 2015-01-09 by Capella
-// - Fixed bug for BBDeviation, which is a double and not int
-//
-// Ver 2.5 - 2015-11-27 by Capella
-// - Removed Comments, as they are printed in the chart, or changed them to Print, so they are printed
-//   at the Terminal Journal tab instead
-// - Printout of default execution time in ms is now 0 instead of -1
-// - Fixed 'division by zero' error in case it's not possible to fetch market BID price using the
-//   MarketInfo command in the function sub_multiplicator()
-// - Added external TimeFrame so that the EA now can trade on other timeframes as well, incl. TF-control
-// - Modified functions init to OnInit, deinit to DeInit and start to OnTick to adjust for new version of MQL4
-// Ver 2.501 - 2015-12-22 by Capella
-// - Added more comments and fixed typos in text
-// Ver 2.52 - 2016-02-29 by Capella
-// - Added #property strict for the compiler, and made corrections (adding forced datatypes)
-// Ver 2.521 - 2016-03-09 by Capella
-// - Fixed bug that removed EA from chart if settings was changed.
-// - Added printed text for reason for why DeInit was called
-// Ver 2.522 - 2016-03-19 by Capella
-// - Added variable names at the beginning of Comments for variables, as MT4 now show the Comments
-//   instead of the Variable names
-//---------------------------------------------------------------------------------------------------
+/**
+ * XMT-Scalper
+ *
+ * Based on the MillionDollarPips EA. Not much remains from the original, except the core idea of the strategy (tick scalping
+ * based on a reversal from a channel breakout).
+ */
+#include <stddefines.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 
-#property copyright     "Copyright 2011-2015 by Capella at http://www.worldwide-invest.org"
-#property version       "2.522"
-#property link          "http://www.worldwide-invest.org"
-#property description   "This is a FREE Shareware Expert Advisor for MetaTrader 4."
-#property description   "Please do not remove the property section and version history."
-#property description   "XMT-Scalper is a Tick Scalper originally made for EURUSD M1, but can also work on other pairs, Gold and CFD's and timeframes"
-#property description   "It's extremely broker sensitive and requires tight spread when used on M1."
-#property description   "Read the PDF-file for explanations and settings."
-#property strict
-
-//----------------------- Include files ------------------------------------------------------------
-
-// Note: If the below files are stored in the installation directory of MT4 then the files should be
-// written with " " around their names. If you however prefer to have the include files in the same
-// directory as this EA, then the files below should be surropunded by < > instead.
-#include "stdlib.mqh"        // "stdlib.mqh" or "<sdlib.mqh>
-#include "stderror.mqh"      // "stderror.mqh" or <stderror.mqh>
-
-//----------------------- External Globals ----------------------------------------------------------------
-// All globals should here have their name starting with a CAPITAL character
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string  Configuration              = "==== Configuration ====";
 extern bool    ReverseTrade               = FALSE; // ReverseTrade: If TRUE, then trade in opposite direction
@@ -265,7 +18,7 @@ extern bool    ECN_Mode                   = FALSE; // ECN_Mode: True for brokers
 extern bool    Debug                      = FALSE; // Debug: Print huge log files with info, only for debugging purposes
 extern bool    Verbose                    = FALSE; // Verbose: Additional log information printed in the Expert tab
 extern string  TradingSettings            = "==== Trade settings ====";
-extern ENUM_TIMEFRAMES TimeFrame          = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
+extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
 extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
 extern int     MaxExecution               = 0; // MaxExecution: Max allowed average execution time in ms (0 means no restrictions)
 extern int     MaxExecutionMinutes        = 5; // MaxExecutionMinutes: How often in minutes should fake orders be sent to measure execution speed
@@ -308,11 +61,15 @@ extern color   Color_Section2             = Aqua;   // Color for text lines
 extern color   Color_Section3             = Orange; // Color for text lines
 extern color   Color_Section4             = Magenta;// Color for text lines
 
-//--------------------------- Globals --------------------------------------------------------------
-// All globals should here have their name starting with a CAPITAL character
-// All variables are arranged according to their data type
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-string EA_version = "XMT-Scalper v. 2.522";
+#include <core/expert.mqh>
+#include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
+
+//--------------------------- Globals --------------------------------------------------------------
+
+string EA_version = "XMT-Scalper v2.522";
 
 datetime StartTime;        // Initial time
 datetime LastTime;         // For measuring tics
@@ -358,8 +115,8 @@ double Tot_closed_comm;    // A summary of the current closed commission for thi
 double G_balance = 0;      // Balance for this EA
 double Array_spread[30];   // Store spreads for the last 30 tics
 double LotSize;            // Lotsize
-double Highest;            // LotSize indicator value
-double Lowest;             // Lowest indicator value
+double highest;            // LotSize indicator value
+double lowest;             // Lowest indicator value
 double StopLevel;          // Broker StopLevel
 double StopOut;            // Broker stoput percentage
 double LotStep;            // Broker LotStep
@@ -367,10 +124,13 @@ double MarginForOneLot;    // Margin required for 1 lot
 double Avg_tickspermin;    // Used for simulation of latency during backtests
 double MarginFree;         // Free margin in percentage
 
-//======================= Program initialization ===================================================
 
-void OnInit()
-{
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
    // Print short message at the start of initalization
    Print ("====== Initialization of ", EA_version, " ======");
 
@@ -381,8 +141,7 @@ void OnInit()
       if ( Period() != TimeFrame )
       {
          // The setting of timefram,e does not match the chart tiomeframe, so alert of this and exit
-         Alert ("The EA has been set to run on timeframe: ", EnumToString( TimeFrame )," but it has been attached to a chart with timeframe: ", Period() );
-         ExpertRemove();
+         return(catch("onInit(1)  The EA has been set to run on timeframe "+ TimeframeDescription(TimeFrame) +" but it has been attached to a chart with timeframe "+ TimeframeDescription(Period()) +".", ERR_RUNTIME_ERROR));
       }
    }
 
@@ -475,12 +234,16 @@ void OnInit()
    // Print short message at the end of initialization
    Print ( "========== Initialization complete! ===========\n" );
 
+   return(catch("onInit(2)"));
 }
 
-//======================= Program deinitialization =================================================
 
-void OnDeinit( const int reason )
-{
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
    string text = "";
 
    // Print summarize of broker errors
@@ -502,8 +265,8 @@ void OnDeinit( const int reason )
       // If we run backtests and simulate latency, then print result
       if ( MaxExecution > 0 )
       {
-         text = text + "During backtesting " + (string) SkippedTicks + " number of ticks was ";
-         text = text + "skipped to simulate latency of up to " + (string) MaxExecution + " ms";
+         text = text + "During backtesting " + SkippedTicks + " number of ticks was ";
+         text = text + "skipped to simulate latency of up to " + MaxExecution + " ms";
          sub_printandcomment ( text );
       }
    }
@@ -512,17 +275,20 @@ void OnDeinit( const int reason )
    Print ( EA_version, " has been deinitialized!" );
 
    // Print the uninitialization reason code
-   Print ( __FUNCTION__, "_Uninitalization reason code = ", reason );
+   Print ( "OnDeinit _Uninitalization reason code = ", UninitializeReason());
    //--- The second way to get the uninitialization reason code
-   Print ( __FUNCTION__, "_UninitReason = ", sub_UninitReasonText( _UninitReason ) );
+   Print ( "OnDeinit _UninitReason = ", sub_UninitReasonText(UninitializeReason()) );
 
+   return(catch("onDeinit(1)"));
 }
 
 
-//==================================== Program start called at every tick ===============================================
-
-void OnTick()
-{
+/**
+ * Main function
+ *
+ * @return int - error status
+ */
+int onTick() {
    // We must wait til we have enough of bar data before we call trading routine
    if ( iBars ( Symbol(), TimeFrame ) > Indicatorperiod )
    {
@@ -537,6 +303,8 @@ void OnTick()
    // We have not yet enough of bar data, so print message
    else
       Print ( "Please wait until enough of bar data has been gathered!" );
+
+   return(catch("onTick(1)"));
 }
 
 
@@ -544,11 +312,12 @@ void OnTick()
 // Notation:
 // All actual and formal parameters in subs have their names starting with par_
 // All local variables in subs have their names written in lower case
-// All subroutines (aka function) except OnTick(), OnInit() and OnDeinit() have their names starting with sub_ to
 
-// This is the main trading subroutine
-void sub_trade()
-{
+
+/**
+ * Main trading subroutine
+ */
+void sub_trade() {
    string textstring;
    string pair;
    string indy;
@@ -703,24 +472,24 @@ void sub_trade()
    if ( UseIndicatorSwitch == 1 && isbidgreaterthanima == TRUE )
    {
       isbidgreaterthanindy = TRUE;
-      Highest = imahigh;
-      Lowest = imalow;
+      highest = imahigh;
+      lowest = imalow;
    }
 
    // If we're using iBands as indicator, then set variables from it
    else if ( UseIndicatorSwitch == 2 && isbidgreaterthanibands == TRUE )
    {
       isbidgreaterthanindy = TRUE;
-      Highest = ibandsupper;
-      Lowest = ibandslower;
+      highest = ibandsupper;
+      lowest = ibandslower;
    }
 
    // If we're using iEnvelopes as indicator, then set variables from it
    else if ( UseIndicatorSwitch == 3 && isbidgreaterthanenvelopes == TRUE )
    {
       isbidgreaterthanindy = TRUE;
-      Highest = envelopesupper;
-      Lowest = envelopeslower;
+      highest = envelopesupper;
+      lowest = envelopeslower;
    }
 
    // Calculate spread
@@ -761,7 +530,7 @@ void sub_trade()
       VolatilityLimit = realavgspread * VolatilityMultiplier;
 
    // If the variables below have values it means that we have enough of data from broker server.
-   if ( volatility && VolatilityLimit && Lowest && Highest && UseIndicatorSwitch != 4 )
+   if ( volatility && VolatilityLimit && lowest && highest && UseIndicatorSwitch != 4 )
    {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
       if ( volatility > VolatilityLimit )
@@ -772,14 +541,14 @@ void sub_trade()
          // In case of UseVolatilityPercentage == TRUE then also check if it differ enough of percentage
          if ( ( UseVolatilityPercentage == FALSE ) || ( UseVolatilityPercentage == TRUE && volatilitypercentage > VolatilityPercentageLimit ) )
          {
-            if ( bid < Lowest )
+            if ( bid < lowest )
             {
                if ( ReverseTrade == FALSE )
                   pricedirection = -1; // BUY or BUYSTOP
                else // ReverseTrade == true
                   pricedirection = 1; // SELL or SELLSTOP
             }
-            else if ( bid > Highest )
+            else if ( bid > highest )
             {
                if ( ReverseTrade == FALSE )
                   pricedirection = 1;  // SELL or SELLSTOP
@@ -845,7 +614,7 @@ void sub_trade()
                   if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
                   {
                      // Start Execution timer
-                     Execution = (int) GetTickCount();
+                     Execution = GetTickCount();
                      // Try to modify order
                      wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Lime );
                   }
@@ -853,7 +622,7 @@ void sub_trade()
                   if ( wasordermodified == TRUE )
                   {
                      // Calculate Execution speed
-                     Execution = (int) GetTickCount() - Execution;
+                     Execution = GetTickCount() - Execution;
                      // If we have choosen to take snapshots and we're not backtesting, then do so
                      if ( TakeShots && !IsTesting() )
                         sub_takesnapshot();
@@ -904,14 +673,14 @@ void sub_trade()
                   if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
                   {
                      // Start Execution timer
-                     Execution = (int) GetTickCount();
+                     Execution = GetTickCount();
                      wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange );
                   }
                   // Order was modiified with new SL and TP
                   if ( wasordermodified == TRUE )
                   {
                      // Calculate Execution speed
-                     Execution = (int) GetTickCount() - Execution;
+                     Execution = GetTickCount() - Execution;
                      // If we have choosen to take snapshots and we're not backtesting, then do so
                      if ( TakeShots && !IsTesting() )
                         sub_takesnapshot();
@@ -965,17 +734,17 @@ void sub_trade()
                      {
                         RefreshRates();
                         // Start Execution timer
-                        Execution = (int) GetTickCount();
+                        Execution = GetTickCount();
                         wasordermodified = OrderModify ( OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Lime );
                      }
                      // Order was modified
                      if ( wasordermodified == TRUE )
                      {
                         // Calculate Execution speed
-                        Execution = (int) GetTickCount() - Execution;
+                        Execution = GetTickCount() - Execution;
                         // Print if debug or verbose
                         if ( Debug || Verbose )
-                           Print ( "Order executed in " + (string) Execution + " ms" );
+                           Print ( "Order executed in " + Execution + " ms" );
                      }
                      // Order was not modified
                      else
@@ -1019,17 +788,17 @@ void sub_trade()
                      {
                         RefreshRates();
                         // Start Execution counter
-                        Execution = (int) GetTickCount();
+                        Execution = GetTickCount();
                         wasordermodified = OrderModify ( OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange );
                      }
                      // Order was modified
                      if ( wasordermodified == TRUE )
                      {
                         // Calculate Execution speed
-                        Execution = (int) GetTickCount() - Execution;
+                        Execution = GetTickCount() - Execution;
                         // Print if debug or verbose
                         if ( Debug || Verbose )
-                           Print ( "Order executed in " + (string) Execution + " ms" );
+                           Print ( "Order executed in " + Execution + " ms" );
                      }
                      // Order was not modified
                      else
@@ -1056,8 +825,8 @@ void sub_trade()
    // Calculate and keep track on global error number
    if ( GlobalError >= 0 || GlobalError == -2 )
    {
-      bidpart = (int) NormalizeDouble ( bid / Point, 0 );
-      askpart = (int) NormalizeDouble ( ask / Point, 0 );
+      bidpart = NormalizeDouble ( bid / Point, 0 );
+      askpart = NormalizeDouble ( ask / Point, 0 );
       if ( bidpart % 10 != 0 || askpart % 10 != 0 )
          GlobalError = -1;
       else
@@ -1077,7 +846,7 @@ void sub_trade()
    {
       pricedirection = 0; // Ignore the order opening triger
       if ( Debug || Verbose )
-         Print ( "Server is too Slow. Average Execution: " + (string) Avg_execution );
+         Print ( "Server is too Slow. Average Execution: " + Avg_execution );
    }
 
    // Set default price adjustment
@@ -1100,16 +869,16 @@ void sub_trade()
             orderstoploss =  0;
             ordertakeprofit = 0;
             // Start Execution counter
-            Execution = (int) GetTickCount();
+            Execution = GetTickCount();
             // Send a BUYSTOP order without SL and TP
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, 0, Lime );
             // OrderSend was executed successfully
             if ( orderticket > 0 )
             {
                // Calculate Execution speed
-               Execution = (int) GetTickCount() - Execution;
+               Execution = GetTickCount() - Execution;
                if ( Debug || Verbose )
-                  Print ( "Order executed in " + (string) Execution + " ms" );
+                  Print ( "Order executed in " + Execution + " ms" );
                // If we have choosen to take snapshots and we're not backtesting, then do so
                if ( TakeShots && !IsTesting() )
                   sub_takesnapshot();
@@ -1131,16 +900,16 @@ void sub_trade()
                orderstoploss =  sub_normalizebrokerdigits ( orderprice - spread - StopLoss * Point - AddPriceGap );
                ordertakeprofit = sub_normalizebrokerdigits ( orderprice + TakeProfit * Point + AddPriceGap );
                // Start Execution timer
-               Execution = (int) GetTickCount();
+               Execution = GetTickCount();
                // Send a modify order for BUYSTOP order with new SL and TP
                wasordermodified = OrderModify ( OrderTicket(), orderprice, orderstoploss, ordertakeprofit, orderexpiretime, Lime );
                // OrderModify was executed successfully
                if ( wasordermodified == TRUE )
                {
                   // Calculate Execution speed
-                  Execution = (int) GetTickCount() - Execution;
+                  Execution = GetTickCount() - Execution;
                   if ( Debug || Verbose )
-                     Print ( "Order executed in " + (string) Execution + " ms" );
+                     Print ( "Order executed in " + Execution + " ms" );
                   // If we have choosen to take snapshots and we're not backtesting, then do so
                   if ( TakeShots && !IsTesting() )
                      sub_takesnapshot();
@@ -1165,15 +934,15 @@ void sub_trade()
             orderstoploss =  sub_normalizebrokerdigits ( orderprice - spread - StopLoss * Point - AddPriceGap );
             ordertakeprofit = sub_normalizebrokerdigits ( orderprice + TakeProfit * Point + AddPriceGap );
             // Start Execution counter
-            Execution = (int) GetTickCount();
+            Execution = GetTickCount();
             // Send a BUYSTOP order with SL and TP
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Lime );
             if ( orderticket > 0 ) // OrderSend was executed suxxessfully
             {
                // Calculate Execution speed
-               Execution = (int) GetTickCount() - Execution;
+               Execution = GetTickCount() - Execution;
                if ( Debug || Verbose )
-                  Print ( "Order executed in " + (string) Execution + " ms" );
+                  Print ( "Order executed in " + Execution + " ms" );
                // If we have choosen to take snapshots and we're not backtesting, then do so
                if ( TakeShots && !IsTesting() )
                   sub_takesnapshot();
@@ -1201,16 +970,16 @@ void sub_trade()
          if (ECN_Mode)
          {
             // Start Execution timer
-            Execution = (int) GetTickCount();
+            Execution = GetTickCount();
             // Send a SELLSTOP order without SL and TP
             orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, 0, Orange );
             // OrderSend was executed successfully
             if ( orderticket > 0 )
             {
                // Calculate Execution speed
-               Execution = (int) GetTickCount() - Execution;
+               Execution = GetTickCount() - Execution;
                if ( Debug || Verbose )
-                  Print ( "Order executed in " + (string) Execution + " ms" );
+                  Print ( "Order executed in " + Execution + " ms" );
                // If we have choosen to take snapshots and we're not backtesting, then do so
                if ( TakeShots && !IsTesting() )
                   sub_takesnapshot();
@@ -1232,7 +1001,7 @@ void sub_trade()
                orderstoploss = sub_normalizebrokerdigits ( orderprice + spread + StopLoss * Point + AddPriceGap );
                ordertakeprofit = sub_normalizebrokerdigits ( orderprice - TakeProfit * Point - AddPriceGap );
                // Start Execution timer
-               Execution = (int) GetTickCount();
+               Execution = GetTickCount();
                // Send a modify order with adjusted SL and TP
                wasordermodified = OrderModify ( OrderTicket(), OrderOpenPrice(), orderstoploss, ordertakeprofit, orderexpiretime, Orange );
             }
@@ -1240,10 +1009,10 @@ void sub_trade()
             if ( wasordermodified == TRUE )
             {
                // Calculate Execution speed
-               Execution = (int) GetTickCount() - Execution;
+               Execution = GetTickCount() - Execution;
                // Print debug info
                if ( Debug || Verbose )
-                  Print ( "Order executed in " + (string) Execution + " ms" );
+                  Print ( "Order executed in " + Execution + " ms" );
                // If we have choosen to take snapshots and we're not backtesting, then do so
                if ( TakeShots && !IsTesting() )
                   sub_takesnapshot();
@@ -1266,17 +1035,17 @@ void sub_trade()
             orderstoploss = sub_normalizebrokerdigits ( orderprice + spread + StopLoss * Point + AddPriceGap );
             ordertakeprofit = sub_normalizebrokerdigits ( orderprice - TakeProfit * Point - AddPriceGap );
             // Start Execution timer
-            Execution = (int) GetTickCount();
+            Execution = GetTickCount();
             // Send a SELLSTOP order with SL and TP
             orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Orange );
             // If OrderSend was executed successfully
             if ( orderticket > 0 )
             {
                // Calculate exection speed for that order
-               Execution = (int) GetTickCount() - Execution;
+               Execution = GetTickCount() - Execution;
                // Print debug info
                if ( Debug || Verbose )
-                  Print ( "Order executed in " + (string) Execution + " ms" );
+                  Print ( "Order executed in " + Execution + " ms" );
                if ( TakeShots && !IsTesting() )
                   sub_takesnapshot();
             } // end successful ordersend
@@ -1299,7 +1068,7 @@ void sub_trade()
       // When backtesting, simulate random Execution time based on the setting
       if ( IsTesting() && MaxExecution )
       {
-         MathSrand ( (int) TimeLocal( ));
+         MathSrand ( TimeLocal( ));
          Execution = MathRand() / ( 32767 / MaxExecution );
       }
       else
@@ -1311,11 +1080,11 @@ void sub_trade()
             fakeprice = ask * 2.0;
             // Send a BUYSTOP order
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, fakeprice, Slippage, 0, 0, OrderCmt, Magic, 0, Lime );
-            Execution = (int) GetTickCount();
+            Execution = GetTickCount();
             // Send a modify command where we adjust the price with +1 pip
             wasordermodified = OrderModify ( orderticket, fakeprice + 10 * Point, 0, 0, 0, Lime );
             // Calculate Execution speed
-            Execution = (int) GetTickCount() - Execution;
+            Execution = GetTickCount() - Execution;
             // Delete the order
             select = OrderDelete(orderticket);
          }
@@ -1339,7 +1108,7 @@ void sub_trade()
    {
       // Error
       if ( GlobalError == -2 )
-         Print ( "ERROR -- Instrument " + Symbol() + " prices should have " + (string) BrokerDigits + " fraction digits on broker account" );
+         Print ( "ERROR -- Instrument " + Symbol() + " prices should have " + BrokerDigits + " fraction digits on broker account" );
       // No errors, ready to print
       else
       {
@@ -1355,10 +1124,10 @@ void sub_trade()
             textstring = textstring + "\n*** DEBUG MODE *** \nCurrency pair: " + Symbol() + ", Volatility: " + sub_dbl2strbrokerdigits ( volatility )
             + ", VolatilityLimit: " + sub_dbl2strbrokerdigits ( VolatilityLimit ) + ", VolatilityPercentage: " + sub_dbl2strbrokerdigits ( volatilitypercentage );
             textstring = textstring + "\nPriceDirection: " + StringSubstr ( "BUY NULLSELLBOTH", 4 * pricedirection + 4, 4 ) +  ", Expire: "
-            + TimeToStr ( orderexpiretime, TIME_MINUTES ) + ", Open orders: " + (string) counter1;
+            + TimeToStr ( orderexpiretime, TIME_MINUTES ) + ", Open orders: " + counter1;
             textstring = textstring + "\nBid: " + sub_dbl2strbrokerdigits ( bid ) + ", Ask: " + sub_dbl2strbrokerdigits ( ask ) + ", " + indy;
             textstring = textstring + "\nAvgSpread: " + sub_dbl2strbrokerdigits ( avgspread ) + ", RealAvgSpread: " + sub_dbl2strbrokerdigits ( realavgspread )
-            + ", Commission: " + sub_dbl2strbrokerdigits ( Commission ) + ", Lots: " + DoubleToStr ( LotSize, 2 ) + ", Execution: " + (string) tmpexecution + " ms";
+            + ", Commission: " + sub_dbl2strbrokerdigits ( Commission ) + ", Lots: " + DoubleToStr ( LotSize, 2 ) + ", Execution: " + tmpexecution + " ms";
             if ( sub_normalizebrokerdigits ( realavgspread ) > sub_normalizebrokerdigits ( MaxSpread * Point ) )
             {
                textstring = textstring + "\n" + "The current spread (" + sub_dbl2strbrokerdigits ( realavgspread )
@@ -1366,8 +1135,8 @@ void sub_trade()
             }
             if ( MaxExecution > 0 && Avg_execution > MaxExecution )
             {
-               textstring = textstring + "\n" + "The current Avg Execution (" + (string) Avg_execution +") is higher than what has been set as MaxExecution ("
-               + (string) MaxExecution+ " ms), so no trading is allowed right now on this currency pair!";
+               textstring = textstring + "\n" + "The current Avg Execution (" + Avg_execution +") is higher than what has been set as MaxExecution ("
+               + MaxExecution+ " ms), so no trading is allowed right now on this currency pair!";
             }
             Print ( textstring );
             // Only print this if we have a any orders  OR have a price breakout OR Verbode mode is set to TRUE
@@ -1379,12 +1148,13 @@ void sub_trade()
 
    // Check for stray market orders without SL
    sub_Check4StrayTrades();
+}
 
-} // end sub
 
-// Check for stray trades
-void sub_Check4StrayTrades()
-{
+/**
+ * Check for stray trades
+ */
+void sub_Check4StrayTrades() {
    // Initiate some local variables
    int loop;
    int totals;
@@ -1451,31 +1221,39 @@ void sub_Check4StrayTrades()
    }
 }
 
-// Convert a decimal number to a text string
-string sub_dbl2strbrokerdigits ( double par_a )
-{
+
+/**
+ * Convert a decimal number to a text string
+ */
+string sub_dbl2strbrokerdigits ( double par_a ) {
    return ( DoubleToStr ( par_a, BrokerDigits ) );
 }
 
-// Adjust numbers with as many decimals as the broker uses
-double sub_normalizebrokerdigits ( double par_a )
-{
+
+/**
+ * Adjust numbers with as many decimals as the broker uses
+ */
+double sub_normalizebrokerdigits ( double par_a ) {
    return ( NormalizeDouble ( par_a, BrokerDigits ) );
 }
 
-// Adjust textstring with zeros at the end
-string sub_adjust00instring ( int par_a )
-{
+
+/**
+ * Adjust textstring with zeros at the end
+ */
+string sub_adjust00instring ( int par_a ) {
    if ( par_a < 10 )
-      return ( "00" + (string) par_a );
+      return ( "00" + par_a );
    if ( par_a < 100 )
-      return ( "0" + (string) par_a );
-   return ( "" + (string) par_a );
+      return ( "0" + par_a );
+   return ( "" + par_a );
 }
 
-// Print out formatted textstring
-void sub_printformattedstring ( string par_a )
-{
+
+/**
+ * Print out formatted textstring
+ */
+void sub_printformattedstring ( string par_a ) {
    // Initiate some local variables
    int difference;
    int a = -1;
@@ -1495,14 +1273,16 @@ void sub_printformattedstring ( string par_a )
    }
 }
 
-// Calculate lot multiplicator for Account Currency. Assumes that account currency is any of the 8 majors.
-// If the account currency is of any other currency, then calculate the multiplicator as follows:
-// If base-currency is USD then use the BID-price for the currency pair USDXXX; or if the
-// counter currency is USD the use 1 / BID-price for the currency pair XXXUSD,
-// where XXX is the abbreviation for the account currency. The calculated lot-size should
-// then be multiplied with this multiplicator.
-double sub_multiplicator()
-{
+
+/**
+ * Calculate lot multiplicator for Account Currency. Assumes that account currency is any of the 8 majors.
+ * If the account currency is of any other currency, then calculate the multiplicator as follows:
+ * If base-currency is USD then use the BID-price for the currency pair USDXXX; or if the
+ * counter currency is USD the use 1 / BID-price for the currency pair XXXUSD,
+ * where XXX is the abbreviation for the account currency. The calculated lot-size should
+ * then be multiplied with this multiplicator.
+ */
+double sub_multiplicator() {
    // Initiate some local variables
    double marketbid = 0;
    double multiplicator = 1.0;
@@ -1615,9 +1395,11 @@ double sub_multiplicator()
    return ( multiplicator );
 }
 
-// Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
-int sub_magicnumber ()
-{
+
+/**
+ * Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
+ */
+int sub_magicnumber () {
    // Initiate some local variables
    string a;
    string b;
@@ -1637,9 +1419,11 @@ int sub_magicnumber ()
    return ( i );
 }
 
-// Main routine for making a screenshoot / printscreen
-void sub_takesnapshot()
-{
+
+/**
+ * Main routine for making a screenshoot / printscreen
+ */
+void sub_takesnapshot() {
    // Initiate some local variables
    static datetime lastbar;
    static int doshot = -1;
@@ -1649,11 +1433,11 @@ void sub_takesnapshot()
 
    // If more than 0 screen shot should be taken per bar
    if ( ShotsPerBar > 0 )
-      shotinterval = (int) MathRound ( ( 60 * Period() ) / ShotsPerBar );
+      shotinterval = MathRound ( ( 60 * Period() ) / ShotsPerBar );
    // Only one screen shot should be taken
    else
       shotinterval = 60 * Period();
-   phase = (int) MathFloor ( ( CurTime() - Time[0] ) / shotinterval );
+   phase = MathFloor ( ( CurTime() - Time[0] ) / shotinterval );
 
    // Check to see that one bar has passed by
    if ( Time[0] != lastbar )
@@ -1676,9 +1460,11 @@ void sub_takesnapshot()
       doshot -= 1;
 }
 
-// Make a screenshoot / printscreen
-void sub_makescreenshot ( string par_sx = "" )
-{
+
+/**
+ * Make a screenshoot / printscreen
+ */
+void sub_makescreenshot ( string par_sx = "" ) {
    // Initate a local variables
    static int no = 0;
    string fn;
@@ -1686,18 +1472,20 @@ void sub_makescreenshot ( string par_sx = "" )
    // Increase counter
    no ++;
    // Prepare textstring as filename to be saved
-   fn = "SnapShot" + Symbol() + (string) Period() + "\\" + (string) Year() + "-" + sub_maketimestring ( Month(), 2 )
+   fn = "SnapShot" + Symbol() + Period() + "\\" + Year() + "-" + sub_maketimestring ( Month(), 2 )
    + "-" + sub_maketimestring ( Day(), 2 ) + " " + sub_maketimestring ( Hour(), 2 ) + "_" + sub_maketimestring ( Minute(), 2 )
-   + "_" + sub_maketimestring ( Seconds( ), 2 ) + " " + (string) no + (string) par_sx + ".gif";
+   + "_" + sub_maketimestring ( Seconds( ), 2 ) + " " + no + par_sx + ".gif";
 
    // Make a scrren shot, and i there is an error when a screen shot should have been taken then print out error message
    if ( !ScreenShot ( fn, 640, 480 ) )
       Print ( "ScreenShot error: ", ErrorDescription ( GetLastError() ) );
 }
 
-// Add leading zeros that the resulting string has 'digits' length.
-string sub_maketimestring ( int par_number, int par_digits )
-{
+
+/**
+ * Add leading zeros that the resulting string has 'digits' length.
+ */
+string sub_maketimestring ( int par_number, int par_digits ) {
    // Initiate a local variable
    string result;
 
@@ -1708,9 +1496,11 @@ string sub_maketimestring ( int par_number, int par_digits )
    return ( result );
 }
 
-// Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
-double sub_calculatelotsize()
-{
+
+/**
+ * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
+ */
+double sub_calculatelotsize() {
    // initiate some localö variables
    string textstring;
    double availablemoney;
@@ -1765,9 +1555,11 @@ double sub_calculatelotsize()
    return ( lotsize );
 }
 
-// Re-calculate a new Risk if the current one is too low or too high
-void sub_recalculatewrongrisk()
-{
+
+/**
+ * Re-calculate a new Risk if the current one is too low or too high
+ */
+void sub_recalculatewrongrisk() {
    // Initiate some local variables
    string textstring;
    double availablemoney;
@@ -1835,9 +1627,11 @@ void sub_recalculatewrongrisk()
    }
 }
 
-// Print out broker details and other info
-void sub_printdetails()
-{
+
+/**
+ * Print out broker details and other info
+ */
+void sub_printdetails() {
    // Initiate some local variables
    string margintext;
    string stopouttext;
@@ -1894,15 +1688,19 @@ void sub_printdetails()
    Print ( "Risk adjusted LotSize: ", DoubleToStr ( LotSize, 2 ) + fixedlots );
 }
 
-// Print and show comment of text
-void sub_printandcomment ( string par_text )
-{
+
+/**
+ * Print and show comment of text
+ */
+void sub_printandcomment ( string par_text ) {
    Print ( par_text );
 }
 
-// Summarize error messages that comes from the broker server
-void sub_errormessages()
-{
+
+/**
+ * Summarize error messages that comes from the broker server
+ */
+void sub_errormessages() {
    // Initiate a local variable
    int error = GetLastError();
 
@@ -1979,9 +1777,11 @@ void sub_errormessages()
    }
 }
 
-// Print out and comment summarized messages from the broker
-void sub_printsumofbrokererrors()
-{
+
+/**
+ * Print out and comment summarized messages from the broker
+ */
+void sub_printsumofbrokererrors() {
    // Prepare some lopcal variables
    string txt;
    int totalerrors;
@@ -2025,9 +1825,11 @@ void sub_printsumofbrokererrors()
       sub_printandcomment ( "There was no error reported from the broker server!" );
 }
 
-// Check through all open orders
-void sub_CheckThroughAllOpenOrders()
-{
+
+/**
+ * Check through all open orders
+ */
+void sub_CheckThroughAllOpenOrders() {
    // Initiate some local variables
    int pos;
    double tmp_order_lots;
@@ -2072,9 +1874,11 @@ void sub_CheckThroughAllOpenOrders()
 
 }
 
-// Check through all closed orders
-void sub_CheckThroughAllClosedOrders()
-{
+
+/**
+ * Check through all closed orders
+ */
+void sub_CheckThroughAllClosedOrders() {
    // Initiate some local variables
    int pos;
    int openTotal = OrdersHistoryTotal();
@@ -2109,9 +1913,11 @@ void sub_CheckThroughAllClosedOrders()
    G_balance = Tot_closed_profit + Tot_closed_swap + Tot_closed_comm;
 }
 
-// Printout graphics on the chart
-void sub_ShowGraphInfo()
-{
+
+/**
+ * Printout graphics on the chart
+ */
+void sub_ShowGraphInfo() {
    string line1;
    string line2;
    string line3;
@@ -2161,9 +1967,11 @@ void sub_ShowGraphInfo()
    sub_Display ( "line10", line10, Text_Size, 3, linespace, Color_Section4, 0 );
 }
 
-// Subroutine for displaying graphics on the chart
-void sub_Display ( string obj_name, string object_text, int object_text_fontsize, int object_x_distance, int object_y_distance, color object_textcolor, int object_corner_value )
-{
+
+/**
+ * Subroutine for displaying graphics on the chart
+ */
+void sub_Display ( string obj_name, string object_text, int object_text_fontsize, int object_x_distance, int object_y_distance, color object_textcolor, int object_corner_value ) {
    ObjectCreate ( obj_name, OBJ_LABEL, 0, 0, 0, 0, 0 );
    ObjectSet ( obj_name, OBJPROP_CORNER, object_corner_value );
    ObjectSet ( obj_name, OBJPROP_XDISTANCE, object_x_distance );
@@ -2171,15 +1979,19 @@ void sub_Display ( string obj_name, string object_text, int object_text_fontsize
    ObjectSetText ( obj_name, object_text, object_text_fontsize, "Tahoma", object_textcolor );
 }
 
-// Delete all graphics on the chart
-void sub_DeleteDisplay()
-{
+
+/**
+ * Delete all graphics on the chart
+ */
+void sub_DeleteDisplay() {
    ObjectsDeleteAll();
 }
 
-// Get text for Uninit Reason
-string sub_UninitReasonText( int reasonCode )
-{
+
+/**
+ * Get text for Uninit Reason
+ */
+string sub_UninitReasonText( int reasonCode ) {
    string text = "";
 
    switch ( reasonCode )
@@ -2197,17 +2009,16 @@ string sub_UninitReasonText( int reasonCode )
          text = "Input-parameter was changed";
          break;
       case REASON_RECOMPILE:
-         text = "Program " + __FILE__ + " was recompiled";
+         text = "Program " + WindowExpertName() + " was recompiled";
          break;
       case REASON_REMOVE:
-         text = "Program " + __FILE__ + " was removed from chart";
+         text = "Program " + WindowExpertName() + " was removed from chart";
          break;
       case REASON_TEMPLATE:
          text = "New template was applied to chart";
          break;
       default:
          text = "Another reason";
-    }
-
+   }
    return ( text );
 }
