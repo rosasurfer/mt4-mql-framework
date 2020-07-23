@@ -1,8 +1,8 @@
 /**
- * XMT-Scalper
+ * A "Million Dollar Pips" EA remake
  *
- * Based on the MillionDollarPips EA. Not much remains from the original, except the core idea of the strategy (tick scalping
- * based on a reversal from a channel breakout).
+ * An EA based on the probably single most famous MetaTrader EA ever written. Not much remains from the original, except the
+ * core idea of the strategy: tick scalping based on a reversal from a channel breakout.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string  Configuration              = "==== Configuration ====";
+extern string  ___a______________________ = "==== Configuration ====";
 extern bool    ReverseTrade               = false; // ReverseTrade: If true, then trade in opposite direction
 extern int     Magic                      = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
 extern string  OrderCmt                   = "XMT-Scalper 2.522"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
@@ -18,7 +18,7 @@ extern bool    ECN_Mode                   = false; // ECN_Mode: true for brokers
 extern bool    Debug                      = false; // Debug: Print huge log files with info, only for debugging purposes
 extern bool    Verbose                    = false; // Verbose: Additional log information printed in the Expert tab
 
-extern string  TradingSettings            = "==== Trade settings ====";
+extern string  ___b______________________ = "==== Trade settings ====";
 extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
 extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
 extern int     MaxExecution               = 0; // MaxExecution: Max allowed average execution time in ms (0 means no restrictions)
@@ -31,21 +31,21 @@ extern double  Commission                 = 0; // Commission: Some broker accoun
 extern int     Slippage                   = 3; // Slippage: Maximum allowed Slippage of price in points
 extern double  MinimumUseStopLevel        = 0; // MinimumUseStopLevel: Stoplevel to use will be max value of either this value or broker stoplevel
 
-extern string  VolatilitySettings         = "==== Volatility Settings ====";
+extern string  ___c______________________ = "==== Volatility Settings ====";
 extern bool    UseDynamicVolatilityLimit  = true; // UseDynamicVolatilityLimit: Calculated based on INT (spread * VolatilityMultiplier)
 extern double  VolatilityMultiplier       = 125; // VolatilityMultiplier: A multiplier that only is used if UseDynamicVolatilityLimit is set to true
 extern double  VolatilityLimit            = 180; // VolatilityLimit: A fix value that only is used if UseDynamicVolatilityLimit is set to false
 extern bool    UseVolatilityPercentage    = true; // UseVolatilityPercentage: If true, then price must break out more than a specific percentage
 extern double  VolatilityPercentageLimit  = 0; // VolatilityPercentageLimit: Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
 
-extern string  UseIndicatorSet            = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
+extern string  ___d______________________ = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
 extern int     UseIndicatorSwitch         = 1; // UseIndicatorSwitch: Choose of indicator for price channel.
 extern int     Indicatorperiod            = 3; // Indicatorperiod: Period in bars for indicator
 extern double  BBDeviation                = 2.0; // BBDeviation: Deviation for the iBands indicator only
 extern double  EnvelopesDeviation         = 0.07; // EnvelopesDeviation: Deviation for the iEnvelopes indicator only
 extern int     OrderExpireSeconds         = 3600; // OrderExpireSeconds: Orders are deleted after so many seconds
 
-extern string  Money_Management           = "==== Money Management ====";
+extern string  ___e______________________ = "==== Money Management ====";
 extern bool    MoneyManagement            = true; // MoneyManagement: If true then calculate lotsize automaticallay based on Risk, if false then use ManualLotsize below
 extern double  MinLots                    = 0.01; // MinLots: Minimum lot-size to trade with
 extern double  MaxLots                    = 100.0; // MaxLots : Maximum allowed lot-size to trade with
@@ -53,7 +53,7 @@ extern double  Risk                       = 2.0; // Risk: Risk setting in percen
 extern double  ManualLotsize              = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to false
 extern double  MinMarginLevel             = 100; // MinMarginLevel: Lowest allowed Margin level for new positions to be opened
 
-extern string  DisplayGraphics            = "=== Display Graphics ==="; // Colors for sub_Display at upper left
+extern string  ___f______________________ = "=== Display Graphics ==="; // Colors for sub_Display at upper left
 extern int     Heading_Size               = 13;  // Heading_Size: Font size for headline
 extern int     Text_Size                  = 12;  // Text_Size: Font size for texts
 extern color   Color_Heading              = Lime;   // Color for text lines
