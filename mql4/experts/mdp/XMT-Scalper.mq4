@@ -17,6 +17,7 @@ extern string  OrderCmt                   = "XMT-Scalper 2.522"; // OrderCmt. Tr
 extern bool    ECN_Mode                   = false; // ECN_Mode: true for brokers that don't accept SL and TP to be sent at the same time as the order
 extern bool    Debug                      = false; // Debug: Print huge log files with info, only for debugging purposes
 extern bool    Verbose                    = false; // Verbose: Additional log information printed in the Expert tab
+
 extern string  TradingSettings            = "==== Trade settings ====";
 extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
 extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
@@ -29,18 +30,21 @@ extern double  TrailingStart              = 20; // TrailingStart: Start trailing
 extern double  Commission                 = 0; // Commission: Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
 extern int     Slippage                   = 3; // Slippage: Maximum allowed Slippage of price in points
 extern double  MinimumUseStopLevel        = 0; // MinimumUseStopLevel: Stoplevel to use will be max value of either this value or broker stoplevel
+
 extern string  VolatilitySettings         = "==== Volatility Settings ====";
 extern bool    UseDynamicVolatilityLimit  = true; // UseDynamicVolatilityLimit: Calculated based on INT (spread * VolatilityMultiplier)
 extern double  VolatilityMultiplier       = 125; // VolatilityMultiplier: A multiplier that only is used if UseDynamicVolatilityLimit is set to true
 extern double  VolatilityLimit            = 180; // VolatilityLimit: A fix value that only is used if UseDynamicVolatilityLimit is set to false
 extern bool    UseVolatilityPercentage    = true; // UseVolatilityPercentage: If true, then price must break out more than a specific percentage
 extern double  VolatilityPercentageLimit  = 0; // VolatilityPercentageLimit: Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
+
 extern string  UseIndicatorSet            = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
 extern int     UseIndicatorSwitch         = 1; // UseIndicatorSwitch: Choose of indicator for price channel.
 extern int     Indicatorperiod            = 3; // Indicatorperiod: Period in bars for indicator
 extern double  BBDeviation                = 2.0; // BBDeviation: Deviation for the iBands indicator only
 extern double  EnvelopesDeviation         = 0.07; // EnvelopesDeviation: Deviation for the iEnvelopes indicator only
 extern int     OrderExpireSeconds         = 3600; // OrderExpireSeconds: Orders are deleted after so many seconds
+
 extern string  Money_Management           = "==== Money Management ====";
 extern bool    MoneyManagement            = true; // MoneyManagement: If true then calculate lotsize automaticallay based on Risk, if false then use ManualLotsize below
 extern double  MinLots                    = 0.01; // MinLots: Minimum lot-size to trade with
@@ -48,10 +52,7 @@ extern double  MaxLots                    = 100.0; // MaxLots : Maximum allowed 
 extern double  Risk                       = 2.0; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
 extern double  ManualLotsize              = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to false
 extern double  MinMarginLevel             = 100; // MinMarginLevel: Lowest allowed Margin level for new positions to be opened
-extern string  Screen_Shooter             = "==== Screen Shooter ====";
-extern bool    TakeShots                  = false; // TakeShots: Save screen shots for each opened order
-extern int     DelayTicks                 = 1; // DelayTicks: Delay so many ticks after new bar
-extern int     ShotsPerBar                = 1; // ShotsPerBar: How many screen shots per bar
+
 extern string  DisplayGraphics            = "=== Display Graphics ==="; // Colors for sub_Display at upper left
 extern int     Heading_Size               = 13;  // Heading_Size: Font size for headline
 extern int     Text_Size                  = 12;  // Text_Size: Font size for texts
@@ -128,7 +129,6 @@ double MarginFree;         // Free margin in percentage
  * @return int - error status
  */
 int onInit() {
-   // If we don't run a backtest
    if (!IsTesting()) {
       // Check if timeframe of chart matches timeframe of external setting
       if (Period() != TimeFrame) {
@@ -592,15 +592,10 @@ void sub_trade() {
                   if (wasordermodified) {
                      // Calculate Execution speed
                      Execution = GetTickCount() - Execution;
-                     // If we have choosen to take snapshots and we're not backtesting, then do so
-                     if ( TakeShots && !IsTesting() )
-                        sub_takesnapshot();
                      // Break out from while-loop since the order now has been modified
                      break;
                   }
-                  // Order was not modified
-                  else
-                  {
+                  else {
                      // Reset Execution counter
                      Execution = -1;
                      // Add to errors
@@ -648,15 +643,10 @@ void sub_trade() {
                   if (wasordermodified) {
                      // Calculate Execution speed
                      Execution = GetTickCount() - Execution;
-                     // If we have choosen to take snapshots and we're not backtesting, then do so
-                     if ( TakeShots && !IsTesting() )
-                        sub_takesnapshot();
                      // Break out from while-loop since the order now has been modified
                      break;
                   }
-                  // Order was not modified
-                  else
-                  {
+                  else {
                      // Reset Execution counter
                      Execution = -1;
                      // Add to errors
@@ -833,19 +823,12 @@ void sub_trade() {
             // Send a BUYSTOP order without SL and TP
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, 0, Lime );
             // OrderSend was executed successfully
-            if ( orderticket > 0 )
-            {
+            if (orderticket > 0) {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
-               if ( Debug || Verbose )
-                  Print ( "Order executed in " + Execution + " ms" );
-               // If we have choosen to take snapshots and we're not backtesting, then do so
-               if ( TakeShots && !IsTesting() )
-                  sub_takesnapshot();
-            }  // end if ordersend
-            // OrderSend was NOT executed
-            else
-            {
+               if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+            }
+            else {
                ordersenderror = true;
                Execution = -1;
                // Add to errors
@@ -867,22 +850,16 @@ void sub_trade() {
                if (wasordermodified) {
                   // Calculate Execution speed
                   Execution = GetTickCount() - Execution;
-                  if ( Debug || Verbose )
-                     Print ( "Order executed in " + Execution + " ms" );
-                  // If we have choosen to take snapshots and we're not backtesting, then do so
-                  if ( TakeShots && !IsTesting() )
-                     sub_takesnapshot();
-               } // end successful ordermodiify
-               // Order was NOT modified
-               else
-               {
+                  if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+               }
+               else {
                   ordersenderror = true;
                   Execution = -1;
                   // Add to errors
                   sub_errormessages();
-               } // end if-else
-            }  // end if ordermodify
-         } // end if ECN_Mode
+               }
+            }
+         }
 
          // No ECN-mode, SL and TP can be sent directly
          else
@@ -896,27 +873,21 @@ void sub_trade() {
             Execution = GetTickCount();
             // Send a BUYSTOP order with SL and TP
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Lime );
-            if ( orderticket > 0 ) // OrderSend was executed suxxessfully
-            {
+            if (orderticket > 0) {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
-               if ( Debug || Verbose )
-                  Print ( "Order executed in " + Execution + " ms" );
-               // If we have choosen to take snapshots and we're not backtesting, then do so
-               if ( TakeShots && !IsTesting() )
-                  sub_takesnapshot();
-            } // end successful ordersend
-            // Order was NOT sent
-            else
-            {
+               if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+            }
+            else {
+               // Order was NOT sent
                ordersenderror = true;
                // Reset Execution timer
                Execution = -1;
                // Add to errors
                sub_errormessages();
-            } // end if-else
-         } // end no ECN-mode
-      } // end if pricedirection == -1 or 2
+            }
+         }
+      }
 
       // If we have a price breakout upwards (Bullish) then send a SELLSTOP order
       if ( pricedirection == 1 || pricedirection == 2 )
@@ -932,20 +903,13 @@ void sub_trade() {
             Execution = GetTickCount();
             // Send a SELLSTOP order without SL and TP
             orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, 0, Orange );
-            // OrderSend was executed successfully
-            if ( orderticket > 0 )
-            {
+            if (orderticket > 0) {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
                if ( Debug || Verbose )
                   Print ( "Order executed in " + Execution + " ms" );
-               // If we have choosen to take snapshots and we're not backtesting, then do so
-               if ( TakeShots && !IsTesting() )
-                  sub_takesnapshot();
-            }  // end if ordersend
-            // OrderSend was NOT executed
-            else
-            {
+            }
+            else {
                ordersenderror = true;
                Execution = -1;
                // Add to errors
@@ -969,15 +933,9 @@ void sub_trade() {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
                // Print debug info
-               if ( Debug || Verbose )
-                  Print ( "Order executed in " + Execution + " ms" );
-               // If we have choosen to take snapshots and we're not backtesting, then do so
-               if ( TakeShots && !IsTesting() )
-                  sub_takesnapshot();
-            } // end if ordermodify was executed successfully
-            // Order was NOT executed
-            else
-            {
+               if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+            }
+            else {
                ordersenderror = true;
                // Reset Execution timer
                Execution = -1;
@@ -1002,23 +960,18 @@ void sub_trade() {
                // Calculate exection speed for that order
                Execution = GetTickCount() - Execution;
                // Print debug info
-               if ( Debug || Verbose )
-                  Print ( "Order executed in " + Execution + " ms" );
-               if ( TakeShots && !IsTesting() )
-                  sub_takesnapshot();
-            } // end successful ordersend
-            // OrderSend was NOT executed successfully
-            else
-            {
+               if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
+            }
+            else {
                ordersenderror = true;
                // Nullify Execution timer
                Execution = 0;
                // Add to errors
                sub_errormessages();
-            } // end if-else
-         } // end no ECN-mode
-      } // end pricedirection == 0 or 2
-   } // end if execute new orders
+            }
+         }
+      }
+   }
 
    // If we have no samples, every MaxExecutionMinutes a new OrderModify Execution test is done
    if ( MaxExecution && Execution == -1 && ( TimeLocal() - StartTime ) % MaxExecutionMinutes == 0 )
@@ -1112,7 +1065,6 @@ void sub_trade() {
  * Check for stray trades
  */
 void sub_Check4StrayTrades() {
-   // Initiate some local variables
    int loop;
    int totals;
    bool modified = true;
@@ -1210,7 +1162,6 @@ string sub_adjust00instring ( int par_a ) {
  * Print out formatted textstring
  */
 void sub_printformattedstring ( string par_a ) {
-   // Initiate some local variables
    int difference;
    int a = -1;
 
@@ -1239,7 +1190,6 @@ void sub_printformattedstring ( string par_a ) {
  * then be multiplied with this multiplicator.
  */
 double sub_multiplicator() {
-   // Initiate some local variables
    double marketbid = 0;
    double multiplicator = 1.0;
    int length;
@@ -1356,7 +1306,6 @@ double sub_multiplicator() {
  * Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
  */
 int sub_magicnumber () {
-   // Initiate some local variables
    string a;
    string b;
    int c;
@@ -1377,87 +1326,9 @@ int sub_magicnumber () {
 
 
 /**
- * Main routine for making a screenshoot / printscreen
- */
-void sub_takesnapshot() {
-   // Initiate some local variables
-   static datetime lastbar;
-   static int doshot = -1;
-   static int oldphase = 3000000;
-   int shotinterval;
-   int phase;
-
-   // If more than 0 screen shot should be taken per bar
-   if ( ShotsPerBar > 0 )
-      shotinterval = MathRound ( ( 60 * Period() ) / ShotsPerBar );
-   // Only one screen shot should be taken
-   else
-      shotinterval = 60 * Period();
-   phase = MathFloor ( ( CurTime() - Time[0] ) / shotinterval );
-
-   // Check to see that one bar has passed by
-   if ( Time[0] != lastbar )
-   {
-      lastbar = Time[0];
-      doshot = DelayTicks;
-   }
-   // No new bar has passed by, so check if enough of time has passed by within this bar
-   else if ( phase > oldphase )
-      sub_makescreenshot ( "i" );
-
-   // Reset varioable
-   oldphase = phase;
-
-   // If no screen shot has been taken then do it now
-   if ( doshot == 0 )
-      sub_makescreenshot ( "" );
-   // A screen shot has already been taken, so decrease counter
-   if ( doshot >= 0 )
-      doshot -= 1;
-}
-
-
-/**
- * Make a screenshoot / printscreen
- */
-void sub_makescreenshot ( string par_sx = "" ) {
-   // Initate a local variables
-   static int no = 0;
-   string fn;
-
-   // Increase counter
-   no ++;
-   // Prepare textstring as filename to be saved
-   fn = "SnapShot" + Symbol() + Period() + "\\" + Year() + "-" + sub_maketimestring ( Month(), 2 )
-   + "-" + sub_maketimestring ( Day(), 2 ) + " " + sub_maketimestring ( Hour(), 2 ) + "_" + sub_maketimestring ( Minute(), 2 )
-   + "_" + sub_maketimestring ( Seconds( ), 2 ) + " " + no + par_sx + ".gif";
-
-   // Make a scrren shot, and i there is an error when a screen shot should have been taken then print out error message
-   if ( !ScreenShot ( fn, 640, 480 ) )
-      Print ( "ScreenShot error: ", ErrorDescription ( GetLastError() ) );
-}
-
-
-/**
- * Add leading zeros that the resulting string has 'digits' length.
- */
-string sub_maketimestring ( int par_number, int par_digits ) {
-   // Initiate a local variable
-   string result;
-
-   result = DoubleToStr ( par_number, 0 );
-   while ( StringLen ( result ) < par_digits )
-      result = "0" + result;
-
-   return ( result );
-}
-
-
-/**
  * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
  */
 double sub_calculatelotsize() {
-   // initiate some localö variables
    string textstring;
    double availablemoney;
    double lotsize;
@@ -1515,7 +1386,6 @@ double sub_calculatelotsize() {
  * Re-calculate a new Risk if the current one is too low or too high
  */
 void sub_recalculatewrongrisk() {
-   // Initiate some local variables
    string textstring;
    double availablemoney;
    double maxlot;
@@ -1594,7 +1464,6 @@ void sub_printandcomment(string par_text) {
  * Summarize error messages that comes from the broker server
  */
 void sub_errormessages() {
-   // Initiate a local variable
    int error = GetLastError();
 
    // Depending on the value if the variable error, one case should match and the counter for that errtor should be increased with 1
@@ -1675,7 +1544,6 @@ void sub_errormessages() {
  * Print out and comment summarized messages from the broker
  */
 void sub_printsumofbrokererrors() {
-   // Prepare some lopcal variables
    string txt;
    int totalerrors;
 
@@ -1723,7 +1591,6 @@ void sub_printsumofbrokererrors() {
  * Check through all open orders
  */
 void sub_CheckThroughAllOpenOrders() {
-   // Initiate some local variables
    int pos;
    double tmp_order_lots;
    double tmp_order_price;
