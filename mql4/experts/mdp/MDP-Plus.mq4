@@ -89,11 +89,11 @@ int Err_invalidprice;      // Error count for invalid price
 int Err_invalidstops;      // Error count for invalid SL and/or TP
 int Err_invalidtradevolume;// Error count for invalid lot size
 int Err_pricechange;       // Error count for change of price
-int Err_brokerbuzy;        // Error count for broker is buzy
+int Err_brokerbusy;        // Error count for broker is busy
 int Err_requotes;          // Error count for requotes
 int Err_toomanyrequests;   // Error count for too many requests
 int Err_trademodifydenied; // Error count for modify orders is denied
-int Err_tradecontextbuzy;  // error count for trade context is buzy
+int Err_tradecontextbusy;  // error count for trade context is busy
 int SkippedTicks = 0;      // Used for simulation of latency during backtests, how many tics that should be skipped
 int Ticks_samples = 0;     // Used for simulation of latency during backtests, number of tick samples
 int Tot_closed_pos;        // Number of closed positions for this EA
@@ -128,22 +128,13 @@ double Avg_tickspermin;    // Used for simulation of latency during backtests
  * @return int - error status
  */
 int onInit() {
-   if (!IsTesting()) {
-      // Check if timeframe of chart matches timeframe of external setting
-      if (Period() != TimeFrame) {
-         // The setting of timefram,e does not match the chart tiomeframe, so alert of this and exit
-         return(catch("onInit(1)  The EA has been set to run on timeframe "+ TimeframeDescription(TimeFrame) +" but it has been attached to a chart with timeframe "+ TimeframeDescription(Period()) +".", ERR_RUNTIME_ERROR));
-      }
+   if (!IsTesting() && Period()!=TimeFrame) {
+      return(catch("onInit(1)  The EA has been set to run on timeframe "+ TimeframeDescription(TimeFrame) +" but it has been attached to a chart with timeframe "+ TimeframeDescription(Period()) +".", ERR_RUNTIME_ERROR));
    }
 
-   // If we have any objects on the screen then clear the screen
    RemoveObjects();
-
-   // Reset time for Execution control
-   StartTime = TimeLocal();
-
-   // Reset error variable
-   GlobalError = -1;
+   StartTime   = TimeLocal();    // Reset time for Execution control
+   GlobalError = -1;             // Reset error variable
 
    // Calculate StopLevel as max of either STOPLEVEL or FREEZELEVEL
    StopLevel = MathMax ( MarketInfo ( Symbol(), MODE_FREEZELEVEL ), MarketInfo ( Symbol(), MODE_STOPLEVEL ) );
@@ -193,7 +184,7 @@ int onInit() {
    sub_recalculatewrongrisk();
 
    // Calculate intitial LotSize
-   LotSize = sub_calculatelotsize();
+   LotSize = CalculateLotsize();
 
    // If magic number is set to a value less than 0, then calculate MagicNumber automatically
    if ( Magic < 0 )
@@ -356,9 +347,8 @@ void MainFunction() {
       }
    }
 
-   // Get Ask and Bid for the currency
-   ask = MarketInfo ( Symbol(), MODE_ASK );
-   bid = MarketInfo ( Symbol(), MODE_BID );
+   bid = Bid;
+   ask = Ask;
 
    // Calculate the channel of Volatility based on the difference of iHigh and iLow during current bar
    ihigh = iHigh ( Symbol(), TimeFrame, 0 );
@@ -425,17 +415,12 @@ void MainFunction() {
       lowest = envelopeslower;
    }
 
-   // Calculate spread
    spread = ask - bid;
-
-   // Calculate lot size
-   LotSize = sub_calculatelotsize();
+   LotSize = CalculateLotsize();
 
    // calculatwe orderexpiretime, but only if it is set to a value
-   if ( OrderExpireSeconds != 0 )
-      orderexpiretime = TimeCurrent() + OrderExpireSeconds;
-   else
-      orderexpiretime = 0;
+   if (OrderExpireSeconds != 0) orderexpiretime = TimeCurrent() + OrderExpireSeconds;
+   else                         orderexpiretime = 0;
 
    // Calculate average true spread, which is the average of the spread for the last 30 tics
    ArrayCopy ( Array_spread, Array_spread, 0, 1, 29 );
@@ -556,23 +541,15 @@ void MainFunction() {
                   else {
                      // Reset Execution counter
                      Execution = -1;
-                     // Add to errors
-                     sub_errormessages();
-                     // Print if debug or verbose
-                     if ( Debug || Verbose )
-                        Print ( "Order could not be modified because of ", ErrorDescription ( GetLastError() ) );
-                     // Order has not been modified and it has no StopLoss
-                     if ( orderstoploss == 0 )
+                     CheckLastError();
+                     if (Debug || Verbose) Print("Order could not be modified because of ", ErrorDescription(GetLastError()));
                      // Try to modify order with a safe hard SL that is 3 pip from current price
-                        wasordermodified = OrderModify ( OrderTicket(), 0, NormalizeDouble ( Bid - 30, Digits ), 0, 0, Red );
+                     if (!orderstoploss) wasordermodified = OrderModify(OrderTicket(), 0, NormalizeDouble(Bid-3*Pip, Digits), 0, 0, Red);
                   }
                }
-               // Break out from while-loop since the order now has been modified
                break;
             }
-            // count 1 more up
             counter1 ++;
-            // Break out from switch
             break;
 
          // We've found a matching SELL-order
@@ -595,35 +572,24 @@ void MainFunction() {
                      Execution = GetTickCount();
                      wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange );
                   }
+
                   // Order was modiified with new SL and TP
                   if (wasordermodified) {
-                     // Calculate Execution speed
                      Execution = GetTickCount() - Execution;
-                     // Break out from while-loop since the order now has been modified
                      break;
                   }
-                  else {
-                     // Reset Execution counter
-                     Execution = -1;
-                     // Add to errors
-                     sub_errormessages();
-                     // Print if debug or verbose
-                     if ( Debug || Verbose )
-                        Print ( "Order could not be modified because of ", ErrorDescription ( GetLastError() ) );
-                     // Lets wait 1 second before we try to modify the order again
-                     Sleep ( 1000 );
-                     // Order has not been modified and it has no StopLoss
-                     if ( orderstoploss == 0 )
-                     // Try to modify order with a safe hard SL that is 3 pip from current price
-                        wasordermodified = OrderModify ( OrderTicket(), 0, NormalizeDouble ( Ask + 30, Digits), 0, 0, Red );
-                  }
+
+                  // Reset Execution counter
+                  Execution = -1;
+                  CheckLastError();
+                  if (Debug || Verbose) Print("Order could not be modified because of ", ErrorDescription(GetLastError()));
+                  Sleep(1000);
+                  // Try to modify order with a safe hard SL that is 3 pip from current price
+                  if (!orderstoploss) wasordermodified = OrderModify(OrderTicket(), 0, NormalizeDouble(Ask + 3*Pip, Digits), 0, 0, Red);
                }
-               // Break out from while-loop since the order now has been modified
                break;
             }
-            // count 1 more up
             counter1 ++;
-            // Break out from switch
             break;
 
          // We've found a matching BUYSTOP-order
@@ -650,32 +616,24 @@ void MainFunction() {
                      }
                      // Order was modified
                      if (wasordermodified) {
-                        // Calculate Execution speed
                         Execution = GetTickCount() - Execution;
-                        // Print if debug or verbose
-                        if ( Debug || Verbose )
-                           Print ( "Order executed in " + Execution + " ms" );
+                        if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
                      }
-                     // Order was not modified
-                     else
-                     {
+                     else {
                         // Reset Execution counter
                         Execution = -1;
-                        // Add to errors
-                        sub_errormessages();
+                        CheckLastError();
                      }
                   }
-                  // Break out from endless loop
                   break;
                }
-               // Increase counter
                counter1 ++;
             }
             // Price was larger than the indicator
-            else
+            else {
                // Delete the order
-               select = OrderDelete ( OrderTicket() );
-            // Break out from switch
+               select = OrderDelete(OrderTicket());
+            }
             break;
 
          // We've found a matching SELLSTOP-order
@@ -697,41 +655,32 @@ void MainFunction() {
                         RefreshRates();
                         // Start Execution counter
                         Execution = GetTickCount();
-                        wasordermodified = OrderModify ( OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange );
+                        wasordermodified = OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange);
                      }
                      // Order was modified
                      if (wasordermodified) {
-                        // Calculate Execution speed
                         Execution = GetTickCount() - Execution;
-                        // Print if debug or verbose
-                        if ( Debug || Verbose )
-                           Print ( "Order executed in " + Execution + " ms" );
+                        if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
                      }
-                     // Order was not modified
-                     else
-                     {
-                        // Reset Execution counter
+                     else {
                         Execution = -1;
-                        // Add to errors
-                        sub_errormessages();
+                        CheckLastError();
                      }
                   }
-                  // Break out from endless loop
                   break;
                }
-               // count 1 more up
-               counter1 ++;
+               counter1++;
             }
-            // Price was NOT larger than the indicator, so delete the order
-            else
-               select = OrderDelete ( OrderTicket() );
-         } // end of switch
-      }  // end if OrderMagicNumber
-   } // end for loopcount2 - end of loop through open orders
+            else {
+               // Price was NOT larger than the indicator, so delete the order
+               select = OrderDelete(OrderTicket());
+            }
+         }
+      }
+   }
 
    // Calculate and keep track on global error number
-   if ( GlobalError >= 0 || GlobalError == -2 )
-   {
+   if (GlobalError >= 0 || GlobalError==-2) {
       bidpart = NormalizeDouble ( bid / Point, 0 );
       askpart = NormalizeDouble ( ask / Point, 0 );
       if ( bidpart % 10 != 0 || askpart % 10 != 0 )
@@ -786,12 +735,10 @@ void MainFunction() {
             else {
                ordersenderror = true;
                Execution = -1;
-               // Add to errors
-               sub_errormessages();
+               CheckLastError();
             }
             // OrderSend was executed successfully, so now modify it with SL and TP
-            if ( OrderSelect ( orderticket, SELECT_BY_TICKET ) )
-            {
+            if (OrderSelect(orderticket, SELECT_BY_TICKET)) {
                RefreshRates();
                // Set prices for OrderModify of BUYSTOP order
                orderprice      = OrderOpenPrice();
@@ -803,22 +750,19 @@ void MainFunction() {
                wasordermodified = OrderModify ( OrderTicket(), orderprice, orderstoploss, ordertakeprofit, orderexpiretime, Lime );
                // OrderModify was executed successfully
                if (wasordermodified) {
-                  // Calculate Execution speed
                   Execution = GetTickCount() - Execution;
-                  if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+                  if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
                }
                else {
                   ordersenderror = true;
                   Execution = -1;
-                  // Add to errors
-                  sub_errormessages();
+                  CheckLastError();
                }
             }
          }
 
          // No ECN-mode, SL and TP can be sent directly
-         else
-         {
+         else {
             RefreshRates();
             // Set prices for BUYSTOP order
             orderprice      = askplusdistance;//ask+StopLevel
@@ -829,17 +773,13 @@ void MainFunction() {
             // Send a BUYSTOP order with SL and TP
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Lime );
             if (orderticket > 0) {
-               // Calculate Execution speed
                Execution = GetTickCount() - Execution;
-               if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+               if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
             }
             else {
-               // Order was NOT sent
                ordersenderror = true;
-               // Reset Execution timer
                Execution = -1;
-               // Add to errors
-               sub_errormessages();
+               CheckLastError();
             }
          }
       }
@@ -867,12 +807,11 @@ void MainFunction() {
             else {
                ordersenderror = true;
                Execution = -1;
-               // Add to errors
-               sub_errormessages();
+               CheckLastError();
             }
+
             // If the SELLSTOP order was executed successfully, then select that order
-            if ( OrderSelect(orderticket, SELECT_BY_TICKET ) )
-            {
+            if (OrderSelect(orderticket, SELECT_BY_TICKET)) {
                RefreshRates();
                // Set prices for SELLSTOP order with modified SL and TP
                orderprice      = OrderOpenPrice();
@@ -883,23 +822,21 @@ void MainFunction() {
                // Send a modify order with adjusted SL and TP
                wasordermodified = OrderModify ( OrderTicket(), OrderOpenPrice(), orderstoploss, ordertakeprofit, orderexpiretime, Orange );
             }
+
             // OrderModify was executed successfully
             if (wasordermodified) {
-               // Calculate Execution speed
                Execution = GetTickCount() - Execution;
-               // Print debug info
-               if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+               if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
-               // Reset Execution timer
                Execution = -1;
-               // Add to errors
-               sub_errormessages();
+               CheckLastError();
             }
          }
-         else // No ECN-mode, SL and TP can be sent directly
-         {
+
+         else {
+            // No ECN-mode, SL and TP can be sent directly
             RefreshRates();
             // Set prices for SELLSTOP order with SL and TP
             orderprice = bidminusdistance;
@@ -910,35 +847,27 @@ void MainFunction() {
             // Send a SELLSTOP order with SL and TP
             orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Orange );
             // If OrderSend was executed successfully
-            if ( orderticket > 0 )
-            {
-               // Calculate exection speed for that order
+            if (orderticket > 0) {
                Execution = GetTickCount() - Execution;
-               // Print debug info
                if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
-               // Nullify Execution timer
                Execution = 0;
-               // Add to errors
-               sub_errormessages();
+               CheckLastError();
             }
          }
       }
    }
 
    // If we have no samples, every MaxExecutionMinutes a new OrderModify Execution test is done
-   if ( MaxExecution && Execution == -1 && ( TimeLocal() - StartTime ) % MaxExecutionMinutes == 0 )
-   {
+   if (MaxExecution && Execution==-1 && (TimeLocal()-StartTime) % MaxExecutionMinutes == 0) {
       // When backtesting, simulate random Execution time based on the setting
-      if ( IsTesting() && MaxExecution )
-      {
-         MathSrand ( TimeLocal( ));
-         Execution = MathRand() / ( 32767 / MaxExecution );
+      if (IsTesting() && MaxExecution) {
+         MathSrand(TimeLocal());
+         Execution = MathRand() / (32767/MaxExecution);
       }
-      else
-      {
+      else {
          // Unless backtesting, lets send a fake order to check the OrderModify Execution time,
          if (!IsTesting()) {
             // To be sure that the fake order never is executed, st the price to twice the current price
@@ -947,8 +876,7 @@ void MainFunction() {
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, fakeprice, Slippage, 0, 0, OrderCmt, Magic, 0, Lime );
             Execution = GetTickCount();
             // Send a modify command where we adjust the price with +1 pip
-            wasordermodified = OrderModify ( orderticket, fakeprice + 10 * Point, 0, 0, 0, Lime );
-            // Calculate Execution speed
+            wasordermodified = OrderModify(orderticket, fakeprice + 1*Pip, 0, 0, 0, Lime);
             Execution = GetTickCount() - Execution;
             // Delete the order
             select = OrderDelete(orderticket);
@@ -1010,73 +938,38 @@ void MainFunction() {
       }
    }
 
-   // Check for stray market orders without SL
-   sub_Check4StrayTrades();
+   // Check open positions without SL
+   CheckMissingSL();
 }
 
 
 /**
- * Check for stray trades
+ * Make sure all open positions have a stoploss.
  */
-void sub_Check4StrayTrades() {
-   int loop;
-   int totals;
-   bool modified = true;
-   bool selected;
-   double ordersl;
-   double newsl;
+void CheckMissingSL() {
+   // New SL for stray market orders is max of either current SL or 10 points
+   double stoploss, slDistance = MathMax(StopLoss, 10);
+   int totals = OrdersTotal();
 
-   // New SL to use for modifying stray market orders is max of either current SL or 10 points
-   newsl = MathMax ( StopLoss, 10 );
-   // Get number of open orders
-   totals = OrdersTotal();
+   for (int loop=0; loop < totals; loop ++) {
+      if (OrderSelect(loop, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
 
-   // Loop through all open orders from first to last
-   for ( loop = 0; loop < totals; loop ++ )
-   {
-      // Select on order
-      if ( OrderSelect ( loop, SELECT_BY_POS, MODE_TRADES ) )
-      {
-         // Check if it matches the MagicNumber and chart symbol
-         if ( OrderMagicNumber() == Magic && OrderSymbol() == Symbol() )    // If the orders are for this EA
-         {
-            ordersl = OrderStopLoss();
-            // Continue as long as the SL for the order is 0.0
-            while ( ordersl == 0.0 )
-            {
-               // We have found a Buy-order
-               if ( OrderType() == OP_BUY )
-               {
-                  // Set new SL 10 points away from current price
-                  newsl = Bid - newsl * Point;
-                  modified = OrderModify ( OrderTicket(), OrderOpenPrice(), NormalizeDouble ( newsl, Digits ), OrderTakeProfit(), 0, Blue );
+            while (!OrderStopLoss()) {
+               if (OrderType() == OP_BUY) {
+                  stoploss = NormalizeDouble(Bid - slDistance * Point, Digits);     // Set new SL 10 points away from current price
+                  if (OrderModify(OrderTicket(), OrderOpenPrice(), stoploss, OrderTakeProfit(), 0, Blue)) break;
                }
-               // We have found a Sell-order
-               else if ( OrderType() == OP_SELL )
-               {
-                  // Set new SL 10 points away from current price
-                  newsl = Ask + newsl * Point;
-                  modified = OrderModify ( OrderTicket(), OrderOpenPrice(), NormalizeDouble ( newsl, Digits ), OrderTakeProfit(), 0, Blue );
+               else if (OrderType() == OP_SELL) {
+                  stoploss = NormalizeDouble(Ask + slDistance * Point, Digits);     // Set new SL 10 points away from current price
+                  if (OrderModify(OrderTicket(), OrderOpenPrice(), stoploss, OrderTakeProfit(), 0, Blue)) break;
                }
-               // If the order without previous SL was modified wit a new SL
-               if (modified) {
-                  // Select that modified order, set while condition variable to that true value and exit while-loop
-                  selected = OrderSelect ( modified, SELECT_BY_TICKET, MODE_TRADES );
-                  ordersl = OrderStopLoss();
-                  break;
-               }
-               // If the order could not be modified
-               else // if (!modified)
-               {
-                  // Wait 1/10 second and then fetch new prices
-                  Sleep ( 100 );
-                  RefreshRates();
-                  // Print debug info
-                  if ( Debug || Verbose )
-                     Print ( "Error trying to modify stray order with a SL!" );
-                  // Add to errors
-                  sub_errormessages();
-               }
+
+               // Wait 100 msec and then fetch new prices
+               Sleep(100);
+               RefreshRates();
+               if (Debug || Verbose) Print("Error trying to modify stray order with a SL!");
+               CheckLastError();
             }
          }
       }
@@ -1243,7 +1136,7 @@ int sub_magicnumber () {
 /**
  * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
  */
-double sub_calculatelotsize() {
+double CalculateLotsize() {
    double availablemoney;
    double lotsize;
    double maxlot;
@@ -1354,79 +1247,21 @@ void sub_recalculatewrongrisk() {
 /**
  * Summarize error messages that comes from the broker server
  */
-void sub_errormessages() {
-   int error = GetLastError();
-
-   // Depending on the value if the variable error, one case should match and the counter for that errtor should be increased with 1
-   switch ( error )
-   {
-      // Unchanged values
-      case 1: // ERR_SERVER_BUSY:
-      {
-         Err_unchangedvalues ++;
-         break;
-      }
-      // Trade server is busy
-      case 4: // ERR_SERVER_BUSY:
-      {
-         Err_busyserver ++;
-         break;
-      }
-      case 6: // ERR_NO_CONNECTION:
-      {
-         Err_lostconnection ++;
-         break;
-      }
-      case 8: // ERR_TOO_FREQUENT_REQUESTS:
-      {
-         Err_toomanyrequest ++;
-         break;
-      }
-      case 129: // ERR_INVALID_PRICE:
-      {
-         Err_invalidprice ++;
-         break;
-      }
-      case 130: // ERR_INVALID_STOPS:
-      {
-         Err_invalidstops ++;
-         break;
-      }
-      case 131: // ERR_INVALID_TRADE_VOLUME:
-      {
-         Err_invalidtradevolume ++;
-         break;
-      }
-      case 135: // ERR_PRICE_CHANGED:
-      {
-         Err_pricechange ++;
-         break;
-      }
-      case 137: // ERR_BROKER_BUSY:
-      {
-         Err_brokerbuzy ++;
-         break;
-      }
-      case 138: // ERR_REQUOTE:
-      {
-         Err_requotes ++;
-         break;
-      }
-      case 141: // ERR_TOO_MANY_REQUESTS:
-      {
-         Err_toomanyrequests ++;
-         break;
-      }
-      case 145: // ERR_TRADE_MODIFY_DENIED:
-      {
-         Err_trademodifydenied ++;
-         break;
-      }
-      case 146: // ERR_TRADE_CONTEXT_BUSY:
-      {
-         Err_tradecontextbuzy ++;
-         break;
-      }
+void CheckLastError() {
+   switch (GetLastError()) {
+      case ERR_NO_RESULT:             Err_unchangedvalues++;    break;
+      case ERR_SERVER_BUSY:           Err_busyserver++;         break;
+      case ERR_NO_CONNECTION:         Err_lostconnection++;     break;
+      case ERR_TOO_FREQUENT_REQUESTS: Err_toomanyrequest++;     break;
+      case ERR_INVALID_PRICE:         Err_invalidprice++;       break;
+      case ERR_INVALID_STOP:          Err_invalidstops++;       break;
+      case ERR_INVALID_TRADE_VOLUME:  Err_invalidtradevolume++; break;
+      case ERR_PRICE_CHANGED:         Err_pricechange++;        break;
+      case ERR_BROKER_BUSY:           Err_brokerbusy++;         break;
+      case ERR_REQUOTE:               Err_requotes++;           break;
+      case ERR_TOO_MANY_REQUESTS:     Err_toomanyrequests++;    break;
+      case ERR_TRADE_MODIFY_DENIED:   Err_trademodifydenied++;  break;
+      case ERR_TRADE_CONTEXT_BUSY:    Err_tradecontextbusy++;   break;
    }
 }
 
@@ -1443,26 +1278,26 @@ void PrintErrors() {
               + Err_invalidstops
               + Err_invalidtradevolume
               + Err_pricechange
-              + Err_brokerbuzy
+              + Err_brokerbusy
               + Err_requotes
               + Err_toomanyrequests
               + Err_trademodifydenied
-              + Err_tradecontextbuzy;
+              + Err_tradecontextbusy;
 
    string txt = "Number of times the brokers server reported that ";
    if (Err_unchangedvalues    > 0) Print(txt +"SL and TP was modified to existing values: "+ Err_unchangedvalues   );
-   if (Err_busyserver         > 0) Print(txt +"it is buzy: "+                                Err_busyserver        );
+   if (Err_busyserver         > 0) Print(txt +"it is busy: "+                                Err_busyserver        );
    if (Err_lostconnection     > 0) Print(txt +"the connection is lost: "+                    Err_lostconnection    );
    if (Err_toomanyrequest     > 0) Print(txt +"there was too many requests: "+               Err_toomanyrequest    );
    if (Err_invalidprice       > 0) Print(txt +"the price was invalid: "+                     Err_invalidprice      );
    if (Err_invalidstops       > 0) Print(txt +"invalid SL and/or TP: "+                      Err_invalidstops      );
    if (Err_invalidtradevolume > 0) Print(txt +"invalid lot size: "+                          Err_invalidtradevolume);
    if (Err_pricechange        > 0) Print(txt +"the price has changed: "+                     Err_pricechange       );
-   if (Err_brokerbuzy         > 0) Print(txt +"the broker is buzy: "+                        Err_brokerbuzy        );
+   if (Err_brokerbusy         > 0) Print(txt +"the broker is busy: "+                        Err_brokerbusy        );
    if (Err_requotes           > 0) Print(txt +"requotes "+                                   Err_requotes          );
    if (Err_toomanyrequests    > 0) Print(txt +"too many requests "+                          Err_toomanyrequests   );
    if (Err_trademodifydenied  > 0) Print(txt +"modifying orders is denied "+                 Err_trademodifydenied );
-   if (Err_tradecontextbuzy   > 0) Print(txt +"trade context is buzy: "+                     Err_tradecontextbuzy  );
+   if (Err_tradecontextbusy   > 0) Print(txt +"trade context is busy: "+                     Err_tradecontextbusy  );
    if (!errors)                    Print("No trade errors reported");
 }
 
