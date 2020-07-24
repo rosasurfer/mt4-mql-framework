@@ -101,26 +101,25 @@ int Tot_Orders;            // Number of open orders disregarding of magic and pa
 int Tot_open_pos;          // Number of open positions for this EA
 
 double LotBase;            // Amount of money in base currency for 1 lot
-double Tot_open_profit;    // A summary of the current open profit/loss for this EA
 double Tot_open_lots;      // A summary of the current open lots for this EA
+double Tot_open_profit;    // A summary of the current open profit/loss for this EA
 double Tot_open_swap;      // A summary of the current charged swaps of the open positions for this EA
 double Tot_open_commission;// A summary of the currebt charged commission of the open positions for this EA
-double G_equity;           // Current equity for this EA
-double Changedmargin;      // Free margin for this account
 double Tot_closed_lots;    // A summary of the current closed lots for this EA
 double Tot_closed_profit;  // A summary of the current closed profit/loss for this EA
 double Tot_closed_swap;    // A summary of the current closed swaps for this EA
 double Tot_closed_comm;    // A summary of the current closed commission for this EA
 double G_balance = 0;      // Balance for this EA
+double G_equity;           // Current equity for this EA
+double Changedmargin;      // Free margin for this account
 double Array_spread[30];   // Store spreads for the last 30 tics
 double LotSize;            // Lotsize
-double highest;            // LotSize indicator value
+double highest;            // Highest indicator value
 double lowest;             // Lowest indicator value
 double StopLevel;          // Broker StopLevel
 double LotStep;            // Broker LotStep
 double MarginForOneLot;    // Margin required for 1 lot
 double Avg_tickspermin;    // Used for simulation of latency during backtests
-double MarginFree;         // Free margin in percentage
 
 
 /**
@@ -255,7 +254,7 @@ int onTick() {
 
 
 /**
- * Main trading subroutine
+ *
  */
 void MainFunction() {
    string textstring;
@@ -312,9 +311,6 @@ void MainFunction() {
    double am = 0.000000001;  // Set variable to a very small number
    double marginlevel;
    double tmpexecution;
-
-   // Get the Free Margin
-   MarginFree = AccountFreeMargin();
 
    // Calculate Margin level
    if ( AccountMargin() != 0 )
@@ -1248,20 +1244,10 @@ int sub_magicnumber () {
  * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
  */
 double sub_calculatelotsize() {
-   string textstring;
    double availablemoney;
    double lotsize;
    double maxlot;
    double minlot;
-   int lotdigit = 0;
-
-   // Adjust lot decimals to broker lotstep
-   if ( LotStep ==  1)
-      lotdigit = 0;
-   if ( LotStep == 0.1 )
-      lotdigit = 1;
-   if ( LotStep == 0.01 )
-      lotdigit = 2;
 
    // Get available money as Equity
    availablemoney = AccountEquity();
@@ -1274,10 +1260,7 @@ double sub_calculatelotsize() {
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
    lotsize = MathMin(MathFloor ( Risk / 102 * availablemoney / ( StopLoss + AddPriceGap ) / LotStep ) * LotStep, MaxLots );
    lotsize = lotsize * sub_multiplicator();
-   lotsize = NormalizeDouble ( lotsize, lotdigit );
-
-   // Empty textstring
-   textstring = "";
+   lotsize = NormalizeLots(lotsize);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
    if (!MoneyManagement) {
@@ -1285,19 +1268,16 @@ double sub_calculatelotsize() {
       lotsize = ManualLotsize;
 
       // Check if ManualLotsize is greater than allowed LotSize
-      if ( ManualLotsize > maxlot )
-      {
+      if (ManualLotsize > maxlot) {
          lotsize = maxlot;
-         textstring = "Note: Manual LotSize is too high. It has been recalculated to maximum allowed " + DoubleToStr ( maxlot, 2 );
-         Print ( textstring );
+         Print("Note: Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
          ManualLotsize = maxlot;
       }
-      // ManualLotSize is NOT greater than allowed LotSize
-      else if ( ManualLotsize < minlot )
+      else if (ManualLotsize < minlot) {
          lotsize = minlot;
+      }
    }
-
-   return ( lotsize );
+   return(lotsize);
 }
 
 
@@ -1580,7 +1560,7 @@ int ShowStatus(int error = NO_ERROR) {
    string line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
    string line5 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
    string line6 = "                               ";
-   string line7 = "Free margin: " + DoubleToStr ( MarginFree, 2 ) + ", Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
+   string line7 = "Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
    string line8 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
 
    int textspacing=10, x=3, y=10;
