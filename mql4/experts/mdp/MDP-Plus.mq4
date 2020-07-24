@@ -138,7 +138,7 @@ int onInit() {
    }
 
    // If we have any objects on the screen then clear the screen
-   sub_DeleteDisplay();   // clear the chart
+   RemoveObjects();
 
    // Reset time for Execution control
    StartTime = TimeLocal();
@@ -171,7 +171,7 @@ int onInit() {
    VolatilityMultiplier = VolatilityMultiplier / 10;
    ArrayInitialize ( Array_spread, 0 );
    VolatilityLimit = VolatilityLimit * Point;
-   Commission = sub_normalizebrokerdigits ( Commission * Point );
+   Commission = NormalizeDouble(Commission * Point, Digits);
    TrailingStart = TrailingStart * Point;
    StopLevel = StopLevel * Point;
    AddPriceGap = AddPriceGap * Point;
@@ -204,12 +204,10 @@ int onInit() {
    if ( MaxExecution > 0 )
       MaxExecutionMinutes = MaxExecution * 60;
 
-   // Check through all closed and open orders to get stats
+   // Check through all closed and open orders to get stats and show status
    UpdateClosedOrderStats();
-   sub_CheckThroughAllOpenOrders();
-
-   // Show info in graphics
-   sub_ShowGraphInfo();
+   UpdateOpenOrderStats();
+   ShowStatus();
 
    return(catch("onInit(2)"));
 }
@@ -227,7 +225,7 @@ int onDeinit() {
    sub_printsumofbrokererrors();
 
    // Delete all objects on the screen
-   sub_DeleteDisplay();
+   RemoveObjects();
 
    // Check through all closed orders
    UpdateClosedOrderStats();
@@ -239,22 +237,12 @@ int onDeinit() {
       Print ( "Total closed commission = ", DoubleToStr ( Tot_closed_comm, 2 ) );
 
       // If we run backtests and simulate latency, then print result
-      if ( MaxExecution > 0 )
-      {
+      if (MaxExecution > 0) {
          text = text + "During backtesting " + SkippedTicks + " number of ticks was ";
          text = text + "skipped to simulate latency of up to " + MaxExecution + " ms";
-         sub_printandcomment ( text );
+         Print(text);
       }
    }
-
-   // Print short message when EA has been deinitialized
-   Print ( EA_version, " has been deinitialized!" );
-
-   // Print the uninitialization reason code
-   Print ( "OnDeinit _Uninitalization reason code = ", UninitializeReason());
-   //--- The second way to get the uninitialization reason code
-   Print ( "OnDeinit _UninitReason = ", sub_UninitReasonText(UninitializeReason()) );
-
    return(catch("onDeinit(1)"));
 }
 
@@ -266,21 +254,19 @@ int onDeinit() {
  */
 int onTick() {
    // We must wait til we have enough of bar data before we call trading routine
-   if ( iBars ( Symbol(), TimeFrame ) > Indicatorperiod )
-   {
+   if (iBars(Symbol(), TimeFrame) > Indicatorperiod) {
       // Call the actual main subroutine
       sub_trade();
 
       // Check through all closed and open orders to get stats to show on screen
       UpdateClosedOrderStats();
-      sub_CheckThroughAllOpenOrders();
-      sub_ShowGraphInfo();
+      UpdateOpenOrderStats();
+      ShowStatus();
    }
-   // We have not yet enough of bar data, so print message
-   else
-      Print ( "Please wait until enough of bar data has been gathered!" );
-
-   return(catch("onTick(1)"));
+   else {
+      debug("onTick(1)  Please wait until enough of bar data has been gathered!");
+   }
+   return(catch("onTick(2)"));
 }
 
 
@@ -494,9 +480,9 @@ void sub_trade() {
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
-   askpluscommission = sub_normalizebrokerdigits ( ask + Commission );
-   bidminuscommission = sub_normalizebrokerdigits ( bid - Commission );
-   realavgspread = avgspread + Commission;
+   askpluscommission  = NormalizeDouble(ask + Commission, Digits);
+   bidminuscommission = NormalizeDouble(bid - Commission, Digits);
+   realavgspread      = avgspread + Commission;
 
    // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads multiplied with the VolatilityMulitplier constant
    if (UseDynamicVolatilityLimit)
@@ -575,14 +561,12 @@ void sub_trade() {
                orderstoploss = OrderStopLoss();
                ordertakeprofit = OrderTakeProfit();
                // Ok to modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
-               if ( ordertakeprofit < sub_normalizebrokerdigits ( askpluscommission + TakeProfit * Point + AddPriceGap ) && askpluscommission + TakeProfit * Point + AddPriceGap - ordertakeprofit > TrailingStart )
-               {
+               if (LT(ordertakeprofit, askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && GT(askpluscommission + TakeProfit * Point + AddPriceGap - ordertakeprofit, TrailingStart, Digits)) {
                   // Set SL and TP
-                  orderstoploss = sub_normalizebrokerdigits ( bid - StopLoss * Point - AddPriceGap );
-                  ordertakeprofit = sub_normalizebrokerdigits ( askpluscommission + TakeProfit * Point + AddPriceGap );
+                  orderstoploss   = NormalizeDouble(bid - StopLoss*Point - AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
                   // Send an OrderModify command with adjusted SL and TP
-                  if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                  {
+                  if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
                      // Start Execution timer
                      Execution = GetTickCount();
                      // Try to modify order
@@ -627,14 +611,12 @@ void sub_trade() {
                orderstoploss = OrderStopLoss();
                ordertakeprofit = OrderTakeProfit();
                // Ok to modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
-               if ( ordertakeprofit > sub_normalizebrokerdigits ( bidminuscommission - TakeProfit * Point - AddPriceGap ) && ordertakeprofit - bidminuscommission + TakeProfit * Point - AddPriceGap > TrailingStart )
-               {
+               if (GT(ordertakeprofit, bidminuscommission-TakeProfit*Point-AddPriceGap, Digits) && GT(ordertakeprofit-bidminuscommission+TakeProfit*Point-AddPriceGap, TrailingStart, Digits)) {
                   // set SL and TP
-                  orderstoploss = sub_normalizebrokerdigits ( ask + StopLoss * Point + AddPriceGap );
-                  ordertakeprofit = sub_normalizebrokerdigits ( bidminuscommission - TakeProfit * Point - AddPriceGap );
+                  orderstoploss   = NormalizeDouble(ask + StopLoss*Point + AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
                   // Send an OrderModify command with adjusted SL and TP
-                  if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                  {
+                  if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
                      // Start Execution timer
                      Execution = GetTickCount();
                      wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange );
@@ -675,9 +657,9 @@ void sub_trade() {
             // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
             if (!isbidgreaterthanindy) {
                // Calculate how much Price, SL and TP should be modified
-               orderprice = sub_normalizebrokerdigits ( ask + StopLevel + AddPriceGap );
-               orderstoploss = sub_normalizebrokerdigits ( orderprice - spread - StopLoss * Point - AddPriceGap );
-               ordertakeprofit = sub_normalizebrokerdigits ( orderprice + Commission + TakeProfit * Point + AddPriceGap );
+               orderprice      = NormalizeDouble(ask + StopLevel + AddPriceGap, Digits);
+               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit*Point + AddPriceGap, Digits);
                // Start endless loop
                while (true) {
                   // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
@@ -727,9 +709,9 @@ void sub_trade() {
             // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
             if (isbidgreaterthanindy) {
                // Calculate how much Price, SL and TP should be modified
-               orderprice = sub_normalizebrokerdigits ( bid - StopLevel - AddPriceGap );
-               orderstoploss = sub_normalizebrokerdigits ( orderprice + spread + StopLoss * Point + AddPriceGap );
-               ordertakeprofit = sub_normalizebrokerdigits ( orderprice - Commission - TakeProfit * Point - AddPriceGap );
+               orderprice      = NormalizeDouble(bid - StopLevel - AddPriceGap, Digits);
+               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit*Point - AddPriceGap, Digits);
                // Endless loop
                while (true) {
                   // Ok to modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
@@ -805,8 +787,7 @@ void sub_trade() {
    bidminusdistance = bid - StopLevel;
 
    // If we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread AND we have no errors THEN proceed
-   if ( counter1 == 0 && pricedirection != 0 && sub_normalizebrokerdigits ( realavgspread) <= sub_normalizebrokerdigits ( MaxSpread * Point ) && GlobalError == -1 )
-   {
+   if (!counter1 && pricedirection && LE(realavgspread, MaxSpread*Point, Digits) && GlobalError==-1) {
       // If we have a price breakout downwards (Bearish) then send a BUYSTOP order
       if ( pricedirection == -1 || pricedirection == 2 ) // Send a BUYSTOP
       {
@@ -839,9 +820,9 @@ void sub_trade() {
             {
                RefreshRates();
                // Set prices for OrderModify of BUYSTOP order
-               orderprice = OrderOpenPrice();
-               orderstoploss =  sub_normalizebrokerdigits ( orderprice - spread - StopLoss * Point - AddPriceGap );
-               ordertakeprofit = sub_normalizebrokerdigits ( orderprice + TakeProfit * Point + AddPriceGap );
+               orderprice      = OrderOpenPrice();
+               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
                // Start Execution timer
                Execution = GetTickCount();
                // Send a modify order for BUYSTOP order with new SL and TP
@@ -866,9 +847,9 @@ void sub_trade() {
          {
             RefreshRates();
             // Set prices for BUYSTOP order
-            orderprice = askplusdistance;//ask+StopLevel
-            orderstoploss =  sub_normalizebrokerdigits ( orderprice - spread - StopLoss * Point - AddPriceGap );
-            ordertakeprofit = sub_normalizebrokerdigits ( orderprice + TakeProfit * Point + AddPriceGap );
+            orderprice      = askplusdistance;//ask+StopLevel
+            orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
+            ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
             // Start Execution counter
             Execution = GetTickCount();
             // Send a BUYSTOP order with SL and TP
@@ -920,9 +901,9 @@ void sub_trade() {
             {
                RefreshRates();
                // Set prices for SELLSTOP order with modified SL and TP
-               orderprice = OrderOpenPrice();
-               orderstoploss = sub_normalizebrokerdigits ( orderprice + spread + StopLoss * Point + AddPriceGap );
-               ordertakeprofit = sub_normalizebrokerdigits ( orderprice - TakeProfit * Point - AddPriceGap );
+               orderprice      = OrderOpenPrice();
+               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
                // Start Execution timer
                Execution = GetTickCount();
                // Send a modify order with adjusted SL and TP
@@ -948,8 +929,8 @@ void sub_trade() {
             RefreshRates();
             // Set prices for SELLSTOP order with SL and TP
             orderprice = bidminusdistance;
-            orderstoploss = sub_normalizebrokerdigits ( orderprice + spread + StopLoss * Point + AddPriceGap );
-            ordertakeprofit = sub_normalizebrokerdigits ( orderprice - TakeProfit * Point - AddPriceGap );
+            orderstoploss = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
+            ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
             // Start Execution timer
             Execution = GetTickCount();
             // Send a SELLSTOP order with SL and TP
@@ -1038,8 +1019,7 @@ void sub_trade() {
             textstring = textstring + "\nBid: " + sub_dbl2strbrokerdigits ( bid ) + ", Ask: " + sub_dbl2strbrokerdigits ( ask ) + ", " + indy;
             textstring = textstring + "\nAvgSpread: " + sub_dbl2strbrokerdigits ( avgspread ) + ", RealAvgSpread: " + sub_dbl2strbrokerdigits ( realavgspread )
             + ", Commission: " + sub_dbl2strbrokerdigits ( Commission ) + ", Lots: " + DoubleToStr ( LotSize, 2 ) + ", Execution: " + tmpexecution + " ms";
-            if ( sub_normalizebrokerdigits ( realavgspread ) > sub_normalizebrokerdigits ( MaxSpread * Point ) )
-            {
+            if (GT(realavgspread, MaxSpread*Point, Digits)) {
                textstring = textstring + "\n" + "The current spread (" + sub_dbl2strbrokerdigits ( realavgspread )
                +") is higher than what has been set as MaxSpread (" + sub_dbl2strbrokerdigits ( MaxSpread * Point ) + ") so no trading is allowed right now on this currency pair!";
             }
@@ -1135,14 +1115,6 @@ void sub_Check4StrayTrades() {
  */
 string sub_dbl2strbrokerdigits ( double par_a ) {
    return ( DoubleToStr ( par_a, Digits ) );
-}
-
-
-/**
- * Adjust numbers with as many decimals as the broker uses
- */
-double sub_normalizebrokerdigits ( double par_a ) {
-   return ( NormalizeDouble ( par_a, Digits ) );
 }
 
 
@@ -1414,7 +1386,7 @@ void sub_recalculatewrongrisk() {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be higher than " + DoubleToStr ( maxrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss and Equity. It has now been adjusted accordingly to " + DoubleToStr ( maxrisk, 1 ) + "%";
          Risk = maxrisk;
-         sub_printandcomment ( textstring );
+         Print(textstring);
       }
       // If Risk% is less than the minimum risklevel the broker accept, then adjust Risk accordingly and print out changes
       if (Risk < minrisk)
@@ -1422,7 +1394,7 @@ void sub_recalculatewrongrisk() {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be lower than " + DoubleToStr ( minrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss, AddPriceGap and Equity. It has now been adjusted accordingly to " + DoubleToStr ( minrisk, 1 ) + "%";
          Risk = minrisk;
-         sub_printandcomment ( textstring );
+         Print(textstring);
       }
    }
    // If we don't use MoneyManagement, then use fixed manual LotSize
@@ -1433,30 +1405,22 @@ void sub_recalculatewrongrisk() {
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be less than " + DoubleToStr ( MinLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2);
          ManualLotsize = MinLots;
-         sub_printandcomment ( textstring );
+         Print(textstring);
       }
       if ( ManualLotsize > MaxLots )
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than " + DoubleToStr ( MaxLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2 );
          ManualLotsize = MaxLots;
-         sub_printandcomment ( textstring );
+         Print(textstring);
       }
       // Check to see that manual LotSize does not exceeds maximum allowed LotSize
       if ( ManualLotsize > maxlot )
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than maximum allowed LotSize. It has now been adjusted to " + DoubleToStr ( maxlot, 2 );
          ManualLotsize = maxlot;
-         sub_printandcomment ( textstring );
+         Print(textstring);
       }
    }
-}
-
-
-/**
- * Print and show comment of text
- */
-void sub_printandcomment(string par_text) {
-   Print(par_text);
 }
 
 
@@ -1555,42 +1519,28 @@ void sub_printsumofbrokererrors() {
    + Err_invalidstops + Err_invalidtradevolume + Err_pricechange + Err_brokerbuzy + Err_requotes + Err_toomanyrequests
    + Err_trademodifydenied + Err_tradecontextbuzy;
 
-   // Call print subroutine with text depending on found errors
-   if ( Err_unchangedvalues > 0 )
-      sub_printandcomment ( txt + "SL and TP was modified to existing values: " + DoubleToStr ( Err_unchangedvalues, 0 ) );
-   if ( Err_busyserver > 0 )
-      sub_printandcomment ( txt + "it is buzy: " + DoubleToStr ( Err_busyserver, 0 ) );
-   if ( Err_lostconnection > 0 )
-      sub_printandcomment ( txt + "the connection is lost: " + DoubleToStr ( Err_lostconnection, 0 ) );
-   if ( Err_toomanyrequest > 0 )
-      sub_printandcomment ( txt + "there was too many requests: " + DoubleToStr ( Err_toomanyrequest, 0 ) );
-   if ( Err_invalidprice > 0 )
-      sub_printandcomment ( txt + "the price was invalid: " + DoubleToStr ( Err_invalidprice, 0 ) );
-   if ( Err_invalidstops > 0 )
-      sub_printandcomment ( txt + "invalid SL and/or TP: " + DoubleToStr ( Err_invalidstops, 0 ) );
-   if ( Err_invalidtradevolume > 0 )
-      sub_printandcomment ( txt + "invalid lot size: " + DoubleToStr ( Err_invalidtradevolume, 0 ) );
-   if ( Err_pricechange > 0 )
-      sub_printandcomment(txt + "the price has changed: " + DoubleToStr ( Err_pricechange, 0 ) );
-   if ( Err_brokerbuzy > 0 )
-      sub_printandcomment(txt + "the broker is buzy: " + DoubleToStr ( Err_brokerbuzy, 0 ) ) ;
-   if ( Err_requotes > 0 )
-      sub_printandcomment ( txt + "requotes " + DoubleToStr ( Err_requotes, 0 ) );
-   if ( Err_toomanyrequests > 0 )
-      sub_printandcomment ( txt + "too many requests " + DoubleToStr ( Err_toomanyrequests, 0 ) );
-   if ( Err_trademodifydenied > 0 )
-      sub_printandcomment ( txt + "modifying orders is denied " + DoubleToStr ( Err_trademodifydenied, 0 ) );
-   if ( Err_tradecontextbuzy > 0)
-      sub_printandcomment ( txt + "trade context is buzy: " + DoubleToStr ( Err_tradecontextbuzy, 0 ) );
-   if ( totalerrors == 0 )
-      sub_printandcomment ( "There was no error reported from the broker server!" );
+   // print found errors
+   if (Err_unchangedvalues    > 0) Print(txt + "SL and TP was modified to existing values: " + DoubleToStr ( Err_unchangedvalues, 0 ) );
+   if (Err_busyserver         > 0) Print(txt + "it is buzy: " + DoubleToStr ( Err_busyserver, 0 ) );
+   if (Err_lostconnection     > 0) Print(txt + "the connection is lost: " + DoubleToStr ( Err_lostconnection, 0 ) );
+   if (Err_toomanyrequest     > 0) Print(txt + "there was too many requests: " + DoubleToStr ( Err_toomanyrequest, 0 ) );
+   if (Err_invalidprice       > 0) Print(txt + "the price was invalid: " + DoubleToStr ( Err_invalidprice, 0 ) );
+   if (Err_invalidstops       > 0) Print(txt + "invalid SL and/or TP: " + DoubleToStr ( Err_invalidstops, 0 ) );
+   if (Err_invalidtradevolume > 0) Print(txt + "invalid lot size: " + DoubleToStr ( Err_invalidtradevolume, 0 ) );
+   if (Err_pricechange        > 0) Print(txt + "the price has changed: " + DoubleToStr ( Err_pricechange, 0 ) );
+   if (Err_brokerbuzy         > 0) Print(txt + "the broker is buzy: " + DoubleToStr ( Err_brokerbuzy, 0 ) ) ;
+   if (Err_requotes           > 0) Print(txt + "requotes " + DoubleToStr ( Err_requotes, 0 ) );
+   if (Err_toomanyrequests    > 0) Print(txt + "too many requests " + DoubleToStr ( Err_toomanyrequests, 0 ) );
+   if (Err_trademodifydenied  > 0) Print(txt + "modifying orders is denied " + DoubleToStr ( Err_trademodifydenied, 0 ) );
+   if (Err_tradecontextbuzy   > 0) Print(txt + "trade context is buzy: " + DoubleToStr ( Err_tradecontextbuzy, 0 ) );
+   if (totalerrors == 0)           Print("There was no error reported from the broker server!" );
 }
 
 
 /**
  * Check through all open orders
  */
-void sub_CheckThroughAllOpenOrders() {
+void UpdateOpenOrderStats() {
    int pos;
    double tmp_order_lots;
    double tmp_order_price;
@@ -1668,109 +1618,46 @@ void UpdateClosedOrderStats() {
 
 /**
  * Printout graphics on the chart
+ *
+ * @param  int error [optional] - error to display (default: none)
+ *
+ * @return int - the same error or the current error status if no error was passed
  */
-void sub_ShowGraphInfo() {
-   string line1;
-   string line2;
-   string line3;
-   string line4;
-   string line5;
-// string line6;
-   string line7;
-// string line8;
-   string line9;
-   string line10;
-   int textspacing = 10;
-   int linespace;
+int ShowStatus(int error = NO_ERROR) {
+   string line1 = EA_version;
+   string line2 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
+   string line3 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
+   string line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
+   string line5 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
+   string line6 = "                               ";
+   string line7 = "Free margin: " + DoubleToStr ( MarginFree, 2 ) + ", Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
+   string line8 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
 
-   // Prepare for sub_Display
-   line1 = EA_version;
-   line2 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
-   line3 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
-   line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
-   line5 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
-// line6
-   line7 = "                               ";
-// line8 = "";
-   line9 = "Free margin: " + DoubleToStr ( MarginFree, 2 ) + ", Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
-   line10 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
+   int textspacing=10, x=3, y=10;
+   CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = textspacing * 2 + Text_Size * 1 + 3 * 1;
+   CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = textspacing * 2 + Text_Size * 2 + 3 * 2 + 20;
+   CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = textspacing * 2 + Text_Size * 3 + 3 * 3 + 40;
+   CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 4 + 3 * 4 + 40;
+   CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 5 + 3 * 5 + 40;
+   CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 6 + 3 * 6 + 40;
+   CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 7 + 3 * 7 + 40;
+   CreateLabel("line8", line8, Text_Size,    x, y, Color_Section4);
 
-   // sub_Display graphic information on the chart
-   linespace = textspacing;
-   sub_Display ( "line1", line1, Heading_Size, 3, linespace, Color_Heading, 0 );
-   linespace = textspacing * 2 + Text_Size * 1 + 3 * 1;
-   // linespace = textspacing * 2 + Text_Size * 2 + 3 * 2;  // Next line should look like this
-   sub_Display ( "line2", line2, Text_Size, 3, linespace, Color_Section1, 0 );
-   linespace = textspacing * 2 + Text_Size * 2 + 3 * 2 + 20;
-   sub_Display ( "line3", line3, Text_Size, 3, linespace, Color_Section2, 0 );
-   linespace = textspacing * 2 + Text_Size * 3 + 3 * 3 + 40;
-   sub_Display ( "line4", line4, Text_Size, 3, linespace, Color_Section3, 0 );
-   linespace = textspacing * 2 + Text_Size * 4 + 3 * 4 + 40;
-   sub_Display ( "line5", line5, Text_Size, 3, linespace, Color_Section3, 0 );
-// linespace = textspacing * 2 + Text_Size * 5 + 3 * 5 + 60;
-// sub_Display ( "line6", line6, Text_Size, 3, linespace, Color_Section4, 0 );
-   linespace = textspacing * 2 + Text_Size * 5 + 3 * 5 + 40;
-   sub_Display ( "line7", line7, Text_Size, 3, linespace, Color_Section4, 0 );
-// linespace = textspacing * 2 + Text_Size * 7 + 3 * 7 + 60;
-// sub_Display ( "line8", line8, Text_Size, 3, linespace, Color_Section4, 0 );
-   linespace = textspacing * 2 + Text_Size * 6 + 3 * 6 + 40;
-   sub_Display ( "line9", line9, Text_Size, 3, linespace, Color_Section4, 0 );
-   linespace = textspacing * 2 + Text_Size * 7 + 3 * 7 + 40;
-   sub_Display ( "line10", line10, Text_Size, 3, linespace, Color_Section4, 0 );
+   if (!error)
+      return(last_error);
+   return(error);
 }
 
 
 /**
- * Subroutine for displaying graphics on the chart
+ * Display graphics on the chart.
  */
-void sub_Display ( string obj_name, string object_text, int object_text_fontsize, int object_x_distance, int object_y_distance, color object_textcolor, int object_corner_value ) {
-   ObjectCreate ( obj_name, OBJ_LABEL, 0, 0, 0, 0, 0 );
-   ObjectSet ( obj_name, OBJPROP_CORNER, object_corner_value );
-   ObjectSet ( obj_name, OBJPROP_XDISTANCE, object_x_distance );
-   ObjectSet ( obj_name, OBJPROP_YDISTANCE, object_y_distance );
-   ObjectSetText ( obj_name, object_text, object_text_fontsize, "Tahoma", object_textcolor );
-}
-
-
-/**
- * Delete all graphics on the chart
- */
-void sub_DeleteDisplay() {
-   ObjectsDeleteAll();
-}
-
-
-/**
- * Get text for Uninit Reason
- */
-string sub_UninitReasonText( int reasonCode ) {
-   string text = "";
-
-   switch ( reasonCode )
-   {
-      case REASON_ACCOUNT:
-         text = "Account was changed";
-         break;
-      case REASON_CHARTCHANGE:
-         text = "Symbol or timeframe was changed";
-         break;
-      case REASON_CHARTCLOSE:
-         text = "Chart was closed";
-         break;
-      case REASON_PARAMETERS:
-         text = "Input-parameter was changed";
-         break;
-      case REASON_RECOMPILE:
-         text = "Program " + WindowExpertName() + " was recompiled";
-         break;
-      case REASON_REMOVE:
-         text = "Program " + WindowExpertName() + " was removed from chart";
-         break;
-      case REASON_TEMPLATE:
-         text = "New template was applied to chart";
-         break;
-      default:
-         text = "Another reason";
-   }
-   return ( text );
+void CreateLabel(string label, string text, int fontSize, int x, int y, color fontColor) {
+   label = WindowExpertName() +"."+ label;
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, x);
+   ObjectSet    (label, OBJPROP_YDISTANCE, y);
+   ObjectSetText(label, text, fontSize, "Tahoma", fontColor);
+   RegisterObject(label);
 }
