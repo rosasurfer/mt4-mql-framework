@@ -186,13 +186,11 @@ int onInit() {
    // Calculate intitial LotSize
    LotSize = CalculateLotsize();
 
-   // If magic number is set to a value less than 0, then calculate MagicNumber automatically
-   if ( Magic < 0 )
-     Magic = sub_magicnumber();
+   // If magic number is set to a value less than 0, then generate a new MagicNumber
+   if (Magic < 0) Magic = GenerateMagicNumber();
 
    // If Execution speed should be measured, then adjust maxexecution from minutes to seconds
-   if ( MaxExecution > 0 )
-      MaxExecutionMinutes = MaxExecution * 60;
+   if (MaxExecution > 0) MaxExecutionMinutes = MaxExecution * 60;
 
    // Check through all closed and open orders to get stats and show status
    UpdateClosedOrderStats();
@@ -1112,24 +1110,21 @@ double sub_multiplicator() {
 
 /**
  * Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
+ *
+ * @return int
  */
-int sub_magicnumber () {
-   string a;
-   string b;
-   int c;
-   int d;
-   int i;
+int GenerateMagicNumber() {
    string par = "EURUSDJPYCHFCADAUDNZDGBP";
-   string sym = Symbol();
+   string symbol = Symbol();
 
-   a = StringSubstr ( sym, 0, 3 );
-   b = StringSubstr ( sym, 3, 3 );
-   c = StringFind ( par, a, 0 );
-   d = StringFind ( par, b, 0 );
-   i = 999999999 - AccountNumber() - c - d;
-   if (Debug)
-      Print ( "MagicNumber: ", i );
-   return ( i );
+   string a = StringSubstr(symbol, 0, 3);
+   string b = StringSubstr(symbol, 3, 3);
+   int c = StringFind(par, a, 0);
+   int d = StringFind(par, b, 0);
+
+   int result = 999999999 - AccountNumber() - c - d;
+   if (Debug) debug("GenerateMagicNumber(1)  MagicNumber="+ result);
+   return(result);
 }
 
 
