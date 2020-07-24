@@ -219,29 +219,17 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   string text = "";
-
-   // Print summarize of broker errors
-   sub_printsumofbrokererrors();
-
-   // Delete all objects on the screen
+   PrintErrors();
    RemoveObjects();
-
-   // Check through all closed orders
    UpdateClosedOrderStats();
 
-   // If we're running as backtest, then print some result
    if (IsTesting()) {
-      Print ( "Total closed lots = ", DoubleToStr ( Tot_closed_lots, 2 ) );
-      Print ( "Total closed swap = ", DoubleToStr ( Tot_closed_swap, 2 ) );
-      Print ( "Total closed commission = ", DoubleToStr ( Tot_closed_comm, 2 ) );
+      Print("Total lots: "+       DoubleToStr(Tot_closed_lots, 2));
+      Print("Total swap: "+       DoubleToStr(Tot_closed_swap, 2));
+      Print("Total commission: "+ DoubleToStr(Tot_closed_comm, 2));
 
-      // If we run backtests and simulate latency, then print result
-      if (MaxExecution > 0) {
-         text = text + "During backtesting " + SkippedTicks + " number of ticks was ";
-         text = text + "skipped to simulate latency of up to " + MaxExecution + " ms";
-         Print(text);
-      }
+      if (MaxExecution > 0)
+         Print("During backtesting "+ SkippedTicks +" number of ticks were skipped to simulate latency of up to "+ MaxExecution +" ms.");
    }
    return(catch("onDeinit(1)"));
 }
@@ -253,33 +241,23 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // We must wait til we have enough of bar data before we call trading routine
-   if (iBars(Symbol(), TimeFrame) > Indicatorperiod) {
-      // Call the actual main subroutine
-      sub_trade();
-
-      // Check through all closed and open orders to get stats to show on screen
+   if (iBars(Symbol(), TimeFrame) <= Indicatorperiod) {
+      debug("onTick(1)  Please wait until enough of bar data has been gathered!");
+   }
+   else {
+      MainFunction();
       UpdateClosedOrderStats();
       UpdateOpenOrderStats();
       ShowStatus();
-   }
-   else {
-      debug("onTick(1)  Please wait until enough of bar data has been gathered!");
    }
    return(catch("onTick(2)"));
 }
 
 
-//================================ Subroutines (aka functions) starts here =========================================
-// Notation:
-// All actual and formal parameters in subs have their names starting with par_
-// All local variables in subs have their names written in lower case
-
-
 /**
  * Main trading subroutine
  */
-void sub_trade() {
+void MainFunction() {
    string textstring;
    string pair;
    string indy;
@@ -401,7 +379,7 @@ void sub_trade() {
       imahigh = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0 );
       imadiff = imahigh - imalow;
       isbidgreaterthanima = bid >= imalow + imadiff / 2.0;
-      indy = "iMA_low: " + sub_dbl2strbrokerdigits ( imalow ) + ", iMA_high: " + sub_dbl2strbrokerdigits ( imahigh ) + ", iMA_diff: " + sub_dbl2strbrokerdigits ( imadiff );
+      indy = "iMA_low: " + DoubleToStr(imalow, Digits) + ", iMA_high: " + DoubleToStr(imahigh, Digits) + ", iMA_diff: " + DoubleToStr(imadiff, Digits);
    }
 
    // Calculate a channel on BollingerBands, and check if the price is outside of this channel
@@ -411,7 +389,7 @@ void sub_trade() {
       ibandslower = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_LOWER, 0 );
       ibandsdiff = ibandsupper - ibandslower;
       isbidgreaterthanibands = bid >= ibandslower + ibandsdiff / 2.0;
-      indy = "iBands_upper: " + sub_dbl2strbrokerdigits ( ibandsupper ) + ", iBands_lower: " + sub_dbl2strbrokerdigits ( ibandslower ) + ", iBands_diff: " + sub_dbl2strbrokerdigits ( ibandsdiff );
+      indy = "iBands_upper: " + DoubleToStr(ibandsupper, Digits) + ", iBands_lower: " + DoubleToStr(ibandslower, Digits) + ", iBands_diff: " + DoubleToStr(ibandsdiff, Digits);
    }
 
    // Calculate a channel on Envelopes, and check if the price is outside of this channel
@@ -421,7 +399,7 @@ void sub_trade() {
       envelopeslower = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_LOWER, 0 );
       envelopesdiff = envelopesupper - envelopeslower;
       isbidgreaterthanenvelopes = bid >= envelopeslower + envelopesdiff / 2.0;
-      indy = "iEnvelopes_upper: " + sub_dbl2strbrokerdigits ( envelopesupper ) + ", iEnvelopes_lower: " + sub_dbl2strbrokerdigits ( envelopeslower ) + ", iEnvelopes_diff: " + sub_dbl2strbrokerdigits ( envelopesdiff) ;
+      indy = "iEnvelopes_upper: " + DoubleToStr(envelopesupper, Digits) + ", iEnvelopes_lower: " + DoubleToStr(envelopeslower, Digits) + ", iEnvelopes_diff: " + DoubleToStr(envelopesdiff, Digits) ;
    }
 
    // Reset breakout variable as false
@@ -1003,7 +981,7 @@ void sub_trade() {
       // No errors, ready to print
       else
       {
-         textstring = TimeToStr ( TimeCurrent() ) + " Tick: " + sub_adjust00instring ( TickCounter );
+         textstring = TimeToStr ( TimeCurrent() ) + " Tick: " + StrLeftPad(TickCounter, 3, "0");
          // Only show / print this if Debug OR Verbose are set to true
          if ( Debug || Verbose )
          {
@@ -1012,16 +990,16 @@ void sub_trade() {
             if ( Execution == -1 )
                tmpexecution = 0;
             // Prepare text string for printing
-            textstring = textstring + "\n*** DEBUG MODE *** \nCurrency pair: " + Symbol() + ", Volatility: " + sub_dbl2strbrokerdigits ( volatility )
-            + ", VolatilityLimit: " + sub_dbl2strbrokerdigits ( VolatilityLimit ) + ", VolatilityPercentage: " + sub_dbl2strbrokerdigits ( volatilitypercentage );
+            textstring = textstring + "\n*** DEBUG MODE *** \nCurrency pair: " + Symbol() + ", Volatility: " + DoubleToStr(volatility, Digits)
+            + ", VolatilityLimit: " + DoubleToStr(VolatilityLimit, Digits) + ", VolatilityPercentage: " + DoubleToStr(volatilitypercentage, Digits);
             textstring = textstring + "\nPriceDirection: " + StringSubstr ( "BUY NULLSELLBOTH", 4 * pricedirection + 4, 4 ) +  ", Expire: "
             + TimeToStr ( orderexpiretime, TIME_MINUTES ) + ", Open orders: " + counter1;
-            textstring = textstring + "\nBid: " + sub_dbl2strbrokerdigits ( bid ) + ", Ask: " + sub_dbl2strbrokerdigits ( ask ) + ", " + indy;
-            textstring = textstring + "\nAvgSpread: " + sub_dbl2strbrokerdigits ( avgspread ) + ", RealAvgSpread: " + sub_dbl2strbrokerdigits ( realavgspread )
-            + ", Commission: " + sub_dbl2strbrokerdigits ( Commission ) + ", Lots: " + DoubleToStr ( LotSize, 2 ) + ", Execution: " + tmpexecution + " ms";
+            textstring = textstring + "\nBid: " + NumberToStr(bid, PriceFormat) + ", Ask: "+ NumberToStr(ask, PriceFormat) + ", " + indy;
+            textstring = textstring + "\nAvgSpread: " + DoubleToStr(avgspread, Digits) + ", RealAvgSpread: " + DoubleToStr(realavgspread, Digits)
+            + ", Commission: " + DoubleToStr(Commission, 2) + ", Lots: " + DoubleToStr ( LotSize, 2 ) + ", Execution: " + tmpexecution + " ms";
             if (GT(realavgspread, MaxSpread*Point, Digits)) {
-               textstring = textstring + "\n" + "The current spread (" + sub_dbl2strbrokerdigits ( realavgspread )
-               +") is higher than what has been set as MaxSpread (" + sub_dbl2strbrokerdigits ( MaxSpread * Point ) + ") so no trading is allowed right now on this currency pair!";
+               textstring = textstring + "\n" + "The current spread (" + DoubleToStr(realavgspread, Digits)
+               +") is higher than what has been set as MaxSpread (" + DoubleToStr(MaxSpread*Point, Digits) + ") so no trading is allowed right now on this currency pair!";
             }
             if ( MaxExecution > 0 && Avg_execution > MaxExecution )
             {
@@ -1031,10 +1009,10 @@ void sub_trade() {
             Print ( textstring );
             // Only print this if we have a any orders  OR have a price breakout OR Verbode mode is set to true
             if ( counter1 != 0 || pricedirection != 0 )
-               sub_printformattedstring ( textstring );
+               PrintLines(textstring);
          }
-      } // end if-else
-   } // end check initialization
+      }
+   }
 
    // Check for stray market orders without SL
    sub_Check4StrayTrades();
@@ -1111,44 +1089,13 @@ void sub_Check4StrayTrades() {
 
 
 /**
- * Convert a decimal number to a text string
+ * Print a multiline string line by line.
  */
-string sub_dbl2strbrokerdigits ( double par_a ) {
-   return ( DoubleToStr ( par_a, Digits ) );
-}
-
-
-/**
- * Adjust textstring with zeros at the end
- */
-string sub_adjust00instring ( int par_a ) {
-   if ( par_a < 10 )
-      return ( "00" + par_a );
-   if ( par_a < 100 )
-      return ( "0" + par_a );
-   return ( "" + par_a );
-}
-
-
-/**
- * Print out formatted textstring
- */
-void sub_printformattedstring ( string par_a ) {
-   int difference;
-   int a = -1;
-
-   // Loop through the text string from left to right to find a newline
-   while ( a < StringLen ( par_a ) )
-   {
-      difference = a + 1;
-      a = StringFind ( par_a, "\n", difference );
-      if ( a == -1 )
-      {
-         Print ( StringSubstr ( par_a, difference ) );
-         return;
-      }
-      // Print out the formatted text string, line for line
-      Print ( StringSubstr ( par_a, difference, a - difference ) );
+void PrintLines(string str) {
+   string values[];
+   int size = Explode(str, NL, values, NULL);
+   for (int i=0; i < size; i++) {
+      Print(values[i]);
    }
 }
 
@@ -1507,33 +1454,36 @@ void sub_errormessages() {
 /**
  * Print out and comment summarized messages from the broker
  */
-void sub_printsumofbrokererrors() {
-   string txt;
-   int totalerrors;
+void PrintErrors() {
+   int errors = Err_unchangedvalues
+              + Err_busyserver
+              + Err_lostconnection
+              + Err_toomanyrequest
+              + Err_invalidprice
+              + Err_invalidstops
+              + Err_invalidtradevolume
+              + Err_pricechange
+              + Err_brokerbuzy
+              + Err_requotes
+              + Err_toomanyrequests
+              + Err_trademodifydenied
+              + Err_tradecontextbuzy;
 
-   // Prepare a text strring
-   txt = "Number of times the brokers server reported that ";
-
-   // Sum up total errors
-   totalerrors = Err_unchangedvalues + Err_busyserver + Err_lostconnection + Err_toomanyrequest + Err_invalidprice
-   + Err_invalidstops + Err_invalidtradevolume + Err_pricechange + Err_brokerbuzy + Err_requotes + Err_toomanyrequests
-   + Err_trademodifydenied + Err_tradecontextbuzy;
-
-   // print found errors
-   if (Err_unchangedvalues    > 0) Print(txt + "SL and TP was modified to existing values: " + DoubleToStr ( Err_unchangedvalues, 0 ) );
-   if (Err_busyserver         > 0) Print(txt + "it is buzy: " + DoubleToStr ( Err_busyserver, 0 ) );
-   if (Err_lostconnection     > 0) Print(txt + "the connection is lost: " + DoubleToStr ( Err_lostconnection, 0 ) );
-   if (Err_toomanyrequest     > 0) Print(txt + "there was too many requests: " + DoubleToStr ( Err_toomanyrequest, 0 ) );
-   if (Err_invalidprice       > 0) Print(txt + "the price was invalid: " + DoubleToStr ( Err_invalidprice, 0 ) );
-   if (Err_invalidstops       > 0) Print(txt + "invalid SL and/or TP: " + DoubleToStr ( Err_invalidstops, 0 ) );
-   if (Err_invalidtradevolume > 0) Print(txt + "invalid lot size: " + DoubleToStr ( Err_invalidtradevolume, 0 ) );
-   if (Err_pricechange        > 0) Print(txt + "the price has changed: " + DoubleToStr ( Err_pricechange, 0 ) );
-   if (Err_brokerbuzy         > 0) Print(txt + "the broker is buzy: " + DoubleToStr ( Err_brokerbuzy, 0 ) ) ;
-   if (Err_requotes           > 0) Print(txt + "requotes " + DoubleToStr ( Err_requotes, 0 ) );
-   if (Err_toomanyrequests    > 0) Print(txt + "too many requests " + DoubleToStr ( Err_toomanyrequests, 0 ) );
-   if (Err_trademodifydenied  > 0) Print(txt + "modifying orders is denied " + DoubleToStr ( Err_trademodifydenied, 0 ) );
-   if (Err_tradecontextbuzy   > 0) Print(txt + "trade context is buzy: " + DoubleToStr ( Err_tradecontextbuzy, 0 ) );
-   if (totalerrors == 0)           Print("There was no error reported from the broker server!" );
+   string txt = "Number of times the brokers server reported that ";
+   if (Err_unchangedvalues    > 0) Print(txt +"SL and TP was modified to existing values: "+ Err_unchangedvalues   );
+   if (Err_busyserver         > 0) Print(txt +"it is buzy: "+                                Err_busyserver        );
+   if (Err_lostconnection     > 0) Print(txt +"the connection is lost: "+                    Err_lostconnection    );
+   if (Err_toomanyrequest     > 0) Print(txt +"there was too many requests: "+               Err_toomanyrequest    );
+   if (Err_invalidprice       > 0) Print(txt +"the price was invalid: "+                     Err_invalidprice      );
+   if (Err_invalidstops       > 0) Print(txt +"invalid SL and/or TP: "+                      Err_invalidstops      );
+   if (Err_invalidtradevolume > 0) Print(txt +"invalid lot size: "+                          Err_invalidtradevolume);
+   if (Err_pricechange        > 0) Print(txt +"the price has changed: "+                     Err_pricechange       );
+   if (Err_brokerbuzy         > 0) Print(txt +"the broker is buzy: "+                        Err_brokerbuzy        );
+   if (Err_requotes           > 0) Print(txt +"requotes "+                                   Err_requotes          );
+   if (Err_toomanyrequests    > 0) Print(txt +"too many requests "+                          Err_toomanyrequests   );
+   if (Err_trademodifydenied  > 0) Print(txt +"modifying orders is denied "+                 Err_trademodifydenied );
+   if (Err_tradecontextbuzy   > 0) Print(txt +"trade context is buzy: "+                     Err_tradecontextbuzy  );
+   if (!errors)                    Print("No trade errors reported");
 }
 
 
