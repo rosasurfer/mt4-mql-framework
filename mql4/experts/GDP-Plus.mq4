@@ -5,13 +5,13 @@
  * An EA based on the probably single most famous MetaTrader EA ever written. Nothing remains from the original except the
  * core idea of the strategy: tick scalping based on a reversal from a channel breakout.
  *
- * Today the original EA circulates in the internet under various names and versions (MDP-Plus, XMT, Assar). However all
+ * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). However all
  * known versions - including the original - are so severly flawed that one should never run any one of them on a live
- * account. This GDP version is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all
- * parts with faster/more robust/more advanced components and adds major enhancements for production use.
+ * account. The GDP version uses/is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces
+ * all parts with faster/more robust/more advanced components and adds major enhancements for production use.
  *
  * Sources:
- *  All used original versions are included in this repo and accessible via the Git history. Some of them:
+ *  All original versions are included in the repo and accessible via the Git history. Some of them:
  *
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp              [MillionDollarPips v2 decompiled]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp               [MDP-Plus v2.2 + PDF by Capella]
@@ -20,8 +20,8 @@
  *
  * Fixes/changes (wip):
  * - embedded in MQL4 framework
- * - dropped input parameter MinMarginLevel
- * - dropped screenshot functionality
+ * - dropped input parameter MinMarginLevel to continue managing open positions during critical drawdowns
+ * - dropped screenshot functionality (may be re-added later)
  * - fixed invalid SL calculations
  */
 #include <stddefines.mqh>
@@ -90,13 +90,16 @@ extern color   Color_Section4            = Magenta;      // Color for text lines
 string orderComment = "GDP";
 
 // PL statistics
-double G_balance = 0;            // Balance for this EA
-double G_equity;                 // Current equity for this EA
-double Changedmargin;            // Free margin for this account
+int    openPositions;            // number of open positions
+double openLots;                 // open lotsize
+double openPl;                   // floating PL
+int    closedPositions;          // number of closed positions
+double closedLots;               // closed lotsize
+double closedPl;                 //
+double totalPl;                  // openPl + closedPl
 
 
-
-
+// --- old ------------------------------------------------------------------------------------------------------------------
 datetime StartTime;              // Initial time
 datetime LastTime;               // For measuring tics
 
@@ -121,19 +124,9 @@ int Err_trademodifydenied;       // Error count for modify orders is denied
 int Err_tradecontextbusy;        // error count for trade context is busy
 int SkippedTicks = 0;            // Used for simulation of latency during backtests, how many tics that should be skipped
 int Ticks_samples = 0;           // Used for simulation of latency during backtests, number of tick samples
-int Tot_closed_pos;              // Number of closed positions for this EA
 int Tot_Orders;                  // Number of open orders disregarding of magic and pairs
-int Tot_open_pos;                // Number of open positions for this EA
 
 double LotBase;                  // Amount of money in base currency for 1 lot
-double Tot_open_lots;            // A summary of the current open lots for this EA
-double Tot_open_profit;          // A summary of the current open profit/loss for this EA
-double Tot_open_swap;            // A summary of the current charged swaps of the open positions for this EA
-double Tot_open_commission;      // A summary of the currebt charged commission of the open positions for this EA
-double Tot_closed_lots;          // A summary of the current closed lots for this EA
-double Tot_closed_profit;        // A summary of the current closed profit/loss for this EA
-double Tot_closed_swap;          // A summary of the current closed swaps for this EA
-double Tot_closed_comm;          // A summary of the current closed commission for this EA
 double Array_spread[30];         // Store spreads for the last 30 tics
 double LotSize;                  // Lotsize
 double highest;                  // Highest indicator value
@@ -203,8 +196,7 @@ int onInit() {
    if (Magic < 0)        Magic = GenerateMagicNumber();           // If magic number is set to a value less than 0, then generate a new MagicNumber
    if (MaxExecution > 0) MaxExecutionMinutes = MaxExecution * 60; // If Execution speed should be measured, then adjust maxexecution from minutes to seconds
 
-   UpdateClosedOrderStats();                                      // Check through all closed and open orders to get stats and show status
-   UpdateOpenOrderStats();
+   UpdatePlStats();
    ShowStatus();
 
    return(catch("onInit(2)"));
@@ -218,16 +210,8 @@ int onInit() {
  */
 int onDeinit() {
    PrintErrors();
-   DeleteRegisteredObjects();
-   UpdateClosedOrderStats();
-
-   if (IsTesting()) {
-      Print("Total lots: "+       DoubleToStr(Tot_closed_lots, 2));
-      Print("Total swap: "+       DoubleToStr(Tot_closed_swap, 2));
-      Print("Total commission: "+ DoubleToStr(Tot_closed_comm, 2));
-
-      if (MaxExecution > 0)
-         Print("During backtesting "+ SkippedTicks +" number of ticks were skipped to simulate latency of up to "+ MaxExecution +" ms.");
+   if (IsTesting() && MaxExecution > 0) {
+      Print("During backtesting "+ SkippedTicks +" number of ticks were skipped to simulate latency of up to "+ MaxExecution +" ms.");
    }
    return(catch("onDeinit(1)"));
 }
@@ -244,8 +228,7 @@ int onTick() {
    }
    else {
       MainFunction();
-      UpdateClosedOrderStats();
-      UpdateOpenOrderStats();
+      UpdatePlStats();
       ShowStatus();
    }
    return(catch("onTick(2)"));
@@ -1220,60 +1203,46 @@ void PrintErrors() {
 
 
 /**
- * Update stats of open positions.
+ * Update PL stats of open and closed positions.
  */
-void UpdateOpenOrderStats() {
-   Tot_Orders = OrdersTotal();
+void UpdatePlStats() {
+   double openProfit, openSwap, openCommission, closedProfit, closedSwap, closedCommission;
 
-   Tot_open_pos        = 0;
-   Tot_open_profit     = 0;
-   Tot_open_swap       = 0;
-   Tot_open_commission = 0;
-   Tot_open_lots       = 0;
-   Changedmargin       = 0;
+   openPositions   = 0;
+   openLots        = 0;
+   closedPositions = 0;
+   closedLots      = 0;
 
-   for (int i=0; i < Tot_Orders; i++) {
+   int orders = OrdersTotal();
+   for (int i=0; i < orders; i++) {
       if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
          if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-            Tot_open_lots       += OrderLots();
-            Tot_open_profit     += OrderProfit();
-            Tot_open_swap       += OrderSwap();
-            Tot_open_commission += OrderCommission();
-            Changedmargin       += OrderLots() * OrderOpenPrice();
-            Tot_open_pos++;
+            openPositions++;
+            openLots       += OrderLots();
+            openProfit     += OrderProfit();
+            openSwap       += OrderSwap();
+            openCommission += OrderCommission();
          }
       }
    }
 
-   // Calculate equity for this EA (not for the entire account)
-   G_equity = G_balance + Tot_open_profit + Tot_open_swap + Tot_open_commission;
-}
-
-
-/**
- * Update stats of closed positions.
- */
-void UpdateClosedOrderStats() {
-   int openTotal = OrdersHistoryTotal();
-
-   Tot_closed_lots   = 0;
-   Tot_closed_profit = 0;
-   Tot_closed_swap   = 0;
-   Tot_closed_comm   = 0;
-   Tot_closed_pos    = 0;
-
-   for (int i=0; i < openTotal; i++) {
+   orders = OrdersHistoryTotal();
+   for (i=0; i < orders; i++) {
       if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {
          if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-            Tot_closed_lots   += OrderLots();
-            Tot_closed_profit += OrderProfit();
-            Tot_closed_swap   += OrderSwap();
-            Tot_closed_comm   += OrderCommission();
-            Tot_closed_pos++;
+            closedPositions++;
+            closedLots       += OrderLots();
+            closedProfit     += OrderProfit();
+            closedSwap       += OrderSwap();
+            closedCommission += OrderCommission();
          }
       }
    }
-   G_balance = Tot_closed_profit + Tot_closed_swap + Tot_closed_comm;
+
+   // calculate equity for the EA (not for the entire account)
+   openPl   = openProfit + openSwap + openCommission;
+   closedPl = closedProfit + closedSwap + closedCommission;
+   totalPl  = openPl + closedPl;
 }
 
 
@@ -1286,21 +1255,15 @@ void UpdateClosedOrderStats() {
  */
 int ShowStatus(int error = NO_ERROR) {
    string line1 = WindowExpertName();
-   string line2 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
-   string line3 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
-   string line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
-   string line5 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
-   string line6 = " ";
-   string line7 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
+   string line2 = "Open PL:   "+ openPositions   +" positions ("+ NumberToStr(openLots,   ".0+") +" lot)   PL="+ DoubleToStr(openPl, 2);
+   string line3 = "Closed PL: "+ closedPositions +" positions ("+ NumberToStr(closedLots, ".0+") +" lot)   PL="+ DoubleToStr(closedPl, 2);
+   string line4 = "Total PL:  "+ DoubleToStr(totalPl, 2);
 
-   int linespacing=20, x=3, y=10;
-   ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = linespacing + Text_Size * 1 + 3 * 1;
-   ShowStatus.CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = linespacing + Text_Size * 2 + 3 * 2 + 20;
-   ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = linespacing + Text_Size * 3 + 3 * 3 + 40;
-   ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = linespacing + Text_Size * 4 + 3 * 4 + 40;
-   ShowStatus.CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = linespacing + Text_Size * 5 + 3 * 5 + 40;
-   ShowStatus.CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = linespacing + Text_Size * 6 + 3 * 6 + 40;
-   ShowStatus.CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4);
+   int spacing=20, x=3, y=10;
+   ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = spacing + Text_Size * 1 + 3 * 1;
+   ShowStatus.CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = spacing + Text_Size * 2 + 3 * 2 + 20;
+   ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = spacing + Text_Size * 3 + 3 * 3 + 40;
+   ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3);
 
    if (!error)
       return(last_error);
