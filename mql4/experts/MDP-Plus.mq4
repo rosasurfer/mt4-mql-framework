@@ -232,7 +232,6 @@ int onTick() {
  *
  */
 void MainFunction() {
-   string textstring;
    string pair;
    string indy;
 
@@ -879,46 +878,35 @@ void MainFunction() {
    }
 
    // Check initialization
-   if ( GlobalError >= 0 )
-      Print ( "Robot is initializing..." );
-   else
-   {
-      // Error
-      if ( GlobalError == -2 )
-         Print ( "ERROR -- Instrument " + Symbol() + " prices should have " + Digits + " fraction digits on broker account" );
-      // No errors, ready to print
-      else
-      {
-         textstring = TimeToStr ( TimeCurrent() ) + " Tick: " + StrLeftPad(TickCounter, 3, "0");
-         // Only show / print this if Debug OR Verbose are set to true
-         if ( Debug || Verbose )
-         {
-            // In case Execution is -1 (not yet calculate dvalue, set it to 0 for printing
-            tmpexecution = Execution;
-            if ( Execution == -1 )
-               tmpexecution = 0;
-            // Prepare text string for printing
-            textstring = textstring + "\n*** DEBUG MODE *** \nCurrency pair: " + Symbol() + ", Volatility: " + DoubleToStr(volatility, Digits)
-            + ", VolatilityLimit: " + DoubleToStr(VolatilityLimit, Digits) + ", VolatilityPercentage: " + DoubleToStr(volatilitypercentage, Digits);
-            textstring = textstring + "\nPriceDirection: " + StringSubstr ( "BUY NULLSELLBOTH", 4 * pricedirection + 4, 4 ) +  ", Expire: "
-            + TimeToStr ( orderexpiretime, TIME_MINUTES ) + ", Open orders: " + counter1;
-            textstring = textstring + "\nBid: " + NumberToStr(bid, PriceFormat) + ", Ask: "+ NumberToStr(ask, PriceFormat) + ", " + indy;
-            textstring = textstring + "\nAvgSpread: " + DoubleToStr(avgspread, Digits) + ", RealAvgSpread: " + DoubleToStr(realavgspread, Digits)
-            + ", Commission: " + DoubleToStr(Commission, 2) + ", Lots: " + DoubleToStr ( LotSize, 2 ) + ", Execution: " + tmpexecution + " ms";
-            if (GT(realavgspread, MaxSpread*Point, Digits)) {
-               textstring = textstring + "\n" + "The current spread (" + DoubleToStr(realavgspread, Digits)
-               +") is higher than what has been set as MaxSpread (" + DoubleToStr(MaxSpread*Point, Digits) + ") so no trading is allowed right now on this currency pair!";
-            }
-            if ( MaxExecution > 0 && Avg_execution > MaxExecution )
-            {
-               textstring = textstring + "\n" + "The current Avg Execution (" + Avg_execution +") is higher than what has been set as MaxExecution ("
-               + MaxExecution+ " ms), so no trading is allowed right now on this currency pair!";
-            }
-            Print ( textstring );
-            // Only print this if we have a any orders  OR have a price breakout OR Verbode mode is set to true
-            if ( counter1 != 0 || pricedirection != 0 )
-               PrintLines(textstring);
+   if (GlobalError >= 0) {
+      Print("Robot is initializing...");
+   }
+   else {
+      if (GlobalError == -2) {
+         Print("ERROR -- Instrument "+ Symbol() +" prices should have "+ Digits +" fraction digits on broker account");
+      }
+      else if (Debug || Verbose) {
+         // In case Execution is -1 (not yet calculate dvalue, set it to 0 for printing
+         tmpexecution = Execution;
+         if (Execution == -1) tmpexecution = 0;
+
+         string text = TimeToStr(TimeCurrent()) +" Tick: "+ StrLeftPad(TickCounter, 3, "0")                                                                                                                + NL
+                     + "*** DEBUG MODE *** "                                                                                                                                                               + NL
+                     + "Currency pair: "+ Symbol()                                                                                                                                                         + NL
+                     + "Volatility: "+ DoubleToStr(volatility, Digits) +", VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +", VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits) + NL
+                     + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Expire: "+ TimeToStr(orderexpiretime, TIME_MINUTES) +", Open orders: "+ counter1                  + NL
+                     + "Bid: "+ NumberToStr(bid, PriceFormat) +", Ask: "+ NumberToStr(ask, PriceFormat) +", "+ indy                                                                                        + NL
+                     + "AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)                                                                              + NL
+                     + "Commission: "+ DoubleToStr(Commission, 2) +", Lots: "+ DoubleToStr(LotSize, 2) +", Execution: "+ tmpexecution +" ms"                                                               + NL;
+
+         if (GT(realavgspread, MaxSpread*Point, Digits)) {
+            text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended." + NL;
          }
+         if (MaxExecution > 0 && Avg_execution > MaxExecution) {
+            text = text + "Current avg Execution ("+ Avg_execution +") is higher than the configured MaxExecution ("+ MaxExecution +" ms), trading is suspended." + NL;
+         }
+         //if (counter1 || pricedirection) // Only print this if we have a any orders OR have a price breakout OR Verbode mode is set to TRUE
+         Print(StrTrim(text));
       }
    }
 
@@ -957,18 +945,6 @@ void CheckMissingSL() {
             }
          }
       }
-   }
-}
-
-
-/**
- * Print a multiline string line by line.
- */
-void PrintLines(string str) {
-   string values[];
-   int size = Explode(str, NL, values, NULL);
-   for (int i=0; i < size; i++) {
-      Print(values[i]);
    }
 }
 
@@ -1128,7 +1104,6 @@ double CalculateLotsize() {
  * Re-calculate a new Risk if the current one is too low or too high
  */
 void RecalculateRisk() {
-   string textstring;
    double availablemoney;
    double maxlot;
    double minlot;
@@ -1145,8 +1120,8 @@ void RecalculateRisk() {
    minlot = MinLots;
    // Minimum allowed Risk by the broker according to minlots_broker
    minrisk = MathRound ( minlot * StopLoss / availablemoney * 100 / 0.1 ) * 0.1;
-   // Empty textstring
-   textstring = "";
+
+   string textstring = "";
 
    // If we use money management
    if (MoneyManagement) {
