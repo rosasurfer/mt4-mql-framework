@@ -4403,17 +4403,17 @@ int RegisterObject(string label) {
  *
  * @return int - error status
  */
-int RemoveObjects() {
+int DeleteRegisteredObjects() {
    int size = ArraySize(registeredObjects);
    if (!size) return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
       if (ObjectFind(registeredObjects[i]) != -1)
-         if (!ObjectDelete(registeredObjects[i])) warn("RemoveObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+         if (!ObjectDelete(registeredObjects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
    }
    ArrayResize(registeredObjects, 0);
 
-   return(catch("RemoveObjects(2)"));
+   return(catch("DeleteRegisteredObjects(2)"));
 }
 
 

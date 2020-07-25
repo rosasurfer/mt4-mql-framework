@@ -6869,6 +6869,7 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
+   int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
@@ -6881,7 +6882,6 @@ void __DummyCalls() {
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ReleaseLock(string mutexName);
-   int      RemoveObjects();
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
