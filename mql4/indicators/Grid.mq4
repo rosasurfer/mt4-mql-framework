@@ -40,7 +40,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RemoveObjects();
+   DeleteRegisteredObjects();
    return(catch("onDeinit(1)"));
 }
 

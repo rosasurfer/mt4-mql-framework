@@ -130,7 +130,7 @@ int onInit() {
       return(catch("onInit(1)  The EA has been set to run on timeframe "+ TimeframeDescription(TimeFrame) +" but it has been attached to a chart with timeframe "+ TimeframeDescription(Period()) +".", ERR_RUNTIME_ERROR));
    }
 
-   RemoveObjects();
+   DeleteRegisteredObjects();
    StartTime   = TimeLocal();    // Reset time for Execution control
    GlobalError = -1;             // Reset error variable
 
@@ -194,7 +194,7 @@ int onInit() {
  */
 int onDeinit() {
    PrintErrors();
-   RemoveObjects();
+   DeleteRegisteredObjects();
    UpdateClosedOrderStats();
 
    if (IsTesting()) {
