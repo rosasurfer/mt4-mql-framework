@@ -50,7 +50,6 @@ extern double  MinLots                   = 0.01;         // Minimum lot-size to 
 extern double  MaxLots                   = 100;          // Maximum allowed lot-size to trade with
 extern double  Risk                      = 2;            // Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
 extern double  ManualLotsize             = 0.1;          // Fix lot size to trade with if MoneyManagement above is set to false
-extern double  MinMarginLevel            = 100;          // Lowest allowed Margin level for new positions to be opened
 
 extern string  ___f_____________________ = "=== Display Graphics ===";
 extern int     Heading_Size              = 13;           // Font size for headline
@@ -282,22 +281,7 @@ void MainFunction() {
    double askpluscommission;
    double bidminuscommission;
    double skipticks;
-   double am = 0.000000001;  // Set variable to a very small number
-   double marginlevel;
    double tmpexecution;
-
-   // Calculate Margin level
-   if ( AccountMargin() != 0 )
-      am = AccountMargin();
-   marginlevel = AccountEquity() / am * 100;
-
-   // Free Margin is less than the value of MinMarginLevel, so no trading is allowed
-   if ( marginlevel < MinMarginLevel )
-   {
-      Print ( "Warning! Free Margin " + DoubleToStr ( marginlevel, 2 ) + " is lower than MinMarginLevel!" );
-      Alert ( "Warning! Free Margin " + DoubleToStr ( marginlevel, 2 ) + " is lower than MinMarginLevel!" );
-      return;
-   }
 
    // Previous time was less than current time, initiate tick counter
    if ( LastTime < Time[0] )
@@ -1319,9 +1303,8 @@ int ShowStatus(int error = NO_ERROR) {
    string line3 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
    string line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
    string line5 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
-   string line6 = "                               ";
-   string line7 = "Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
-   string line8 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
+   string line6 = " ";
+   string line7 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
 
    int textspacing=10, x=3, y=10;
    ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = textspacing * 2 + Text_Size * 1 + 3 * 1;
@@ -1330,8 +1313,7 @@ int ShowStatus(int error = NO_ERROR) {
    ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 4 + 3 * 4 + 40;
    ShowStatus.CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 5 + 3 * 5 + 40;
    ShowStatus.CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 6 + 3 * 6 + 40;
-   ShowStatus.CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 7 + 3 * 7 + 40;
-   ShowStatus.CreateLabel("line8", line8, Text_Size,    x, y, Color_Section4);
+   ShowStatus.CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4);
 
    if (!error)
       return(last_error);
