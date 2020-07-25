@@ -10,57 +10,56 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string  ___a______________________ = "==== Configuration ====";
-extern bool    ReverseTrade               = false; // ReverseTrade: If true, then trade in opposite direction
-extern int     Magic                      = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
-extern string  OrderCmt                   = "XMT-Scalper 2.522"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
-extern bool    ECN_Mode                   = false; // ECN_Mode: true for brokers that don't accept SL and TP to be sent at the same time as the order
-extern bool    Debug                      = false; // Debug: Print huge log files with info, only for debugging purposes
-extern bool    Verbose                    = false; // Verbose: Additional log information printed in the Expert tab
+extern string  ___a_____________________ = "==== Configuration ====";
+extern bool    ReverseTrade              = false;        // If TRUE, then trade in opposite direction
+extern int     Magic                     = -1;           // If set to a number less than 0 it will calculate MagicNumber automatically
+extern bool    ECN_Mode                  = false;        // TRUE for brokers that don't accept SL and TP to be sent at the same time as the order
+extern bool    Debug                     = false;        // Print huge log files with info, only for debugging purposes
+extern bool    Verbose                   = false;        // Additional log information printed in the Expert tab
 
-extern string  ___b______________________ = "==== Trade settings ====";
-extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
-extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
-extern int     MaxExecution               = 0; // MaxExecution: Max allowed average execution time in ms (0 means no restrictions)
-extern int     MaxExecutionMinutes        = 5; // MaxExecutionMinutes: How often in minutes should fake orders be sent to measure execution speed
-extern double  StopLoss                   = 60; // StopLoss: SL from as many points. Default 60 (= 6 pips)
-extern double  TakeProfit                 = 100; // TakeProfit: TP from as many points. Default 100 (= 10 pip)
-extern double  AddPriceGap                = 0; // AddPriceGap: Additional price gap in points added to SL and TP in order to avoid Error 130
-extern double  TrailingStart              = 20; // TrailingStart: Start trailing profit from as so many points.
-extern double  Commission                 = 0; // Commission: Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
-extern int     Slippage                   = 3; // Slippage: Maximum allowed Slippage of price in points
-extern double  MinimumUseStopLevel        = 0; // MinimumUseStopLevel: Stoplevel to use will be max value of either this value or broker stoplevel
+extern string  ___b_____________________ = "==== Trade settings ====";
+extern int     TimeFrame                 = PERIOD_M1;    // Trading timeframe must match the timeframe of the chart
+extern double  MaxSpread                 = 30;           // Max allowed spread in points
+extern int     MaxExecution              = 0;            // Max allowed average execution time in ms (0 means no restriction)
+extern int     MaxExecutionMinutes       = 5;            // How often in minutes should fake orders be sent to measure execution speed
+extern double  StopLoss                  = 60;           // SL from as many points. Default 60 (= 6 pips)
+extern double  TakeProfit                = 100;          // TP from as many points. Default 100 (= 10 pip)
+extern double  AddPriceGap               = 0;            // Additional price gap in points added to SL and TP in order to avoid Error 130
+extern double  TrailingStart             = 20;           // Start trailing profit from as so many points.
+extern double  Commission                = 0;            // Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
+extern int     Slippage                  = 3;            // Maximum allowed Slippage of price in points
+extern double  MinimumUseStopLevel       = 0;            // Stoplevel to use will be max value of either this value or broker stoplevel
 
-extern string  ___c______________________ = "==== Volatility Settings ====";
-extern bool    UseDynamicVolatilityLimit  = true; // UseDynamicVolatilityLimit: Calculated based on INT (spread * VolatilityMultiplier)
-extern double  VolatilityMultiplier       = 125; // VolatilityMultiplier: A multiplier that only is used if UseDynamicVolatilityLimit is set to true
-extern double  VolatilityLimit            = 180; // VolatilityLimit: A fix value that only is used if UseDynamicVolatilityLimit is set to false
-extern bool    UseVolatilityPercentage    = true; // UseVolatilityPercentage: If true, then price must break out more than a specific percentage
-extern double  VolatilityPercentageLimit  = 0; // VolatilityPercentageLimit: Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
+extern string  ___c_____________________ = "==== Volatility Settings ====";
+extern bool    UseDynamicVolatilityLimit = true;         // Calculated based on (int)(spread * VolatilityMultiplier)
+extern double  VolatilityMultiplier      = 125;          // A multiplier that only is used if UseDynamicVolatilityLimit is set to TRUE
+extern double  VolatilityLimit           = 180;          // A fix value that only is used if UseDynamicVolatilityLimit is set to FALSE
+extern bool    UseVolatilityPercentage   = true;         // If TRUE, then price must break out more than a specific percentage
+extern double  VolatilityPercentageLimit = 0;            // Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
 
-extern string  ___d______________________ = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
-extern int     UseIndicatorSwitch         = 1; // UseIndicatorSwitch: Choose of indicator for price channel.
-extern int     Indicatorperiod            = 3; // Indicatorperiod: Period in bars for indicator
-extern double  BBDeviation                = 2.0; // BBDeviation: Deviation for the iBands indicator only
-extern double  EnvelopesDeviation         = 0.07; // EnvelopesDeviation: Deviation for the iEnvelopes indicator only
-extern int     OrderExpireSeconds         = 3600; // OrderExpireSeconds: Orders are deleted after so many seconds
+extern string  ___d_____________________ = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
+extern int     UseIndicatorSwitch        = 1;            // Choose of indicator for price channel.
+extern int     Indicatorperiod           = 3;            // Period in bars for indicator
+extern double  BBDeviation               = 2;            // Deviation for the iBands indicator only
+extern double  EnvelopesDeviation        = 0.07;         // Deviation for the iEnvelopes indicator only
+extern int     OrderExpireSeconds        = 3600;         // Orders are deleted after so many seconds
 
-extern string  ___e______________________ = "==== Money Management ====";
-extern bool    MoneyManagement            = true; // MoneyManagement: If true then calculate lotsize automaticallay based on Risk, if false then use ManualLotsize below
-extern double  MinLots                    = 0.01; // MinLots: Minimum lot-size to trade with
-extern double  MaxLots                    = 100.0; // MaxLots : Maximum allowed lot-size to trade with
-extern double  Risk                       = 2.0; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
-extern double  ManualLotsize              = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to false
-extern double  MinMarginLevel             = 100; // MinMarginLevel: Lowest allowed Margin level for new positions to be opened
+extern string  ___e_____________________ = "==== Money Management ====";
+extern bool    MoneyManagement           = true;         // If TRUE then calculate lotsize automaticallay based on Risk, if false then use ManualLotsize below
+extern double  MinLots                   = 0.01;         // Minimum lot-size to trade with
+extern double  MaxLots                   = 100;          // Maximum allowed lot-size to trade with
+extern double  Risk                      = 2;            // Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
+extern double  ManualLotsize             = 0.1;          // Fix lot size to trade with if MoneyManagement above is set to false
+extern double  MinMarginLevel            = 100;          // Lowest allowed Margin level for new positions to be opened
 
-extern string  ___f______________________ = "=== Display Graphics ==="; // Colors for sub_Display at upper left
-extern int     Heading_Size               = 13;  // Heading_Size: Font size for headline
-extern int     Text_Size                  = 12;  // Text_Size: Font size for texts
-extern color   Color_Heading              = Lime;   // Color for text lines
-extern color   Color_Section1             = Yellow; // Color for text lines
-extern color   Color_Section2             = Aqua;   // Color for text lines
-extern color   Color_Section3             = Orange; // Color for text lines
-extern color   Color_Section4             = Magenta;// Color for text lines
+extern string  ___f_____________________ = "=== Display Graphics ===";
+extern int     Heading_Size              = 13;           // Font size for headline
+extern int     Text_Size                 = 12;           // Font size for texts
+extern color   Color_Heading             = Lime;         // Color for text lines
+extern color   Color_Section1            = Yellow;       // Color for text lines
+extern color   Color_Section2            = Aqua;         // Color for text lines
+extern color   Color_Section3            = Orange;       // Color for text lines
+extern color   Color_Section4            = Magenta;      // Color for text lines
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,58 +67,57 @@ extern color   Color_Section4             = Magenta;// Color for text lines
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-//--------------------------- Globals --------------------------------------------------------------
-
 string EA_version = "XMT-Scalper v2.522";
+string OrderCmt   = "XMT";       // order comment
 
-datetime StartTime;        // Initial time
-datetime LastTime;         // For measuring tics
+datetime StartTime;              // Initial time
+datetime LastTime;               // For measuring tics
 
-int GlobalError = 0;       // To keep track on number of added errors
-int TickCounter = 0;       // Counting tics
-int UpTo30Counter = 0;     // For calculating average spread
-int Execution = -1;        // For Execution speed, -1 means no speed
-int Avg_execution = 0;     // Average Execution speed
-int Execution_samples = 0; // For calculating average Execution speed
-int Err_unchangedvalues;   // Error count for unchanged values (modify to the same values)
-int Err_busyserver;        // Error count for busy server
-int Err_lostconnection;    // Error count for lost connection
-int Err_toomanyrequest;    // Error count for too many requests
-int Err_invalidprice;      // Error count for invalid price
-int Err_invalidstops;      // Error count for invalid SL and/or TP
-int Err_invalidtradevolume;// Error count for invalid lot size
-int Err_pricechange;       // Error count for change of price
-int Err_brokerbusy;        // Error count for broker is busy
-int Err_requotes;          // Error count for requotes
-int Err_toomanyrequests;   // Error count for too many requests
-int Err_trademodifydenied; // Error count for modify orders is denied
-int Err_tradecontextbusy;  // error count for trade context is busy
-int SkippedTicks = 0;      // Used for simulation of latency during backtests, how many tics that should be skipped
-int Ticks_samples = 0;     // Used for simulation of latency during backtests, number of tick samples
-int Tot_closed_pos;        // Number of closed positions for this EA
-int Tot_Orders;            // Number of open orders disregarding of magic and pairs
-int Tot_open_pos;          // Number of open positions for this EA
+int GlobalError = 0;             // To keep track on number of added errors
+int TickCounter = 0;             // Counting tics
+int UpTo30Counter = 0;           // For calculating average spread
+int Execution = -1;              // For Execution speed, -1 means no speed
+int Avg_execution = 0;           // Average Execution speed
+int Execution_samples = 0;       // For calculating average Execution speed
+int Err_unchangedvalues;         // Error count for unchanged values (modify to the same values)
+int Err_busyserver;              // Error count for busy server
+int Err_lostconnection;          // Error count for lost connection
+int Err_toomanyrequest;          // Error count for too many requests
+int Err_invalidprice;            // Error count for invalid price
+int Err_invalidstops;            // Error count for invalid SL and/or TP
+int Err_invalidtradevolume;      // Error count for invalid lot size
+int Err_pricechange;             // Error count for change of price
+int Err_brokerbusy;              // Error count for broker is busy
+int Err_requotes;                // Error count for requotes
+int Err_toomanyrequests;         // Error count for too many requests
+int Err_trademodifydenied;       // Error count for modify orders is denied
+int Err_tradecontextbusy;        // error count for trade context is busy
+int SkippedTicks = 0;            // Used for simulation of latency during backtests, how many tics that should be skipped
+int Ticks_samples = 0;           // Used for simulation of latency during backtests, number of tick samples
+int Tot_closed_pos;              // Number of closed positions for this EA
+int Tot_Orders;                  // Number of open orders disregarding of magic and pairs
+int Tot_open_pos;                // Number of open positions for this EA
 
-double LotBase;            // Amount of money in base currency for 1 lot
-double Tot_open_lots;      // A summary of the current open lots for this EA
-double Tot_open_profit;    // A summary of the current open profit/loss for this EA
-double Tot_open_swap;      // A summary of the current charged swaps of the open positions for this EA
-double Tot_open_commission;// A summary of the currebt charged commission of the open positions for this EA
-double Tot_closed_lots;    // A summary of the current closed lots for this EA
-double Tot_closed_profit;  // A summary of the current closed profit/loss for this EA
-double Tot_closed_swap;    // A summary of the current closed swaps for this EA
-double Tot_closed_comm;    // A summary of the current closed commission for this EA
-double G_balance = 0;      // Balance for this EA
-double G_equity;           // Current equity for this EA
-double Changedmargin;      // Free margin for this account
-double Array_spread[30];   // Store spreads for the last 30 tics
-double LotSize;            // Lotsize
-double highest;            // Highest indicator value
-double lowest;             // Lowest indicator value
-double StopLevel;          // Broker StopLevel
-double LotStep;            // Broker LotStep
-double MarginForOneLot;    // Margin required for 1 lot
-double Avg_tickspermin;    // Used for simulation of latency during backtests
+double LotBase;                  // Amount of money in base currency for 1 lot
+double Tot_open_lots;            // A summary of the current open lots for this EA
+double Tot_open_profit;          // A summary of the current open profit/loss for this EA
+double Tot_open_swap;            // A summary of the current charged swaps of the open positions for this EA
+double Tot_open_commission;      // A summary of the currebt charged commission of the open positions for this EA
+double Tot_closed_lots;          // A summary of the current closed lots for this EA
+double Tot_closed_profit;        // A summary of the current closed profit/loss for this EA
+double Tot_closed_swap;          // A summary of the current closed swaps for this EA
+double Tot_closed_comm;          // A summary of the current closed commission for this EA
+double G_balance = 0;            // Balance for this EA
+double G_equity;                 // Current equity for this EA
+double Changedmargin;            // Free margin for this account
+double Array_spread[30];         // Store spreads for the last 30 tics
+double LotSize;                  // Lotsize
+double highest;                  // Highest indicator value
+double lowest;                   // Lowest indicator value
+double StopLevel;                // Broker StopLevel
+double LotStep;                  // Broker LotStep
+double MarginForOneLot;          // Margin required for 1 lot
+double Avg_tickspermin;          // Used for simulation of latency during backtests
 
 
 /**
@@ -1351,14 +1349,14 @@ int ShowStatus(int error = NO_ERROR) {
    string line8 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
 
    int textspacing=10, x=3, y=10;
-   CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = textspacing * 2 + Text_Size * 1 + 3 * 1;
-   CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = textspacing * 2 + Text_Size * 2 + 3 * 2 + 20;
-   CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = textspacing * 2 + Text_Size * 3 + 3 * 3 + 40;
-   CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 4 + 3 * 4 + 40;
-   CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 5 + 3 * 5 + 40;
-   CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 6 + 3 * 6 + 40;
-   CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 7 + 3 * 7 + 40;
-   CreateLabel("line8", line8, Text_Size,    x, y, Color_Section4);
+   ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = textspacing * 2 + Text_Size * 1 + 3 * 1;
+   ShowStatus.CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = textspacing * 2 + Text_Size * 2 + 3 * 2 + 20;
+   ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = textspacing * 2 + Text_Size * 3 + 3 * 3 + 40;
+   ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 4 + 3 * 4 + 40;
+   ShowStatus.CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 5 + 3 * 5 + 40;
+   ShowStatus.CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 6 + 3 * 6 + 40;
+   ShowStatus.CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 7 + 3 * 7 + 40;
+   ShowStatus.CreateLabel("line8", line8, Text_Size,    x, y, Color_Section4);
 
    if (!error)
       return(last_error);
@@ -1369,7 +1367,7 @@ int ShowStatus(int error = NO_ERROR) {
 /**
  * Display graphics on the chart.
  */
-void CreateLabel(string label, string text, int fontSize, int x, int y, color fontColor) {
+void ShowStatus.CreateLabel(string label, string text, int fontSize, int x, int y, color fontColor) {
    label = WindowExpertName() +"."+ label;
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0, 0, 0);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
