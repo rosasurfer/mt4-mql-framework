@@ -1,8 +1,28 @@
 /**
- * A "Million Dollar Pips" EA remake
+ * Gazillion Dollar Pips - a "MillionDollarPips" EA revisited
  *
- * An EA based on the probably single most famous MetaTrader EA ever written. Not much remains from the original, except the
+ *
+ * An EA based on the probably single most famous MetaTrader EA ever written. Nothing remains from the original except the
  * core idea of the strategy: tick scalping based on a reversal from a channel breakout.
+ *
+ * Today the original EA circulates in the internet under various names and versions (MDP-Plus, XMT, Assar). However all
+ * known versions are so severly flawed or even broken that one should never run any of them on a live account. This version
+ * is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues and replaces most parts with more stable
+ * and more robust components.
+ *
+ * Sources:
+ *  All used original versions are included in this repo and accessible via the Git history. Some of them are here:
+ *
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp              [MillionDollarPips v2 decompiled]
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp               [MDP-Plus v2.2 + PDF by Capella]
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp          [XMT-Scalper v2.522 + PDF by Capella]
+ *
+ *
+ * Fixes/changes:
+ *
+ *
+ *
+ *
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -246,7 +266,6 @@ void MainFunction() {
 
    int orderticket;
    int loopcount2;
-   int loopcount1;
    int pricedirection;
    int counter1;
    int counter2;
@@ -284,33 +303,27 @@ void MainFunction() {
    double tmpexecution;
 
    // Previous time was less than current time, initiate tick counter
-   if ( LastTime < Time[0] )
-   {
-      // For simulation of latency during backtests, consider only 10 samples at most.
-      if ( Ticks_samples < 10 )
-         Ticks_samples ++;
-      Avg_tickspermin = Avg_tickspermin + ( TickCounter - Avg_tickspermin ) / Ticks_samples;
-      // Set previopus time to current time and reset tick counter
-      LastTime = Time[0];
+   if (LastTime < Time[0]) {
+      if (Ticks_samples < 10)          // For simulation of latency during backtests, consider at most 10 samples.
+         Ticks_samples++;
+      Avg_tickspermin = Avg_tickspermin + (TickCounter-Avg_tickspermin) / Ticks_samples;
+      LastTime    = Time[0];
       TickCounter = 0;
    }
-   // Previous time was NOT less than current time, so increase tick counter with 1
-   else
-      TickCounter ++;
+   else {
+      // Previous time was not less than current time, so increase tick counter
+      TickCounter++;
+   }
 
-   // If backtesting and MaxExecution is set let's skip a proportional number of ticks them in order to
-   // reproduce the effect of latency on this EA
-   if ( IsTesting() && MaxExecution != 0 && Execution != -1 )
-   {
-      skipticks = MathRound ( Avg_tickspermin * MaxExecution / ( 60 * 1000 ) );
-      if ( SkippedTicks >= skipticks )
-      {
-         Execution = -1;
+   // If backtesting and MaxExecution is set let's skip a proportional number of ticks to simulate the effect of latency.
+   if (IsTesting() && MaxExecution && Execution!=-1) {
+      skipticks = MathRound(Avg_tickspermin * MaxExecution / (60*1000));
+      if (SkippedTicks >= skipticks) {
+         Execution    = -1;
          SkippedTicks = 0;
       }
-      else
-      {
-         SkippedTicks ++;
+      else {
+         SkippedTicks++;
       }
    }
 
@@ -318,12 +331,11 @@ void MainFunction() {
    ask = Ask;
 
    // Calculate the channel of Volatility based on the difference of iHigh and iLow during current bar
-   ihigh = iHigh ( Symbol(), TimeFrame, 0 );
-   ilow = iLow ( Symbol(), TimeFrame, 0 );
+   ihigh      = iHigh(Symbol(), TimeFrame, 0);
+   ilow       = iLow (Symbol(), TimeFrame, 0);
    volatility = ihigh - ilow;
 
-   // Reset printout string
-   indy = "";
+   indy = "";        // reset printout string
 
    // Calculate a channel on Moving Averages, and check if the price is outside of this channel.
    if ( UseIndicatorSwitch == 1 || UseIndicatorSwitch == 4 )
@@ -355,54 +367,54 @@ void MainFunction() {
       indy = "iEnvelopes_upper: " + DoubleToStr(envelopesupper, Digits) + ", iEnvelopes_lower: " + DoubleToStr(envelopeslower, Digits) + ", iEnvelopes_diff: " + DoubleToStr(envelopesdiff, Digits) ;
    }
 
-   // Reset breakout variable as false
+   // reset breakout variable
    isbidgreaterthanindy = false;
 
-   // Reset pricedirection for no indication of trading direction
+   // reset pricedirection for no indication of trading direction
    pricedirection = 0;
 
-   // If we're using iMA as indicator, then set variables from it
+   // if we're using iMA as indicator, then set variables from it
    if (UseIndicatorSwitch==1 && isbidgreaterthanima) {
       isbidgreaterthanindy = true;
       highest = imahigh;
       lowest = imalow;
    }
 
-   // If we're using iBands as indicator, then set variables from it
+   // if we're using iBands as indicator, then set variables from it
    else if (UseIndicatorSwitch==2 && isbidgreaterthanibands) {
       isbidgreaterthanindy = true;
       highest = ibandsupper;
       lowest = ibandslower;
    }
 
-   // If we're using iEnvelopes as indicator, then set variables from it
+   // if we're using iEnvelopes as indicator, then set variables from it
    else if (UseIndicatorSwitch==3 && isbidgreaterthanenvelopes) {
       isbidgreaterthanindy = true;
       highest = envelopesupper;
       lowest = envelopeslower;
    }
 
-   spread = ask - bid;
+   spread  = ask - bid;
    LotSize = CalculateLotsize();
 
    // calculatwe orderexpiretime, but only if it is set to a value
    if (OrderExpireSeconds != 0) orderexpiretime = TimeCurrent() + OrderExpireSeconds;
    else                         orderexpiretime = 0;
 
-   // Calculate average true spread, which is the average of the spread for the last 30 tics
-   ArrayCopy ( Array_spread, Array_spread, 0, 1, 29 );
+   // calculate average true spread, which is the average of the spread for the last 30 tics
+   ArrayCopy(Array_spread, Array_spread, 0, 1, 29);
    Array_spread[29] = spread;
-   if ( UpTo30Counter < 30 )
-      UpTo30Counter ++;
+   if (UpTo30Counter < 30)
+      UpTo30Counter++;
    sumofspreads = 0;
-   loopcount2 = 29;
-   for ( loopcount1 = 0; loopcount1 < UpTo30Counter; loopcount1 ++ )
-   {
+   loopcount2   = 29;
+
+   for (int i=0; i < UpTo30Counter; i++) {
       sumofspreads += Array_spread[loopcount2];
-      loopcount2 --;
+      loopcount2--;
    }
 
-   // Calculate an average of spreads based on the spread from the last 30 tics
+   // Calculate the average spread over the last 30 ticks
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
@@ -418,37 +430,28 @@ void MainFunction() {
    if ( volatility && VolatilityLimit && lowest && highest && UseIndicatorSwitch != 4 )
    {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
-      if ( volatility > VolatilityLimit )
-      {
+      if (volatility > VolatilityLimit) {
          // Calculate how much it differs
          volatilitypercentage = volatility / VolatilityLimit;
 
          // In case of UseVolatilityPercentage then also check if it differ enough of percentage
          if (!UseVolatilityPercentage || (UseVolatilityPercentage && volatilitypercentage > VolatilityPercentageLimit)) {
-            if ( bid < lowest )
-            {
-               if (!ReverseTrade)
-                  pricedirection = -1; // BUY or BUYSTOP
-               else // ReverseTrade
-                  pricedirection = 1; // SELL or SELLSTOP
+            if (bid < lowest) {
+               if (!ReverseTrade) pricedirection = -1;   // BUY or BUYSTOP
+               else               pricedirection =  1;   // SELL or SELLSTOP
             }
             else if (bid > highest) {
-               if (!ReverseTrade)
-                  pricedirection = 1;  // SELL or SELLSTOP
-               else // ReverseTrade
-                  pricedirection = -1; // BUY or BUYSTOP
+               if (!ReverseTrade) pricedirection =  1;   // SELL or SELLSTOP
+               else               pricedirection = -1;   // BUY or BUYSTOP
             }
          }
       }
-      // The Volatility is less than the VolatilityLimit so we set the volatilitypercentage to zero
-      else
-         volatilitypercentage = 0;
+      else volatilitypercentage = 0;
    }
 
    // Check for out of money
-   if ( AccountEquity() <= 0.0 )
-   {
-      Print ( "ERROR -- Account Equity is " + DoubleToStr ( MathRound ( AccountEquity() ), 0 ) );
+   if (AccountEquity() <= 0) {
+      Print("ERROR -- Account Equity is " + DoubleToStr(AccountEquity(), 2));
       return;
    }
 
