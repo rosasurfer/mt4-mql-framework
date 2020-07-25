@@ -1,14 +1,14 @@
 /**
- * Gazillion Dollar Pips - a "MillionDollarPips" EA revisited
+ * "GazillionDollarPips" (GDP) is a "MillionDollarPips" EA revisited
  *
  *
  * An EA based on the probably single most famous MetaTrader EA ever written. Nothing remains from the original except the
  * core idea of the strategy: tick scalping based on a reversal from a channel breakout.
  *
  * Today the original EA circulates in the internet under various names and versions (MDP-Plus, XMT, Assar). However all
- * known versions are so severly flawed or even broken that one should never run any of them on a live account. This version
- * is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues and replaces most parts with more stable
- * and more robust components.
+ * known versions - including the original - are so severly flawed that one should never run any one of them on a live
+ * account. This GDP version is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all
+ * parts with faster/more robust/more advanced components and adds major enhancements for production use.
  *
  * Sources:
  *  All used original versions are included in this repo and accessible via the Git history. Some of them:
@@ -18,11 +18,11 @@
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp          [XMT-Scalper v2.522 + PDF by Capella]
  *
  *
- * Major fixes/changes:
- * - embed in MQL4 framework
- * - drop input parameter MinMarginLevel
- * - drop screenshot functionality (for the time being)
- * - fix invalid SL calculations
+ * Fixes/changes (wip):
+ * - embedded in MQL4 framework
+ * - dropped input parameter MinMarginLevel
+ * - dropped screenshot functionality
+ * - fixed invalid SL calculations
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -57,8 +57,8 @@ extern double  VolatilityLimit           = 180;          // A fix value that onl
 extern bool    UseVolatilityPercentage   = true;         // If TRUE, then price must break out more than a specific percentage
 extern double  VolatilityPercentageLimit = 0;            // Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
 
-extern string  ___d_____________________ = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
-extern int     UseIndicatorSwitch        = 1;            // Choose of indicator for price channel.
+extern string  ___d_____________________ = "=== Indicators: 1=Moving Average, 2=BollingerBand, 3=Envelopes";
+extern int     UseIndicatorSwitch        = 1;            // indicator selection for channel creation
 extern int     Indicatorperiod           = 3;            // Period in bars for indicator
 extern double  BBDeviation               = 2;            // Deviation for the iBands indicator only
 extern double  EnvelopesDeviation        = 0.07;         // Deviation for the iEnvelopes indicator only
@@ -86,8 +86,16 @@ extern color   Color_Section4            = Magenta;      // Color for text lines
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-string EA_version = "XMT-Scalper v2.522";
-string OrderCmt   = "XMT";       // order comment
+// order defaults
+string orderComment = "GDP";
+
+// PL statistics
+double G_balance = 0;            // Balance for this EA
+double G_equity;                 // Current equity for this EA
+double Changedmargin;            // Free margin for this account
+
+
+
 
 datetime StartTime;              // Initial time
 datetime LastTime;               // For measuring tics
@@ -126,9 +134,6 @@ double Tot_closed_lots;          // A summary of the current closed lots for thi
 double Tot_closed_profit;        // A summary of the current closed profit/loss for this EA
 double Tot_closed_swap;          // A summary of the current closed swaps for this EA
 double Tot_closed_comm;          // A summary of the current closed commission for this EA
-double G_balance = 0;            // Balance for this EA
-double G_equity;                 // Current equity for this EA
-double Changedmargin;            // Free margin for this account
 double Array_spread[30];         // Store spreads for the last 30 tics
 double LotSize;                  // Lotsize
 double highest;                  // Highest indicator value
@@ -695,7 +700,7 @@ void MainFunction() {
             // Start Execution counter
             Execution = GetTickCount();
             // Send a BUYSTOP order without SL and TP
-            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, 0, Lime );
+            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, 0, Lime );
             // OrderSend was executed successfully
             if (orderticket > 0) {
                // Calculate Execution speed
@@ -741,7 +746,7 @@ void MainFunction() {
             // Start Execution counter
             Execution = GetTickCount();
             // Send a BUYSTOP order with SL and TP
-            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Lime );
+            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Lime );
             if (orderticket > 0) {
                Execution = GetTickCount() - Execution;
                if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
@@ -767,7 +772,7 @@ void MainFunction() {
             // Start Execution timer
             Execution = GetTickCount();
             // Send a SELLSTOP order without SL and TP
-            orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, 0, Orange );
+            orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, 0, Orange );
             if (orderticket > 0) {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
@@ -815,7 +820,7 @@ void MainFunction() {
             // Start Execution timer
             Execution = GetTickCount();
             // Send a SELLSTOP order with SL and TP
-            orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, orderexpiretime, Orange );
+            orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Orange );
             // If OrderSend was executed successfully
             if (orderticket > 0) {
                Execution = GetTickCount() - Execution;
@@ -843,7 +848,7 @@ void MainFunction() {
             // To be sure that the fake order never is executed, st the price to twice the current price
             fakeprice = ask * 2.0;
             // Send a BUYSTOP order
-            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, fakeprice, Slippage, 0, 0, OrderCmt, Magic, 0, Lime );
+            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, fakeprice, Slippage, 0, 0, orderComment, Magic, 0, Lime );
             Execution = GetTickCount();
             // Send a modify command where we adjust the price with +1 pip
             wasordermodified = OrderModify(orderticket, fakeprice + 1*Pip, 0, 0, 0, Lime);
@@ -1215,72 +1220,51 @@ void PrintErrors() {
 
 
 /**
- * Check through all open orders
+ * Update stats of open positions.
  */
 void UpdateOpenOrderStats() {
-   int pos;
-   double tmp_order_lots;
-   double tmp_order_price;
-
-   // Get total number of open orders
    Tot_Orders = OrdersTotal();
 
-   // Reset counters
-   Tot_open_pos = 0;
-   Tot_open_profit = 0;
-   Tot_open_lots = 0;
-   Tot_open_swap = 0;
+   Tot_open_pos        = 0;
+   Tot_open_profit     = 0;
+   Tot_open_swap       = 0;
    Tot_open_commission = 0;
-   G_equity = 0;
-   Changedmargin = 0;
+   Tot_open_lots       = 0;
+   Changedmargin       = 0;
 
-   // Loop through all open orders from first to last
-   for ( pos = 0; pos < Tot_Orders; pos ++ )
-   {
-      // Select on order
-      if ( OrderSelect ( pos, SELECT_BY_POS, MODE_TRADES ) )
-      {
-
-         // Check if it matches the MagicNumber
-         if ( OrderMagicNumber() == Magic && OrderSymbol() == Symbol() )    // If the orders are for this EA
-         {
-            // Calculate sum of open orders, open profit, swap and commission
-            Tot_open_pos ++;
-            tmp_order_lots = OrderLots();
-            Tot_open_lots += tmp_order_lots;
-            tmp_order_price = OrderOpenPrice();
-            Tot_open_profit += OrderProfit();
-            Tot_open_swap += OrderSwap();
+   for (int i=0; i < Tot_Orders; i++) {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
+            Tot_open_lots       += OrderLots();
+            Tot_open_profit     += OrderProfit();
+            Tot_open_swap       += OrderSwap();
             Tot_open_commission += OrderCommission();
-            Changedmargin += tmp_order_lots * tmp_order_price;
+            Changedmargin       += OrderLots() * OrderOpenPrice();
+            Tot_open_pos++;
          }
       }
    }
-   // Calculate Balance and Equity for this EA and not for the entire account
-   G_equity = G_balance + Tot_open_profit + Tot_open_swap + Tot_open_commission;
 
+   // Calculate equity for this EA (not for the entire account)
+   G_equity = G_balance + Tot_open_profit + Tot_open_swap + Tot_open_commission;
 }
 
 
 /**
- * Check through all closed orders
+ * Update stats of closed positions.
  */
 void UpdateClosedOrderStats() {
    int openTotal = OrdersHistoryTotal();
 
-   Tot_closed_pos    = 0;
    Tot_closed_lots   = 0;
    Tot_closed_profit = 0;
    Tot_closed_swap   = 0;
    Tot_closed_comm   = 0;
-   G_balance         = 0;
+   Tot_closed_pos    = 0;
 
-   // Loop through all closed orders
-   for (int pos=0; pos < openTotal; pos++) {
-      // Select an order
-      if (OrderSelect(pos, SELECT_BY_POS, MODE_HISTORY)) {                 // Loop through the order history
-         // If the MagicNumber matches
-         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {       // If the orders are for this EA
+   for (int i=0; i < openTotal; i++) {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {
+         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
             Tot_closed_lots   += OrderLots();
             Tot_closed_profit += OrderProfit();
             Tot_closed_swap   += OrderSwap();
@@ -1301,7 +1285,7 @@ void UpdateClosedOrderStats() {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   string line1 = EA_version;
+   string line1 = WindowExpertName();
    string line2 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
    string line3 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
    string line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
@@ -1309,13 +1293,13 @@ int ShowStatus(int error = NO_ERROR) {
    string line6 = " ";
    string line7 = "Margin value: " + DoubleToStr ( Changedmargin, 2 );
 
-   int textspacing=10, x=3, y=10;
-   ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = textspacing * 2 + Text_Size * 1 + 3 * 1;
-   ShowStatus.CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = textspacing * 2 + Text_Size * 2 + 3 * 2 + 20;
-   ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = textspacing * 2 + Text_Size * 3 + 3 * 3 + 40;
-   ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 4 + 3 * 4 + 40;
-   ShowStatus.CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = textspacing * 2 + Text_Size * 5 + 3 * 5 + 40;
-   ShowStatus.CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = textspacing * 2 + Text_Size * 6 + 3 * 6 + 40;
+   int linespacing=20, x=3, y=10;
+   ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = linespacing + Text_Size * 1 + 3 * 1;
+   ShowStatus.CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = linespacing + Text_Size * 2 + 3 * 2 + 20;
+   ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = linespacing + Text_Size * 3 + 3 * 3 + 40;
+   ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3); y = linespacing + Text_Size * 4 + 3 * 4 + 40;
+   ShowStatus.CreateLabel("line5", line5, Text_Size,    x, y, Color_Section3); y = linespacing + Text_Size * 5 + 3 * 5 + 40;
+   ShowStatus.CreateLabel("line6", line6, Text_Size,    x, y, Color_Section4); y = linespacing + Text_Size * 6 + 3 * 6 + 40;
    ShowStatus.CreateLabel("line7", line7, Text_Size,    x, y, Color_Section4);
 
    if (!error)
