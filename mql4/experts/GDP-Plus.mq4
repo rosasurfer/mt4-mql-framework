@@ -11,18 +11,18 @@
  * and more robust components.
  *
  * Sources:
- *  All used original versions are included in this repo and accessible via the Git history. Some of them are here:
+ *  All used original versions are included in this repo and accessible via the Git history. Some of them:
  *
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp              [MillionDollarPips v2 decompiled]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp               [MDP-Plus v2.2 + PDF by Capella]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp          [XMT-Scalper v2.522 + PDF by Capella]
  *
  *
- * Fixes/changes:
- *
- *
- *
- *
+ * Major fixes/changes:
+ * - embed in MQL4 framework
+ * - drop input parameter MinMarginLevel
+ * - drop screenshot functionality (for the time being)
+ * - fix invalid SL calculations
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
