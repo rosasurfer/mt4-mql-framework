@@ -57,8 +57,8 @@ string   s_margin_currency;                           // 12 bytes               
 //---- commissions calculation                                                          -------
 //++++ add 4 bytes to align the next double                                             +++++++
 double   d_comm_base = 0;                             // basic commission               //  424 + 8
-int      i_comm_type = COMMISSION_MODE_PIPS;          // basic commission type          //  432 + 4
-int      i_comm_lots = COMMISSION_TYPE_PER_DEAL;      // commission per lot or per deal //  436 + 4
+int      i_comm_type = COMM_TYPE_POINTS;              // basic commission type          //  432 + 4
+int      i_comm_lots = COMMISSION_PER_DEAL;           // commission per lot or per deal //  436 + 4
 //---- for internal use                                                                 -------
 int      i_from_bar=0;                                // 'fromdate' bar number          //  440 + 4
 int      i_to_bar=0;                                  // 'todate' bar number            //  444 + 4
