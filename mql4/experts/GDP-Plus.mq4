@@ -6,9 +6,9 @@
  * core idea of the strategy: tick scalping based on a reversal from a channel breakout.
  *
  * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). However all
- * known versions - including the original - are so severly flawed that one should never run any one of them on a live
- * account. The GDP version uses/is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces
- * all parts with faster/more robust/more advanced components and adds major enhancements for production use.
+ * known versions - including the original - are so severly flawed that one should never run anyone of them on a live account.
+ * The GDP version uses/is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts
+ * with more robust or faster components and adds major enhancements for production use.
  *
  * Sources:
  *  All original versions are included in the repo and accessible via the Git history. Some of them:
@@ -22,8 +22,9 @@
  * - embedded in MQL4 framework
  * - fixed broken processing logic of open orders
  * - fixed invalid stoploss calculations
- * - removed useless sending of "speed test" orders
- * - removed measuring execution times and trade suspension on delays (the framework logs everything)
+ * - replaced invalid commission calculation by framework functionality and removed input parameter "Commission"
+ * - removed useless sending of speed test orders
+ * - removed measuring execution times and trade suspension on delays (the framework handles this better)
  * - removed screenshot functionality (may be re-added later)
  * - removed input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
  * - removed unused input parameter "Verbose"
@@ -34,22 +35,15 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string  ___a_____________________ = "==== Configuration ====";
-extern bool    ReverseTrade              = false;        // If TRUE, then trade in opposite direction
-extern int     Magic                     = -1;           // If set to a number less than 0 it will calculate MagicNumber automatically
-extern bool    ECN_Mode                  = false;        // TRUE for brokers that don't accept SL and TP to be sent at the same time as the order
-extern bool    Debug                     = false;        // Print debug information, only for debugging purposes
+extern string  ___a_____________________ = "==== General ====";
+extern bool    Debug                     = false;        // Print debug information
 
-extern string  ___b_____________________ = "==== Trade settings ====";
-extern int     TimeFrame                 = PERIOD_M1;    // Trading timeframe must match the timeframe of the chart
-extern double  MaxSpread                 = 30;           // Max allowed spread in points
-extern double  StopLoss                  = 60;           // SL in points. Default 60 (= 6 pip)
-extern double  TakeProfit                = 100;          // TP in points. Default 100 (= 10 pip)
-extern double  AddPriceGap               = 0;            // Additional price gap in points added to SL and TP in order to avoid Error 130
-extern double  TrailingStart             = 20;           // Start trailing profit from as so many points.
-extern double  Commission                = 0;            // commission in USD per lot
-extern int     Slippage                  = 3;            // Maximum allowed Slippage of price in points
-extern double  MinimumUseStopLevel       = 0;            // Stoplevel to use will be max value of either this value or broker stoplevel
+extern string  ___b_____________________ = "=== Indicators: 1=Moving Average, 2=BollingerBand, 3=Envelopes";
+extern int     UseIndicatorSwitch        = 1;            // indicator selection for channel creation
+extern int     TimeFrame                 = PERIOD_M1;    // must match the timeframe of the chart
+extern int     Indicatorperiod           = 3;            // Period in bars for indicator
+extern double  BBDeviation               = 2;            // Deviation for the iBands indicator only
+extern double  EnvelopesDeviation        = 0.07;         // Deviation for the iEnvelopes indicator only
 
 extern string  ___c_____________________ = "==== Volatility Settings ====";
 extern bool    UseDynamicVolatilityLimit = true;         // Calculated based on (int)(spread * VolatilityMultiplier)
@@ -58,19 +52,25 @@ extern double  VolatilityLimit           = 180;          // A fix value that onl
 extern bool    UseVolatilityPercentage   = true;         // If TRUE, then price must break out more than a specific percentage
 extern double  VolatilityPercentageLimit = 0;            // Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
 
-extern string  ___d_____________________ = "=== Indicators: 1=Moving Average, 2=BollingerBand, 3=Envelopes";
-extern int     UseIndicatorSwitch        = 1;            // indicator selection for channel creation
-extern int     Indicatorperiod           = 3;            // Period in bars for indicator
-extern double  BBDeviation               = 2;            // Deviation for the iBands indicator only
-extern double  EnvelopesDeviation        = 0.07;         // Deviation for the iEnvelopes indicator only
-extern int     OrderExpireSeconds        = 3600;         // Orders are deleted after so many seconds
-
-extern string  ___e_____________________ = "==== Money Management ====";
+extern string  ___d_____________________ = "==== MoneyManagement ====";
 extern bool    MoneyManagement           = true;         // If TRUE calculate lotsize based on Risk, if FALSE use ManualLotsize
 extern double  Risk                      = 2;            // Risk setting in percentage, for 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
 extern double  MinLots                   = 0.01;         // Minimum lotsize to trade with
 extern double  MaxLots                   = 100;          // Maximum allowed lotsize to trade with
 extern double  ManualLotsize             = 0.1;          // Fixed lotsize to trade with if MoneyManagement is set to FALSE
+
+extern string  ___e_____________________ = "==== Trade settings ====";
+extern bool    ReverseTrade              = false;        // If TRUE, then trade in opposite direction
+extern bool    ECN_Mode                  = false;        // TRUE for brokers that don't accept SL and TP to be sent at the same time as the order
+extern double  StopLoss                  = 60;           // SL in points. Default 60 (= 6 pip)
+extern double  TakeProfit                = 100;          // TP in points. Default 100 (= 10 pip)
+extern double  AddPriceGap               = 0;            // Additional price gap in points added to SL and TP in order to avoid Error 130
+extern double  TrailingStart             = 20;           // Start trailing profit from as so many points.
+extern int     Slippage                  = 3;            // Maximum allowed Slippage of price in points
+extern int     Magic                     = -1;           // If set to a number less than 0 it will calculate MagicNumber automatically
+extern int     OrderExpireSeconds        = 3600;         // Orders are deleted after so many seconds
+extern double  MinimumUseStopLevel       = 0;            // Stoplevel to use will be max value of either this value or broker stoplevel
+extern double  MaxSpread                 = 30;           // Max allowed spread in points
 
 extern string  ___f_____________________ = "=== Display Graphics ===";
 extern int     Heading_Size              = 13;           // Font size for headline
@@ -99,7 +99,7 @@ double totalPl;                  // openPl + closedPl
 
 // order defaults
 string orderComment = "GDP";
-
+double commissionMarkup;         // commission markup in price terms, e.g. 0.000045
 
 
 // --- old ------------------------------------------------------------------------------------------------------------------
@@ -172,7 +172,6 @@ int onInit() {
    VolatilityMultiplier = VolatilityMultiplier / 10;
    ArrayInitialize(spreads, 0);
    VolatilityLimit = VolatilityLimit * Point;
-   Commission = NormalizeDouble(Commission * Point, Digits);
    TrailingStart = TrailingStart * Point;
    StopLevel = StopLevel * Point;
    AddPriceGap = AddPriceGap * Point;
@@ -190,6 +189,7 @@ int onInit() {
    RecalculateRisk();                                             // Make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
    LotSize = CalculateLotsize();                                  // Calculate intitial LotSize
    if (Magic < 0) Magic = GenerateMagicNumber();                  // If magic number is set to a value less than 0, then generate a new MagicNumber
+   commissionMarkup = GetCommission(1, COMMISSION_MODE_MARKUP);
 
    UpdatePlStats();
    ShowStatus();
@@ -231,7 +231,6 @@ int onTick() {
  *
  */
 void MainFunction() {
-   string pair;
    string indy;
 
    datetime orderexpiretime;
@@ -377,9 +376,9 @@ void MainFunction() {
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
-   askpluscommission  = NormalizeDouble(ask + Commission, Digits);
-   bidminuscommission = NormalizeDouble(bid - Commission, Digits);
-   realavgspread      = avgspread + Commission;
+   askpluscommission  = NormalizeDouble(ask + commissionMarkup, Digits);
+   bidminuscommission = NormalizeDouble(bid - commissionMarkup, Digits);
+   realavgspread      = avgspread + commissionMarkup;
 
    // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads multiplied with the VolatilityMulitplier constant
    if (UseDynamicVolatilityLimit)
@@ -477,7 +476,7 @@ void MainFunction() {
                   // Calculate how much Price, SL and TP should be modified
                   orderprice      = NormalizeDouble(ask + StopLevel + AddPriceGap, Digits);
                   orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit*Point + AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice + commissionMarkup + TakeProfit*Point + AddPriceGap, Digits);
                   // modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
                   if (orderprice < OrderOpenPrice() && OrderOpenPrice()-orderprice > TrailingStart) {
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
@@ -497,7 +496,7 @@ void MainFunction() {
                   // Calculate how much Price, SL and TP should be modified
                   orderprice      = NormalizeDouble(bid - StopLevel - AddPriceGap, Digits);
                   orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit*Point - AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice - commissionMarkup - TakeProfit*Point - AddPriceGap, Digits);
                   // modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
                   if (orderprice > OrderOpenPrice() && orderprice-OrderOpenPrice() > TrailingStart) {
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
@@ -640,7 +639,7 @@ void MainFunction() {
                      + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Expire: "+ TimeToStr(orderexpiretime, TIME_MINUTES) +", Open orders: "+ counter1                  + NL
                      + "Bid: "+ NumberToStr(bid, PriceFormat) +", Ask: "+ NumberToStr(ask, PriceFormat) +", "+ indy                                                                                        + NL
                      + "AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)                                                                              + NL
-                     + "Commission: "+ DoubleToStr(Commission, 2) +", Lots: "+ DoubleToStr(LotSize, 2)                                                                                                     + NL;
+                     + "Lots: "+ DoubleToStr(LotSize, 2)                                                                                                                                                   + NL;
 
          if (GT(realavgspread, MaxSpread*Point, Digits)) {
             text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended."+ NL;
