@@ -3,12 +3,12 @@
  *
  *
  * An EA based on the probably single most famous MetaTrader EA ever written. Nothing remains from the original except the
- * core idea of the strategy: tick scalping based on a reversal from a channel breakout.
+ * core idea of the strategy: scalping based on a reversal from a channel breakout.
  *
  * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). However all
  * known versions - including the original - are so severly flawed that one should never run anyone of them on a live account.
- * The GDP version uses/is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts
- * with more robust or faster components and adds major enhancements for production use.
+ * This GDP version is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts with
+ * more robust or faster components and adds major improvements for production use.
  *
  * Sources:
  *  All original versions are included in the repo and accessible via the Git history. Some of them:
@@ -19,14 +19,14 @@
  *
  *
  * Fixes/changes (wip):
- * - embedded in MQL4 framework
+ * - embedded in rosasurfer MQL4 framework
  * - fixed broken processing logic of open orders
  * - fixed invalid stoploss calculations
  * - replaced invalid commission calculation by framework functionality and removed input parameter "Commission"
+ * - removed input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
  * - removed useless sending of speed test orders
  * - removed measuring execution times and trade suspension on delays (the framework handles this better)
  * - removed screenshot functionality (may be re-added later)
- * - removed input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
  * - removed unused input parameter "Verbose"
  */
 #include <stddefines.mqh>
@@ -73,13 +73,13 @@ extern double  MinimumUseStopLevel       = 0;            // Stoplevel to use wil
 extern double  MaxSpread                 = 30;           // Max allowed spread in points
 
 extern string  ___f_____________________ = "=== Display Graphics ===";
-extern int     Heading_Size              = 13;           // Font size for headline
-extern int     Text_Size                 = 12;           // Font size for texts
-extern color   Color_Heading             = Lime;         // Color for text lines
-extern color   Color_Section1            = Yellow;       // Color for text lines
-extern color   Color_Section2            = Aqua;         // Color for text lines
-extern color   Color_Section3            = Orange;       // Color for text lines
-extern color   Color_Section4            = Magenta;      // Color for text lines
+extern int     Heading_Size              = 10;           // Font size for headline
+extern int     Text_Size                 = 10;           // Font size for texts
+extern color   Color_Heading             = Blue;         // Color for text lines
+extern color   Color_Section1            = Blue;         // Color for text lines
+extern color   Color_Section2            = Blue;         // Color for text lines
+extern color   Color_Section3            = Blue;         // Color for text lines
+extern color   Color_Section4            = Blue;         // Color for text lines
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -97,9 +97,9 @@ double closedLots;               // closed lotsize
 double closedPl;                 //
 double totalPl;                  // openPl + closedPl
 
-// order defaults
+// order/trade data
 string orderComment = "GDP";
-double commissionMarkup;         // commission markup in price terms, e.g. 0.000045
+double commissionMarkup;         // commission markup in quote currency, e.g. 0.0000'41
 
 
 // --- old ------------------------------------------------------------------------------------------------------------------
@@ -650,6 +650,8 @@ void MainFunction() {
 
    // Check open positions without SL
    CheckMissingSL();
+
+   catch("MainFunction(1)");
 }
 
 
@@ -684,6 +686,7 @@ void CheckMissingSL() {
          }
       }
    }
+   catch("CheckMissingSL(1)");
 }
 
 
@@ -773,6 +776,7 @@ double GetLotsizeMultiplier() {
    // If account currency is something else we assumes it is USD
    if (!multiplicator) multiplicator = 1;
 
+   catch("GetLotsizeMultiplier(1)");
    return(multiplicator);
 }
 
@@ -793,6 +797,8 @@ int GenerateMagicNumber() {
 
    int result = 999999999 - AccountNumber() - c - d;
    if (Debug) debug("GenerateMagicNumber(1)  MagicNumber="+ result);
+
+   catch("GenerateMagicNumber(2)");
    return(result);
 }
 
@@ -830,6 +836,8 @@ double CalculateLotsize() {
          lotsize = minlot;
       }
    }
+
+   catch("CalculateLotsize(1)");
    return(lotsize);
 }
 
@@ -900,6 +908,8 @@ void RecalculateRisk() {
          Print(textstring);
       }
    }
+
+   catch("RecalculateRisk(1)");
 }
 
 
@@ -1007,6 +1017,8 @@ void UpdatePlStats() {
    openPl   = openProfit + openSwap + openCommission;
    closedPl = closedProfit + closedSwap + closedCommission;
    totalPl  = openPl + closedPl;
+
+   catch("UpdatePlStats(1)");
 }
 
 
@@ -1029,6 +1041,8 @@ int ShowStatus(int error = NO_ERROR) {
    ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = spacing + Text_Size * 3 + 3 * 3 + 40;
    ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3);
 
+   catch("ShowStatus(1)");
+
    if (!error)
       return(last_error);
    return(error);
@@ -1040,10 +1054,13 @@ int ShowStatus(int error = NO_ERROR) {
  */
 void ShowStatus.CreateLabel(string label, string text, int fontSize, int x, int y, color fontColor) {
    label = WindowExpertName() +"."+ label;
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0, 0, 0);
+
+   if (ObjectFind(label) != 0) {
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      RegisterObject(label);
+   }
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, x);
    ObjectSet    (label, OBJPROP_YDISTANCE, y);
    ObjectSetText(label, text, fontSize, "Tahoma", fontColor);
-   RegisterObject(label);
 }
