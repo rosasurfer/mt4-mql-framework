@@ -61,7 +61,6 @@ extern double  ManualLotsize             = 0.1;          // Fixed lotsize to tra
 
 extern string  ___e_____________________ = "==== Trade settings ====";
 extern bool    ReverseTrade              = false;        // If TRUE, then trade in opposite direction
-extern bool    ECN_Mode                  = false;        // TRUE for brokers that don't accept SL and TP to be sent at the same time as the order
 extern double  StopLoss                  = 60;           // SL in points. Default 60 (= 6 pip)
 extern double  TakeProfit                = 100;          // TP in points. Default 100 (= 10 pip)
 extern double  AddPriceGap               = 0;            // Additional price gap in points added to SL and TP in order to avoid Error 130
@@ -248,10 +247,6 @@ void MainFunction() {
    int askpart;
    int bidpart;
 
-   double ask;
-   double bid;
-   double askplusdistance;
-   double bidminusdistance;
    double volatilitypercentage = 0;
    double orderprice;
    double orderstoploss;
@@ -285,9 +280,6 @@ void MainFunction() {
       TickCounter++;
    }
 
-   bid = Bid;
-   ask = Ask;
-
    // Calculate the channel of Volatility based on the difference of iHigh and iLow during current bar
    ihigh      = iHigh(Symbol(), TimeFrame, 0);
    ilow       = iLow (Symbol(), TimeFrame, 0);
@@ -301,7 +293,7 @@ void MainFunction() {
       imalow = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_LOW, 0 );
       imahigh = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0 );
       imadiff = imahigh - imalow;
-      isbidgreaterthanima = bid >= imalow + imadiff / 2.0;
+      isbidgreaterthanima = Bid >= imalow + imadiff / 2.0;
       indy = "iMA_low: " + DoubleToStr(imalow, Digits) + ", iMA_high: " + DoubleToStr(imahigh, Digits) + ", iMA_diff: " + DoubleToStr(imadiff, Digits);
    }
 
@@ -311,7 +303,7 @@ void MainFunction() {
       ibandsupper = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_UPPER, 0 );
       ibandslower = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_LOWER, 0 );
       ibandsdiff = ibandsupper - ibandslower;
-      isbidgreaterthanibands = bid >= ibandslower + ibandsdiff / 2.0;
+      isbidgreaterthanibands = Bid >= ibandslower + ibandsdiff / 2.0;
       indy = "iBands_upper: " + DoubleToStr(ibandsupper, Digits) + ", iBands_lower: " + DoubleToStr(ibandslower, Digits) + ", iBands_diff: " + DoubleToStr(ibandsdiff, Digits);
    }
 
@@ -321,7 +313,7 @@ void MainFunction() {
       envelopesupper = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_UPPER, 0 );
       envelopeslower = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_LOWER, 0 );
       envelopesdiff = envelopesupper - envelopeslower;
-      isbidgreaterthanenvelopes = bid >= envelopeslower + envelopesdiff / 2.0;
+      isbidgreaterthanenvelopes = Bid >= envelopeslower + envelopesdiff / 2.0;
       indy = "iEnvelopes_upper: " + DoubleToStr(envelopesupper, Digits) + ", iEnvelopes_lower: " + DoubleToStr(envelopeslower, Digits) + ", iEnvelopes_diff: " + DoubleToStr(envelopesdiff, Digits) ;
    }
 
@@ -352,7 +344,7 @@ void MainFunction() {
       lowest = envelopeslower;
    }
 
-   spread  = ask - bid;
+   spread  = Ask - Bid;
    LotSize = CalculateLotsize();
 
    // calculatwe orderexpiretime, but only if it is set to a value
@@ -376,8 +368,8 @@ void MainFunction() {
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
-   askpluscommission  = NormalizeDouble(ask + commissionMarkup, Digits);
-   bidminuscommission = NormalizeDouble(bid - commissionMarkup, Digits);
+   askpluscommission  = NormalizeDouble(Ask + commissionMarkup, Digits);
+   bidminuscommission = NormalizeDouble(Bid - commissionMarkup, Digits);
    realavgspread      = avgspread + commissionMarkup;
 
    // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads multiplied with the VolatilityMulitplier constant
@@ -394,11 +386,11 @@ void MainFunction() {
 
          // In case of UseVolatilityPercentage then also check if it differ enough of percentage
          if (!UseVolatilityPercentage || (UseVolatilityPercentage && volatilitypercentage > VolatilityPercentageLimit)) {
-            if (bid < lowest) {
+            if (Bid < lowest) {
                if (!ReverseTrade) pricedirection = -1;   // BUY or BUYSTOP
                else               pricedirection =  1;   // SELL or SELLSTOP
             }
-            else if (bid > highest) {
+            else if (Bid > highest) {
                if (!ReverseTrade) pricedirection =  1;   // SELL or SELLSTOP
                else               pricedirection = -1;   // BUY or BUYSTOP
             }
@@ -430,7 +422,7 @@ void MainFunction() {
                   // modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
                   if (LT(ordertakeprofit, askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && GT(askpluscommission + TakeProfit*Point + AddPriceGap - ordertakeprofit, TrailingStart, Digits)) {
                      // Set SL and TP
-                     orderstoploss   = NormalizeDouble(bid - StopLoss*Point - AddPriceGap, Digits);
+                     orderstoploss   = NormalizeDouble(Bid - StopLoss*Point - AddPriceGap, Digits);
                      ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
                         if (OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Lime))
@@ -454,7 +446,7 @@ void MainFunction() {
                   // modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
                   if (GT(ordertakeprofit, bidminuscommission-TakeProfit*Point-AddPriceGap, Digits) && GT(ordertakeprofit-bidminuscommission+TakeProfit*Point-AddPriceGap, TrailingStart, Digits)) {
                      // set SL and TP
-                     orderstoploss   = NormalizeDouble(ask + StopLoss*Point + AddPriceGap, Digits);
+                     orderstoploss   = NormalizeDouble(Ask + StopLoss*Point + AddPriceGap, Digits);
                      ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
                         if (OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange))
@@ -474,7 +466,7 @@ void MainFunction() {
                // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
                if (!isbidgreaterthanindy) {
                   // Calculate how much Price, SL and TP should be modified
-                  orderprice      = NormalizeDouble(ask + StopLevel + AddPriceGap, Digits);
+                  orderprice      = NormalizeDouble(Ask + StopLevel + AddPriceGap, Digits);
                   orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
                   ordertakeprofit = NormalizeDouble(orderprice + commissionMarkup + TakeProfit*Point + AddPriceGap, Digits);
                   // modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
@@ -494,7 +486,7 @@ void MainFunction() {
                // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
                if (isbidgreaterthanindy) {
                   // Calculate how much Price, SL and TP should be modified
-                  orderprice      = NormalizeDouble(bid - StopLevel - AddPriceGap, Digits);
+                  orderprice      = NormalizeDouble(Bid - StopLevel - AddPriceGap, Digits);
                   orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
                   ordertakeprofit = NormalizeDouble(orderprice - commissionMarkup - TakeProfit*Point - AddPriceGap, Digits);
                   // modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
@@ -515,8 +507,8 @@ void MainFunction() {
 
    // Calculate and keep track of global error number
    if (GlobalError >= 0 || GlobalError==-2) {
-      bidpart = NormalizeDouble(bid/Point, 0);
-      askpart = NormalizeDouble(ask/Point, 0);
+      bidpart = NormalizeDouble(Bid/Point, 0);
+      askpart = NormalizeDouble(Ask/Point, 0);
       if      (bidpart % 10 || askpart % 10)         GlobalError = -1;
       else if (GlobalError >= 0 && GlobalError < 10) GlobalError++;
       else                                           GlobalError = -2;
@@ -525,100 +517,32 @@ void MainFunction() {
    // Reset error-variable
    ordersenderror = false;
 
-   // Set default price adjustment
-   askplusdistance = ask + StopLevel;
-   bidminusdistance = bid - StopLevel;
-
    // If we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread AND we have no errors THEN proceed
    if (!counter1 && pricedirection && LE(realavgspread, MaxSpread*Point, Digits) && GlobalError==-1) {
       // If we have a price breakout downwards (Bearish) then send a BUYSTOP order
       if (pricedirection==-1 || pricedirection==2 ) {    // Send a BUYSTOP
-         // Calculate a new price to use
-         orderprice = ask + StopLevel;
-
-         // ECN_Mode: SL and TP is not sent with order, but added afterwords in a OrderModify command
-         if (ECN_Mode) {
-            // Set prices for OrderModify of BUYSTOP order
-            orderprice = askplusdistance;
-            orderstoploss =  0;
-            ordertakeprofit = 0;
-            // Send a BUYSTOP order without SL and TP
-            orderticket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, 0, Lime);
-            if (!orderticket) {
-               ordersenderror = true;
-               CheckLastError();
-            }
-            else {
-               OrderSelect(orderticket, SELECT_BY_TICKET);
-               RefreshRates();
-               // Set prices for OrderModify of BUYSTOP order
-               orderprice      = OrderOpenPrice();
-               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
-               // Send a modify order for BUYSTOP order with new SL and TP
-               if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, orderexpiretime, Lime)) {
-                  ordersenderror = true;
-                  CheckLastError();
-               }
-            }
-         }
-
-         // No ECN-mode, SL and TP can be sent directly
-         else {
-            RefreshRates();
-            // Set prices for BUYSTOP order
-            orderprice      = askplusdistance;//ask+StopLevel
-            orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
-            ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
-            // Send a BUYSTOP order with SL and TP
-            if (!OrderSend(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Lime)) {
-               ordersenderror = true;
-               CheckLastError();
-            }
+         RefreshRates();
+         // Set prices for BUYSTOP order
+         orderprice      = Ask + StopLevel;
+         orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
+         ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
+         // Send a BUYSTOP order with SL and TP
+         if (!OrderSend(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Lime)) {
+            ordersenderror = true;
+            CheckLastError();
          }
       }
 
       // If we have a price breakout upwards (Bullish) then send a SELLSTOP order
       if (pricedirection==1 || pricedirection==2) {
-         // Set prices for SELLSTOP order with zero SL and TP
-         orderprice      = bidminusdistance;
-         orderstoploss   = 0;
-         ordertakeprofit = 0;
-
-         // ECN_Mode: SL and TP cannot be sent with order, but must be sent afterwords in a modify command
-         if (ECN_Mode) {
-            // Send a SELLSTOP order without SL and TP
-            orderticket = OrderSend ( Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, 0, Orange );
-            if (!orderticket) {
-               ordersenderror = true;
-               CheckLastError();
-            }
-            else {
-               OrderSelect(orderticket, SELECT_BY_TICKET);
-               RefreshRates();
-               // Set prices for SELLSTOP order with modified SL and TP
-               orderprice      = OrderOpenPrice();
-               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
-               // Send a modify order with adjusted SL and TP
-               if (!OrderModify(OrderTicket(), OrderOpenPrice(), orderstoploss, ordertakeprofit, orderexpiretime, Orange)) {
-                  ordersenderror = true;
-                  CheckLastError();
-               }
-            }
-         }
-
-         // No ECN-mode, SL and TP can be sent directly
-         else {
-            RefreshRates();
-            // Set prices for SELLSTOP order with SL and TP
-            orderprice = bidminusdistance;
-            orderstoploss = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
-            ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
-            if (!OrderSend(Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Orange)) {
-               ordersenderror = true;
-               CheckLastError();
-            }
+         RefreshRates();
+         // Set prices for SELLSTOP order with SL and TP
+         orderprice      = Bid - StopLevel;
+         orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
+         ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
+         if (!OrderSend(Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Orange)) {
+            ordersenderror = true;
+            CheckLastError();
          }
       }
    }
@@ -634,15 +558,14 @@ void MainFunction() {
       // Only print this if we have any orders or a price breakout
       if (counter1 || pricedirection)  {
          string text = TimeToStr(TimeCurrent()) +" Tick: "+ TickCounter                                                                                                                                    + NL
-                     + "Currency pair: "+ Symbol()                                                                                                                                                         + NL
                      + "Volatility: "+ DoubleToStr(volatility, Digits) +", VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +", VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits) + NL
-                     + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Expire: "+ TimeToStr(orderexpiretime, TIME_MINUTES) +", Open orders: "+ counter1                  + NL
-                     + "Bid: "+ NumberToStr(bid, PriceFormat) +", Ask: "+ NumberToStr(ask, PriceFormat) +", "+ indy                                                                                        + NL
+                     + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Open orders: "+ counter1                                                                          + NL
+                     +  indy                                                                                                                                                                               + NL
                      + "AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)                                                                              + NL
                      + "Lots: "+ DoubleToStr(LotSize, 2)                                                                                                                                                   + NL;
 
          if (GT(realavgspread, MaxSpread*Point, Digits)) {
-            text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended."+ NL;
+            text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended.";
          }
          Print(StrTrim(text));
       }
