@@ -1080,21 +1080,23 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Calculate the current symbol's commission value for the specified lot size.
+ * Calculate the current symbol's commission value for the specified lotsize.
  *
- * @param  double lots [optional] - lot size (default: 1 lot)
+ * @param  double lots [optional] - lotsize (default: 1 lot)
+ * @param  int    mode [optional] - COMMISSION_MODE_MONEY:  in account currency (default)
+ *                                  COMMISSION_MODE_MARKUP: as price markup in quote currency (independant of lotsize)
  *
  * @return double - commission value or EMPTY (-1) in case of errors
  */
-double GetCommission(double lots = 1.0) {
-   static double static.rate;
-   static bool   resolved;
+double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
+   static double baseCommission;
+   static bool resolved;
 
    if (!resolved) {
-      double rate;
+      double value;
 
       if (This.IsTesting()) {
-         rate = Test_GetCommission(__ExecutionContext, 1);
+         value = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
          // TODO: if (is_CFD) rate = 0;
@@ -1109,16 +1111,24 @@ double GetCommission(double lots = 1.0) {
             key = company +"."+ currency;
             if (!IsGlobalConfigKeyA(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
          }
-         rate = GetGlobalConfigDouble(section, key);
-         if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_VALUE)));
+         value = GetGlobalConfigDouble(section, key);
+         if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
       }
-      static.rate = rate;
-      resolved    = true;
+      baseCommission = value;
+      resolved = true;
    }
 
-   if (lots == 1)
-      return(static.rate);
-   return(static.rate * lots);
+   switch (mode) {
+      case COMMISSION_MODE_MONEY:
+         if (lots == 1)
+            return(baseCommission);
+         return(baseCommission * lots);
+
+      case COMMISSION_MODE_MARKUP:
+         double pipValue = PipValue(); if (!pipValue) return(EMPTY);
+         return(baseCommission/pipValue * Pip);
+   }
+   return(_EMPTY(catch("GetCommission(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
