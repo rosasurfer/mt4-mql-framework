@@ -467,17 +467,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define SCM_MARGIN_CURRENCY            3        // as amount of margin currency (see "symbols.raw")
 
 
-// Commission calculation modes, siehe FXT_HEADER
-#define COMMISSION_MODE_MONEY          0
-#define COMMISSION_MODE_PIPS           1
-#define COMMISSION_MODE_PERCENT        2
-
-
-// Commission types, siehe FXT_HEADER
-#define COMMISSION_TYPE_RT             0        // round-turn (both deals)
-#define COMMISSION_TYPE_PER_DEAL       1        // per single deal
-
-
 // Symbol types, siehe struct SYMBOL
 #define SYMBOL_TYPE_FOREX              1
 #define SYMBOL_TYPE_CFD                2
