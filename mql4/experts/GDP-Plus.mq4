@@ -22,6 +22,7 @@
  * - embedded in MQL4 framework
  * - dropped input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
  * - dropped unused input parameter "Verbose"
+ * - dropped useless sending of "speed testing" orders
  * - dropped screenshot functionality (may be re-added later)
  * - fixed invalid SL calculations
  */
@@ -41,7 +42,6 @@ extern string  ___b_____________________ = "==== Trade settings ====";
 extern int     TimeFrame                 = PERIOD_M1;    // Trading timeframe must match the timeframe of the chart
 extern double  MaxSpread                 = 30;           // Max allowed spread in points
 extern int     MaxExecution              = 0;            // Max allowed average execution time in ms (0 means no restriction)
-extern int     MaxExecutionMinutes       = 5;            // How often in minutes should fake orders be sent to measure execution speed
 extern double  StopLoss                  = 60;           // SL in points. Default 60 (= 6 pip)
 extern double  TakeProfit                = 100;          // TP in points. Default 100 (= 10 pip)
 extern double  AddPriceGap               = 0;            // Additional price gap in points added to SL and TP in order to avoid Error 130
@@ -195,8 +195,7 @@ int onInit() {
    LotBase         = MarketInfo(Symbol(), MODE_LOTSIZE);          // Fetch the amount of money in base currency for 1 lot
    RecalculateRisk();                                             // Make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
    LotSize = CalculateLotsize();                                  // Calculate intitial LotSize
-   if (Magic < 0)        Magic = GenerateMagicNumber();           // If magic number is set to a value less than 0, then generate a new MagicNumber
-   if (MaxExecution > 0) MaxExecutionMinutes = MaxExecution * 60; // If Execution speed should be measured, then adjust maxexecution from minutes to seconds
+   if (Magic < 0) Magic = GenerateMagicNumber();                  // If magic number is set to a value less than 0, then generate a new MagicNumber
 
    UpdatePlStats();
    ShowStatus();
@@ -246,7 +245,6 @@ void MainFunction() {
 
    datetime orderexpiretime;
 
-   bool select = false;
    bool wasordermodified = false;
    bool ordersenderror = false;
    bool isbidgreaterthanima = false;
@@ -284,7 +282,6 @@ void MainFunction() {
    double spread;
    double avgspread;
    double realavgspread;
-   double fakeprice;
    double sumofspreads;
    double askpluscommission;
    double bidminuscommission;
@@ -449,7 +446,7 @@ void MainFunction() {
 
    // Loop through all open orders to either modify or delete them
    for (i=0; i < OrdersTotal(); i++) {
-      select = OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
 
       if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol() && !OrderCloseTime()) {
 
@@ -561,7 +558,7 @@ void MainFunction() {
                }
                else {
                   // Price was larger than the indicator, delete the order
-                  select = OrderDelete(OrderTicket());
+                  OrderDelete(OrderTicket());
                }
                break;
 
@@ -601,7 +598,7 @@ void MainFunction() {
                }
                else {
                   // Price was NOT larger than the indicator, so delete the order
-                  select = OrderDelete(OrderTicket());
+                  OrderDelete(OrderTicket());
                }
                break;
          }
@@ -776,30 +773,6 @@ void MainFunction() {
                Execution = 0;
                CheckLastError();
             }
-         }
-      }
-   }
-
-   // If we have no samples, every MaxExecutionMinutes a new OrderModify Execution test is done
-   if (MaxExecution && Execution==-1 && (TimeLocal()-StartTime) % MaxExecutionMinutes == 0) {
-      // When backtesting, simulate random Execution time based on the setting
-      if (IsTesting() && MaxExecution) {
-         MathSrand(TimeLocal());
-         Execution = MathRand() / (32767/MaxExecution);
-      }
-      else {
-         // Unless backtesting, lets send a fake order to check the OrderModify Execution time,
-         if (!IsTesting()) {
-            // To be sure that the fake order never is executed, st the price to twice the current price
-            fakeprice = ask * 2.0;
-            // Send a BUYSTOP order
-            orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, fakeprice, Slippage, 0, 0, orderComment, Magic, 0, Lime );
-            Execution = GetTickCount();
-            // Send a modify command where we adjust the price with +1 pip
-            wasordermodified = OrderModify(orderticket, fakeprice + 1*Pip, 0, 0, 0, Lime);
-            Execution = GetTickCount() - Execution;
-            // Delete the order
-            select = OrderDelete(orderticket);
          }
       }
    }
