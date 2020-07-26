@@ -20,7 +20,8 @@
  *
  * Fixes/changes (wip):
  * - embedded in MQL4 framework
- * - dropped input parameter MinMarginLevel to continue managing open positions during critical drawdowns
+ * - dropped input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
+ * - dropped unused input parameter "Verbose"
  * - dropped screenshot functionality (may be re-added later)
  * - fixed invalid SL calculations
  */
@@ -34,19 +35,18 @@ extern string  ___a_____________________ = "==== Configuration ====";
 extern bool    ReverseTrade              = false;        // If TRUE, then trade in opposite direction
 extern int     Magic                     = -1;           // If set to a number less than 0 it will calculate MagicNumber automatically
 extern bool    ECN_Mode                  = false;        // TRUE for brokers that don't accept SL and TP to be sent at the same time as the order
-extern bool    Debug                     = false;        // Print huge log files with info, only for debugging purposes
-extern bool    Verbose                   = false;        // Additional log information printed in the Expert tab
+extern bool    Debug                     = false;        // Print debug information, only for debugging purposes
 
 extern string  ___b_____________________ = "==== Trade settings ====";
 extern int     TimeFrame                 = PERIOD_M1;    // Trading timeframe must match the timeframe of the chart
 extern double  MaxSpread                 = 30;           // Max allowed spread in points
 extern int     MaxExecution              = 0;            // Max allowed average execution time in ms (0 means no restriction)
 extern int     MaxExecutionMinutes       = 5;            // How often in minutes should fake orders be sent to measure execution speed
-extern double  StopLoss                  = 60;           // SL from as many points. Default 60 (= 6 pips)
-extern double  TakeProfit                = 100;          // TP from as many points. Default 100 (= 10 pip)
+extern double  StopLoss                  = 60;           // SL in points. Default 60 (= 6 pip)
+extern double  TakeProfit                = 100;          // TP in points. Default 100 (= 10 pip)
 extern double  AddPriceGap               = 0;            // Additional price gap in points added to SL and TP in order to avoid Error 130
 extern double  TrailingStart             = 20;           // Start trailing profit from as so many points.
-extern double  Commission                = 0;            // Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
+extern double  Commission                = 0;            // commission in USD per lot
 extern int     Slippage                  = 3;            // Maximum allowed Slippage of price in points
 extern double  MinimumUseStopLevel       = 0;            // Stoplevel to use will be max value of either this value or broker stoplevel
 
@@ -65,11 +65,11 @@ extern double  EnvelopesDeviation        = 0.07;         // Deviation for the iE
 extern int     OrderExpireSeconds        = 3600;         // Orders are deleted after so many seconds
 
 extern string  ___e_____________________ = "==== Money Management ====";
-extern bool    MoneyManagement           = true;         // If TRUE then calculate lotsize automaticallay based on Risk, if false then use ManualLotsize below
-extern double  MinLots                   = 0.01;         // Minimum lot-size to trade with
-extern double  MaxLots                   = 100;          // Maximum allowed lot-size to trade with
-extern double  Risk                      = 2;            // Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
-extern double  ManualLotsize             = 0.1;          // Fix lot size to trade with if MoneyManagement above is set to false
+extern bool    MoneyManagement           = true;         // If TRUE calculate lotsize based on Risk, if FALSE use ManualLotsize
+extern double  Risk                      = 2;            // Risk setting in percentage, for 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
+extern double  MinLots                   = 0.01;         // Minimum lotsize to trade with
+extern double  MaxLots                   = 100;          // Maximum allowed lotsize to trade with
+extern double  ManualLotsize             = 0.1;          // Fixed lotsize to trade with if MoneyManagement is set to FALSE
 
 extern string  ___f_____________________ = "=== Display Graphics ===";
 extern int     Heading_Size              = 13;           // Font size for headline
@@ -86,8 +86,6 @@ extern color   Color_Section4            = Magenta;      // Color for text lines
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-// order defaults
-string orderComment = "GDP";
 
 // PL statistics
 int    openPositions;            // number of open positions
@@ -98,17 +96,34 @@ double closedLots;               // closed lotsize
 double closedPl;                 //
 double totalPl;                  // openPl + closedPl
 
+// order defaults
+string orderComment = "GDP";
+
+
 
 // --- old ------------------------------------------------------------------------------------------------------------------
 datetime StartTime;              // Initial time
 datetime LastTime;               // For measuring tics
+int      TickCounter;            // Counting tics
+int      UpTo30Counter;          // For calculating average spread
+int      SkippedTicks;           // Used for simulation of latency during backtests, how many tics that should be skipped
+int      Ticks_samples;          // Used for simulation of latency during backtests, number of tick samples
+double   Avg_tickspermin;        // Used for simulation of latency during backtests
+double   spreads[30];            // Store spreads for the last 30 tics
 
-int GlobalError = 0;             // To keep track on number of added errors
-int TickCounter = 0;             // Counting tics
-int UpTo30Counter = 0;           // For calculating average spread
 int Execution = -1;              // For Execution speed, -1 means no speed
-int Avg_execution = 0;           // Average Execution speed
-int Execution_samples = 0;       // For calculating average Execution speed
+int Avg_execution;               // Average Execution speed
+int Execution_samples;           // For calculating average Execution speed
+
+double LotBase;                  // Amount of money in base currency for 1 lot
+double LotSize;                  // Lotsize
+double highest;                  // Highest indicator value
+double lowest;                   // Lowest indicator value
+double StopLevel;                // Broker StopLevel
+double LotStep;                  // Broker LotStep
+double MarginForOneLot;          // Margin required for 1 lot
+
+int GlobalError;                 // To keep track on number of added errors
 int Err_unchangedvalues;         // Error count for unchanged values (modify to the same values)
 int Err_busyserver;              // Error count for busy server
 int Err_lostconnection;          // Error count for lost connection
@@ -122,19 +137,6 @@ int Err_requotes;                // Error count for requotes
 int Err_toomanyrequests;         // Error count for too many requests
 int Err_trademodifydenied;       // Error count for modify orders is denied
 int Err_tradecontextbusy;        // error count for trade context is busy
-int SkippedTicks = 0;            // Used for simulation of latency during backtests, how many tics that should be skipped
-int Ticks_samples = 0;           // Used for simulation of latency during backtests, number of tick samples
-int Tot_Orders;                  // Number of open orders disregarding of magic and pairs
-
-double LotBase;                  // Amount of money in base currency for 1 lot
-double Array_spread[30];         // Store spreads for the last 30 tics
-double LotSize;                  // Lotsize
-double highest;                  // Highest indicator value
-double lowest;                   // Lowest indicator value
-double StopLevel;                // Broker StopLevel
-double LotStep;                  // Broker LotStep
-double MarginForOneLot;          // Margin required for 1 lot
-double Avg_tickspermin;          // Used for simulation of latency during backtests
 
 
 /**
@@ -174,7 +176,7 @@ int onInit() {
    // Re-calculate variables
    VolatilityPercentageLimit = VolatilityPercentageLimit / 100 + 1;
    VolatilityMultiplier = VolatilityMultiplier / 10;
-   ArrayInitialize ( Array_spread, 0 );
+   ArrayInitialize(spreads, 0);
    VolatilityLimit = VolatilityLimit * Point;
    Commission = NormalizeDouble(Commission * Point, Digits);
    TrailingStart = TrailingStart * Point;
@@ -256,7 +258,6 @@ void MainFunction() {
    int loopcount2;
    int pricedirection;
    int counter1;
-   int counter2;
    int askpart;
    int bidpart;
 
@@ -390,15 +391,15 @@ void MainFunction() {
    else                         orderexpiretime = 0;
 
    // calculate average true spread, which is the average of the spread for the last 30 tics
-   ArrayCopy(Array_spread, Array_spread, 0, 1, 29);
-   Array_spread[29] = spread;
+   ArrayCopy(spreads, spreads, 0, 1, 29);
+   spreads[29] = spread;
    if (UpTo30Counter < 30)
       UpTo30Counter++;
    sumofspreads = 0;
    loopcount2   = 29;
 
    for (int i=0; i < UpTo30Counter; i++) {
-      sumofspreads += Array_spread[loopcount2];
+      sumofspreads += spreads[loopcount2];
       loopcount2--;
    }
 
@@ -443,224 +444,186 @@ void MainFunction() {
       return;
    }
 
-   // Reset Execution time
    Execution = -1;
+   counter1  = 0;
 
-   // Reset counters
-   counter1 = 0;
-   counter2 = 0;
+   // Loop through all open orders to either modify or delete them
+   for (i=0; i < OrdersTotal(); i++) {
+      select = OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
 
-   // Loop through all open orders (if any) to either modify them or delete them
-   for ( loopcount2 = 0; loopcount2 < OrdersTotal(); loopcount2 ++ )
-   {
-      // Select an order from the open orders
-      select = OrderSelect ( loopcount2, SELECT_BY_POS, MODE_TRADES );
-      // We've found an that matches the magic number and is open
-      if ( OrderMagicNumber() == Magic && OrderCloseTime() == 0 )
-      {
-         // If the order doesn't match the currency pair from the chart then check next open order
-         if ( OrderSymbol() != Symbol() )
-         {
-            // Increase counter
-            counter2 ++;
-            continue;
-         }
-         // Select order by type of order
-         switch ( OrderType() )
-         {
-         // We've found a matching BUY-order
-         case OP_BUY:
-            // Start endless loop
-            while (true) {
-               // Update prices from the broker
-               RefreshRates();
-               // Set SL and TP
-               orderstoploss = OrderStopLoss();
-               ordertakeprofit = OrderTakeProfit();
-               // Ok to modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
-               if (LT(ordertakeprofit, askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && GT(askpluscommission + TakeProfit * Point + AddPriceGap - ordertakeprofit, TrailingStart, Digits)) {
-                  // Set SL and TP
-                  orderstoploss   = NormalizeDouble(bid - StopLoss*Point - AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
-                  // Send an OrderModify command with adjusted SL and TP
-                  if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                     // Start Execution timer
-                     Execution = GetTickCount();
-                     // Try to modify order
-                     wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Lime );
-                  }
-                  // Order was modified with new SL and TP
-                  if (wasordermodified) {
-                     // Calculate Execution speed
-                     Execution = GetTickCount() - Execution;
-                     // Break out from while-loop since the order now has been modified
-                     break;
-                  }
-                  else {
-                     // Reset Execution counter
-                     Execution = -1;
-                     CheckLastError();
-                     if (Debug || Verbose) Print("Order could not be modified because of ", ErrorDescription(GetLastError()));
-                     // Try to modify order with a safe hard SL that is 3 pip from current price
-                     if (!orderstoploss) wasordermodified = OrderModify(OrderTicket(), 0, NormalizeDouble(Bid-3*Pip, Digits), 0, 0, Red);
-                  }
-               }
-               break;
-            }
-            counter1 ++;
-            break;
+      if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol() && !OrderCloseTime()) {
 
-         // We've found a matching SELL-order
-         case OP_SELL:
-            // Start endless loop
-            while (true) {
-               // Update broker prices
-               RefreshRates();
-               // Set SL and TP
-               orderstoploss = OrderStopLoss();
-               ordertakeprofit = OrderTakeProfit();
-               // Ok to modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
-               if (GT(ordertakeprofit, bidminuscommission-TakeProfit*Point-AddPriceGap, Digits) && GT(ordertakeprofit-bidminuscommission+TakeProfit*Point-AddPriceGap, TrailingStart, Digits)) {
-                  // set SL and TP
-                  orderstoploss   = NormalizeDouble(ask + StopLoss*Point + AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
-                  // Send an OrderModify command with adjusted SL and TP
-                  if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                     // Start Execution timer
-                     Execution = GetTickCount();
-                     wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange );
-                  }
-
-                  // Order was modiified with new SL and TP
-                  if (wasordermodified) {
-                     Execution = GetTickCount() - Execution;
-                     break;
-                  }
-
-                  // Reset Execution counter
-                  Execution = -1;
-                  CheckLastError();
-                  if (Debug || Verbose) Print("Order could not be modified because of ", ErrorDescription(GetLastError()));
-                  Sleep(1000);
-                  // Try to modify order with a safe hard SL that is 3 pip from current price
-                  if (!orderstoploss) wasordermodified = OrderModify(OrderTicket(), 0, NormalizeDouble(Ask + 3*Pip, Digits), 0, 0, Red);
-               }
-               break;
-            }
-            counter1 ++;
-            break;
-
-         // We've found a matching BUYSTOP-order
-         case OP_BUYSTOP:
-            // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
-            if (!isbidgreaterthanindy) {
-               // Calculate how much Price, SL and TP should be modified
-               orderprice      = NormalizeDouble(ask + StopLevel + AddPriceGap, Digits);
-               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit*Point + AddPriceGap, Digits);
-               // Start endless loop
-               while (true) {
-                  // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
-                  if ( orderprice < OrderOpenPrice() && OrderOpenPrice() - orderprice > TrailingStart )
-                  {
-
-                     // Send an OrderModify command with adjusted Price, SL and TP
-                     if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                     {
-                        RefreshRates();
+         switch (OrderType()) {
+            case OP_BUY:
+               while (true) {                            // Start endless loop
+                  RefreshRates();
+                  orderstoploss   = OrderStopLoss();
+                  ordertakeprofit = OrderTakeProfit();
+                  // Ok to modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
+                  if (LT(ordertakeprofit, askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && GT(askpluscommission + TakeProfit * Point + AddPriceGap - ordertakeprofit, TrailingStart, Digits)) {
+                     // Set SL and TP
+                     orderstoploss   = NormalizeDouble(bid - StopLoss*Point - AddPriceGap, Digits);
+                     ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
+                     // Send an OrderModify command with adjusted SL and TP
+                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
                         // Start Execution timer
                         Execution = GetTickCount();
-                        wasordermodified = OrderModify ( OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Lime );
+                        // Try to modify order
+                        wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Lime );
                      }
-                     // Order was modified
+                     // Order was modified with new SL and TP
                      if (wasordermodified) {
+                        // Calculate Execution speed
                         Execution = GetTickCount() - Execution;
-                        if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
+                        // Break out from while-loop since the order now has been modified
+                        break;
                      }
                      else {
                         // Reset Execution counter
                         Execution = -1;
-                        CheckLastError();
-                     }
-                  }
-                  break;
-               }
-               counter1 ++;
-            }
-            // Price was larger than the indicator
-            else {
-               // Delete the order
-               select = OrderDelete(OrderTicket());
-            }
-            break;
-
-         // We've found a matching SELLSTOP-order
-         case OP_SELLSTOP:
-            // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
-            if (isbidgreaterthanindy) {
-               // Calculate how much Price, SL and TP should be modified
-               orderprice      = NormalizeDouble(bid - StopLevel - AddPriceGap, Digits);
-               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit*Point - AddPriceGap, Digits);
-               // Endless loop
-               while (true) {
-                  // Ok to modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
-                  if ( orderprice > OrderOpenPrice() && orderprice - OrderOpenPrice() > TrailingStart)
-                  {
-                     // Send an OrderModify command with adjusted Price, SL and TP
-                     if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                     {
-                        RefreshRates();
-                        // Start Execution counter
-                        Execution = GetTickCount();
-                        wasordermodified = OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange);
-                     }
-                     // Order was modified
-                     if (wasordermodified) {
-                        Execution = GetTickCount() - Execution;
-                        if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
-                     }
-                     else {
-                        Execution = -1;
-                        CheckLastError();
+                        int error = CheckLastError();
+                        if (Debug) Print("Order could not be modified because of "+ ErrorDescription(error));
+                        // Try to modify order with a safe hard SL that is 3 pip from current price
+                        if (!orderstoploss) wasordermodified = OrderModify(OrderTicket(), 0, NormalizeDouble(Bid-3*Pip, Digits), 0, 0, Red);
                      }
                   }
                   break;
                }
                counter1++;
-            }
-            else {
-               // Price was NOT larger than the indicator, so delete the order
-               select = OrderDelete(OrderTicket());
-            }
+               break;
+
+            case OP_SELL:
+               while (true) {             // Start endless loop
+                  RefreshRates();
+                  orderstoploss   = OrderStopLoss();
+                  ordertakeprofit = OrderTakeProfit();
+                  // Ok to modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
+                  if (GT(ordertakeprofit, bidminuscommission-TakeProfit*Point-AddPriceGap, Digits) && GT(ordertakeprofit-bidminuscommission+TakeProfit*Point-AddPriceGap, TrailingStart, Digits)) {
+                     // set SL and TP
+                     orderstoploss   = NormalizeDouble(ask + StopLoss*Point + AddPriceGap, Digits);
+                     ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
+                     // Send an OrderModify command with adjusted SL and TP
+                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
+                        // Start Execution timer
+                        Execution = GetTickCount();
+                        wasordermodified = OrderModify ( OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange );
+                     }
+
+                     // Order was modiified with new SL and TP
+                     if (wasordermodified) {
+                        Execution = GetTickCount() - Execution;
+                        break;
+                     }
+
+                     // Reset Execution counter
+                     Execution = -1;
+                     error = CheckLastError();
+                     if (Debug) Print("Order could not be modified because of "+ ErrorDescription(error));
+                     Sleep(1000);
+                     // Try to modify order with a safe hard SL that is 3 pip from current price
+                     if (!orderstoploss) wasordermodified = OrderModify(OrderTicket(), 0, NormalizeDouble(Ask + 3*Pip, Digits), 0, 0, Red);
+                  }
+                  break;
+               }
+               counter1++;
+               break;
+
+            case OP_BUYSTOP:
+               // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
+               if (!isbidgreaterthanindy) {
+                  // Calculate how much Price, SL and TP should be modified
+                  orderprice      = NormalizeDouble(ask + StopLevel + AddPriceGap, Digits);
+                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit*Point + AddPriceGap, Digits);
+
+                  while (true) {                         // Start endless loop
+                     // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
+                     if (orderprice < OrderOpenPrice() && OrderOpenPrice()-orderprice > TrailingStart) {
+
+                        // Send an OrderModify command with adjusted Price, SL and TP
+                        if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
+                           RefreshRates();
+                           Execution = GetTickCount();               // Start Execution timer
+                           wasordermodified = OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Lime);
+                        }
+                        if (wasordermodified) {
+                           Execution = GetTickCount() - Execution;
+                           if (Debug) Print("Order executed in "+ Execution +" ms");
+                        }
+                        else {
+                           Execution = -1;         // Reset Execution counter
+                           CheckLastError();
+                        }
+                     }
+                     break;
+                  }
+                  counter1++;
+               }
+               else {
+                  // Price was larger than the indicator, delete the order
+                  select = OrderDelete(OrderTicket());
+               }
+               break;
+
+            case OP_SELLSTOP:
+               // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
+               if (isbidgreaterthanindy) {
+                  // Calculate how much Price, SL and TP should be modified
+                  orderprice      = NormalizeDouble(bid - StopLevel - AddPriceGap, Digits);
+                  orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit*Point - AddPriceGap, Digits);
+                  // Endless loop
+                  while (true) {
+                     // Ok to modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
+                     if ( orderprice > OrderOpenPrice() && orderprice - OrderOpenPrice() > TrailingStart)
+                     {
+                        // Send an OrderModify command with adjusted Price, SL and TP
+                        if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
+                        {
+                           RefreshRates();
+                           // Start Execution counter
+                           Execution = GetTickCount();
+                           wasordermodified = OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange);
+                        }
+                        // Order was modified
+                        if (wasordermodified) {
+                           Execution = GetTickCount() - Execution;
+                           if (Debug) Print("Order executed in "+ Execution +" ms");
+                        }
+                        else {
+                           Execution = -1;
+                           CheckLastError();
+                        }
+                     }
+                     break;
+                  }
+                  counter1++;
+               }
+               else {
+                  // Price was NOT larger than the indicator, so delete the order
+                  select = OrderDelete(OrderTicket());
+               }
+               break;
          }
       }
    }
 
-   // Calculate and keep track on global error number
+   // Calculate and keep track of global error number
    if (GlobalError >= 0 || GlobalError==-2) {
-      bidpart = NormalizeDouble ( bid / Point, 0 );
-      askpart = NormalizeDouble ( ask / Point, 0 );
-      if ( bidpart % 10 != 0 || askpart % 10 != 0 )
-         GlobalError = -1;
-      else
-      {
-         if ( GlobalError >= 0 && GlobalError < 10 )
-            GlobalError ++;
-         else
-            GlobalError = -2;
-      }
+      bidpart = NormalizeDouble(bid/Point, 0);
+      askpart = NormalizeDouble(ask/Point, 0);
+      if      (bidpart % 10 || askpart % 10)         GlobalError = -1;
+      else if (GlobalError >= 0 && GlobalError < 10) GlobalError++;
+      else                                           GlobalError = -2;
    }
 
    // Reset error-variable
    ordersenderror = false;
 
    // Before executing new orders, lets check the average Execution time.
-   if ( pricedirection != 0 && MaxExecution > 0 && Avg_execution > MaxExecution )
-   {
-      pricedirection = 0; // Ignore the order opening triger
-      if ( Debug || Verbose )
-         Print ( "Server is too Slow. Average Execution: " + Avg_execution );
+   if (pricedirection && MaxExecution > 0 && Avg_execution > MaxExecution) {
+      pricedirection = 0;                             // disable the order opening condition
+      if (Debug) Print("Server is too Slow. Average Execution: "+ Avg_execution);
    }
 
    // Set default price adjustment
@@ -688,7 +651,7 @@ void MainFunction() {
             if (orderticket > 0) {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
-               if (Debug || Verbose) Print ("Order executed in "+ Execution +" ms");
+               if (Debug) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
@@ -709,7 +672,7 @@ void MainFunction() {
                // OrderModify was executed successfully
                if (wasordermodified) {
                   Execution = GetTickCount() - Execution;
-                  if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
+                  if (Debug) Print("Order executed in "+ Execution +" ms");
                }
                else {
                   ordersenderror = true;
@@ -732,7 +695,7 @@ void MainFunction() {
             orderticket = OrderSend ( Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Lime );
             if (orderticket > 0) {
                Execution = GetTickCount() - Execution;
-               if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
+               if (Debug) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
@@ -759,8 +722,7 @@ void MainFunction() {
             if (orderticket > 0) {
                // Calculate Execution speed
                Execution = GetTickCount() - Execution;
-               if ( Debug || Verbose )
-                  Print ( "Order executed in " + Execution + " ms" );
+               if (Debug) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
@@ -784,7 +746,7 @@ void MainFunction() {
             // OrderModify was executed successfully
             if (wasordermodified) {
                Execution = GetTickCount() - Execution;
-               if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
+               if (Debug) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
@@ -807,7 +769,7 @@ void MainFunction() {
             // If OrderSend was executed successfully
             if (orderticket > 0) {
                Execution = GetTickCount() - Execution;
-               if (Debug || Verbose) Print("Order executed in "+ Execution +" ms");
+               if (Debug) Print("Order executed in "+ Execution +" ms");
             }
             else {
                ordersenderror = true;
@@ -843,46 +805,43 @@ void MainFunction() {
    }
 
    // Do we have a valid Execution sample? Update the average Execution time.
-   if ( Execution >= 0 )
-   {
+   if (Execution >= 0) {
       // Consider only 10 samples at most.
-      if ( Execution_samples < 10 )
-         Execution_samples ++;
+      if (Execution_samples < 10)
+         Execution_samples++;
       // Calculate average Execution speed
-      Avg_execution = Avg_execution + ( Execution - Avg_execution ) / Execution_samples;
+      Avg_execution = Avg_execution + (Execution-Avg_execution)/Execution_samples;
    }
 
    // Check initialization
    if (GlobalError >= 0) {
       Print("Robot is initializing...");
    }
-   else {
-      if (GlobalError == -2) {
-         Print("ERROR -- Instrument "+ Symbol() +" prices should have "+ Digits +" fraction digits on broker account");
-      }
-      else if (Debug || Verbose) {
-         // In case Execution is -1 (not yet calculate dvalue, set it to 0 for printing
-         tmpexecution = Execution;
-         if (Execution == -1) tmpexecution = 0;
+   else if (GlobalError == -2) {
+      Print("ERROR -- Instrument "+ Symbol() +" prices should have "+ Digits +" fraction digits on broker account");
+   }
+   else if (Debug) {
+      // In case Execution is -1 (not yet calculated value, set it to 0 for printing
+      tmpexecution = Execution;
+      if (Execution == -1) tmpexecution = 0;
 
-         string text = TimeToStr(TimeCurrent()) +" Tick: "+ StrLeftPad(TickCounter, 3, "0")                                                                                                                + NL
-                     + "*** DEBUG MODE *** "                                                                                                                                                               + NL
-                     + "Currency pair: "+ Symbol()                                                                                                                                                         + NL
-                     + "Volatility: "+ DoubleToStr(volatility, Digits) +", VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +", VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits) + NL
-                     + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Expire: "+ TimeToStr(orderexpiretime, TIME_MINUTES) +", Open orders: "+ counter1                  + NL
-                     + "Bid: "+ NumberToStr(bid, PriceFormat) +", Ask: "+ NumberToStr(ask, PriceFormat) +", "+ indy                                                                                        + NL
-                     + "AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)                                                                              + NL
-                     + "Commission: "+ DoubleToStr(Commission, 2) +", Lots: "+ DoubleToStr(LotSize, 2) +", Execution: "+ tmpexecution +" ms"                                                               + NL;
+      string text = TimeToStr(TimeCurrent()) +" Tick: "+ TickCounter                                                                                                                                    + NL
+                  + "*** DEBUG MODE *** "                                                                                                                                                               + NL
+                  + "Currency pair: "+ Symbol()                                                                                                                                                         + NL
+                  + "Volatility: "+ DoubleToStr(volatility, Digits) +", VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +", VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits) + NL
+                  + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Expire: "+ TimeToStr(orderexpiretime, TIME_MINUTES) +", Open orders: "+ counter1                  + NL
+                  + "Bid: "+ NumberToStr(bid, PriceFormat) +", Ask: "+ NumberToStr(ask, PriceFormat) +", "+ indy                                                                                        + NL
+                  + "AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)                                                                              + NL
+                  + "Commission: "+ DoubleToStr(Commission, 2) +", Lots: "+ DoubleToStr(LotSize, 2) +", Execution: "+ tmpexecution +" ms"                                                               + NL;
 
-         if (GT(realavgspread, MaxSpread*Point, Digits)) {
-            text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended." + NL;
-         }
-         if (MaxExecution > 0 && Avg_execution > MaxExecution) {
-            text = text + "Current avg Execution ("+ Avg_execution +") is higher than the configured MaxExecution ("+ MaxExecution +" ms), trading is suspended." + NL;
-         }
-         //if (counter1 || pricedirection) // Only print this if we have a any orders OR have a price breakout OR Verbode mode is set to TRUE
-         Print(StrTrim(text));
+      if (GT(realavgspread, MaxSpread*Point, Digits)) {
+         text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended."+ NL;
       }
+      if (MaxExecution > 0 && Avg_execution > MaxExecution) {
+         text = text +"Current avg Execution ("+ Avg_execution +") is higher than the configured MaxExecution ("+ MaxExecution +" ms), trading is suspended."+ NL;
+      }
+      //if (counter1 || pricedirection) // Only print this if we have a any orders OR have a price breakout OR Verbode mode is set to TRUE
+      Print(StrTrim(text));
    }
 
    // Check open positions without SL
@@ -915,7 +874,7 @@ void CheckMissingSL() {
                // Wait 100 msec and then fetch new prices
                Sleep(100);
                RefreshRates();
-               if (Debug || Verbose) Print("Error trying to modify stray order with a SL!");
+               if (Debug) Print("Error trying to modify order without a stoploss");
                CheckLastError();
             }
          }
@@ -1038,20 +997,16 @@ int GenerateMagicNumber() {
  * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
  */
 double CalculateLotsize() {
-   double availablemoney;
-   double lotsize;
-   double maxlot;
-   double minlot;
-
    // Get available money as Equity
-   availablemoney = AccountEquity();
+   double availablemoney = AccountEquity();
 
    // Maximum allowed Lot by the broker according to Equity. And we don't use 100% but 98%
-   maxlot = MathMin ( MathFloor ( availablemoney * 0.98 / MarginForOneLot / LotStep ) * LotStep, MaxLots );
+   double maxlot = MathMin ( MathFloor ( availablemoney * 0.98 / MarginForOneLot / LotStep ) * LotStep, MaxLots );
    // Minimum allowed Lot by the broker
-   minlot = MinLots;
+   double minlot = MinLots;
 
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
+   double lotsize;
    lotsize = MathMin(MathFloor ( Risk / 102 * availablemoney / ( StopLoss + AddPriceGap ) / LotStep ) * LotStep, MaxLots );
    lotsize = lotsize * GetLotsizeMultiplier();
    lotsize = NormalizeLots(lotsize);
@@ -1146,9 +1101,13 @@ void RecalculateRisk() {
 
 /**
  * Summarize error messages that comes from the broker server
+ *
+ * @return int - the detected error status
  */
-void CheckLastError() {
-   switch (GetLastError()) {
+int CheckLastError() {
+   int error = GetLastError();
+
+   switch (error) {
       case ERR_NO_RESULT:             Err_unchangedvalues++;    break;
       case ERR_SERVER_BUSY:           Err_busyserver++;         break;
       case ERR_NO_CONNECTION:         Err_lostconnection++;     break;
@@ -1163,6 +1122,7 @@ void CheckLastError() {
       case ERR_TRADE_MODIFY_DENIED:   Err_trademodifydenied++;  break;
       case ERR_TRADE_CONTEXT_BUSY:    Err_tradecontextbusy++;   break;
    }
+   return(error);
 }
 
 
