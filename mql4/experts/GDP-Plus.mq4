@@ -72,13 +72,8 @@ extern double  MinimumUseStopLevel       = 0;            // Stoplevel to use wil
 extern double  MaxSpread                 = 30;           // Max allowed spread in points
 
 extern string  ___f_____________________ = "=== Display Graphics ===";
-extern int     Heading_Size              = 10;           // Font size for headline
-extern int     Text_Size                 = 10;           // Font size for texts
-extern color   Color_Heading             = Blue;         // Color for text lines
-extern color   Color_Section1            = Blue;         // Color for text lines
-extern color   Color_Section2            = Blue;         // Color for text lines
-extern color   Color_Section3            = Blue;         // Color for text lines
-extern color   Color_Section4            = Blue;         // Color for text lines
+extern int     StatusFontSize            = 10;           //
+extern color   StatusFontColor           = Blue;         //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -959,10 +954,10 @@ int ShowStatus(int error = NO_ERROR) {
    string line4 = "Total PL:  "+ DoubleToStr(totalPl, 2);
 
    int spacing=20, x=3, y=10;
-   ShowStatus.CreateLabel("line1", line1, Heading_Size, x, y, Color_Heading ); y = spacing + Text_Size * 1 + 3 * 1;
-   ShowStatus.CreateLabel("line2", line2, Text_Size,    x, y, Color_Section1); y = spacing + Text_Size * 2 + 3 * 2 + 20;
-   ShowStatus.CreateLabel("line3", line3, Text_Size,    x, y, Color_Section2); y = spacing + Text_Size * 3 + 3 * 3 + 40;
-   ShowStatus.CreateLabel("line4", line4, Text_Size,    x, y, Color_Section3);
+   ShowStatus.CreateLabel("line1", line1, x, y); y = spacing + StatusFontSize * 1 + 3 * 1;
+   ShowStatus.CreateLabel("line2", line2, x, y); y = spacing + StatusFontSize * 2 + 3 * 2 + 20;
+   ShowStatus.CreateLabel("line3", line3, x, y); y = spacing + StatusFontSize * 3 + 3 * 3 + 40;
+   ShowStatus.CreateLabel("line4", line4, x, y);
 
    catch("ShowStatus(1)");
 
@@ -975,7 +970,7 @@ int ShowStatus(int error = NO_ERROR) {
 /**
  * Display graphics on the chart.
  */
-void ShowStatus.CreateLabel(string label, string text, int fontSize, int x, int y, color fontColor) {
+void ShowStatus.CreateLabel(string label, string text, int x, int y) {
    label = WindowExpertName() +"."+ label;
 
    if (ObjectFind(label) != 0) {
@@ -985,5 +980,5 @@ void ShowStatus.CreateLabel(string label, string text, int fontSize, int x, int 
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, x);
    ObjectSet    (label, OBJPROP_YDISTANCE, y);
-   ObjectSetText(label, text, fontSize, "Tahoma", fontColor);
+   ObjectSetText(label, text, StatusFontSize, "Tahoma", StatusFontColor);
 }
