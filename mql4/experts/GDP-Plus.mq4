@@ -6,12 +6,12 @@
  * core idea of the strategy: scalping based on a reversal from a channel breakout.
  *
  * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). However all
- * known versions - including the original - are so severly flawed that one should never run anyone of them on a live account.
- * This GDP version is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts with
- * more robust or faster components and adds major improvements for production use.
+ * known versions - including the original - are so severly flawed that one should never run them on a live account. This GDP
+ * version is fully embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts with more
+ * robust or faster components and adds major improvements for production use.
  *
  * Sources:
- *  All original versions are included in the repo and accessible via the Git history. Some of them:
+ *  The original versions are included in the repo and accessible via the Git history. Some of them:
  *
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp              [MillionDollarPips v2 decompiled]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp               [MDP-Plus v2.2 + PDF by Capella]
@@ -19,14 +19,18 @@
  *
  *
  * Fixes/changes (wip):
- * - embedded in rosasurfer MQL4 framework
+ * - embedded in MQL4 framework
+ * - moved all error tracking/handling to the framework
+ * - moved all Print() output to the framework logger
+ * - fixed broken validation of symbol digits
  * - fixed broken processing logic of open orders
  * - fixed invalid stoploss calculations
  * - replaced invalid commission calculation by framework functionality and removed input parameter "Commission"
  * - removed input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
+ * - removed obsolete NDD functionality
  * - removed useless sending of speed test orders
- * - removed measuring execution times and trade suspension on delays (the framework handles this better)
- * - removed screenshot functionality (may be re-added later)
+ * - removed measuring execution times and trade suspension on delays (framework handling is better)
+ * - removed screenshot functionality (framework logging is better)
  * - removed unused input parameter "Verbose"
  */
 #include <stddefines.mqh>
@@ -36,7 +40,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string  ___a_____________________ = "==== General ====";
-extern bool    Debug                     = false;        // Print debug information
+extern bool    Debug                     = false;        //
 
 extern string  ___b_____________________ = "=== Indicators: 1=Moving Average, 2=BollingerBand, 3=Envelopes";
 extern int     UseIndicatorSwitch        = 1;            // indicator selection for channel creation
@@ -46,7 +50,7 @@ extern double  BBDeviation               = 2;            // Deviation for the iB
 extern double  EnvelopesDeviation        = 0.07;         // Deviation for the iEnvelopes indicator only
 
 extern string  ___c_____________________ = "==== Volatility Settings ====";
-extern bool    UseDynamicVolatilityLimit = true;         // Calculated based on (int)(spread * VolatilityMultiplier)
+extern bool    UseDynamicVolatilityLimit = true;         // Calculated as (spread * VolatilityMultiplier)
 extern double  VolatilityMultiplier      = 125;          // A multiplier that only is used if UseDynamicVolatilityLimit is set to TRUE
 extern double  VolatilityLimit           = 180;          // A fix value that only is used if UseDynamicVolatilityLimit is set to FALSE
 extern bool    UseVolatilityPercentage   = true;         // If TRUE, then price must break out more than a specific percentage
@@ -111,21 +115,6 @@ double StopLevel;                // Broker StopLevel
 double LotStep;                  // Broker LotStep
 double MarginForOneLot;          // Margin required for 1 lot
 
-int GlobalError;                 // To keep track on number of added errors
-int Err_unchangedvalues;         // Error count for unchanged values (modify to the same values)
-int Err_busyserver;              // Error count for busy server
-int Err_lostconnection;          // Error count for lost connection
-int Err_toomanyrequest;          // Error count for too many requests
-int Err_invalidprice;            // Error count for invalid price
-int Err_invalidstops;            // Error count for invalid SL and/or TP
-int Err_invalidtradevolume;      // Error count for invalid lot size
-int Err_pricechange;             // Error count for change of price
-int Err_brokerbusy;              // Error count for broker is busy
-int Err_requotes;                // Error count for requotes
-int Err_toomanyrequests;         // Error count for too many requests
-int Err_trademodifydenied;       // Error count for modify orders is denied
-int Err_tradecontextbusy;        // error count for trade context is busy
-
 
 /**
  * Initialization
@@ -138,8 +127,7 @@ int onInit() {
    }
 
    DeleteRegisteredObjects();
-   StartTime   = TimeLocal();    // Reset time for Execution control
-   GlobalError = -1;             // Reset error variable
+   StartTime = TimeLocal();      // Reset time for Execution control
 
    // Calculate StopLevel as max of either STOPLEVEL or FREEZELEVEL
    StopLevel = MathMax ( MarketInfo ( Symbol(), MODE_FREEZELEVEL ), MarketInfo ( Symbol(), MODE_STOPLEVEL ) );
@@ -198,7 +186,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   PrintErrors();
    return(catch("onDeinit(1)"));
 }
 
@@ -222,14 +209,13 @@ int onTick() {
 
 
 /**
- *
+ * @return int - error status
  */
-void MainFunction() {
+int MainFunction() {
    string indy;
 
    datetime orderexpiretime;
 
-   bool ordersenderror = false;
    bool isbidgreaterthanima = false;
    bool isbidgreaterthanibands = false;
    bool isbidgreaterthanenvelopes = false;
@@ -239,8 +225,6 @@ void MainFunction() {
    int loopcount2;
    int pricedirection;
    int counter1;
-   int askpart;
-   int bidpart;
 
    double volatilitypercentage = 0;
    double orderprice;
@@ -262,8 +246,8 @@ void MainFunction() {
    double avgspread;
    double realavgspread;
    double sumofspreads;
-   double askpluscommission;
    double bidminuscommission;
+   double askpluscommission;
 
    // Previous time was less than current time, initiate tick counter
    if (LastTime < Time[0]) {
@@ -280,7 +264,7 @@ void MainFunction() {
    ilow       = iLow (Symbol(), TimeFrame, 0);
    volatility = ihigh - ilow;
 
-   indy = "";        // reset printout string
+   indy = "";        // reset indicator log message
 
    // Calculate a channel on Moving Averages, and check if the price is outside of this channel.
    if ( UseIndicatorSwitch == 1 || UseIndicatorSwitch == 4 )
@@ -363,8 +347,8 @@ void MainFunction() {
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
-   askpluscommission  = NormalizeDouble(Ask + commissionMarkup, Digits);
    bidminuscommission = NormalizeDouble(Bid - commissionMarkup, Digits);
+   askpluscommission  = NormalizeDouble(Ask + commissionMarkup, Digits);
    realavgspread      = avgspread + commissionMarkup;
 
    // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads multiplied with the VolatilityMulitplier constant
@@ -394,12 +378,6 @@ void MainFunction() {
       else volatilitypercentage = 0;
    }
 
-   // Check for out of money
-   if (AccountEquity() <= 0) {
-      Print("ERROR -- Account Equity is " + DoubleToStr(AccountEquity(), 2));
-      return;
-   }
-
    counter1 = 0;
 
    // Loop through all open orders to either modify or delete them
@@ -410,49 +388,43 @@ void MainFunction() {
 
          switch (OrderType()) {
             case OP_BUY:
-               while (true) {       // no loop but a block which can be left anywhere
-                  RefreshRates();
-                  orderstoploss   = OrderStopLoss();
-                  ordertakeprofit = OrderTakeProfit();
-                  // modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
-                  if (LT(ordertakeprofit, askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && GT(askpluscommission + TakeProfit*Point + AddPriceGap - ordertakeprofit, TrailingStart, Digits)) {
-                     // Set SL and TP
-                     orderstoploss   = NormalizeDouble(Bid - StopLoss*Point - AddPriceGap, Digits);
-                     ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
-                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        if (OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Lime))
-                           break;
-                        int error = CheckLastError();
-                        if (Debug) Print("Order could not be modified because of "+ ErrorDescription(error));
-                     }
+               orderstoploss   = OrderStopLoss();
+               ordertakeprofit = OrderTakeProfit();
+               // modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
+               if (LT(ordertakeprofit, askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && GT(askpluscommission + TakeProfit*Point + AddPriceGap - ordertakeprofit, TrailingStart, Digits)) {
+                  // Set SL and TP
+                  orderstoploss   = NormalizeDouble(Bid - StopLoss*Point - AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
+                  if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
+                     if (!OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Lime))
+                        return(catch("MainFunction(1)->OrderModify()"));
                   }
-                  // Try to modify order with a safe hard SL that is 3 pip from current price
-                  if (!orderstoploss) OrderModify(OrderTicket(), 0, NormalizeDouble(Bid-3*Pip, Digits), 0, 0, Red);
-                  break;
+               }
+               else if (!orderstoploss) {
+                  // Modify order with a safe hard SL that is 3 pip from current price
+                  if (!OrderModify(OrderTicket(), 0, NormalizeDouble(Bid-3*Pip, Digits), 0, 0, Red))
+                     return(catch("MainFunction(2)->OrderModify()"));
                }
                counter1++;
                break;
 
             case OP_SELL:
-               while (true) {       // no loop but a block which can be left anywhere
-                  RefreshRates();
-                  orderstoploss   = OrderStopLoss();
-                  ordertakeprofit = OrderTakeProfit();
-                  // modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
-                  if (GT(ordertakeprofit, bidminuscommission-TakeProfit*Point-AddPriceGap, Digits) && GT(ordertakeprofit-bidminuscommission+TakeProfit*Point-AddPriceGap, TrailingStart, Digits)) {
-                     // set SL and TP
-                     orderstoploss   = NormalizeDouble(Ask + StopLoss*Point + AddPriceGap, Digits);
-                     ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
-                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        if (OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange))
-                           break;
-                     }
-                     error = CheckLastError();
-                     if (Debug) Print("Order could not be modified because of "+ ErrorDescription(error));
+               orderstoploss   = OrderStopLoss();
+               ordertakeprofit = OrderTakeProfit();
+               // modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
+               if (GT(ordertakeprofit, bidminuscommission-TakeProfit*Point-AddPriceGap, Digits) && GT(ordertakeprofit-bidminuscommission+TakeProfit*Point-AddPriceGap, TrailingStart, Digits)) {
+                  // set SL and TP
+                  orderstoploss   = NormalizeDouble(Ask + StopLoss*Point + AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
+                  if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
+                     if (!OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, orderexpiretime, Orange))
+                        return(catch("MainFunction(3)->OrderModify()"));
                   }
-                  // Try to modify order with a safe hard SL that is 3 pip from current price
-                  if (!orderstoploss) OrderModify(OrderTicket(), 0, NormalizeDouble(Ask + 3*Pip, Digits), 0, 0, Red);
-                  break;
+               }
+               else if (!orderstoploss) {
+                  // Modify order with a safe hard SL that is 3 pip from current price
+                  if (!OrderModify(OrderTicket(), 0, NormalizeDouble(Ask + 3*Pip, Digits), 0, 0, Red))
+                     return(catch("MainFunction(4)->OrderModify()"));
                }
                counter1++;
                break;
@@ -467,14 +439,17 @@ void MainFunction() {
                   // modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
                   if (orderprice < OrderOpenPrice() && OrderOpenPrice()-orderprice > TrailingStart) {
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        RefreshRates();
                         if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Lime))
-                           CheckLastError();
+                           return(catch("MainFunction(5)->OrderModify()"));
                      }
                   }
                   counter1++;
                }
-               else OrderDelete(OrderTicket()); // Price was larger than the indicator, delete the order
+               else {
+                  // Price was larger than the indicator, delete the order
+                  if (!OrderDelete(OrderTicket()))
+                     return(catch("MainFunction(6)->OrderDelete()"));
+               }
                break;
 
             case OP_SELLSTOP:
@@ -487,33 +462,24 @@ void MainFunction() {
                   // modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
                   if (orderprice > OrderOpenPrice() && orderprice-OrderOpenPrice() > TrailingStart) {
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        RefreshRates();
                         if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange))
-                           CheckLastError();
+                           return(catch("MainFunction(7)->OrderModify()"));
                      }
                   }
                   counter1++;
                }
-               else OrderDelete(OrderTicket()); // Price was NOT larger than the indicator, so delete the order
+               else {
+                  // Price was NOT larger than the indicator, so delete the order
+                  if (!OrderDelete(OrderTicket()))
+                     return(catch("MainFunction(8)->OrderDelete()"));
+               }
                break;
          }
       }
    }
 
-   // Calculate and keep track of global error number
-   if (GlobalError >= 0 || GlobalError==-2) {
-      bidpart = NormalizeDouble(Bid/Point, 0);
-      askpart = NormalizeDouble(Ask/Point, 0);
-      if      (bidpart % 10 || askpart % 10)         GlobalError = -1;
-      else if (GlobalError >= 0 && GlobalError < 10) GlobalError++;
-      else                                           GlobalError = -2;
-   }
-
-   // Reset error-variable
-   ordersenderror = false;
-
-   // If we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread AND we have no errors THEN proceed
-   if (!counter1 && pricedirection && LE(realavgspread, MaxSpread*Point, Digits) && GlobalError==-1) {
+   // If we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread
+   if (!counter1 && pricedirection && LE(realavgspread, MaxSpread*Point, Digits)) {
       // If we have a price breakout downwards (Bearish) then send a BUYSTOP order
       if (pricedirection==-1 || pricedirection==2 ) {    // Send a BUYSTOP
          RefreshRates();
@@ -522,10 +488,8 @@ void MainFunction() {
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
          // Send a BUYSTOP order with SL and TP
-         if (!OrderSend(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Lime)) {
-            ordersenderror = true;
-            CheckLastError();
-         }
+         if (!OrderSend(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Lime))
+            return(catch("MainFunction(9)->OrderSend()"));
       }
 
       // If we have a price breakout upwards (Bullish) then send a SELLSTOP order
@@ -535,76 +499,61 @@ void MainFunction() {
          orderprice      = Bid - StopLevel;
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
-         if (!OrderSend(Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Orange)) {
-            ordersenderror = true;
-            CheckLastError();
-         }
+         if (!OrderSend(Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, orderexpiretime, Orange))
+            return(catch("MainFunction(10)->OrderSend()"));
       }
    }
 
-   // Check initialization
-   if (GlobalError >= 0) {
-      Print("Robot is initializing...");
-   }
-   else if (GlobalError == -2) {
-      Print("ERROR -- Instrument "+ Symbol() +" prices should have "+ Digits +" fraction digits on broker account");
-   }
-   else if (Debug) {
-      // Only print this if we have any orders or a price breakout
-      if (counter1 || pricedirection)  {
-         string text = TimeToStr(TimeCurrent()) +" Tick: "+ TickCounter                                                                                                                                    + NL
-                     + "Volatility: "+ DoubleToStr(volatility, Digits) +", VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +", VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits) + NL
-                     + "PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Open orders: "+ counter1                                                                          + NL
-                     +  indy                                                                                                                                                                               + NL
-                     + "AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)                                                                              + NL
-                     + "Lots: "+ DoubleToStr(LotSize, 2)                                                                                                                                                   + NL;
+   // Print debug infos if we have any orders or a price breakout
+   if (Debug && (counter1 || pricedirection)) {
+      string text = TimeToStr(TimeCurrent()) +" Tick: "+ TickCounter
+                  + ", Volatility: "+ DoubleToStr(volatility, Digits) +", VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +", VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits)
+                  + ", PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4) +", Open orders: "+ counter1
+                  +  ", "+ indy
+                  + ", AvgSpread: "+ DoubleToStr(avgspread, Digits) +", RealAvgSpread: "+ DoubleToStr(realavgspread, Digits)
+                  + ", Lots: "+ DoubleToStr(LotSize, 2);
 
-         if (GT(realavgspread, MaxSpread*Point, Digits)) {
-            text = text +"Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended.";
-         }
-         Print(StrTrim(text));
+      if (GT(realavgspread, MaxSpread*Point, Digits)) {
+         text = text +", Current spread (" + DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread*Point, Digits) +"), trading is suspended.";
       }
+      debug("MainFunction(11)  "+ text);
    }
 
    // Check open positions without SL
-   CheckMissingSL();
-
-   catch("MainFunction(1)");
+   return(CheckMissingSL());
 }
 
 
 /**
  * Make sure all open positions have a stoploss.
+ *
+ * @return int - error status
  */
-void CheckMissingSL() {
+int CheckMissingSL() {
    // New SL for stray market orders is max of either current SL or 10 points
    double stoploss, slDistance = MathMax(StopLoss, 10);
-   int totals = OrdersTotal();
+   int orders = OrdersTotal();
 
-   for (int loop=0; loop < totals; loop ++) {
-      if (OrderSelect(loop, SELECT_BY_POS, MODE_TRADES)) {
-         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-
-            while (!OrderStopLoss()) {
-               if (OrderType() == OP_BUY) {
-                  stoploss = NormalizeDouble(Bid - slDistance * Point, Digits);     // Set new SL 10 points away from current price
-                  if (OrderModify(OrderTicket(), OrderOpenPrice(), stoploss, OrderTakeProfit(), 0, Blue)) break;
-               }
-               else if (OrderType() == OP_SELL) {
-                  stoploss = NormalizeDouble(Ask + slDistance * Point, Digits);     // Set new SL 10 points away from current price
-                  if (OrderModify(OrderTicket(), OrderOpenPrice(), stoploss, OrderTakeProfit(), 0, Blue)) break;
-               }
-
-               // Wait 100 msec and then fetch new prices
-               Sleep(100);
-               RefreshRates();
-               if (Debug) Print("Error trying to modify order without a stoploss");
-               CheckLastError();
+   for (int i=0; i < orders; i++) {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol() && !OrderStopLoss()) {
+            if (OrderType() == OP_BUY) {
+               // Set new SL 10 points away from current price
+               stoploss = NormalizeDouble(Bid - slDistance * Point, Digits);
+               if (!OrderModify(OrderTicket(), OrderOpenPrice(), stoploss, OrderTakeProfit(), 0, Blue))
+                  return(catch("CheckMissingSL(1)->OrderModify()"));
+            }
+            else if (OrderType() == OP_SELL) {
+               // Set new SL 10 points away from current price
+               stoploss = NormalizeDouble(Ask + slDistance * Point, Digits);
+               if (!OrderModify(OrderTicket(), OrderOpenPrice(), stoploss, OrderTakeProfit(), 0, Blue))
+                  return(catch("CheckMissingSL(2)->OrderModify()"));
             }
          }
       }
    }
-   catch("CheckMissingSL(1)");
+
+   return(catch("CheckMissingSL(3)"));
 }
 
 
@@ -616,86 +565,24 @@ void CheckMissingSL() {
  * where XXX is the abbreviation for the account currency. The calculated lot-size should
  * then be multiplied with this multiplicator.
  *
- * @return double
+ * @return double - multiplier value or NULL in case of errors
  */
 double GetLotsizeMultiplier() {
-   double multiplicator = 1;
-
-   // If the account currency is USD
-   if (AccountCurrency() == "USD")
-      return(multiplicator);
-
-   string symbolSuffix = StrRight(Symbol(), -6);
    double rate;
+   string symbolSuffix = StrRight(Symbol(), -6);
 
-   if (AccountCurrency() == "EUR") {
-      rate = MarketInfo("EURUSD"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         warn("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 1.0 instead!");
-         multiplicator = 1;
-      }
-      else multiplicator = 1 / rate;
-   }
+   if      (AccountCurrency() == "USD") rate = 1;
+   if      (AccountCurrency() == "EUR") rate = MarketInfo("EURUSD"+ symbolSuffix, MODE_BID);
+   else if (AccountCurrency() == "GBP") rate = MarketInfo("GBPUSD"+ symbolSuffix, MODE_BID);
+   else if (AccountCurrency() == "AUD") rate = MarketInfo("AUDUSD"+ symbolSuffix, MODE_BID);
+   else if (AccountCurrency() == "NZD") rate = MarketInfo("NZDUSD"+ symbolSuffix, MODE_BID);
+   else if (AccountCurrency() == "CHF") rate = MarketInfo("USDCHF"+ symbolSuffix, MODE_BID);
+   else if (AccountCurrency() == "JPY") rate = MarketInfo("USDJPY"+ symbolSuffix, MODE_BID);
+   else if (AccountCurrency() == "CAD") rate = MarketInfo("USDCAD"+ symbolSuffix, MODE_BID);
+   else return(!catch("GetLotsizeMultiplier(1)  Unable to fetch Bid price for "+ AccountCurrency(), ERR_INVALID_MARKET_DATA));
 
-   if (AccountCurrency() == "GBP") {
-      rate = MarketInfo("GBPUSD"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         warn("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 1.5 instead!");
-         multiplicator = 1.5;
-      }
-      else multiplicator = 1 / rate;
-   }
-
-   if (AccountCurrency() == "AUD") {
-      rate = MarketInfo("AUDUSD"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         Print("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 0.7 instead!");
-         multiplicator = 0.7;
-      }
-      else multiplicator = 1 / rate;
-   }
-
-   if (AccountCurrency() == "NZD") {
-      rate = MarketInfo("NZDUSD"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         Print("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 0.65 instead!");
-         multiplicator = 0.65;
-      }
-      else multiplicator = 1 / rate;
-   }
-
-   if (AccountCurrency() == "CHF") {
-      rate = MarketInfo("USDCHF"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         Print("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 1.0 instead!");
-         multiplicator = 1;
-      }
-      else multiplicator = 1 / rate;
-   }
-
-   if (AccountCurrency() == "JPY") {
-      rate = MarketInfo("USDJPY"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         Print("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 120 instead!");
-         multiplicator = 120;
-      }
-      else multiplicator = 1 / rate;
-   }
-
-   if (AccountCurrency() == "CAD") {
-      rate = MarketInfo("USDCAD"+ symbolSuffix, MODE_BID);
-      if (!rate) {
-         Print("Unable to fetch the Bid price for "+ AccountCurrency() +", will use the static value 1.3 instead!");
-         multiplicator = 1.3;
-      }
-      else multiplicator = 1 / rate;
-   }
-
-   // If account currency is something else we assumes it is USD
-   if (!multiplicator) multiplicator = 1;
-
-   catch("GetLotsizeMultiplier(1)");
-   return(multiplicator);
+   if (!rate) return(!catch("GetLotsizeMultiplier(2)  Unable to fetch Bid price for "+ AccountCurrency(), ERR_INVALID_MARKET_DATA));
+   return(1/rate);
 }
 
 
@@ -736,7 +623,7 @@ double CalculateLotsize() {
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
    double lotsize;
    lotsize = MathMin(MathFloor ( Risk / 102 * availablemoney / ( StopLoss + AddPriceGap ) / LotStep ) * LotStep, MaxLots );
-   lotsize = lotsize * GetLotsizeMultiplier();
+   lotsize = lotsize * GetLotsizeMultiplier(); if (!lotsize) return(NULL);
    lotsize = NormalizeLots(lotsize);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
@@ -747,7 +634,7 @@ double CalculateLotsize() {
       // Check if ManualLotsize is greater than allowed LotSize
       if (ManualLotsize > maxlot) {
          lotsize = maxlot;
-         Print("Note: Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
+         warn("CalculateLotsize(1)  Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
          ManualLotsize = maxlot;
       }
       else if (ManualLotsize < minlot) {
@@ -755,8 +642,9 @@ double CalculateLotsize() {
       }
    }
 
-   catch("CalculateLotsize(1)");
-   return(lotsize);
+   if (!catch("CalculateLotsize(1)"))
+      return(lotsize);
+   return(NULL);
 }
 
 
@@ -791,7 +679,7 @@ void RecalculateRisk() {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be higher than " + DoubleToStr ( maxrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss and Equity. It has now been adjusted accordingly to " + DoubleToStr ( maxrisk, 1 ) + "%";
          Risk = maxrisk;
-         Print(textstring);
+         warn("RecalculateRisk(1)  "+ textstring);
       }
       // If Risk% is less than the minimum risklevel the broker accept, then adjust Risk accordingly and print out changes
       if (Risk < minrisk)
@@ -799,7 +687,7 @@ void RecalculateRisk() {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be lower than " + DoubleToStr ( minrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss, AddPriceGap and Equity. It has now been adjusted accordingly to " + DoubleToStr ( minrisk, 1 ) + "%";
          Risk = minrisk;
-         Print(textstring);
+         warn("RecalculateRisk(2)  "+ textstring);
       }
    }
    // If we don't use MoneyManagement, then use fixed manual LotSize
@@ -810,87 +698,23 @@ void RecalculateRisk() {
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be less than " + DoubleToStr ( MinLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2);
          ManualLotsize = MinLots;
-         Print(textstring);
+         warn("RecalculateRisk(3)  "+ textstring);
       }
       if ( ManualLotsize > MaxLots )
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than " + DoubleToStr ( MaxLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2 );
          ManualLotsize = MaxLots;
-         Print(textstring);
+         warn("RecalculateRisk(4)  "+ textstring);
       }
       // Check to see that manual LotSize does not exceeds maximum allowed LotSize
       if ( ManualLotsize > maxlot )
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than maximum allowed LotSize. It has now been adjusted to " + DoubleToStr ( maxlot, 2 );
          ManualLotsize = maxlot;
-         Print(textstring);
+         warn("RecalculateRisk(5)  "+ textstring);
       }
    }
-
-   catch("RecalculateRisk(1)");
-}
-
-
-/**
- * Summarize error messages that comes from the broker server
- *
- * @return int - the detected error status
- */
-int CheckLastError() {
-   int error = GetLastError();
-
-   switch (error) {
-      case ERR_NO_RESULT:             Err_unchangedvalues++;    break;
-      case ERR_SERVER_BUSY:           Err_busyserver++;         break;
-      case ERR_NO_CONNECTION:         Err_lostconnection++;     break;
-      case ERR_TOO_FREQUENT_REQUESTS: Err_toomanyrequest++;     break;
-      case ERR_INVALID_PRICE:         Err_invalidprice++;       break;
-      case ERR_INVALID_STOP:          Err_invalidstops++;       break;
-      case ERR_INVALID_TRADE_VOLUME:  Err_invalidtradevolume++; break;
-      case ERR_PRICE_CHANGED:         Err_pricechange++;        break;
-      case ERR_BROKER_BUSY:           Err_brokerbusy++;         break;
-      case ERR_REQUOTE:               Err_requotes++;           break;
-      case ERR_TOO_MANY_REQUESTS:     Err_toomanyrequests++;    break;
-      case ERR_TRADE_MODIFY_DENIED:   Err_trademodifydenied++;  break;
-      case ERR_TRADE_CONTEXT_BUSY:    Err_tradecontextbusy++;   break;
-   }
-   return(error);
-}
-
-
-/**
- * Print out and comment summarized messages from the broker
- */
-void PrintErrors() {
-   int errors = Err_unchangedvalues
-              + Err_busyserver
-              + Err_lostconnection
-              + Err_toomanyrequest
-              + Err_invalidprice
-              + Err_invalidstops
-              + Err_invalidtradevolume
-              + Err_pricechange
-              + Err_brokerbusy
-              + Err_requotes
-              + Err_toomanyrequests
-              + Err_trademodifydenied
-              + Err_tradecontextbusy;
-
-   string txt = "Number of times the brokers server reported that ";
-   if (Err_unchangedvalues    > 0) Print(txt +"SL and TP was modified to existing values: "+ Err_unchangedvalues   );
-   if (Err_busyserver         > 0) Print(txt +"it is busy: "+                                Err_busyserver        );
-   if (Err_lostconnection     > 0) Print(txt +"the connection is lost: "+                    Err_lostconnection    );
-   if (Err_toomanyrequest     > 0) Print(txt +"there was too many requests: "+               Err_toomanyrequest    );
-   if (Err_invalidprice       > 0) Print(txt +"the price was invalid: "+                     Err_invalidprice      );
-   if (Err_invalidstops       > 0) Print(txt +"invalid SL and/or TP: "+                      Err_invalidstops      );
-   if (Err_invalidtradevolume > 0) Print(txt +"invalid lot size: "+                          Err_invalidtradevolume);
-   if (Err_pricechange        > 0) Print(txt +"the price has changed: "+                     Err_pricechange       );
-   if (Err_brokerbusy         > 0) Print(txt +"the broker is busy: "+                        Err_brokerbusy        );
-   if (Err_requotes           > 0) Print(txt +"requotes "+                                   Err_requotes          );
-   if (Err_toomanyrequests    > 0) Print(txt +"too many requests "+                          Err_toomanyrequests   );
-   if (Err_trademodifydenied  > 0) Print(txt +"modifying orders is denied "+                 Err_trademodifydenied );
-   if (Err_tradecontextbusy   > 0) Print(txt +"trade context is busy: "+                     Err_tradecontextbusy  );
-   if (!errors)                    Print("No trade errors reported");
+   catch("RecalculateRisk(6)");
 }
 
 
@@ -948,7 +772,13 @@ void UpdatePlStats() {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   string line1 = WindowExpertName();
+   if (!__CHART()) return(error);
+
+   string sError = "";
+   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
+   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
+
+   string line1 = WindowExpertName() + sError;
    string line2 = "Open PL:   "+ openPositions   +" positions ("+ NumberToStr(openLots,   ".0+") +" lot)   PL="+ DoubleToStr(openPl, 2);
    string line3 = "Closed PL: "+ closedPositions +" positions ("+ NumberToStr(closedLots, ".0+") +" lot)   PL="+ DoubleToStr(closedPl, 2);
    string line4 = "Total PL:  "+ DoubleToStr(totalPl, 2);
@@ -959,11 +789,9 @@ int ShowStatus(int error = NO_ERROR) {
    ShowStatus.CreateLabel("line3", line3, x, y); y = spacing + StatusFontSize * 3 + 3 * 3 + 40;
    ShowStatus.CreateLabel("line4", line4, x, y);
 
-   catch("ShowStatus(1)");
-
-   if (!error)
-      return(last_error);
-   return(error);
+   if (!catch("ShowStatus(1)"))
+      return(error);
+   return(last_error);
 }
 
 
