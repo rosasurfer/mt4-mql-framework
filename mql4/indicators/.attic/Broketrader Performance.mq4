@@ -232,7 +232,7 @@ double iMTF(int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, systemTimeframe, "systems\\"+ WindowExpertName(),
+   double value = iCustom(NULL, systemTimeframe, ".attic\\"+ WindowExpertName(),
                           SMA.Periods,                            // int    SMA.Periods
                           Stochastic.Periods,                     // int    Stochastic.Periods
                           Stochastic.MA1.Periods,                 // int    Stochastic.MA1.Periods
@@ -290,7 +290,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "systems/Broketrader",
+   double value = iCustom(NULL, timeframe, ".attic/Broketrader",
                           smaPeriods,                             // int    SMA.Periods
                           stochasticPeriods,                      // int    Stochastic.Periods
                           stochasticMa1Periods,                   // int    Stochastic.MA1.Periods
