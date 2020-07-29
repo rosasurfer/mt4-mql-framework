@@ -8782,7 +8782,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=systems/Broketrader
+name=.attic/Broketrader
 flags=339
 window_num=0
 <inputs>
