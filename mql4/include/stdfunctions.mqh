@@ -1080,21 +1080,23 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Calculate the current symbol's commission value for the specified lot size.
+ * Calculate the current symbol's commission value for the specified lotsize.
  *
- * @param  double lots [optional] - lot size (default: 1 lot)
+ * @param  double lots [optional] - lotsize (default: 1 lot)
+ * @param  int    mode [optional] - COMMISSION_MODE_MONEY:  in account currency (default)
+ *                                  COMMISSION_MODE_MARKUP: as price markup in quote currency (independant of lotsize)
  *
  * @return double - commission value or EMPTY (-1) in case of errors
  */
-double GetCommission(double lots = 1.0) {
-   static double static.rate;
-   static bool   resolved;
+double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
+   static double baseCommission;
+   static bool resolved;
 
    if (!resolved) {
-      double rate;
+      double value;
 
       if (This.IsTesting()) {
-         rate = Test_GetCommission(__ExecutionContext, 1);
+         value = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
          // TODO: if (is_CFD) rate = 0;
@@ -1109,16 +1111,24 @@ double GetCommission(double lots = 1.0) {
             key = company +"."+ currency;
             if (!IsGlobalConfigKeyA(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
          }
-         rate = GetGlobalConfigDouble(section, key);
-         if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_VALUE)));
+         value = GetGlobalConfigDouble(section, key);
+         if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
       }
-      static.rate = rate;
-      resolved    = true;
+      baseCommission = value;
+      resolved = true;
    }
 
-   if (lots == 1)
-      return(static.rate);
-   return(static.rate * lots);
+   switch (mode) {
+      case COMMISSION_MODE_MONEY:
+         if (lots == 1)
+            return(baseCommission);
+         return(baseCommission * lots);
+
+      case COMMISSION_MODE_MARKUP:
+         double pipValue = PipValue(); if (!pipValue) return(EMPTY);
+         return(baseCommission/pipValue * Pip);
+   }
+   return(_EMPTY(catch("GetCommission(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -3190,20 +3200,20 @@ int Chart.Expert.Properties() {
 
 
 /**
- * Schickt dem aktuellen Chart einen künstlichen Tick.
+ * Send a virtual tick to the current chart.
  *
- * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
+ * @param  bool sound [optional] - whether to audibly confirm the tick (default: no)
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
-int Chart.SendTick(bool sound=false) {
+int Chart.SendTick(bool sound = false) {
    sound = sound!=0;
 
    int hWnd = __ExecutionContext[EC.hChart];
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - Expert::start() wird in Offline-Charts nicht getriggert
-   }                                                              //                1 - Expert::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - doesn't trigger Expert::start() in offline charts
+   }                                                              //                1 - triggers Expert::start() in offline charts (if a server connection is established)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -6869,6 +6879,7 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
+   int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
@@ -6881,7 +6892,6 @@ void __DummyCalls() {
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ReleaseLock(string mutexName);
-   int      RemoveObjects();
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
