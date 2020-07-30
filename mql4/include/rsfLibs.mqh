@@ -229,7 +229,7 @@
    int      DecreasePeriod(int period);
 
    int      RegisterObject(string label);
-   int      RemoveObjects();
+   int      DeleteRegisteredObjects();
    int      RepositionLegend();
 
 

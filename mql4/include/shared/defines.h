@@ -186,6 +186,22 @@
 #define TRADE_DIRECTION_BOTH                    3
 
 
+// commission types, see struct FXT_HEADER
+#define COMM_TYPE_MONEY                         0        // base commission in money terms
+#define COMM_TYPE_POINTS                        1        // base commission in points
+#define COMM_TYPE_PERCENT                       2        // base commission in percent
+
+
+// commission charge modes, see struct FXT_HEADER
+#define COMMISSION_PER_LOT                      0        // per both deals (round-trip)
+#define COMMISSION_PER_DEAL                     1        // per single deal
+
+
+// commission calculation modes, see GetCommission()
+#define COMMISSION_MODE_MONEY                   0        // commission value in account currency for 1 lot
+#define COMMISSION_MODE_MARKUP                  1        // commission markup in quote currency
+
+
 // file system related constants
 #define MKDIR_PARENT                            1        // create non-existing parent directories as needed => @see CreateDirectory()
 
