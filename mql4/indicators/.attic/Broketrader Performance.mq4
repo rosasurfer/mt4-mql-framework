@@ -105,7 +105,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(bufferTotalPL)) return(log("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation

@@ -92,7 +92,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // under unspecific circumstances on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(wickA)) return(log("onTick(1)  size(wickA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
 
