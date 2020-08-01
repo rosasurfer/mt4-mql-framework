@@ -91,10 +91,6 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -170,17 +166,6 @@ int onInit() {
 int onDeinit() {
    RepositionLegend();
    return(catch("onDeinit(1)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -346,46 +331,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
    SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = __NAME();
-   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.StoreInt   (name +".input.Max.Bars",             Max.Bars             );
-   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = __NAME();
-   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.RestoreInt   (name +".input.Max.Bars",             Max.Bars             );
-   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 
