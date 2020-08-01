@@ -91,6 +91,7 @@
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    int  SetActiveWindow(int hWnd);
    bool SetWindowTextA(int hWnd, string lpString);
+   bool ShowWindow(int hWnd, int nCmdShow);
 
 #import "version.dll"
    bool GetFileVersionInfoA(string lpFilename, int handle, int bufferSize, int lpBuffer[]);
