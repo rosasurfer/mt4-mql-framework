@@ -178,7 +178,7 @@ int onTick() {
    if (!AccountNumber())
       return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(bufferMain)) return(log("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
