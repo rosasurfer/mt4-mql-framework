@@ -4936,30 +4936,23 @@ Indicator values left of the specified index will not appear in the chart. By de
       caption=SetIndexEmptyValue()
       type=void
       <content>
-        Sets drawing line empty value.
-        Empty values are not drawn or shown in the Data window.
-      By default, empty value is <span class="const">EMPTY_VALUE</span>.
+        Set the indicator buffer value interpreted as "empty" value. Empty values are not drawn on the chart or shown in the "Data" window. 
+        The default empty value is <span class="const">EMPTY_VALUE</span>.<br/>
+        <br/>
+        <b>Note:</b><br/>
+        Arrays bound to indicator buffers are always initialized with <span class="number">0.0</span> (zero), independent of a set "empty" value. 
       </content>
       <example>
-int init() {
-   // 2 allocated indicator buffers
-   SetIndexBuffer(0, ExtUppperBuffer);
-   SetIndexBuffer(1, ExtLowerBuffer);<br/>
+<span class="type code">int</span> <span class="core code">init</span>() {
+   <span class="comment code">// 2 indicator buffers</span>
+   <span class="function code">SetIndexBuffer</span>(<span class="number code">0</span>, buffer1);
+   <span class="function code">SetIndexBuffer</span>(<span class="number code">1</span>, buffer2);<br/>
 
-   // drawing parameters setting
-   SetIndexStyle(0, DRAW_ARROW);
-   SetIndexArrow(0, 217);
-   SetIndexStyle(1, DRAW_ARROW);
-   SetIndexArrow(1, 218);<br/>
+   <span class="comment code">// buffer entries of 0.0 will not be displayed</span>
+   <span class="function code">SetIndexEmptyValue</span>(<span class="number code">0</span>, <span class="number code">0.0</span>);
+   <span class="function code">SetIndexEmptyValue</span>(<span class="number code">1</span>, <span class="number code">0.0</span>);<br/>
 
-   // 0 value will not be displayed
-   SetIndexEmptyValue(0, 0.0);
-   SetIndexEmptyValue(1, 0.0);<br/>
-
-   // displaying in Data window
-   SetIndexLabel(0, "Fractal Up");
-   SetIndexLabel(1, "Fractal Down");
-   return(0);
+   <span class="type code">return</span>(<span class="number code">0</span>);
 }
       </example>
       <parameter>
@@ -4970,7 +4963,7 @@ int init() {
       <parameter>
         type=double
         name=value
-        description=New &quot;empty&quot; value.
+        description=value to be interpreted as "empty" value
       </parameter>
     </function>
 
