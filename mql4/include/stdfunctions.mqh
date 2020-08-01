@@ -6922,7 +6922,6 @@ void __DummyCalls() {
    int      GetParent(int hWnd);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
-   int      GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool     IsWindow(int hWnd);
    int      MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
