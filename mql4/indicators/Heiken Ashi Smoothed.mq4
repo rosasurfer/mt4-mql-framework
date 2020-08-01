@@ -36,8 +36,8 @@ double ExtMapBuffer5[];
 double ExtMapBuffer6[];
 double ExtMapBuffer7[];
 double ExtMapBuffer8[];
-//----
-int ExtCountedBars=0;
+
+
 //+------------------------------------------------------------------+
 //| Custom indicator initialization function                         |
 //|------------------------------------------------------------------|
@@ -68,96 +68,71 @@ int init()
 //---- initialization done
    return(0);
   }
-//+------------------------------------------------------------------+
-//| Custor indicator deinitialization function                       |
-//+------------------------------------------------------------------+
-int deinit()
-  {
-//---- TODO: add your code here
-  return(0);
-  }
-bool Crossed (double haOpen , double haClose )
-{
-
-static string last_direction = "";
-string current_direction = "";
-
-if(haOpen<=haClose) current_direction = "LONG";
-if(haOpen>haClose) current_direction = "SHORT";
 
 
 
-if(current_direction != last_direction)
-{
-      if(POP_UP_Box_Alert==true)Alert ("H/Ashi Direction change "+current_direction+"  " ,Symbol()," ",Period()," @ ",Bid);
-      if(Sound_Alert==true) PlaySound("alert2.wav");
-      last_direction = current_direction;
-      return (true);
-}
-else
-{
-      return (false);
-
-}
 
 
-//----
-   return(0);
-  }
 //+------------------------------------------------------------------+
 //| Custom indicator iteration function                              |
 //+------------------------------------------------------------------+
-int start()
-  {
-   double maOpen, maClose, maLow, maHigh;
+int start() {
    double haOpen, haHigh, haLow, haClose;
-   if(Bars<=10) return(0);
-   ExtCountedBars=IndicatorCounted();
-//---- check for possible errors
-   if (ExtCountedBars<0) return(-1);
-//---- last counted bar will be recounted
-   if (ExtCountedBars>0) ExtCountedBars--;
-   int pos=Bars-ExtCountedBars-1;
-   while(pos>=0)
-     {
-      maOpen  = iMA(NULL,0,MaPeriod,0,MaMetod,PRICE_OPEN ,pos);
-      maClose = iMA(NULL,0,MaPeriod,0,MaMetod,PRICE_CLOSE,pos);
-      maLow   = iMA(NULL,0,MaPeriod,0,MaMetod,PRICE_LOW  ,pos);
-      maHigh  = iMA(NULL,0,MaPeriod,0,MaMetod,PRICE_HIGH ,pos);
+   double maOpen, maHigh, maLow, maClose;
 
-      haOpen=(ExtMapBuffer5[pos+1]+ExtMapBuffer6[pos+1])/2;
-      haClose=(maOpen+maHigh+maLow+maClose)/4;
-      haHigh=MathMax(maHigh, MathMax(haOpen, haClose));
-      haLow=MathMin(maLow, MathMin(haOpen, haClose));
+   if (Bars <= 10) return(0);
+   int ExtCountedBars = IndicatorCounted();
+   if (ExtCountedBars > 0) ExtCountedBars--;
+   int pos = Bars-ExtCountedBars-1;
 
-      if (haOpen<haClose)
-        {
-         ExtMapBuffer7[pos]=haLow;
-         ExtMapBuffer8[pos]=haHigh;
-        }
-      else
-        {
-         ExtMapBuffer7[pos]=haHigh;
-         ExtMapBuffer8[pos]=haLow;
-        }
-      ExtMapBuffer5[pos]=haOpen;
-      ExtMapBuffer6[pos]=haClose;
+   while (pos >= 0) {
+      maOpen  = iMA(NULL, NULL, MaPeriod, 0, MaMetod, PRICE_OPEN,  pos);
+      maClose = iMA(NULL, NULL, MaPeriod, 0, MaMetod, PRICE_CLOSE, pos);
+      maLow   = iMA(NULL, NULL, MaPeriod, 0, MaMetod, PRICE_LOW,   pos);
+      maHigh  = iMA(NULL, NULL, MaPeriod, 0, MaMetod, PRICE_HIGH,  pos);
 
+      haOpen  = (ExtMapBuffer5[pos+1] + ExtMapBuffer6[pos+1])/2;
+      haClose = (maOpen + maHigh + maLow + maClose)/4;
+      haHigh  = MathMax(maHigh, MathMax(haOpen, haClose));
+      haLow   = MathMin(maLow, MathMin(haOpen, haClose));
+
+      if (haOpen < haClose) {
+         ExtMapBuffer7[pos] = haLow;
+         ExtMapBuffer8[pos] = haHigh;
+      }
+      else {
+         ExtMapBuffer7[pos] = haHigh;
+         ExtMapBuffer8[pos] = haLow;
+      }
+      ExtMapBuffer5[pos] = haOpen;
+      ExtMapBuffer6[pos] = haClose;
       pos--;
-     }
+   }
 
    int i;
-   for(i=0; i<Bars; i++) ExtMapBuffer1[i]=iMAOnArray(ExtMapBuffer7,Bars,MaPeriod2,0,MaMetod2,i);
-   for(i=0; i<Bars; i++) ExtMapBuffer2[i]=iMAOnArray(ExtMapBuffer8,Bars,MaPeriod2,0,MaMetod2,i);
-   for(i=0; i<Bars; i++) ExtMapBuffer3[i]=iMAOnArray(ExtMapBuffer5,Bars,MaPeriod2,0,MaMetod2,i);
-   for(i=0; i<Bars; i++) ExtMapBuffer4[i]=iMAOnArray(ExtMapBuffer6,Bars,MaPeriod2,0,MaMetod2,i);
+   for (i=0; i < Bars; i++) ExtMapBuffer1[i] = iMAOnArray(ExtMapBuffer7, Bars, MaPeriod2, 0, MaMetod2, i);
+   for (i=0; i < Bars; i++) ExtMapBuffer2[i] = iMAOnArray(ExtMapBuffer8, Bars, MaPeriod2, 0, MaMetod2, i);
+   for (i=0; i < Bars; i++) ExtMapBuffer3[i] = iMAOnArray(ExtMapBuffer5, Bars, MaPeriod2, 0, MaMetod2, i);
+   for (i=0; i < Bars; i++) ExtMapBuffer4[i] = iMAOnArray(ExtMapBuffer6, Bars, MaPeriod2, 0, MaMetod2, i);
 
-
-
-     Print(Crossed (ExtMapBuffer1[0],ExtMapBuffer2[0]));
-//----
    return(0);
-  }
-//+------------------------------------------------------------------+
+}
 
 
+/**
+ *
+ */
+bool Crossed(double haOpen, double haClose) {
+   static string last_direction = "";
+
+   if (haOpen <= haClose) string current_direction = "LONG";
+   if (haOpen >  haClose)        current_direction = "SHORT";
+
+   if (current_direction != last_direction) {
+      if (POP_UP_Box_Alert) Alert("H/Ashi Direction change "+ current_direction +"  "+ Symbol() +" "+ Period() +" @ "+ Bid);
+      if (Sound_Alert)      PlaySound("alert2.wav");
+      last_direction = current_direction;
+      return(true);
+   }
+   return (false);
+}
