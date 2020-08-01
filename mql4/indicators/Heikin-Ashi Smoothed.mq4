@@ -8,11 +8,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Input.MA.Periods  = 6;
-extern int Input.MA.Method   = 2;
+extern color Color.BarUp       = Blue;
+extern color Color.BarDown     = Red;
 
-extern int Output.MA.Periods = 2;
-extern int Output.MA.Method  = 3;
+extern int   Input.MA.Periods  = 6;
+extern int   Input.MA.Method   = 2;
+extern int   Output.MA.Periods = 2;
+extern int   Output.MA.Method  = 3;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,36 +22,31 @@ extern int Output.MA.Method  = 3;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define MODE_WICK_DOWN        0           // indicator buffer ids
-#define MODE_WICK_UP          1
-#define MODE_BODY_DOWN        2
-#define MODE_BODY_UP          3
+#define MODE_WICK_A           0                          // indicator buffer ids
+#define MODE_WICK_B           1
+#define MODE_BODY_A           2
+#define MODE_BODY_B           3
 
 #property indicator_chart_window
 #property indicator_buffers   4
 
-#property indicator_color1    Red         // bull bar low, bear bar high
-#property indicator_color2    Blue        // bull bar high, bear bar low
-#property indicator_color3    Red         // body down
-#property indicator_color4    Blue        // body up
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+#property indicator_color4    CLR_NONE
 
-#property indicator_width1    1           // bull bar high, bear bar low
-#property indicator_width2    1           // bull bar low, bear bar high
-#property indicator_width3    3           // body down
-#property indicator_width4    3           // body up
+#property indicator_width1    1
+#property indicator_width2    1
+#property indicator_width3    3
+#property indicator_width4    3
 
+double wickA[];
+double wickB[];
+double bodyA[];
+double bodyB[];
 
-
-
-double buffer1[];                         // output bull bar high, bear bar low
-double buffer2[];                         // output bull bar low, bear bar high
-double buffer3[];                         // output body down
-double buffer4[];                         // output body up
-
-double buffer5[];
-double buffer6[];
-double buffer7[];
-double buffer8[];
+string indicatorName;
+string chartLegendLabel;
 
 
 /**
@@ -58,17 +55,32 @@ double buffer8[];
  * @return int - error status
  */
 int onInit() {
-   IndicatorBuffers(8);
+   // validate inputs
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.BarUp   == 0xFF000000) Color.BarUp   = CLR_NONE;
+   if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 
-   SetIndexBuffer(0, buffer1); SetIndexStyle(0, DRAW_HISTOGRAM, 0);
-   SetIndexBuffer(1, buffer2); SetIndexStyle(1, DRAW_HISTOGRAM, 0);
-   SetIndexBuffer(2, buffer3); SetIndexStyle(2, DRAW_HISTOGRAM, 0);
-   SetIndexBuffer(3, buffer4); SetIndexStyle(3, DRAW_HISTOGRAM, 0);
+   // buffer management
+   SetIndexBuffer(MODE_WICK_A, wickA);
+   SetIndexBuffer(MODE_WICK_B, wickB);
+   SetIndexBuffer(MODE_BODY_A, bodyA);
+   SetIndexBuffer(MODE_BODY_B, bodyB);
 
-   SetIndexBuffer(4, buffer5);
-   SetIndexBuffer(5, buffer6);
-   SetIndexBuffer(6, buffer7);
-   SetIndexBuffer(7, buffer8);
+   // chart legend
+   if (!IsSuperContext()) {
+       chartLegendLabel = CreateLegendLabel();
+       RegisterObject(chartLegendLabel);
+   }
+
+   // names, labels and display options
+   indicatorName = "Heikin-Ashi";
+   IndicatorShortName(indicatorName);
+   SetIndexLabel(MODE_WICK_A, indicatorName +" wick A"); // chart tooltips and "Data" window
+   SetIndexLabel(MODE_WICK_B, indicatorName +" wick B");
+   SetIndexLabel(MODE_BODY_A, indicatorName +" body B");
+   SetIndexLabel(MODE_BODY_B, indicatorName +" body B");
+   IndicatorDigits(Digits);
+   SetIndicatorOptions();
 
    return(catch("onInit(1)"));
 }
@@ -80,6 +92,11 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   if (!ArraySize(wickA)) return(log("onTick(1)  size(wickA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+
+
    double haOpen, haHigh, haLow, haClose;
 
    if (Bars <= 10) return(0);
@@ -109,36 +126,7 @@ int onTick() {
       buffer6[bar] = haClose;
    }
 
-   for (bar=0; bar < Bars; bar++) buffer1[bar] = iMAOnArray(buffer7, Bars, Output.MA.Periods, 0, Output.MA.Method, bar);   // output bull bar low, bear bar high
-   for (bar=0; bar < Bars; bar++) buffer2[bar] = iMAOnArray(buffer8, Bars, Output.MA.Periods, 0, Output.MA.Method, bar);   // output bull bar high, bear bar low
-   for (bar=0; bar < Bars; bar++) buffer3[bar] = iMAOnArray(buffer5, Bars, Output.MA.Periods, 0, Output.MA.Method, bar);   // output body down
-   for (bar=0; bar < Bars; bar++) buffer4[bar] = iMAOnArray(buffer6, Bars, Output.MA.Periods, 0, Output.MA.Method, bar);   // output body up
-
    return(last_error);
-
-   Crossed(NULL, NULL);
-}
-
-
-/**
- *
- */
-bool Crossed(double open, double close) {
-   static string last_direction = "";
-
-   if (open <= close) string current_direction = "LONG";
-   if (open >  close)        current_direction = "SHORT";
-
-   bool POP_UP_Box_Alert = false;
-   bool Sound_Alert = false;
-
-   if (current_direction != last_direction) {
-      if (POP_UP_Box_Alert) Alert("H/Ashi Direction change "+ current_direction +"  "+ Symbol() +" "+ Period() +" @ "+ Bid);
-      if (Sound_Alert)      PlaySound("alert2.wav");
-      last_direction = current_direction;
-      return(true);
-   }
-   return (false);
 }
 
 
@@ -148,9 +136,11 @@ bool Crossed(double open, double close) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Input.MA.Periods=",  Input.MA.Periods,  ";", NL,
-                            "Input.MA.Method=",   Input.MA.Method,   ";", NL,
-                            "Output.MA.Periods=", Output.MA.Periods, ";", NL,
-                            "Output.MA.Method=",  Output.MA.Method,  ";")
+   return(StringConcatenate("Color.BarUp=",       ColorToStr(Color.BarUp),   ";", NL,
+                            "Color.BarDown=",     ColorToStr(Color.BarDown), ";", NL,
+                            "Input.MA.Periods=",  Input.MA.Periods,          ";", NL,
+                            "Input.MA.Method=",   Input.MA.Method,           ";", NL,
+                            "Output.MA.Periods=", Output.MA.Periods,         ";", NL,
+                            "Output.MA.Method=",  Output.MA.Method,          ";")
    );
 }
