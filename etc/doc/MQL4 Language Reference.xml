@@ -1578,26 +1578,25 @@ It can be one of the following values:</p>
 <p>Drawing shape types for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>(). Can be one of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">DRAW_LINE</td><td>0</td><td>Drawing line.</td></tr>
-<tr><td class="const">DRAW_SECTION</td><td>1</td><td>Drawing sections.</td></tr>
-<tr><td class="const">DRAW_HISTOGRAM</td><td>2</td><td>Drawing histogram.</td></tr>
-<tr><td class="const">DRAW_ARROW</td><td>3</td><td>Drawing arrows (symbols).</td></tr>
-<tr><td class="const">DRAW_ZIGZAG</td><td>4</td><td>Drawing sections between even and odd indicator buffers.</td></tr>
+<tr><td class="const">DRAW_LINE</td><td>0</td><td>Draws lines.</td></tr>
+<tr><td class="const">DRAW_SECTION</td><td>1</td><td>Draws sections.</td></tr>
+<tr><td class="const">DRAW_HISTOGRAM</td><td>2</td><td>Draws histograms between successive even and odd indicator buffers. The larger buffer value determines the color to use.</td></tr>
+<tr><td class="const">DRAW_ARROW</td><td>3</td><td>Draws symbols.</td></tr>
+<tr><td class="const">DRAW_ZIGZAG</td><td>4</td><td>Draws sections between successive even and odd indicator buffers.</td></tr>
 <tr><td class="const">DRAW_NONE</td><td>12</td><td>No drawing.</td></tr>
 </table>
 <br/>
 <p>Drawing pen styles for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>() (valid when line width = 1). Can be one of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">STYLE_SOLID</td><td>0</td><td>The pen is solid.</td></tr>
-<tr><td class="const">STYLE_DASH</td><td>1</td><td>The pen is dashed.</td></tr>
-<tr><td class="const">STYLE_DOT</td><td>2</td><td>The pen is dotted.</td></tr>
-<tr><td class="const">STYLE_DASHDOT</td><td>3</td><td>The pen has alternating dashes and dots.</td></tr>
-<tr><td class="const">STYLE_DASHDOTDOT</td><td>4</td><td>The pen has alternating dashes and double dots.</td></tr>
+<tr><td class="const">STYLE_SOLID</td><td>0</td><td>solid pen</td></tr>
+<tr><td class="const">STYLE_DASH</td><td>1</td><td>dashed pen</td></tr>
+<tr><td class="const">STYLE_DOT</td><td>2</td><td>dotted pen</td></tr>
+<tr><td class="const">STYLE_DASHDOT</td><td>3</td><td>pen with alternating dashes and dots</td></tr>
+<tr><td class="const">STYLE_DASHDOTDOT</td><td>4</td><td>pen with alternating dashes and double dots</td></tr>
 </table>
       </content>
     </text>
-
 
     <text>
       tag=constants_arrows
