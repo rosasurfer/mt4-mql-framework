@@ -7660,7 +7660,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       Calculates the Accumulation/Distribution indicator and returns its value.
       </content>
       <example>
-  double result=iAD(NULL, 0, 1);
+double result = iAD(NULL, 0, 1);
       </example>
       <parameter>
         type=string
@@ -7680,6 +7680,46 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
     </function>
 
     <function>
+      tag=indicators_iADX
+      caption=iADX() - Average Directional Movement Index
+      type=double
+      <content>
+      Calculates the Movement directional index and returns its value.
+      </content>
+      example=if (iADX(NULL, 0, 14, PRICE_HIGH, MODE_MAIN, 0) &gt; iADX(NULL, 0, 14, PRICE_HIGH, MODE_PLUSDI, 0)) return(0);
+      <parameter>
+        type=string
+        name=symbol
+        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+      </parameter>
+      <parameter>
+        type=int
+        name=timeframe
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+      </parameter>
+      <parameter>
+        type=int
+        name=period
+        description=Averaging period for calculation.
+      </parameter>
+      <parameter>
+        type=int
+        name=applied_price
+        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
+      </parameter>
+      <parameter>
+        type=int
+        name=mode
+        description=Indicator line index. It can be any of the <a href="help://constants_lines">Indicators line identifiers enumeration</a> value.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
       tag=indicators_iAlligator
       caption=iAlligator() - Alligator
       type=double
@@ -7688,7 +7728,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       Calculates the Bill Williams' Alligator and returns its value.
       </content>
       <example>
-  double jaw_val=iAlligator(NULL, 0, 13, 8, 8, 5, 5, 3, MODE_SMMA, PRICE_MEDIAN, MODE_GATORJAW, 1);
+double value = iAlligator(NULL, 0, 13, 8, 8, 5, 5, 3, MODE_SMMA, PRICE_MEDIAN, MODE_GATORJAW, 1);
       </example>
       <parameter>
         type=string
@@ -7758,13 +7798,15 @@ Data source, identifier of a line of the indicator. It can be any of the followi
     </function>
 
     <function>
-      tag=indicators_iADX
-      caption=iADX() - Average Directional Movement Index
+      tag=indicators_iAO
+      caption=iAO() - Awesome Oscillator
       type=double
       <content>
-      Calculates the Movement directional index and returns its value.
+      Calculates the Bill Williams' Awesome oscillator and returns its value.
       </content>
-      example=if(iADX(NULL,0,14,PRICE_HIGH,MODE_MAIN,0)&gt;iADX(NULL,0,14,PRICE_HIGH,MODE_PLUSDI,0)) return(0);
+      <example>
+double value = iAO(NULL, 0, 2);
+      </example>
       <parameter>
         type=string
         name=symbol
@@ -7774,21 +7816,6 @@ Data source, identifier of a line of the indicator. It can be any of the followi
         type=int
         name=timeframe
         description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=period
-        description=Averaging period for calculation.
-      </parameter>
-      <parameter>
-        type=int
-        name=applied_price
-        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
-      </parameter>
-      <parameter>
-        type=int
-        name=mode
-        description=Indicator line index. It can be any of the <a href="help://constants_lines">Indicators line identifiers enumeration</a> value.
       </parameter>
       <parameter>
         type=int
@@ -7805,7 +7832,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       Calculates the Indicator of the average true range and returns its value.
       </content>
       <example>
-  if(iATR(NULL,0,12,0)&gt;iATR(NULL,0,20,0)) return(0);
+if (iATR(NULL, 0, 12, 0) &gt; iATR(NULL, 0, 20, 0)) return(0);
       </example>
       <parameter>
         type=string
@@ -7822,70 +7849,6 @@ Data source, identifier of a line of the indicator. It can be any of the followi
         name=period
         description=Averaging period for calculation.
         </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
-      tag=indicators_iAO
-      caption=iAO() - Awesome Oscillator
-      type=double
-      <content>
-      Calculates the Bill Williams' Awesome oscillator and returns its value.
-      </content>
-      <example>
-  double val=iAO(NULL, 0, 2);
-      </example>
-      <parameter>
-        type=string
-        name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
-      </parameter>
-      <parameter>
-        type=int
-        name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
-      tag=indicators_iBearsPower
-      caption=iBearsPower() - Bears Power
-      type=double
-      <content>
-      Calculates the Bears Power indicator and returns its value.
-      </content>
-      <example>
-  double val=iBearsPower(NULL, 0, 13,PRICE_CLOSE,0);
-      </example>
-      <parameter>
-        type=string
-        name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
-      </parameter>
-      <parameter>
-        type=int
-        name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=period
-        description=Averaging period for calculation.
-      </parameter>
-      <parameter>
-        type=int
-        name=applied_price
-        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
-      </parameter>
       <parameter>
         type=int
         name=shift
@@ -7990,14 +7953,14 @@ Data source, identifier of a line of the indicator. It can be any of the followi
     </function>
 
     <function>
-      tag=indicators_iBullsPower
-      caption=iBullsPower() - Bulls Power
+      tag=indicators_iBearsPower
+      caption=iBearsPower() - Bears Power
       type=double
       <content>
-      Calculates the Bulls Power indicator and returns its value.
+      Calculates the Bears Power indicator and returns its value.
       </content>
       <example>
-  double val=iBullsPower(NULL, 0, 13,PRICE_CLOSE,0);
+double value = iBearsPower(NULL, 0, 13, PRICE_CLOSE, 0);
       </example>
       <parameter>
         type=string
@@ -8027,6 +7990,70 @@ Data source, identifier of a line of the indicator. It can be any of the followi
     </function>
 
     <function>
+      tag=indicators_iBullsPower
+      caption=iBullsPower() - Bulls Power
+      type=double
+      <content>
+      Calculates the Bulls Power indicator and returns its value.
+      </content>
+      <example>
+double value = iBullsPower(NULL, 0, 13, PRICE_CLOSE, 0);
+      </example>
+      <parameter>
+        type=string
+        name=symbol
+        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+      </parameter>
+      <parameter>
+        type=int
+        name=timeframe
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+      </parameter>
+      <parameter>
+        type=int
+        name=period
+        description=Averaging period for calculation.
+      </parameter>
+      <parameter>
+        type=int
+        name=applied_price
+        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
+      tag=indicators_iBWMFI
+      caption=iBWMFI() - Market Facilitation Index (Bill Williams)
+      type=double
+      <content>
+      Calculates the Bill Williams Market Facilitation index and returns its value.
+      </content>
+      <example>
+double value = iBWMFI(NULL, 0, 0);
+      </example>
+      <parameter>
+        type=string
+        name=symbol
+        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+      </parameter>
+      <parameter>
+        type=int
+        name=timeframe
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
       tag=indicators_iCCI
       caption=iCCI() - Commodity Channel Index
       type=double
@@ -8034,7 +8061,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       Calculates the Commodity channel index and returns its value.
       </content>
       <example>
-  if(iCCI(NULL,0,12,PRICE_TYPICAL,0)&gt;iCCI(NULL,0,20,PRICE_TYPICAL,0)) return(0);
+if (iCCI(NULL, 0, 12, PRICE_TYPICAL, 0) &gt; iCCI(NULL, 0, 20, PRICE_TYPICAL, 0)) return(0);
       </example>
       <parameter>
         type=string
@@ -8071,7 +8098,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
         Calculates the Commodity Channel Index on custom data. The indicator is calculated from left to right. To access the array elements as a series array
         (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
-      example=if(iCCIOnArray(ExtBuffer,total,12,0)&gt;iCCI(NULL,0,20,PRICE_TYPICAL, 0)) return(0);
+      example=if (iCCIOnArray(ExtBuffer, total, 12, 0) &gt; iCCI(NULL, 0, 20, PRICE_TYPICAL, 0)) return(0);
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
@@ -8156,7 +8183,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the DeMarker indicator and returns its value.
       </content>
       <example>
-  double val=iDeMarker(NULL, 0, 13, 1);
+double value = iDeMarker(NULL, 0, 13, 1);
       </example>
       <parameter>
         type=string
@@ -8188,7 +8215,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the Envelopes indicator and returns its value.
       </content>
       <example>
-  double val=iEnvelopes(NULL, 0, 13,MODE_SMA,10,PRICE_CLOSE,0.2,MODE_UPPER,0);
+double value = iEnvelopes(NULL, 0, 13, MODE_SMA, 10, PRICE_CLOSE, 0.2, MODE_UPPER, 0);
       </example>
       <parameter>
         type=string
@@ -8246,7 +8273,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
         (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       <example>
-  double val=iEnvelopesOnArray(ExtBuffer, 0, 13, MODE_SMA, 0.2, MODE_UPPER,0 );
+double value = iEnvelopesOnArray(ExtBuffer, 0, 13, MODE_SMA, 0.2, MODE_UPPER, 0);
       </example>
       <parameter>
         type=double
@@ -8298,7 +8325,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the Force index and returns its value.
       </content>
       <example>
-  double val=iForce(NULL, 0, 13,MODE_SMA,PRICE_CLOSE,0);
+double value = iForce(NULL, 0, 13, MODE_SMA, PRICE_CLOSE, 0);
       </example>
       <parameter>
         type=string
@@ -8340,7 +8367,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the Fractals and returns its value.
       </content>
       <example>
-  double val=iFractals(NULL, 0, MODE_UPPER, 3);
+double value = iFractals(NULL, 0, MODE_UPPER, 3);
       </example>
       <parameter>
         type=string
@@ -8372,7 +8399,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Gator oscillator calculation. The oscillator displays the difference between the <a href="help://indicators_iAlligator">Alligator</a> red and blue lines (the upper histogram) and that between red and green lines (the lower histogram).
       </content>
       <example>
-  double jaw_val=iGator(NULL, 0, 13, 8, 8, 5, 5, 3, MODE_SMMA, PRICE_MEDIAN, MODE_UPPER, 1);
+double value = iGator(NULL, 0, 13, 8, 8, 5, 5, 3, MODE_SMMA, PRICE_MEDIAN, MODE_UPPER, 1);
       </example>
       <parameter>
         type=string
@@ -8445,7 +8472,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       </content>
       keywords=;MODE_TENKANSEN;MODE_KIJUNSEN;MODE_SENKOUSPANA;MODE_SENKOUSPANB;MODE_CHINKOUSPAN;
       <example>
-  double tenkan_sen=iIchimoku(NULL, 0, 9, 26, 52, MODE_TENKANSEN, 1);
+double value = iIchimoku(NULL, 0, 9, 26, 52, MODE_TENKANSEN, 1);
       </example>
       <parameter>
         type=string
@@ -8485,136 +8512,13 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
     </function>
 
     <function>
-      tag=indicators_iBWMFI
-      caption=iBWMFI() - Market Facilitation Index (Bill Williams)
-      type=double
-      <content>
-      Calculates the Bill Williams Market Facilitation index and returns its value.
-      </content>
-      <example>
-  double val=iBWMFI(NULL, 0, 0);
-      </example>
-      <parameter>
-        type=string
-        name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
-      </parameter>
-      <parameter>
-        type=int
-        name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
-      tag=indicators_iMomentum
-      caption=iMomentum() - Momentum
-      type=double
-      <content>
-      Calculates the Momentum indicator and returns its value.
-      </content>
-      example=if(iMomentum(NULL,0,12,PRICE_CLOSE,0)&gt;iMomentum(NULL,0,20,PRICE_CLOSE,0)) return(0);
-      <parameter>
-        type=string
-        name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
-      </parameter>
-      <parameter>
-        type=int
-        name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=period
-        description=Period (amount of bars) for calculation of price changes.
-      </parameter>
-      <parameter>
-        type=int
-        name=applied_price
-        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
-      </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
-      tag=indicators_iMomentumOnArray
-      caption=iMomentumOnArray() - Momentum on buffer
-      type=double
-      <content>
-        Calculates the Momentum indicator values on custom data. The indicator is calculated from left to right. To access the array elements as a series array
-        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
-      </content>
-      example=if(iMomentumOnArray(mybuffer,100,12,0)&gt;iMomentumOnArray(mubuffer,100,20,0)) return(0);
-      <parameter>
-        type=double
-        name=<nobr>array[]</nobr>
-        description=Array with data.
-      </parameter>
-      <parameter>
-        type=int
-        name=total
-        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
-      </parameter>
-      <parameter>
-        type=int
-        name=period
-        description=Period (amount of bars) for calculation of price changes.
-      </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
-      tag=indicators_iMFI
-      caption=iMFI() - Money Flow Index
-      type=double
-      <content>
-      Calculates the Money flow index and returns its value.
-      </content>
-      example=if(iMFI(NULL,0,14,0)&gt;iMFI(NULL,0,14,1)) return(0);
-      <parameter>
-        type=string
-        name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
-      </parameter>
-      <parameter>
-        type=int
-        name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=period
-        description=Period (amount of bars) for calculation of the indicator.
-      </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
       tag=indicators_iMA
       caption=iMA() - Moving Average
       type=double
       <content>
       Calculates the Moving average indicator and returns a value.
       </content>
-      example=AlligatorJawsBuffer[i] = iMA(NULL, 0, 13, 8, MODE_SMA, PRICE_MEDIAN, i);
+      example=double value = iMA(NULL, 0, 13, 8, MODE_SMA, PRICE_MEDIAN, i);
       <parameter>
         type=string
         name=symbol
@@ -8705,51 +8609,6 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
     </function>
 
     <function>
-      tag=indicators_iOsMA
-      caption=iOsMA() - Moving Average of Oscillator
-      type=double
-      <content>
-      Calculates the Moving Average of Oscillator and returns its value.
-      </content>
-      example=if(iOsMA(NULL,0,12,26,9,PRICE_OPEN,1)&gt;iOsMA(NULL,0,12,26,9,PRICE_OPEN,0)) return(0);
-      <parameter>
-        type=string
-        name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
-      </parameter>
-      <parameter>
-        type=int
-        name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
-      </parameter>
-      <parameter>
-        type=int
-        name=fast_ema_period
-        description=Number of periods for fast moving average calculation.
-      </parameter>
-      <parameter>
-        type=int
-        name=slow_ema_period
-        description=Number of periods for slow moving average calculation.
-      </parameter>
-      <parameter>
-        type=int
-        name=signal_period
-        description=Number of periods for signal moving average calculation.
-      </parameter>
-      <parameter>
-        type=int
-        name=applied_price
-        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
-      </parameter>
-      <parameter>
-        type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
-      </parameter>
-    </function>
-
-    <function>
       tag=indicators_iMACD
       caption=iMACD() - Moving Averages Convergence/Divergence
       type=double
@@ -8800,6 +8659,102 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
     </function>
 
     <function>
+      tag=indicators_iMFI
+      caption=iMFI() - Money Flow Index
+      type=double
+      <content>
+      Calculates the Money flow index and returns its value.
+      </content>
+      example=if (iMFI(NULL, 0, 14, 0) &gt; iMFI(NULL, 0, 14, 1)) return(0);
+      <parameter>
+        type=string
+        name=symbol
+        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+      </parameter>
+      <parameter>
+        type=int
+        name=timeframe
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+      </parameter>
+      <parameter>
+        type=int
+        name=period
+        description=Period (amount of bars) for calculation of the indicator.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
+      tag=indicators_iMomentum
+      caption=iMomentum() - Momentum
+      type=double
+      <content>
+      Calculates the Momentum indicator and returns its value.
+      </content>
+      example=if (iMomentum(NULL, 0, 12, PRICE_CLOSE, 0) &gt; iMomentum(NULL, 0, 20, PRICE_CLOSE, 0)) return(0);
+      <parameter>
+        type=string
+        name=symbol
+        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+      </parameter>
+      <parameter>
+        type=int
+        name=timeframe
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+      </parameter>
+      <parameter>
+        type=int
+        name=period
+        description=Period (amount of bars) for calculation of price changes.
+      </parameter>
+      <parameter>
+        type=int
+        name=applied_price
+        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
+      tag=indicators_iMomentumOnArray
+      caption=iMomentumOnArray() - Momentum on buffer
+      type=double
+      <content>
+        Calculates the Momentum indicator values on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
+      </content>
+      example=if (iMomentumOnArray(buffer, 100, 12, 0) &gt; iMomentumOnArray(buffer, 100, 20, 0)) return(0);
+      <parameter>
+        type=double
+        name=<nobr>array[]</nobr>
+        description=Array with data.
+      </parameter>
+      <parameter>
+        type=int
+        name=total
+        description=Number of data points to calculate. 0 means the whole array, see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
+      </parameter>
+      <parameter>
+        type=int
+        name=period
+        description=Period (amount of bars) for calculation of price changes.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
       tag=indicators_iOBV
       caption=iOBV() - On Balance Volume
       type=double
@@ -8807,7 +8762,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the On Balance Volume indicator and returns its value.
       </content>
       <example>
-  double val=iOBV(NULL, 0, PRICE_CLOSE, 1);
+double value = iOBV(NULL, 0, PRICE_CLOSE, 1);
       </example>
       <parameter>
         type=string
@@ -8832,13 +8787,13 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
     </function>
 
     <function>
-      tag=indicators_iSAR
-      caption=iSAR() - Parabolic SAR
+      tag=indicators_iOsMA
+      caption=iOsMA() - Moving Average of Oscillator
       type=double
       <content>
-      Calculates the Parabolic Stop and Reverse system and returns its value.
+      Calculates the Moving Average of Oscillator and returns its value.
       </content>
-      example=if(iSAR(NULL,0,0.02,0.2,0)&gt;Close[0]) return(0);
+      example=if (iOsMA(NULL, 0, 12, 26, 9, PRICE_OPEN, 1) &gt; iOsMA(NULL, 0, 12, 26, 9, PRICE_OPEN, 0)) return(0);
       <parameter>
         type=string
         name=symbol
@@ -8850,14 +8805,24 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
         description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
-        type=double
-        name=step
-        description=Increment, usually 0.02.
+        type=int
+        name=fast_ema_period
+        description=Number of periods for fast moving average calculation.
       </parameter>
       <parameter>
-        type=double
-        name=maximum
-        description=Maximum value, usually 0.2.
+        type=int
+        name=slow_ema_period
+        description=Number of periods for slow moving average calculation.
+      </parameter>
+      <parameter>
+        type=int
+        name=signal_period
+        description=Number of periods for signal moving average calculation.
+      </parameter>
+      <parameter>
+        type=int
+        name=applied_price
+        description=Applied price. It can be any of <a href="help://constants_prices">Applied price enumeration</a> values.
       </parameter>
       <parameter>
         type=int
@@ -8873,7 +8838,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <content>
       Calculates the Relative strength index and returns its value.
       </content>
-      example=if(iRSI(NULL,0,14,PRICE_CLOSE,0)&gt;iRSI(NULL,0,14,PRICE_CLOSE,1)) return(0);
+      example=if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &gt; iRSI(NULL, 0, 14, PRICE_CLOSE, 1)) return(0);
       <parameter>
         type=string
         name=symbol
@@ -8909,7 +8874,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
         Calculates the Relative Strength Index on custom data. The indicator is calculated from left to right. To access the array elements as a series array
         (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
-      example=if(iRSIOnArray(ExtBuffer,1000,14,0)&gt;iRSI(NULL,0,14,PRICE_CLOSE,1)) return(0);
+      example=if (iRSIOnArray(buffer, 1000, 14, 0) &gt; iRSI(NULL, 0, 14, PRICE_CLOSE, 1)) return(0);
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
@@ -8940,7 +8905,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the Relative Vigor index and returns its value.
       </content>
       <example>
-  double val=iRVI(NULL, 0, 10,MODE_MAIN,0);
+double value = iRVI(NULL, 0, 10, MODE_MAIN, 0);
       </example>
       <parameter>
         type=string
@@ -8970,13 +8935,48 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
     </function>
 
     <function>
+      tag=indicators_iSAR
+      caption=iSAR() - Parabolic SAR
+      type=double
+      <content>
+      Calculates the Parabolic Stop and Reverse system and returns its value.
+      </content>
+      example=if (iSAR(NULL, 0, 0.02, 0.2, 0) &gt; Close[0]) return(0);
+      <parameter>
+        type=string
+        name=symbol
+        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+      </parameter>
+      <parameter>
+        type=int
+        name=timeframe
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+      </parameter>
+      <parameter>
+        type=double
+        name=step
+        description=Increment, usually 0.02.
+      </parameter>
+      <parameter>
+        type=double
+        name=maximum
+        description=Maximum value, usually 0.2.
+      </parameter>
+      <parameter>
+        type=int
+        name=shift
+        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+      </parameter>
+    </function>
+
+    <function>
       tag=indicators_iStdDev
       caption=iStdDev() - Standard Deviation
       type=double
       <content>
       Calculates the Standard Deviation indicator and returns its value.
       </content>
-      example=double val=iStdDev(NULL,0,10,0,MODE_EMA,PRICE_CLOSE,0);
+      example=double value = iStdDev(NULL, 0, 10, 0, MODE_EMA, PRICE_CLOSE, 0);
       <parameter>
         type=string
         name=symbol
@@ -9022,7 +9022,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
         Calculates the Standard Deviation indicator on custom data. The indicator is calculated from left to right. To access the array elements as a series array
         (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
-      example=double val=iStdDevOnArray(ExtBuffer,100,10,0,MODE_EMA,0);
+      example=double value = iStdDevOnArray(buffer, 100, 10, 0, MODE_EMA, 0);
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
@@ -9063,8 +9063,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       Calculates the Stochastic oscillator and returns its value.
       </content>
       <example>
-  if(iStochastic(NULL,0,5,3,3,MODE_SMA,0,MODE_MAIN,0)&gt;iStochastic(NULL,0,5,3,3,MODE_SMA,0,MODE_SIGNAL,0))
-    return(0);
+if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_SIGNAL, 0)) return(0);
       </example>
       <parameter>
         type=string
@@ -9120,7 +9119,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <content>
       Calculates the Larry William's percent range indicator and returns its value.
       </content>
-      example=if(iWPR(NULL,0,14,0)&gt;iWPR(NULL,0,14,1)) return(0);
+      example=if (iWPR(NULL, 0, 14, 0) &gt; iWPR(NULL, 0, 14, 1)) return(0);
       <parameter>
         type=string
         name=symbol
