@@ -694,6 +694,7 @@ bool     RemoveTickTimer(int timerId);;
 double   RemoveWindowDoubleA(int hWnd, string name);;
 int      RemoveWindowIntegerA(int hWnd, string name);;
 string   RemoveWindowStringA(int hWnd, string name);;
+bool     ReopenAlertDialog(int sound);;
 bool     SetCustomLogA(int ec[], string filename);;
 int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowDoubleA(int hWnd, string name, double value);;
