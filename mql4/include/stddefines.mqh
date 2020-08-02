@@ -273,7 +273,7 @@ double  N_INF;                                              // -1.#INF: negative
 // MA method identifiers, see iMA()
 #define MODE_SMA                       0        // simple moving average
 #define MODE_EMA                       1        // exponential moving average
-#define MODE_SMMA                      2        // smoothed moving average: SMMA(n) = EMA(2*n-1)
+#define MODE_SMMA                      2        // smoothed moving average, same as EMA: SMMA(n) = EMA(2*n-1)
 #define MODE_LWMA                      3        // linear weighted moving average
 #define MODE_ALMA                      4        // Arnaud Legoux moving average
 
