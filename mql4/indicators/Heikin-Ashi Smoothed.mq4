@@ -1,7 +1,7 @@
 /**
  * A Heikin-Ashi indicator with optional smoothing of input and output prices.
  *
- * Supported Moving Average types:
+ * Supported Moving-Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
@@ -13,11 +13,10 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices                 Genesis: SMMA(6) = EMA(11)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices; Genesis: SMMA(6) = EMA(11)
 extern int    Input.MA.Periods  = 6;
-
-extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of HA values                    Genesis: LWMA(2)
-extern int    Output.MA.Periods = 2;
+extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of HA values;    Genesis: LWMA(2)
+extern int    Output.MA.Periods = 0;  // 2
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
@@ -32,19 +31,32 @@ extern color  Color.BarDown     = Red;
 #define MODE_HA_CLOSE         1
 #define MODE_HA_HIGHLOW       2
 #define MODE_HA_LOWHIGH       3
+#define MODE_OUT_OPEN         4           // output prices (smoothed HA values)
+#define MODE_OUT_CLOSE        5
+#define MODE_OUT_HIGHLOW      6
+#define MODE_OUT_LOWHIGH      7
 
 #property indicator_chart_window
-#property indicator_buffers   4
+#property indicator_buffers   8
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
 #property indicator_color4    CLR_NONE
+#property indicator_color5    CLR_NONE
+#property indicator_color6    CLR_NONE
+#property indicator_color7    CLR_NONE
+#property indicator_color8    CLR_NONE
 
 double haOpen   [];
 double haClose  [];
 double haHighLow[];                       // holds the High of a bearish HA bar
 double haLowHigh[];                       // holds the High of a bullish HA bar
+
+double outOpen   [];
+double outClose  [];
+double outHighLow[];                      // holds the High of a bearish output bar
+double outLowHigh[];                      // holds the High of a bullish output bar
 
 int    inputMaMethod;
 int    inputMaPeriods;
@@ -109,10 +121,14 @@ int onInit() {
 
 
    // buffer management
-   SetIndexBuffer(MODE_HA_OPEN,    haOpen   );
-   SetIndexBuffer(MODE_HA_CLOSE,   haClose  );
-   SetIndexBuffer(MODE_HA_HIGHLOW, haHighLow);
-   SetIndexBuffer(MODE_HA_LOWHIGH, haLowHigh);
+   SetIndexBuffer(MODE_HA_OPEN,     haOpen    );
+   SetIndexBuffer(MODE_HA_CLOSE,    haClose   );
+   SetIndexBuffer(MODE_HA_HIGHLOW,  haHighLow );
+   SetIndexBuffer(MODE_HA_LOWHIGH,  haLowHigh );
+   SetIndexBuffer(MODE_OUT_OPEN,    outOpen   );
+   SetIndexBuffer(MODE_OUT_CLOSE,   outClose  );
+   SetIndexBuffer(MODE_OUT_HIGHLOW, outHighLow);
+   SetIndexBuffer(MODE_OUT_LOWHIGH, outLowHigh);
 
    // chart legend
    if (!IsSuperContext()) {
@@ -123,10 +139,14 @@ int onInit() {
    // names, labels and display options
    indicatorName = "Heikin-Ashi";
    IndicatorShortName(indicatorName);
-   SetIndexLabel(MODE_HA_OPEN,    indicatorName +" Open");  // chart tooltips and "Data" window
-   SetIndexLabel(MODE_HA_CLOSE,   indicatorName +" Close");
-   SetIndexLabel(MODE_HA_HIGHLOW, indicatorName +" H/L");
-   SetIndexLabel(MODE_HA_LOWHIGH, indicatorName +" L/H");
+   SetIndexLabel(MODE_HA_OPEN,     NULL);    // chart tooltips and "Data" window
+   SetIndexLabel(MODE_HA_CLOSE,    NULL);
+   SetIndexLabel(MODE_HA_HIGHLOW,  NULL);
+   SetIndexLabel(MODE_HA_LOWHIGH,  NULL);
+   SetIndexLabel(MODE_OUT_OPEN,    NULL);
+   SetIndexLabel(MODE_OUT_CLOSE,   NULL);
+   SetIndexLabel(MODE_OUT_HIGHLOW, NULL);
+   SetIndexLabel(MODE_OUT_LOWHIGH, NULL);
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -154,24 +174,32 @@ int onTick() {
 
    // reset all buffers before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(haOpen,    EMPTY_VALUE);
-      ArrayInitialize(haClose,   EMPTY_VALUE);
-      ArrayInitialize(haHighLow, EMPTY_VALUE);
-      ArrayInitialize(haLowHigh, EMPTY_VALUE);
+      ArrayInitialize(haOpen,     EMPTY_VALUE);
+      ArrayInitialize(haClose,    EMPTY_VALUE);
+      ArrayInitialize(haHighLow,  EMPTY_VALUE);
+      ArrayInitialize(haLowHigh,  EMPTY_VALUE);
+      ArrayInitialize(outOpen,    EMPTY_VALUE);
+      ArrayInitialize(outClose,   EMPTY_VALUE);
+      ArrayInitialize(outHighLow, EMPTY_VALUE);
+      ArrayInitialize(outLowHigh, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(haOpen,    Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(haClose,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(haHighLow, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(haLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haOpen,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haClose,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haHighLow,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haLowHigh,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(outOpen,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(outClose,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(outHighLow, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(outLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    double inO, inH, inL, inC;             // input prices
    double haO, haH, haL, haC;             // Heikin-Ashi values
-   double maO, maH, maL, maC;             // smoothed Heikin-Ashi output values
+   double maO, maH, maL, maC;             // output prices (smoothed HA values)
 
 
    // calculate HA startbar
@@ -222,10 +250,19 @@ int onTick() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   SetIndexStyle(MODE_HA_OPEN,    DRAW_HISTOGRAM, EMPTY, 3, Color.BarDown);   // in histograms the larger of both values
-   SetIndexStyle(MODE_HA_CLOSE,   DRAW_HISTOGRAM, EMPTY, 3, Color.BarUp  );   // determines the color to use
-   SetIndexStyle(MODE_HA_HIGHLOW, DRAW_HISTOGRAM, EMPTY, 1, Color.BarDown);
-   SetIndexStyle(MODE_HA_LOWHIGH, DRAW_HISTOGRAM, EMPTY, 1, Color.BarUp  );
+   int drawType = ifInt(outputMaMethod==MODE_SMA && outputMaPeriods==1, DRAW_HISTOGRAM, DRAW_NONE);
+
+   SetIndexStyle(MODE_HA_OPEN,    drawType, EMPTY, 3, Color.BarDown);   // in histograms the larger of both values
+   SetIndexStyle(MODE_HA_CLOSE,   drawType, EMPTY, 3, Color.BarUp  );   // determines the color to use
+   SetIndexStyle(MODE_HA_HIGHLOW, drawType, EMPTY, 1, Color.BarDown);
+   SetIndexStyle(MODE_HA_LOWHIGH, drawType, EMPTY, 1, Color.BarUp  );
+
+   drawType = ifInt(drawType==DRAW_HISTOGRAM, DRAW_NONE, DRAW_HISTOGRAM);
+
+   SetIndexStyle(MODE_OUT_OPEN,    drawType, EMPTY, 3, Color.BarDown);
+   SetIndexStyle(MODE_OUT_CLOSE,   drawType, EMPTY, 3, Color.BarUp  );
+   SetIndexStyle(MODE_OUT_HIGHLOW, drawType, EMPTY, 1, Color.BarDown);
+   SetIndexStyle(MODE_OUT_LOWHIGH, drawType, EMPTY, 1, Color.BarUp  );
 }
 
 
