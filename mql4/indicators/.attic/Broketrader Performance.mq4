@@ -378,7 +378,7 @@ double GetClosedPL(int bar) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    SetIndexStyle(MODE_OPEN,   DRAW_NONE, STYLE_SOLID, 1, CLR_NONE);

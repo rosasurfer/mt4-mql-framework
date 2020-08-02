@@ -1,5 +1,5 @@
 /**
- * A MACD (Moving Average Convergence-Divergence) with support for non-standard moving averages
+ * A MACD (Moving Average Convergence-Divergence) with support for non-standard moving average types.
  *
  *
  * Available Moving Average types:
@@ -8,13 +8,13 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * There's intentionally no support for the SMMA as SMMA(n) = EMA(2*n-1).
- *
  * Indicator buffers for iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
  *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
+ *
+ * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -128,6 +128,7 @@ int onInit() {
    }
    fastMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (fastMA.method == -1)             return(catch("onInit(2)  Invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  Unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
 
    // FastMA.AppliedPrice
@@ -147,18 +148,18 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) fastMA.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) fastMA.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) fastMA.appliedPrice = PRICE_WEIGHTED;
-      else                              return(catch("onInit(3)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                              return(catch("onInit(4)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
 
    // SlowMA.Periods
-   if (SlowMA.Periods < 1)              return(catch("onInit(4)  Invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (SlowMA.Periods < 1)              return(catch("onInit(5)  Invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slowMA.periods = SlowMA.Periods;
-   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(5)  Parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
+   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(6)  Parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
    if (fastMA.periods == slowMA.periods) {
       if (fastMA.method == slowMA.method) {
          if (fastMA.appliedPrice == slowMA.appliedPrice) {
-            return(catch("onInit(6)  Parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
+            return(catch("onInit(7)  Parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
          }
       }
    }
@@ -172,7 +173,8 @@ int onInit() {
       sValue = StrTrim(SlowMA.Method);
    }
    slowMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (slowMA.method == -1)             return(catch("onInit(7)  Invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.method == -1)             return(catch("onInit(8)  Invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  Unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
 
    // SlowMA.AppliedPrice
@@ -192,7 +194,7 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) slowMA.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) slowMA.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) slowMA.appliedPrice = PRICE_WEIGHTED;
-      else                              return(catch("onInit(8)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                              return(catch("onInit(10)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
 
@@ -202,13 +204,13 @@ int onInit() {
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
 
    // styles
-   if (Histogram.Style.Width < 0)       return(catch("onInit(9)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)       return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width < 0)              return(catch("onInit(11)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)              return(catch("onInit(12)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)              return(catch("onInit(13)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)              return(catch("onInit(14)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)                   return(catch("onInit(13)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                   return(catch("onInit(15)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
@@ -253,7 +255,7 @@ int onInit() {
    if (fastMA.method == MODE_ALMA) @ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
    if (slowMA.method == MODE_ALMA) @ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
 
-   return(catch("onInit(14)"));
+   return(catch("onInit(16)"));
 }
 
 
@@ -394,7 +396,7 @@ bool onCross(int section) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
