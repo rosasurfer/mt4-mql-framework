@@ -2851,27 +2851,28 @@ bool IsDemoFix() {
 
 
 /**
- * Listet alle ChildWindows eines Parent-Windows auf und schickt die Ausgabe an die Debug-Ausgabe.
+ * Enumerate all child windows of a window and send output to the system debugger.
  *
- * @param  int  hWnd                 - Handle des Parent-Windows
- * @param  bool recursive [optional] - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
+ * @param  int  hWnd                 - Handle of the window. If this parameter is NULL all top-level windows are enumerated.
+ * @param  bool recursive [optional] - Whether to enumerate child windows recursively (default: no).
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool EnumChildWindows(int hWnd, bool recursive = false) {
    recursive = recursive!=0;
-   if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_PARAMETER));
-   if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd="+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
+   if      (!hWnd)           hWnd = GetDesktopWindow();
+   else if (hWnd < 0)        return(!catch("EnumChildWindows(1)  invalid parameter hWnd: "+ hWnd , ERR_INVALID_PARAMETER));
+   else if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd: "+ IntToHexStr(hWnd), ERR_INVALID_PARAMETER));
 
-   string padding, class, title;
+   string padding, wndTitle, wndClass;
    int ctrlId;
 
    static int sublevel;
    if (!sublevel) {
-      class  = GetClassName(hWnd);
-      title  = GetWindowText(hWnd);
-      ctrlId = GetDlgCtrlID(hWnd);
-      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
+      wndClass = GetClassName(hWnd);
+      wndTitle = GetWindowText(hWnd);
+      ctrlId   = GetDlgCtrlID(hWnd);
+      debug("EnumChildWindows()  "+ IntToHexStr(hWnd) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
    }
    sublevel++;
    padding = StrRepeat(" ", (sublevel-1)<<1);
@@ -2879,10 +2880,10 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
    int i, hWndNext=GetWindow(hWnd, GW_CHILD);
    while (hWndNext != 0) {
       i++;
-      class  = GetClassName(hWndNext);
-      title  = GetWindowText(hWndNext);
-      ctrlId = GetDlgCtrlID(hWndNext);
-      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
+      wndClass = GetClassName(hWndNext);
+      wndTitle = GetWindowText(hWndNext);
+      ctrlId   = GetDlgCtrlID(hWndNext);
+      debug("EnumChildWindows()  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
 
       if (recursive) {
          if (!EnumChildWindows(hWndNext, true)) {
@@ -2892,7 +2893,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
       }
       hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
    }
-   if (!sublevel) /*&&*/ if (!i) debug("EnumChildWindows(.)  "+ padding +"-> (no child windows)");
+   if (!sublevel && !i) debug("EnumChildWindows()  "+ padding +"-> (no child windows)");
 
    sublevel--;
    return(!catch("EnumChildWindows(3)"));
@@ -6915,12 +6916,12 @@ void __DummyCalls() {
 #import "user32.dll"
    int      GetAncestor(int hWnd, int cmd);
    int      GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
+   int      GetDesktopWindow();
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
    int      GetParent(int hWnd);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
-   int      GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool     IsWindow(int hWnd);
    int      MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
