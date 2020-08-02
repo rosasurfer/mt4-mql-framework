@@ -63,7 +63,7 @@ string legendLabel, iDescription;
 int onInit() {
    // (1) Validierung
    // MA.Periods
-   if (MA.Periods < 2)      return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 2)      return(catch("onInit(1)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
    // MA.Method
@@ -74,7 +74,8 @@ int onInit() {
    }
    else sValue = MA.Method;
    ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)     return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == -1)        return(catch("onInit(2)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == MODE_SMMA) return(catch("onInit(3)  Unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
@@ -94,29 +95,29 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                  return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                  return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // ATR.Periods
-   if (ATR.Periods < 1)     return(catch("onInit(4)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)     return(catch("onInit(5)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // ATR.Timeframe
    ATR.Timeframe = StrToUpper(StrTrim(ATR.Timeframe));
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (atr.timeframe == -1) return(catch("onInit(5)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (atr.timeframe == -1) return(catch("onInit(6)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
 
    // ATR.Multiplier
-   if (ATR.Multiplier < 0)  return(catch("onInit(6)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)  return(catch("onInit(7)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
    // Max.Bars
-   if (Max.Bars < -1)       return(catch("onInit(7)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)       return(catch("onInit(8)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Chart-Legende erzeugen
@@ -156,7 +157,7 @@ int onInit() {
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
    SetIndicatorOptions();
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -256,7 +257,7 @@ bool RecalcALMAChannel(int startBar) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);

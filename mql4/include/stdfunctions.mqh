@@ -2357,14 +2357,14 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
- * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
+ * Return the integer constant of a Moving-Average type representation.
  *
- * @param  string value     - MA-Methode
- * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
+ * @param  string value            - string representation of a Moving-Average type
+ * @param  int    flags [optional] - execution control: errors to set silently (default: none)
  *
- * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Moving-Average type constant oder -1 (EMPTY) in case of errors
  */
-int StrToMaMethod(string value, int execFlags=NULL) {
+int StrToMaMethod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
@@ -2372,24 +2372,18 @@ int StrToMaMethod(string value, int execFlags=NULL) {
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
-   if (str ==         "LWMA") return(MODE_LWMA);
-   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "EMA" ) return(MODE_EMA );
    if (str == ""+ MODE_EMA  ) return(MODE_EMA );
+   if (str ==         "SMMA") return(MODE_SMMA);
+   if (str == ""+ MODE_SMMA ) return(MODE_SMMA);
+   if (str ==         "LWMA") return(MODE_LWMA);
+   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   if (!flags & F_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-int StrToMovingAverageMethod(string value, int execFlags=NULL) {
-   return(StrToMaMethod(value, execFlags));
 }
 
 
@@ -4840,14 +4834,14 @@ int StrToOperationType(string value) {
 
 
 /**
- * Return the integer constant of a trade direction identifier.
+ * Return the integer constant of a trade direction representation.
  *
- * @param  string value     - trade directions: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
- * @param  int    execFlags - execution control: error flags to set silently (default: none)
+ * @param  string value            - string representation of a trade direction: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
+ * @param  int    flags [optional] - execution control: errors to set silently (default: none)
  *
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToTradeDirection(string value, int execFlags=NULL) {
+int StrToTradeDirection(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "TRADE_DIRECTION_"))
@@ -4862,8 +4856,9 @@ int StrToTradeDirection(string value, int execFlags=NULL) {
    if (str ==                    "BOTH" ) return(TRADE_DIRECTION_BOTH);
    if (str == ""+ TRADE_DIRECTION_BOTH  ) return(TRADE_DIRECTION_BOTH);
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   else                                      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (!flags & F_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6830,7 +6825,6 @@ void __DummyCalls() {
    StrToHexStr(NULL);
    StrToLower(NULL);
    StrToMaMethod(NULL);
-   StrToMovingAverageMethod(NULL);
    StrToOperationType(NULL);
    StrToPeriod(NULL);
    StrToPriceType(NULL);

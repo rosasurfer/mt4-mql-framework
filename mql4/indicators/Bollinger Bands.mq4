@@ -93,7 +93,7 @@ int onInit() {
 
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)      return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)      return(catch("onInit(1)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.Method
    string values[], sValue = MA.Method;
@@ -103,7 +103,8 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)     return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == -1)        return(catch("onInit(2)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == MODE_SMMA) return(catch("onInit(3)  Unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
@@ -123,7 +124,7 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                  return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                  return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
@@ -131,21 +132,21 @@ int onInit() {
    if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
 
    // MA.LineWidth
-   if (MA.LineWidth < 0)    return(catch("onInit(4)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (MA.LineWidth > 5)    return(catch("onInit(5)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth < 0)    return(catch("onInit(5)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth > 5)    return(catch("onInit(6)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.StdDevs
-   if (Bands.StdDevs < 0)   return(catch("onInit(6)  Invalid input parameter Bands.StdDevs = "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.StdDevs < 0)   return(catch("onInit(7)  Invalid input parameter Bands.StdDevs = "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // Bands.LineWidth
-   if (Bands.LineWidth < 0) return(catch("onInit(7)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5) return(catch("onInit(8)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0) return(catch("onInit(8)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5) return(catch("onInit(9)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)       return(catch("onInit(9)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)       return(catch("onInit(10)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (!ConfigureSignal("BollingerBand", Signal.onTouchBand, signals))                                        return(last_error);
@@ -193,7 +194,7 @@ int onInit() {
    if (ma.method==MODE_ALMA && MA.Periods > 1) {
       @ALMA.CalculateWeights(alma.weights, MA.Periods);
    }
-   return(catch("onInit(10)"));
+   return(catch("onInit(11)"));
 }
 
 
@@ -289,7 +290,7 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);

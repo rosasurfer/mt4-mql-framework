@@ -35,11 +35,6 @@ extern int   Output.MA.Method  = 3;
 #property indicator_color3    CLR_NONE
 #property indicator_color4    CLR_NONE
 
-#property indicator_width1    3
-#property indicator_width2    3
-#property indicator_width3    1
-#property indicator_width4    1
-
 double haOpen   [];
 double haClose  [];
 double haHighLow[];                       // holds the High of a bearish HA bar
@@ -112,14 +107,13 @@ int onTick() {
       ShiftIndicatorBuffer(haLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-   // calculate start bar
-   int bars     = ChangedBars;
-   int startBar = Min(bars-1, Bars-2);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-
    double inO, inH, inL, inC;             // input prices
    double haO, haH, haL, haC;             // Heikin-Ashi values
    double maO, maH, maL, maC;             // smoothed Heikin-Ashi output values
+
+   // calculate start bar
+   int startBar = Min(ChangedBars-1, Bars-2);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    // initialize the oldest bar
    int bar = startBar;
@@ -144,11 +138,11 @@ int onTick() {
       haClose[bar] = haC;
 
       if (haO < haC) {
-         haLowHigh[bar] = haH;            // bullish bar, the High goes into the up-colored buffer
+         haLowHigh[bar] = haH;            // bullish HA bar, the High goes into the up-colored buffer
          haHighLow[bar] = haL;
       }
       else {
-         haHighLow[bar] = haH;            // bearish bar, the High goes into the down-colored buffer
+         haHighLow[bar] = haH;            // bearish HA bar, the High goes into the down-colored buffer
          haLowHigh[bar] = haL;
       }
    }
@@ -159,7 +153,7 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    SetIndexStyle(MODE_HA_OPEN,    DRAW_HISTOGRAM, EMPTY, 3, Color.BarDown);   // in histograms the larger of both values

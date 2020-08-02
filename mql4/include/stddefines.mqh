@@ -270,7 +270,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_TIME                      5        // bar open time
 
 
-// MA method identifiers, siehe iMA()
+// MA method identifiers, see iMA()
 #define MODE_SMA                       0        // simple moving average
 #define MODE_EMA                       1        // exponential moving average
 #define MODE_SMMA                      2        // smoothed moving average: SMMA(n) = EMA(2*n-1)
@@ -278,18 +278,18 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_ALMA                      4        // Arnaud Legoux moving average
 
 
-// Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
+// indicator line identifiers, see iMACD(), iRVI(), iStochastic()
 #define MODE_MAIN                      0        // base indicator line
 #define MODE_SIGNAL                    1        // signal line
 
 
-// Indicator line identifiers, siehe iADX()
+// indicator line identifiers, see iADX()
 #define MODE_MAIN                      0        // base indicator line
 #define MODE_PLUSDI                    1        // +DI indicator line
 #define MODE_MINUSDI                   2        // -DI indicator line
 
 
-// Indicator line identifiers, siehe iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
+// indicator line identifiers, see iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
 #define MODE_UPPER                     1        // upper line
 #define MODE_LOWER                     2        // lower line
 
