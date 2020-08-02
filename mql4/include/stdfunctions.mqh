@@ -5322,59 +5322,50 @@ int StrToPriceType(string value, int execFlags = NULL) {
 
 
 /**
- * Gibt die lesbare Beschreibung einer MovingAverage-Methode zurück.
+ * Return a readable version of a Moving-Average method type constant.
  *
- * @param  int type - MA-Methode
- *
- * @return string
- */
-string MaMethodDescription(int method) {
-   switch (method) {
-      case MODE_SMA : return("SMA" );
-      case MODE_LWMA: return("LWMA");
-      case MODE_EMA : return("EMA" );
-      case MODE_ALMA: return("ALMA");
-   }
-   return(_EMPTY_STR(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-string MovingAverageMethodDescription(int method) {
-   return(MaMethodDescription(method));
-}
-
-
-/**
- * Return a readable version of a MovingAverage method.
- *
- * @param  int method
+ * @param  int type - MA method type
  *
  * @return string
  */
-string MaMethodToStr(int method) {
-   switch (method) {
+string MaMethodToStr(int type) {
+   switch (type) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_EMA : return("MODE_EMA" );
+      case MODE_SMMA: return("MODE_SMMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   return(_EMPTY_STR(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("MaMethodToStr(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Alias
+ * Return a description of a Moving-Average method type constant.
+ *
+ * @param  int  type              - MA method type
+ * @param  bool strict [optional] - whether to trigger an error if the passed value is invalid (default: yes)
+ *
+ * @return string - description or an empty string in case of errors
  */
-string MovingAverageMethodToStr(int method) {
-   return(MaMethodToStr(method));
+string MaMethodDescription(int type, bool strict = true) {
+   strict = strict!=0;
+
+   switch (type) {
+      case MODE_SMA : return("SMA" );
+      case MODE_LWMA: return("LWMA");
+      case MODE_EMA : return("EMA" );
+      case MODE_SMMA: return("SMMA");
+      case MODE_ALMA: return("ALMA");
+   }
+   if (strict)
+      return(_EMPTY_STR(catch("MaMethodDescription(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   return("");
 }
 
 
 /**
- * Return a readable version of a price type identifier.
+ * Return a readable version of a price type constant.
  *
  * @param  int type - price type
  *
@@ -5392,14 +5383,14 @@ string PriceTypeToStr(int type) {
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
-   return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Gibt die lesbare Version eines Price-Identifiers zurück.
+ * Return a description of a price type constant.
  *
- * @param  int type - Price-Type
+ * @param  int type - price type
  *
  * @return string
  */
@@ -5415,7 +5406,7 @@ string PriceTypeDescription(int type) {
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }
-   return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5518,7 +5509,7 @@ string SwapCalculationModeToStr(int mode) {
       case SCM_INTEREST       : return("SCM_INTEREST"       );
       case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
-   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid paramter mode = "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6758,8 +6749,6 @@ void __DummyCalls() {
    MessageBoxButtonToStr(NULL);
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
-   MovingAverageMethodDescription(NULL);
-   MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
    Mul(NULL, NULL);

@@ -1,6 +1,5 @@
 /**
- * Heikin-Ashi Smoothed
- *
+ * A Heikin-Ashi indicator with optional smoothing of input and output prices.
  *
  * Supported Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
@@ -14,11 +13,11 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices                 Genesis: SMMA(6) = EMA(11)
 extern int    Input.MA.Periods  = 6;
-extern string Input.MA.Method   = "SMA | LWMA | EMA | SMMA*";     // averaging of input prices     SMMA(6) = EMA(11)
 
+extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of HA values                    Genesis: LWMA(2)
 extern int    Output.MA.Periods = 2;
-extern string Output.MA.Method  = "SMA | LWMA* | EMA | SMMA";     // averaging of HA values        LWMA(2)
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
@@ -64,30 +63,45 @@ string chartLegendLabel;
  */
 int onInit() {
    // validate inputs
-   if (Input.MA.Periods  < 1) return(catch("onInit(1)  Invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Output.MA.Periods < 1) return(catch("onInit(2)  Invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   inputMaPeriods  = Input.MA.Periods;
-   outputMaPeriods = Output.MA.Periods;
-
-   // Input.MA.Method
-   string sValues[], sValue=Input.MA.Method;
+   // Input.MA
+   string sValues[], sValue=StrTrim(Input.MA.Method);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+      sValue = StrTrim(sValues[size-1]);
    }
-   inputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (inputMaMethod == -1)   return(catch("onInit(3)  Invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Input.MA.Method = MaMethodDescription(inputMaMethod);
+   if (!StringLen(sValue) || StrCompareI(sValue, "none")) {
+      inputMaMethod = EMPTY;
+   }
+   else {
+      inputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+      if (inputMaMethod == -1)   return(catch("onInit(1)  Invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   }
+   Input.MA.Method = MaMethodDescription(inputMaMethod, false);
+   if (!IsEmpty(inputMaMethod)) {
+      if (Input.MA.Periods < 0)  return(catch("onInit(2)  Invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      inputMaPeriods = ifInt(!Input.MA.Periods, 1, Input.MA.Periods);
+      if (inputMaPeriods == 1) inputMaMethod = EMPTY;
+   }
 
    // Output.MA.Method
-   sValue = Output.MA.Method;
+   sValue = StrTrim(Output.MA.Method);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+      sValue = StrTrim(sValues[size-1]);
    }
-   outputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (outputMaMethod == -1)  return(catch("onInit(5)  Invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Output.MA.Method = MaMethodDescription(outputMaMethod);
+   if (!StringLen(sValue) || StrCompareI(sValue, "none")) {
+      outputMaMethod = EMPTY;
+   }
+   else {
+      outputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+      if (outputMaMethod == -1)  return(catch("onInit(3)  Invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   }
+   Output.MA.Method = MaMethodDescription(outputMaMethod, false);
+   if (!IsEmpty(outputMaMethod)) {
+      if (Output.MA.Periods < 0) return(catch("onInit(4)  Invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      outputMaPeriods = ifInt(!Output.MA.Periods, 1, Output.MA.Periods);
+      if (outputMaPeriods == 1) outputMaMethod = EMPTY;
+   }
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.BarUp   == 0xFF000000) Color.BarUp   = CLR_NONE;
@@ -116,6 +130,15 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
+   // after legend/label processing: replace disabled smoothing with equal SMA(1) to simplify calculations
+   if (IsEmpty(inputMaMethod)) {
+      inputMaMethod  = MODE_SMA;
+      inputMaPeriods = 1;
+   }
+   if (IsEmpty(outputMaMethod)) {
+      outputMaMethod  = MODE_SMA;
+      outputMaPeriods = 1;
+   }
    return(catch("onInit(7)"));
 }
 
@@ -150,23 +173,28 @@ int onTick() {
    double haO, haH, haL, haC;             // Heikin-Ashi values
    double maO, maH, maL, maC;             // smoothed Heikin-Ashi output values
 
-   // calculate start bar
-   int startBar = Min(ChangedBars-1, Bars-2);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   // initialize the oldest bar
-   int bar = startBar;
+   // calculate HA startbar
+   int startBarHA = Min(Bars-inputMaPeriods-1, ChangedBars-1);
+   if (startBarHA < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+
+   int bar = startBarHA;
    if (haOpen[bar+1] == EMPTY_VALUE) {
-      haOpen [bar+1] =  Open[bar+1];
-      haClose[bar+1] = (Open[bar+1] + High[bar+1] + Low[bar+1] + Close[bar+1])/4;
+      // initialize HA values of the oldest bar
+      inO = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_OPEN,  bar+1);
+      inH = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_HIGH,  bar+1);
+      inL = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_LOW,   bar+1);
+      inC = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_CLOSE, bar+1);
+      haOpen [bar+1] =  inO;
+      haClose[bar+1] = (inO + inH + inL + inC)/4;
    }
 
    // recalculate changed bars
    for (; bar >= 0; bar--) {
-      inO = Open [bar];
-      inH = High [bar];
-      inL = Low  [bar];
-      inC = Close[bar];
+      inO = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_OPEN,  bar);
+      inH = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_HIGH,  bar);
+      inL = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_LOW,   bar);
+      inC = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_CLOSE, bar);
 
       haO = (haOpen[bar+1] + haClose[bar+1])/2;
       haC = (inO + inH + inL + inC)/4;
@@ -185,7 +213,6 @@ int onTick() {
          haLowHigh[bar] = haL;
       }
    }
-
    return(last_error);
 }
 
@@ -208,10 +235,10 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Input.MA.Periods=",  Input.MA.Periods,                 ";", NL,
-                            "Input.MA.Method=",   DoubleQuoteStr(Input.MA.Method),  ";", NL,
-                            "Output.MA.Periods=", Output.MA.Periods,                ";", NL,
+   return(StringConcatenate("Input.MA.Method=",   DoubleQuoteStr(Input.MA.Method),  ";", NL,
+                            "Input.MA.Periods=",  Input.MA.Periods,                 ";", NL,
                             "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
+                            "Output.MA.Periods=", Output.MA.Periods,                ";", NL,
                             "Color.BarUp=",       ColorToStr(Color.BarUp),          ";", NL,
                             "Color.BarDown=",     ColorToStr(Color.BarDown),        ";")
    );
