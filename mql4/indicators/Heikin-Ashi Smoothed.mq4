@@ -1,6 +1,12 @@
 /**
  * Heikin-Ashi Smoothed
  *
+ *
+ * Supported Moving Average types:
+ *  • SMA  - Simple Moving Average:          equal bar weighting
+ *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
+ *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
+ *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -8,13 +14,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color Color.BarUp       = Blue;
-extern color Color.BarDown     = Red;
+extern int    Input.MA.Periods  = 6;
+extern string Input.MA.Method   = "SMA | LWMA | EMA | SMMA*";     // averaging of input prices     SMMA(6) = EMA(11)
 
-extern int   Input.MA.Periods  = 6;
-extern int   Input.MA.Method   = 2;
-extern int   Output.MA.Periods = 2;
-extern int   Output.MA.Method  = 3;
+extern int    Output.MA.Periods = 2;
+extern string Output.MA.Method  = "SMA | LWMA* | EMA | SMMA";     // averaging of HA values        LWMA(2)
+
+extern color  Color.BarUp       = Blue;
+extern color  Color.BarDown     = Red;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,6 +47,12 @@ double haClose  [];
 double haHighLow[];                       // holds the High of a bearish HA bar
 double haLowHigh[];                       // holds the High of a bullish HA bar
 
+int    inputMaMethod;
+int    inputMaPeriods;
+
+int    outputMaMethod;
+int    outputMaPeriods;
+
 string indicatorName;
 string chartLegendLabel;
 
@@ -51,9 +64,35 @@ string chartLegendLabel;
  */
 int onInit() {
    // validate inputs
+   if (Input.MA.Periods  < 1) return(catch("onInit(1)  Invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Output.MA.Periods < 1) return(catch("onInit(2)  Invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   inputMaPeriods  = Input.MA.Periods;
+   outputMaPeriods = Output.MA.Periods;
+
+   // Input.MA.Method
+   string sValues[], sValue=Input.MA.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   inputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (inputMaMethod == -1)   return(catch("onInit(3)  Invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   Input.MA.Method = MaMethodDescription(inputMaMethod);
+
+   // Output.MA.Method
+   sValue = Output.MA.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   outputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (outputMaMethod == -1)  return(catch("onInit(5)  Invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   Output.MA.Method = MaMethodDescription(outputMaMethod);
+
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.BarUp   == 0xFF000000) Color.BarUp   = CLR_NONE;
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
+
 
    // buffer management
    SetIndexBuffer(MODE_HA_OPEN,    haOpen   );
@@ -77,7 +116,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(1)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -169,11 +208,11 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Color.BarUp=",       ColorToStr(Color.BarUp),   ";", NL,
-                            "Color.BarDown=",     ColorToStr(Color.BarDown), ";", NL,
-                            "Input.MA.Periods=",  Input.MA.Periods,          ";", NL,
-                            "Input.MA.Method=",   Input.MA.Method,           ";", NL,
-                            "Output.MA.Periods=", Output.MA.Periods,         ";", NL,
-                            "Output.MA.Method=",  Output.MA.Method,          ";")
+   return(StringConcatenate("Input.MA.Periods=",  Input.MA.Periods,                 ";", NL,
+                            "Input.MA.Method=",   DoubleQuoteStr(Input.MA.Method),  ";", NL,
+                            "Output.MA.Periods=", Output.MA.Periods,                ";", NL,
+                            "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
+                            "Color.BarUp=",       ColorToStr(Color.BarUp),          ";", NL,
+                            "Color.BarDown=",     ColorToStr(Color.BarDown),        ";")
    );
 }
