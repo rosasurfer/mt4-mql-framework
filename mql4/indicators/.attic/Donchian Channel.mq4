@@ -43,9 +43,8 @@ int onInit() {
 
    // Anzeigeoptionen
    string indicatorName = "Donchian Channel("+ Periods +")";
-   IndicatorShortName(indicatorName);
-
-   SetIndexLabel(0, "Donchian Upper("+ Periods +")");                      // Daten-Anzeige
+   IndicatorShortName(indicatorName);                               // chart context menu
+   SetIndexLabel(0, "Donchian Upper("+ Periods +")");               // chart tooltips and "Data" window
    SetIndexLabel(1, "Donchian Lower("+ Periods +")");
    IndicatorDigits(Digits);
 

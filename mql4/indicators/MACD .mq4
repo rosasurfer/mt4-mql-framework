@@ -243,8 +243,8 @@ int onInit() {
    else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
    string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
-   IndicatorShortName(indicatorName + signalInfo +"  ");                // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          dataName);                         // "Data" window and tooltips
+   IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);

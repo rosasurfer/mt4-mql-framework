@@ -123,8 +123,8 @@ int onInit() {
    string shortName="TEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "TEMA("+ MA.Periods + strAppliedPrice +")";
-   IndicatorShortName(shortName);                              // context menu
-   SetIndexLabel(MODE_TEMA,  shortName);                       // "Data" window and tooltips
+   IndicatorShortName(shortName);                              // chart context menu
+   SetIndexLabel(MODE_TEMA,  shortName);                       // chart tooltips and "Data" window
    SetIndexLabel(MODE_EMA_1, NULL);
    SetIndexLabel(MODE_EMA_2, NULL);
    IndicatorDigits(SubPipDigits);
