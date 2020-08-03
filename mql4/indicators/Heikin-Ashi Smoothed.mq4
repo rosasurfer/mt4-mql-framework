@@ -13,9 +13,9 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices;                Genesis: SMMA(6) = EMA(11)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices        Genesis: SMMA(6) = EMA(11)
 extern int    Input.MA.Periods  = 6;
-extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of resulting HA values;         Genesis: LWMA(2)
+extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of HA values           Genesis: LWMA(2)
 extern int    Output.MA.Periods = 2;
 
 extern color  Color.BarUp       = Blue;
@@ -26,8 +26,9 @@ extern color  Color.BarDown     = Red;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/@Trend.mqh>
 
-#define MODE_OUT_OPEN         0           // indicator buffer ids
+#define MODE_OUT_OPEN         0                 // indicator buffer ids
 #define MODE_OUT_CLOSE        1
 #define MODE_OUT_HIGHLOW      2
 #define MODE_OUT_LOWHIGH      3
@@ -37,7 +38,7 @@ extern color  Color.BarDown     = Red;
 #define MODE_HA_CLOSE         7
 
 #property indicator_chart_window
-#property indicator_buffers   4           // buffers visible in input dialog
+#property indicator_buffers   4                 // buffers visible in input dialog
 int       allocated_buffers = 8;
 
 #property indicator_color1    CLR_NONE
@@ -52,8 +53,8 @@ double haClose[];
 
 double outOpen   [];
 double outClose  [];
-double outHighLow[];                      // holds the High of a bearish output bar
-double outLowHigh[];                      // holds the High of a bullish output bar
+double outHighLow[];                            // holds the High of a bearish output bar
+double outLowHigh[];                            // holds the High of a bullish output bar
 
 int    inputMaMethod;
 int    inputMaPeriods;
@@ -134,9 +135,12 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = "Heikin-Ashi";
-   IndicatorShortName(indicatorName);
-   SetIndexLabel(MODE_OUT_OPEN,    NULL);    // chart tooltips and "Data" window
+   indicatorName = "Heikin-Ashi";               // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
+   if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
+   if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
+
+   IndicatorShortName(indicatorName);           // chart context menu
+   SetIndexLabel(MODE_OUT_OPEN,    NULL);       // chart tooltips and "Data" window
    SetIndexLabel(MODE_OUT_CLOSE,   NULL);
    SetIndexLabel(MODE_OUT_HIGHLOW, NULL);
    SetIndexLabel(MODE_OUT_LOWHIGH, NULL);
@@ -193,13 +197,15 @@ int onTick() {
 
    // calculate start bars
    int haBars      = Bars-inputMaPeriods;
-   int haStartBar  = Min(haBars, ChangedBars) - 1;
-   int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0); // IIR filters need at least 10 bars for initialization
+   int haStartBar  = Min(haBars, ChangedBars) - 1;    // IIR filters need at least 10 bars for initialization
+   int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0);
    int outBars     = haBars-outInitBars+1;
    int outStartBar = Min(outBars, ChangedBars) - 1;
    if (outStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   double inO, inH, inL, inC;                // input prices
+   double inO,  inH,  inL,  inC;                      // input prices
+   double outO, outH, outL, outC;                     // output prices
+
 
    // initialize HA values of the oldest bar
    int bar = haStartBar;
@@ -227,22 +233,27 @@ int onTick() {
 
    // recalculate changed output bars (2nd smoothing)
    for (bar=outStartBar; bar >= 0; bar--) {
-      double outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
-      double outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
-      double outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
-      double outC = iMAOnArray(haClose, WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      outC = iMAOnArray(haClose, WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
 
       outOpen [bar] = outO;
       outClose[bar] = outC;
 
       if (outO < outC) {
-         outLowHigh[bar] = outH;             // bullish bar, the High goes into the up-colored buffer
+         outLowHigh[bar] = outH;                      // bullish bar, the High goes into the up-colored buffer
          outHighLow[bar] = outL;
       }
       else {
-         outHighLow[bar] = outH;             // bearish bar, the High goes into the down-colored buffer
+         outHighLow[bar] = outH;                      // bearish bar, the High goes into the down-colored buffer
          outLowHigh[bar] = outL;
       }
+   }
+
+   if (!IsSuperContext()) {
+      color legendColor = ifInt(outO < outC, Color.BarUp, Color.BarDown);
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", legendColor, legendColor, outC, Digits, NULL, Time[0]);
    }
    return(last_error);
 }
