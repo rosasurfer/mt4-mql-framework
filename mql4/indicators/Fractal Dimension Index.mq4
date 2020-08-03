@@ -115,8 +115,8 @@ int onInit() {
 
    // names, labels and display options
    string indicatorName = "FDI("+ fdiPeriods +")";
-   IndicatorShortName(indicatorName +"  ");              // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN,  indicatorName);             // "Data" window and tooltips
+   IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN,  indicatorName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER, NULL);
    SetIndexLabel(MODE_LOWER, NULL);
    SetIndicatorOptions();

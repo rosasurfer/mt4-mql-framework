@@ -135,11 +135,11 @@ int onInit() {
    string sAppliedPrice = ""; if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ema.appliedPrice);
    string shortName = "Trix("+ EMA.Periods + sAppliedPrice +")";
    string dataName = "Trix("+ EMA.Periods +")";
-   IndicatorShortName(shortName +"  ");                           // indicator subwindow and context menus
+   IndicatorShortName(shortName +"  ");                           // chart subwindow and context menus
    SetIndexLabel(MODE_EMA_1,         NULL    );
    SetIndexLabel(MODE_EMA_2,         NULL    );
    SetIndexLabel(MODE_EMA_3,         NULL    );
-   SetIndexLabel(MODE_MAIN,          dataName);                   // "Data" window and tooltips
+   SetIndexLabel(MODE_MAIN,          dataName);                   // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER_SECTION, NULL    );
    SetIndexLabel(MODE_LOWER_SECTION, NULL    );
    SetIndexLabel(MODE_TREND,         NULL    );

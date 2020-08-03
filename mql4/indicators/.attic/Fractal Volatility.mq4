@@ -69,8 +69,8 @@ int onInit() {
 
    // data display configuration, names, labels
    string name = "Fractal Volatility("+ Vola.Periods +")";
-   IndicatorShortName(name +"  ");                          // subwindow and context menu
-   SetIndexLabel(0, name);                                  // "Data" window and tooltips
+   IndicatorShortName(name +"  ");                          // chart subwindow and context menu
+   SetIndexLabel(0, name);                                  // chart tooltips and "Data" window
    IndicatorDigits(1);
 
    // drawing options and styles

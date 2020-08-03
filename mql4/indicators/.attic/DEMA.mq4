@@ -120,8 +120,8 @@ int onInit() {
    string shortName="DEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "DEMA("+ MA.Periods + strAppliedPrice +")";
-   IndicatorShortName(shortName);                              // context menu
-   SetIndexLabel(MODE_DEMA,  shortName);                       // "Data" window and tooltips
+   IndicatorShortName(shortName);                              // chart context menu
+   SetIndexLabel(MODE_DEMA,  shortName);                       // chart tooltips and "Data" window
    SetIndexLabel(MODE_EMA_1, NULL);
    IndicatorDigits(SubPipDigits);
 

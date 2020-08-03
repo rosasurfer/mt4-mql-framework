@@ -192,7 +192,7 @@ int onInit() {
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = MA.Method +"("+ MA.Periods +")";
-   IndicatorShortName(shortName);
+   IndicatorShortName(shortName);                        // chart context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);

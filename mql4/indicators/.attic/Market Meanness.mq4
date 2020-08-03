@@ -64,8 +64,8 @@ int onInit() {
 
    // (3) names, labels, data display
    string name = "Market Meanness("+ mmi.periods +")";
-   IndicatorShortName(name +"  ");                                   // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN, name);                                   // "Data" window and tooltips
+   IndicatorShortName(name +"  ");                                   // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN, name);                                   // chart tooltips and "Data" window
    IndicatorDigits(1);
 
 

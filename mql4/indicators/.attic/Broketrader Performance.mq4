@@ -88,7 +88,7 @@ int onInit() {
    SetIndexBuffer(MODE_TOTAL,  bufferTotalPL );                               // total PL:  visible
 
    // names, labels and display options
-   IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // indicator subwindow and context menu
+   IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // chart subwindow and context menu
    SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // "Data" window
    SetIndexLabel(MODE_CLOSED, "Broketrader closed PL");
    SetIndexLabel(MODE_TOTAL,  "Broketrader total PL" );
