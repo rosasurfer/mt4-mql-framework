@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
 extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices;                Genesis: SMMA(6) = EMA(11)
 extern int    Input.MA.Periods  = 6;
 extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of resulting HA values;         Genesis: LWMA(2)
-extern int    Output.MA.Periods = 0;  // 2
+extern int    Output.MA.Periods = 2;
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
@@ -192,14 +192,17 @@ int onTick() {
 
 
    // calculate start bars
-   int startBarHA = Min(Bars-inputMaPeriods-1, ChangedBars-1);
-   if (startBarHA < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-
+   int haBars      = Bars-inputMaPeriods;
+   int haStartBar  = Min(haBars, ChangedBars) - 1;
+   int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0); // IIR filters need at least 10 bars for initialization
+   int outBars     = haBars-outInitBars+1;
+   int outStartBar = Min(outBars, ChangedBars) - 1;
+   if (outStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    double inO, inH, inL, inC;                // input prices
 
    // initialize HA values of the oldest bar
-   int bar = startBarHA;
+   int bar = haStartBar;
    if (!haOpen[bar+1]) {
       inO = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_OPEN,  bar+1);
       inH = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_HIGH,  bar+1);
@@ -223,7 +226,7 @@ int onTick() {
    }
 
    // recalculate changed output bars (2nd smoothing)
-   for (bar=startBarHA; bar >= 0; bar--) {
+   for (bar=outStartBar; bar >= 0; bar--) {
       double outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
       double outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
       double outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
