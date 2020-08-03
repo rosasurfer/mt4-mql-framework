@@ -410,6 +410,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define PRICE_BID                      7        // Bid
 #define PRICE_ASK                      8        // Ask
 
+//#define PRICE_AVERAGE                         // (O+H+L+C)/4
+
 
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
