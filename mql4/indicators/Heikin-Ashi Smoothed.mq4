@@ -218,8 +218,8 @@ int onTick() {
 
       haOpen [bar] = (haOpen[bar+1] + haClose[bar+1])/2;
       haClose[bar] = (inO + inH + inL + inC)/4;
-      haHigh [bar] = MathMax(inH, MathMax(haOpen[bar], haClose[bar]));
-      haLow  [bar] = MathMin(inL, MathMin(haOpen[bar], haClose[bar]));
+      haHigh [bar] = MathMax(inH, haOpen[bar]);
+      haLow  [bar] = MathMin(inL, haOpen[bar]);
    }
 
    // recalculate changed output bars (2nd smoothing)
