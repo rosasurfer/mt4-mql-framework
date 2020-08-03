@@ -222,24 +222,22 @@ int onTick() {
       haLow  [bar] = MathMin(inL, MathMin(haOpen[bar], haClose[bar]));
    }
 
-   double outO, outH, outL, outC;            // output prices (smoothed HA values)
-
    // recalculate changed output bars (2nd smoothing)
    for (bar=startBarHA; bar >= 0; bar--) {
-      outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
-      outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
-      outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
-      outC = iMAOnArray(haClose, WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      double outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      double outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      double outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
+      double outC = iMAOnArray(haClose, WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
 
       outOpen [bar] = outO;
       outClose[bar] = outC;
 
       if (outO < outC) {
-         outLowHigh[bar] = outH;             // bullish HA bar, the High goes into the up-colored buffer
+         outLowHigh[bar] = outH;             // bullish bar, the High goes into the up-colored buffer
          outHighLow[bar] = outL;
       }
       else {
-         outHighLow[bar] = outH;             // bearish HA bar, the High goes into the down-colored buffer
+         outHighLow[bar] = outH;             // bearish bar, the High goes into the down-colored buffer
          outLowHigh[bar] = outL;
       }
    }

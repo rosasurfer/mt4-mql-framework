@@ -149,7 +149,7 @@ int onTick() {
       // data timeframe = chart timeframe
 
       for (int i=changedBars-1; i >= 0; i--) {
-         // buffer1 = (Sadukey-Median + Close)/2                              // Sadukey-Median = (O+H+L+C)/4
+         // buffer1 = (PRICE_AVERAGE + Close)/2
          buffer1[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Close[i+ 0])/2
                     + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Close[i+ 1])/2
                     + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Close[i+ 2])/2
@@ -217,7 +217,7 @@ int onTick() {
                     - 0.00274361 * ((Open[i+64] + High[i+64] + Low[i+64] + Close[i+64])/4 + Close[i+64])/2
                     + 0.01018757 * ((Open[i+65] + High[i+65] + Low[i+65] + Close[i+65])/4 + Close[i+65])/2;
 
-         // buffer2 = (Sadukey-Median + Open)/2                               // Sadukey-Median = (O+H+L+C)/4
+         // buffer2 = (PRICE_AVERAGE + Open)/2
          buffer2[i] = 0.11859648 * ((Open[i+ 0] + High[i+ 0] + Low[i+ 0] + Close[i+ 0])/4 + Open[i+ 0])/2
                     + 0.11781324 * ((Open[i+ 1] + High[i+ 1] + Low[i+ 1] + Close[i+ 1])/4 + Open[i+ 1])/2
                     + 0.11548308 * ((Open[i+ 2] + High[i+ 2] + Low[i+ 2] + Close[i+ 2])/4 + Open[i+ 2])/2
