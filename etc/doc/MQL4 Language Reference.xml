@@ -258,7 +258,7 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
         <pre class="docmql4">bool a = true;
 bool b = false;
 bool c = 1;</pre>
-        <p>The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.</p>
+        The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.<br/>
         <br/>
         <span style="color:red">Bug:</span>
         <br/>
@@ -4027,25 +4027,30 @@ dim_size=ArrayRange(num_array, 1);
       caption=ArrayResize()
       type=int
       <content>
-        Sets the size of an arrays first dimension. If executed successfully, it returns the number of all elements contained
-        in the array after resizing, otherwise it returns -1 and the array is not resized.<br/>
-        Note: A locally declared (in a function) and resized array will remain resized after the function has completed its operation.
-        The next time the function is called such array will have a size different from the declared one.
+        Sets the size of an array's first dimension. Returns the number of all array elements after resizing or <span class="number">-1</span> in case of errors.<br/>
+        <br/>
+        <b>Notes:</b>
+        <br/>
+        <li>Local arrays (arrays declared in a function) will remain resized and keep their values after the function returned.</li>
+        
+        <li>Resizing an array to the same size does nothing (no-op). Resizing an array to a size of <span class="number">0</span> releases the
+        allocated memory. Resizing an array to a different size allocates new memory and the address of the internal array buffer changes.</li>
+        
+        <li>When resizing an array existing or remaining array elements are kept. New array elements are initialized with <span class="number">0</span> (zero).</li>
       </content>
       <example>
-double array1[][4];
-int    element_count=ArrayResize(array1, 20);
-// new size - 80 elements
+<span class="type code">double</span> array[][<span class="number code">4</span>];
+<span class="type code">int</span> size = <span class="function code">ArrayResize</span>(array, <span class="number code">20</span>);    <span class="comment code">// new size is 80 elements</span>
       </example>
       <parameter>
         type=object
         name=<nobr>array[]</nobr>
-        description=Array to resize.
+        description=array to resize
       </parameter>
       <parameter>
         type=int
-        name=new_size
-        description=New size for the first dimension.
+        name=size
+        description=new size of the first dimension
       </parameter>
     </function>
 
@@ -10776,7 +10781,7 @@ Note: For custom indicators, this value is undefined.
          <b>See also</b> <a href="help://windows_WindowXOnDropped">WindowXOnDropped()</a>, <a href="help://windows_WindowPriceOnDropped">WindowPriceOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
       </content>
       <example>
-<span class="function">Print</span>("Expert dropped at point x=", <span class="function">WindowXOnDropped</span>(), " y=", <span class="function">WindowYOnDropped</span>());
+<span class="function code">Print</span>("Expert dropped at point x=", <span class="function code">WindowXOnDropped</span>(), " y=", <span class="function code">WindowYOnDropped</span>());
       </example>
     </function>
   </group>
@@ -10809,51 +10814,6 @@ Note: For custom indicators, this value is undefined.
       </table><br/>
     </content>
   </group>
-
-
-  <group>
-    tag=empty
-    caption=
-    <content></content>
-  </group>
-
-
-  <group>
-    tag=expander
-    caption=MT4 Expander
-    <content>
-      <p>Der Expander des Fortschritts</p>
-      <br/>
-    </content>
-  </group>
-
-
-  <group>
-    tag=empty
-    caption=
-    <content></content>
-  </group>
-
-
-  <group>
-     tag=mt4_600
-     caption=MetaTrader 4.600+
-     <content>
-     <p>MetaTrader 4.600+ (ab Build 510)</p>
-     </content>
-
-     <group>
-        tag=mt4_600_historyformat
-        caption=Neues Historyformat
-        <content>
-        <p>Neues History-Format</p>
-
-        <ul>
-           <li>Alte MetaTrader-Versionen (bis Build 509), die auf eine Historydatei im neuen Format sto&szlig;en, l&ouml;schen diese Datei beim Beenden.</li>
-        </ul>
-        </content>
-      </group>
-   </group>
 
 </group>
 </dictionary>
