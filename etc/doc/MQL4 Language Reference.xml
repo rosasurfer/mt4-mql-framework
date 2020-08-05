@@ -3676,19 +3676,25 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopy()
       type=int
       <content>
-         Copies elements of one array to another one and returns the number of copied elements.<br/>
+         Copies elements from one array to another and returns the number of copied elements.<br/>
          <br/>
          Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
-         and <span class="type">color</span> are considered the same). Ranges of multidimensional arrays must match, the size of the first dimension
-         (rows) may differ. If needed the size of the target array is automatically increased.<br/>
+         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first 
+         dimension of the target array (rows) is automatically increased.<br/>
+         <br/>
+<b>Notes:</b>
+<br/>
+<li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
+
+<li>The start index to copy from is relative to the start of the internal source array buffer, regardless of the indexing order of the array.</li>
       </content>
       <example>
-double source[][6];
-double target[10][6];<br/>
+<span class="type code">double</span> source[][<span class="number code">6</span>];
+<span class="type code">double</span> target[][<span class="number code">6</span>];<br/>
 
-ArrayCopyRates(source);                        // source[] is filled with some data
-ArrayCopy(target, source, 0, 0, 60);           // target[] now holds the oldest 10 bars from history
-ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 10 bars from history
+<span class="function code">ArrayCopyRates</span>(source);                         <span class="comment code">// source[] is filled with some data and becomes reverse-indexed</span>
+<span class="function code">ArrayCopy</span>(target, source, <span class="number code">0</span>, <span class="number code">0</span>, <span class="number code">60</span>);            <span class="comment code">// target[] now holds the oldest 10 bars from history</span>
+<span class="function code">ArrayCopy</span>(target, source, <span class="number code">0</span>, <span class="const code">Bars</span>*<span class="number code">6</span> - <span class="number code">60</span>, <span class="number code">60</span>);  <span class="comment code">// target[] now holds the newest 10 bars from history</span>
       </example>
       <parameter>
         type=object
@@ -3704,19 +3710,19 @@ ArrayCopy(target, source, 0, Bars*6-60, 60);   // target[] now holds the newest 
         type=int
         name=to
         def_value=<span class="number">0</span>
-        description=target start index to copy to (default: <span class="number">0</span>)
+        description=target array start index to copy to (default: <span class="number">0</span>)
       </parameter>
       <parameter>
         type=int
         name=from
         def_value=<span class="number">0</span>
-        description=source start index to copy from (default: <span class="number">0</span>)
+        description=source array start index to copy from (default: <span class="number">0</span>)
       </parameter>
       <parameter>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=number of elements to copy (default: <span class="const">WHOLE_ARRAY</span>)
+        description=number of elements to copy (default: all elements from source start index to the end of the array)
       </parameter>
     </function>
 
@@ -3741,10 +3747,10 @@ custom or non-standard timeseries. The first dimension of the target array holds
 <br/>
 <li>No real copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
 
-<li>When assigning to a local variable the target array doesn't act like regular arrays. <a href="help://basics_variables_static">Static</a> behavior needs 
-    to be explicitely declared if needed.</li>
+<li>When assigning to a locally declared array the array stops behaving like a regular array and starts behaving like an integer. 
+    If needed <a href="help://basics_variables_static">static</a> behavior now needs to be explicitely declared.</li>
 
-<li>The assigned array is read-only.</li>
+<li>The assigned array is read-only and reverse-indexed.</li>
 
 <li>When a timeseries is accessed the first time typically the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> is set and new data may arrive later.</li>
 
@@ -3753,7 +3759,7 @@ custom or non-standard timeseries. The first dimension of the target array holds
     <a href="help://constants_errors">ERR_SERIES_NOT_AVAILABLE</a> (i.e. returned bars = 0).</li>
 
 <li>If the array is passed to a DLL the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
-    (MetaQuotes alias: <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more rates arrive it is
+    (MetaQuotes alias <span class="type">RateInfo</span>). This array is reverse-indexed (index 0 points to the oldest bar). As more rates arrive it is
     dynamically extended.</li>
 
 <br/>
@@ -4059,32 +4065,44 @@ dim_size=ArrayRange(num_array, 1);
       caption=ArraySetAsSeries()
       type=bool
       <content>
-        Sets the indexing direction of the array. If <i>reversed</i> is <span class="const">true</span> the array will be indexed in reversed order,
-        i.e. access to index 0 returns the last element. Setting <i>reversed</i> to <span class="const">false</span> sets a standard indexing order. The function returns the previous status.
+        Sets the indexing direction of an array. If <i>reverse</i> is <span class="const">true</span> the array will be indexed in reversed order,
+        i.e. accessing index 0 returns the last element. Setting <i>reverse</i> to <span class="const">false</span> sets standard indexing order.<br/> 
+        Returns the previous state.<br/>
+        <br/>
+        <b>Notes:</b>
+        <br/>
+        <li>Changing an array's indexing order does not change the address of the internal array buffer.</li>
+        
+        <li>When resizing a reverse-indexed array new elements are added to the beginning of the array and not to the end.</li>
       </content>
       <example>
-double macd_buffer[300];
-double signal_buffer[300];
-int    size = ArraySize(macd_buffer);
-ArraySetAsSeries(macd_buffer, true);
+<span class="type code">int</span> values[] = {<span class="number code">1</span>, <span class="number code">2</span>, <span class="number code">3</span>, <span class="number code">4</span>};<br/>
 
-for (int i=0; i&lt;size; i++){
-   macd_buffer[i] = iMA(NULL, 0, 12, 0, MODE_EMA, PRICE_CLOSE, i) - iMA(NULL, 0, 26, 0, MODE_EMA, PRICE_CLOSE, i);
-}
+<span class="keyword code">for</span> (<span class="type code">int</span> i=<span class="number code">0</span>; i &lt; <span class="number code">4</span>; i++) {
+   <span class="function code">Print</span>(values[i]);            <span class="comment code">// 1, 2, 3, 4</span>
+}<br/>
 
-for (i=0; i&lt;size; i++) {
-   signal_buffer[i] = iMAOnArray(macd_buffer, limit, 9, 0, MODE_SMA, i);
+<span class="function code">ArraySetAsSeries</span>(values, <span class="const code">true</span>);<br/>
+
+<span class="keyword code">for</span> (i=<span class="number code">0</span>; i &lt; <span class="number code">4</span>; i++) {
+   <span class="function code">Print</span>(values[i]);            <span class="comment code">// 4, 3, 2, 1</span>
+}<br/>
+
+<span class="function code">ArrayResize</span>(values, <span class="number code">6</span>);<br/>
+
+<span class="keyword code">for</span> (i=<span class="number code">0</span>; i &lt; <span class="number code">6</span>; i++) {
+   <span class="function code">Print</span>(values[i]);            <span class="comment code">// 4, 3, 2, 1, 0, 0</span>
 }
       </example>
       <parameter>
-        type=double
+        type=object
         name=<nobr>array[]</nobr>
-        description=numeric array to set
+        description=array to modify
       </parameter>
       <parameter>
         type=bool
-        name=reversed
-        description=indexing order mode
+        name=reverse
+        description=whether to switch to reverse indexing mode
       </parameter>
     </function>
 
