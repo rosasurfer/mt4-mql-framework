@@ -4034,7 +4034,7 @@ dim_size=ArrayRange(num_array, 1);
         <li>Local arrays (arrays declared in a function) will remain resized and keep their values after the function returned.</li>
         
         <li>Resizing an array to the same size does nothing (no-op). Resizing an array to a size of <span class="number">0</span> releases the
-        allocated memory. Resizing an array to a different size allocates new memory and the address of the internal array buffer changes.</li>
+        allocated memory. Resizing an array to a different size allocates new memory and changes the address of the internal buffer.</li>
         
         <li>When resizing an array existing or remaining array elements are kept. New array elements are initialized with <span class="number">0</span> (zero).</li>
       </content>
