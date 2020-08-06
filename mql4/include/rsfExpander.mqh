@@ -24,6 +24,7 @@
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    bool     LoadMqlProgramW(int hChart, int programType, string programName);
    int      MT4InternalMsg();
+   bool     ReopenAlertDialog(int sound);
    //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
