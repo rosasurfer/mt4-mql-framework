@@ -35,7 +35,7 @@
 int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    if (ArrayDimension(target) != 2)                            return(_EMPTY(catch("iCopyRates(1)  invalid parameter target[] (illegal number of dimensions: "+ ArrayDimension(target) +")", ERR_INCOMPATIBLE_ARRAYS)));
    if (ArrayRange(target, 1) != 6)                             return(_EMPTY(catch("iCopyRates(2)  invalid size of parameter target: array["+ ArrayRange(target, 0) +"]["+ ArrayRange(target, 1) +"]", ERR_INCOMPATIBLE_ARRAYS)));
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(_EMPTY(catch("iCopyRates(3)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_FUNC_NOT_ALLOWED)));
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(_EMPTY(catch("iCopyRates(3)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE)));
 
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (!timeframe) timeframe = Period();
@@ -96,7 +96,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    datetime firstBarTime=0, lastBarTime=0;
    int changedBars = 0;
 
-   // resolve the number of changed bars
+   // resolve the number of changed bars; uses the same logic as iChangedBars()
    if (bars > 0) {
       firstBarTime = target[     0][TIME];
       lastBarTime  = target[bars-1][TIME];
@@ -108,6 +108,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
          changedBars = 1;                                                        // a regular tick
       }
       else if (bars==data[i][CR.Bars]) {                                         // number of bars is unchanged but last bar changed: the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
+         debug("iCopyRates(6)  number of bars unchanged but last bars differs, hit series MAX_CHART_BARS? (bars="+ bars +", lastBar="+ TimeToStr(lastBarTime, TIME_FULL) +", prevLastBar="+ TimeToStr(data[i][CR.LastBarTime], TIME_FULL) +")");
          // find the bar stored in data[i][CR.FirstBarTime]
          int offset = iBarShift(symbol, timeframe, data[i][CR.FirstBarTime], true);
          if (offset == -1) changedBars = bars;                                   // CR.FirstBarTime not found: mark all bars as changed
