@@ -8,17 +8,17 @@
  * @param  _Out_ double &downtrend[]               - Buffer for falling trendline values.
  * @param  _Out_ double &uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
  *                                                   downtrend[] to be visible.
- * @param  _In_  int     lineStyle                 - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately
- *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
- *                                                   points to draw a line.
  * @param  _In_  bool    enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring.
  *                                                   (default: no)
  * @param  _In_  bool    enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On).
  *                                                   (default: no)
+ * @param  _In_  int     lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately
+ *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
+ *                                                   points to draw a line. (default: draw data points only)
  * @param  _In_  int     digits         [optional] - If set, values are normalized to the specified number of digits.
  *                                                   (default: no normalization)
  */
-void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int digits=EMPTY_VALUE) {
+void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
    enableColoring = enableColoring!=0;
    enableUptrend2 = enableColoring && enableUptrend2!=0;
 

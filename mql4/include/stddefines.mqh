@@ -1,8 +1,8 @@
 /**
  * Global constants and variables
  */
-#property stacksize 32768                                   // According to differing MetaQuotes sources the default stacksize per MQL module in 2019 is
-                                                            // at least 256KB (some claim even 1-8MB). In build 225 the default stacksize was 16KB which
+#property stacksize 32768                                   // According to different MetaQuotes sources the default stacksize per MQL module in 2019 is
+                                                            // at least 256KB (some even claim 1-8MB). In build 225 the default stacksize was 16KB which
 #include <mqldefines.mqh>                                   // at some point had to be increased. Using 32KB never caused any issues.
 #include <win32defines.mqh>                                 //
 #include <structs/sizes.mqh>                                //  @see  https://docs.mql4.com/basis/variables/local#stack
@@ -44,14 +44,14 @@ string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des 
 int      Tick;                                              // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.Time;                                         // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                       // Bars = UnchangedBars + ChangedBars
-int      UnchangedBars;                                     // used in indicators only as otherwise IndicatorCounted() is not supported
+int      ChangedBars;                                       // Bars = ChangedBars + UnchangedBars
+int      UnchangedBars;                                     // used in indicators only, otherwise IndicatorCounted() is not supported
 int      ShiftedBars;                                       // used in offline charts only
 
 int      last_error;                                        // last error of the current core function call
 int      prev_error;                                        // last error of the previous core function call
 
-int      stack.OrderSelect[];                               // FIFO stack of selected orders per module
+int      stack.OrderSelect[];                               // FIFO stack of selected orders (per MQL module)
 
 string   __Timezones[] = {
    /*0                           =>*/ "server",             // default
@@ -70,25 +70,25 @@ string   __Timezones[] = {
 
 // special constants
 #define NULL                        0
-#define EMPTY_STR                  ""
+#define EMPTY_STR                   ""
 #define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
 #define HTML_TAB                    "&Tab;"                 // tab                        \t
 #define HTML_BRVBAR                 "&brvbar;"              // broken vertical bar        |
-#define HTML_PIPE                   HTML_BRVBAR             // alias: pipe                |
+#define HTML_PIPE                   HTML_BRVBAR             // pipe (alias)               |
 #define HTML_LCUB                   "&lcub;"                // left curly brace           {
 #define HTML_RCUB                   "&rcub;"                // right curly brace          }
 #define HTML_APOS                   "&apos;"                // apostrophe                 '
 #define HTML_DQUOTE                 "&quot;"                // double quote               "
-#define HTML_SQUOTE                 HTML_APOS               // alias: single quote        '
+#define HTML_SQUOTE                 HTML_APOS               // single quote (alias)       '
 #define HTML_COMMA                  "&comma;"               // comma                      ,
 
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
-double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
+double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPUs immer negativ)
 double  P_INF;                                              //  1.#INF: positive infinity
-double  N_INF;                                              // -1.#INF: negative infinity (@see http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
+double  N_INF;                                              // -1.#INF: negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
 
 // Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
@@ -270,26 +270,26 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_TIME                      5        // bar open time
 
 
-// MA method identifiers, siehe iMA()
+// MA method identifiers, see iMA()
 #define MODE_SMA                       0        // simple moving average
 #define MODE_EMA                       1        // exponential moving average
-#define MODE_SMMA                      2        // smoothed moving average: SMMA(n) = EMA(2*n-1)
+#define MODE_SMMA                      2        // smoothed moving average, same as EMA: SMMA(n) = EMA(2*n-1)
 #define MODE_LWMA                      3        // linear weighted moving average
 #define MODE_ALMA                      4        // Arnaud Legoux moving average
 
 
-// Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
+// indicator line identifiers, see iMACD(), iRVI(), iStochastic()
 #define MODE_MAIN                      0        // base indicator line
 #define MODE_SIGNAL                    1        // signal line
 
 
-// Indicator line identifiers, siehe iADX()
+// indicator line identifiers, see iADX()
 #define MODE_MAIN                      0        // base indicator line
 #define MODE_PLUSDI                    1        // +DI indicator line
 #define MODE_MINUSDI                   2        // -DI indicator line
 
 
-// Indicator line identifiers, siehe iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
+// indicator line identifiers, see iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
 #define MODE_UPPER                     1        // upper line
 #define MODE_LOWER                     2        // lower line
 
@@ -325,6 +325,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
 
 #define FDI.MODE_MAIN                  0        // Fractal Dimension main line
+
+#define HeikinAshi.MODE_TREND          4        // Heikin-Ashi Smoothed trend direction and length
 
 #define HalfTrend.MODE_MAIN            0        // HalfTrend SR line
 #define HalfTrend.MODE_TREND           1        // HalfTrend trend direction and length
@@ -409,6 +411,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define PRICE_WEIGHTED                 6        // (H+L+C+C)/4
 #define PRICE_BID                      7        // Bid
 #define PRICE_ASK                      8        // Ask
+
+//#define PRICE_AVERAGE                         // (O+H+L+C)/4
 
 
 /*
