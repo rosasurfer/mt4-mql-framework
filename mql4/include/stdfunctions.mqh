@@ -37,9 +37,7 @@ int start.RelaunchInputDialog() {
  *
  * @return int - the same error
  *
- * Notes:
- *  - No part of this function must load additional EX4 libaries.
- *  - The terminal must run with Administrator rights for OutputDebugString() to transport debug messages.
+ * Notes: This function must not use .ex4 libary functions. Using DLL functions is fine.
  */
 int debug(string message, int error = NO_ERROR) {
    static bool recursiveCall = false;
