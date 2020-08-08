@@ -57,7 +57,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 #property indicator_chart_window
 #property indicator_buffers   5                          // buffers visible in input dialog
-int       allocated_buffers = 7;
+int       terminal_buffers  = 7;                         // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -315,7 +315,7 @@ bool onTrendChange(int trend) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 

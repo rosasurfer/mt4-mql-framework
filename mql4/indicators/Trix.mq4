@@ -43,7 +43,7 @@ extern int    Max.Bars              = 5000;                 // max. number of ba
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible in input dialog
-int       allocated_buffers = 7;                            // used buffers
+int       terminal_buffers  = 7;                            // buffers managed by the terminal
 
 #property indicator_width1    1
 #property indicator_width2    0
@@ -241,7 +241,7 @@ int onTick() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);

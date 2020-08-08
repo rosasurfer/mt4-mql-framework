@@ -47,7 +47,7 @@ extern int    Max.Bars               = 10000;            // max. number of bars 
 
 #property indicator_separate_window
 #property indicator_buffers   2                          // buffers visible in input dialog
-int       allocated_buffers = 4;
+int       terminal_buffers  = 4;                         // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -223,7 +223,7 @@ int onTick() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
    int ma2Type  = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
