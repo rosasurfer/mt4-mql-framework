@@ -3622,20 +3622,13 @@ else
         Note: Binary search processes only sorted arrays. To sort numeric arrays use the <a href="help://array_ArraySort">ArraySort()</a> function.
       </content>
       <example>
-datetime daytimes[];
-int      shift = 10, dayshift;
+// datetime series are reverse-indexed and in descending order
+datetime times[];
+ArrayCopySeries(times, MODE_TIME, Symbol(), PERIOD_D1);<br/>
 
-// all Time[] series are sorted in descendant mode
-ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
+int i = ArrayBsearch(times, Time[10], WHOLE_ARRAY, 0, MODE_DESCEND);<br/>
 
-if (Time[shift] &gt;= daytimes[0]) {
-   dayshift = 0;
-}
-else {
-   dayshift = ArrayBsearch(daytimes, Time[shift], WHOLE_ARRAY, 0, MODE_DESCEND);
-   if (Period() &lt; PERIOD_D1) dayshift++;
-}
-Print(TimeToStr(Time[shift]) +&quot; corresponds to &quot;+ dayshift +&quot; day bar opened at &quot;+ TimeToStr(daytimes[dayshift]));
+Print(TimeToStr(Time[10]) +" corresponds to bar index "+ i +" (opentime: "+ TimeToStr(times[i]) +")");
       </example>
       <parameter>
         type=double

@@ -88,7 +88,7 @@ int onInit() {
    SetIndexBuffer(MODE_TOTAL,  bufferTotalPL );                               // total PL:  visible
 
    // names, labels and display options
-   IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // indicator subwindow and context menu
+   IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // chart subwindow and context menu
    SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // "Data" window
    SetIndexLabel(MODE_CLOSED, "Broketrader closed PL");
    SetIndexLabel(MODE_TOTAL,  "Broketrader total PL" );
@@ -105,7 +105,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(bufferTotalPL)) return(log("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -378,7 +378,7 @@ double GetClosedPL(int bar) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    SetIndexStyle(MODE_OPEN,   DRAW_NONE, STYLE_SOLID, 1, CLR_NONE);
