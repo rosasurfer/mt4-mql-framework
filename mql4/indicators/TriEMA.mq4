@@ -256,7 +256,7 @@ int onTick() {
    for (i=ChangedBars-1; i >= 0; i--)   firstEma [i] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, maAppliedPrice, i);
    for (i=ChangedBars-1; i >= 0; i--)   secondEma[i] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
    for (i=startBar;      i >= 0; i--) { thirdEma [i] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
-      @Trend.UpdateDirection(thirdEma, i, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(thirdEma, i, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {

@@ -1,8 +1,8 @@
 /**
  * Global constants and variables
  */
-#property stacksize 32768                                   // According to differing MetaQuotes sources the default stacksize per MQL module in 2019 is
-                                                            // at least 256KB (some claim even 1-8MB). In build 225 the default stacksize was 16KB which
+#property stacksize 32768                                   // According to different MetaQuotes sources the default stacksize per MQL module in 2019 is
+                                                            // at least 256KB (some even claim 1-8MB). In build 225 the default stacksize was 16KB which
 #include <mqldefines.mqh>                                   // at some point had to be increased. Using 32KB never caused any issues.
 #include <win32defines.mqh>                                 //
 #include <structs/sizes.mqh>                                //  @see  https://docs.mql4.com/basis/variables/local#stack
@@ -44,14 +44,14 @@ string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des 
 int      Tick;                                              // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.Time;                                         // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                       // Bars = UnchangedBars + ChangedBars
-int      UnchangedBars;                                     // used in indicators only as otherwise IndicatorCounted() is not supported
+int      ChangedBars;                                       // Bars = ChangedBars + UnchangedBars
+int      UnchangedBars;                                     // used in indicators only, otherwise IndicatorCounted() is not supported
 int      ShiftedBars;                                       // used in offline charts only
 
 int      last_error;                                        // last error of the current core function call
 int      prev_error;                                        // last error of the previous core function call
 
-int      stack.OrderSelect[];                               // FIFO stack of selected orders per module
+int      stack.OrderSelect[];                               // FIFO stack of selected orders (per MQL module)
 
 string   __Timezones[] = {
    /*0                           =>*/ "server",             // default
@@ -70,25 +70,25 @@ string   __Timezones[] = {
 
 // special constants
 #define NULL                        0
-#define EMPTY_STR                  ""
+#define EMPTY_STR                   ""
 #define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
 #define HTML_TAB                    "&Tab;"                 // tab                        \t
 #define HTML_BRVBAR                 "&brvbar;"              // broken vertical bar        |
-#define HTML_PIPE                   HTML_BRVBAR             // alias: pipe                |
+#define HTML_PIPE                   HTML_BRVBAR             // pipe (alias)               |
 #define HTML_LCUB                   "&lcub;"                // left curly brace           {
 #define HTML_RCUB                   "&rcub;"                // right curly brace          }
 #define HTML_APOS                   "&apos;"                // apostrophe                 '
 #define HTML_DQUOTE                 "&quot;"                // double quote               "
-#define HTML_SQUOTE                 HTML_APOS               // alias: single quote        '
+#define HTML_SQUOTE                 HTML_APOS               // single quote (alias)       '
 #define HTML_COMMA                  "&comma;"               // comma                      ,
 
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
-double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
+double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPUs immer negativ)
 double  P_INF;                                              //  1.#INF: positive infinity
-double  N_INF;                                              // -1.#INF: negative infinity (@see http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
+double  N_INF;                                              // -1.#INF: negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
 
 // Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()

@@ -27,6 +27,7 @@ extern color  Color.BarDown     = Red;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/ManageIndicatorBuffer.mqh>
 
 #define MODE_OUT_OPEN         0                 // indicator buffer ids
 #define MODE_OUT_CLOSE        1
@@ -58,8 +59,7 @@ double outClose  [];
 double outHighLow[];                            // holds the High of a bearish output bar
 double outLowHigh[];                            // holds the High of a bullish output bar
 
-double doubleBuffer[];                          // manually managed buffers
-int    intBuffer   [];
+double trend[];                                 // manually managed buffer
 
 int    inputMaMethod;
 int    inputMaPeriods;
@@ -174,7 +174,7 @@ int onTick() {
    // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(haOpen)) return(log("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorIntBuffer(MODE_TREND, intBuffer);
+   ManageIndicatorBuffer(MODE_TREND, trend);
 
    // reset all buffers before doing a full recalculation
    if (!UnchangedBars) {
@@ -186,7 +186,7 @@ int onTick() {
       ArrayInitialize(outClose,   EMPTY_VALUE);
       ArrayInitialize(outHighLow, EMPTY_VALUE);
       ArrayInitialize(outLowHigh, EMPTY_VALUE);
-      ArrayInitialize(intBuffer,  0);
+      ArrayInitialize(trend,      0);
       SetIndicatorOptions();
    }
 
@@ -200,6 +200,7 @@ int onTick() {
       ShiftIndicatorBuffer(outClose,   Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(outHighLow, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(outLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
    }
 
 
@@ -212,7 +213,7 @@ int onTick() {
    if (outStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    double inO,  inH,  inL,  inC;                      // input prices
-   double outO, outH, outL, outC;                     // output prices
+   double outO, outH, outL, outC, dNull[];            // output prices
 
 
    // initialize HA values of the oldest bar
@@ -257,73 +258,13 @@ int onTick() {
          outHighLow[bar] = outH;                      // bearish bar, the High goes into the down-colored buffer
          outLowHigh[bar] = outL;
       }
-      intBuffer[bar] = bar;
+      @Trend.UpdateDirection(outClose, bar, trend, dNull, dNull, dNull);
    }
 
    if (!IsSuperContext()) {
-      color legendColor = ifInt(outO < outC, Color.BarUp, Color.BarDown);
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", legendColor, legendColor, outC, Digits, NULL, Time[0]);
+      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
    }
    return(last_error);
-}
-
-
-/**
- * Manage an additional indicator buffer for integers. In MQL4.0 the terminal manages a maximum of 8 indicator buffers.
- * Additional buffers must be managed by the framework. Additional buffers are for internal calculations only, they can't be
- * accessed via iCustom().
- *
- * @param  int id       - buffer id
- * @param  int buffer[] - buffer
- *
- * @return bool - success status
- */
-bool ManageIndicatorIntBuffer(int id, int buffer[]) {
-   if (id < 0)                                                 return(!catch("ManageIndicatorIntBuffer(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("ManageIndicatorIntBuffer(2)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE));
-   if (!Bars)                                                  return(!catch("ManageIndicatorIntBuffer(3)  Bars = 0", ERR_ILLEGAL_STATE));
-
-   // maintain a metadata array {id => data[]} to support multiple buffers
-   #define IB.Tick            0                                // last Tick value for detecting multiple calls during the same tick
-   #define IB.Bars            1                                // last number of bars
-   #define IB.FirstBarTime    2                                // last opentime of the newest bar
-   #define IB.LastBarTime     3                                // last opentime of the oldest bar
-
-   int data[][4];                                              // TODO: reset data on account change
-   if (ArraySize(data) <= id) {
-      ArrayResize(data, id+1);                                 // id => array key
-   }
-   if (Tick == data[id][IB.Tick]) return(true);                // execute only once per tick
-
-
-   if (Bars == data[id][IB.Bars]) {                            // number of Bars unchanged
-      if (Time[Bars-1] != data[id][IB.LastBarTime]) {          // last bar changed: bars have been shifted off the end
-         warn("ManageIndicatorIntBuffer(4)  number of bars unchanged but oldest bar differs, hit timeseries MAX_CHART_BARS? (bars="+ Bars +", lastBar="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBar="+ TimeToStr(data[id][IB.LastBarTime], TIME_FULL) +")");
-         // TODO: find previous FirstBarTime and shift content accordingly
-      }  //else                                                // last bar still the same: nothing to do (a regular tick)
-   }
-   else {                                                      // number of Bars changed
-      if (Bars < data[id][IB.Bars]) return(!catch("ManageIndicatorIntBuffer(5)  number of bars decreased from "+ data[id][IB.Bars] +" to "+ Bars +" (lastBar="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBar="+ TimeToStr(data[id][IB.LastBarTime], TIME_FULL) +")", ERR_ILLEGAL_STATE));
-      ArraySetAsSeries(buffer, false);                         // update buffer size
-      ArrayResize(buffer, Bars);
-      ArraySetAsSeries(buffer, true);                          // new bars may have been inserted or appended: both cases are covered by ChangedBars
-      debug("ManageIndicatorIntBuffer(6)  increased buffer size from "+ data[id][IB.Bars] +" to "+ Bars);
-
-      if (Time[Bars-1] != data[id][IB.LastBarTime]) {          // last bar changed: additionally bars have been shifted off the end
-         warn("ManageIndicatorIntBuffer(7)  number of bars unchanged but oldest bar differs, hit timeseries MAX_CHART_BARS? (bars="+ Bars +", lastBar="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBar="+ TimeToStr(data[id][IB.LastBarTime], TIME_FULL) +")");
-         // TODO: find previous FirstBarTime and shift content accordingly
-      }
-   }
-
-   data[id][IB.Tick        ] = Tick;
-   data[id][IB.Bars        ] = Bars;
-   data[id][IB.FirstBarTime] = Time[0];
-   data[id][IB.LastBarTime ] = Time[Bars-1];
-
-   // safety double-check
-   if (ArraySize(buffer) != Bars)
-      return(!catch("ManageIndicatorIntBuffer(8)  size(buffer)="+ ArraySize(buffer) +" != Bars="+ Bars, ERR_RUNTIME_ERROR));
-   return(!catch("ManageIndicatorIntBuffer(9)"));
 }
 
 

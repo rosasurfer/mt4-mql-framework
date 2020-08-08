@@ -209,7 +209,7 @@ int onTick() {
       for (int i=0; i < length; i++) {
          main[bar] += filterWeights[i] * Close[bar+i];
       }
-      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
