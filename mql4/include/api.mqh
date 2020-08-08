@@ -284,7 +284,7 @@ void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
-void     @Trend.UpdateDirection(double &values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
+void     @Trend.UpdateDirection(double &values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
 bool     ConfigureSignal(string name, string &configValue, bool &enabled);;
 bool     ConfigureSignalMail(string configValue, bool &enabled, string &sender, string &receiver);;
@@ -304,6 +304,7 @@ string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 string   JoinStrings(string &values[], string separator = ", ");;
+bool     ManageIndicatorBuffer(int id, double buffer[]);;
 
 
 // include/structs/mt4/

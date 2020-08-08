@@ -230,7 +230,7 @@ int onTick() {
       else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
 
       // trend direction and length
-      @Trend.UpdateDirection(trixMain, bar, trixTrend, dNull, dNull, dNull, DRAW_NONE);
+      @Trend.UpdateDirection(trixMain, bar, trixTrend, dNull, dNull, dNull);
    }
    return(last_error);
 }
