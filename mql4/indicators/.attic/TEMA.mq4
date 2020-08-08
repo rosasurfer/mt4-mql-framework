@@ -38,7 +38,7 @@ extern int    Max.Bars        = 5000;                    // max. number of bars 
 
 #property indicator_chart_window
 #property indicator_buffers   1                          // buffers visible in input dialog
-int       allocated_buffers = 3;                         // used buffers
+int       terminal_buffers =  3;                         // buffers managed by the terminal
 #property indicator_width1    2
 
 double tema     [];                                      // MA values:       visible, displayed in "Data" window
@@ -218,7 +218,7 @@ int onTick() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 

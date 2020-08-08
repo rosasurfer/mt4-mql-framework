@@ -48,7 +48,7 @@ extern int   Histogram.Style.Width = 2;
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible in input dialog
-int       allocated_buffers = 6;                            // used buffers
+int       terminal_buffers  = 6;                            // buffers managed by the terminal
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
 double fisherSection   [];                                  // direction and length:      invisible
@@ -214,7 +214,7 @@ int onTick() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
