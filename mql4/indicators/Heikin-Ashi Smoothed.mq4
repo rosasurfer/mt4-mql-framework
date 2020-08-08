@@ -1,11 +1,17 @@
 /**
- * A Heikin-Ashi indicator with optional smoothing of input and output prices.
+ * A Heikin-Ashi indicator with optional smoothing of input and output values.
  *
- * Supported Moving-Average types:
+ *
+ * Supported Moving-Averages:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *
+ * Indicator buffers for iCustom():
+ *  • HeikinAshi.MODE_TREND: trend direction and length
+ *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -29,20 +35,23 @@ extern color  Color.BarDown     = Red;
 #include <functions/@Trend.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
 
-#define MODE_OUT_OPEN         0                 // indicator buffer ids
+#define MODE_OUT_OPEN         0                       // indicator buffer ids
 #define MODE_OUT_CLOSE        1
 #define MODE_OUT_HIGHLOW      2
 #define MODE_OUT_LOWHIGH      3
-#define MODE_HA_OPEN          4
-#define MODE_HA_HIGH          5
-#define MODE_HA_LOW           6
-#define MODE_HA_CLOSE         7
-#define MODE_TREND            8
+
+#define MODE_TREND            HeikinAshi.MODE_TREND   // 4
+
+#define MODE_HA_OPEN          5
+#define MODE_HA_HIGH          6
+#define MODE_HA_LOW           7
+#define MODE_HA_CLOSE         8                       // managed by the framework
+
 
 #property indicator_chart_window
-#property indicator_buffers   4                 // buffers visible in input dialog
-int       terminal_buffers  = 8;                // buffers managed by the terminal
-int       framework_buffers = 1;                // buffers managed by the framework
+#property indicator_buffers   4                       // buffers visible in input dialog
+int       terminal_buffers  = 8;                      // buffers managed by the terminal
+int       framework_buffers = 1;                      // buffers managed by the framework
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -56,10 +65,10 @@ double haClose[];
 
 double outOpen   [];
 double outClose  [];
-double outHighLow[];                            // holds the High of a bearish output bar
-double outLowHigh[];                            // holds the High of a bullish output bar
+double outHighLow[];                                  // holds the High of a bearish output bar
+double outLowHigh[];                                  // holds the High of a bullish output bar
 
-double trend[];                                 // manually managed buffer
+double trend[];
 
 int    inputMaMethod;
 int    inputMaPeriods;
@@ -124,14 +133,14 @@ int onInit() {
 
 
    // buffer management
-   SetIndexBuffer(MODE_HA_OPEN,     haOpen    );
-   SetIndexBuffer(MODE_HA_HIGH,     haHigh    );
-   SetIndexBuffer(MODE_HA_LOW,      haLow     );
-   SetIndexBuffer(MODE_HA_CLOSE,    haClose   );
    SetIndexBuffer(MODE_OUT_OPEN,    outOpen   );
    SetIndexBuffer(MODE_OUT_CLOSE,   outClose  );
    SetIndexBuffer(MODE_OUT_HIGHLOW, outHighLow);
    SetIndexBuffer(MODE_OUT_LOWHIGH, outLowHigh);
+   SetIndexBuffer(MODE_TREND,       trend     );
+   SetIndexBuffer(MODE_HA_OPEN,     haOpen    );
+   SetIndexBuffer(MODE_HA_HIGH,     haHigh    );
+   SetIndexBuffer(MODE_HA_LOW,      haLow     );
 
    // chart legend
    if (!IsSuperContext()) {
@@ -174,7 +183,7 @@ int onTick() {
    // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(haOpen)) return(log("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_TREND, trend);
+   ManageIndicatorBuffer(MODE_HA_CLOSE, haClose);
 
    // reset all buffers before doing a full recalculation
    if (!UnchangedBars) {

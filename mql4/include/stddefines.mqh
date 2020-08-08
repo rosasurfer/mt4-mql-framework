@@ -326,6 +326,8 @@ double  N_INF;                                              // -1.#INF: negative
 
 #define FDI.MODE_MAIN                  0        // Fractal Dimension main line
 
+#define HeikinAshi.MODE_TREND          4        // Heikin-Ashi Smoothed trend direction and length
+
 #define HalfTrend.MODE_MAIN            0        // HalfTrend SR line
 #define HalfTrend.MODE_TREND           1        // HalfTrend trend direction and length
 
