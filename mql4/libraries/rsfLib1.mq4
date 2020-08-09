@@ -2187,6 +2187,36 @@ double SumDoubles(double values[]) {
 
 
 /**
+ * Convert an array of order tickets to a readable representation.
+ *
+ * @param  int    tickets[]
+ * @param  string separator [optional] - element separator (default: ", ")
+ *
+ * @return string - readable representation or an empty string in case of errors
+ */
+string TicketsToStr(int tickets[], string separator = ", ") {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(tickets);
+   if (!size) return("{}");
+
+   if (separator == "0")                           // (string) NULL
+      separator = ", ";
+
+   string result, sValue;
+
+   for (int i=0; i < size; i++) {
+      if   (tickets[i] > 0) sValue = StringConcatenate("#", tickets[i]);
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
+}
+
+
+/**
  * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h)
  * fett (•) dargestellt.
  *
