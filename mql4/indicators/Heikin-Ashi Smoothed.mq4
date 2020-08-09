@@ -267,13 +267,39 @@ int onTick() {
          outHighLow[bar] = outH;                      // bearish bar, the High goes into the down-colored buffer
          outLowHigh[bar] = outL;
       }
-      @Trend.UpdateDirection(outClose, bar, trend, dNull, dNull, dNull);
+      UpdateTrend(bar);
    }
 
    if (!IsSuperContext()) {
       @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
    }
    return(last_error);
+}
+
+
+/**
+ * Update the Heikin-Ashi trend buffer. Trend is considered up on a bullish and considered down on a bearish Heikin-Ashi bar.
+ *
+ * @param  int bar - bar offset to update
+ */
+void UpdateTrend(int bar) {
+   int currTrend = 0;
+
+   if (outOpen[bar]!=EMPTY_VALUE && outClose[bar]!=EMPTY_VALUE) {
+      if (outClose[bar] > outOpen[bar]) currTrend = +1;
+      else                              currTrend = -1;
+   }
+
+   if (bar == Bars-1) {
+      trend[bar] = currTrend;
+   }
+   else {
+      int prevTrend = trend[bar+1];
+
+      if      (currTrend == +1) trend[bar] = Max(prevTrend, 0) + 1;
+      else if (currTrend == -1) trend[bar] = Min(prevTrend, 0) - 1;
+      else  /*!currTrend*/      trend[bar] = prevTrend + Sign(prevTrend);
+   }
 }
 
 
