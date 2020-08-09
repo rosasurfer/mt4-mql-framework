@@ -60,8 +60,8 @@ int init() {
    }
 
    // initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER in tester
-       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
+       hChart = WindowHandle(Symbol(), NULL);
 
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
