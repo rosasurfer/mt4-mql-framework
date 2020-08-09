@@ -552,7 +552,7 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  *
  * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
  * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found a message is logged but
- * execution continues normally.
+ * execution continues.
  *
  * @param  string soundfile
  * @param  int    flags
