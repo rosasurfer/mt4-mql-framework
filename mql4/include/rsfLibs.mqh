@@ -1,5 +1,6 @@
 /**
- * Functions already imported in the core are removed from this file. For the last version with a complete function listing
+ * Functions already imported by the framework core files are removed from this file.
+ * Last version with a complete function listing:
  *
  *
  */
@@ -236,6 +237,7 @@
    // toString helpers
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
    string   StringsToStr(string array[], string separator);
+   string   TicketsToStr(int    array[], string separator);
    string   WaitForSingleObjectValueToStr(int value);
 
    string   CharToHexStr(int char);
@@ -248,7 +250,6 @@
    string   BoolsToStr             (bool array[], string separator);
    string   IntsToStr               (int array[], string separator);
    string   CharsToStr              (int array[], string separator);
-   string   TicketsToStr            (int array[], string separator);
    string   TicketsToStr.Lots       (int array[], string separator);
    string   TicketsToStr.LotsSymbols(int array[], string separator);
    string   TicketsToStr.Position   (int array[]);
