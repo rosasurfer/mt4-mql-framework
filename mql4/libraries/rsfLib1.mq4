@@ -514,18 +514,7 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
    // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
    if (lTimezone == "gmt") return(0);
 
-
    if (serverTime < 0) return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(1)  invalid parameter serverTime = "+ serverTime, ERR_INVALID_PARAMETER)));
-
-
-   if (lTimezone == "alpari") {
-      if (serverTime < D'2012.04.01 00:00:00') lTimezone = "europe/berlin";
-      else                                     lTimezone = "europe/kiev";
-   }
-   else if (lTimezone == "globalprime") {
-      if (serverTime < D'2015.10.25 00:00:00') lTimezone = "fxt";
-      else                                     lTimezone = "europe/kiev";
-   }
 
    int offset, year=TimeYearEx(serverTime)-1970;
 
@@ -4170,18 +4159,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
    // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
    if (lTimezone == "gmt") return(0);
 
-
    if (gmtTime < 0) return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(1)  invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_PARAMETER)));
-
-
-   if (lTimezone == "alpari") {
-      if (gmtTime < D'2012.04.01 00:00:00') lTimezone = "europe/berlin";
-      else                                  lTimezone = "europe/kiev";
-   }
-   else if (lTimezone == "globalprime") {
-      if (gmtTime < D'2015.10.25 00:00:00') lTimezone = "fxt";
-      else                                  lTimezone = "europe/kiev";
-   }
 
    int offset, year=TimeYearEx(gmtTime)-1970;
 

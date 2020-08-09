@@ -53,20 +53,6 @@ int      prev_error;                                        // last error of the
 
 int      stack.OrderSelect[];                               // FIFO stack of selected orders (per MQL module)
 
-string   __Timezones[] = {
-   /*0                           =>*/ "server",             // default
-   /*TIMEZONE_ID_ALPARI          =>*/ TIMEZONE_ALPARI,
-   /*TIMEZONE_ID_AMERICA_NEW_YORK=>*/ TIMEZONE_AMERICA_NEW_YORK,
-   /*TIMEZONE_ID_EUROPE_BERLIN   =>*/ TIMEZONE_EUROPE_BERLIN,
-   /*TIMEZONE_ID_EUROPE_KIEV     =>*/ TIMEZONE_EUROPE_KIEV,
-   /*TIMEZONE_ID_EUROPE_LONDON   =>*/ TIMEZONE_EUROPE_LONDON,
-   /*TIMEZONE_ID_EUROPE_MINSK    =>*/ TIMEZONE_EUROPE_MINSK,
-   /*TIMEZONE_ID_FXT             =>*/ TIMEZONE_FXT,
-   /*TIMEZONE_ID_FXT_MINUS_0200  =>*/ TIMEZONE_FXT_MINUS_0200,
-   /*TIMEZONE_ID_GLOBALPRIME     =>*/ TIMEZONE_GLOBALPRIME
-   /*TIMEZONE_ID_GMT             =>*/ TIMEZONE_GMT
-};
-
 
 // special constants
 #define NULL                        0
