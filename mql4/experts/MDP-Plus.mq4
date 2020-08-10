@@ -1,17 +1,17 @@
 /**
- * "GazillionDollarPips" (GDP) is a "MillionDollarPips" EA revisited
+ * A "MillionDollarPips" EA revisited
  *
  *
  * An EA based on the probably single most famous MetaTrader EA ever written. Nothing remains from the original except the
  * core idea of the strategy: scalping based on a reversal from a channel breakout.
  *
- * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). However all
- * known versions are so fundamentally flawed that they must never be run on a live account. This GDP version is fully
- * embedded in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts with more robust or faster
- * components and adds major improvements for production use.
+ * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). All known
+ * versions are so fundamentally flawed that they cannot be run on a live account. This MDP-Plus version is fully embedded
+ * in the rosasurfer MQL4 framework. It fixes the existing issues, replaces all parts with more robust or faster components
+ * and adds major improvements.
  *
  * Sources:
- *  The original versions are included in the repo and accessible via the Git history. Use ONLY for reference:
+ *  The original versions are included in the repo and accessible via the Git history (use only for reference):
  *
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp              [MillionDollarPips v2 decompiled]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp               [MDP-Plus v2.2 + PDF by Capella]
@@ -105,7 +105,7 @@ double closedPl;                 //
 double totalPl;                  // openPl + closedPl
 
 // order/trade data
-string orderComment = "GDP";
+string orderComment = "MDPP";
 double commissionMarkup;         // commission markup in quote currency, e.g. 0.0000'41
 
 
