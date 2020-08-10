@@ -49,8 +49,8 @@ int onInit() {
 
    // data display configuration, names, labels
    string name = "Kaufman Efficiency("+ Periods +")";
-   IndicatorShortName(name +"  ");                          // subwindow and context menu
-   SetIndexLabel(0, name);                                  // "Data" window and tooltips
+   IndicatorShortName(name +"  ");                          // chart subwindow and context menu
+   SetIndexLabel(0, name);                                  // chart tooltips and "Data" window
    IndicatorDigits(3);
 
    // drawing options and styles
@@ -77,7 +77,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(bufferKER)) return(log("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
@@ -142,7 +142,7 @@ double Volatility(int bar) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);

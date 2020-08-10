@@ -1,5 +1,5 @@
 /**
- * Constants shared by MQL4 and the MT4Expander (C++).
+ * Constants shared by MQL4.0 and MT4Expander (C++).
  */
 
 
@@ -305,32 +305,6 @@
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
 #define INIT_NO_BARS_REQUIRED                   8        // executable without history (scripts only)
-
-
-// known timezones
-#define TIMEZONE_ALPARI           "Alpari"               // until 03/2012 "Europe/Berlin", after "Europe/Kiev"
-#define TIMEZONE_AMERICA_NEW_YORK "America/New_York"
-#define TIMEZONE_EUROPE_BERLIN    "Europe/Berlin"
-#define TIMEZONE_EUROPE_KIEV      "Europe/Kiev"
-#define TIMEZONE_EUROPE_LONDON    "Europe/London"
-#define TIMEZONE_EUROPE_MINSK     "Europe/Minsk"
-#define TIMEZONE_FXT              "FXT"                  // "Europe/Kiev"   with DST changes of "America/New_York"
-#define TIMEZONE_FXT_MINUS_0200   "FXT-0200"             // "Europe/London" with DST changes of "America/New_York"
-#define TIMEZONE_GLOBALPRIME      "GlobalPrime"          // until 24.10.2015 "FXT", then a single time "Europe/Kiev", then "FXT" again
-#define TIMEZONE_GMT              "GMT"
-
-
-// known timezone ids
-#define TIMEZONE_ID_ALPARI                      1
-#define TIMEZONE_ID_AMERICA_NEW_YORK            2
-#define TIMEZONE_ID_EUROPE_BERLIN               3
-#define TIMEZONE_ID_EUROPE_KIEV                 4
-#define TIMEZONE_ID_EUROPE_LONDON               5
-#define TIMEZONE_ID_EUROPE_MINSK                6
-#define TIMEZONE_ID_FXT                         7
-#define TIMEZONE_ID_FXT_MINUS_0200              8
-#define TIMEZONE_ID_GLOBALPRIME                 9
-#define TIMEZONE_ID_GMT                        10
 
 
 // MT4 internal messages
