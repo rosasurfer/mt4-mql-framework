@@ -235,9 +235,10 @@
 
 
    // toString helpers
+   string   BoolsToStr(bool array[], string separator);
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
    string   StringsToStr(string array[], string separator);
-   string   TicketsToStr(int    array[], string separator);
+   string   TicketsToStr(int array[], string separator);
    string   WaitForSingleObjectValueToStr(int value);
 
    string   CharToHexStr(int char);
@@ -247,7 +248,6 @@
    string   IntegerToBinaryStr(int integer);
 
 #import "rsfLib2.ex4"
-   string   BoolsToStr             (bool array[], string separator);
    string   IntsToStr               (int array[], string separator);
    string   CharsToStr              (int array[], string separator);
    string   TicketsToStr.Lots       (int array[], string separator);
