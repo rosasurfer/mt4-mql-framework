@@ -1,9 +1,9 @@
 /**
- * Data types and sizes in C, Win32 (16bit word size) and MQL:
- * ===========================================================
+ * Data types and sizes in C, Win32 and MQL4.0
+ * ===========================================
  *
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |        |                 |           max(hex) |          signed range(dec) |        unsigned range(dec) |       C        |        Win32        |      MQL       |
+ * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |        Win32        |     MQL4.0     |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
  * |         |         |        |        |  1 bit |                 |               0x01 |                    0 ... 1 |                    0 ... 1 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
@@ -15,9 +15,11 @@
  * |         |         |        |        |        |                 |                    |              2.147.483.647 |              4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
  * |         |         |        |        |        |                 |                    |                            |                            |                | (handles, pointers) |                |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFFFFFFFFFF | -9.223.372.036.854.775.808 |                          0 |     double     |  LONGLONG,DWORDLONG |     double     | double: 53bit mantisse which allows integers of up to 53bit without loss of precision
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFFFFFFFFFF | -9.223.372.036.854.775.808 |                          0 |   double (1)   |  LONGLONG,DWORDLONG |   double (1)   |
  * |         |         |        |        |        |                 |                    |  9.223.372.036.854.775.807 | 18.446.744.073.709.551.616 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ *
+ * (1) A double with 53 bit mantisse which allows integers of up to 53 bit without loss of precision.
  */
 #property library
 
@@ -33,6 +35,7 @@ int __DEINIT_FLAGS__[];
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
+#include <functions/JoinBools.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -514,18 +517,7 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
    // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
    if (lTimezone == "gmt") return(0);
 
-
    if (serverTime < 0) return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(1)  invalid parameter serverTime = "+ serverTime, ERR_INVALID_PARAMETER)));
-
-
-   if (lTimezone == "alpari") {
-      if (serverTime < D'2012.04.01 00:00:00') lTimezone = "europe/berlin";
-      else                                     lTimezone = "europe/kiev";
-   }
-   else if (lTimezone == "globalprime") {
-      if (serverTime < D'2015.10.25 00:00:00') lTimezone = "fxt";
-      else                                     lTimezone = "europe/kiev";
-   }
 
    int offset, year=TimeYearEx(serverTime)-1970;
 
@@ -2196,6 +2188,36 @@ double SumDoubles(double values[]) {
 
 
 /**
+ * Convert an array of order tickets to a readable representation.
+ *
+ * @param  int    tickets[]
+ * @param  string separator [optional] - element separator (default: ", ")
+ *
+ * @return string - readable representation or an empty string in case of errors
+ */
+string TicketsToStr(int tickets[], string separator = ", ") {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(tickets);
+   if (!size) return("{}");
+
+   if (separator == "0")                           // (string) NULL
+      separator = ", ";
+
+   string result, sValue;
+
+   for (int i=0; i < size; i++) {
+      if   (tickets[i] > 0) sValue = StringConcatenate("#", tickets[i]);
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
+}
+
+
+/**
  * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h)
  * fett (•) dargestellt.
  *
@@ -3460,7 +3482,169 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
       return(paddingLeft + input + paddingRight);
    }
 
-   return(_EMPTY_STR(catch("StringPad(2)  illegal parameter pad_type = "+ pad_type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StringPad(2)  illegal parameter pad_type: "+ pad_type, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Convert a boolean array to a readable representation.
+ *
+ * @param  bool   array[]
+ * @param  string separator [optional] - element separator (default: ", ")
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string BoolsToStr(bool array[][], string separator = ", ") {
+   return(__BoolsToStr(array, array, separator));
+}
+
+
+/**
+ * Internal helper function working around the compiler's dimension check. Used only by BoolsToStr().
+ */
+string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
+   if (separator == "0")                              // (string) NULL
+      separator = ", ";
+   string result = "";
+   int dimensions = ArrayDimension(values2);
+   int dim1 = ArrayRange(values2, 0);
+
+   // test for a 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinBools(values2, separator), "}"));
+   }
+
+   int dim2 = ArrayRange(values2, 1);
+
+   // test for a 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2_X[]; ArrayResize(sValues2_X, dim1);
+      bool    values2_Y[]; ArrayResize( values2_Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2_Y[y] = values2[x][y];
+         }
+         sValues2_X[x] = BoolsToStr(values2_Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
+      ArrayResize(sValues2_X, 0);
+      ArrayResize( values2_Y, 0);
+      return(result);
+   }
+
+   int dim3 = ArrayRange(values3, 2);
+
+   // test for a 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3_X[]; ArrayResize(sValues3_X, dim1);
+      string sValues3_Y[]; ArrayResize(sValues3_Y, dim2);
+      bool    values3_Z[]; ArrayResize( values3_Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3_Z[z] = values3[x][y][z];
+            }
+            sValues3_Y[y] = BoolsToStr(values3_Z, separator);
+         }
+         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
+      ArrayResize(sValues3_X, 0);
+      ArrayResize(sValues3_Y, 0);
+      ArrayResize( values3_Z, 0);
+      return(result);
+   }
+   return(_EMPTY_STR(catch("__BoolsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert a string array to a readable representation.
+ *
+ * @param  string array[]
+ * @param  string separator [optional] - element separator (default: ", ")
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string StringsToStr(string array[][], string separator = ", ") {
+   return(__StringsToStr(array, array, separator));
+}
+
+
+/**
+ * Internal helper function working around the compiler's dimension check. Used only by StringsToStr().
+ */
+string __StringsToStr(string values2[][], string values3[][][], string separator) {
+   if (separator == "0")                              // (string) NULL
+      separator = ", ";
+   string result = "";
+   int dimensions = ArrayDimension(values2);
+   int dim1 = ArrayRange(values2, 0);
+
+   // test for a 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      string copy[]; ArrayResize(copy, 0);
+      ArrayCopy(copy, values2);
+      DoubleQuoteStrings(copy);
+
+      result = StringConcatenate("{", JoinStrings(copy, separator), "}");
+      ArrayResize(copy, 0);
+      return(result);
+   }
+
+   int dim2 = ArrayRange(values2, 1);
+
+   // test for a 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2_X[]; ArrayResize(sValues2_X, dim1);
+      string  values2_Y[]; ArrayResize( values2_Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2_Y[y] = values2[x][y];             // TODO: catch NPE
+         }
+         sValues2_X[x] = StringsToStr(values2_Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
+      ArrayResize(sValues2_X, 0);
+      ArrayResize( values2_Y, 0);
+      return(result);
+   }
+
+   int dim3 = ArrayRange(values3, 2);
+
+   // test for a 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3_X[]; ArrayResize(sValues3_X, dim1);
+      string sValues3_Y[]; ArrayResize(sValues3_Y, dim2);
+      string  values3_Z[]; ArrayResize( values3_Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3_Z[z] = values3[x][y][z];       // TODO: catch NPE
+            }
+            sValues3_Y[y] = StringsToStr(values3_Z, separator);
+         }
+         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
+      ArrayResize(sValues3_X, 0);
+      ArrayResize(sValues3_Y, 0);
+      ArrayResize( values3_Z, 0);
+      return(result);
+   }
+   return(_EMPTY_STR(catch("__StringsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -4170,18 +4354,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
    // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
    if (lTimezone == "gmt") return(0);
 
-
    if (gmtTime < 0) return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(1)  invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_PARAMETER)));
-
-
-   if (lTimezone == "alpari") {
-      if (gmtTime < D'2012.04.01 00:00:00') lTimezone = "europe/berlin";
-      else                                  lTimezone = "europe/kiev";
-   }
-   else if (lTimezone == "globalprime") {
-      if (gmtTime < D'2015.10.25 00:00:00') lTimezone = "fxt";
-      else                                  lTimezone = "europe/kiev";
-   }
 
    int offset, year=TimeYearEx(gmtTime)-1970;
 
@@ -7336,20 +7509,23 @@ bool onCommand(string data[]) { return(!catch("onCommand()  must be implemented 
 
 
 #import "rsfLib2.ex4"
+   bool   DoubleQuoteStrings(string array[]);
    string DoublesToStr(double array[], string separator);
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfExpander.dll"
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
+   bool   SortMqlStringsA(string values[], int size);
+
+   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+
    int    pi_hProcess(int pi[]);
    int    pi_hThread(int pi[]);
    int    si_setFlags(int si[], int flags);
    int    si_setShowWindow(int si[], int cmdShow);
    int    si_setSize(int si[], int size);
-   bool   SortMqlStringsA(string values[], int size);
-   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
    int    tzi_Bias(int tzi[]);
    int    tzi_DaylightBias(int tzi[]);
    bool   wfd_FileAttribute_Directory(int wfd[]);

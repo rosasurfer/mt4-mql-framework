@@ -47,7 +47,7 @@ extern int    Max.Bars               = 10000;            // max. number of bars 
 
 #property indicator_separate_window
 #property indicator_buffers   2                          // buffers visible in input dialog
-int       allocated_buffers = 4;
+int       terminal_buffers  = 4;                         // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -132,8 +132,8 @@ int onInit() {
    if (ma1Periods==1 || ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
    string indicatorName  = "Stochastic(RSI("+ rsiPeriods +"), "+ stochPeriods + sStochMa1Periods + sStochMa2Periods +")";
 
-   IndicatorShortName(indicatorName +"  ");              // indicator subwindow and context menu
-   SetIndexLabel(MODE_RSI,       NULL);                  // "Data" window and tooltips
+   IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
+   SetIndexLabel(MODE_RSI,       NULL);                  // chart tooltips and "Data" window
    SetIndexLabel(MODE_STOCH_RAW, NULL);
    SetIndexLabel(MODE_STOCH_MA1, "Stoch(RSI) main"); if (Main.Color == CLR_NONE) SetIndexLabel(MODE_STOCH_MA1, NULL);
    SetIndexLabel(MODE_STOCH_MA2, "Stoch(RSI) signal");
@@ -150,7 +150,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
    if (!ArraySize(bufferRsi)) return(log("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -220,10 +220,10 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
    int ma2Type  = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);

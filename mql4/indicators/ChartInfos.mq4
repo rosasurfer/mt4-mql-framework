@@ -4218,6 +4218,8 @@ string InputsToStr() {
    int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
+   string   StringsToStr(string array[], string separator);
+   string   TicketsToStr(int    array[], string separator);
 
 #import "rsfLib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
@@ -4227,8 +4229,6 @@ string InputsToStr() {
 
    string   IntsToStr            (int    array[], string separator);
    string   DoublesToStr         (double array[], string separator);
-   string   StringsToStr         (string array[], string separator);
-   string   TicketsToStr         (int    array[], string separator);
    string   TicketsToStr.Lots    (int    array[], string separator);
    string   TicketsToStr.Position(int    array[]);
 #import
