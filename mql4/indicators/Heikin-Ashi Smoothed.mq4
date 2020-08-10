@@ -27,6 +27,8 @@ extern int    Output.MA.Periods = 2;
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
 
+extern bool   ShowWicks         = true;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -309,11 +311,12 @@ void UpdateTrend(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
+   int drawType = ifInt(ShowWicks, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_OUT_OPEN,    DRAW_HISTOGRAM, EMPTY, 3, Color.BarDown);  // in histograms the larger of both values
    SetIndexStyle(MODE_OUT_CLOSE,   DRAW_HISTOGRAM, EMPTY, 3, Color.BarUp  );  // determines the color to use
-   SetIndexStyle(MODE_OUT_HIGHLOW, DRAW_HISTOGRAM, EMPTY, 1, Color.BarDown);
-   SetIndexStyle(MODE_OUT_LOWHIGH, DRAW_HISTOGRAM, EMPTY, 1, Color.BarUp  );
+   SetIndexStyle(MODE_OUT_HIGHLOW, drawType,       EMPTY, 1, Color.BarDown);
+   SetIndexStyle(MODE_OUT_LOWHIGH, drawType,       EMPTY, 1, Color.BarUp  );
 }
 
 
@@ -328,6 +331,7 @@ string InputsToStr() {
                             "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
                             "Output.MA.Periods=", Output.MA.Periods,                ";", NL,
                             "Color.BarUp=",       ColorToStr(Color.BarUp),          ";", NL,
-                            "Color.BarDown=",     ColorToStr(Color.BarDown),        ";")
+                            "Color.BarDown=",     ColorToStr(Color.BarDown),        ";", NL,
+                            "ShowWicks=",         BoolToStr(ShowWicks),             ";")
    );
 }
