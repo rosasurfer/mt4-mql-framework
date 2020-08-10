@@ -35,6 +35,7 @@ int __DEINIT_FLAGS__[];
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
+#include <functions/JoinBools.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -3486,7 +3487,85 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
 
 
 /**
- * Convert an MQL string array to a readable representation.
+ * Convert a boolean array to a readable representation.
+ *
+ * @param  bool   array[]
+ * @param  string separator [optional] - element separator (default: ", ")
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string BoolsToStr(bool array[][], string separator = ", ") {
+   return(__BoolsToStr(array, array, separator));
+}
+
+
+/**
+ * Internal helper function working around the compiler's dimension check. Used only by BoolsToStr().
+ */
+string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
+   if (separator == "0")                              // (string) NULL
+      separator = ", ";
+   string result = "";
+   int dimensions = ArrayDimension(values2);
+   int dim1 = ArrayRange(values2, 0);
+
+   // test for a 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinBools(values2, separator), "}"));
+   }
+
+   int dim2 = ArrayRange(values2, 1);
+
+   // test for a 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2_X[]; ArrayResize(sValues2_X, dim1);
+      bool    values2_Y[]; ArrayResize( values2_Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2_Y[y] = values2[x][y];
+         }
+         sValues2_X[x] = BoolsToStr(values2_Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
+      ArrayResize(sValues2_X, 0);
+      ArrayResize( values2_Y, 0);
+      return(result);
+   }
+
+   int dim3 = ArrayRange(values3, 2);
+
+   // test for a 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3_X[]; ArrayResize(sValues3_X, dim1);
+      string sValues3_Y[]; ArrayResize(sValues3_Y, dim2);
+      bool    values3_Z[]; ArrayResize( values3_Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3_Z[z] = values3[x][y][z];
+            }
+            sValues3_Y[y] = BoolsToStr(values3_Z, separator);
+         }
+         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
+      ArrayResize(sValues3_X, 0);
+      ArrayResize(sValues3_Y, 0);
+      ArrayResize( values3_Z, 0);
+      return(result);
+   }
+   return(_EMPTY_STR(catch("__BoolsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert a string array to a readable representation.
  *
  * @param  string array[]
  * @param  string separator [optional] - element separator (default: ", ")
@@ -3508,7 +3587,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
    int dimensions = ArrayDimension(values2);
    int dim1 = ArrayRange(values2, 0);
 
-   // test for a 1 dimensional array
+   // test for a 1-dimensional array
    if (dimensions == 1) {
       if (dim1 == 0)
          return("{}");
@@ -3523,7 +3602,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
 
    int dim2 = ArrayRange(values2, 1);
 
-   // test for a 2 dimensional array
+   // test for a 2-dimensional array
    if (dimensions == 2) {
       string sValues2_X[]; ArrayResize(sValues2_X, dim1);
       string  values2_Y[]; ArrayResize( values2_Y, dim2);
@@ -3543,7 +3622,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
 
    int dim3 = ArrayRange(values3, 2);
 
-   // test for a 3 dimensional array
+   // test for a 3-dimensional array
    if (dimensions == 3) {
       string sValues3_X[]; ArrayResize(sValues3_X, dim1);
       string sValues3_Y[]; ArrayResize(sValues3_Y, dim2);

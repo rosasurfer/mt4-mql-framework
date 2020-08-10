@@ -380,6 +380,7 @@ int      ArrayUnshiftBool(bool &array[], bool value);;
 int      ArrayUnshiftDouble(double &array[], double value);;
 int      ArrayUnshiftInt(int &array[], int value);;
 bool     BoolInArray(bool &haystack[], bool needle);;
+string   BoolsToStr(bool &array[], string separator);;
 int      BufferGetChar(int &buffer[], int pos);;
 string   BufferToHexStr(int &buffer[]);;
 string   BufferToStr(int &buffer[]);;
@@ -512,7 +513,6 @@ string   WordToHexStr(int word);;
 
 
 // libraries/rsfLib2.ex4
-string   BoolsToStr(bool &array[], string separator);;
 string   CharsToStr(int &array[], string separator);;
 bool     DoubleQuoteStrings(string &array[]);;
 string   DoublesToStr(double &array[], string separator);;
