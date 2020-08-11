@@ -7,33 +7,10 @@
 
 
 /**
- * Lädt den Input-Dialog des aktuellen Programms neu.
- *
- * @return int - Fehlerstatus
- */
-int start.RelaunchInputDialog() {
-   int error;
-
-   if (IsExpert()) {
-      if (!IsTesting())
-         error = Chart.Expert.Properties();
-   }
-   else if (IsIndicator()) {
-      //if (!IsTesting())
-      //   error = Chart.Indicator.Properties();                     // TODO: implementieren
-   }
-
-   if (IsError(error))
-      SetLastError(error, NULL);
-   return(error);
-}
-
-
-/**
  * Send a message to the system debugger.
  *
  * @param  string message          - message
- * @param  int    error [optional] - error code
+ * @param  int    error [optional] - error code (default: none)
  *
  * @return int - the same error
  *
@@ -65,8 +42,7 @@ int debug(string message, int error = NO_ERROR) {
  *
  * @param  string location            - the error's location identifier incl. optional message
  * @param  int    error    [optional] - enforce a specific error (default: none)
- * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack
- *                                      (default: no)
+ * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack (default: no)
  *
  * @return int - the same error
  */
@@ -140,7 +116,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * Show a warning with an optional error but don't set the error.
  *
  * @param  string message          - message to display
- * @param  int    error [optional] - error to display
+ * @param  int    error [optional] - error to display (default: none)
  *
  * @return int - the same error
  */
@@ -231,12 +207,11 @@ int log(string message, int error = NO_ERROR) {
 
 
 /**
- * Set the last error code of the module. If called in a library the error will bubble up to the program's main module.
- * If called in an indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR
- * will never bubble up.
+ * Set the last error code of the module. If called in a library the error will bubble up to the program's main module. If called in an
+ * indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR will never bubble up.
  *
- * @param  int error - error code
- * @param  int param - ignored, any other value (default: none)
+ * @param  int error            - error code
+ * @param  int param [optional] - ignored, any value (default: none)
  *
  * @return int - the same error code (for chaining)
  */
@@ -250,9 +225,9 @@ int SetLastError(int error, int param = NULL) {
 
 
 /**
- * Gibt die Beschreibung eines Fehlercodes zurück.
+ * Return the description of an error code.
  *
- * @param  int error - MQL- oder gemappter Win32-Fehlercode
+ * @param  int error - MQL error code or mapped Win32 error code
  *
  * @return string
  */
@@ -3155,6 +3130,29 @@ string StrToHexStr(string value) {
    }
 
    return(result);
+}
+
+
+/**
+ * Open the input dialog of the current program.
+ *
+ * @return int - error status
+ */
+int start.RelaunchInputDialog() {
+   int error;
+
+   if (IsExpert()) {
+      if (!IsTesting())
+         error = Chart.Expert.Properties();
+   }
+   else if (IsIndicator()) {
+      //if (!IsTesting())
+      //   error = Chart.Indicator.Properties();                     // TODO: implement
+   }
+
+   if (IsError(error))
+      SetLastError(error, NULL);
+   return(error);
 }
 
 
