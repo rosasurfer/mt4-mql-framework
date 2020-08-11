@@ -3454,9 +3454,9 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
       type=double
       keywords=;AccountFreeMargin;
       <content>
-      Returns free margin value of the current account.
+      Return the free margin value of the current account (in account currency). The free margin is the amount of money available to open new positions.
       </content>
-      example=Print(&quot;Account free margin = &quot;, AccountFreeMargin());
+      example=<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());
     </function>
 
     <function>
@@ -3501,8 +3501,9 @@ Operation type. It can be either <a href="help://constants_trading">OP_BUY</a> o
       3 - only floating loss of open positions is used for calculation, floating profit of open positions is not used
       </content>
       <example>
-if(AccountFreeMarginMode()==0)
-   Print(&quot;Floating profit/loss is not used.&quot;);
+if (AccountFreeMarginMode() == 0) {
+   Print("Floating profit/loss is not used.");
+}
       </example>
     </function>
 
@@ -3512,9 +3513,9 @@ if(AccountFreeMarginMode()==0)
       type=int
       keywords=;AccountLeverage;
       <content>
-      Returns leverage of the current account.
+      Return the leverage value of the whole account as a multiplier. Single symbols may have a different leverage value.
       </content>
-      example=Print(&quot;Account #&quot;, AccountNumber(), &quot; leverage is &quot;, AccountLeverage());
+      example=<span class="function code">Print</span>(<span class="string code">"Account leverage is 1:"</span>, <span class="function code">AccountLeverage</span>());    <span class="comment code">// e.g. 1:100</span>
     </function>
 
     <function>
@@ -3522,9 +3523,9 @@ if(AccountFreeMarginMode()==0)
       caption=AccountMargin()
       type=double
       <content>
-      Returns margin value of the current account.
+      Return the used margin value of the current account (in account currency). The used margin is the amount of money used by all open positions.
       </content>
-      example=Print(&quot;Account margin &quot;, AccountMargin());
+      example=<span class="function code">Print</span>(<span class="string code">"Used margin: "</span>, <span class="function code">AccountMargin</span>());
     </function>
 
     <function>
@@ -3534,7 +3535,7 @@ if(AccountFreeMarginMode()==0)
       <content>
       Returns the current account name.
       </content>
-      example=Print(&quot;Account name &quot;, AccountName());
+      example=Print("Account name ", AccountName());
     </function>
 
     <function>
@@ -3544,7 +3545,7 @@ if(AccountFreeMarginMode()==0)
       <content>
       Returns the number of the current account.
       </content>
-      example=Print(&quot;account number &quot;, AccountNumber());
+      example=Print("account number ", AccountNumber());
     </function>
 
     <function>
@@ -3554,7 +3555,7 @@ if(AccountFreeMarginMode()==0)
       <content>
       Returns profit value of the current account.
       </content>
-      example=Print(&quot;Account profit &quot;, AccountProfit());
+      example=Print("Account profit ", AccountProfit());
     </function>
 
     <function>
@@ -3564,7 +3565,7 @@ if(AccountFreeMarginMode()==0)
       <content>
       Returns the connected server name.
       </content>
-      example=Print(&quot;Server name is &quot;, AccountServer());
+      example=Print("Server name is ", AccountServer());
     </function>
 
     <function>
@@ -3672,18 +3673,18 @@ Search direction. It can be any of the following values:<br/>
          Copies elements from one array to another and returns the number of copied elements.<br/>
          <br/>
          Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
-         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first 
+         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first
          dimension of the target array (rows) is automatically increased.<br/>
          <br/>
 <b>Notes:</b>
 <br/>
 <li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
 
-<li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or 
-    <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless 
+<li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
+    <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless
     of the indexing order of the arrays.</li>
 
-<li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or 
+<li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
     <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are according to the indexing order of the arrays.</li>
 
       </content>
@@ -3731,7 +3732,7 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns the specified timeseries to the target array and returns the number of contained bars or -1 on failure. The function supports loading of 
+Assigns the specified timeseries to the target array and returns the number of contained bars or -1 on failure. The function supports loading of
 custom or non-standard timeseries. The first dimension of the target array holds the bar offset, the second dimension holds the elements:<br/>
 <br/>
  <span class="code"> 0 </span>- open time<br/>
@@ -3747,15 +3748,15 @@ custom or non-standard timeseries. The first dimension of the target array holds
 <br/>
 <li>No real copying is performed and no additional memory is allocated. Instead a delegating instance to the internal rates array is assigned and access is redirected.</li>
 
-<li>When assigning to a locally declared array the array stops behaving like a regular array and starts behaving like an integer. 
+<li>When assigning to a locally declared array the array stops behaving like a regular array and starts behaving like an integer.
     If needed <a href="help://basics_variables_static">static</a> behavior now needs to be explicitely declared.</li>
 
 <li>The assigned array is read-only and reverse-indexed.</li>
 
 <li>When a timeseries is accessed the first time typically the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> is set and new data may arrive later.</li>
 
-<li>If an empty timeseries is re-requested due to <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> and before new data has arrived the function 
-    returns -1 and sets the error <a href="help://constants_errors">ERR_ARRAY_ERROR</a> (also in tester). The error should be handled like 
+<li>If an empty timeseries is re-requested due to <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> and before new data has arrived the function
+    returns -1 and sets the error <a href="help://constants_errors">ERR_ARRAY_ERROR</a> (also in tester). The error should be handled like
     <a href="help://constants_errors">ERR_SERIES_NOT_AVAILABLE</a> (i.e. returned bars = 0).</li>
 
 <li>If the array is passed to a DLL the DLL receives a pointer to the internal data array of type <span class="type">HISTORY_BAR_400[]</span>
@@ -3767,7 +3768,7 @@ custom or non-standard timeseries. The first dimension of the target array holds
 <b>Changes in MQL4.5 (terminal builds > 509):</b>
 <br/>
 Calling the function with a target parameter of type <span class="type">double[][]</span> now allocates new memory and performs a deep copy of the
-timeseries. Newly arriving data in the timeseries is not automatically reflected in the target array anymore. This change affects only MQL4 programs 
+timeseries. Newly arriving data in the timeseries is not automatically reflected in the target array anymore. This change affects only MQL4 programs
 compiled with the MQL5 compiler. See <a target="_blank" href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>.
 <br/>
 <br/>
@@ -4038,10 +4039,10 @@ dim_size=ArrayRange(num_array, 1);
         <b>Notes:</b>
         <br/>
         <li>Local arrays (arrays declared in a function) will remain resized and keep their values after the function returned.</li>
-        
+
         <li>Resizing an array to the same size does nothing (no-op). Resizing an array to a size of <span class="number">0</span> releases the
         allocated memory. Resizing an array to a different size allocates new memory and changes the address of the internal buffer.</li>
-        
+
         <li>When resizing an array existing or remaining array elements are kept. New array elements are initialized with <span class="number">0</span> (zero).</li>
       </content>
       <example>
@@ -4066,13 +4067,13 @@ dim_size=ArrayRange(num_array, 1);
       type=bool
       <content>
         Sets the indexing direction of an array. If <i>reverse</i> is <span class="const">true</span> the array will be indexed in reversed order,
-        i.e. accessing index 0 returns the last element. Setting <i>reverse</i> to <span class="const">false</span> sets standard indexing order.<br/> 
+        i.e. accessing index 0 returns the last element. Setting <i>reverse</i> to <span class="const">false</span> sets standard indexing order.<br/>
         Returns the previous state.<br/>
         <br/>
         <b>Notes:</b>
         <br/>
         <li>Changing an array's indexing order does not change the address of the internal array buffer.</li>
-        
+
         <li>When resizing a reverse-indexed array new elements are added to the beginning of the array and not to the end.</li>
       </content>
       <example>
@@ -4726,8 +4727,8 @@ Optional data output mode can be one or combination of:<br/>
       <br/>
       <br/>
       <b>Notes:</b><br/>
-      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom 
-          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen 
+      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom
+          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen
           <span class="global">UnchangedBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
           - <span class="global">UnchangedBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
           - <span class="global">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
@@ -4745,19 +4746,19 @@ Optional data output mode can be one or combination of:<br/>
           Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
           (BarOpen-Event) im Chart erscheint.<br/><br/></li>
 
-      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in 
+      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
           Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
 <br/>
 <b>Changes in MQL4.5 (terminal builds > 509):</b><br/>
-For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>(int rates_total, int prev_calculated, ...) see 
-<a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and 
+For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>(int rates_total, int prev_calculated, ...) see
+<a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
 <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.
 <br/>
 <br/>
       </content>
       <example>
 <span class="keyword code">extern</span> <span class="type code">int</span> Periods = 20;
-...      
+...
 <span class="type code">int</span> <span class="core code">start</span>() {
    <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
    <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
@@ -4958,11 +4959,11 @@ Indicator values left of the specified index will not appear in the chart. By de
       caption=SetIndexEmptyValue()
       type=void
       <content>
-        Set the indicator buffer value interpreted as "empty" value. Empty values are not drawn on the chart or shown in the "Data" window. 
+        Set the indicator buffer value interpreted as "empty" value. Empty values are not drawn on the chart or shown in the "Data" window.
         The default empty value is <span class="const">EMPTY_VALUE</span>.<br/>
         <br/>
         <b>Note:</b><br/>
-        Arrays bound to indicator buffers are always initialized with <span class="number">0.0</span> (zero), independent of a set "empty" value. 
+        Arrays bound to indicator buffers are always initialized with <span class="number">0.0</span> (zero), independent of a set "empty" value.
       </content>
       <example>
 <span class="type code">int</span> <span class="core code">init</span>() {
