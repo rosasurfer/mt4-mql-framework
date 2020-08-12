@@ -27,7 +27,7 @@ extern int    Output.MA.Periods = 2;
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
 
-extern bool   ShowWicks         = true;
+extern bool   ShowWicks         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
