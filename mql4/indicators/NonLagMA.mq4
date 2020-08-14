@@ -2,8 +2,8 @@
  * Low-lag moving average (based on sources by Igor Durkin aka igorad)
  *
  *
- * This implementation uses the formula of version 4. While version 7 is a bit less responsive (and may be more correct) in
- * 99.9% of the observed cases trend changes indicated by both formulas are identical.
+ * This implementation uses the formula of version 4. While version 7 is a bit less responsive (and probably more correct)
+ * in 99.9% of the observed cases trend changes indicated by both formulas are identical.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -11,11 +11,11 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see     v4.0: http://www.forexfactory.com/showthread.php?t=571026
- * @see     v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
- * @see     v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
- * @see     v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
- * @see     v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
+ * @see  v4.0: http://www.forexfactory.com/showthread.php?t=571026
+ * @see  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
+ * @see  v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
+ * @see  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
+ * @see  v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -103,10 +103,6 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // Cycle.Length
    if (Cycle.Length < 2) return(catch("onInit(1)  Invalid input parameter Cycle.Length = "+ Cycle.Length, ERR_INVALID_INPUT_PARAMETER));
@@ -210,17 +206,6 @@ int onInit() {
 int onDeinit() {
    RepositionLegend();
    return(catch("onDeinit(1)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -329,50 +314,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
    SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = __NAME();
-   Chart.StoreInt   (name +".input.Cycle.Length",         Cycle.Length        );
-   Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice        );
-   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
-   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
-   Chart.StoreString(name +".input.Draw.Type",            Draw.Type           );
-   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.StoreInt   (name +".input.Max.Bars",             Max.Bars            );
-   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
-   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound        );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = __NAME();
-   Chart.RestoreInt   (name +".input.Cycle.Length",         Cycle.Length        );
-   Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice        );
-   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
-   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
-   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type           );
-   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.RestoreInt   (name +".input.Max.Bars",             Max.Bars            );
-   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
-   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound        );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver);
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 
