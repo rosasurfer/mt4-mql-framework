@@ -1,13 +1,13 @@
 /**
  * Calculate the weights of a NonLagMA.
  *
- * This indicator uses the formula of version 4. The MA using the formula of version 7 reacts a tiny bit slower than this one
- * and is probably more correct (because more recent). However trend changes indicated by both formulas are identical in
- * 99.9% of all observed cases.
+ * This indicator uses the formula of version 4. The MA using the formula of version 7 is a bit less responsive (and probably
+ * more correct because more recent). However in 99.9% of the observed cases trend changes indicated by both formulas are
+ * identical.
  *
- * @param  double weights[]
- * @param  int    cycles
- * @param  int    cycleLengths
+ * @param  _Out_ double weights[]
+ * @param  _In_  int    cycles
+ * @param  _In_  int    cycleLength
  *
  * @return bool - success status
  *
