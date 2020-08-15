@@ -1,9 +1,9 @@
 /**
- * Low-lag moving average (based on sources by Igor Durkin aka igorad)
+ * Non-lag Moving Average
  *
  *
- * This implementation uses the formula of version 4. While version 7 is a bit less responsive (and probably more correct)
- * in 99.9% of the observed cases trend changes indicated by both formulas are identical.
+ * Based on sources by Igor Durkin (aka igorad) and  uses the formula of version 4. While version 7 is a bit less responsive
+ * (and probably more correct) in 99.9% of the observed cases trend changes are identical.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
