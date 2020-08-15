@@ -1,5 +1,5 @@
 /**
- * Non-lag Moving Average
+ * Non-Lag Moving Average
  *
  *
  * Based on sources by Igor Durkin (aka igorad) and  uses the formula of version 4. While version 7 is a bit less responsive
