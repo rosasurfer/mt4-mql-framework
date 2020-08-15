@@ -14,7 +14,7 @@
  *
  * @return int - the same error
  *
- * Notes: This function must not use .ex4 libary functions. Using DLL functions is fine.
+ * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 int debug(string message, int error = NO_ERROR) {
    static bool recursiveCall = false;
@@ -26,10 +26,10 @@ int debug(string message, int error = NO_ERROR) {
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
-   else                         application = "MetaTrader::";
+   if (This.IsTesting()) string sApplication = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
+   else                         sApplication = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
+   OutputDebugStringA(StringConcatenate(sApplication, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
 
    recursiveCall = false;
    return(error);
@@ -182,22 +182,22 @@ int warn(string message, int error = NO_ERROR) {
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__ExecutionContext[EC.logEnabled]) return(error);         // skip logging if fully disabled
+   if (!__ExecutionContext[EC.logEnabled]) return(error);            // skip logging if fully disabled
 
    static bool recursiveCall = false;
-   if (recursiveCall)                                             // prevent recursive calls
+   if (recursiveCall)                                                // prevent recursive calls
       return(debug("log(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
-   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {           // send the message to the system debugger
+   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {              // send the message to the system debugger
       debug(message, error);
    }
-   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {        // send the message to the terminal log
+   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {           // send the message to the terminal log
       string sError = "";
       if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
       Print(__NAME(), "::", StrReplace(message, NL, " "), sError);
    }
-   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {          // send the message to a custom logger
+   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {             // send the message to a custom logger
       LogMessageA(__ExecutionContext, message, error);
    }
 
@@ -591,25 +591,24 @@ string Pluralize(int count, string singular="", string plural="s") {
 
 
 /**
- * Dropin replacement for Alert().
- *
  * Display an alert even if not supported by the terminal in the current context (e.g. in tester).
  *
  * @param  string message
+ *
+ * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   // ForceAlert() is used when Kansas is going bye-bye. To be as robust as possible it must have little/no dependencies.
-   // Especially it must NOT call any MQL library functions. DLL functions are OK.
+   debug(message);                                                                  // send the message to the debug output
 
-   Alert(message);                                             // make sure the message shows up in the terminal log
+   Alert(Symbol(), ",", PeriodDescription(Period()), " ", __NAME(), " ", message);  // makes it show up in the terminal log
 
    if (IsTesting()) {
-      // Alert() prints to the log but is fully ignored otherwise
-      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
-      message = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
+      // in tester no Alert() dialog was displayed
+      string sCaption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
+      string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
       PlaySoundEx("alert.wav", MB_DONT_LOG);
-      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
+      MessageBoxEx(sCaption, sMessage, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
 }
 
