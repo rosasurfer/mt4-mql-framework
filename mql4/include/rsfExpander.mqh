@@ -126,7 +126,7 @@
    string   OperationTypeToStr(int type);
    string   OrderTypeDescription(int type);           // alias
    string   OrderTypeToStr(int type);                 // alias
-   string   PeriodDescription(int period);
+   //string PeriodDescription(int period);            // also implemented in MQL
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);

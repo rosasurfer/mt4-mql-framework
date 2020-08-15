@@ -195,6 +195,7 @@ string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
 datetime ParseDate(string value);;
 datetime ParseDateTime(string value);;
+string   PeriodDescription(int period);;           // also implemented in MT4Expander
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
@@ -685,7 +686,7 @@ int      onDeinitRecompile();;
 int      onDeinitRemove();;
 int      onDeinitTemplate();;
 int      onDeinitUndefined();;
-string   PeriodDescription(int period);;
+string   PeriodDescription(int period);;           // also implemented in MQL
 string   PeriodToStr(int period);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;

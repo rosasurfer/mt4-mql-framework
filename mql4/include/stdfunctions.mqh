@@ -17,9 +17,14 @@
  * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 int debug(string message, int error = NO_ERROR) {
+   if (!IsDllsAllowed()) {
+      Print("debug(1)  ", message);
+      return(error);
+   }
+
    static bool recursiveCall = false;
    if (recursiveCall) {                               // prevent recursive calls
-      Print("debug(1)  recursive call: ", message);
+      Print("debug(2)  recursive call: ", message);
       return(error);
    }
    recursiveCall = true;
@@ -598,13 +603,14 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                                  // send the message to the debug output
+   debug(message);                                                   // send the message to the debug output
 
-   Alert(Symbol(), ",", PeriodDescription(Period()), " ", __NAME(), " ", message);  // makes it show up in the terminal log
+   string sPeriod = PeriodDescription(Period());
+   Alert(Symbol(), ",", sPeriod, ": ", __NAME(), ":  ", message);   // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
-      string sCaption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
+      string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
       string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
       PlaySoundEx("alert.wav", MB_DONT_LOG);
@@ -1582,6 +1588,9 @@ bool __LOG() {
  */
 string __NAME() {
    static string name = ""; if (!StringLen(name)) {
+      if (!IsDllsAllowed())
+         return(WindowExpertName());
+
       string program = ec_ProgramName(__ExecutionContext);
       string module  = ec_ModuleName (__ExecutionContext);
 
@@ -5148,6 +5157,38 @@ datetime ParseDateTime(string value) {
       }
    }
    return(DateTime(iYY, iMM, iDD, iHH, iII, iSS));
+}
+
+
+/**
+ * Return the description of a timeframe identifier. Supports custom timeframes.
+ *
+ * @param  int period - timeframe identifier or amount of minutes per bar period
+ *
+ * @return string
+ *
+ * Note: Implemented in MQL and the MT4Expander to be available if DLL calls are disabled.
+ */
+string PeriodDescription(int period) {
+   if (!period) period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return("M1" );     // 1 minute
+      case PERIOD_M5 : return("M5" );     // 5 minutes
+      case PERIOD_M15: return("M15");     // 15 minutes
+      case PERIOD_M30: return("M30");     // 30 minutes
+      case PERIOD_H1 : return("H1" );     // 1 hour
+      case PERIOD_H2 : return("H2" );     // 2 hours (custom timeframe)
+      case PERIOD_H3 : return("H3" );     // 3 hours (custom timeframe)
+      case PERIOD_H4 : return("H4" );     // 4 hours
+      case PERIOD_H6 : return("H6" );     // 6 hours (custom timeframe)
+      case PERIOD_H8 : return("H8" );     // 8 hours (custom timeframe)
+      case PERIOD_D1 : return("D1" );     // 1 day
+      case PERIOD_W1 : return("W1" );     // 1 week
+      case PERIOD_MN1: return("MN1");     // 1 month
+      case PERIOD_Q1 : return("Q1" );     // 1 quarter (custom timeframe)
+   }
+   return(""+ period);
 }
 
 
