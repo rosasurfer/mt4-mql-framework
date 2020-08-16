@@ -18,7 +18,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ATR.Timeframe   = "current* | M1 | M5 | M15 | ..."; // empty = current
+extern string ATR.Timeframe   = "current* | M1 | M5 | M15 | ..."; // empty: current
 extern int    ATR.Periods     = 60;
 extern double ATR.Multiplier  = 1;
 

@@ -89,8 +89,8 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
-   SetIndexBuffer(MODE_BUFFER1, buffer1);             // buffer 1: visible
-   SetIndexBuffer(MODE_BUFFER2, buffer2);             // buffer 2: visible
+   SetIndexBuffer(MODE_BUFFER1, buffer1);
+   SetIndexBuffer(MODE_BUFFER2, buffer2);
 
    // chart legend
    if (!IsSuperContext()) {

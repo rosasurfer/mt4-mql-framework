@@ -1,8 +1,7 @@
 /**
- * HalfTrend indicator - a support/resistance line defined by a trading range channel
+ * HalfTrend SR - a continuous support/resistance line defined by a trading range channel
  *
- *
- * The indicator is similar to the SuperTrend indicator which uses a slightly different channel calculation and trend logic.
+ * Similar to the SuperTrend indicator but uses a slightly different channel calculation and trend logic.
  *
  * Indicator buffers for iCustom():
  *  • HalfTrend.MODE_MAIN:  main SR values
