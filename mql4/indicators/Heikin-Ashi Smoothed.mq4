@@ -19,9 +19,9 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA | SMMA*";    // averaging of input prices        Genesis: SMMA(6) = EMA(11)
-extern int    Input.MA.Periods  = 6;
-extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA";    // averaging of HA values           Genesis: LWMA(2)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA*";           // averaging of input prices        Genesis: SMMA(6) = EMA(11)
+extern int    Input.MA.Periods  = 11;
+extern string Output.MA.Method  = "none | SMA | LWMA* | EMA";           // averaging of HA values           Genesis: LWMA(2)
 extern int    Output.MA.Periods = 2;
 
 extern color  Color.BarUp       = Blue;
@@ -109,7 +109,7 @@ int onInit() {
       if (inputMaPeriods == 1) inputMaMethod = EMPTY;
    }
 
-   // Output.MA.Method
+   // Output.MA
    sValue = StrTrim(Output.MA.Method);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);

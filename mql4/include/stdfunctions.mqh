@@ -5324,7 +5324,7 @@ int StrToPriceType(string value, int execFlags = NULL) {
       if (str == "L"               ) return(PRICE_LOW     );
       if (str == ""+ PRICE_LOW     ) return(PRICE_LOW     );
       if (str == "C"               ) return(PRICE_CLOSE   );
-      if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );
+      if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );      // numeric 0 (zero)
       if (str == "M"               ) return(PRICE_MEDIAN  );
       if (str == ""+ PRICE_MEDIAN  ) return(PRICE_MEDIAN  );
       if (str == "T"               ) return(PRICE_TYPICAL );

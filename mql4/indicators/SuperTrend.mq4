@@ -1,17 +1,18 @@
 /**
- * SuperTrend - a support/resistance line defined by an ATR channel
+ * SuperTrend SR - a continuous support/resistance line defined by an ATR channel
  *
  *
- * The upper or lower band of an ATR channel calculated around High and Low of the current bar is used to calculate a rising
- * or falling support/resistance line. It changes direction when:
+ * The upper and lower band of an ATR channel calculated around price High and Low are used to calculate a continuous SR line
+ * (only rising or falling values). The line changes direction when:
  *
- *  (1) the outer ATR channel band crosses the support/resistance line built by the inner ATR channel band and
- *  (2) price crosses a Moving Average in the same direction
+ *  (1) The outer ATR channel band crosses the support/resistance line formed by the inner ATR channel band.
+ *      - and -
+ *  (2) Price crosses a Moving Average in the same direction.
  *
  * The indicator is similar to the HalfTrend indicator which uses a slightly different channel calculation and trend logic.
  *
  * Indicator buffers for iCustom():
- *  • SuperTrend.MODE_MAIN:  main SR values
+ *  • SuperTrend.MODE_MAIN:  main SR line values
  *  • SuperTrend.MODE_TREND: trend direction and length
  *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
@@ -21,9 +22,8 @@
  * @see  http://www.forexfactory.com/showthread.php?t=268038  (Plateman's CCI aka SuperTrend)
  * @see  /mql4/indicators/HalfTrend.mq4
  *
- * Notes: In the above FF links a CCI is used to get the SMA component for averaging price. Here the CCI is replaced and the
- *        SMA is used directly. The defining element for the indicator is the ATR channel, not price or the SMA. Therefore
- *        the original SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
+ * Note: The defining element for the indicator is the ATR channel, not price or MA. Therefore the original
+ *       SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
