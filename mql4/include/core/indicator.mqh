@@ -190,7 +190,7 @@ bool init.GlobalVars() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
    Tick           = __ExecutionContext[EC.ticks       ];
-   Tick.Time      = __ExecutionContext[EC.lastTickTime];
+   Tick.Time      = __ExecutionContext[EC.currTickTime];
 
    __lpSuperContext = __ExecutionContext[EC.superContext];
    if (!__lpSuperContext) {                                       // with a supercontext this context is already up-to-date
