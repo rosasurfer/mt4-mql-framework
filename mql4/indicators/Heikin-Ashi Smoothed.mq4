@@ -217,8 +217,8 @@ int onTick() {
 
    // calculate start bars
    int haBars      = Bars-inputMaPeriods;
-   int haStartBar  = Min(haBars, ChangedBars) - 1;    // IIR filters need at least 10 bars for initialization
-   int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0);
+   int haStartBar  = Min(haBars, ChangedBars) - 1;
+   int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0);    // IIR filters need at least 10 bars for initialization
    int outBars     = haBars-outInitBars+1;
    int outStartBar = Min(outBars, ChangedBars) - 1;
    if (outStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
