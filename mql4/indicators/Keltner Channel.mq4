@@ -1,5 +1,16 @@
 /**
- * Keltner Channel (ATR channel)
+ * Keltner Channel - an ATR channel around a Moving Average
+ *
+ * Upper and lower channel band are defined as:
+ *  UpperBand = MA + ATR * Multiplier
+ *  LowerBand = MA - ATR * Multiplier
+ *
+ * Supported Moving-Averages:
+ *  • SMA  - Simple Moving Average:          equal bar weighting
+ *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
+ *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
+ *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -7,18 +18,18 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods      = 200;
-extern string MA.Method       = "SMA* | LWMA | EMA | ALMA";
-extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
-
-extern int    ATR.Periods     = 100;
-extern string ATR.Timeframe   = "current";                           // Timeframe: M1 | M5 | M15 | ...
+extern string ATR.Timeframe   = "current* | M1 | M5 | M15 | ..."; // empty = current
+extern int    ATR.Periods     = 60;
 extern double ATR.Multiplier  = 1;
 
-extern color  Color.Bands     = Blue;                                // Farbverwaltung hier, damit Code Zugriff hat
+extern string MA.Method       = "SMA* | LWMA | EMA | ALMA";
+extern int    MA.Periods      = 10;
+extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
+
+extern color  Color.Bands     = Blue;
 extern color  Color.MA        = CLR_NONE;
 
-extern int    Max.Bars        = 5000;                                // max. number of bars to display (-1: all available)
+extern int    Max.Bars        = 10000;                            // max. number of bars to display (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,9 +39,9 @@ extern int    Max.Bars        = 5000;                                // max. num
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
 
-#define MODE_MA               Bands.MODE_MA                          // MA
-#define MODE_UPPER            Bands.MODE_UPPER                       // oberes Band
-#define MODE_LOWER            Bands.MODE_LOWER                       // unteres Band
+#define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
+#define MODE_UPPER            Bands.MODE_UPPER
+#define MODE_LOWER            Bands.MODE_LOWER
 
 #property indicator_chart_window
 #property indicator_buffers   3
@@ -40,131 +51,130 @@ extern int    Max.Bars        = 5000;                                // max. num
 #property indicator_style3    STYLE_SOLID
 
 
-double bufferMA       [];                                            // sichtbar
-double bufferUpperBand[];                                            // sichtbar
-double bufferLowerBand[];                                            // sichtbar
+double ma       [];
+double upperBand[];
+double lowerBand[];
 
-int    ma.periods;
-int    ma.method;
-int    ma.appliedPrice;
+int    atrTimeframe;
+int    atrPeriods;
+double atrMultiplier;
 
-int    atr.timeframe;
+int    maMethod;
+int    maPeriods;
+int    maAppliedPrice;
+double almaWeights[];                                             // ALMA bar weights
 
-double alma.weights[];                                               // Gewichtungen der einzelnen Bars eines ALMA
+int    maxValues;
 
-string legendLabel, iDescription;
+string indicatorName;
+string legendLabel;
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   // (1) Validierung
-   // MA.Periods
-   if (MA.Periods < 2)      return(catch("onInit(1)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   ma.periods = MA.Periods;
-
-   // MA.Method
-   string values[], sValue;
-   if (Explode(MA.Method, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
-   }
-   else sValue = MA.Method;
-   ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)        return(catch("onInit(2)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (ma.method == MODE_SMMA) return(catch("onInit(3)  Unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   MA.Method = MaMethodDescription(ma.method);
-
-   // MA.AppliedPrice
-   sValue = StrToLower(MA.AppliedPrice);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   // validate inputs
+   // ATR
+   string sValues[], sValue = ATR.Timeframe;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if (sValue == "") sValue = "close";                      // default price type
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ma.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                  return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue=="" || sValue=="0" || sValue=="current") {
+      atrTimeframe  = Period();
+      ATR.Timeframe = "current";
    }
-   MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
+   else {
+      atrTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+      if (atrTimeframe == -1) return(catch("onInit(1)  Invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      ATR.Timeframe = TimeframeDescription(atrTimeframe);
+   }
+   if (ATR.Periods < 1)       return(catch("onInit(2)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)    return(catch("onInit(3)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   atrPeriods    = ATR.Periods;
+   atrMultiplier = ATR.Multiplier;
+   // MA.Method
+   sValue = MA.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (maMethod == -1)        return(catch("onInit(4)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA.Method = MaMethodDescription(maMethod);
+   // MA.Periods
+   if (MA.Periods < 0)        return(catch("onInit(5)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
+   // MA.AppliedPrice
+   sValue = StrToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if (sValue == "") sValue = "close";                            // default price type
+   maAppliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice == -1) {
+      if      (StrStartsWith("open",     sValue)) maAppliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) maAppliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) maAppliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) maAppliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) maAppliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) maAppliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) maAppliedPrice = PRICE_WEIGHTED;
+      else                    return(catch("onInit(6)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   }
+   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
-   // ATR.Periods
-   if (ATR.Periods < 1)     return(catch("onInit(5)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
-
-   // ATR.Timeframe
-   ATR.Timeframe = StrToUpper(StrTrim(ATR.Timeframe));
-   if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
-   if (ATR.Timeframe == ""       ) atr.timeframe = Period();
-   else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (atr.timeframe == -1) return(catch("onInit(6)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-
-   // ATR.Multiplier
-   if (ATR.Multiplier < 0)  return(catch("onInit(7)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
-
-   // Colors
-   if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-   if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;
+   if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;
 
    // Max.Bars
-   if (Max.Bars < -1)       return(catch("onInit(8)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)         return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
+   // buffer management
+   SetIndexBuffer(MODE_MA,    ma       );
+   SetIndexBuffer(MODE_UPPER, upperBand);
+   SetIndexBuffer(MODE_LOWER, lowerBand);
 
-   // (2) Chart-Legende erzeugen
+   // chart legend
    if (!IsSuperContext()) {
-       legendLabel  = CreateLegendLabel();
-       RegisterObject(legendLabel);
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
    }
 
+   // names, labels and display options
+   string sMa            = MA.Method +"("+ maPeriods +")";
+   string sAtrMultiplier = ifString(atrMultiplier==1, "", NumberToStr(atrMultiplier, ".+") +"*");
+   string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);
+   string sAtr           = sAtrMultiplier +"ATR("+ atrPeriods + sAtrTimeframe +")";
+   indicatorName         = "Keltner Channel "+ sMa +" ± "+ sAtr;
+   IndicatorShortName(indicatorName);                 // chart context menu
+   SetIndexLabel(MODE_MA,    "Keltner Channel MA"); if (Color.MA == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
+   SetIndexLabel(MODE_UPPER, "Keltner Upper Band");   // chart tooltips and "Data" window
+   SetIndexLabel(MODE_LOWER, "Keltner Lower Band");
 
-   // (3) ggf. ALMA-Gewichtungen berechnen
-   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)                 // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      @ALMA.CalculateWeights(alma.weights, ma.periods);
-
-
-   // (4.1) Bufferverwaltung
-   SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                   // sichtbar
-   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                   // sichtbar
-   SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                   // sichtbar
-
-   // (4.2) Anzeigeoptionen
-   string strAtrTimeframe = ""; if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
-   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +")";
-   string atrDescription = NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
-   IndicatorShortName("Keltner Channel "+ atrDescription);              // chart context menu
-   SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und Data window
-   SetIndexLabel(Bands.MODE_LOWER, "Keltner Lower "+ atrDescription);
-   if (Color.MA == CLR_NONE) SetIndexLabel(Bands.MODE_MA, NULL);
-   else                      SetIndexLabel(Bands.MODE_MA, "Keltner Channel "+ MA.Method +"("+ MA.Periods +")");
-   IndicatorDigits(SubPipDigits);
-
-   // (4.3) Zeichenoptionen
-   int startDraw = 0;
-   if (Max.Bars >= 0) startDraw = Bars - Max.Bars;
-   if (startDraw < 0) startDraw = 0;
-   SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
-   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
-   SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
+   IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(9)"));
+   // pre-calculate ALMA bar weights
+   if (maMethod == MODE_ALMA) @ALMA.CalculateWeights(almaWeights, maPeriods);
+
+   return(catch("onInit(8)"));
 }
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    RepositionLegend();
@@ -173,85 +183,72 @@ int onDeinit() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
-   // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(bufferMA))                                         // kann bei Terminal-Start auftreten
-      return(log("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
+   if (!ArraySize(ma)) return(log("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(bufferMA,        EMPTY_VALUE);
-      ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
-      ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
+      ArrayInitialize(ma,        EMPTY_VALUE);
+      ArrayInitialize(upperBand, EMPTY_VALUE);
+      ArrayInitialize(lowerBand, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
-
-   // (1) synchronize buffers with a shifted offline chart
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferLowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(ma,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-
-   if (ma.periods < 2)                                               // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
-      return(NO_ERROR);
-
-
-   // (2) Startbar der Berechnung ermitteln
-   if (ChangedBars > Max.Bars) /*&&*/ if (Max.Bars >= 0)
-      ChangedBars = Max.Bars;
-   int startBar = Min(ChangedBars-1, Bars-ma.periods);
+   // calculate start bar
+   int changedBars = Min(ChangedBars, maxValues);
+   int startBar = Min(changedBars, Bars-maPeriods+1) - 1;
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-
-   // (3) ungültige Bars neuberechnen
-   if (ma.method <= MODE_LWMA) {
-      double atr;
-      for (int bar=startBar; bar >= 0; bar--) {
-         bufferMA       [bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
-         atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplier;
-         bufferUpperBand[bar] = bufferMA[bar] + atr;
-         bufferLowerBand[bar] = bufferMA[bar] - atr;
-      }
-   }
-   else if (ma.method == MODE_ALMA) {
+   // recalculate changed bars
+   if (maMethod == MODE_ALMA) {
       RecalcALMAChannel(startBar);
    }
+   else {
+      for (int bar=startBar; bar >= 0; bar--) {
+         double atr = iATR(NULL, atrTimeframe, atrPeriods, bar) * atrMultiplier;
 
-
-   // (4) Legende aktualisieren
-   @Bands.UpdateLegend(legendLabel, iDescription, "", Color.Bands, bufferUpperBand[0], bufferLowerBand[0], Digits, Time[0]);
+         ma       [bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, maAppliedPrice, bar);
+         upperBand[bar] = ma[bar] + atr;
+         lowerBand[bar] = ma[bar] - atr;
+      }
+   }
+   @Bands.UpdateLegend(legendLabel, indicatorName, "", Color.Bands, upperBand[0], lowerBand[0], Digits, Time[0]);
 
    return(last_error);
 }
 
 
 /**
- * Berechnet die ungültigen Bars eines ALMA-basierten Keltner Channels neu.
+ * Recalculate the changed bars of an ALMA based Keltner Channel.
  *
  * @param  int startBar
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool RecalcALMAChannel(int startBar) {
-   double atr;
-
    for (int i, j, bar=startBar; bar >= 0; bar--) {
-      bufferMA[bar] = 0;
-      for (i=0; i < ma.periods; i++) {
-         bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
+      double atr = iATR(NULL, atrTimeframe, atrPeriods, bar) * atrMultiplier;
+
+      ma[bar] = 0;
+      for (i=0; i < maPeriods; i++) {
+         ma[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
       }
-      atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplier;
-      bufferUpperBand[bar] = bufferMA[bar] + atr;
-      bufferLowerBand[bar] = bufferMA[bar] - atr;
+      upperBand[bar] = ma[bar] + atr;
+      lowerBand[bar] = ma[bar] - atr;
    }
-   return(!catch("RecalcALMAChannel()"));
+   return(!catch("RecalcALMAChannel(1)"));
 }
 
 
@@ -260,13 +257,11 @@ bool RecalcALMAChannel(int startBar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
-
    int drawType = ifInt(Color.MA==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
-   SetIndexStyle(Bands.MODE_MA,    drawType,  EMPTY, EMPTY, Color.MA   );
-   SetIndexStyle(Bands.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
-   SetIndexStyle(Bands.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+   SetIndexStyle(MODE_MA,    drawType,  EMPTY, EMPTY, Color.MA   );
+   SetIndexStyle(MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+   SetIndexStyle(MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
 }
 
 
@@ -276,14 +271,15 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",      DoubleQuoteStr(MA.Periods),                         ";", NL,
-                            "MA.Method=",       DoubleQuoteStr(MA.Method),                          ";", NL,
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),                    ";", NL,
-                            "ATR.Periods=",     ATR.Periods,                                        ";", NL,
-                            "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe),                      ";", NL,
-                            "ATR.Multiplier=",  DoubleQuoteStr(NumberToStr(ATR.Multiplier, ".1+")), ";", NL,
-                            "Color.Bands=",     ColorToStr(Color.Bands),                            ";", NL,
-                            "Color.MA=",        ColorToStr(Color.MA),                               ";", NL,
-                            "Max.Bars=",        Max.Bars,                                           ";")
+   return(StringConcatenate(
+                            "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe),      ";", NL,
+                            "ATR.Periods=",     ATR.Periods,                        ";", NL,
+                            "ATR.Multiplier=",  NumberToStr(ATR.Multiplier, ".1+"), ";", NL,
+                            "MA.Method=",       DoubleQuoteStr(MA.Method),          ";", NL,
+                            "MA.Periods=",      MA.Periods,                         ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),    ";", NL,
+                            "Color.Bands=",     ColorToStr(Color.Bands),            ";", NL,
+                            "Color.MA=",        ColorToStr(Color.MA),               ";", NL,
+                            "Max.Bars=",        Max.Bars,                           ";")
    );
 }
