@@ -181,8 +181,8 @@ int onInit() {
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = __NAME() +"("+ cycleLength + sAppliedPrice +")";
-   string shortName = __NAME() +"("+ cycleLength +")";
-   IndicatorShortName(shortName);                        // chart context menu
+   string shortName = "NLMA("+ cycleLength +")";
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);

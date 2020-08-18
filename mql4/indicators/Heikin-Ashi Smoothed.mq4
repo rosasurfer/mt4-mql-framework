@@ -155,7 +155,7 @@ int onInit() {
    if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
    if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
 
-   IndicatorShortName(indicatorName);           // chart context menu
+   IndicatorShortName(indicatorName);           // chart tooltips and context menu
    SetIndexLabel(MODE_OUT_OPEN,    NULL);       // chart tooltips and "Data" window
    SetIndexLabel(MODE_OUT_CLOSE,   NULL);
    SetIndexLabel(MODE_OUT_HIGHLOW, NULL);

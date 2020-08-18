@@ -183,7 +183,7 @@ int onInit() {
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    string shortName = "2-Pole-Filter("+ Periods +")";
-   IndicatorShortName(shortName);                        // chart context menu
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);

@@ -156,7 +156,7 @@ int onInit() {
    string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);
    string sAtr           = sAtrMultiplier +"ATR("+ atrPeriods + sAtrTimeframe +")";
    indicatorName         = "Keltner Channel "+ sMa +" ± "+ sAtr;
-   IndicatorShortName(indicatorName);                 // chart context menu
+   IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_MA,    "Keltner Channel MA"); if (Color.MA == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    SetIndexLabel(MODE_UPPER, "Keltner Upper Band");   // chart tooltips and "Data" window
    SetIndexLabel(MODE_LOWER, "Keltner Lower Band");

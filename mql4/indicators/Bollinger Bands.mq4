@@ -174,7 +174,7 @@ int onInit() {
    string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
    ind.shortName = __NAME() +"("+ MA.Periods +")";
    ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
-   IndicatorShortName(ind.shortName);                          // chart context menu
+   IndicatorShortName(ind.shortName);                          // chart tooltips and context menu
    if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
    SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
