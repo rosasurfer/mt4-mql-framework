@@ -173,7 +173,7 @@ int onInit() {
 
    // names, labels and display options
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
-   IndicatorShortName(indicatorName);                           // chart context menu
+   IndicatorShortName(indicatorName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_MA,            indicatorName);            // chart tooltips and "Data" window
    SetIndexLabel(MODE_MA_L,          NULL);
    SetIndexLabel(MODE_MA_S,          NULL);

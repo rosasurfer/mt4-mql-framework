@@ -89,7 +89,7 @@ int onInit() {
 
    // names, labels and display options
    IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // chart subwindow and context menu
-   SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // "Data" window
+   SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // chart tooltips and "Data" window
    SetIndexLabel(MODE_CLOSED, "Broketrader closed PL");
    SetIndexLabel(MODE_TOTAL,  "Broketrader total PL" );
    IndicatorDigits(1);

@@ -180,7 +180,7 @@ int onInit() {
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName = "JMA("+ Periods + sPhase + sAppliedPrice +")";
    string shortName = "JMA("+ Periods +")";
-   IndicatorShortName(shortName);                        // chart context menu
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);

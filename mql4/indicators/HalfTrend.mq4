@@ -150,7 +150,7 @@ int onInit() {
 
    // names, labels and display options
    indicatorName = __NAME() +"("+ Periods +")";
-   IndicatorShortName(indicatorName);                    // chart context menu
+   IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
    SetIndexLabel(MODE_UPTREND,   NULL);

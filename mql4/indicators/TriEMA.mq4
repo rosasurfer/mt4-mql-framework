@@ -178,7 +178,7 @@ int onInit() {
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = __NAME() +"("+ MA.Periods +")";
-   IndicatorShortName(shortName);                        // chart context menu
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_EMA_1,     NULL);
    SetIndexLabel(MODE_EMA_2,     NULL);
    SetIndexLabel(MODE_EMA_3,     shortName);             // chart tooltips and "Data" window
