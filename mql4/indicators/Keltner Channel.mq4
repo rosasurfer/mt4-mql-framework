@@ -18,16 +18,15 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ATR.Timeframe   = "current* | M1 | M5 | M15 | ..."; // empty: current
-extern int    ATR.Periods     = 60;
-extern double ATR.Multiplier  = 1;
-
 extern string MA.Method       = "SMA* | LWMA | EMA | ALMA";
 extern int    MA.Periods      = 10;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern color  MA.Color        = CLR_NONE;
 
-extern color  Color.Bands     = Blue;
-extern color  Color.MA        = CLR_NONE;
+extern string ATR.Timeframe   = "current* | M1 | M5 | M15 | ..."; // empty: current
+extern int    ATR.Periods     = 60;
+extern double ATR.Multiplier  = 1;
+extern color  Bands.Color     = Blue;
 
 extern int    Max.Bars        = 10000;                            // max. number of bars to display (-1: all available)
 
@@ -46,6 +45,10 @@ extern int    Max.Bars        = 10000;                            // max. number
 #property indicator_chart_window
 #property indicator_buffers   3
 
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
+#property indicator_color3    CLR_NONE
+
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_SOLID
 #property indicator_style3    STYLE_SOLID
@@ -55,19 +58,18 @@ double ma       [];
 double upperBand[];
 double lowerBand[];
 
-int    atrTimeframe;
-int    atrPeriods;
-double atrMultiplier;
-
 int    maMethod;
 int    maPeriods;
 int    maAppliedPrice;
 double almaWeights[];                                             // ALMA bar weights
 
-int    maxValues;
+int    atrTimeframe;
+int    atrPeriods;
+double atrMultiplier;
 
 string indicatorName;
 string legendLabel;
+int    maxValues;
 
 
 /**
@@ -77,30 +79,10 @@ string legendLabel;
  */
 int onInit() {
    // validate inputs
-   // ATR
-   string sValues[], sValue = ATR.Timeframe;
+   // MA
+   string sValues[], sValue = MA.Method;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrTrim(sValue);
-   if (sValue=="" || sValue=="0" || sValue=="current") {
-      atrTimeframe  = Period();
-      ATR.Timeframe = "current";
-   }
-   else {
-      atrTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (atrTimeframe == -1) return(catch("onInit(1)  Invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-      ATR.Timeframe = TimeframeDescription(atrTimeframe);
-   }
-   if (ATR.Periods < 1)       return(catch("onInit(2)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ATR.Multiplier < 0)    return(catch("onInit(3)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
-   atrPeriods    = ATR.Periods;
-   atrMultiplier = ATR.Multiplier;
-   // MA.Method
-   sValue = MA.Method;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
@@ -131,9 +113,30 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
+   // ATR
+   sValue = ATR.Timeframe;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if (sValue=="" || sValue=="0" || sValue=="current") {
+      atrTimeframe  = Period();
+      ATR.Timeframe = "current";
+   }
+   else {
+      atrTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+      if (atrTimeframe == -1) return(catch("onInit(1)  Invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      ATR.Timeframe = TimeframeDescription(atrTimeframe);
+   }
+   if (ATR.Periods < 1)       return(catch("onInit(2)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)    return(catch("onInit(3)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   atrPeriods    = ATR.Periods;
+   atrMultiplier = ATR.Multiplier;
+
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;
-   if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;
+   if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;
+   if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // Max.Bars
    if (Max.Bars < -1)         return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
@@ -157,9 +160,9 @@ int onInit() {
    string sAtr           = sAtrMultiplier +"ATR("+ atrPeriods + sAtrTimeframe +")";
    indicatorName         = "Keltner Channel "+ sMa +" ± "+ sAtr;
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
-   SetIndexLabel(MODE_MA,    "Keltner Channel MA"); if (Color.MA == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
-   SetIndexLabel(MODE_UPPER, "Keltner Upper Band");   // chart tooltips and "Data" window
-   SetIndexLabel(MODE_LOWER, "Keltner Lower Band");
+   SetIndexLabel(MODE_MA,    "KChannel MA"); if (MA.Color == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
+   SetIndexLabel(MODE_UPPER, "KChannel Upper");       // chart tooltips and "Data" window
+   SetIndexLabel(MODE_LOWER, "KChannel Lower");
 
    IndicatorDigits(Digits);
    SetIndicatorOptions();
@@ -224,7 +227,7 @@ int onTick() {
          lowerBand[bar] = ma[bar] - atr;
       }
    }
-   @Bands.UpdateLegend(legendLabel, indicatorName, "", Color.Bands, upperBand[0], lowerBand[0], Digits, Time[0]);
+   @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
 
    return(last_error);
 }
@@ -257,11 +260,11 @@ bool RecalcALMAChannel(int startBar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   int drawType = ifInt(Color.MA==CLR_NONE, DRAW_NONE, DRAW_LINE);
+   int drawType = ifInt(MA.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
-   SetIndexStyle(MODE_MA,    drawType,  EMPTY, EMPTY, Color.MA   );
-   SetIndexStyle(MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
-   SetIndexStyle(MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+   SetIndexStyle(MODE_MA,    drawType,  EMPTY, EMPTY, MA.Color   );
+   SetIndexStyle(MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Bands.Color);
+   SetIndexStyle(MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Bands.Color);
 }
 
 
@@ -271,15 +274,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate(
-                            "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe),      ";", NL,
-                            "ATR.Periods=",     ATR.Periods,                        ";", NL,
-                            "ATR.Multiplier=",  NumberToStr(ATR.Multiplier, ".1+"), ";", NL,
-                            "MA.Method=",       DoubleQuoteStr(MA.Method),          ";", NL,
-                            "MA.Periods=",      MA.Periods,                         ";", NL,
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),    ";", NL,
-                            "Color.Bands=",     ColorToStr(Color.Bands),            ";", NL,
-                            "Color.MA=",        ColorToStr(Color.MA),               ";", NL,
-                            "Max.Bars=",        Max.Bars,                           ";")
+   return(StringConcatenate("MA.Method=",       DoubleQuoteStr(MA.Method),         ";", NL,
+                            "MA.Periods=",      MA.Periods,                        ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   ";", NL,
+                            "MA.Color=",        ColorToStr(MA.Color),              ";", NL,
+                            "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe),     ";", NL,
+                            "ATR.Periods=",     ATR.Periods,                       ";", NL,
+                            "ATR.Multiplier=",  NumberToStr(ATR.Multiplier, ".+"), ";", NL,
+                            "Bands.Color=",     ColorToStr(Bands.Color),           ";", NL,
+                            "Max.Bars=",        Max.Bars,                          ";")
    );
 }
