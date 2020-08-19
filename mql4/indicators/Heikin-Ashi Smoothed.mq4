@@ -177,12 +177,23 @@ int onInit() {
 
 
 /**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   RepositionLegend();
+   return(catch("onDeinit(1)"));
+}
+
+
+/**
  * Main function
  *
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(haOpen)) return(log("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    ManageIndicatorBuffer(MODE_HA_CLOSE, haClose);
