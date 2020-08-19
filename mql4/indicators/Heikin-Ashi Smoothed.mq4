@@ -79,7 +79,7 @@ int    outputMaMethod;
 int    outputMaPeriods;
 
 string indicatorName;
-string chartLegendLabel;
+string legendLabel;
 
 
 /**
@@ -146,8 +146,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel();
-       RegisterObject(chartLegendLabel);
+       legendLabel = CreateLegendLabel();
+       RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -284,7 +284,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
    }
    return(last_error);
 }
