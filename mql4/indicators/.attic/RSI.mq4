@@ -76,16 +76,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
-   rsi.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(rsi.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) rsi.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) rsi.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) rsi.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) rsi.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) rsi.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) rsi.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) rsi.appliedPrice = PRICE_WEIGHTED;
-      else                        return(catch("onInit(2)  Invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   rsi.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(rsi.appliedPrice) || rsi.appliedPrice > PRICE_WEIGHTED) {
+                                  return(catch("onInit(2)  Invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    RSI.AppliedPrice = PriceTypeDescription(rsi.appliedPrice);
 

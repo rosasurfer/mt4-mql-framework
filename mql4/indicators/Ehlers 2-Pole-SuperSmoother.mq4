@@ -116,17 +116,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                   // default price type
-   appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (appliedPrice == -1) {
-      if      (StrStartsWith("open",     sValue)) appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) appliedPrice = PRICE_WEIGHTED;
-      else             return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (appliedPrice==-1 || appliedPrice > PRICE_WEIGHTED)
+                       return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    AppliedPrice = PriceTypeDescription(appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)

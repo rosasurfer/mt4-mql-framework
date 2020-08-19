@@ -139,17 +139,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
-   fastMA.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(fastMA.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) fastMA.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) fastMA.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) fastMA.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) fastMA.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) fastMA.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) fastMA.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) fastMA.appliedPrice = PRICE_WEIGHTED;
-      else                              return(catch("onInit(4)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   fastMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (fastMA.appliedPrice==-1 || fastMA.appliedPrice > PRICE_WEIGHTED)
+                                        return(catch("onInit(4)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
 
    // SlowMA.Periods
@@ -185,17 +177,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
-   slowMA.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(slowMA.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) slowMA.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) slowMA.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) slowMA.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) slowMA.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) slowMA.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) slowMA.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) slowMA.appliedPrice = PRICE_WEIGHTED;
-      else                              return(catch("onInit(10)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   slowMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (slowMA.appliedPrice==-1 || slowMA.appliedPrice > PRICE_WEIGHTED)
+                                        return(catch("onInit(10)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
