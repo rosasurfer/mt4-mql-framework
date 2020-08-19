@@ -36,6 +36,7 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/@Trend.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER_BAND       Bands.MODE_UPPER
@@ -92,6 +93,7 @@ double atrMultiplier;
 int    atrSmoothingMethod;
 int    atrSmoothingPeriods;
 
+string indicatorName;
 string legendLabel;
 
 
@@ -178,7 +180,8 @@ int onInit() {
    }
 
    // names, labels and display options
-   IndicatorShortName(WindowExpertName());                                                                                          // chart tooltips and context menu
+   indicatorName = WindowExpertName();
+   IndicatorShortName(indicatorName);                                                                                               // chart tooltips and context menu
    SetIndexLabel(MODE_MA,         "KCh MA"   );      if (MA.Color          == CLR_NONE) SetIndexLabel(MODE_MA,             NULL);   // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER_BAND, "KCh Upper");      if (ATR.Channel.Color == CLR_NONE) SetIndexLabel(MODE_UPPER_BAND,     NULL);
    SetIndexLabel(MODE_LOWER_BAND, "KCh Lower");      if (ATR.Channel.Color == CLR_NONE) SetIndexLabel(MODE_LOWER_BAND,     NULL);
@@ -241,7 +244,7 @@ int onTick() {
    // recalculate changed MA values
    int initBars = maPeriods-1;
    if (maMethod==MODE_EMA || maMethod==MODE_SMMA)
-      initBars = Max(10, maPeriods*3);                                     // IIR filters need at least 10 bars for initialization
+      initBars = Max(10, maPeriods*3);                // IIR filters need at least 10 bars for initialization
    int maBars = Bars-initBars;
    int maStartBar = Min(ChangedBars, maBars) - 1;
 
@@ -261,7 +264,7 @@ int onTick() {
    // recalculate changed ATR channel values
    initBars = atrSmoothingPeriods-1;
    if (atrSmoothingMethod==MODE_EMA || atrSmoothingMethod==MODE_SMMA)
-      initBars = Max(10, atrSmoothingPeriods*3);                           // IIR filters need at least 10 bars for initialization
+      initBars = Max(10, atrSmoothingPeriods*3);      // IIR filters need at least 10 bars for initialization
    int channelBars = Min(maBars, atrBars)-initBars;
    int channelStartBar = Min(ChangedBars, channelBars) - 1;
 
@@ -272,7 +275,7 @@ int onTick() {
    }
 
    // recalculate changed SR values
-   initBars = 1;                                                           // one bar for comparison with the previous value
+   initBars = 1;                                      // 1 bar for comparison with the previous value
    int srBars = Min(maBars, channelBars)-initBars;
    int srStartBar = Min(ChangedBars, srBars) - 1;
    if (srStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
@@ -302,6 +305,11 @@ int onTick() {
          }
       }
       prevSR = lineUp[bar] + lineDown[bar];
+   }
+
+   if (!IsSuperContext()) {
+      color trendColor = ifInt(lineUp[0], Support.Color, Resistance.Color);
+      @Trend.UpdateLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, Digits, NULL, Time[0]);
    }
    return(last_error);
 }

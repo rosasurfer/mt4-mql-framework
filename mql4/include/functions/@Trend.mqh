@@ -130,11 +130,11 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
  * Update a trendline's chart legend.
  *
  * @param  string   label          - chart label of the legend object
- * @param  string   name           - the trendline's name (indicator name)
+ * @param  string   name           - indicator name
  * @param  string   status         - additional status info (if any)
- * @param  color    uptrendColor   - the trendline's uptrend color
- * @param  color    downtrendColor - the trendline's downtrend color
- * @param  double   value          - trendline value to display
+ * @param  color    uptrendColor   - the uptrend color
+ * @param  color    downtrendColor - the downtrend color
+ * @param  double   value          - indicator value to display
  * @param  int      digits         - digits of the value to display
  * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
  * @param  datetime barOpenTime    - bar opentime of the value to display
@@ -154,14 +154,16 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       else if (digits == SubPipDigits) sValue = NumberToStr(value, SubPipPriceFormat);
       else                             sValue = DoubleToStr(value, digits);
 
-      if (trend != 0) sTrend = StringConcatenate("(", trend, ")");
+      if (trend != 0) sTrend = StringConcatenate("  (", trend, ")");
+
+      if (status != "") status = StringConcatenate("  ", status);
 
       if (uptrendColor != downtrendColor) {
-         if      (trend ==  1) sOnTrendChange = "turns up";             // intra-bar trend change
-         else if (trend == -1) sOnTrendChange = "turns down";           // ...
+         if      (trend ==  1) sOnTrendChange = "  turns up";           // intra-bar trend change
+         else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(name, "    ", sValue, "  ", sTrend, "    ", status, "    ", sOnTrendChange);
+      string text = StringConcatenate(name, "    ", sValue, sTrend, status, sOnTrendChange);
       color  cColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (cColor == Aqua  ) cColor = DeepSkyBlue;
       else if (cColor == Gold  ) cColor = Orange;
