@@ -93,17 +93,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
-   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ema.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
-      else                        return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   ema.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
+                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)

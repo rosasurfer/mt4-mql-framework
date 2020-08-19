@@ -5309,51 +5309,78 @@ string HistoryFlagsToStr(int flags) {
  * Return the integer constant of a price type identifier.
  *
  * @param  string value
- * @param  int    execFlags [optional] - control execution: errors to set silently (default: none)
+ * @param  int    flags [optional] - F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
+ *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPriceType(string value, int execFlags = NULL) {
+int StrToPriceType(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StringLen(str) == 1) {
-      if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
-      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );
-      if (str == "H"               ) return(PRICE_HIGH    );
+   if (StrStartsWith(str, "PRICE_")) {
+      flags &= (~F_PARTIAL_ID);                                // PRICE_* doesn't support the F_PARTIAL_ID flag
+      if (str == "PRICE_OPEN"    ) return(PRICE_OPEN    );
+      if (str == "PRICE_HIGH"    ) return(PRICE_HIGH    );
+      if (str == "PRICE_LOW"     ) return(PRICE_LOW     );
+      if (str == "PRICE_CLOSE"   ) return(PRICE_CLOSE   );
+      if (str == "PRICE_MEDIAN"  ) return(PRICE_MEDIAN  );
+      if (str == "PRICE_TYPICAL" ) return(PRICE_TYPICAL );
+      if (str == "PRICE_WEIGHTED") return(PRICE_WEIGHTED);
+      if (str == "PRICE_AVERAGE" ) return(PRICE_AVERAGE );
+      if (str == "PRICE_BID"     ) return(PRICE_BID     );
+      if (str == "PRICE_ASK"     ) return(PRICE_ASK     );
+   }
+   else if (StringLen(str) > 0) {
+      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );   // check for numeric identifiers
       if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );
-      if (str == "L"               ) return(PRICE_LOW     );
       if (str == ""+ PRICE_LOW     ) return(PRICE_LOW     );
-      if (str == "C"               ) return(PRICE_CLOSE   );
-      if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );      // numeric 0 (zero)
-      if (str == "M"               ) return(PRICE_MEDIAN  );
+      if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );
       if (str == ""+ PRICE_MEDIAN  ) return(PRICE_MEDIAN  );
-      if (str == "T"               ) return(PRICE_TYPICAL );
       if (str == ""+ PRICE_TYPICAL ) return(PRICE_TYPICAL );
-      if (str == "W"               ) return(PRICE_WEIGHTED);
       if (str == ""+ PRICE_WEIGHTED) return(PRICE_WEIGHTED);
-      if (str == "B"               ) return(PRICE_BID     );
+      if (str == ""+ PRICE_AVERAGE ) return(PRICE_AVERAGE );
       if (str == ""+ PRICE_BID     ) return(PRICE_BID     );
-      if (str == "A"               ) return(PRICE_ASK     );
       if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
-   }
-   else {
-      if (StrStartsWith(str, "PRICE_"))
-         str = StrSubstr(str, 6);
 
-      if (str == "OPEN"            ) return(PRICE_OPEN    );
-      if (str == "HIGH"            ) return(PRICE_HIGH    );
-      if (str == "LOW"             ) return(PRICE_LOW     );
-      if (str == "CLOSE"           ) return(PRICE_CLOSE   );
-      if (str == "MEDIAN"          ) return(PRICE_MEDIAN  );
-      if (str == "TYPICAL"         ) return(PRICE_TYPICAL );
-      if (str == "WEIGHTED"        ) return(PRICE_WEIGHTED);
-      if (str == "BID"             ) return(PRICE_BID     );
-      if (str == "ASK"             ) return(PRICE_ASK     );
+      if (flags & F_PARTIAL_ID && 1) {
+         if (StrStartsWith("OPEN",     str))   return(PRICE_OPEN    );
+         if (StrStartsWith("HIGH",     str))   return(PRICE_HIGH    );
+         if (StrStartsWith("LOW",      str))   return(PRICE_LOW     );
+         if (StrStartsWith("CLOSE",    str))   return(PRICE_CLOSE   );
+         if (StrStartsWith("MEDIAN",   str))   return(PRICE_MEDIAN  );
+         if (StrStartsWith("TYPICAL",  str))   return(PRICE_TYPICAL );
+         if (StrStartsWith("WEIGHTED", str))   return(PRICE_WEIGHTED);
+         if (StrStartsWith("BID",      str))   return(PRICE_BID     );
+         if (StringLen(str) > 1) {
+            if (StrStartsWith("ASK",     str)) return(PRICE_ASK     );
+            if (StrStartsWith("AVERAGE", str)) return(PRICE_AVERAGE );
+         }
+      }
+      else {
+         if (str == "O"       ) return(PRICE_OPEN    );
+         if (str == "H"       ) return(PRICE_HIGH    );
+         if (str == "L"       ) return(PRICE_LOW     );
+         if (str == "C"       ) return(PRICE_CLOSE   );
+         if (str == "M"       ) return(PRICE_MEDIAN  );
+         if (str == "T"       ) return(PRICE_TYPICAL );
+         if (str == "W"       ) return(PRICE_WEIGHTED);
+         if (str == "A"       ) return(PRICE_AVERAGE );
+         if (str == "OPEN"    ) return(PRICE_OPEN    );
+         if (str == "HIGH"    ) return(PRICE_HIGH    );
+         if (str == "LOW"     ) return(PRICE_LOW     );
+         if (str == "CLOSE"   ) return(PRICE_CLOSE   );
+         if (str == "MEDIAN"  ) return(PRICE_MEDIAN  );
+         if (str == "TYPICAL" ) return(PRICE_TYPICAL );
+         if (str == "WEIGHTED") return(PRICE_WEIGHTED);
+         if (str == "AVERAGE" ) return(PRICE_AVERAGE );
+         if (str == "BID"     ) return(PRICE_BID     );        // no single letter id
+         if (str == "ASK"     ) return(PRICE_ASK     );        // no single letter id
+      }
    }
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToPriceType(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
+   else                                      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   return(-1);
 }
 
 
@@ -5416,6 +5443,7 @@ string PriceTypeToStr(int type) {
       case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
+      case PRICE_AVERAGE:  return("PRICE_AVERAGE" );     // (O+H+L+C)/4
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
@@ -5439,6 +5467,7 @@ string PriceTypeDescription(int type) {
       case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
+      case PRICE_AVERAGE:  return("Average" );     // (O+H+L+C)/4
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }

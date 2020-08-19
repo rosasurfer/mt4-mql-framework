@@ -387,20 +387,6 @@ double  N_INF;                                              // -1.#INF: negative
                                                 //     Instrumente. Eine vom Stopoutlevel des Accounts abweichende MARGIN_MAINTENANCE einzelner Instrumente ist vermutlich nur
                                                 //     bei einem Stopoutlevel von 100% sinnvoll. Beides zusammen ist ziemlich verwirrend.
 
-// Price identifiers, siehe iMA() etc.
-#define PRICE_CLOSE                    0        // C
-#define PRICE_OPEN                     1        // O
-#define PRICE_HIGH                     2        // H
-#define PRICE_LOW                      3        // L
-#define PRICE_MEDIAN                   4        // (H+L)/2
-#define PRICE_TYPICAL                  5        // (H+L+C)/3
-#define PRICE_WEIGHTED                 6        // (H+L+C+C)/4
-#define PRICE_BID                      7        // Bid
-#define PRICE_ASK                      8        // Ask
-
-//#define PRICE_AVERAGE                         // (O+H+L+C)/4
-
-
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
 

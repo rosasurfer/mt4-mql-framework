@@ -1,7 +1,7 @@
 /**
  * Keltner Channel - an ATR channel around a Moving Average
  *
- * Upper and lower channel band are defined as:
+ * Channel bands are defined as:
  *  UpperBand = MA + ATR * Multiplier
  *  LowerBand = MA - ATR * Multiplier
  *
@@ -87,10 +87,10 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)        return(catch("onInit(4)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)        return(catch("onInit(1)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
-   if (MA.Periods < 0)        return(catch("onInit(5)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 0)        return(catch("onInit(2)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
    // MA.AppliedPrice
    sValue = StrToLower(MA.AppliedPrice);
@@ -100,17 +100,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                            // default price type
-   maAppliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice == -1) {
-      if      (StrStartsWith("open",     sValue)) maAppliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) maAppliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) maAppliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) maAppliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) maAppliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) maAppliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) maAppliedPrice = PRICE_WEIGHTED;
-      else                    return(catch("onInit(6)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
+                              return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR
@@ -126,11 +118,11 @@ int onInit() {
    }
    else {
       atrTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (atrTimeframe == -1) return(catch("onInit(1)  Invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      if (atrTimeframe == -1) return(catch("onInit(4)  Invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
       ATR.Timeframe = TimeframeDescription(atrTimeframe);
    }
-   if (ATR.Periods < 1)       return(catch("onInit(2)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ATR.Multiplier < 0)    return(catch("onInit(3)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)       return(catch("onInit(5)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)    return(catch("onInit(6)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
    atrPeriods    = ATR.Periods;
    atrMultiplier = ATR.Multiplier;
 

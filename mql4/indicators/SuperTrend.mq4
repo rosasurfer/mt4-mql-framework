@@ -1,5 +1,5 @@
 /**
- * SuperTrend SR - a continuous support/resistance line defined by an ATR channel
+ * SuperTrend SR - a support/resistance line formed by an ATR channel
  *
  *
  * The upper and lower band of an ATR channel calculated around price High and Low are used to calculate a continuous SR line
