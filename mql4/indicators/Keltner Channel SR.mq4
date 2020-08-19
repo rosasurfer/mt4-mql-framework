@@ -17,15 +17,18 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern color  Support.Color         = Blue;
+extern color  Resistance.Color      = Red;
+
 extern string MA.Method             = "SMA* | LWMA | EMA | SMMA";
-extern int    MA.Periods            = 10;                                                          // Nix: 1
-extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";  // Nix: Open
+extern int    MA.Periods            = 1;                                                           // Nix: 1
+extern string MA.AppliedPrice       = "Open* | High | Low | Close | Median | Typical | Weighted";  // Nix: Open
 extern color  MA.Color              = CLR_NONE;
 
 extern int    ATR.Periods           = 60;
 extern double ATR.Multiplier        =  3;
-extern string ATR.Smoothing.Method  = "SMA* | LWMA | EMA | SMMA";                                  // Nix: EMA
-extern int    ATR.Smoothing.Periods = 1;                                                           // Nix: 10
+extern string ATR.Smoothing.Method  = "none | SMA | LWMA | EMA* | SMMA";                           // Nix: EMA
+extern int    ATR.Smoothing.Periods = 10;                                                          // Nix: 10
 extern color  ATR.Channel.Color     = CLR_NONE;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,10 +53,10 @@ int       terminal_buffers  = 8;                      // buffers managed by the 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
-#property indicator_color4    Red
-#property indicator_color5    Red
-#property indicator_color6    Blue
-#property indicator_color7    Blue
+#property indicator_color4    CLR_NONE
+#property indicator_color5    CLR_NONE
+#property indicator_color6    CLR_NONE
+#property indicator_color7    CLR_NONE
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_DOT
@@ -80,9 +83,9 @@ double lineUpStart  [];
 double lineDown     [];
 double lineDownStart[];
 
-int    ma1Method;
-int    ma1Periods;
-int    ma1AppliedPrice;
+int    maMethod;
+int    maPeriods;
+int    maAppliedPrice;
 
 int    atrPeriods;
 double atrMultiplier;
@@ -105,12 +108,13 @@ int onInit() {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   ma1Method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma1Method == -1)           return(catch("onInit(1)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   MA.Method = MaMethodDescription(ma1Method);
+   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (maMethod == -1)              return(catch("onInit(1)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
-   if (MA.Periods < 0)            return(catch("onInit(2)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   ma1Periods = ifInt(!MA.Periods, 1, MA.Periods);
+   if (MA.Periods < 0)              return(catch("onInit(2)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
+   if (maPeriods == 1) maMethod = MODE_SMA;
    // MA.AppliedPrice
    sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -119,16 +123,16 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                            // default price type
-   ma1AppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ma1AppliedPrice==-1 || ma1AppliedPrice > PRICE_WEIGHTED)
-                                  return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   MA.AppliedPrice = PriceTypeDescription(ma1AppliedPrice);
+   maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
+                                    return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR.Periods
-   if (ATR.Periods < 1)           return(catch("onInit(4)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)             return(catch("onInit(4)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrPeriods = ATR.Periods;
    // ATR.Multiplier
-   if (ATR.Multiplier < 0)        return(catch("onInit(5)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)          return(catch("onInit(5)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
    atrMultiplier = ATR.Multiplier;
    // ATR.Smoothing.Method
    sValue = ATR.Smoothing.Method;
@@ -136,22 +140,36 @@ int onInit() {
       size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   atrSmoothingMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (atrSmoothingMethod == -1)  return(catch("onInit(6)  Invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
-   ATR.Smoothing.Method = MaMethodDescription(atrSmoothingMethod);
+   sValue= StrTrim(sValue);
+   if (!StringLen(sValue) || StrCompareI(sValue, "none")) {
+      atrSmoothingMethod = EMPTY;
+      ATR.Smoothing.Method = "none";
+   }
+   else {
+      atrSmoothingMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+      if (atrSmoothingMethod == -1) return(catch("onInit(6)  Invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
+      ATR.Smoothing.Method = MaMethodDescription(atrSmoothingMethod);
+   }
    // ATR.Smoothing.Periods
-   if (ATR.Smoothing.Periods < 0) return(catch("onInit(7)  Invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
-   atrSmoothingPeriods = ifInt(!ATR.Smoothing.Periods, 1, ATR.Smoothing.Periods);
+   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(7)  Invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
+   atrSmoothingPeriods = ifInt(atrSmoothingMethod==EMPTY || !ATR.Smoothing.Periods, 1, ATR.Smoothing.Periods);
+   if (atrSmoothingPeriods == 1) atrSmoothingMethod = MODE_SMA;
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Support.Color     == 0xFF000000) Support.Color     = CLR_NONE;
+   if (Resistance.Color  == 0xFF000000) Resistance.Color  = CLR_NONE;
    if (MA.Color          == 0xFF000000) MA.Color          = CLR_NONE;
    if (ATR.Channel.Color == 0xFF000000) ATR.Channel.Color = CLR_NONE;
 
    // buffer management
-   SetIndexBuffer(MODE_MA,         ma       ); SetIndexEmptyValue(MODE_MA,         0);
-   SetIndexBuffer(MODE_ATR,        atr      );                                         // invisible
-   SetIndexBuffer(MODE_UPPER_BAND, upperBand); SetIndexEmptyValue(MODE_UPPER_BAND, 0);
-   SetIndexBuffer(MODE_LOWER_BAND, lowerBand); SetIndexEmptyValue(MODE_LOWER_BAND, 0);
+   SetIndexBuffer(MODE_MA,             ma           ); SetIndexEmptyValue(MODE_MA,             0);
+   SetIndexBuffer(MODE_ATR,            atr          );                                                // invisible
+   SetIndexBuffer(MODE_UPPER_BAND,     upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,     0);
+   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,     0);
+   SetIndexBuffer(MODE_LINE_UP,        lineUp       ); SetIndexEmptyValue(MODE_LINE_UP,        0);
+   SetIndexBuffer(MODE_LINE_UPSTART,   lineUpStart  ); SetIndexEmptyValue(MODE_LINE_UPSTART,   0);
+   SetIndexBuffer(MODE_LINE_DOWN,      lineDown     ); SetIndexEmptyValue(MODE_LINE_DOWN,      0);
+   SetIndexBuffer(MODE_LINE_DOWNSTART, lineDownStart); SetIndexEmptyValue(MODE_LINE_DOWNSTART, 0);
 
    // chart legend
    if (!IsSuperContext()) {
@@ -160,19 +178,16 @@ int onInit() {
    }
 
    // names, labels and display options
-   IndicatorShortName(WindowExpertName());                                                                                 // chart tooltips and context menu
-   SetIndexLabel(MODE_MA,         "KCh MA"   ); if (MA.Color          == CLR_NONE) SetIndexLabel(MODE_MA,         NULL);   // chart tooltips and "Data" window
-   SetIndexLabel(MODE_UPPER_BAND, "KCh Upper"); if (ATR.Channel.Color == CLR_NONE) SetIndexLabel(MODE_UPPER_BAND, NULL);
-   SetIndexLabel(MODE_LOWER_BAND, "KCh Lower"); if (ATR.Channel.Color == CLR_NONE) SetIndexLabel(MODE_LOWER_BAND, NULL);
+   IndicatorShortName(WindowExpertName());                                                                                          // chart tooltips and context menu
+   SetIndexLabel(MODE_MA,         "KCh MA"   );      if (MA.Color          == CLR_NONE) SetIndexLabel(MODE_MA,             NULL);   // chart tooltips and "Data" window
+   SetIndexLabel(MODE_UPPER_BAND, "KCh Upper");      if (ATR.Channel.Color == CLR_NONE) SetIndexLabel(MODE_UPPER_BAND,     NULL);
+   SetIndexLabel(MODE_LOWER_BAND, "KCh Lower");      if (ATR.Channel.Color == CLR_NONE) SetIndexLabel(MODE_LOWER_BAND,     NULL);
+   SetIndexLabel(MODE_LINE_UP,    "KCh Support");    if (Support.Color     == CLR_NONE) SetIndexLabel(MODE_LINE_UP,        NULL);
+                                                                                        SetIndexLabel(MODE_LINE_UPSTART,   NULL);
+   SetIndexLabel(MODE_LINE_DOWN,  "KCh Resistance"); if (Resistance.Color  == CLR_NONE) SetIndexLabel(MODE_LINE_DOWN,      NULL);
+                                                                                        SetIndexLabel(MODE_LINE_DOWNSTART, NULL);
    IndicatorDigits(Digits);
    SetIndicatorOptions();
-
-
-
-   SetIndexBuffer(MODE_LINE_UP,        lineUp       ); SetIndexEmptyValue(MODE_LINE_UP,        0); SetIndexLabel(MODE_LINE_UP,        "KCh Support");
-   SetIndexBuffer(MODE_LINE_UPSTART,   lineUpStart  ); SetIndexEmptyValue(MODE_LINE_UPSTART,   0); SetIndexLabel(MODE_LINE_UPSTART,   NULL); SetIndexStyle(MODE_LINE_UPSTART,   DRAW_ARROW, EMPTY); SetIndexArrow(MODE_LINE_UPSTART,   159);
-   SetIndexBuffer(MODE_LINE_DOWN,      lineDown     ); SetIndexEmptyValue(MODE_LINE_DOWN,      0); SetIndexLabel(MODE_LINE_DOWN,      "KCh Resistance");
-   SetIndexBuffer(MODE_LINE_DOWNSTART, lineDownStart); SetIndexEmptyValue(MODE_LINE_DOWNSTART, 0); SetIndexLabel(MODE_LINE_DOWNSTART, NULL); SetIndexStyle(MODE_LINE_DOWNSTART, DRAW_ARROW, EMPTY); SetIndexArrow(MODE_LINE_DOWNSTART, 159);
 
    return(catch("onInit(4)"));
 }
@@ -224,22 +239,20 @@ int onTick() {
    }
 
    // recalculate changed MA values
-   int initBars = ma1Periods-1;
-   if (ma1Periods > 1 && (ma1Method==MODE_EMA || ma1Method==MODE_SMMA))
-      initBars = Max(10, ma1Periods*3);                                    // IIR filters need at least 10 bars for initialization
+   int initBars = maPeriods-1;
+   if (maMethod==MODE_EMA || maMethod==MODE_SMMA)
+      initBars = Max(10, maPeriods*3);                                     // IIR filters need at least 10 bars for initialization
    int maBars = Bars-initBars;
    int maStartBar = Min(ChangedBars, maBars) - 1;
-   if (maStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    for (int bar=maStartBar; bar >= 0; bar--) {
-      ma[bar] = iMA(NULL, NULL, ma1Periods, 0, ma1Method, ma1AppliedPrice, bar);
+      ma[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, maAppliedPrice, bar);
    }
 
    // recalculate changed ATR values
    initBars = atrPeriods-1;
    int atrBars = Bars-initBars;
    int atrStartBar = Min(ChangedBars, atrBars) - 1;
-   if (atrStartBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
 
    for (bar=atrStartBar; bar >= 0; bar--) {
       atr[bar] = iATR(NULL, NULL, atrPeriods, bar);
@@ -247,11 +260,10 @@ int onTick() {
 
    // recalculate changed ATR channel values
    initBars = atrSmoothingPeriods-1;
-   if (atrSmoothingPeriods > 1 && (atrSmoothingMethod==MODE_EMA || atrSmoothingMethod==MODE_SMMA))
+   if (atrSmoothingMethod==MODE_EMA || atrSmoothingMethod==MODE_SMMA)
       initBars = Max(10, atrSmoothingPeriods*3);                           // IIR filters need at least 10 bars for initialization
-   int channelBars = Min(maBars, atrBars);
+   int channelBars = Min(maBars, atrBars)-initBars;
    int channelStartBar = Min(ChangedBars, channelBars) - 1;
-   if (channelStartBar < 0) return(catch("onTick(4)", ERR_HISTORY_INSUFFICIENT));
 
    for (bar=channelStartBar; bar >= 0; bar--) {
       double channelWidth = atrMultiplier * iMAOnArray(atr, WHOLE_ARRAY, atrSmoothingPeriods, 0, atrSmoothingMethod, bar);
@@ -259,45 +271,37 @@ int onTick() {
       lowerBand[bar] = ma[bar] - channelWidth;
    }
 
-
-
-   // calculate SR start bar
-   initBars = ifInt(atrSmoothingMethod==MODE_EMA, Max(10, atrSmoothingPeriods*3), atrSmoothingPeriods);     // IIR filters need at least 10 bars for initialization
-   int bars = atrBars-initBars;                                                     // one bar less as SR calculation looks back one bar
-   int startBar = Min(ChangedBars, bars) - 1;
-   if (startBar < 0) return(catch("onTick(4)", ERR_HISTORY_INSUFFICIENT));
-
-   double prevSR = lineUp[startBar+1] + lineDown[startBar+1];
-   if (!prevSR) prevSR = Open[startBar+1];
-
    // recalculate changed SR values
-   for (int i=startBar; i >= 0; i--) {
-      if (!atr[i]) continue;
+   initBars = 1;                                                           // one bar for comparison with the previous value
+   int srBars = Min(maBars, channelBars)-initBars;
+   int srStartBar = Min(ChangedBars, srBars) - 1;
+   if (srStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-      double price     = Open[i];
-      double prevPrice = Open[i+1];
+   double prevSR = lineUp[srStartBar+1] + lineDown[srStartBar+1];
+   if (!prevSR) prevSR = ma[srStartBar+1];
 
-      if (prevPrice < prevSR) {
-         if (price < prevSR) {
-            lineUp  [i] = 0;
-            lineDown[i] = MathMin(prevSR, upperBand[i]);
+   for (bar=srStartBar; bar >= 0; bar--) {
+      if (ma[bar+1] < prevSR) {
+         if (ma[bar] < prevSR) {
+            lineUp  [bar] = 0;
+            lineDown[bar] = MathMin(prevSR, upperBand[bar]);
          }
          else {
-            lineUp  [i] = lowerBand[i]; lineUpStart[i] = lineUp[i];
-            lineDown[i] = 0;
+            lineUp  [bar] = lowerBand[bar]; lineUpStart[bar] = lineUp[bar];
+            lineDown[bar] = 0;
          }
       }
-      else /*prevPrice > prevSR*/{
-         if (price > prevSR) {
-            lineUp  [i] = MathMax(prevSR, lowerBand[i]);
-            lineDown[i] = 0;
+      else /*ma[bar+1] > prevSR*/{
+         if (ma[bar] > prevSR) {
+            lineUp  [bar] = MathMax(prevSR, lowerBand[bar]);
+            lineDown[bar] = 0;
          }
          else {
-            lineUp  [i] = 0;
-            lineDown[i] = upperBand[i]; lineDownStart[i] = lineDown[i];
+            lineUp  [bar] = 0;
+            lineDown[bar] = upperBand[bar]; lineDownStart[bar] = lineDown[bar];
          }
       }
-      prevSR = lineUp[i] + lineDown[i];
+      prevSR = lineUp[bar] + lineDown[bar];
    }
    return(last_error);
 }
@@ -311,11 +315,29 @@ void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
 
    int drawType = ifInt(MA.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
-   SetIndexStyle(MODE_MA,         drawType, EMPTY, EMPTY, MA.Color);
+   SetIndexStyle(MODE_MA, drawType, EMPTY, EMPTY, MA.Color);
 
    drawType = ifInt(ATR.Channel.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
    SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, ATR.Channel.Color);
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, ATR.Channel.Color);
+
+   if (Support.Color == CLR_NONE) {
+      SetIndexStyle(MODE_LINE_UP,      DRAW_NONE);
+      SetIndexStyle(MODE_LINE_UPSTART, DRAW_NONE);
+   }
+   else {
+      SetIndexStyle(MODE_LINE_UP,      DRAW_LINE,  EMPTY, EMPTY, Support.Color);
+      SetIndexStyle(MODE_LINE_UPSTART, DRAW_ARROW, EMPTY, EMPTY, Support.Color); SetIndexArrow(MODE_LINE_UPSTART, 159);
+   }
+
+   if (Resistance.Color == CLR_NONE) {
+      SetIndexStyle(MODE_LINE_DOWN,      DRAW_NONE);
+      SetIndexStyle(MODE_LINE_DOWNSTART, DRAW_NONE);
+   }
+   else {
+      SetIndexStyle(MODE_LINE_DOWN,      DRAW_LINE,  EMPTY, EMPTY, Resistance.Color);
+      SetIndexStyle(MODE_LINE_DOWNSTART, DRAW_ARROW, EMPTY, EMPTY, Resistance.Color); SetIndexArrow(MODE_LINE_DOWNSTART, 159);
+   }
 }
 
 
@@ -325,7 +347,9 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Method=",             DoubleQuoteStr(MA.Method),            ";", NL,
+   return(StringConcatenate("Support.Color=",         ColorToStr(Support.Color),            ";", NL,
+                            "Resistance.Color=",      ColorToStr(Resistance.Color),         ";", NL,
+                            "MA.Method=",             DoubleQuoteStr(MA.Method),            ";", NL,
                             "MA.Periods=",            MA.Periods,                           ";", NL,
                             "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),      ";", NL,
                             "MA.Color=",              ColorToStr(MA.Color),                 ";", NL,
