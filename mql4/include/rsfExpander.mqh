@@ -26,7 +26,7 @@
    int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);
    //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
@@ -126,7 +126,7 @@
    string   OperationTypeToStr(int type);
    string   OrderTypeDescription(int type);           // alias
    string   OrderTypeToStr(int type);                 // alias
-   string   PeriodDescription(int period);
+   //string PeriodDescription(int period);            // also implemented in MQL
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);

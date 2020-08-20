@@ -48,7 +48,7 @@ extern int   Histogram.Style.Width = 2;
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible in input dialog
-int       allocated_buffers = 6;                            // used buffers
+int       terminal_buffers  = 6;                            // buffers managed by the terminal
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
 double fisherSection   [];                                  // direction and length:      invisible
@@ -92,8 +92,8 @@ int onInit() {
 
    // (3) data display configuration, names and labels
    string name = "Fisher Transform("+ Fisher.Periods +")";
-   IndicatorShortName(name +"  ");                          // subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          name);                 // "Data" window and tooltips
+   IndicatorShortName(name +"  ");                          // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          name);                 // chart tooltips and "Data" window
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
@@ -131,7 +131,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(fisherMain)) return(log("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
@@ -211,10 +211,10 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 

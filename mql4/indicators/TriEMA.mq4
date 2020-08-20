@@ -57,7 +57,7 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 #property indicator_chart_window
 #property indicator_buffers   5                          // buffers visible in input dialog
-int       allocated_buffers = 7;
+int       terminal_buffers  = 7;                         // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -178,7 +178,7 @@ int onInit() {
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = __NAME() +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = __NAME() +"("+ MA.Periods +")";
-   IndicatorShortName(shortName);                        // chart context menu
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_EMA_1,     NULL);
    SetIndexLabel(MODE_EMA_2,     NULL);
    SetIndexLabel(MODE_EMA_3,     shortName);             // chart tooltips and "Data" window
@@ -221,7 +221,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(firstEma)) return(log("onTick(1)  size(firstEma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -256,7 +256,7 @@ int onTick() {
    for (i=ChangedBars-1; i >= 0; i--)   firstEma [i] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, maAppliedPrice, i);
    for (i=ChangedBars-1; i >= 0; i--)   secondEma[i] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
    for (i=startBar;      i >= 0; i--) { thirdEma [i] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
-      @Trend.UpdateDirection(thirdEma, i, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(thirdEma, i, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
@@ -312,10 +312,10 @@ bool onTrendChange(int trend) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 

@@ -115,8 +115,8 @@ int onInit() {
 
    // names, labels and display options
    string indicatorName = "FDI("+ fdiPeriods +")";
-   IndicatorShortName(indicatorName +"  ");              // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN,  indicatorName);             // "Data" window and tooltips
+   IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN,  indicatorName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER, NULL);
    SetIndexLabel(MODE_LOWER, NULL);
    SetIndicatorOptions();
@@ -131,7 +131,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -221,7 +221,7 @@ bool UpdateChangedBars(int startBar) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    SetIndexStyle(MODE_MAIN, DRAW_NONE);

@@ -173,8 +173,8 @@ int onInit() {
 
    // names, labels and display options
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
-   IndicatorShortName(indicatorName);
-   SetIndexLabel(MODE_MA,            indicatorName);
+   IndicatorShortName(indicatorName);                           // chart tooltips and context menu
+   SetIndexLabel(MODE_MA,            indicatorName);            // chart tooltips and "Data" window
    SetIndexLabel(MODE_MA_L,          NULL);
    SetIndexLabel(MODE_MA_S,          NULL);
    SetIndexLabel(MODE_HIST_L_PRICE1, NULL);
@@ -206,7 +206,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(maLong)) return(log("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -394,7 +394,7 @@ bool onReversal(int direction) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    SetIndexStyle(MODE_MA,    DRAW_NONE);

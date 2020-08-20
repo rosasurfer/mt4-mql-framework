@@ -47,8 +47,8 @@
    int      ec_UnchangedBars       (int ec[]);
    int      ec_Ticks               (int ec[]);
    int      ec_CycleTicks          (int ec[]);
-   datetime ec_LastTickTime        (int ec[]);
    datetime ec_PrevTickTime        (int ec[]);
+   datetime ec_CurrTickTime        (int ec[]);
    double   ec_Bid                 (int ec[]);
    double   ec_Ask                 (int ec[]);
 

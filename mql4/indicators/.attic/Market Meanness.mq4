@@ -64,8 +64,8 @@ int onInit() {
 
    // (3) names, labels, data display
    string name = "Market Meanness("+ mmi.periods +")";
-   IndicatorShortName(name +"  ");                                   // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN, name);                                   // "Data" window and tooltips
+   IndicatorShortName(name +"  ");                                   // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN, name);                                   // chart tooltips and "Data" window
    IndicatorDigits(1);
 
 
@@ -88,7 +88,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(bufferMMI)) return(log("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -131,7 +131,7 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);

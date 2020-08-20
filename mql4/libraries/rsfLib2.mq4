@@ -9,100 +9,11 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinBools.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
-
-
-/**
- * Konvertiert ein String-Array mit bis zu 3 Dimensionen in einen lesbaren String.
- *
- * @param  string values[]
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string StringsToStr(string values[][], string separator=", ") {
-   return(__StringsToStr(values, values, separator));
-}
-
-
-/**
- * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
- *
- * @access private - Aufruf nur aus StringsToStr()
- */
-string __StringsToStr(string values2[][], string values3[][][], string separator) {
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
-
-
-   // 1-dimensionales Array
-   if (dimensions == 1) {
-      if (dim1 == 0)
-         return("{}");
-      string copy[]; ArrayResize(copy, 0);
-      ArrayCopy(copy, values2);
-      DoubleQuoteStrings(copy);
-
-      result = StringConcatenate("{", JoinStrings(copy, separator), "}");
-      ArrayResize(copy, 0);
-      return(result);
-   }
-   else dim2 = ArrayRange(values2, 1);
-
-
-   // 2-dimensionales Array
-   if (dimensions == 2) {
-      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
-      string    values2.Y[]; ArrayResize(   values2.Y, dim2);
-
-      for (int x=0; x < dim1; x++) {
-         for (int y=0; y < dim2; y++) {
-            values2.Y[y] = values2[x][y];             // TODO: NPE abfangen
-         }
-         strValues2.X[x] = StringsToStr(values2.Y, separator);
-      }
-
-      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
-      ArrayResize(strValues2.X, 0);
-      ArrayResize(   values2.Y, 0);
-      return(result);
-   }
-   else dim3 = ArrayRange(values3, 2);
-
-
-   // 3-dimensionales Array
-   if (dimensions == 3) {
-      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
-      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
-      string    values3.Z[]; ArrayResize(   values3.Z, dim3);
-
-      for (x=0; x < dim1; x++) {
-         for (y=0; y < dim2; y++) {
-            for (int z=0; z < dim3; z++) {
-               values3.Z[z] = values3[x][y][z];      // TODO: NPE abfangen
-            }
-            strValues3.Y[y] = StringsToStr(values3.Z, separator);
-         }
-         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
-      }
-
-      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
-      ArrayResize(strValues3.X, 0);
-      ArrayResize(strValues3.Y, 0);
-      ArrayResize(   values3.Z, 0);
-      return(result);
-   }
-
-   return(_EMPTY_STR(catch("__StringsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
-}
 
 
 /**
@@ -604,38 +515,6 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
 
 
 /**
- * Konvertiert ein Array mit Ordertickets in einen lesbaren String.
- *
- * @param  int    tickets[] - für Tickets ungültige Werte werden entsprechend dargestellt
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string TicketsToStr(int tickets[], string separator=", ") {
-   if (ArrayDimension(tickets) != 1)
-      return(_EMPTY_STR(catch("TicketsToStr(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(tickets);
-   if (!size)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string result, sValue;
-
-   for (int i=0; i < size; i++) {
-      if   (tickets[i] > 0) sValue = StringConcatenate("#", tickets[i]);
-      else if (!tickets[i]) sValue = "(NULL)";
-      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
-      result = StringConcatenate(result, separator, sValue);
-   }
-
-   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
-}
-
-
-/**
  * Konvertiert ein Array mit Ordertickets in einen lesbaren String, der zusätzlich die Lotsize des jeweiligen Tickets enthält.
  *
  * @param  int    tickets[] - für Tickets ungültige Werte werden entsprechend dargestellt
@@ -766,88 +645,6 @@ string TicketsToStr.Position(int tickets[]) {
    else             result =      NumberToStr(total, ".+") + ifString(hedged, " ±"+ NumberToStr(hedged, ".+"), "") +" lots";
 
    return(result);
-}
-
-
-/**
- * Konvertiert ein Boolean-Array mit bis zu 3 Dimensionen in einen lesbaren String.
- *
- * @param  bool   values[]
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string BoolsToStr(bool values[][], string separator=", ") {
-   return(__BoolsToStr(values, values, separator));
-}
-
-
-/**
- * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
- *
- * @access private - Aufruf nur aus BoolsToStr()
- */
-string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
-
-
-   // 1-dimensionales Array
-   if (dimensions == 1) {
-      if (dim1 == 0)
-         return("{}");
-      return(StringConcatenate("{", JoinBools(values2, separator), "}"));
-   }
-   else dim2 = ArrayRange(values2, 1);
-
-
-   // 2-dimensionales Array
-   if (dimensions == 2) {
-      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
-      bool      values2.Y[]; ArrayResize(   values2.Y, dim2);
-
-      for (int x=0; x < dim1; x++) {
-         for (int y=0; y < dim2; y++) {
-            values2.Y[y] = values2[x][y];
-         }
-         strValues2.X[x] = BoolsToStr(values2.Y, separator);
-      }
-
-      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
-      ArrayResize(strValues2.X, 0);
-      ArrayResize(   values2.Y, 0);
-      return(result);
-   }
-   else dim3 = ArrayRange(values3, 2);
-
-
-   // 3-dimensionales Array
-   if (dimensions == 3) {
-      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
-      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
-      bool      values3.Z[]; ArrayResize(   values3.Z, dim3);
-
-      for (x=0; x < dim1; x++) {
-         for (y=0; y < dim2; y++) {
-            for (int z=0; z < dim3; z++) {
-               values3.Z[z] = values3[x][y][z];
-            }
-            strValues3.Y[y] = BoolsToStr(values3.Z, separator);
-         }
-         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
-      }
-
-      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
-      ArrayResize(strValues3.X, 0);
-      ArrayResize(strValues3.Y, 0);
-      ArrayResize(   values3.Z, 0);
-      return(result);
-   }
-
-   return(_EMPTY_STR(catch("__BoolsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 

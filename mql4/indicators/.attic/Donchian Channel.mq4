@@ -43,9 +43,8 @@ int onInit() {
 
    // Anzeigeoptionen
    string indicatorName = "Donchian Channel("+ Periods +")";
-   IndicatorShortName(indicatorName);
-
-   SetIndexLabel(0, "Donchian Upper("+ Periods +")");                      // Daten-Anzeige
+   IndicatorShortName(indicatorName);                               // chart tooltips and context menu
+   SetIndexLabel(0, "Donchian Upper("+ Periods +")");               // chart tooltips and "Data" window
    SetIndexLabel(1, "Donchian Lower("+ Periods +")");
    IndicatorDigits(Digits);
 
@@ -119,7 +118,7 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);

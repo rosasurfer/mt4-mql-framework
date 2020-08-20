@@ -7,54 +7,34 @@
 
 
 /**
- * Lädt den Input-Dialog des aktuellen Programms neu.
- *
- * @return int - Fehlerstatus
- */
-int start.RelaunchInputDialog() {
-   int error;
-
-   if (IsExpert()) {
-      if (!IsTesting())
-         error = Chart.Expert.Properties();
-   }
-   else if (IsIndicator()) {
-      //if (!IsTesting())
-      //   error = Chart.Indicator.Properties();                     // TODO: implementieren
-   }
-
-   if (IsError(error))
-      SetLastError(error, NULL);
-   return(error);
-}
-
-
-/**
  * Send a message to the system debugger.
  *
  * @param  string message          - message
- * @param  int    error [optional] - error code
+ * @param  int    error [optional] - error code (default: none)
  *
  * @return int - the same error
  *
- * Notes:
- *  - No part of this function must load additional EX4 libaries.
- *  - The terminal must run with Administrator rights for OutputDebugString() to transport debug messages.
+ * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 int debug(string message, int error = NO_ERROR) {
+   if (!IsDllsAllowed()) {
+      Print("debug(1)  ", message);
+      return(error);
+   }
+
    static bool recursiveCall = false;
    if (recursiveCall) {                               // prevent recursive calls
-      Print("debug(1)  recursive call: ", message);
+      Print("debug(2)  recursive call: ", message);
       return(error);
    }
    recursiveCall = true;
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
-   else                         application = "MetaTrader::";
+   if (This.IsTesting()) string sApplication = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
+   else                         sApplication = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
+   OutputDebugStringA(StringConcatenate(sApplication, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
 
    recursiveCall = false;
    return(error);
@@ -67,8 +47,7 @@ int debug(string message, int error = NO_ERROR) {
  *
  * @param  string location            - the error's location identifier incl. optional message
  * @param  int    error    [optional] - enforce a specific error (default: none)
- * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack
- *                                      (default: no)
+ * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack (default: no)
  *
  * @return int - the same error
  */
@@ -142,7 +121,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * Show a warning with an optional error but don't set the error.
  *
  * @param  string message          - message to display
- * @param  int    error [optional] - error to display
+ * @param  int    error [optional] - error to display (default: none)
  *
  * @return int - the same error
  */
@@ -208,22 +187,22 @@ int warn(string message, int error = NO_ERROR) {
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__ExecutionContext[EC.logEnabled]) return(error);         // skip logging if fully disabled
+   if (!__ExecutionContext[EC.logEnabled]) return(error);            // skip logging if fully disabled
 
    static bool recursiveCall = false;
-   if (recursiveCall)                                             // prevent recursive calls
+   if (recursiveCall)                                                // prevent recursive calls
       return(debug("log(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
-   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {           // send the message to the system debugger
+   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {              // send the message to the system debugger
       debug(message, error);
    }
-   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {        // send the message to the terminal log
+   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {           // send the message to the terminal log
       string sError = "";
       if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
       Print(__NAME(), "::", StrReplace(message, NL, " "), sError);
    }
-   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {          // send the message to a custom logger
+   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {             // send the message to a custom logger
       LogMessageA(__ExecutionContext, message, error);
    }
 
@@ -233,12 +212,11 @@ int log(string message, int error = NO_ERROR) {
 
 
 /**
- * Set the last error code of the module. If called in a library the error will bubble up to the program's main module.
- * If called in an indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR
- * will never bubble up.
+ * Set the last error code of the module. If called in a library the error will bubble up to the program's main module. If called in an
+ * indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR will never bubble up.
  *
- * @param  int error - error code
- * @param  int param - ignored, any other value (default: none)
+ * @param  int error            - error code
+ * @param  int param [optional] - ignored, any value (default: none)
  *
  * @return int - the same error code (for chaining)
  */
@@ -252,9 +230,9 @@ int SetLastError(int error, int param = NULL) {
 
 
 /**
- * Gibt die Beschreibung eines Fehlercodes zurück.
+ * Return the description of an error code.
  *
- * @param  int error - MQL- oder gemappter Win32-Fehlercode
+ * @param  int error - MQL error code or mapped Win32 error code
  *
  * @return string
  */
@@ -554,7 +532,7 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  *
  * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
  * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found a message is logged but
- * execution continues normally.
+ * execution continues.
  *
  * @param  string soundfile
  * @param  int    flags
@@ -618,25 +596,25 @@ string Pluralize(int count, string singular="", string plural="s") {
 
 
 /**
- * Dropin replacement for Alert().
- *
  * Display an alert even if not supported by the terminal in the current context (e.g. in tester).
  *
  * @param  string message
+ *
+ * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   // ForceAlert() is used when Kansas is going bye-bye. To be as robust as possible it must have little/no dependencies.
-   // Especially it must NOT call any MQL library functions. DLL functions are OK.
+   debug(message);                                                   // send the message to the debug output
 
-   Alert(message);                                             // make sure the message shows up in the terminal log
+   string sPeriod = PeriodDescription(Period());
+   Alert(Symbol(), ",", sPeriod, ": ", __NAME(), ":  ", message);   // the message shows up in the terminal log
 
    if (IsTesting()) {
-      // Alert() prints to the log but is fully ignored otherwise
-      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
-      message = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
+      // in tester no Alert() dialog was displayed
+      string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
+      string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
       PlaySoundEx("alert.wav", MB_DONT_LOG);
-      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
+      MessageBoxEx(sCaption, sMessage, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
 }
 
@@ -1610,6 +1588,9 @@ bool __LOG() {
  */
 string __NAME() {
    static string name = ""; if (!StringLen(name)) {
+      if (!IsDllsAllowed())
+         return(WindowExpertName());
+
       string program = ec_ProgramName(__ExecutionContext);
       string module  = ec_ModuleName (__ExecutionContext);
 
@@ -2357,14 +2338,14 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
- * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
+ * Return the integer constant of a Moving-Average type representation.
  *
- * @param  string value     - MA-Methode
- * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
+ * @param  string value            - string representation of a Moving-Average type
+ * @param  int    flags [optional] - execution control: errors to set silently (default: none)
  *
- * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Moving-Average type constant oder -1 (EMPTY) in case of errors
  */
-int StrToMaMethod(string value, int execFlags=NULL) {
+int StrToMaMethod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
@@ -2372,24 +2353,18 @@ int StrToMaMethod(string value, int execFlags=NULL) {
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
-   if (str ==         "LWMA") return(MODE_LWMA);
-   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "EMA" ) return(MODE_EMA );
    if (str == ""+ MODE_EMA  ) return(MODE_EMA );
+   if (str ==         "SMMA") return(MODE_SMMA);
+   if (str == ""+ MODE_SMMA ) return(MODE_SMMA);
+   if (str ==         "LWMA") return(MODE_LWMA);
+   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   if (!flags & F_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-int StrToMovingAverageMethod(string value, int execFlags=NULL) {
-   return(StrToMaMethod(value, execFlags));
 }
 
 
@@ -3163,6 +3138,29 @@ string StrToHexStr(string value) {
    }
 
    return(result);
+}
+
+
+/**
+ * Open the input dialog of the current program.
+ *
+ * @return int - error status
+ */
+int start.RelaunchInputDialog() {
+   int error;
+
+   if (IsExpert()) {
+      if (!IsTesting())
+         error = Chart.Expert.Properties();
+   }
+   else if (IsIndicator()) {
+      //if (!IsTesting())
+      //   error = Chart.Indicator.Properties();                     // TODO: implement
+   }
+
+   if (IsError(error))
+      SetLastError(error, NULL);
+   return(error);
 }
 
 
@@ -4840,14 +4838,14 @@ int StrToOperationType(string value) {
 
 
 /**
- * Return the integer constant of a trade direction identifier.
+ * Return the integer constant of a trade direction representation.
  *
- * @param  string value     - trade directions: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
- * @param  int    execFlags - execution control: error flags to set silently (default: none)
+ * @param  string value            - string representation of a trade direction: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
+ * @param  int    flags [optional] - execution control: errors to set silently (default: none)
  *
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToTradeDirection(string value, int execFlags=NULL) {
+int StrToTradeDirection(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "TRADE_DIRECTION_"))
@@ -4862,8 +4860,9 @@ int StrToTradeDirection(string value, int execFlags=NULL) {
    if (str ==                    "BOTH" ) return(TRADE_DIRECTION_BOTH);
    if (str == ""+ TRADE_DIRECTION_BOTH  ) return(TRADE_DIRECTION_BOTH);
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   else                                      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (!flags & F_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5162,6 +5161,38 @@ datetime ParseDateTime(string value) {
 
 
 /**
+ * Return the description of a timeframe identifier. Supports custom timeframes.
+ *
+ * @param  int period - timeframe identifier or amount of minutes per bar period
+ *
+ * @return string
+ *
+ * Note: Implemented in MQL and the MT4Expander to be available if DLL calls are disabled.
+ */
+string PeriodDescription(int period) {
+   if (!period) period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return("M1" );     // 1 minute
+      case PERIOD_M5 : return("M5" );     // 5 minutes
+      case PERIOD_M15: return("M15");     // 15 minutes
+      case PERIOD_M30: return("M30");     // 30 minutes
+      case PERIOD_H1 : return("H1" );     // 1 hour
+      case PERIOD_H2 : return("H2" );     // 2 hours (custom timeframe)
+      case PERIOD_H3 : return("H3" );     // 3 hours (custom timeframe)
+      case PERIOD_H4 : return("H4" );     // 4 hours
+      case PERIOD_H6 : return("H6" );     // 6 hours (custom timeframe)
+      case PERIOD_H8 : return("H8" );     // 8 hours (custom timeframe)
+      case PERIOD_D1 : return("D1" );     // 1 day
+      case PERIOD_W1 : return("W1" );     // 1 week
+      case PERIOD_MN1: return("MN1");     // 1 month
+      case PERIOD_Q1 : return("Q1" );     // 1 quarter (custom timeframe)
+   }
+   return(""+ period);
+}
+
+
+/**
  * Return the flag for the specified timeframe identifier. Supports custom timeframes.
  *
  * @param  int period [optional] - timeframe identifier (default: timeframe of the current chart)
@@ -5278,108 +5309,126 @@ string HistoryFlagsToStr(int flags) {
  * Return the integer constant of a price type identifier.
  *
  * @param  string value
- * @param  int    execFlags [optional] - control execution: errors to set silently (default: none)
+ * @param  int    flags [optional] - F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
+ *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPriceType(string value, int execFlags = NULL) {
+int StrToPriceType(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StringLen(str) == 1) {
-      if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
-      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );
-      if (str == "H"               ) return(PRICE_HIGH    );
+   if (StrStartsWith(str, "PRICE_")) {
+      flags &= (~F_PARTIAL_ID);                                // PRICE_* doesn't support the F_PARTIAL_ID flag
+      if (str == "PRICE_OPEN"    ) return(PRICE_OPEN    );
+      if (str == "PRICE_HIGH"    ) return(PRICE_HIGH    );
+      if (str == "PRICE_LOW"     ) return(PRICE_LOW     );
+      if (str == "PRICE_CLOSE"   ) return(PRICE_CLOSE   );
+      if (str == "PRICE_MEDIAN"  ) return(PRICE_MEDIAN  );
+      if (str == "PRICE_TYPICAL" ) return(PRICE_TYPICAL );
+      if (str == "PRICE_WEIGHTED") return(PRICE_WEIGHTED);
+      if (str == "PRICE_AVERAGE" ) return(PRICE_AVERAGE );
+      if (str == "PRICE_BID"     ) return(PRICE_BID     );
+      if (str == "PRICE_ASK"     ) return(PRICE_ASK     );
+   }
+   else if (StringLen(str) > 0) {
+      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );   // check for numeric identifiers
       if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );
-      if (str == "L"               ) return(PRICE_LOW     );
       if (str == ""+ PRICE_LOW     ) return(PRICE_LOW     );
-      if (str == "C"               ) return(PRICE_CLOSE   );
       if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );
-      if (str == "M"               ) return(PRICE_MEDIAN  );
       if (str == ""+ PRICE_MEDIAN  ) return(PRICE_MEDIAN  );
-      if (str == "T"               ) return(PRICE_TYPICAL );
       if (str == ""+ PRICE_TYPICAL ) return(PRICE_TYPICAL );
-      if (str == "W"               ) return(PRICE_WEIGHTED);
       if (str == ""+ PRICE_WEIGHTED) return(PRICE_WEIGHTED);
-      if (str == "B"               ) return(PRICE_BID     );
+      if (str == ""+ PRICE_AVERAGE ) return(PRICE_AVERAGE );
       if (str == ""+ PRICE_BID     ) return(PRICE_BID     );
-      if (str == "A"               ) return(PRICE_ASK     );
       if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
-   }
-   else {
-      if (StrStartsWith(str, "PRICE_"))
-         str = StrSubstr(str, 6);
 
-      if (str == "OPEN"            ) return(PRICE_OPEN    );
-      if (str == "HIGH"            ) return(PRICE_HIGH    );
-      if (str == "LOW"             ) return(PRICE_LOW     );
-      if (str == "CLOSE"           ) return(PRICE_CLOSE   );
-      if (str == "MEDIAN"          ) return(PRICE_MEDIAN  );
-      if (str == "TYPICAL"         ) return(PRICE_TYPICAL );
-      if (str == "WEIGHTED"        ) return(PRICE_WEIGHTED);
-      if (str == "BID"             ) return(PRICE_BID     );
-      if (str == "ASK"             ) return(PRICE_ASK     );
+      if (flags & F_PARTIAL_ID && 1) {
+         if (StrStartsWith("OPEN",     str))   return(PRICE_OPEN    );
+         if (StrStartsWith("HIGH",     str))   return(PRICE_HIGH    );
+         if (StrStartsWith("LOW",      str))   return(PRICE_LOW     );
+         if (StrStartsWith("CLOSE",    str))   return(PRICE_CLOSE   );
+         if (StrStartsWith("MEDIAN",   str))   return(PRICE_MEDIAN  );
+         if (StrStartsWith("TYPICAL",  str))   return(PRICE_TYPICAL );
+         if (StrStartsWith("WEIGHTED", str))   return(PRICE_WEIGHTED);
+         if (StrStartsWith("BID",      str))   return(PRICE_BID     );
+         if (StringLen(str) > 1) {
+            if (StrStartsWith("ASK",     str)) return(PRICE_ASK     );
+            if (StrStartsWith("AVERAGE", str)) return(PRICE_AVERAGE );
+         }
+      }
+      else {
+         if (str == "O"       ) return(PRICE_OPEN    );
+         if (str == "H"       ) return(PRICE_HIGH    );
+         if (str == "L"       ) return(PRICE_LOW     );
+         if (str == "C"       ) return(PRICE_CLOSE   );
+         if (str == "M"       ) return(PRICE_MEDIAN  );
+         if (str == "T"       ) return(PRICE_TYPICAL );
+         if (str == "W"       ) return(PRICE_WEIGHTED);
+         if (str == "A"       ) return(PRICE_AVERAGE );
+         if (str == "OPEN"    ) return(PRICE_OPEN    );
+         if (str == "HIGH"    ) return(PRICE_HIGH    );
+         if (str == "LOW"     ) return(PRICE_LOW     );
+         if (str == "CLOSE"   ) return(PRICE_CLOSE   );
+         if (str == "MEDIAN"  ) return(PRICE_MEDIAN  );
+         if (str == "TYPICAL" ) return(PRICE_TYPICAL );
+         if (str == "WEIGHTED") return(PRICE_WEIGHTED);
+         if (str == "AVERAGE" ) return(PRICE_AVERAGE );
+         if (str == "BID"     ) return(PRICE_BID     );        // no single letter id
+         if (str == "ASK"     ) return(PRICE_ASK     );        // no single letter id
+      }
    }
 
-   if (!execFlags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToPriceType(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
+   else                                      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   return(-1);
 }
 
 
 /**
- * Gibt die lesbare Beschreibung einer MovingAverage-Methode zurück.
+ * Return a readable version of a Moving-Average method type constant.
  *
- * @param  int type - MA-Methode
+ * @param  int type - MA method type
  *
  * @return string
  */
-string MaMethodDescription(int method) {
-   switch (method) {
-      case MODE_SMA : return("SMA" );
-      case MODE_LWMA: return("LWMA");
-      case MODE_EMA : return("EMA" );
-      case MODE_ALMA: return("ALMA");
-   }
-   return(_EMPTY_STR(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-string MovingAverageMethodDescription(int method) {
-   return(MaMethodDescription(method));
-}
-
-
-/**
- * Return a readable version of a MovingAverage method.
- *
- * @param  int method
- *
- * @return string
- */
-string MaMethodToStr(int method) {
-   switch (method) {
+string MaMethodToStr(int type) {
+   switch (type) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_EMA : return("MODE_EMA" );
+      case MODE_SMMA: return("MODE_SMMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   return(_EMPTY_STR(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("MaMethodToStr(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Alias
+ * Return a description of a Moving-Average method type constant.
+ *
+ * @param  int  type              - MA method type
+ * @param  bool strict [optional] - whether to trigger an error if the passed value is invalid (default: yes)
+ *
+ * @return string - description or an empty string in case of errors
  */
-string MovingAverageMethodToStr(int method) {
-   return(MaMethodToStr(method));
+string MaMethodDescription(int type, bool strict = true) {
+   strict = strict!=0;
+
+   switch (type) {
+      case MODE_SMA : return("SMA" );
+      case MODE_LWMA: return("LWMA");
+      case MODE_EMA : return("EMA" );
+      case MODE_SMMA: return("SMMA");
+      case MODE_ALMA: return("ALMA");
+   }
+   if (strict)
+      return(_EMPTY_STR(catch("MaMethodDescription(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   return("");
 }
 
 
 /**
- * Return a readable version of a price type identifier.
+ * Return a readable version of a price type constant.
  *
  * @param  int type - price type
  *
@@ -5394,17 +5443,18 @@ string PriceTypeToStr(int type) {
       case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
+      case PRICE_AVERAGE:  return("PRICE_AVERAGE" );     // (O+H+L+C)/4
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
-   return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Gibt die lesbare Version eines Price-Identifiers zurück.
+ * Return a description of a price type constant.
  *
- * @param  int type - Price-Type
+ * @param  int type - price type
  *
  * @return string
  */
@@ -5417,10 +5467,11 @@ string PriceTypeDescription(int type) {
       case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
+      case PRICE_AVERAGE:  return("Average" );     // (O+H+L+C)/4
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }
-   return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5523,7 +5574,7 @@ string SwapCalculationModeToStr(int mode) {
       case SCM_INTEREST       : return("SCM_INTEREST"       );
       case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
-   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid paramter mode = "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6763,8 +6814,6 @@ void __DummyCalls() {
    MessageBoxButtonToStr(NULL);
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
-   MovingAverageMethodDescription(NULL);
-   MovingAverageMethodToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
    Mul(NULL, NULL);
@@ -6830,7 +6879,6 @@ void __DummyCalls() {
    StrToHexStr(NULL);
    StrToLower(NULL);
    StrToMaMethod(NULL);
-   StrToMovingAverageMethod(NULL);
    StrToOperationType(NULL);
    StrToPeriod(NULL);
    StrToPriceType(NULL);
