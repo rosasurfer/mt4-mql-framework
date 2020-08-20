@@ -43,7 +43,7 @@ extern int    Max.Bars              = 5000;                 // max. number of ba
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible in input dialog
-int       allocated_buffers = 7;                            // used buffers
+int       terminal_buffers  = 7;                            // buffers managed by the terminal
 
 #property indicator_width1    1
 #property indicator_width2    0
@@ -93,17 +93,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
-   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ema.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
-      else                        return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   ema.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
+                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -135,11 +127,11 @@ int onInit() {
    string sAppliedPrice = ""; if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ema.appliedPrice);
    string shortName = "Trix("+ EMA.Periods + sAppliedPrice +")";
    string dataName = "Trix("+ EMA.Periods +")";
-   IndicatorShortName(shortName +"  ");                           // indicator subwindow and context menus
+   IndicatorShortName(shortName +"  ");                           // chart subwindow and context menus
    SetIndexLabel(MODE_EMA_1,         NULL    );
    SetIndexLabel(MODE_EMA_2,         NULL    );
    SetIndexLabel(MODE_EMA_3,         NULL    );
-   SetIndexLabel(MODE_MAIN,          dataName);                   // "Data" window and tooltips
+   SetIndexLabel(MODE_MAIN,          dataName);                   // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER_SECTION, NULL    );
    SetIndexLabel(MODE_LOWER_SECTION, NULL    );
    SetIndexLabel(MODE_TREND,         NULL    );
@@ -176,7 +168,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(trixMain)) return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -230,7 +222,7 @@ int onTick() {
       else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
 
       // trend direction and length
-      @Trend.UpdateDirection(trixMain, bar, trixTrend, dNull, dNull, dNull, DRAW_NONE);
+      @Trend.UpdateDirection(trixMain, bar, trixTrend, dNull, dNull, dNull);
    }
    return(last_error);
 }
@@ -238,10 +230,10 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(allocated_buffers);
+   IndicatorBuffers(terminal_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);

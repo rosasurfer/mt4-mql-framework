@@ -1,5 +1,5 @@
 /**
- * Constants shared by MQL4 and the MT4Expander (C++).
+ * Constants shared by MQL4.0 and MT4Expander (C++).
  */
 
 
@@ -133,32 +133,33 @@
 
 
 // flags marking errors handled by custom error handlers (these errors don't trigger a terminating ERROR alert)
-#define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //      1
-#define F_ERS_EXECUTION_STOPPING       0x00000002        //      2   temporary state
-#define F_ERS_HISTORY_UPDATE           0x00000004        //      4   temporary state
-#define F_ERR_INVALID_PARAMETER        0x00000008        //      8
-#define F_ERR_INVALID_STOP             0x00000010        //     16
-#define F_ERR_INVALID_TICKET           0x00000020        //     32
-#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040        //     64
-#define F_ERR_MARKET_CLOSED            0x00000080        //    128
-#define F_ERR_NO_CONNECTION            0x00000100        //    256
-#define F_ERR_NO_RESULT                0x00000200        //    512
-#define F_ERR_OFF_QUOTES               0x00000400        //   1024
-#define F_ERR_ORDER_CHANGED            0x00000800        //   2048
-#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000        //   4096
-#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000        //   8192   temporary state
-#define F_ERR_TRADE_DISABLED           0x00004000        //  16384
-#define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //  32768
-#define F_ERR_TRADESERVER_GONE         0x00010000        //  65536
+#define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //       1
+#define F_ERS_EXECUTION_STOPPING       0x00000002        //       2  temporary state
+#define F_ERS_HISTORY_UPDATE           0x00000004        //       4  temporary state
+#define F_ERR_INVALID_PARAMETER        0x00000008        //       8
+#define F_ERR_INVALID_STOP             0x00000010        //      16
+#define F_ERR_INVALID_TICKET           0x00000020        //      32
+#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040        //      64
+#define F_ERR_MARKET_CLOSED            0x00000080        //     128
+#define F_ERR_NO_CONNECTION            0x00000100        //     256
+#define F_ERR_NO_RESULT                0x00000200        //     512
+#define F_ERR_OFF_QUOTES               0x00000400        //    1024
+#define F_ERR_ORDER_CHANGED            0x00000800        //    2048
+#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000        //    4096
+#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000        //    8192  temporary state
+#define F_ERR_TRADE_DISABLED           0x00004000        //   16384
+#define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //   32768
+#define F_ERR_TRADESERVER_GONE         0x00010000        //   65536
 
 
 // flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00020000        // 131072 (don't hedge multiple positions on close)
-#define F_OE_DONT_CHECK_STATUS         0x00040000        // 262144 (don't check order status before proceeding)
+#define F_OE_DONT_HEDGE                0x00020000        //  131072  don't hedge multiple positions on close
+#define F_OE_DONT_CHECK_STATUS         0x00040000        //  262144  don't check order status before proceeding
 
 
-// flag enabling custom timeframe support
-#define F_CUSTOM_TIMEFRAME             0x00080000        // 524288
+// other flags
+#define F_CUSTOM_TIMEFRAME             0x00080000        //  524288  support for custom timeframes
+#define F_PARTIAL_ID                   0x00100000        // 1048576  parser support for incomplete identifiers
 
 
 // order and operation types
@@ -184,6 +185,19 @@
 #define TRADE_DIRECTION_LONG                    1
 #define TRADE_DIRECTION_SHORT                   2
 #define TRADE_DIRECTION_BOTH                    3
+
+
+// price type identifiers, see iMA() etc.
+#define PRICE_CLOSE                             0        // C
+#define PRICE_OPEN                              1        // O
+#define PRICE_HIGH                              2        // H
+#define PRICE_LOW                               3        // L
+#define PRICE_MEDIAN                            4        // (H+L)/2
+#define PRICE_TYPICAL                           5        // (H+L+C)/3
+#define PRICE_WEIGHTED                          6        // (H+L+C+C)/4
+#define PRICE_AVERAGE                           7        // (O+H+L+C)/4
+#define PRICE_BID                               8        // Bid
+#define PRICE_ASK                               9        // Ask
 
 
 // commission types, see struct FXT_HEADER
@@ -305,32 +319,6 @@
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
 #define INIT_NO_BARS_REQUIRED                   8        // executable without history (scripts only)
-
-
-// known timezones
-#define TIMEZONE_ALPARI           "Alpari"               // until 03/2012 "Europe/Berlin", after "Europe/Kiev"
-#define TIMEZONE_AMERICA_NEW_YORK "America/New_York"
-#define TIMEZONE_EUROPE_BERLIN    "Europe/Berlin"
-#define TIMEZONE_EUROPE_KIEV      "Europe/Kiev"
-#define TIMEZONE_EUROPE_LONDON    "Europe/London"
-#define TIMEZONE_EUROPE_MINSK     "Europe/Minsk"
-#define TIMEZONE_FXT              "FXT"                  // "Europe/Kiev"   with DST changes of "America/New_York"
-#define TIMEZONE_FXT_MINUS_0200   "FXT-0200"             // "Europe/London" with DST changes of "America/New_York"
-#define TIMEZONE_GLOBALPRIME      "GlobalPrime"          // until 24.10.2015 "FXT", then a single time "Europe/Kiev", then "FXT" again
-#define TIMEZONE_GMT              "GMT"
-
-
-// known timezone ids
-#define TIMEZONE_ID_ALPARI                      1
-#define TIMEZONE_ID_AMERICA_NEW_YORK            2
-#define TIMEZONE_ID_EUROPE_BERLIN               3
-#define TIMEZONE_ID_EUROPE_KIEV                 4
-#define TIMEZONE_ID_EUROPE_LONDON               5
-#define TIMEZONE_ID_EUROPE_MINSK                6
-#define TIMEZONE_ID_FXT                         7
-#define TIMEZONE_ID_FXT_MINUS_0200              8
-#define TIMEZONE_ID_GLOBALPRIME                 9
-#define TIMEZONE_ID_GMT                        10
 
 
 // MT4 internal messages

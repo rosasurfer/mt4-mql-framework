@@ -1,5 +1,6 @@
 /**
- * Functions already imported in the core are removed from this file. For the last version with a complete function listing
+ * Functions already imported by the framework core files are removed from this file.
+ * Last version with a complete function listing:
  *
  *
  */
@@ -212,16 +213,16 @@
    bool     SortOpenTickets(int keys[][]);
 
 #import "rsfLib1.ex4"
-   string   StdSymbol();                                                            // alias of GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                                       // alias of GetStandardSymbolOrAlt(symbol, symbol)
+   string   StdSymbol();                                                // alias of GetStandardSymbol(Symbol())
+   string   GetStandardSymbol(string symbol);                           // alias of GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
-   string   GetSymbolName(string symbol);                                           // alias of GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
 
-   string   GetLongSymbolName(string symbol);                                       // alias of GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                           // alias of GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
 
@@ -234,19 +235,21 @@
 
 
    // toString helpers
+   string   BoolsToStr(bool array[], string separator);
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
-
-   string   IntegerToBinaryStr(int integer);
+   string   StringsToStr(string array[], string separator);
+   string   TicketsToStr(int array[], string separator);
+   string   WaitForSingleObjectValueToStr(int value);
 
    string   CharToHexStr(int char);
    string   WordToHexStr(int word);
    string   IntegerToHexStr(int decimal);
 
+   string   IntegerToBinaryStr(int integer);
+
 #import "rsfLib2.ex4"
-   string   BoolsToStr             (bool array[], string separator);
    string   IntsToStr               (int array[], string separator);
    string   CharsToStr              (int array[], string separator);
-   string   TicketsToStr            (int array[], string separator);
    string   TicketsToStr.Lots       (int array[], string separator);
    string   TicketsToStr.LotsSymbols(int array[], string separator);
    string   TicketsToStr.Position   (int array[]);
@@ -256,13 +259,14 @@
    string   DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);
    string   iBufferToStr         (double array[], string separator);
    string   MoneysToStr          (double array[], string separator);
-   string   RatesToStr           (double array[], string separator); string PricesToStr(double array[], string separator);   // alias
-   string   StringsToStr         (string array[], string separator);
+   string   RatesToStr           (double array[], string separator);
+   string   PricesToStr          (double array[], string separator);    // alias of RatesToStr()
 
+
+   // other
 #import "rsfLib1.ex4"
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
-   string   WaitForSingleObjectValueToStr(int value);
    int      WinExecWait(string cmdLine, int cmdShow);
 #import "rsfLib2.ex4"
    int      GetTerminalRuntime();

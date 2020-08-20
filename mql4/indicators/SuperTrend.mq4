@@ -1,17 +1,18 @@
 /**
- * SuperTrend - a support/resistance line defined by an ATR channel
+ * SuperTrend SR - a support/resistance line formed by an ATR channel
  *
  *
- * The upper or lower band of an ATR channel calculated around High and Low of the current bar is used to calculate a rising
- * or falling support/resistance line. It changes direction when:
+ * The upper and lower band of an ATR channel calculated around price High and Low are used to calculate a continuous SR line
+ * (only rising or falling values). The line changes direction when:
  *
- *  (1) the outer ATR channel band crosses the support/resistance line built by the inner ATR channel band and
- *  (2) price crosses a Moving Average in the same direction
+ *  (1) The outer ATR channel band crosses the support/resistance line formed by the inner ATR channel band.
+ *      - and -
+ *  (2) Price crosses a Moving Average in the same direction.
  *
  * The indicator is similar to the HalfTrend indicator which uses a slightly different channel calculation and trend logic.
  *
  * Indicator buffers for iCustom():
- *  • SuperTrend.MODE_MAIN:  main SR values
+ *  • SuperTrend.MODE_MAIN:  main SR line values
  *  • SuperTrend.MODE_TREND: trend direction and length
  *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
@@ -21,9 +22,8 @@
  * @see  http://www.forexfactory.com/showthread.php?t=268038  (Plateman's CCI aka SuperTrend)
  * @see  /mql4/indicators/HalfTrend.mq4
  *
- * Notes: In the above FF links a CCI is used to get the SMA component for averaging price. Here the CCI is replaced and the
- *        SMA is used directly. The defining element for the indicator is the ATR channel, not price or the SMA. Therefore
- *        the original SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
+ * Note: The defining element for the indicator is the ATR channel, not price or MA. Therefore the original
+ *       SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -176,7 +176,7 @@ int onInit() {
 
    // names, labels and display options
    indicatorName = __NAME() +"("+ ATR.Periods +")";
-   IndicatorShortName(indicatorName);                    // chart context menu
+   IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
    SetIndexLabel(MODE_UPTREND,   NULL);
@@ -216,7 +216,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before doing a full recalculation
@@ -364,7 +364,7 @@ bool onTrendChange(int trend) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);

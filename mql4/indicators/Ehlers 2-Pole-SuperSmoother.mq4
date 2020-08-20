@@ -116,17 +116,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                   // default price type
-   appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (appliedPrice == -1) {
-      if      (StrStartsWith("open",     sValue)) appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) appliedPrice = PRICE_WEIGHTED;
-      else             return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (appliedPrice==-1 || appliedPrice > PRICE_WEIGHTED)
+                       return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    AppliedPrice = PriceTypeDescription(appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -183,7 +175,7 @@ int onInit() {
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    string shortName = "2-Pole-Filter("+ Periods +")";
-   IndicatorShortName(shortName);
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);
@@ -235,7 +227,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -269,7 +261,7 @@ int onTick() {
       if (bar > Bars-3) main[bar] = price;               // prevent index out of range errors
       else              main[bar] = coef1*price + coef2*main[bar+1] + coef3*main[bar+2];
 
-      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, drawType, true, true, Digits);
+      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
@@ -325,7 +317,7 @@ bool onTrendChange(int trend) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);

@@ -137,8 +137,8 @@ int onInit() {
    // (4) data display configuration, names and labels
    indicatorName = __NAME();
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), 2), "");
-   IndicatorShortName(indicatorName + signalInfo +"  ");       // indicator subwindow and context menu
-   SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // "Data" window and tooltips
+   IndicatorShortName(indicatorName + signalInfo +"  ");       // chart subwindow and context menu
+   SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // chart tooltips and "Data" window
    SetIndexLabel(MODE_DELTA_SIGNAL, NULL);
    SetIndexLabel(MODE_DELTA_LONG,   NULL);
    SetIndexLabel(MODE_DELTA_SHORT,  NULL);
@@ -178,7 +178,7 @@ int onTick() {
    if (!AccountNumber())
       return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(bufferMain)) return(log("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -345,7 +345,7 @@ double GetBfxCoreVolume(int buffer, int bar) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);

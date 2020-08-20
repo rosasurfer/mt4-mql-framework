@@ -1,8 +1,7 @@
 /**
- * HalfTrend indicator - a support/resistance line defined by a trading range channel
+ * HalfTrend SR - a continuous support/resistance line defined by a trading range channel
  *
- *
- * The indicator is similar to the SuperTrend indicator which uses a slightly different channel calculation and trend logic.
+ * Similar to the SuperTrend indicator but uses a slightly different channel calculation and trend logic.
  *
  * Indicator buffers for iCustom():
  *  • HalfTrend.MODE_MAIN:  main SR values
@@ -151,7 +150,7 @@ int onInit() {
 
    // names, labels and display options
    indicatorName = __NAME() +"("+ Periods +")";
-   IndicatorShortName(indicatorName);                    // chart context menu
+   IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
    SetIndexLabel(MODE_UPTREND,   NULL);
@@ -191,7 +190,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before doing a full recalculation
@@ -331,7 +330,7 @@ bool onTrendChange(int trend) {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);

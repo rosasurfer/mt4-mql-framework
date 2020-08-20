@@ -7,5 +7,5 @@
 #include <shared/defines.h>                        // constants shared by MQL4 and MT4Expander
 #include <shared/errors.h>                         // error codes shared by MQL4 and MT4Expander
 
-#define CLR_NONE  0xFFFFFFFF                       // win32 api: 0xFFFFFFFFL
-#define NO_ERROR  ERR_NO_ERROR                     // win32 api: 0x0L
+#define CLR_NONE  0xFFFFFFFF                       // Win32 API: 0xFFFFFFFFL
+#define NO_ERROR  ERR_NO_ERROR                     // Win32 API: 0x0L

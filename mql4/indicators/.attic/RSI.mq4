@@ -76,16 +76,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
-   rsi.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(rsi.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) rsi.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) rsi.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) rsi.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) rsi.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) rsi.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) rsi.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) rsi.appliedPrice = PRICE_WEIGHTED;
-      else                        return(catch("onInit(2)  Invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   rsi.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(rsi.appliedPrice) || rsi.appliedPrice > PRICE_WEIGHTED) {
+                                  return(catch("onInit(2)  Invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    RSI.AppliedPrice = PriceTypeDescription(rsi.appliedPrice);
 
@@ -114,8 +107,8 @@ int onInit() {
    // (3) data display configuration, names and labels
    string strAppliedPrice = ifString(rsi.appliedPrice==PRICE_CLOSE, "", ","+ PriceTypeDescription(rsi.appliedPrice));
    string name = "RSI("+ rsi.periods + strAppliedPrice +")";
-   IndicatorShortName(name +"  ");                                   // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          name);                          // "Data" window and tooltips
+   IndicatorShortName(name +"  ");                                   // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          name);                          // chart tooltips and "Data" window
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
@@ -152,7 +145,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under specific circumstances buffers may not be initialized on the first tick after terminal start
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(bufferRSI)) return(log("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
@@ -209,7 +202,7 @@ int onTick() {
 
 /**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not get ignored.
+ * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
