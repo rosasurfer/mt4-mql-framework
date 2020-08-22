@@ -1,15 +1,16 @@
 /**
  * Duel
  *
- * Eye to eye stand winners and losers.
- * Hurt by envy, cut by greed.
- * Face to face with their own disillusions.
- * The scars of old romances still on their cheeks.
+ * Eye to eye stand winners and losers
+ * Hurt by envy, cut by greed
+ * Face to face with their own disillusions
+ * The scars of old romances still on their cheeks
  *
- * This EA is a bi-directional strategy with optional pyramiding, martingale or reverse-martingale position sizing algorithm.
  *
- * - If "Pyramid.Multiplier" and "Martingale.Multiplier" both are "0" the EA trades like a regular single-entry system.
- * - If "Martingale.Multiplier" is greater than "1" the EA trades on the loosing side like a regular Martingale system.
+ * A bi-directional trading system with optional pyramiding, martingale or reverse-martingale position sizing.
+ *
+ * - If "Pyramid.Multiplier" and "Martingale.Multiplier" both are "0" the EA trades like a regular single-position system.
+ * - If "Martingale.Multiplier" is greater than "0" the EA trades on the loosing side like a Martingale system.
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  */
@@ -19,7 +20,9 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double LotSize = 0.1;
+extern double Pyramid.Multiplier    = 0;
+extern double Martingale.Multiplier = 0;
+extern double LotSize               = 0.01;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,7 +56,7 @@ int onTick() {
 
    // start new sequence
    if (sequence.status == STATUS_WAITING) {
-      // open pending orders
+      StartSequence();
    }
 
    // manage positions
@@ -132,5 +135,8 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("LotSize=", NumberToStr(LotSize, ".1+"), ";"));
+   return(StringConcatenate("Pyramid.Multiplier=",    NumberToStr(Pyramid.Multiplier, ".1+"),    ";", NL,
+                            "Martingale.Multiplier=", NumberToStr(Martingale.Multiplier, ".1+"), ";", NL,
+                            "LotSize=",               NumberToStr(LotSize, ".1+"),               ";")
+   );
 }
