@@ -7,12 +7,12 @@
  * The scars of old romances still on their cheeks
  *
  *
- * A bi-directional trading system with optional pyramiding, martingale or reverse-martingale position sizing.
+ * A uni-directional or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
- * - If "Pyramid.Multiplier" and "Martingale.Multiplier" both are "0" the EA trades like a regular single-position system.
- * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a Martingale system.
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
+ * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a Martingale system.
+ * - If both multipliers are "0" the EA trades like a regular single-position system (no grid).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -20,12 +20,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string GridDirection         = "Long | Short | Both";
+extern string GridDirection         = "Long | Short | Both*";
 extern int    GridSize              = 20;
-extern string UnitSize              = "0.01* | [L]{double} | auto";  // "{double}"=fix, "L{double}"=compounding or "auto"=externally configured unitsize
+extern double UnitSize              = 0.01;     // lots at the first grid level
 
-extern double Pyramid.Multiplier    = 0;                             // unitsize multiplier on the winning side
-extern double Martingale.Multiplier = 0;                             // unitsize multiplier on the losing side
+extern double Pyramid.Multiplier    = 0;        // unitsize multiplier on the winning side
+extern double Martingale.Multiplier = 0;        // unitsize multiplier on the losing side
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,7 +34,7 @@ extern double Martingale.Multiplier = 0;                             // unitsize
 #include <rsfLibs.mqh>
 
 
-#define STRATEGY_ID           105      // unique strategy id
+#define STRATEGY_ID           105               // unique strategy id
 
 
 // sequence status values
@@ -49,16 +49,17 @@ int    sequence.id;
 string sequence.name = "";
 int    sequence.status;
 int    sequence.directions;
-bool   sequence.isLongDirection;
-bool   sequence.isShortDirection;
+double sequence.unitsize;                       // lots at the first grid level
 
 
-// order/position management
-int long.pendings.ticket [];
-int long.positions.ticket[];
+// order management
+bool   long.enabled;
+int    long.pendings.ticket [];
+int    long.positions.ticket[];
 
-int short.pendings.ticket [];
-int short.positions.ticket[];
+bool   short.enabled;
+int    short.pendings.ticket [];
+int    short.positions.ticket[];
 
 
 #include <apps/duel/init.mqh>
@@ -71,19 +72,30 @@ int short.positions.ticket[];
  * @return int - error status
  */
 int onTick() {
-
-   if (sequence.status == STATUS_WAITING) {                    // start new sequence
+   if (sequence.status == STATUS_WAITING) {                    // start a new sequence
       StartSequence();
    }
-   else if (sequence.status == STATUS_PROGRESSING) {           // manage running sequence
-      // check pending orders
-      // check PL
-      // open more pending orders || close all positions
+   else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
+      if (UpdateStatus()) {                                    // check pending orders and PL
+         if (IsStopSignal()) StopSequence();                   // close all positions
+         else                UpdatePendingOrders();            // add/modify pending orders
+      }
    }
    else if (sequence.status == STATUS_STOPPED) {
    }
-
    return(last_error);
+}
+
+
+/**
+ * Whether a stop condition is satisfied for a progressing sequence.
+ *
+ * @return bool
+ */
+bool IsStopSignal() {
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   return(false);
 }
 
 
@@ -97,13 +109,9 @@ bool StartSequence() {
 
    if (__LOG()) log("StartSequence(2)  starting new sequence "+ sequence.name +"...");
 
-
-
    // define gridbase
    //gridbase = GetGridbase();
    //startPrice = NormalizeDouble(gridbase, Digits);
-
-
 
    // calculate start equity and unitsize
    //sequence.startEquity   = CalculateStartEquity();
@@ -111,23 +119,58 @@ bool StartSequence() {
 
    sequence.status = STATUS_PROGRESSING;
 
-
-   if (sequence.isLongDirection) {
+   if (long.enabled) {
       // open buy market
       // open buy stop
       // open buy limit
       UpdatePendingOrders();
    }
 
-   if (sequence.isShortDirection) {
+   if (short.enabled) {
       // open sell market
       // open sell stop
       // open sell limit
       UpdatePendingOrders();
    }
 
-   if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+   if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started");
    return(!catch("StartSequence(4)"));
+}
+
+
+/**
+ * Close all open positions, delete pending orders and stop the sequence.
+ *
+ * @return bool - success status
+ */
+bool StopSequence() {
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   return(true);
+}
+
+
+/**
+ * Update internal order and PL status with current market data.
+ *
+ * @return bool - success status
+ */
+bool UpdateStatus() {
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   return(true);
+}
+
+
+/**
+ * Update all existing and add new or missing pending orders.
+ *
+ * @return bool - success status
+ */
+bool UpdatePendingOrders() {
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   return(true);
 }
 
 
@@ -191,7 +234,7 @@ int ShowStatus(int error = NO_ERROR) {
 string InputsToStr() {
    return(StringConcatenate("GridDirection=",         DoubleQuoteStr(GridDirection),             ";", NL,
                             "GridSize=",              GridSize,                                  ";", NL,
-                            "UnitSize=",              DoubleQuoteStr(UnitSize),                  ";", NL,
+                            "UnitSize=",              NumberToStr(UnitSize, ".1+"),              ";", NL,
                             "Pyramid.Multiplier=",    NumberToStr(Pyramid.Multiplier, ".1+"),    ";", NL,
                             "Martingale.Multiplier=", NumberToStr(Martingale.Multiplier, ".1+"), ";")
    );
