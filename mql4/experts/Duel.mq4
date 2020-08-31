@@ -9,10 +9,10 @@
  *
  * A uni-directional or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
+ * - If both multipliers are "0" the EA trades like a regular single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a Martingale system.
- * - If both multipliers are "0" the EA trades like a regular single-position system (no grid).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -24,8 +24,8 @@ extern string GridDirection         = "Long | Short | Both*";
 extern int    GridSize              = 20;
 extern double UnitSize              = 0.01;     // lots at the first grid level
 
-extern double Pyramid.Multiplier    = 0;        // unitsize multiplier on the winning side
-extern double Martingale.Multiplier = 0;        // unitsize multiplier on the losing side
+extern double Pyramid.Multiplier    = 1;        // unitsize multiplier on the winning side
+extern double Martingale.Multiplier = 1;        // unitsize multiplier on the losing side
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,7 +34,9 @@ extern double Martingale.Multiplier = 0;        // unitsize multiplier on the lo
 #include <rsfLibs.mqh>
 
 
-#define STRATEGY_ID           105               // unique strategy id
+#define STRATEGY_ID         105                 // unique strategy id
+#define SEQUENCE_ID_MIN    1000                 // min. sequence id value (at least 4 digits)
+#define SEQUENCE_ID_MAX   16383                 // max. sequence id value (at most 14 bits: 32767 >> 1)
 
 
 // sequence status values
@@ -45,21 +47,23 @@ extern double Martingale.Multiplier = 0;        // unitsize multiplier on the lo
 
 
 // sequence data
-int    sequence.id;
-string sequence.name = "";
-int    sequence.status;
-int    sequence.directions;
-double sequence.unitsize;                       // lots at the first grid level
+int      sequence.id;
+datetime sequence.created;
+bool     sequence.isTest;                       // whether the sequence is a test (a finished test can be loaded into an online chart)
+string   sequence.name = "";
+int      sequence.status;
+int      sequence.directions;
+double   sequence.unitsize;                     // lots at the first grid level
 
 
 // order management
-bool   long.enabled;
-int    long.pendings.ticket [];
-int    long.positions.ticket[];
+bool     long.enabled;
+int      long.pendings.ticket [];
+int      long.positions.ticket[];
 
-bool   short.enabled;
-int    short.pendings.ticket [];
-int    short.positions.ticket[];
+bool     short.enabled;
+int      short.pendings.ticket [];
+int      short.positions.ticket[];
 
 
 #include <apps/duel/init.mqh>
@@ -107,7 +111,7 @@ bool IsStopSignal() {
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (__LOG()) log("StartSequence(2)  starting new sequence "+ sequence.name +"...");
+   if (__LOG()) log("StartSequence(2)  "+ sequence.name +"  starting sequence...");
 
    // define gridbase
    //gridbase = GetGridbase();
@@ -171,6 +175,21 @@ bool UpdatePendingOrders() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    return(true);
+}
+
+
+/**
+ * Generate a new sequence id. As strategy ids differ multiple strategies may use the same sequence id at the same time.
+ *
+ * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
+ */
+int CreateSequenceId() {
+   MathSrand(GetTickCount());
+   int id;
+   while (id < SEQUENCE_ID_MIN || id > SEQUENCE_ID_MAX) {
+      id = MathRand();                                   // TODO: in tester generate consecutive ids
+   }                                                     // TODO: test id for uniqueness
+   return(id);
 }
 
 
