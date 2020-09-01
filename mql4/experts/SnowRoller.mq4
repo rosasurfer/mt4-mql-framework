@@ -1686,8 +1686,8 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
    if (saveStatusMode && saveStatusMode!=SAVESTATUS_ENFORCE && saveStatusMode!=SAVESTATUS_SKIP)
                                               return(!catch("UpdatePendingOrders(2)  "+ sequence.longName +" invalid parameter saveStatusMode: "+ saveStatusMode, ERR_INVALID_PARAMETER));
    /*
-   Processing logic
-   ----------------
+   Process flow
+   ------------
    (1) iterate downwards starting at the current level and check all active levels
        - for each level an order must exist (open or closed) except when in StartSequence()
        - if an order is open:   check and adjust the SL of level 1 orders

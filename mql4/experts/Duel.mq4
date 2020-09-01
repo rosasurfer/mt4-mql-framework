@@ -34,36 +34,39 @@ extern double Martingale.Multiplier = 1;        // unitsize multiplier on the lo
 #include <rsfLibs.mqh>
 
 
-#define STRATEGY_ID         105                 // unique strategy id
-#define SEQUENCE_ID_MIN    1000                 // min. sequence id value (at least 4 digits)
-#define SEQUENCE_ID_MAX   16383                 // max. sequence id value (at most 14 bits: 32767 >> 1)
+#define STRATEGY_ID                 105         // unique strategy id
+#define SEQUENCE_ID_MIN            1000         // min. sequence id value (at least 4 digits)
+#define SEQUENCE_ID_MAX           16383         // max. sequence id value (at most 14 bits: 32767 >> 1)
+
+#define D_LONG    TRADE_DIRECTION_LONG          // 1
+#define D_SHORT   TRADE_DIRECTION_SHORT         // 2
+#define D_BOTH    TRADE_DIRECTION_BOTH          // 3
 
 
 // sequence status values
-#define STATUS_UNDEFINED      0
-#define STATUS_WAITING        1
-#define STATUS_PROGRESSING    2
-#define STATUS_STOPPED        3
-
+#define STATUS_UNDEFINED              0
+#define STATUS_WAITING                1
+#define STATUS_PROGRESSING            2
+#define STATUS_STOPPED                3
 
 // sequence data
 int      sequence.id;
 datetime sequence.created;
+string   sequence.name = "";                    // "[LSB].{sequence.id}"
 bool     sequence.isTest;                       // whether the sequence is a test (a finished test can be loaded into an online chart)
-string   sequence.name = "";
 int      sequence.status;
 int      sequence.directions;
 double   sequence.unitsize;                     // lots at the first grid level
-
+int      sequence.level;                        // current grid level: -n...0...+n
+double   sequence.gridbase;
+double   sequence.startEquity;
 
 // order management
 bool     long.enabled;
-int      long.pendings.ticket [];
-int      long.positions.ticket[];
+int      long.tickets[];
 
 bool     short.enabled;
-int      short.pendings.ticket [];
-int      short.positions.ticket[];
+int      short.tickets[];
 
 
 #include <apps/duel/init.mqh>
@@ -76,13 +79,13 @@ int      short.positions.ticket[];
  * @return int - error status
  */
 int onTick() {
-   if (sequence.status == STATUS_WAITING) {                    // start a new sequence
+   if (sequence.status == STATUS_WAITING) {              // start a new sequence
       StartSequence();
    }
-   else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
-      if (UpdateStatus()) {                                    // check pending orders and PL
-         if (IsStopSignal()) StopSequence();                   // close all positions
-         else                UpdatePendingOrders();            // add/modify pending orders
+   else if (sequence.status == STATUS_PROGRESSING) {     // manage a running sequence
+      if (UpdateStatus()) {                              // check pending orders and PL
+         if (IsStopSignal()) StopSequence();             // close all positions
+         else                UpdateOrders();             // add/modify pending orders
       }
    }
    else if (sequence.status == STATUS_STOPPED) {
@@ -110,34 +113,18 @@ bool IsStopSignal() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
    if (__LOG()) log("StartSequence(2)  "+ sequence.name +"  starting sequence...");
 
-   // define gridbase
-   //gridbase = GetGridbase();
-   //startPrice = NormalizeDouble(gridbase, Digits);
+   if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
+   else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
+   else                                     sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
 
-   // calculate start equity and unitsize
-   //sequence.startEquity   = CalculateStartEquity();
-   //sequence.startUnitsize = CalculateUnitSize(sequence.startEquity);
+   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   sequence.status      = STATUS_PROGRESSING;
 
-   sequence.status = STATUS_PROGRESSING;
+   UpdateOrders();
 
-   if (long.enabled) {
-      // open buy market
-      // open buy stop
-      // open buy limit
-      UpdatePendingOrders();
-   }
-
-   if (short.enabled) {
-      // open sell market
-      // open sell stop
-      // open sell limit
-      UpdatePendingOrders();
-   }
-
-   if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started");
+   if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
 }
 
@@ -167,14 +154,35 @@ bool UpdateStatus() {
 
 
 /**
- * Update all existing and add new or missing pending orders.
+ * Update all existing orders and add new or missing ones.
+ *
+ * @param  int direction [optional] - order direction flags (default: all currently active trade directions)
  *
  * @return bool - success status
  */
-bool UpdatePendingOrders() {
+bool UpdateOrders(int direction = D_BOTH) {
    if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   return(true);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   if (direction & D_BOTH && 1) {
+      if (!UpdateOrders(D_LONG))  return(false);
+      if (!UpdateOrders(D_SHORT)) return(false);
+      return(true);
+   }
+
+   if (direction == D_LONG) {
+      if (long.enabled) {
+      }
+      return(true);
+   }
+
+   if (direction == D_SHORT) {
+      if (short.enabled) {
+      }
+      return(true);
+   }
+
+   return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
