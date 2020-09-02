@@ -68,7 +68,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FX
 #include <win32api.mqh>
 
 
-#define STRATEGY_ID  103                           // unique strategy identifier
+#define STRATEGY_ID  103                           // unique strategy id from 101-1023 (10 bit)
 bool    SNOWROLLER;
 bool    SISYPHUS;
 
@@ -2281,7 +2281,7 @@ int Grid.DeleteLimit(int i) {
 
 
 /**
- * Add an order record at the specified offset of the internal order arrays. Array size is increased and the record is
+ * Add an order record at the specified offset to the internal order arrays. Array size is increased and the record is
  * inserted, no data is overwritten.
  *
  * @param  int      ticket
@@ -2492,7 +2492,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    double   slippage    = 0.1;
    double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pips;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber(level);
+   int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = ifInt(level > 0, CLR_LONG, CLR_SHORT); if (!orderDisplayMode) markerColor = CLR_NONE;
@@ -2555,7 +2555,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    double   slippage    = NULL;
    double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber(level);
+   int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
@@ -2613,7 +2613,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    double   slippage    = NULL;
    double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber(level);
+   int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
@@ -2780,15 +2780,15 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
 
 
 /**
- * Generiert für den angegebenen Gridlevel eine MagicNumber.
+ * Generate a magic order number for the specified grid level.
  *
- * @param  int level - Gridlevel
+ * @param  int level
  *
- * @return int - MagicNumber oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - magic number or NULL in case of errors
  */
 int CreateMagicNumber(int level) {
-   if (sequence.id < SID_MIN) return(_EMPTY(catch("CreateMagicNumber(1)  "+ sequence.longName +" illegal sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR)));
-   if (!level)                return(_EMPTY(catch("CreateMagicNumber(2)  "+ sequence.longName +" illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
+   if (sequence.id < SID_MIN) return(!catch("CreateMagicNumber(1)  "+ sequence.longName +" illegal sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
+   if (!level)                return(!catch("CreateMagicNumber(2)  "+ sequence.longName +" illegal parameter level = "+ level, ERR_INVALID_PARAMETER));
 
    // Für bessere Obfuscation ist die Reihenfolge der Werte [ea,level,sequence] und nicht [ea,sequence,level], was aufeinander folgende Werte wären.
    int ea       = STRATEGY_ID & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern)  | Position in MagicNumber: Bits 23-32
