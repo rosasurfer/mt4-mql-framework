@@ -119,7 +119,8 @@ int onTick() {
    }
    else if (sequence.status == STATUS_STOPPED) {
    }
-   return(last_error);
+
+   return(debug("onTick(0.1)", GetLastError()));
 }
 
 
@@ -143,7 +144,7 @@ bool IsStopSignal() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (__LOG()) log("StartSequence(2)  "+ sequence.name +"  starting sequence...");
+   if (__LOG()) log("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
@@ -196,7 +197,7 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (direction & D_BOTH && 1) {
+   if (direction & D_BOTH == D_BOTH) {
       if (!UpdateOrders(D_LONG))  return(false);
       if (!UpdateOrders(D_SHORT)) return(false);
       return(true);
@@ -399,7 +400,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
-   string   comment     = "DL."+ sequence.id +"."+ ifString(type==OP_BUY, "L", "S") +"."+ NumberToStr(level, "+.");
+   string   comment     = "Duel."+ sequence.name +"."+ NumberToStr(level, "+.");
    color    markerColor = ifInt(type==OP_BUY, CLR_LONG, CLR_SHORT);
    int      oeFlags     = NULL;
 
@@ -459,6 +460,19 @@ int ShowStatus(int error = NO_ERROR) {
    if (!catch("ShowStatus(2)"))
       return(error);
    return(last_error);
+}
+
+
+/**
+ * ShowStatus: Update the string representations of standard and long sequence name.
+ */
+void SS.SequenceName() {
+   sequence.name = "";
+
+   if (long.enabled)  sequence.name = sequence.name +"L";
+   if (short.enabled) sequence.name = sequence.name +"S";
+
+   sequence.name = sequence.name +"."+ sequence.id;
 }
 
 

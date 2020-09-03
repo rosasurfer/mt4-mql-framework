@@ -30,9 +30,10 @@ int onInitUser() {
    sequence.id      = CreateSequenceId();
    sequence.created = Max(TimeCurrentEx(), TimeServer());
    sequence.isTest  = IsTesting();
+   sequence.status  = STATUS_WAITING;
    long.enabled     = (sequence.directions & D_LONG  && 1);
    short.enabled    = (sequence.directions & D_SHORT && 1);
-   sequence.status  = STATUS_WAITING;
+   SS.SequenceName();
 
    if (__LOG()) log("onInitUser(6)  sequence "+ sequence.name +" created");
    return(catch("onInitUser(7)"));

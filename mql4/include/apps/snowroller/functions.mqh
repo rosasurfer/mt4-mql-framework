@@ -862,7 +862,7 @@ void SS.All() {
 
 
 /**
- * ShowStatus(): Update the string representation of the "AutoRestart" option.
+ * ShowStatus: Update the string representation of the "AutoRestart" option.
  */
 void SS.AutoRestart() {
    if (!__CHART()) return;
@@ -873,7 +873,7 @@ void SS.AutoRestart() {
 
 
 /**
- * ShowStatus(): Update the string representation of the gridbase.
+ * ShowStatus: Update the string representation of the gridbase.
  */
 void SS.GridBase() {
    if (!__CHART()) return;
@@ -886,7 +886,7 @@ void SS.GridBase() {
 
 
 /**
- * ShowStatus(): Update the string representation of the sequence direction.
+ * ShowStatus: Update the string representation of the sequence direction.
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
@@ -898,7 +898,7 @@ void SS.GridDirection() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.maxDrawdown".
+ * ShowStatus: Update the string representation of "sequence.maxDrawdown".
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
@@ -910,7 +910,7 @@ void SS.MaxDrawdown() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.maxProfit".
+ * ShowStatus: Update the string representation of "sequence.maxProfit".
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
@@ -922,7 +922,7 @@ void SS.MaxProfit() {
 
 
 /**
- * ShowStatus(): Update the string representation of the missed gridlevels.
+ * ShowStatus: Update the string representation of the missed gridlevels.
  */
 void SS.MissedLevels() {
    if (!__CHART()) return;
@@ -934,7 +934,7 @@ void SS.MissedLevels() {
 
 
 /**
- * ShowStatus(): Update the string representaton of the P/L statistics.
+ * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
    if (!__CHART()) return;
@@ -946,7 +946,7 @@ void SS.PLStats() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.profitPerLevel".
+ * ShowStatus: Update the string representation of "sequence.profitPerLevel".
  */
 void SS.ProfitPerLevel() {
    if (!__CHART()) return;
@@ -966,7 +966,7 @@ void SS.ProfitPerLevel() {
 
 
 /**
- * ShowStatus(): Update the string representations of standard and long sequence name.
+ * ShowStatus: Update the string representations of standard and long sequence name.
  */
 void SS.SequenceName() {
    sequence.name = "";
@@ -980,7 +980,7 @@ void SS.SequenceName() {
 
 
 /**
- * ShowStatus(): Update the string representation of the configured start/stop conditions.
+ * ShowStatus: Update the string representation of the configured start/stop conditions.
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
@@ -1044,7 +1044,7 @@ void SS.StartStopConditions() {
 
 
 /**
- * ShowStatus(); Update the string representation of the start/stop statistics.
+ * ShowStatus: Update the string representation of the start/stop statistics.
  */
 void SS.StartStopStats() {
    if (!__CHART()) return;
@@ -1072,7 +1072,7 @@ void SS.StartStopStats() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.stops" and "sequence.stopsPL".
+ * ShowStatus: Update the string representation of "sequence.stops" and "sequence.stopsPL".
  */
 void SS.Stops() {
    if (!__CHART()) return;
@@ -1087,7 +1087,7 @@ void SS.Stops() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.totalPL".
+ * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
    if (!__CHART()) return;
@@ -1100,7 +1100,7 @@ void SS.TotalPL() {
 
 
 /**
- * ShowStatus(): Update the string representation of the unitsize.
+ * ShowStatus: Update the string representation of the unitsize.
  */
 void SS.UnitSize() {
    if (!__CHART()) return;
