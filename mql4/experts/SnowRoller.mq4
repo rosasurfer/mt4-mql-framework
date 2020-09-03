@@ -2066,7 +2066,7 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
 bool Grid.AddPosition(int level) {
    if (IsLastError())                      return( false);
    if (sequence.status != STATUS_STARTING) return(_false(catch("Grid.AddPosition(1)  "+ sequence.longName +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
-   if (!level)                             return(_false(catch("Grid.AddPosition(2)  "+ sequence.longName +" illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
+   if (!level)                             return(_false(catch("Grid.AddPosition(2)  "+ sequence.longName +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER)));
 
    int oe[], orderType = ifInt(sequence.direction==D_LONG, OP_BUY, OP_SELL);
 
@@ -2314,7 +2314,7 @@ bool Orders.AddRecord(int ticket, int level, double gridBase, int pendingType, d
    closedBySL = closedBySL!=0;
 
    int ordersSize = ArraySize(orders.ticket);
-   if (offset < -1 || offset > ordersSize) return(!catch("Orders.AddRecord(1)  "+ sequence.longName +" illegal parameter offset: "+ offset +" (order array size: "+ ordersSize +")", ERR_INVALID_PARAMETER));
+   if (offset < -1 || offset > ordersSize) return(!catch("Orders.AddRecord(1)  "+ sequence.longName +" invalid parameter offset: "+ offset +" (order array size: "+ ordersSize +")", ERR_INVALID_PARAMETER));
 
    if (offset == -1)
       offset = ordersSize;
@@ -2353,7 +2353,7 @@ bool Orders.AddRecord(int ticket, int level, double gridBase, int pendingType, d
  * @return bool - success status
  */
 bool Orders.RemoveRecord(int offset) {
-   if (offset < 0 || offset >= ArraySize(orders.ticket)) return(!catch("Orders.RemoveRecord(1)  "+ sequence.longName +" illegal parameter offset: "+ offset +" (order array size: "+ ArraySize(orders.ticket) +")", ERR_INVALID_PARAMETER));
+   if (offset < 0 || offset >= ArraySize(orders.ticket)) return(!catch("Orders.RemoveRecord(1)  "+ sequence.longName +" invalid parameter offset: "+ offset +" (order array size: "+ ArraySize(orders.ticket) +")", ERR_INVALID_PARAMETER));
 
    ArraySpliceInts   (orders.ticket,       offset, 1);
    ArraySpliceInts   (orders.level,        offset, 1);
@@ -2456,7 +2456,7 @@ int Orders.ResizeArrays(int size, bool reset = false) {
  * @return int - order array index of the found position or EMPTY (-1) if no open position was found
  */
 int Grid.FindOpenPosition(int level) {
-   if (!level) return(_EMPTY(catch("Grid.FindOpenPosition(1)  "+ sequence.longName +" illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
+   if (!level) return(_EMPTY(catch("Grid.FindOpenPosition(1)  "+ sequence.longName +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER)));
 
    int size = ArraySize(orders.ticket);
    for (int i=size-1; i >= 0; i--) {                                 // iterate backwards for performance
@@ -2483,9 +2483,9 @@ int Grid.FindOpenPosition(int level) {
 int SubmitMarketOrder(int type, int level, int &oe[]) {
    if (IsLastError())                                                           return(0);
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(1)  "+ sequence.longName +" cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
-   if (type!=OP_BUY  && type!=OP_SELL)                                          return(_NULL(catch("SubmitMarketOrder(2)  "+ sequence.longName +" illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-   if (type==OP_BUY  && level<=0)                                               return(_NULL(catch("SubmitMarketOrder(3)  "+ sequence.longName +" illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
-   if (type==OP_SELL && level>=0)                                               return(_NULL(catch("SubmitMarketOrder(4)  "+ sequence.longName +" illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type!=OP_BUY  && type!=OP_SELL)                                          return(_NULL(catch("SubmitMarketOrder(2)  "+ sequence.longName +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   if (type==OP_BUY  && level<=0)                                               return(_NULL(catch("SubmitMarketOrder(3)  "+ sequence.longName +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type==OP_SELL && level>=0)                                               return(_NULL(catch("SubmitMarketOrder(4)  "+ sequence.longName +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
    double   price       = NULL;
@@ -2546,9 +2546,9 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
 int SubmitStopOrder(int type, int level, int &oe[]) {
    if (IsLastError())                                                           return(0);
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitStopOrder(1)  "+ sequence.longName +" cannot submit stop order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
-   if (type!=OP_BUYSTOP  && type!=OP_SELLSTOP)                                  return(_NULL(catch("SubmitStopOrder(2)  "+ sequence.longName +" illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-   if (type==OP_BUYSTOP  && level <= 0)                                         return(_NULL(catch("SubmitStopOrder(3)  "+ sequence.longName +" illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
-   if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  "+ sequence.longName +" illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type!=OP_BUYSTOP  && type!=OP_SELLSTOP)                                  return(_NULL(catch("SubmitStopOrder(2)  "+ sequence.longName +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   if (type==OP_BUYSTOP  && level <= 0)                                         return(_NULL(catch("SubmitStopOrder(3)  "+ sequence.longName +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  "+ sequence.longName +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
    double   stopPrice   = GetGridbase() + level*GridSize*Pips;
@@ -2604,9 +2604,9 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
 int SubmitLimitOrder(int type, int level, int &oe[]) {
    if (IsLastError())                                                           return(0);
    if (sequence.status!=STATUS_STARTING && sequence.status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitLimitOrder(1)  "+ sequence.longName +" cannot submit limit order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
-   if (type!=OP_BUYLIMIT  && type!=OP_SELLLIMIT)                                return(_NULL(catch("SubmitLimitOrder(2)  "+ sequence.longName +" illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-   if (type==OP_BUYLIMIT  && level <= 0)                                        return(_NULL(catch("SubmitLimitOrder(3)  "+ sequence.longName +" illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
-   if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  "+ sequence.longName +" illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type!=OP_BUYLIMIT  && type!=OP_SELLLIMIT)                                return(_NULL(catch("SubmitLimitOrder(2)  "+ sequence.longName +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   if (type==OP_BUYLIMIT  && level <= 0)                                        return(_NULL(catch("SubmitLimitOrder(3)  "+ sequence.longName +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
+   if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  "+ sequence.longName +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
    double   limitPrice  = GetGridbase() + level*GridSize*Pips;
@@ -2780,23 +2780,22 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
 
 
 /**
- * Generate a magic order number for the specified grid level.
+ * Generate a unique magic order number for the specified grid level.
  *
  * @param  int level
  *
  * @return int - magic number or NULL in case of errors
  */
 int CreateMagicNumber(int level) {
-   if (sequence.id < SID_MIN) return(!catch("CreateMagicNumber(1)  "+ sequence.longName +" illegal sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
-   if (!level)                return(!catch("CreateMagicNumber(2)  "+ sequence.longName +" illegal parameter level = "+ level, ERR_INVALID_PARAMETER));
+   if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("CreateMagicNumber(1)  "+ sequence.longName +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (sequence.id & (~0x3FFF) != 0) return(!catch("CreateMagicNumber(2)  "+ sequence.longName +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (!level || Abs(level) > 255)   return(!catch("CreateMagicNumber(3)  "+ sequence.longName +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
-   // Für bessere Obfuscation ist die Reihenfolge der Werte [ea,level,sequence] und nicht [ea,sequence,level], was aufeinander folgende Werte wären.
-   int ea       = STRATEGY_ID & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern)  | Position in MagicNumber: Bits 23-32
-       level    = Abs(level);                                        // der Level in MagicNumber ist immer positiv                |
-       level    = level & 0xFF << 14;                                //  8 bit (Bits größer 8 löschen und auf 22 Bit erweitern)   | Position in MagicNumber: Bits 15-22
-   int sequence = sequence.id & 0x3FFF;                              // 14 bit (Bits größer 14 löschen                            | Position in MagicNumber: Bits  1-14
+   int strategy = STRATEGY_ID;                              // 101-1023   (max. 10 bit)
+   int sequence = sequence.id;                              // 1000-16383 (max. 14 bit)
+   level        = Abs(level);                               // 1-255      (max. 8 bit, in magic number always positive)
 
-   return(ea + level + sequence);
+   return((strategy<<22) + (sequence<<8) + (level<<0));
 }
 
 
@@ -2860,19 +2859,18 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
- * Ob die aktuell selektierte Order zu dieser Strategie gehört. Wird eine Sequenz-ID angegeben, wird zusätzlich überprüft,
- * ob die Order zur angegebenen Sequenz gehört.
+ * Whether the currently selected ticket belongs to the current strategy and sequence.
  *
- * @param  int sequenceId - ID einer Sequenz (default: NULL)
+ * @param  int sequenceId [optional] - sequence id to check the ticket against (default: check for a matching strategy only)
  *
  * @return bool
  */
 bool IsMyOrder(int sequenceId = NULL) {
    if (OrderSymbol() == Symbol()) {
-      if (OrderMagicNumber() >> 22 == STRATEGY_ID) {
-         if (sequenceId == NULL)
-            return(true);
-         return(sequenceId == OrderMagicNumber() & 0x3FFF);          // 14 Bits (Bits 1-14) => sequence.id
+      int strategy = OrderMagicNumber() >> 22;
+      if (strategy == STRATEGY_ID) {
+         int sequence = OrderMagicNumber() >> 8 & 0x3FFF;         // 14 bit starting at bit 8 = sequence id
+         return(!sequenceId || sequenceId==sequence);
       }
    }
    return(false);
@@ -3856,7 +3854,7 @@ bool SynchronizeStatus() {
 bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
    lpPermanentChange = lpPermanentChange!=0;
 
-   if (i < 0 || i > ArraySize(orders.ticket)-1) return(!catch("Sync.UpdateOrder(1)  "+ sequence.longName +" illegal parameter i = "+ i, ERR_INVALID_PARAMETER));
+   if (i < 0 || i > ArraySize(orders.ticket)-1) return(!catch("Sync.UpdateOrder(1)  "+ sequence.longName +" invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
    if (orders.closeTime[i] != 0)                return(!catch("Sync.UpdateOrder(2)  "+ sequence.longName +" cannot update ticket #"+ orders.ticket[i] +" (marked as closed in grid arrays)", ERR_ILLEGAL_STATE));
 
    // das Ticket ist selektiert
@@ -4172,7 +4170,7 @@ string StatusEventToStr(int event) {
       case EV_POSITION_STOPOUT: return("EV_POSITION_STOPOUT");
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
-   return(_EMPTY_STR(catch("StatusEventToStr(1)  "+ sequence.longName +" illegal parameter event = "+ event, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusEventToStr(1)  "+ sequence.longName +" invalid parameter event: "+ event, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -4952,7 +4950,7 @@ bool IsStopLossTriggered(int type, double price) {
    if (type == OP_BUY ) return(LE(Bid, price, Digits));
    if (type == OP_SELL) return(GE(Ask, price, Digits));
 
-   return(!catch("IsStopLossTriggered(1)  "+ sequence.longName +" illegal parameter type: "+ type, ERR_INVALID_PARAMETER));
+   return(!catch("IsStopLossTriggered(1)  "+ sequence.longName +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER));
 
    // prevent compiler warnings
    int iNulls[];
