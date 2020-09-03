@@ -4838,31 +4838,44 @@ int StrToOperationType(string value) {
 
 
 /**
- * Return the integer constant of a trade direction representation.
+ * Return the integer constant of a trade direction identifier.
  *
- * @param  string value            - string representation of a trade direction: [TRADE_DIRECTION_][LONG|SHORT|BOTH]
- * @param  int    flags [optional] - execution control: errors to set silently (default: none)
+ * @param  string value            - string representation of a trade direction: [TRADE_DIRECTION_](LONG|SHORT|BOTH)
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "L" = "Long"
+ *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToTradeDirection(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "TRADE_DIRECTION_"))
-      str = StrSubstr(str, 17);
+   if (StrStartsWith(str, "TRADE_DIRECTION_")) {
+      flags &= (~F_PARTIAL_ID);                                // TRADE_DIRECTION_* doesn't support the F_PARTIAL_ID flag
+      if (str == "TRADE_DIRECTION_LONG" ) return(TRADE_DIRECTION_LONG );
+      if (str == "TRADE_DIRECTION_SHORT") return(TRADE_DIRECTION_SHORT);
+      if (str == "TRADE_DIRECTION_BOTH" ) return(TRADE_DIRECTION_BOTH );
+   }
+   else if (StringLen(str) > 0) {
+      if (str == ""+ TRADE_DIRECTION_LONG ) return(TRADE_DIRECTION_LONG );
+      if (str == ""+ TRADE_DIRECTION_SHORT) return(TRADE_DIRECTION_SHORT);
+      if (str == ""+ TRADE_DIRECTION_BOTH ) return(TRADE_DIRECTION_BOTH );
 
-   if (str ==                    "LONG" ) return(TRADE_DIRECTION_LONG);
-   if (str == ""+ TRADE_DIRECTION_LONG  ) return(TRADE_DIRECTION_LONG);
+      if (flags & F_PARTIAL_ID && 1) {
+         if (StrStartsWith("LONG",  str)) return(TRADE_DIRECTION_LONG );
+         if (StrStartsWith("SHORT", str)) return(TRADE_DIRECTION_SHORT);
+         if (StrStartsWith("BOTH",  str)) return(TRADE_DIRECTION_BOTH );
+      }
+      else {
+         if (str == "LONG" ) return(TRADE_DIRECTION_LONG );
+         if (str == "SHORT") return(TRADE_DIRECTION_SHORT);
+         if (str == "BOTH" ) return(TRADE_DIRECTION_BOTH );
+      }
+   }
 
-   if (str ==                    "SHORT") return(TRADE_DIRECTION_SHORT);
-   if (str == ""+ TRADE_DIRECTION_SHORT ) return(TRADE_DIRECTION_SHORT);
-
-   if (str ==                    "BOTH" ) return(TRADE_DIRECTION_BOTH);
-   if (str == ""+ TRADE_DIRECTION_BOTH  ) return(TRADE_DIRECTION_BOTH);
-
-   if (!flags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
+   else                                      catch("StrToTradeDirection(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   return(-1);
 }
 
 
@@ -5309,7 +5322,8 @@ string HistoryFlagsToStr(int flags) {
  * Return the integer constant of a price type identifier.
  *
  * @param  string value
- * @param  int    flags [optional] - F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
  *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized

@@ -181,7 +181,7 @@
 #define OA_STOP                                 2
 
 
-// trade directions, may be used as flags
+// trade directions, can be used as flags
 #define TRADE_DIRECTION_LONG                    1
 #define TRADE_DIRECTION_SHORT                   2
 #define TRADE_DIRECTION_BOTH                    3

@@ -569,17 +569,17 @@ int CountPendingOrders() {
 
 
 /**
- * Generate a new sequence id.
+ * Generate a new sequence id. As strategy ids differ multiple strategies may use the same sequence id at the same time.
  *
  * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
-   int id;                                               // TODO: in tester generate consecutive ids
+   int id;
    while (id < SID_MIN || id > SID_MAX) {
-      id = MathRand();
-   }
-   return(id);                                           // TODO: test id for uniqueness
+      id = MathRand();                                   // TODO: in tester generate consecutive ids
+   }                                                     // TODO: test id for uniqueness
+   return(id);
 }
 
 
