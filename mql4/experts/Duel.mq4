@@ -131,7 +131,8 @@ int onTick() {
 bool IsStopSignal() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   return(false);
+
+   return(!catch("IsStopSignal(2)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -166,7 +167,8 @@ bool StartSequence() {
 bool StopSequence() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   return(true);
+
+   return(!catch("StopSequence(2)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -178,7 +180,8 @@ bool StopSequence() {
 bool UpdateStatus() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   return(true);
+
+   return(!catch("UpdateStatus(2)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -211,37 +214,20 @@ bool UpdateOrders(int direction = D_BOTH) {
             maxLevel = long.level[orders-1];
             // nächsten Preis oben/unten berechnen
             // wenn erste/letzte Order offen sind, die jeweils nächste in den Markt legen
+            return(!catch("UpdateOrders(2)", ERR_NOT_IMPLEMENTED));
          }
       }
       return(true);
    }
 
-   //if (direction == D_SHORT) {
-   //   if (short.enabled) {
-   //   }
-   //   return(true);
-   //}
+   if (direction == D_SHORT) {
+      if (short.enabled) {
+         return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
+      }
+      return(true);
+   }
 
-   return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-}
-
-
-/**
- * Generate a magic order number for the specified grid level.
- *
- * @param  int level
- *
- * @return int - magic number or NULL in case of errors
- */
-int CreateMagicNumber(int level) {
-   if (!level) return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal parameter level: "+ level, ERR_INVALID_PARAMETER));
-
-   int strategy = STRATEGY_ID & 0x3FF;                      // strategy id: 101-1023,   reset all except the first 10 bit
-   int sequence = sequence.id & 0x3FFF;                     // sequence id: 1000-16383, reset all except the first 14 bit
-   level       &= 0xFF;                                     // level:       0-255,      reset all except the first 8 bit         // TODO: levels can be negative
-
-   // bits are concatenated as [level,sequence,strategy] instead of [strategy,sequence,level] which would result in consecutive values
-   return((level<<24) + (sequence<<10) + (strategy<<0));
+   return(!catch("UpdateOrders(4)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
@@ -255,8 +241,25 @@ int CreateSequenceId() {
    int id;
    while (id < SEQUENCE_ID_MIN || id > SEQUENCE_ID_MAX) {
       id = MathRand();                                      // TODO: in tester generate consecutive ids
-   }                                                        // TODO: test id for uniqueness
+   }                                                        // TODO: test the id for uniqueness
    return(id);
+}
+
+
+/**
+ * Generate a unique magic order number for the sequence.
+ *
+ * @return int - magic number or NULL in case of errors
+ */
+int CreateMagicNumber() {
+   if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (sequence.id & (~0x3FFF) != 0) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+
+   int strategy = STRATEGY_ID;                              // 101-1023   (max. 10 bit)
+   int sequence = sequence.id;                              // 1000-16383 (max. 14 bit)
+   int level    = 0;                                        // 0          (not needed for this strategy)
+
+   return((strategy<<22) + (sequence<<8) + (level<<0));
 }
 
 
@@ -271,7 +274,7 @@ int CreateSequenceId() {
 bool Grid.AddPosition(int direction, int level) {
    if (IsLastError())                           return(false);
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("Grid.AddPosition(2)  "+ sequence.name +" illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("Grid.AddPosition(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    int oe[], orderType = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
 
@@ -327,13 +330,11 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
    if (direction == D_LONG) {
       int size = ArraySize(long.ticket);
 
-      for (int i=-1; size && i < size; i++) {
+      for (int i=0; i < size; i++) {
          if (long.level[i] == level) return(!catch("Orders.AddRecord(1)  "+ sequence.name +" cannot overwrite ticket #"+ long.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
          if (long.level[i] > level)
             break;
       }
-      if (i == -1) i = size;
-
       ArrayInsertInt   (long.ticket,       i, ticket                               );
       ArrayInsertInt   (long.level,        i, level                                );
       ArrayInsertInt   (long.pendingType,  i, pendingType                          );
@@ -352,13 +353,11 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
    else if (direction == D_SHORT) {
       size = ArraySize(long.ticket);
 
-      for (i=-1; size && i < size; i++) {
+      for (i=0; i < size; i++) {
          if (short.level[i] == level) return(!catch("Orders.AddRecord(2)  "+ sequence.name +" cannot overwrite ticket #"+ short.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
          if (short.level[i] > level)
             break;
       }
-      if (i == -1) i = size;
-
       ArrayInsertInt   (short.ticket,       i, ticket                               );
       ArrayInsertInt   (short.level,        i, level                                );
       ArrayInsertInt   (short.pendingType,  i, pendingType                          );
@@ -373,7 +372,7 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
       ArrayInsertDouble(short.commission,   i, NormalizeDouble(commission, 2)       );
       ArrayInsertDouble(short.profit,       i, NormalizeDouble(profit,     2)       );
    }
-   else return(!catch("Orders.AddRecord(3)  "+ sequence.name +" illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   else return(!catch("Orders.AddRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    return(!catch("Orders.AddRecord(4)"));
 }
@@ -391,14 +390,14 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
 int SubmitMarketOrder(int type, int level, int &oe[]) {
    if (IsLastError())                         return(0);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("SubmitMarketOrder(1)  "+ sequence.name +" cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (type!=OP_BUY  && type!=OP_SELL)        return(!catch("SubmitMarketOrder(2)  "+ sequence.name +" illegal parameter type: "+ type, ERR_INVALID_PARAMETER));
+   if (type!=OP_BUY  && type!=OP_SELL)        return(!catch("SubmitMarketOrder(2)  "+ sequence.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER));
 
    double   lots        = sequence.unitsize;
    double   price       = NULL;
    double   slippage    = 0.1;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber(level);
+   int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
    string   comment     = "DL."+ sequence.id +"."+ ifString(type==OP_BUY, "L", "S") +"."+ NumberToStr(level, "+.");
    color    markerColor = ifInt(type==OP_BUY, CLR_LONG, CLR_SHORT);
