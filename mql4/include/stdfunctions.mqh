@@ -1118,7 +1118,7 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
  */
 bool init.IsLogEnabled() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "LogInTester", false));                    // tester: default=off
+      return(GetConfigBool("Logging", "Tester", false));                         // tester: default=off
    return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // online: default=on
 }
 
