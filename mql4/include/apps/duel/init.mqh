@@ -38,3 +38,15 @@ int onInitUser() {
    if (__LOG()) log("onInitUser(6)  sequence "+ sequence.name +" created");
    return(catch("onInitUser(7)"));
 }
+
+
+/**
+ * Initialization post-processing hook. Not called if the reason-specific event handler returned with an error.
+ *
+ * @return int - error status
+ */
+int afterInit() {
+   CreateStatusBox();
+   SS.All();
+   return(catch("afterInit(1)"));
+}

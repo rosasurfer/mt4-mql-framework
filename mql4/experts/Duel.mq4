@@ -27,6 +27,8 @@ extern double UnitSize              = 0.01;     // lots at the first grid level
 extern double Pyramid.Multiplier    = 1;        // unitsize multiplier on the winning side
 extern double Martingale.Multiplier = 1;        // unitsize multiplier on the losing side
 
+extern bool   ShowProfitInPercent   = false;    // whether PL is displayed in absolute or percentage terms
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
@@ -65,6 +67,9 @@ int      sequence.directions;
 double   sequence.unitsize;                     // lots at the first level
 double   sequence.gridbase;
 double   sequence.startEquity;
+double   sequence.totalPL;                      // current total P/L of the sequence: totalPL = floatingPL + closedPL
+double   sequence.maxProfit;                    // max. experienced total sequence profit:   0...+n
+double   sequence.maxDrawdown;                  // max. experienced total sequence drawdown: -n...0
 
 // order management
 bool     long.enabled;
@@ -97,6 +102,13 @@ double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
 
+string   sUnitSize            = "";             // caching vars to speed-up execution of ShowStatus()
+string   sGridBase            = "";
+string   sSequenceTotalPL     = "";
+string   sSequenceMaxProfit   = "";
+string   sSequenceMaxDrawdown = "";
+string   sSequencePlStats     = "";
+
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -120,7 +132,7 @@ int onTick() {
    else if (sequence.status == STATUS_STOPPED) {
    }
 
-   return(debug("onTick(0.1)", GetLastError()));
+   return(catch("onTick(1)"));
 }
 
 
@@ -149,6 +161,7 @@ bool StartSequence() {
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
    else                                     sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
+   SS.GridBase();
 
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    sequence.status      = STATUS_PROGRESSING;
@@ -208,7 +221,7 @@ bool UpdateOrders(int direction = D_BOTH) {
       if (long.enabled) {
          orders = ArraySize(long.ticket);
          if (!orders) {
-            Grid.AddPosition(direction, 0);              // erste Order in den Markt legen
+            Grid.AddPosition(direction, 1);              // open first long order
          }
          else {
             minLevel = long.level[0];
@@ -223,7 +236,17 @@ bool UpdateOrders(int direction = D_BOTH) {
 
    if (direction == D_SHORT) {
       if (short.enabled) {
-         return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
+         orders = ArraySize(short.ticket);
+         if (!orders) {
+            Grid.AddPosition(direction, 1);              // open first short order
+         }
+         else {
+            minLevel = short.level[0];
+            maxLevel = short.level[orders-1];
+            // nächsten Preis oben/unten berechnen
+            // wenn erste/letzte Order offen sind, die jeweils nächste in den Markt legen
+            return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
+         }
       }
       return(true);
    }
@@ -304,7 +327,7 @@ bool Grid.AddPosition(int direction, int level) {
 
 
 /**
- * Add an order record to the order arrays. No data is overwritten. The position to insert is automatically determined.
+ * Add an order record to the order arrays. No data is overwritten. The inserting position is automatically determined.
  *
  * @param  int      direction
  *
@@ -352,7 +375,7 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
    }
 
    else if (direction == D_SHORT) {
-      size = ArraySize(long.ticket);
+      size = ArraySize(short.ticket);
 
       for (i=0; i < size; i++) {
          if (short.level[i] == level) return(!catch("Orders.AddRecord(2)  "+ sequence.name +" cannot overwrite ticket #"+ short.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
@@ -392,6 +415,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    if (IsLastError())                         return(0);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("SubmitMarketOrder(1)  "+ sequence.name +" cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (type!=OP_BUY  && type!=OP_SELL)        return(!catch("SubmitMarketOrder(2)  "+ sequence.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER));
+   if (!level)                                return(!catch("SubmitMarketOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    double   lots        = sequence.unitsize;
    double   price       = NULL;
@@ -400,7 +424,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
-   string   comment     = "Duel."+ sequence.name +"."+ NumberToStr(level, "+.");
+   string   comment     = "Duel."+ ifString(type==OP_BUY, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = ifInt(type==OP_BUY, CLR_LONG, CLR_SHORT);
    int      oeFlags     = NULL;
 
@@ -441,21 +465,26 @@ int ShowStatus(int error = NO_ERROR) {
    string msg="", sError="";
 
    switch (sequence.status) {
-      case STATUS_UNDEFINED:   msg = "   not initialized"; break;
-      case STATUS_WAITING:     msg = "   waiting";         break;
-      case STATUS_PROGRESSING: msg = "   progressing";     break;
-      case STATUS_STOPPED:     msg = "   stopped";         break;
+      case STATUS_UNDEFINED:   msg = "not initialized";                                break;
+      case STATUS_WAITING:     msg = StringConcatenate(sequence.name, " waiting");     break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(sequence.name, " progressing"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate(sequence.name, " stopped");     break;
       default:
          return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
+   msg = StringConcatenate(__NAME(), "     ", msg, sError,                            NL,
+                                                                                      NL,
+                           "Grid:              ", GridSize, " pip", sGridBase,        NL,
+                           "UnitSize:        ",   sUnitSize,                          NL,
+                           "Profit/Loss:    ",    sSequenceTotalPL, sSequencePlStats, NL
+   );
+
    // 4 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, NL, __NAME(), msg, sError);
-   if (__CoreFunction == CF_INIT)
-      WindowRedraw();
+   Comment(NL, NL, NL, NL, msg);
+   if (__CoreFunction == CF_INIT) WindowRedraw();
 
    if (!catch("ShowStatus(2)"))
       return(error);
@@ -464,15 +493,132 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
+ * ShowStatus: Update all string representations.
+ */
+void SS.All() {
+   if (!__CHART()) return;
+
+   SS.SequenceName();
+   SS.GridBase();
+   SS.UnitSize();
+   SS.TotalPL();
+   SS.MaxProfit();
+   SS.MaxDrawdown();
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the grid base.
+ */
+void SS.GridBase() {
+   if (!__CHART()) return;
+   sGridBase = "";
+   if (!sequence.gridbase) return;
+   sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
+}
+
+
+/**
+ * ShowStatus: Update the string representation of "sequence.maxDrawdown".
+ */
+void SS.MaxDrawdown() {
+   if (!__CHART()) return;
+   if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+   SS.PLStats();
+}
+
+
+/**
+ * ShowStatus: Update the string representation of "sequence.maxProfit".
+ */
+void SS.MaxProfit() {
+   if (!__CHART()) return;
+   if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+   else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
+   SS.PLStats();
+}
+
+
+/**
+ * ShowStatus: Update the string representaton of the P/L statistics.
+ */
+void SS.PLStats() {
+   if (!__CHART()) return;
+
+   if (ArraySize(long.ticket) || ArraySize(short.ticket)) {
+      // not before a positions was opened
+      sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
+   }
+   else {
+      sSequencePlStats = "";
+   }
+}
+
+
+/**
  * ShowStatus: Update the string representations of standard and long sequence name.
  */
 void SS.SequenceName() {
+   if (!__CHART()) return;
    sequence.name = "";
-
    if (long.enabled)  sequence.name = sequence.name +"L";
    if (short.enabled) sequence.name = sequence.name +"S";
-
    sequence.name = sequence.name +"."+ sequence.id;
+}
+
+
+/**
+ * ShowStatus: Update the string representation of "sequence.totalPL".
+ */
+void SS.TotalPL() {
+   if (!__CHART()) return;
+
+   if (ArraySize(long.ticket) || ArraySize(short.ticket)) {
+      // not before a positions was opened
+      if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+      else                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+   }
+   else {
+      sSequenceTotalPL = "-";
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the unitsize.
+ */
+void SS.UnitSize() {
+   if (!__CHART()) return;
+   sUnitSize = NumberToStr(sequence.unitsize, ".+") +" lot";
+}
+
+
+/**
+ * Create the status display box. It consists of overlapping rectangles made of char "g" font "Webdings". Called only from
+ * afterInit().
+ *
+ * @return int - error status
+ */
+int CreateStatusBox() {
+   if (!__CHART()) return(NO_ERROR);
+
+   int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
+   color  bgColor = Cyan; //C'248,248,248';                      // that's chart background color
+   string label;
+
+   for (int i=0; i < rectangles; i++) {
+      label = __NAME() +".statusbox."+ (i+1);
+      if (ObjectFind(label) != 0) {
+         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+         RegisterObject(label);
+      }
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y   );
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(catch("CreateStatusBox(1)"));
 }
 
 
@@ -486,6 +632,7 @@ string InputsToStr() {
                             "GridSize=",              GridSize,                                  ";", NL,
                             "UnitSize=",              NumberToStr(UnitSize, ".1+"),              ";", NL,
                             "Pyramid.Multiplier=",    NumberToStr(Pyramid.Multiplier, ".1+"),    ";", NL,
-                            "Martingale.Multiplier=", NumberToStr(Martingale.Multiplier, ".1+"), ";")
+                            "Martingale.Multiplier=", NumberToStr(Martingale.Multiplier, ".1+"), ";", NL,
+                            "ShowProfitInPercent=",   BoolToStr(ShowProfitInPercent),            ";")
    );
 }
