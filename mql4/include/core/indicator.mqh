@@ -451,7 +451,7 @@ int deinit() {
       }                                                                          //
    }                                                                             //
    if (!error) error = afterDeinit();                                            // postprocessing hook
-   DeleteRegisteredObjects();
+   if (!error && !last_error) DeleteRegisteredObjects();
 
    CheckErrors("deinit(2)");
    return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
