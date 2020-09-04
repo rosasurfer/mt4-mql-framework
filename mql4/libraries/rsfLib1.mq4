@@ -5252,11 +5252,12 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string message = StringConcatenate("opened #", oe.Ticket(oe), " ", sType, " ", sLots, " ", oe.Symbol(oe), sComment , " at ", sPrice);
    if (!EQ(oe.StopLoss  (oe), 0)) message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    if (!EQ(oe.TakeProfit(oe), 0)) message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
-   if (!This.IsTesting())         message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
-   int requotes = oe.Requotes(oe);
-   message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
-
+   if (!This.IsTesting()) {
+      message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+      int requotes = oe.Requotes(oe);
+      message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
+   }
    return(StringConcatenate(message, sSlippage));
 }
 
