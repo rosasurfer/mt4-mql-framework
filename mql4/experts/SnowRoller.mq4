@@ -2815,16 +2815,16 @@ int ShowStatus(int error = NO_ERROR) {
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
 
    switch (sequence.status) {
-      case STATUS_UNDEFINED:   msg = " not initialized";                                                                                                                                                    break;
-      case STATUS_WAITING:     msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " waiting at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STARTING:    msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STOPPING:    msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
-      case STATUS_STOPPED:     msg = StringConcatenate("     ", sSequenceDirection, " ", Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_UNDEFINED:   msg = "not initialized";                                                                                                                                            break;
+      case STATUS_WAITING:     msg = StringConcatenate(sSequenceDirection, " ", Sequence.ID, " waiting at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STARTING:    msg = StringConcatenate(sSequenceDirection, " ", Sequence.ID, " starting at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(sSequenceDirection, " ", Sequence.ID, " progressing at level ", sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPING:    msg = StringConcatenate(sSequenceDirection, " ", Sequence.ID, " stopping at level ",    sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate(sSequenceDirection, " ", Sequence.ID, " stopped at level ",     sequence.level, "  (max: ", sequence.maxLevel, sSequenceMissedLevels, ")"); break;
       default:
          return(catch("ShowStatus(1)  "+ sequence.longName +" illegal sequence status = "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-   msg = StringConcatenate(__NAME(), msg, sError,                                    NL,
+   msg = StringConcatenate(__NAME(), "     ", msg, sError,                           NL,
                                                                                      NL,
                            "Grid:              ", GridSize, " pip", sGridBase,       NL,
                            "LotSize:          ",  sLotSize, sSequenceProfitPerLevel, NL,
