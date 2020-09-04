@@ -584,7 +584,7 @@ int CreateSequenceId() {
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of char "g" in font "Webdings". Called only from
+ * Create the status display box. It consists of overlapping rectangles made of char "g" font "Webdings". Called only from
  * afterInit().
  *
  * @return int - error status
@@ -840,7 +840,7 @@ int DeleteChartStatus() {
 
 
 /**
- * Update all string representations for ShowStatus().
+ * ShowStatus: Update all string representations.
  */
 void SS.All() {
    if (!__CHART()) return;
