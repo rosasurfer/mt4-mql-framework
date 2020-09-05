@@ -22,7 +22,7 @@ int __DEINIT_FLAGS__[];
 
 extern string GridDirection         = "Long | Short | Both*";
 extern int    GridSize              = 20;
-extern double UnitSize              = 0.01;     // lots at the first grid level
+extern double UnitSize              = 0.1;      // lots at the first grid level
 
 extern double Pyramid.Multiplier    = 1;        // unitsize multiplier on the winning side
 extern double Martingale.Multiplier = 1;        // unitsize multiplier on the losing side
@@ -39,8 +39,8 @@ extern bool   ShowProfitInPercent   = false;    // whether PL is displayed in ab
 
 
 #define STRATEGY_ID         105                 // unique strategy id from 101-1023 (10 bit)
-#define SEQUENCE_ID_MIN    1000                 // min. sequence id value (at least 4 digits)
-#define SEQUENCE_ID_MAX   16383                 // max. sequence id value (at most 14 bits: 32767 >> 1)
+#define SEQUENCE_ID_MIN    1000                 // min. sequence id value (min. 4 digits)
+#define SEQUENCE_ID_MAX   16383                 // max. sequence id value (max. 14 bit value)
 
 #define STATUS_UNDEFINED      0                 // sequence status values
 #define STATUS_WAITING        1
@@ -67,6 +67,8 @@ int      sequence.directions;
 double   sequence.unitsize;                     // lots at the first level
 double   sequence.gridbase;
 double   sequence.startEquity;
+double   sequence.floatingPL;                   // accumulated P/L of all open positions
+double   sequence.closedPL;                     // accumulated P/L of all closed positions
 double   sequence.totalPL;                      // current total P/L of the sequence: totalPL = floatingPL + closedPL
 double   sequence.maxProfit;                    // max. experienced total sequence profit:   0...+n
 double   sequence.maxDrawdown;                  // max. experienced total sequence drawdown: -n...0
@@ -86,6 +88,11 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
+double   long.floatingPL;
+double   long.closedPL;
+double   long.totalPL;
+double   long.maxProfit;
+double   long.maxDrawdown;
 
 bool     short.enabled;
 int      short.ticket      [];
@@ -101,8 +108,13 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
+double   short.floatingPL;
+double   short.closedPL;
+double   short.totalPL;
+double   short.maxProfit;
+double   short.maxDrawdown;
 
-string   sUnitSize            = "";             // caching vars to speed-up execution of ShowStatus()
+string   sUnitSize            = "";             // caching vars to speed-up ShowStatus()
 string   sGridBase            = "";
 string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
@@ -195,7 +207,119 @@ bool UpdateStatus() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   return(!catch("UpdateStatus(2)", ERR_NOT_IMPLEMENTED));
+   // -----------------------------------------------------------------------------------------------------------------------
+   if (long.enabled) {
+      int orders = ArraySize(long.ticket);
+      long.floatingPL = 0;
+
+      for (int i=0; i < orders; i++) {
+         if (long.closeTime[i] > 0) continue;                  // skip tickets known as closed
+         if (!SelectTicket(long.ticket[i], "UpdateStatus(2)")) return(false);
+
+         if (long.type[i] == OP_UNDEFINED) {                   // last time a pending order
+            if (OrderType() != long.pendingType[i]) {          // the pending order was executed
+               long.type      [i] = OrderType();
+               long.openTime  [i] = OrderOpenTime();
+               long.openPrice [i] = OrderOpenPrice();
+               long.swap      [i] = OrderSwap();
+               long.commission[i] = OrderCommission();
+               long.profit    [i] = OrderProfit();
+               if (__LOG()) log("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_LONG, i));
+            }
+         }
+         else {                                                // last time an open position
+            long.swap      [i] = OrderSwap();
+            long.commission[i] = OrderCommission();
+            long.profit    [i] = OrderProfit();
+         }
+
+         if (!OrderCloseTime()) {                              // a still open order
+            long.floatingPL = NormalizeDouble(long.floatingPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
+         }
+         else {                                                // a now closed open position
+            long.closeTime [i] = OrderCloseTime();
+            long.closePrice[i] = OrderClosePrice();
+
+            if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(D_LONG, i));
+            long.closedPL = NormalizeDouble(long.closedPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
+         }
+      }
+                                                               // update PL numbers
+      long.totalPL = NormalizeDouble(long.floatingPL + long.closedPL, 2); SS.TotalPL();
+      if      (long.totalPL > long.maxProfit  ) { long.maxProfit   = long.totalPL; SS.MaxProfit();   }
+      else if (long.totalPL < long.maxDrawdown) { long.maxDrawdown = long.totalPL; SS.MaxDrawdown(); }
+   }
+
+   // -----------------------------------------------------------------------------------------------------------------------
+   if (short.enabled) {
+      orders = ArraySize(short.ticket);
+      short.floatingPL = 0;
+
+      for (i=0; i < orders; i++) {
+         if (short.closeTime[i] > 0) continue;                 // skip tickets known as closed
+         if (!SelectTicket(short.ticket[i], "UpdateStatus(5)")) return(false);
+
+         if (short.type[i] == OP_UNDEFINED) {                  // last time a pending order
+            if (OrderType() != short.pendingType[i]) {         // the pending order was executed
+               short.type      [i] = OrderType();
+               short.openTime  [i] = OrderOpenTime();
+               short.openPrice [i] = OrderOpenPrice();
+               short.swap      [i] = OrderSwap();
+               short.commission[i] = OrderCommission();
+               short.profit    [i] = OrderProfit();
+               if (__LOG()) log("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_SHORT, i));
+            }
+         }
+         else {                                                // last time an open position
+            short.swap      [i] = OrderSwap();
+            short.commission[i] = OrderCommission();
+            short.profit    [i] = OrderProfit();
+         }
+
+         if (!OrderCloseTime()) {                              // a still open order
+            short.floatingPL = NormalizeDouble(short.floatingPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
+         }
+         else {                                                // a now closed open position
+            short.closeTime [i] = OrderCloseTime();
+            short.closePrice[i] = OrderClosePrice();
+
+            if (__LOG()) log("UpdateStatus(7)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(D_SHORT, i));
+            short.closedPL = NormalizeDouble(short.closedPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
+         }
+      }
+                                                               // update PL numbers
+      short.totalPL = NormalizeDouble(short.floatingPL + short.closedPL, 2); SS.TotalPL();
+      if      (short.totalPL > short.maxProfit  ) { short.maxProfit   = short.totalPL; SS.MaxProfit();   }
+      else if (short.totalPL < short.maxDrawdown) { short.maxDrawdown = short.totalPL; SS.MaxDrawdown(); }
+   }
+
+   return(!catch("UpdateStatus(8)"));
+}
+
+
+/**
+ * Compose a log message for a filled entry order.
+ *
+ * @param  int direction - trade direction
+ * @param  int i         - order index
+ *
+ * @return string
+ */
+string UpdateStatus.OrderFillMsg(int direction, int i) {
+   return(_EMPTY_STR(catch("UpdateStatus.OrderFillMsg(1)", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
+ * Compose a log message for a closed position.
+ *
+ * @param  int direction - trade direction
+ * @param  int i         - order index
+ *
+ * @return string
+ */
+string UpdateStatus.PositionCloseMsg(int direction, int i) {
+   return(_EMPTY_STR(catch("UpdateStatus.PositionCloseMsg(1)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -496,14 +620,14 @@ int ShowStatus(int error = NO_ERROR) {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (!__CHART()) return;
-
-   SS.SequenceName();
-   SS.GridBase();
-   SS.UnitSize();
-   SS.TotalPL();
-   SS.MaxProfit();
-   SS.MaxDrawdown();
+   if (__CHART()) {
+      SS.SequenceName();
+      SS.GridBase();
+      SS.UnitSize();
+      SS.TotalPL();
+      SS.MaxProfit();
+      SS.MaxDrawdown();
+   }
 }
 
 
@@ -511,10 +635,11 @@ void SS.All() {
  * ShowStatus: Update the string representation of the grid base.
  */
 void SS.GridBase() {
-   if (!__CHART()) return;
-   sGridBase = "";
-   if (!sequence.gridbase) return;
-   sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
+   if (__CHART()) {
+      sGridBase = "";
+      if (!sequence.gridbase) return;
+      sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
+   }
 }
 
 
@@ -522,10 +647,11 @@ void SS.GridBase() {
  * ShowStatus: Update the string representation of "sequence.maxDrawdown".
  */
 void SS.MaxDrawdown() {
-   if (!__CHART()) return;
-   if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
-   else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
-   SS.PLStats();
+   if (__CHART()) {
+      if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+      else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+      SS.PLStats();
+   }
 }
 
 
@@ -533,10 +659,11 @@ void SS.MaxDrawdown() {
  * ShowStatus: Update the string representation of "sequence.maxProfit".
  */
 void SS.MaxProfit() {
-   if (!__CHART()) return;
-   if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-   else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
-   SS.PLStats();
+   if (__CHART()) {
+      if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+      else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
+      SS.PLStats();
+   }
 }
 
 
@@ -544,14 +671,11 @@ void SS.MaxProfit() {
  * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
-   if (!__CHART()) return;
-
-   if (ArraySize(long.ticket) || ArraySize(short.ticket)) {
-      // not before a positions was opened
-      sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
-   }
-   else {
-      sSequencePlStats = "";
+   if (__CHART()) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
+         sSequencePlStats = StringConcatenate("  (", sSequenceMaxProfit, "/", sSequenceMaxDrawdown, ")");
+      }
+      else sSequencePlStats = "";
    }
 }
 
@@ -560,11 +684,12 @@ void SS.PLStats() {
  * ShowStatus: Update the string representations of standard and long sequence name.
  */
 void SS.SequenceName() {
-   if (!__CHART()) return;
-   sequence.name = "";
-   if (long.enabled)  sequence.name = sequence.name +"L";
-   if (short.enabled) sequence.name = sequence.name +"S";
-   sequence.name = sequence.name +"."+ sequence.id;
+   if (__CHART()) {
+      sequence.name = "";
+      if (long.enabled)  sequence.name = sequence.name +"L";
+      if (short.enabled) sequence.name = sequence.name +"S";
+      sequence.name = sequence.name +"."+ sequence.id;
+   }
 }
 
 
@@ -572,15 +697,12 @@ void SS.SequenceName() {
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
-   if (!__CHART()) return;
-
-   if (ArraySize(long.ticket) || ArraySize(short.ticket)) {
-      // not before a positions was opened
-      if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-      else                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
-   }
-   else {
-      sSequenceTotalPL = "-";
+   if (__CHART()) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
+         if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+         else                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+      }
+      else sSequenceTotalPL = "-";
    }
 }
 
@@ -589,8 +711,9 @@ void SS.TotalPL() {
  * ShowStatus: Update the string representation of the unitsize.
  */
 void SS.UnitSize() {
-   if (!__CHART()) return;
-   sUnitSize = NumberToStr(sequence.unitsize, ".+") +" lot";
+   if (__CHART()) {
+      sUnitSize = NumberToStr(sequence.unitsize, ".+") +" lot";
+   }
 }
 
 
