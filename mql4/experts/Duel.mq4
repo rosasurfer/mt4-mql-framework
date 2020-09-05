@@ -138,6 +138,7 @@ double   short.maxDrawdown;
 
 string   sUnitSize            = "";                      // caching vars to speed-up ShowStatus()
 string   sGridBase            = "";
+string   sStopConditions      = "";
 string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
@@ -179,7 +180,59 @@ bool IsStopSignal() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   return(!catch("IsStopSignal(2)", ERR_NOT_IMPLEMENTED));
+   string message = "";
+
+   // -- absolute TP --------------------------------------------------------------------------------------------------------
+   if (tpAbs.condition) {
+      if (sequence.totalPL >= tpAbs.value) {
+         message = "IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ tpAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
+         tpAbs.condition = false;
+         return(true);
+      }
+   }
+
+   // -- percentage TP ------------------------------------------------------------------------------------------------------
+   if (tpPct.condition) {
+      if (tpPct.absValue == INT_MAX) {
+         tpPct.absValue = tpPct.value/100 * sequence.startEquity;
+      }
+      if (sequence.totalPL >= tpPct.absValue) {
+         message = "IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ tpPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
+         tpPct.condition = false;
+         return(true);
+      }
+   }
+
+   // -- absolute SL --------------------------------------------------------------------------------------------------------
+   if (slAbs.condition) {
+      if (sequence.totalPL <= slAbs.value) {
+         message = "IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ slAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
+         slAbs.condition = false;
+         return(true);
+      }
+   }
+
+   // -- percentage SL ------------------------------------------------------------------------------------------------------
+   if (slPct.condition) {
+      if (slPct.absValue == INT_MIN) {
+         slPct.absValue = slPct.value/100 * sequence.startEquity;
+      }
+      if (sequence.totalPL <= slPct.absValue) {
+         message = "IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
+         slPct.condition = false;
+         return(true);
+      }
+   }
+
+   return(false);
 }
 
 
@@ -215,8 +268,70 @@ bool StartSequence() {
 bool StopSequence() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   int orders, oe[], oeFlags=NULL;
 
-   return(!catch("StopSequence(2)", ERR_NOT_IMPLEMENTED));
+   // -----------------------------------------------------------------------------------------------------------------------
+   if (long.enabled) {
+      orders = ArraySize(long.ticket);
+      long.floatingPL = 0;
+
+      for (int i=0; i < orders; i++) {
+         if (long.closeTime[i] > 0) continue;                        // skip tickets known as closed
+         if (!SelectTicket(long.ticket[i], "StopSequence(2)")) return(false);
+
+         if (long.type[i] == OP_UNDEFINED) {                         // a pending order
+            if (!OrderDeleteEx(long.ticket[i], CLR_NONE, oeFlags, oe)) return(false);
+            long.closeTime[i] = oe.CloseTime(oe);
+         }
+         else {                                                      // on open position
+            if (!OrderCloseEx(long.ticket[i], NULL, NULL, CLR_NONE, oeFlags, oe)) return(false);
+            long.closeTime [i] = oe.CloseTime(oe);
+            long.closePrice[i] = oe.ClosePrice(oe);
+            long.swap      [i] = oe.Swap(oe);
+            long.commission[i] = oe.Commission(oe);
+            long.profit    [i] = oe.Profit(oe);
+            long.closedPL = NormalizeDouble(long.closedPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
+         }
+      }
+                                                                     // update PL numbers
+      long.totalPL = NormalizeDouble(long.floatingPL + long.closedPL, 2); SS.TotalPL();
+      if      (long.totalPL > long.maxProfit  ) { long.maxProfit   = long.totalPL; SS.MaxProfit();   }
+      else if (long.totalPL < long.maxDrawdown) { long.maxDrawdown = long.totalPL; SS.MaxDrawdown(); }
+   }
+
+   // -----------------------------------------------------------------------------------------------------------------------
+   if (short.enabled) {
+      orders = ArraySize(short.ticket);
+      short.floatingPL = 0;
+
+      for (i=0; i < orders; i++) {
+         if (short.closeTime[i] > 0) continue;                       // skip tickets known as closed
+         if (!SelectTicket(short.ticket[i], "StopSequence(3)")) return(false);
+
+         if (short.type[i] == OP_UNDEFINED) {                        // a pending order
+            if (!OrderDeleteEx(short.ticket[i], CLR_NONE, oeFlags, oe)) return(false);
+            short.closeTime[i] = oe.CloseTime(oe);
+         }
+         else {                                                      // on open position
+            if (!OrderCloseEx(short.ticket[i], NULL, NULL, CLR_NONE, oeFlags, oe)) return(false);
+            short.closeTime [i] = oe.CloseTime(oe);
+            short.closePrice[i] = oe.ClosePrice(oe);
+            short.swap      [i] = oe.Swap(oe);
+            short.commission[i] = oe.Commission(oe);
+            short.profit    [i] = oe.Profit(oe);
+            short.closedPL = NormalizeDouble(short.closedPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
+         }
+      }
+                                                                     // update PL numbers
+      short.totalPL = NormalizeDouble(short.floatingPL + short.closedPL, 2); SS.TotalPL();
+      if      (short.totalPL > short.maxProfit  ) { short.maxProfit   = short.totalPL; SS.MaxProfit();   }
+      else if (short.totalPL < short.maxDrawdown) { short.maxDrawdown = short.totalPL; SS.MaxDrawdown(); }
+   }
+
+   sequence.status = STATUS_STOPPED;
+   if (__LOG()) log("StopSequence(4)  "+ sequence.name +" sequence stopped");
+
+   return(!catch("StopSequence(5)"));
 }
 
 
@@ -625,6 +740,7 @@ int ShowStatus(int error = NO_ERROR) {
                                                                                       NL,
                            "Grid:              ", GridSize, " pip", sGridBase,        NL,
                            "UnitSize:        ",   sUnitSize,                          NL,
+                           "Stop:             ",  sStopConditions,                    NL,
                            "Profit/Loss:    ",    sSequenceTotalPL, sSequencePlStats, NL
    );
 
@@ -646,6 +762,7 @@ void SS.All() {
       SS.SequenceName();
       SS.GridBase();
       SS.UnitSize();
+      SS.StopConditions();
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
@@ -711,6 +828,30 @@ void SS.SequenceName() {
       if (long.enabled)  sequence.name = sequence.name +"L";
       if (short.enabled) sequence.name = sequence.name +"S";
       sequence.name = sequence.name +"."+ sequence.id;
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the configured stop conditions.
+ */
+void SS.StopConditions() {
+   if (__CHART()) {
+      string sValue = "";
+      if (tpAbs.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(tpAbs.condition, "@", "!") + tpAbs.description;
+      }
+      if (tpPct.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(tpPct.condition, "@", "!") + tpPct.description;
+      }
+      if (slAbs.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(slAbs.condition, "@", "!") + slAbs.description;
+      }
+      if (slPct.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(slPct.condition, "@", "!") + slPct.description;
+      }
+      if (sValue == "") sStopConditions = "-";
+      else              sStopConditions = sValue;
    }
 }
 
