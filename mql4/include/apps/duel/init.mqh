@@ -35,12 +35,12 @@ int onInitUser() {
       tpPct.condition   = true;
       tpPct.value       = dValue;
       tpPct.absValue    = INT_MAX;
-      tpPct.description = NumberToStr(dValue, ".+") +"%";
+      tpPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
    }
    else {
       tpAbs.condition   = true;
       tpAbs.value       = NormalizeDouble(dValue, 2);
-      tpAbs.description = DoubleToStr(dValue, 2);
+      tpAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
    }
    // StopLoss
    sValue = StrTrim(StopLoss);
@@ -52,12 +52,12 @@ int onInitUser() {
       slPct.condition   = true;
       slPct.value       = dValue;
       slPct.absValue    = INT_MIN;
-      slPct.description = NumberToStr(dValue, ".+") +"%";
+      slPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
    }
    else {
       slAbs.condition   = true;
       slAbs.value       = NormalizeDouble(dValue, 2);
-      slAbs.description = DoubleToStr(dValue, 2);
+      slAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
    }
 
    // create a new sequence
@@ -75,7 +75,7 @@ int onInitUser() {
 
 
 /**
- * Initialization post-processing hook. Not called if the reason-specific event handler returned with an error.
+ * Initialization post-processing hook. Not called if the reason-specific init handler returned with an error.
  *
  * @return int - error status
  */

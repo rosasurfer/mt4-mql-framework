@@ -5009,11 +5009,12 @@ string Order.TempErrorMsg(int oe[], int errors) {
    // temporary error after 0.345 s and 1 requote, retrying...
 
    string message = "temporary error";
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
-   int requotes = oe.Requotes(oe);
-   message = message +" and "+ requotes +" requote" + Pluralize(requotes);
-
+   if (!This.IsTesting()) {
+      message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+      int requotes = oe.Requotes(oe);
+      message = message +" and "+ requotes +" requote" + Pluralize(requotes);
+   }
    return(message +", retrying... ("+ errors +")");
 }
 
@@ -5290,11 +5291,12 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
       if (StringLen(sComment) > 0) sComment = StringConcatenate(" \"", sComment, "\"");
 
    string message = StringConcatenate("temporary error while trying to ", sType, " ", sLots, " ", oe.Symbol(oe), sComment, " at ", sPrice, " (market ", sBid, "/", sAsk, ")");
-   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
-   int requotes = oe.Requotes(oe);
-   message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
-
+   if (!This.IsTesting()) {
+      message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+      int requotes = oe.Requotes(oe);
+      message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
+   }
    return(StringConcatenate(message, ", retrying... ("+ errors +")"));
 }
 
@@ -5328,10 +5330,11 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (!EQ(oe.TakeProfit(oe), 0))        message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
    if (oe.Error(oe) == ERR_INVALID_STOP) message = StringConcatenate(message, ", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
                                          message = StringConcatenate(message, " (market ", sBid, "/", sAsk, ")");
-   if (!This.IsTesting())                message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
-
-   int requotes = oe.Requotes(oe);
-   if (requotes > 0) message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
+   if (!This.IsTesting()) {
+      message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+      int requotes = oe.Requotes(oe);
+      if (requotes > 0) message = StringConcatenate(message, " and ", requotes, " requote", Pluralize(requotes));
+   }
    return(message);
 }
 
@@ -5830,11 +5833,11 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    if (remainder != 0)
       message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
 
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
-
-   int requotes = oe.Requotes(oe);
-   message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
-
+   if (!This.IsTesting()) {
+      message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+      int requotes = oe.Requotes(oe);
+      message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
+   }
    return(message + sSlippage);
 }
 
