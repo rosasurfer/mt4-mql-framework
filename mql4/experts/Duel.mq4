@@ -62,7 +62,7 @@ extern bool   ShowProfitInPercent   = false;             // whether PL is displa
 // sequence data
 int      sequence.id;
 datetime sequence.created;
-string   sequence.name = "";                             // "[LSB].{sequence.id}"
+string   sequence.name = "";                             // "[LS].{sequence.id}"
 bool     sequence.isTest;                                // whether the sequence is a test (a finished test can be loaded into an online chart)
 int      sequence.status;
 int      sequence.directions;
@@ -223,6 +223,9 @@ bool IsStopSignal() {
       if (slPct.absValue == INT_MIN) {
          slPct.absValue = slPct.value/100 * sequence.startEquity;
       }
+
+      debug("IsStopSignal(0.1)  sequence.totalPL="+ sequence.totalPL +"  slPct.absValue="+ slPct.absValue);
+
       if (sequence.totalPL <= slPct.absValue) {
          message = "IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
          if (!IsTesting()) warn(message);
@@ -290,13 +293,13 @@ bool StopSequence() {
             long.swap      [i] = oe.Swap(oe);
             long.commission[i] = oe.Commission(oe);
             long.profit    [i] = oe.Profit(oe);
-            long.closedPL = NormalizeDouble(long.closedPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
+            long.closedPL     += long.swap[i] + long.commission[i] + long.profit[i];
          }
       }
-                                                                     // update PL numbers
-      long.totalPL = NormalizeDouble(long.floatingPL + long.closedPL, 2); SS.TotalPL();
-      if      (long.totalPL > long.maxProfit  ) { long.maxProfit   = long.totalPL; SS.MaxProfit();   }
-      else if (long.totalPL < long.maxDrawdown) { long.maxDrawdown = long.totalPL; SS.MaxDrawdown(); }
+
+      long.totalPL     = long.floatingPL + long.closedPL;            // update PL numbers
+      long.maxProfit   = MathMax(long.totalPL, long.maxProfit);
+      long.maxDrawdown = MathMin(long.totalPL, long.maxDrawdown);
    }
 
    // -----------------------------------------------------------------------------------------------------------------------
@@ -319,16 +322,24 @@ bool StopSequence() {
             short.swap      [i] = oe.Swap(oe);
             short.commission[i] = oe.Commission(oe);
             short.profit    [i] = oe.Profit(oe);
-            short.closedPL = NormalizeDouble(short.closedPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
+            short.closedPL     += short.swap[i] + short.commission[i] + short.profit[i];
          }
       }
-                                                                     // update PL numbers
-      short.totalPL = NormalizeDouble(short.floatingPL + short.closedPL, 2); SS.TotalPL();
-      if      (short.totalPL > short.maxProfit  ) { short.maxProfit   = short.totalPL; SS.MaxProfit();   }
-      else if (short.totalPL < short.maxDrawdown) { short.maxDrawdown = short.totalPL; SS.MaxDrawdown(); }
+
+      short.totalPL     = short.floatingPL + short.closedPL;         // update PL numbers
+      short.maxProfit   = MathMax(short.totalPL, short.maxProfit);
+      short.maxDrawdown = MathMin(short.totalPL, short.maxDrawdown);
    }
 
+   // update total PL numbers
+   sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
+   sequence.closedPL   = NormalizeDouble(long.closedPL   + short.closedPL, 2);
+   sequence.totalPL    = NormalizeDouble(sequence.floatingPL + sequence.closedPL, 2); SS.TotalPL();
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
+
    sequence.status = STATUS_STOPPED;
+   SS.StopConditions();
    if (__LOG()) log("StopSequence(4)  "+ sequence.name +" sequence stopped");
 
    return(!catch("StopSequence(5)"));
@@ -344,93 +355,68 @@ bool UpdateStatus() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   // -----------------------------------------------------------------------------------------------------------------------
-   if (long.enabled) {
-      int orders = ArraySize(long.ticket);
-      long.floatingPL = 0;
+   if (!UpdateStatus_(D_LONG,  long.floatingPL,  long.closedPL,  long.totalPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus_(D_SHORT, short.floatingPL, short.closedPL, short.totalPL, short.maxProfit, short.maxDrawdown, short.ticket, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
-      for (int i=0; i < orders; i++) {
-         if (long.closeTime[i] > 0) continue;                        // skip tickets known as closed
-         if (!SelectTicket(long.ticket[i], "UpdateStatus(2)")) return(false);
+   sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
+   sequence.closedPL   = NormalizeDouble(long.closedPL + short.closedPL, 2);
+   sequence.totalPL    = NormalizeDouble(sequence.floatingPL + sequence.closedPL, 2); SS.TotalPL();
 
-         if (long.type[i] == OP_UNDEFINED) {                         // last time a pending order
-            if (OrderType() != long.pendingType[i]) {                // the pending order was executed
-               long.type      [i] = OrderType();
-               long.openTime  [i] = OrderOpenTime();
-               long.openPrice [i] = OrderOpenPrice();
-               long.swap      [i] = OrderSwap();
-               long.commission[i] = OrderCommission();
-               long.profit    [i] = OrderProfit();
-               if (__LOG()) log("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_LONG, i));
-            }
-         }
-         else {                                                      // last time an open position
-            long.swap      [i] = OrderSwap();
-            long.commission[i] = OrderCommission();
-            long.profit    [i] = OrderProfit();
-         }
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
-         if (!OrderCloseTime()) {                                    // a still open order
-            long.floatingPL = NormalizeDouble(long.floatingPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
-         }
-         else {                                                      // a now closed open position
-            long.closeTime [i] = OrderCloseTime();
-            long.closePrice[i] = OrderClosePrice();
+   return(!catch("UpdateStatus(2)"));
+}
 
-            if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(D_LONG, i));
-            long.closedPL = NormalizeDouble(long.closedPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
-         }
-      }
-                                                                     // update PL numbers
-      long.totalPL = NormalizeDouble(long.floatingPL + long.closedPL, 2); SS.TotalPL();
-      if      (long.totalPL > long.maxProfit  ) { long.maxProfit   = long.totalPL; SS.MaxProfit();   }
-      else if (long.totalPL < long.maxDrawdown) { long.maxDrawdown = long.totalPL; SS.MaxDrawdown(); }
-   }
 
-   // -----------------------------------------------------------------------------------------------------------------------
-   if (short.enabled) {
-      orders = ArraySize(short.ticket);
-      short.floatingPL = 0;
+/**
+ * Internal helper function. Called only by UpdateStatus().
+ *
+ * @return bool - success status
+ */
+bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &totalPL, double &maxProfit, double &maxDrawdown, int tickets[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+   if (direction==D_LONG  && !long.enabled)  return(true);
+   if (direction==D_SHORT && !short.enabled) return(true);
 
-      for (i=0; i < orders; i++) {
-         if (short.closeTime[i] > 0) continue;                       // skip tickets known as closed
-         if (!SelectTicket(short.ticket[i], "UpdateStatus(5)")) return(false);
+   floatingPL = 0;
+   int orders = ArraySize(tickets);
 
-         if (short.type[i] == OP_UNDEFINED) {                        // last time a pending order
-            if (OrderType() != short.pendingType[i]) {               // the pending order was executed
-               short.type      [i] = OrderType();
-               short.openTime  [i] = OrderOpenTime();
-               short.openPrice [i] = OrderOpenPrice();
-               short.swap      [i] = OrderSwap();
-               short.commission[i] = OrderCommission();
-               short.profit    [i] = OrderProfit();
-               if (__LOG()) log("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_SHORT, i));
-            }
-         }
-         else {                                                      // last time an open position
-            short.swap      [i] = OrderSwap();
-            short.commission[i] = OrderCommission();
-            short.profit    [i] = OrderProfit();
-         }
+   for (int i=0; i < orders; i++) {
+      if (closeTimes[i] > 0) continue;                            // skip tickets known as closed
+      if (!SelectTicket(tickets[i], "UpdateStatus(3)")) return(false);
 
-         if (!OrderCloseTime()) {                                    // a still open order
-            short.floatingPL = NormalizeDouble(short.floatingPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
-         }
-         else {                                                      // a now closed open position
-            short.closeTime [i] = OrderCloseTime();
-            short.closePrice[i] = OrderClosePrice();
-
-            if (__LOG()) log("UpdateStatus(7)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(D_SHORT, i));
-            short.closedPL = NormalizeDouble(short.closedPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
+      if (types[i] == OP_UNDEFINED) {                             // last time a pending order
+         if (OrderType() != pendingTypes[i]) {                    // the pending order was executed
+            types      [i] = OrderType();
+            openTimes  [i] = OrderOpenTime();
+            openPrices [i] = OrderOpenPrice();
+            swaps      [i] = OrderSwap();
+            commissions[i] = OrderCommission();
+            profits    [i] = OrderProfit();
+            if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
          }
       }
-                                                                     // update PL numbers
-      short.totalPL = NormalizeDouble(short.floatingPL + short.closedPL, 2); SS.TotalPL();
-      if      (short.totalPL > short.maxProfit  ) { short.maxProfit   = short.totalPL; SS.MaxProfit();   }
-      else if (short.totalPL < short.maxDrawdown) { short.maxDrawdown = short.totalPL; SS.MaxDrawdown(); }
+      else {                                                      // last time an open position
+         swaps      [i] = OrderSwap();
+         commissions[i] = OrderCommission();
+         profits    [i] = OrderProfit();
+      }
+
+      if (!OrderCloseTime()) {                                    // a still open order
+         floatingPL = floatingPL + swaps[i] + commissions[i] + profits[i];
+      }
+      else {                                                      // a now closed open position
+         closeTimes [i] = OrderCloseTime();
+         closePrices[i] = OrderClosePrice();
+         closedPL      += swaps[i] + commissions[i] + profits[i];
+         if (__LOG()) log("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i));
+      }
    }
 
-   return(!catch("UpdateStatus(8)"));
+   totalPL     = NormalizeDouble(floatingPL + closedPL, 2);       // update PL numbers
+   maxProfit   = MathMax(totalPL, maxProfit);
+   maxDrawdown = MathMin(totalPL, maxDrawdown);
+   return(!catch("UpdateStatus(6)"));
 }
 
 
@@ -504,8 +490,6 @@ bool UpdateOrders(int direction = D_BOTH) {
          else {
             minLevel = short.level[0];
             maxLevel = short.level[orders-1];
-            // nächsten Preis oben/unten berechnen
-            // wenn erste/letzte Order offen sind, die jeweils nächste in den Markt legen
             return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
          }
       }
@@ -723,13 +707,19 @@ string StatusDescription(int status) {
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__CHART()) return(error);
-   string msg="", sError="";
+   string msg="", sDirection="", sError="";
+
+   switch (sequence.directions) {
+      case D_LONG:  sDirection = "Long";       break;
+      case D_SHORT: sDirection = "Short";      break;
+      case D_BOTH:  sDirection = "Long+Short"; break;
+   }
 
    switch (sequence.status) {
-      case STATUS_UNDEFINED:   msg = "not initialized";                                break;
-      case STATUS_WAITING:     msg = StringConcatenate(sequence.name, " waiting");     break;
-      case STATUS_PROGRESSING: msg = StringConcatenate(sequence.name, " progressing"); break;
-      case STATUS_STOPPED:     msg = StringConcatenate(sequence.name, " stopped");     break;
+      case STATUS_UNDEFINED:   msg = "not initialized";                                               break;
+      case STATUS_WAITING:     msg = StringConcatenate(sDirection, " ", sequence.id, " waiting");     break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(sDirection, " ", sequence.id, " progressing"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate(sDirection, " ", sequence.id, " stopped");     break;
       default:
          return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
    }
@@ -740,6 +730,8 @@ int ShowStatus(int error = NO_ERROR) {
                                                                                       NL,
                            "Grid:              ", GridSize, " pip", sGridBase,        NL,
                            "UnitSize:        ",   sUnitSize,                          NL,
+                           "Pyramid:        ",    Pyramid.Multiplier,                 NL,
+                           "Martingale:    ",     Martingale.Multiplier,              NL,
                            "Stop:             ",  sStopConditions,                    NL,
                            "Profit/Loss:    ",    sSequenceTotalPL, sSequencePlStats, NL
    );
