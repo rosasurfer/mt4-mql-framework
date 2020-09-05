@@ -25,6 +25,40 @@ int onInitUser() {
    if (Pyramid.Multiplier < 0)    return(catch("onInitUser(4)  Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    // Martingale.Multiplier
    if (Martingale.Multiplier < 0) return(catch("onInitUser(5)  Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   // TakeProfit
+   sValue = StrTrim(TakeProfit);
+   bool isPercent = StrEndsWith(sValue, "%");
+   if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+   if (!StrIsNumeric(sValue))     return(catch("onInitUser(6)  Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), ERR_INVALID_INPUT_PARAMETER));
+   double dValue = StrToDouble(sValue);
+   if (isPercent) {
+      tpPct.condition   = true;
+      tpPct.value       = dValue;
+      tpPct.absValue    = INT_MAX;
+      tpPct.description = NumberToStr(dValue, ".+") +"%";
+   }
+   else {
+      tpAbs.condition   = true;
+      tpAbs.value       = NormalizeDouble(dValue, 2);
+      tpAbs.description = DoubleToStr(dValue, 2);
+   }
+   // StopLoss
+   sValue = StrTrim(StopLoss);
+   isPercent = StrEndsWith(sValue, "%");
+   if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+   if (!StrIsNumeric(sValue))     return(catch("onInitUser(7)  Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), ERR_INVALID_INPUT_PARAMETER));
+   dValue = StrToDouble(sValue);
+   if (isPercent) {
+      slPct.condition   = true;
+      slPct.value       = dValue;
+      slPct.absValue    = INT_MIN;
+      slPct.description = NumberToStr(dValue, ".+") +"%";
+   }
+   else {
+      slAbs.condition   = true;
+      slAbs.value       = NormalizeDouble(dValue, 2);
+      slAbs.description = DoubleToStr(dValue, 2);
+   }
 
    // create a new sequence
    sequence.id      = CreateSequenceId();
@@ -35,8 +69,8 @@ int onInitUser() {
    short.enabled    = (sequence.directions & D_SHORT && 1);
    SS.SequenceName();
 
-   if (__LOG()) log("onInitUser(6)  sequence "+ sequence.name +" created");
-   return(catch("onInitUser(7)"));
+   if (__LOG()) log("onInitUser(8)  sequence "+ sequence.name +" created");
+   return(catch("onInitUser(9)"));
 }
 
 

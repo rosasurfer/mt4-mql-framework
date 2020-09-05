@@ -22,12 +22,14 @@ int __DEINIT_FLAGS__[];
 
 extern string GridDirection         = "Long | Short | Both*";
 extern int    GridSize              = 20;
-extern double UnitSize              = 0.1;      // lots at the first grid level
+extern double UnitSize              = 0.1;               // lots at the first grid level
 
-extern double Pyramid.Multiplier    = 1;        // unitsize multiplier on the winning side
-extern double Martingale.Multiplier = 1;        // unitsize multiplier on the losing side
+extern double Pyramid.Multiplier    = 1;                 // unitsize multiplier on the winning side
+extern double Martingale.Multiplier = 1;                 // unitsize multiplier on the losing side
 
-extern bool   ShowProfitInPercent   = false;    // whether PL is displayed in absolute or percentage terms
+extern string TakeProfit            = "{double}[%]";     // TP in account currency or percent
+extern string StopLoss              = "{double}[%]";     // SL in account currency or percent
+extern bool   ShowProfitInPercent   = false;             // whether PL is displayed in absolute or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,11 +40,11 @@ extern bool   ShowProfitInPercent   = false;    // whether PL is displayed in ab
 #include <structs/rsf/OrderExecution.mqh>
 
 
-#define STRATEGY_ID         105                 // unique strategy id from 101-1023 (10 bit)
-#define SEQUENCE_ID_MIN    1000                 // min. sequence id value (min. 4 digits)
-#define SEQUENCE_ID_MAX   16383                 // max. sequence id value (max. 14 bit value)
+#define STRATEGY_ID         105                          // unique strategy id from 101-1023 (10 bit)
+#define SEQUENCE_ID_MIN    1000                          // min. sequence id value (min. 4 digits)
+#define SEQUENCE_ID_MAX   16383                          // max. sequence id value (max. 14 bit value)
 
-#define STATUS_UNDEFINED      0                 // sequence status values
+#define STATUS_UNDEFINED      0                          // sequence status values
 #define STATUS_WAITING        1
 #define STATUS_PROGRESSING    2
 #define STATUS_STOPPED        3
@@ -51,7 +53,7 @@ extern bool   ShowProfitInPercent   = false;    // whether PL is displayed in ab
 #define D_SHORT               TRADE_DIRECTION_SHORT
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
-#define CLR_PENDING           DeepSkyBlue       // order marker colors
+#define CLR_PENDING           DeepSkyBlue                // order marker colors
 #define CLR_LONG              Blue
 #define CLR_SHORT             Red
 #define CLR_CLOSE             Orange
@@ -60,23 +62,43 @@ extern bool   ShowProfitInPercent   = false;    // whether PL is displayed in ab
 // sequence data
 int      sequence.id;
 datetime sequence.created;
-string   sequence.name = "";                    // "[LSB].{sequence.id}"
-bool     sequence.isTest;                       // whether the sequence is a test (a finished test can be loaded into an online chart)
+string   sequence.name = "";                             // "[LSB].{sequence.id}"
+bool     sequence.isTest;                                // whether the sequence is a test (a finished test can be loaded into an online chart)
 int      sequence.status;
 int      sequence.directions;
-double   sequence.unitsize;                     // lots at the first level
+double   sequence.unitsize;                              // lots at the first level
 double   sequence.gridbase;
 double   sequence.startEquity;
-double   sequence.floatingPL;                   // accumulated P/L of all open positions
-double   sequence.closedPL;                     // accumulated P/L of all closed positions
-double   sequence.totalPL;                      // current total P/L of the sequence: totalPL = floatingPL + closedPL
-double   sequence.maxProfit;                    // max. experienced total sequence profit:   0...+n
-double   sequence.maxDrawdown;                  // max. experienced total sequence drawdown: -n...0
+double   sequence.floatingPL;                            // accumulated P/L of all open positions
+double   sequence.closedPL;                              // accumulated P/L of all closed positions
+double   sequence.totalPL;                               // current total P/L of the sequence: totalPL = floatingPL + closedPL
+double   sequence.maxProfit;                             // max. experienced total sequence profit:   0...+n
+double   sequence.maxDrawdown;                           // max. experienced total sequence drawdown: -n...0
+
+// takeprofit conditions
+bool     tpAbs.condition;                                // whether an absolute TP condition is active
+double   tpAbs.value;
+string   tpAbs.description = "";
+
+bool     tpPct.condition;                                // whether a percentage TP condition is active
+double   tpPct.value;
+double   tpPct.absValue    = INT_MAX;
+string   tpPct.description = "";
+
+// stoploss conditions
+bool     slAbs.condition;                                // whether an absolute SL condition is active
+double   slAbs.value;
+string   slAbs.description = "";
+
+bool     slPct.condition;                                // whether a percentage SL condition is active
+double   slPct.value;
+double   slPct.absValue    = INT_MIN;
+string   slPct.description = "";
 
 // order management
 bool     long.enabled;
 int      long.ticket      [];
-int      long.level       [];                   // grid level: -n...-1 || +1...+n
+int      long.level       [];                            // grid level: -n...-1 || +1...+n
 int      long.pendingType [];
 datetime long.pendingTime [];
 double   long.pendingPrice[];
@@ -114,7 +136,7 @@ double   short.totalPL;
 double   short.maxProfit;
 double   short.maxDrawdown;
 
-string   sUnitSize            = "";             // caching vars to speed-up ShowStatus()
+string   sUnitSize            = "";                      // caching vars to speed-up ShowStatus()
 string   sGridBase            = "";
 string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
@@ -213,11 +235,11 @@ bool UpdateStatus() {
       long.floatingPL = 0;
 
       for (int i=0; i < orders; i++) {
-         if (long.closeTime[i] > 0) continue;                  // skip tickets known as closed
+         if (long.closeTime[i] > 0) continue;                        // skip tickets known as closed
          if (!SelectTicket(long.ticket[i], "UpdateStatus(2)")) return(false);
 
-         if (long.type[i] == OP_UNDEFINED) {                   // last time a pending order
-            if (OrderType() != long.pendingType[i]) {          // the pending order was executed
+         if (long.type[i] == OP_UNDEFINED) {                         // last time a pending order
+            if (OrderType() != long.pendingType[i]) {                // the pending order was executed
                long.type      [i] = OrderType();
                long.openTime  [i] = OrderOpenTime();
                long.openPrice [i] = OrderOpenPrice();
@@ -227,16 +249,16 @@ bool UpdateStatus() {
                if (__LOG()) log("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_LONG, i));
             }
          }
-         else {                                                // last time an open position
+         else {                                                      // last time an open position
             long.swap      [i] = OrderSwap();
             long.commission[i] = OrderCommission();
             long.profit    [i] = OrderProfit();
          }
 
-         if (!OrderCloseTime()) {                              // a still open order
+         if (!OrderCloseTime()) {                                    // a still open order
             long.floatingPL = NormalizeDouble(long.floatingPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
          }
-         else {                                                // a now closed open position
+         else {                                                      // a now closed open position
             long.closeTime [i] = OrderCloseTime();
             long.closePrice[i] = OrderClosePrice();
 
@@ -244,7 +266,7 @@ bool UpdateStatus() {
             long.closedPL = NormalizeDouble(long.closedPL + long.swap[i] + long.commission[i] + long.profit[i], 2);
          }
       }
-                                                               // update PL numbers
+                                                                     // update PL numbers
       long.totalPL = NormalizeDouble(long.floatingPL + long.closedPL, 2); SS.TotalPL();
       if      (long.totalPL > long.maxProfit  ) { long.maxProfit   = long.totalPL; SS.MaxProfit();   }
       else if (long.totalPL < long.maxDrawdown) { long.maxDrawdown = long.totalPL; SS.MaxDrawdown(); }
@@ -256,11 +278,11 @@ bool UpdateStatus() {
       short.floatingPL = 0;
 
       for (i=0; i < orders; i++) {
-         if (short.closeTime[i] > 0) continue;                 // skip tickets known as closed
+         if (short.closeTime[i] > 0) continue;                       // skip tickets known as closed
          if (!SelectTicket(short.ticket[i], "UpdateStatus(5)")) return(false);
 
-         if (short.type[i] == OP_UNDEFINED) {                  // last time a pending order
-            if (OrderType() != short.pendingType[i]) {         // the pending order was executed
+         if (short.type[i] == OP_UNDEFINED) {                        // last time a pending order
+            if (OrderType() != short.pendingType[i]) {               // the pending order was executed
                short.type      [i] = OrderType();
                short.openTime  [i] = OrderOpenTime();
                short.openPrice [i] = OrderOpenPrice();
@@ -270,16 +292,16 @@ bool UpdateStatus() {
                if (__LOG()) log("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_SHORT, i));
             }
          }
-         else {                                                // last time an open position
+         else {                                                      // last time an open position
             short.swap      [i] = OrderSwap();
             short.commission[i] = OrderCommission();
             short.profit    [i] = OrderProfit();
          }
 
-         if (!OrderCloseTime()) {                              // a still open order
+         if (!OrderCloseTime()) {                                    // a still open order
             short.floatingPL = NormalizeDouble(short.floatingPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
          }
-         else {                                                // a now closed open position
+         else {                                                      // a now closed open position
             short.closeTime [i] = OrderCloseTime();
             short.closePrice[i] = OrderClosePrice();
 
@@ -287,7 +309,7 @@ bool UpdateStatus() {
             short.closedPL = NormalizeDouble(short.closedPL + short.swap[i] + short.commission[i] + short.profit[i], 2);
          }
       }
-                                                               // update PL numbers
+                                                                     // update PL numbers
       short.totalPL = NormalizeDouble(short.floatingPL + short.closedPL, 2); SS.TotalPL();
       if      (short.totalPL > short.maxProfit  ) { short.maxProfit   = short.totalPL; SS.MaxProfit();   }
       else if (short.totalPL < short.maxDrawdown) { short.maxDrawdown = short.totalPL; SS.MaxDrawdown(); }
@@ -756,6 +778,8 @@ string InputsToStr() {
                             "UnitSize=",              NumberToStr(UnitSize, ".1+"),              ";", NL,
                             "Pyramid.Multiplier=",    NumberToStr(Pyramid.Multiplier, ".1+"),    ";", NL,
                             "Martingale.Multiplier=", NumberToStr(Martingale.Multiplier, ".1+"), ";", NL,
+                            "TakeProfit=",            DoubleQuoteStr(TakeProfit),                ";", NL,
+                            "StopLoss=",              DoubleQuoteStr(StopLoss),                  ";", NL,
                             "ShowProfitInPercent=",   BoolToStr(ShowProfitInPercent),            ";")
    );
 }
