@@ -13,6 +13,11 @@
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a Martingale system.
+ *
+ * @todo  add TP and SL conditions in pip
+ * @todo  rounding down mode for CalculateLots()
+ * @todo  test generated sequence ids for uniqueness
+ * @todo  in tester generate consecutive sequence ids
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -24,11 +29,11 @@ extern string GridDirection         = "Long | Short | Both*";
 extern int    GridSize              = 20;
 extern double UnitSize              = 0.1;               // lots at the first grid level
 
-extern double Pyramid.Multiplier    = 1;                 // unitsize multiplier on the winning side
-extern double Martingale.Multiplier = 1;                 // unitsize multiplier on the losing side
+extern double Pyramid.Multiplier    = 1;                 // lot multiplier per grid level on the winning side
+extern double Martingale.Multiplier = 1;                 // lot multiplier per grid level on the losing side
 
-extern string TakeProfit            = "{double}[%]";     // TP in account currency or percent
-extern string StopLoss              = "{double}[%]";     // SL in account currency or percent
+extern string TakeProfit            = "{double}[%]";     // TP in absolute or percentage terms
+extern string StopLoss              = "{double}[%]";     // SL in absolute or percentage terms
 extern bool   ShowProfitInPercent   = false;             // whether PL is displayed in absolute or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +103,7 @@ string   slPct.description = "";
 // order management
 bool     long.enabled;
 int      long.ticket      [];
-int      long.level       [];                            // grid level: -n...-1 || +1...+n
+int      long.level       [];                            // grid level: -n...-1 | +1...+n
 int      long.pendingType [];
 datetime long.pendingTime [];
 double   long.pendingPrice[];
@@ -110,6 +115,8 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
+int      long.minLevel;                                  // lowest reached grid level
+int      long.maxLevel;                                  // highest reached grid level
 double   long.floatingPL;
 double   long.closedPL;
 double   long.totalPL;
@@ -130,6 +137,8 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
+int      short.minLevel;
+int      short.maxLevel;
 double   short.floatingPL;
 double   short.closedPL;
 double   short.totalPL;
@@ -137,6 +146,8 @@ double   short.maxProfit;
 double   short.maxDrawdown;
 
 string   sUnitSize            = "";                      // caching vars to speed-up ShowStatus()
+string   sPyramid             = "";
+string   sMartingale          = "";
 string   sGridBase            = "";
 string   sStopConditions      = "";
 string   sSequenceTotalPL     = "";
@@ -224,8 +235,6 @@ bool IsStopSignal() {
          slPct.absValue = slPct.value/100 * sequence.startEquity;
       }
 
-      debug("IsStopSignal(0.1)  sequence.totalPL="+ sequence.totalPL +"  slPct.absValue="+ slPct.absValue);
-
       if (sequence.totalPL <= slPct.absValue) {
          message = "IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
          if (!IsTesting()) warn(message);
@@ -256,7 +265,17 @@ bool StartSequence() {
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    sequence.status      = STATUS_PROGRESSING;
 
-   UpdateOrders();
+   if (long.enabled) {
+      if (!Grid.AddPosition(D_LONG, 1)) return(false);            // open a long position for level 1
+      long.minLevel = 1;
+      long.maxLevel = 1;
+   }
+   if (short.enabled) {
+      if (!Grid.AddPosition(D_SHORT, 1)) return(false);           // open a short position for level 1
+      short.minLevel = 1;
+      short.maxLevel = 1;
+   }
+   if (!UpdateOrders()) return(false);                            // update pending orders
 
    if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
@@ -370,7 +389,7 @@ bool UpdateStatus() {
 
 
 /**
- * Internal helper function. Called only by UpdateStatus().
+ * Internal helper function used only by UpdateStatus(). Updates order and PL status of one grid direction.
  *
  * @return bool - success status
  */
@@ -462,21 +481,28 @@ bool UpdateOrders(int direction = D_BOTH) {
       if (!UpdateOrders(D_SHORT)) return(false);
       return(true);
    }
+   // (1) separation between D_LONG and D_SHORT
+   //
+   // (2) for scaling down (martingale) we use limit orders   | if limits are filled new limits are added      | most simple  | Grid.AddLimit(level)
+   //                                                         |                                                |              |
+   // (3) for scaling up (pyramid) we can use:                |                                                |              |
+   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | most simple  | Grid.AddStop(level)
+   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |              | Grid.AddPosition(level)
+   //     - observe the market and add limit orders           | if levels are reached new limits are added     | most complex | Grid.AddLimit(level)
+   //
+   // (4) depending on the used approach UpdateStatus() needs to monitor different conditions
+
    int orders, minLevel=EMPTY_VALUE, maxLevel=EMPTY_VALUE;
 
    if (direction == D_LONG) {
       if (long.enabled) {
          orders = ArraySize(long.ticket);
-         if (!orders) {
-            Grid.AddPosition(direction, 1);              // open first long order
-         }
-         else {
+
+         for (int i=0; i < orders; i++) {
             minLevel = long.level[0];
             maxLevel = long.level[orders-1];
-            // nächsten Preis oben/unten berechnen
-            // wenn erste/letzte Order offen sind, die jeweils nächste in den Markt legen
-            return(!catch("UpdateOrders(2)", ERR_NOT_IMPLEMENTED));
          }
+         return(!catch("UpdateOrders(2)", ERR_NOT_IMPLEMENTED));
       }
       return(true);
    }
@@ -484,14 +510,12 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (direction == D_SHORT) {
       if (short.enabled) {
          orders = ArraySize(short.ticket);
-         if (!orders) {
-            Grid.AddPosition(direction, 1);              // open first short order
-         }
-         else {
+
+         for (i=0; i < orders; i++) {
             minLevel = short.level[0];
             maxLevel = short.level[orders-1];
-            return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
          }
+         return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
       }
       return(true);
    }
@@ -501,16 +525,16 @@ bool UpdateOrders(int direction = D_BOTH) {
 
 
 /**
- * Generate a new sequence id. As strategy ids differ multiple strategies may use the same sequence id at the same time.
+ * Generate a new sequence id. Because strategy ids differ multiple strategies may use the same sequence ids.
  *
- * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
+ * @return int - sequence id between SEQUENCE_ID_MIN and SEQUENCE_ID_MAX (1000-16383)
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
    int id;
    while (id < SEQUENCE_ID_MIN || id > SEQUENCE_ID_MAX) {
-      id = MathRand();                                      // TODO: in tester generate consecutive ids
-   }                                                        // TODO: test the id for uniqueness
+      id = MathRand();
+   }
    return(id);
 }
 
@@ -533,10 +557,40 @@ int CreateMagicNumber() {
 
 
 /**
- * Open a market position for the specified level and add the order data to the order arrays.
+ * Caluclate the order volume to use for the specified trade direction and grid level.
+ *
+ * @param  int direction - trade direction
+ * @param  int level     - gridlevel
+ *
+ * @return double - normalized order volume or NULL in case of errors
+ */
+double CalculateLots(int direction, int level) {
+   if (IsLastError()) return(NULL);
+   if      (direction == D_LONG)  { if (!long.enabled)  return(NULL); }
+   else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
+   else               return(!catch("CalculateLots(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)        return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+
+   double lots = 0;
+
+   if (level > 0) {
+      if (Pyramid.Multiplier > 0) lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
+      else if (level == 1)        lots = sequence.unitsize;
+   }
+   else if (Martingale.Multiplier > 0) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level);
+
+   lots = NormalizeLots(lots);
+   return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
+}
+
+
+/**
+ * Open a market position for the specified grid level and add the order data to the order arrays. The function doesn't check
+ * whether the specified grid level matches the current market price. It's the responsibility of the caller to call the
+ * function in the correct moment.
  *
  * @param  int direction - trade direction: D_LONG | D_SHORT
- * @param  int level     - grid level of the position to open: -n...+n
+ * @param  int level     - grid level of the position to open: -n...-1 | +1...+n
  *
  * @return bool - success status
  */
@@ -544,10 +598,10 @@ bool Grid.AddPosition(int direction, int level) {
    if (IsLastError())                           return(false);
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("Grid.AddPosition(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)                                  return(!catch("Grid.AddPosition(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
-   int oe[], orderType = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
-
-   int ticket = SubmitMarketOrder(orderType, level, oe);
+   int oe[];
+   int ticket = SubmitMarketOrder(direction, level, oe);
    if (!ticket) return(false);
 
    // prepare dataset
@@ -556,39 +610,35 @@ bool Grid.AddPosition(int direction, int level) {
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
    double   pendingPrice = NULL;
-   int      type         = orderType;
-   datetime openTime     = oe.OpenTime (oe);
+   int      type         = oe.Type(oe);
+   datetime openTime     = oe.OpenTime(oe);
    double   openPrice    = oe.OpenPrice(oe);
    datetime closeTime    = NULL;
    double   closePrice   = NULL;
-   double   swap         = oe.Swap      (oe);      // for the theoretical case that swap is already set on OrderOpen
+   double   swap         = oe.Swap(oe);
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
-   // store dataset
    Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, type, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
    return(!last_error);
 }
 
 
 /**
- * Add an order record to the order arrays. No data is overwritten. The inserting position is automatically determined.
+ * Add an order record to the order arrays. Records are ordered by grid level and the new record is automatically inserted at
+ * the correct position. No data is overwritten.
  *
  * @param  int      direction
- *
  * @param  int      ticket
  * @param  int      level
- *
  * @param  int      pendingType
  * @param  datetime pendingTime
  * @param  double   pendingPrice
- *
  * @param  int      type
  * @param  datetime openTime
  * @param  double   openPrice
  * @param  datetime closeTime
  * @param  double   closePrice
- *
  * @param  double   swap
  * @param  double   commission
  * @param  double   profit
@@ -601,8 +651,7 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
 
       for (int i=0; i < size; i++) {
          if (long.level[i] == level) return(!catch("Orders.AddRecord(1)  "+ sequence.name +" cannot overwrite ticket #"+ long.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
-         if (long.level[i] > level)
-            break;
+         if (long.level[i] > level) break;
       }
       ArrayInsertInt   (long.ticket,       i, ticket                               );
       ArrayInsertInt   (long.level,        i, level                                );
@@ -624,8 +673,7 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
 
       for (i=0; i < size; i++) {
          if (short.level[i] == level) return(!catch("Orders.AddRecord(2)  "+ sequence.name +" cannot overwrite ticket #"+ short.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
-         if (short.level[i] > level)
-            break;
+         if (short.level[i] > level) break;
       }
       ArrayInsertInt   (short.ticket,       i, ticket                               );
       ArrayInsertInt   (short.level,        i, level                                );
@@ -648,29 +696,30 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
 
 
 /**
- * Open a position at current market price.
+ * Open a market position at the current price.
  *
- * @param  _In_  int type  - order type: OP_BUY | OP_SELL
- * @param  _In_  int level - order gridlevel
- * @param  _Out_ int oe[]  - execution details (struct ORDER_EXECUTION)
+ * @param  _In_  int direction - trade direction
+ * @param  _In_  int level     - order gridlevel
+ * @param  _Out_ int oe[]      - execution details (struct ORDER_EXECUTION)
  *
- * @return int - order ticket on success or NULL in case of errors
+ * @return int - order ticket or NULL in case of errors
  */
-int SubmitMarketOrder(int type, int level, int &oe[]) {
-   if (IsLastError())                         return(0);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("SubmitMarketOrder(1)  "+ sequence.name +" cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (type!=OP_BUY  && type!=OP_SELL)        return(!catch("SubmitMarketOrder(2)  "+ sequence.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER));
-   if (!level)                                return(!catch("SubmitMarketOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+int SubmitMarketOrder(int direction, int level, int oe[]) {
+   if (IsLastError())                           return(NULL);
+   if (sequence.status != STATUS_PROGRESSING)   return(!catch("SubmitMarketOrder(1)  "+ sequence.name +" cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("SubmitMarketOrder(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)                                  return(!catch("SubmitMarketOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
-   double   lots        = sequence.unitsize;
+   int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
+   double   lots        = CalculateLots(direction, level);
    double   price       = NULL;
    double   slippage    = 0.1;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
-   string   comment     = "Duel."+ ifString(type==OP_BUY, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = ifInt(type==OP_BUY, CLR_LONG, CLR_SHORT);
+   string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
+   color    markerColor = ifInt(direction==D_LONG, CLR_LONG, CLR_SHORT);
    int      oeFlags     = NULL;
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -707,7 +756,7 @@ string StatusDescription(int status) {
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__CHART()) return(error);
-   string msg="", sDirection="", sError="";
+   string sSequence="", sDirection="", sError="";
 
    switch (sequence.directions) {
       case D_LONG:  sDirection = "Long";       break;
@@ -716,24 +765,24 @@ int ShowStatus(int error = NO_ERROR) {
    }
 
    switch (sequence.status) {
-      case STATUS_UNDEFINED:   msg = "not initialized";                                               break;
-      case STATUS_WAITING:     msg = StringConcatenate(sDirection, " ", sequence.id, " waiting");     break;
-      case STATUS_PROGRESSING: msg = StringConcatenate(sDirection, " ", sequence.id, " progressing"); break;
-      case STATUS_STOPPED:     msg = StringConcatenate(sDirection, " ", sequence.id, " stopped");     break;
+      case STATUS_UNDEFINED:   sSequence = "not initialized";                                                 break;
+      case STATUS_WAITING:     sSequence = StringConcatenate(sDirection, "  ", sequence.id, "  waiting");     break;
+      case STATUS_PROGRESSING: sSequence = StringConcatenate(sDirection, "  ", sequence.id, "  progressing"); break;
+      case STATUS_STOPPED:     sSequence = StringConcatenate(sDirection, "  ", sequence.id, "  stopped");     break;
       default:
          return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
    }
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   msg = StringConcatenate(__NAME(), "     ", msg, sError,                            NL,
-                                                                                      NL,
-                           "Grid:              ", GridSize, " pip", sGridBase,        NL,
-                           "UnitSize:        ",   sUnitSize,                          NL,
-                           "Pyramid:        ",    Pyramid.Multiplier,                 NL,
-                           "Martingale:    ",     Martingale.Multiplier,              NL,
-                           "Stop:             ",  sStopConditions,                    NL,
-                           "Profit/Loss:    ",    sSequenceTotalPL, sSequencePlStats, NL
+   string msg = StringConcatenate(__NAME(), "               ", sSequence, sError,                  NL,
+                                                                                                   NL,
+                                  "Grid:              ",       GridSize, " pip", sGridBase,        NL,
+                                  "UnitSize:        ",         sUnitSize,                          NL,
+                                  "Pyramid:        ",          sPyramid,                           NL,
+                                  "Martingale:    ",           sMartingale,                        NL,
+                                  "Stop:             ",        sStopConditions,                    NL,
+                                  "Profit/Loss:    ",          sSequenceTotalPL, sSequencePlStats, NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -758,6 +807,8 @@ void SS.All() {
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
+      sPyramid    = ifString(!Pyramid.Multiplier, "", NumberToStr(Pyramid.Multiplier, ".1+"));
+      sMartingale = ifString(!Martingale.Multiplier, "", NumberToStr(Martingale.Multiplier, ".1+"));
    }
 }
 
@@ -882,7 +933,7 @@ int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
-   color  bgColor = Cyan; //C'248,248,248';                      // that's chart background color
+   color  bgColor = C'248,248,248';                      // chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
