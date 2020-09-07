@@ -525,7 +525,7 @@ bool UpdateOrders(int direction = D_BOTH) {
 
          if (sequence.isMartingale) {                 // on Martingale ensure the next limit order for scaling down exists
             if (long.level[0] == long.minLevel) {
-               if (!Grid.AddLimit(D_LONG, Min(long.minLevel-1, -1))) return(false);
+               if (!Grid.AddLimit(D_LONG, Min(long.minLevel-1, -2))) return(false);
                orders++;
             }
          }
@@ -545,7 +545,7 @@ bool UpdateOrders(int direction = D_BOTH) {
 
          if (sequence.isMartingale) {                 // on Martingale ensure the next limit order for scaling down exists
             if (short.level[0] == short.minLevel) {
-               if (!Grid.AddLimit(D_SHORT, Min(short.minLevel-1, -1))) return(false);
+               if (!Grid.AddLimit(D_SHORT, Min(short.minLevel-1, -2))) return(false);
                orders++;
             }
          }
@@ -606,17 +606,17 @@ double CalculateGridLevel(int direction, int level) {
    if      (direction == D_LONG)  { if (!long.enabled)  return(NULL); }
    else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
    else                                                 return(!catch("CalculateGridLevel(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)                                          return(!catch("CalculateGridLevel(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (!level || level==-1)                             return(!catch("CalculateGridLevel(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    double price = 0;
 
    if (direction == D_LONG) {
       if (level > 0) price = sequence.gridbase + (level-1) * GridSize*Pip;
-      else           price = sequence.gridbase +  level    * GridSize*Pip;
+      else           price = sequence.gridbase + (level+1) * GridSize*Pip;
    }
    else {
       if (level > 0) price = sequence.gridbase - (level-1) * GridSize*Pip;
-      else           price = sequence.gridbase -  level    * GridSize*Pip;
+      else           price = sequence.gridbase - (level+1) * GridSize*Pip;
    }
    price = NormalizeDouble(price, Digits);
 
@@ -637,7 +637,7 @@ double CalculateLots(int direction, int level) {
    if      (direction == D_LONG)  { if (!long.enabled)  return(NULL); }
    else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
    else                                                 return(!catch("CalculateLots(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)                                          return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (!level || level==-1)                             return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    double lots = 0;
 
@@ -645,7 +645,7 @@ double CalculateLots(int direction, int level) {
       if (sequence.isPyramid) lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
       else if (level == 1)    lots = sequence.unitsize;
    }
-   else if (sequence.isMartingale) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level);
+   else if (sequence.isMartingale) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
    lots = NormalizeLots(lots);
 
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
@@ -849,7 +849,7 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
    if (IsLastError())                           return(NULL);
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("SubmitMarketOrder(1)  "+ sequence.name +" cannot submit market order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("SubmitMarketOrder(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)                                  return(!catch("SubmitMarketOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (!level || level==-1)                     return(!catch("SubmitMarketOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
    double   lots        = CalculateLots(direction, level);
@@ -883,7 +883,7 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    if (IsLastError())                           return(NULL);
    if (sequence.status!=STATUS_PROGRESSING)     return(!catch("SubmitLimitOrder(1)  "+ sequence.name +" cannot submit limit order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("SubmitLimitOrder(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)                                  return(!catch("SubmitLimitOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (!level || level==-1)                     return(!catch("SubmitLimitOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    int      type        = ifInt(direction==D_LONG, OP_BUYLIMIT, OP_SELLLIMIT);
    double   lots        = CalculateLots(direction, level);
@@ -917,7 +917,7 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    if (IsLastError())                           return(NULL);
    if (sequence.status!=STATUS_PROGRESSING)     return(!catch("SubmitStopOrder(1)  "+ sequence.name +" cannot submit stop order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("SubmitStopOrder(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)                                  return(!catch("SubmitStopOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (!level || level==-1)                     return(!catch("SubmitStopOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    int      type        = ifInt(direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
    double   lots        = CalculateLots(direction, level);
