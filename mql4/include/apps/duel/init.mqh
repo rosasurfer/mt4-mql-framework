@@ -7,15 +7,15 @@
  */
 int onInitUser() {
    // validate inputs
-   // GridDirection
-   string sValues[], sValue = GridDirection;
+   // GridDirections
+   string sValues[], sValue = GridDirections;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sequence.directions = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (sequence.directions == -1) return(catch("onInitUser(1)  Invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection), ERR_INVALID_INPUT_PARAMETER));
-   GridDirection = TradeDirectionDescription(sequence.directions);
+   if (sequence.directions == -1) return(catch("onInitUser(1)  Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), ERR_INVALID_INPUT_PARAMETER));
+   GridDirections = TradeDirectionDescription(sequence.directions);
    // GridSize
    if (GridSize < 1)              return(catch("onInitUser(2)  Invalid input parameter GridSize: "+ GridSize, ERR_INVALID_INPUT_PARAMETER));
    // UnitSize
