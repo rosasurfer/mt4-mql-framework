@@ -23,8 +23,10 @@ int onInitUser() {
    sequence.unitsize = UnitSize;
    // Pyramid.Multiplier
    if (Pyramid.Multiplier < 0)    return(catch("onInitUser(4)  Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   sequence.isPyramid = (Pyramid.Multiplier > 0);
    // Martingale.Multiplier
    if (Martingale.Multiplier < 0) return(catch("onInitUser(5)  Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   sequence.isMartingale = (Martingale.Multiplier > 0);
    // TakeProfit
    sValue = StrTrim(TakeProfit);
    bool isPercent = StrEndsWith(sValue, "%");
