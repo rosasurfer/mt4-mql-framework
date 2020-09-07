@@ -1504,8 +1504,7 @@ bool ValidateInputs(bool interactive) {
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
             if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
-            if (!StringLen(sValue))                               return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
@@ -1524,12 +1523,11 @@ bool ValidateInputs(bool interactive) {
 
          else if (key=="@sl" || key=="@loss") {
             if (stop.lossAbs.condition || stop.lossPct.condition)
-                                                                  return(_false(ValidateInputs.OnError("ValidateInputs(53)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
+                                                                  return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(54)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(53)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
-            if (!StringLen(sValue))                               return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(54)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
@@ -1540,12 +1538,12 @@ bool ValidateInputs(bool interactive) {
             else {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                   = "loss("+ NumberToStr(dValue, ".+") +"%)";
+               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
                stop.lossPct.description = exprs[i];
                stop.lossPct.condition   = true;
             }
          }
-         else                                                     return(_false(ValidateInputs.OnError("ValidateInputs(57)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                                     return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
       }
    }
 
@@ -1560,16 +1558,16 @@ bool ValidateInputs(bool interactive) {
    else if (StrStartsWith("off",      sValue)) sValue = "off";
    else if (StrStartsWith("continue", sValue)) sValue = "continue";
    else if (StrStartsWith("reset",    sValue)) sValue = "reset";
-   else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(58)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
+   else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
    AutoRestart = StrCapitalize(sValue);
 
    // StartLevel
    if (isParameterChange) {
       if (StartLevel != last.StartLevel)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(59)", "Cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(57)", "Cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    if (sequence.direction == D_LONG) {
-      if (StartLevel < 0)                                         return(_false(ValidateInputs.OnError("ValidateInputs(60)", "Invalid StartLevel: "+ StartLevel, interactive)));
+      if (StartLevel < 0)                                         return(_false(ValidateInputs.OnError("ValidateInputs(58)", "Invalid StartLevel: "+ StartLevel, interactive)));
    }
    StartLevel = Abs(StartLevel);
 
@@ -1584,7 +1582,7 @@ bool ValidateInputs(bool interactive) {
    // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!catch("ValidateInputs(61)"));
+   return(!catch("ValidateInputs(59)"));
 }
 
 
