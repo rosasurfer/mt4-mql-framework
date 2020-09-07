@@ -73,8 +73,9 @@ int      sequence.status;
 int      sequence.directions;
 bool     sequence.isPyramid;                             // whether the sequence scales in on the winning side (pyramid)
 bool     sequence.isMartingale;                          // whether the sequence scales in on the losing side (martingale)
-double   sequence.unitsize;                              // lots at the first level
 double   sequence.gridbase;
+double   sequence.unitsize;                              // lots at the first level
+double   sequence.totalLots;                             // total open lots: long.totalLots - short.totalLots
 double   sequence.startEquity;
 double   sequence.floatingPL;                            // accumulated P/L of all open positions
 double   sequence.closedPL;                              // accumulated P/L of all closed positions
@@ -118,6 +119,7 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
+double   long.totalLots;                                 // total open long lots: 0...+n
 int      long.minLevel;                                  // lowest reached grid level
 int      long.maxLevel;                                  // highest reached grid level
 double   long.floatingPL;
@@ -141,6 +143,7 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
+double   short.totalLots;                                // total open short lots: 0...+n
 int      short.minLevel;
 int      short.maxLevel;
 double   short.floatingPL;
@@ -150,10 +153,13 @@ double   short.maxProfit;
 double   short.maxDrawdown;
 
 string   sUnitSize            = "";                      // caching vars to speed-up ShowStatus()
+string   sGridBase            = "";
 string   sPyramid             = "";
 string   sMartingale          = "";
-string   sGridBase            = "";
 string   sStopConditions      = "";
+string   sLongLots            = "";
+string   sShortLots           = "";
+string   sTotalLots           = "";
 string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
@@ -273,16 +279,20 @@ bool StartSequence() {
    sequence.status      = STATUS_PROGRESSING;
 
    if (long.enabled) {
-      if (!Grid.AddPosition(D_LONG, 1)) return(false);            // open a long position for level 1
-      long.minLevel = 1;
-      long.maxLevel = 1;
+      int i = Grid.AddPosition(D_LONG, 1); if (i < 0) return(false);    // open a long position for level 1
+      long.minLevel  = 1;
+      long.maxLevel  = 1;
+      long.totalLots = long.lots[i];
    }
    if (short.enabled) {
-      if (!Grid.AddPosition(D_SHORT, 1)) return(false);           // open a short position for level 1
-      short.minLevel = 1;
-      short.maxLevel = 1;
+      i = Grid.AddPosition(D_SHORT, 1); if (i < 0) return(false);       // open a short position for level 1
+      short.minLevel  = 1;
+      short.maxLevel  = 1;
+      short.totalLots = short.lots[i];
    }
-   if (!UpdateOrders()) return(false);                            // update pending orders
+   sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.TotalLots();
+
+   if (!UpdateOrders()) return(false);                                  // update pending orders
 
    if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
@@ -389,9 +399,12 @@ bool UpdateStatus(bool &gridChanged) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    gridChanged = gridChanged!=0;
 
-   if (!UpdateStatus_(D_LONG,  gridChanged, long.minLevel,  long.maxLevel,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus_(D_SHORT, gridChanged, short.minLevel, short.maxLevel, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus_(D_LONG,  gridChanged, long.totalLots, long.minLevel,  long.maxLevel,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus_(D_SHORT, gridChanged, short.totalLots, short.minLevel, short.maxLevel, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.lots, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
+   if (gridChanged) {
+      sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.TotalLots();
+   }
    long.totalPL        = long.floatingPL;
    short.totalPL       = short.floatingPL;
    sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
@@ -410,7 +423,7 @@ bool UpdateStatus(bool &gridChanged) {
  *
  * @return bool - success status
  */
-bool UpdateStatus_(int direction, bool &gridChanged, int &minLevel, int &maxLevel, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus_(int direction, bool &gridChanged, double &totalLots, int &minLevel, int &maxLevel, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], double lots[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -430,8 +443,9 @@ bool UpdateStatus_(int direction, bool &gridChanged, int &minLevel, int &maxLeve
             profits    [i] = OrderProfit();
 
             if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
-            minLevel = MathMin(levels[i], minLevel);
-            maxLevel = MathMax(levels[i], maxLevel);
+            minLevel    = MathMin(levels[i], minLevel);
+            maxLevel    = MathMax(levels[i], maxLevel);
+            totalLots  += lots[i];
             gridChanged = true;
          }
       }
@@ -653,22 +667,21 @@ double CalculateLots(int direction, int level) {
 
 
 /**
- * Open a market position for the specified grid level and add the order data to the order arrays. The function doesn't check
- * whether the specified grid level matches the current market price. It's the responsibility of the caller to call it at the
- * correct time.
+ * Open a market position for the specified grid level and add the order data to the order arrays. There is no check whether
+ * the specified grid level matches the current market price.
  *
  * @param  int direction - trade direction: D_LONG | D_SHORT
  * @param  int level     - grid level of the position to open: -n...-1 | +1...+n
  *
- * @return bool - success status
+ * @return int - array index the order record was stored at or -1 (EMPTY) in case of errors
  */
-bool Grid.AddPosition(int direction, int level) {
-   if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+int Grid.AddPosition(int direction, int level) {
+   if (IsLastError())                         return(EMPTY);
+   if (sequence.status != STATUS_PROGRESSING) return(_EMPTY(catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE)));
 
    int oe[];
    int ticket = SubmitMarketOrder(direction, level, oe);
-   if (!ticket) return(false);
+   if (!ticket) return(EMPTY);
 
    // prepare dataset
    //int    ticket       = ...                     // use as is
@@ -722,7 +735,8 @@ bool Grid.AddLimit(int direction, int level) {
    double   commission   = NULL;
    double   profit       = NULL;
 
-   return(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   int index = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
+   return(!IsEmpty(index));
 }
 
 
@@ -758,7 +772,8 @@ bool Grid.AddStop(int direction, int level) {
    double   commission   = NULL;
    double   profit       = NULL;
 
-   return(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   int index = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
+   return(!IsEmpty(index));
 }
 
 
@@ -782,15 +797,17 @@ bool Grid.AddStop(int direction, int level) {
  * @param  double   commission
  * @param  double   profit
  *
- * @return bool - success status
+ * @return int - index the record was inserted or -1 (EMPTY) in case of errors
  */
-bool Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
+int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
+   int i = EMPTY;
+
    if (direction == D_LONG) {
       int size = ArraySize(long.ticket);
 
-      for (int i=0; i < size; i++) {
-         if (long.level[i] == level) return(!catch("Orders.AddRecord(1)  "+ sequence.name +" cannot overwrite ticket #"+ long.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
-         if (long.level[i] > level) break;
+      for (i=0; i < size; i++) {
+         if (long.level[i] == level) return(_EMPTY(catch("Orders.AddRecord(1)  "+ sequence.name +" cannot overwrite ticket #"+ long.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE)));
+         if (long.level[i] > level)  break;
       }
       ArrayInsertInt   (long.ticket,       i, ticket                               );
       ArrayInsertInt   (long.level,        i, level                                );
@@ -812,8 +829,8 @@ bool Orders.AddRecord(int direction, int ticket, int level, double lots, int pen
       size = ArraySize(short.ticket);
 
       for (i=0; i < size; i++) {
-         if (short.level[i] == level) return(!catch("Orders.AddRecord(2)  "+ sequence.name +" cannot overwrite ticket #"+ short.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE));
-         if (short.level[i] > level) break;
+         if (short.level[i] == level) return(_EMPTY(catch("Orders.AddRecord(2)  "+ sequence.name +" cannot overwrite ticket #"+ short.ticket[i] +" of level "+ level +" (index "+ i +")", ERR_ILLEGAL_STATE)));
+         if (short.level[i] > level)  break;
       }
       ArrayInsertInt   (short.ticket,       i, ticket                               );
       ArrayInsertInt   (short.level,        i, level                                );
@@ -830,9 +847,9 @@ bool Orders.AddRecord(int direction, int ticket, int level, double lots, int pen
       ArrayInsertDouble(short.commission,   i, NormalizeDouble(commission, 2)       );
       ArrayInsertDouble(short.profit,       i, NormalizeDouble(profit,     2)       );
    }
-   else return(!catch("Orders.AddRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   else return(_EMPTY(catch("Orders.AddRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
-   return(!catch("Orders.AddRecord(4)"));
+   return(ifInt(catch("Orders.AddRecord(4)"), EMPTY, i));
 }
 
 
@@ -984,14 +1001,17 @@ int ShowStatus(int error = NO_ERROR) {
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   string msg = StringConcatenate(__NAME(), "               ", sSequence, sError,                  NL,
-                                                                                                   NL,
-                                  "Grid:              ",       GridSize, " pip", sGridBase,        NL,
-                                  "UnitSize:        ",         sUnitSize,                          NL,
-                                  "Pyramid:        ",          sPyramid,                           NL,
-                                  "Martingale:    ",           sMartingale,                        NL,
-                                  "Stop:             ",        sStopConditions,                    NL,
-                                  "Profit/Loss:    ",          sSequenceTotalPL, sSequencePlStats, NL
+   string msg = StringConcatenate(__NAME(), "               ", sSequence, sError,                                  NL,
+                                                                                                                   NL,
+                                  "Grid:              ",       GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
+                                  "UnitSize:        ",         sUnitSize,                                          NL,
+                                  "Stop:             ",        sStopConditions,                                    NL,
+                                                                                                                   NL,
+                                  "Long:            ",         sLongLots,                                          NL,
+                                  "Short:            ",        sShortLots,                                         NL,
+                                  "Total:            ",        sTotalLots,                                         NL,
+                                                                                                                   NL,
+                                  "Profit/Loss:   ",           sSequenceTotalPL, sSequencePlStats,                 NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -1013,11 +1033,12 @@ void SS.All() {
       SS.GridBase();
       SS.UnitSize();
       SS.StopConditions();
+      SS.TotalLots();
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.isPyramid,    NumberToStr(Pyramid.Multiplier, ".1+"),    "");
-      sMartingale = ifString(sequence.isMartingale, NumberToStr(Martingale.Multiplier, ".1+"), "");
+      sPyramid    = ifString(sequence.isPyramid,    ", Pyramid: "+    NumberToStr(Pyramid.Multiplier, ".1+"),    "");
+      sMartingale = ifString(sequence.isMartingale, ", Martingale: "+ NumberToStr(Martingale.Multiplier, ".1+"), "");
    }
 }
 
@@ -1109,6 +1130,24 @@ void SS.StopConditions() {
 
 
 /**
+ * ShowStatus: Update the string representation of "long.totalLots", "short.totalLots" and "sequence.totalLots".
+ */
+void SS.TotalLots() {
+   if (__CHART()) {
+      if (!long.totalLots) sLongLots = "-";
+      else                 sLongLots = NumberToStr(long.totalLots, "+.+") +" lot";
+
+      if (!short.totalLots) sShortLots = "-";
+      else                  sShortLots = NumberToStr(-short.totalLots, "+.+") +" lot";
+
+      if (!long.totalLots && !short.totalLots) sTotalLots = "-";
+      else if (!sequence.totalLots)            sTotalLots = "±0";
+      else                                     sTotalLots = NumberToStr(sequence.totalLots, "+.+") +" lot";
+   }
+}
+
+
+/**
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
@@ -1141,8 +1180,8 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
-   int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
-   color  bgColor = LemonChiffon; // Cyan LemonChiffon bgColor=C'248,248,248'
+   int x[]={2, 101, 165}, y=62, fontSize=83, rectangles=ArraySize(x);   // 75
+   color  bgColor = LemonChiffon;                                       // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
    for (int i=0; i < rectangles; i++) {
