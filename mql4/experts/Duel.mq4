@@ -174,9 +174,10 @@ int onTick() {
       StartSequence();
    }
    else if (sequence.status == STATUS_PROGRESSING) {     // manage a running sequence
-      if (UpdateStatus()) {                              // check pending orders and PL
-         if (IsStopSignal()) StopSequence();             // close all positions
-         else                UpdateOrders();             // add/modify pending orders
+      bool gridChanged = false;                          // whether the current gridbase or gridlevel changed
+      if (UpdateStatus(gridChanged)) {                   // check pending orders and update PL
+         if (IsStopSignal())   StopSequence();           // close all positions
+         else if (gridChanged) UpdateOrders();           // add pending orders
       }
    }
    else if (sequence.status == STATUS_STOPPED) {
@@ -370,16 +371,19 @@ bool StopSequence() {
 
 
 /**
- * Update internal order and PL status with current market data.
+ * Update pending orders and PL with current market data.
+ *
+ * @param  _InOut_ bool gridChanged - whether the current gridlevel changed
  *
  * @return bool - success status
  */
-bool UpdateStatus() {
+bool UpdateStatus(bool &gridChanged) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   gridChanged = gridChanged!=0;
 
-   if (!UpdateStatus_(D_LONG,  long.minLevel,  long.maxLevel,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus_(D_SHORT, short.minLevel, short.maxLevel, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus_(D_LONG,  gridChanged, long.minLevel,  long.maxLevel,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus_(D_SHORT, gridChanged, short.minLevel, short.maxLevel, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    long.totalPL        = long.floatingPL;
    short.totalPL       = short.floatingPL;
@@ -399,7 +403,7 @@ bool UpdateStatus() {
  *
  * @return bool - success status
  */
-bool UpdateStatus_(int direction, int &minLevel, int &maxLevel, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus_(int direction, bool &gridChanged, int &minLevel, int &maxLevel, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -417,10 +421,11 @@ bool UpdateStatus_(int direction, int &minLevel, int &maxLevel, double &floating
             swaps      [i] = OrderSwap();
             commissions[i] = OrderCommission();
             profits    [i] = OrderProfit();
-            if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
 
+            if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
             minLevel = MathMin(levels[i], minLevel);
             maxLevel = MathMax(levels[i], maxLevel);
+            gridChanged = true;
          }
       }
       else {                                                      // last time an open position
@@ -1130,7 +1135,7 @@ int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
-   color  bgColor = Cyan; //C'248,248,248';                      // chart background color
+   color  bgColor = LemonChiffon; // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
    for (int i=0; i < rectangles; i++) {
