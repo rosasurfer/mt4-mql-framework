@@ -84,5 +84,10 @@ int onInitUser() {
 int afterInit() {
    CreateStatusBox();
    SS.All();
+
+   if (IsTesting()) {                                    // initialize tester configuration
+      string section = __NAME() +".Tester";
+      tester.onStopPause = GetConfigBool(section, "OnStopPause", false);
+   }
    return(catch("afterInit(1)"));
 }

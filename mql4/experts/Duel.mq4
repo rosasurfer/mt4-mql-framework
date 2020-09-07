@@ -159,6 +159,8 @@ string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
 
+// debug settings                                        // configurable via framework config, @see Duel::afterInit()
+bool     tester.onStopPause = false;                     // whether to pause the tester after StopSequence()
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -366,7 +368,12 @@ bool StopSequence() {
    SS.StopConditions();
    if (__LOG()) log("StopSequence(4)  "+ sequence.name +" sequence stopped");
 
-   return(!catch("StopSequence(5)"));
+   // pause/stop the tester according to the debug configuration
+   if (IsTesting()) {
+      if (!IsVisualMode())         Tester.Stop("StopSequence(5)");
+      else if (tester.onStopPause) Tester.Pause("StopSequence(6)");
+   }
+   return(!catch("StopSequence(7)"));
 }
 
 
