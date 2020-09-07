@@ -310,7 +310,7 @@ bool StopSequence() {
             long.closeTime[i] = oe.CloseTime(oe);
          }
          else {                                                      // on open position
-            if (!OrderCloseEx(long.ticket[i], NULL, NULL, CLR_NONE, oeFlags, oe)) return(false);
+            if (!OrderCloseEx(long.ticket[i], NULL, NULL, CLR_CLOSE, oeFlags, oe)) return(false);
             long.closeTime [i] = oe.CloseTime(oe);
             long.closePrice[i] = oe.ClosePrice(oe);
             long.swap      [i] = oe.Swap(oe);
@@ -339,7 +339,7 @@ bool StopSequence() {
             short.closeTime[i] = oe.CloseTime(oe);
          }
          else {                                                      // on open position
-            if (!OrderCloseEx(short.ticket[i], NULL, NULL, CLR_NONE, oeFlags, oe)) return(false);
+            if (!OrderCloseEx(short.ticket[i], NULL, NULL, CLR_CLOSE, oeFlags, oe)) return(false);
             short.closeTime [i] = oe.CloseTime(oe);
             short.closePrice[i] = oe.ClosePrice(oe);
             short.swap      [i] = oe.Swap(oe);
@@ -378,11 +378,13 @@ bool UpdateStatus() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (!UpdateStatus_(D_LONG,  long.floatingPL,  long.closedPL,  long.totalPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus_(D_SHORT, short.floatingPL, short.closedPL, short.totalPL, short.maxProfit, short.maxDrawdown, short.ticket, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus_(D_LONG,  long.minLevel,  long.maxLevel,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus_(D_SHORT, short.minLevel, short.maxLevel, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
+   long.totalPL        = long.floatingPL;
+   short.totalPL       = short.floatingPL;
    sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
-   sequence.closedPL   = NormalizeDouble(long.closedPL + short.closedPL, 2);
+   sequence.closedPL   = NormalizeDouble(long.closedPL   + short.closedPL,   2);
    sequence.totalPL    = NormalizeDouble(sequence.floatingPL + sequence.closedPL, 2); SS.TotalPL();
 
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
@@ -393,11 +395,11 @@ bool UpdateStatus() {
 
 
 /**
- * Internal helper function used only by UpdateStatus(). Updates order and PL status of one grid direction.
+ * Helper for UpdateStatus(). Updates order and PL status of a single grid direction.
  *
  * @return bool - success status
  */
-bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &totalPL, double &maxProfit, double &maxDrawdown, int tickets[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus_(int direction, int &minLevel, int &maxLevel, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -405,7 +407,6 @@ bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &
    int orders = ArraySize(tickets);
 
    for (int i=0; i < orders; i++) {
-      if (closeTimes[i] > 0) continue;                            // skip tickets known as closed
       if (!SelectTicket(tickets[i], "UpdateStatus(3)")) return(false);
 
       if (types[i] == OP_UNDEFINED) {                             // last time a pending order
@@ -417,6 +418,9 @@ bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &
             commissions[i] = OrderCommission();
             profits    [i] = OrderProfit();
             if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
+
+            minLevel = MathMin(levels[i], minLevel);
+            maxLevel = MathMax(levels[i], maxLevel);
          }
       }
       else {                                                      // last time an open position
@@ -424,22 +428,13 @@ bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &
          commissions[i] = OrderCommission();
          profits    [i] = OrderProfit();
       }
-
-      if (!OrderCloseTime()) {                                    // a still open order
-         floatingPL = floatingPL + swaps[i] + commissions[i] + profits[i];
-      }
-      else {                                                      // a now closed open position
-         closeTimes [i] = OrderCloseTime();
-         closePrices[i] = OrderClosePrice();
-         closedPL      += swaps[i] + commissions[i] + profits[i];
-         if (__LOG()) log("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i));
-      }
+      floatingPL = floatingPL + swaps[i] + commissions[i] + profits[i];
    }
 
-   totalPL     = NormalizeDouble(floatingPL + closedPL, 2);       // update PL numbers
-   maxProfit   = MathMax(totalPL, maxProfit);
-   maxDrawdown = MathMin(totalPL, maxDrawdown);
-   return(!catch("UpdateStatus(6)"));
+   floatingPL  = NormalizeDouble(floatingPL, 2);                  // update PL numbers
+   maxProfit   = MathMax(floatingPL, maxProfit);
+   maxDrawdown = MathMin(floatingPL, maxDrawdown);
+   return(!catch("UpdateStatus(5)"));
 }
 
 
@@ -452,7 +447,7 @@ bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &
  * @return string
  */
 string UpdateStatus.OrderFillMsg(int direction, int i) {
-   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was filled[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was filled[ at 1.5457'2 with 0.3 pip [positive ]slippage] (market: Bid/Ask)
    int ticket, level, pendingType;
    double lots, pendingPrice, openPrice;
 
@@ -472,11 +467,11 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
       pendingPrice = short.pendingPrice[i];
       openPrice    = short.openPrice[i];
    }
-   else return(!catch("UpdateStatus.OrderFillMsg(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   else return(_EMPTY_STR(catch("UpdateStatus.OrderFillMsg(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
    string sType         = OperationTypeDescription(pendingType);
    string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
-   string comment       = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
+   string comment       = ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
    if (NE(pendingPrice, openPrice)) {
@@ -484,22 +479,9 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
       string sSlippage;
       if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
-      message = message +" at "+ NumberToStr(openPrice, PriceFormat) +" ("+ sSlippage +")";
+      message = message +" at "+ NumberToStr(openPrice, PriceFormat) +" with "+ sSlippage;
    }
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-}
-
-
-/**
- * Compose a log message for a closed position.
- *
- * @param  int direction - trade direction
- * @param  int i         - order index
- *
- * @return string
- */
-string UpdateStatus.PositionCloseMsg(int direction, int i) {
-   return(_EMPTY_STR(catch("UpdateStatus.PositionCloseMsg(1)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -515,12 +497,12 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | simple  | Grid.AddLimit(level)
-   //                                                         |                                                |         |
-   // (2) For scaling up (pyramid) we can use:                |                                                |         |
-   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | simple  | Grid.AddStop(level)
-   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |         | Grid.AddPosition(level)
-   //     - observe the market and add limit orders           | if levels are reached new limits are added     | complex | Grid.AddLimit(level)
+   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | ok | Grid.AddLimit(level)
+   //                                                         |                                                |    |
+   // (2) For scaling up (pyramid) we can use:                |                                                |    |
+   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | ok | Grid.AddStop(level)
+   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level)
+   //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddLimit(level)
    //
    // (3) Depending on the approach used in (2) UpdateStatus() needs to monitor different conditions.
 
@@ -529,13 +511,13 @@ bool UpdateOrders(int direction = D_BOTH) {
          int orders = ArraySize(long.ticket);
          if (!orders) return(!catch("UpdateOrders(3)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.isMartingale) {                 // on Martingale ensure the next order for scaling down exists
+         if (sequence.isMartingale) {                 // on Martingale ensure the next limit order for scaling down exists
             if (long.level[0] == long.minLevel) {
                if (!Grid.AddLimit(D_LONG, Min(long.minLevel-1, -1))) return(false);
                orders++;
             }
          }
-         if (sequence.isPyramid) {                    // on Pyramid ensure the next order for scaling up exists
+         if (sequence.isPyramid) {                    // on Pyramid ensure the next stop order for scaling up exists
             if (long.level[orders-1] == long.maxLevel) {
                if (!Grid.AddStop(D_LONG, long.maxLevel+1)) return(false);
                orders++;
@@ -549,13 +531,13 @@ bool UpdateOrders(int direction = D_BOTH) {
          orders = ArraySize(short.ticket);
          if (!orders) return(!catch("UpdateOrders(4)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.isMartingale) {                 // on Martingale ensure the next order for scaling down exists
+         if (sequence.isMartingale) {                 // on Martingale ensure the next limit order for scaling down exists
             if (short.level[0] == short.minLevel) {
                if (!Grid.AddLimit(D_SHORT, Min(short.minLevel-1, -1))) return(false);
                orders++;
             }
          }
-         if (sequence.isPyramid) {                    // on Pyramid ensure the next order for scaling up exists
+         if (sequence.isPyramid) {                    // on Pyramid ensure the next stop order for scaling up exists
             if (short.level[orders-1] == short.maxLevel) {
                if (!Grid.AddStop(D_SHORT, short.maxLevel+1)) return(false);
                orders++;
