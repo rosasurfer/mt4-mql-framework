@@ -26,7 +26,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string GridDirection         = "Long | Short | Both*";
-extern int    GridSize              = 20;
+extern int    GridSize              = 10;
 extern double UnitSize              = 0.1;               // lots at the first grid level
 
 extern double Pyramid.Multiplier    = 1;                 // lot multiplier per grid level on the winning side
@@ -67,10 +67,12 @@ extern bool   ShowProfitInPercent   = false;             // whether PL is displa
 // sequence data
 int      sequence.id;
 datetime sequence.created;
-string   sequence.name = "";                             // "[LS].{sequence.id}"
 bool     sequence.isTest;                                // whether the sequence is a test (a finished test can be loaded into an online chart)
+string   sequence.name = "";                             // "[LS].{sequence.id}"
 int      sequence.status;
 int      sequence.directions;
+bool     sequence.isPyramid;                             // whether the sequence scales in on the winning side (pyramid)
+bool     sequence.isMartingale;                          // whether the sequence scales in on the losing side (martingale)
 double   sequence.unitsize;                              // lots at the first level
 double   sequence.gridbase;
 double   sequence.startEquity;
@@ -475,52 +477,57 @@ string UpdateStatus.PositionCloseMsg(int direction, int i) {
 bool UpdateOrders(int direction = D_BOTH) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   if (direction & D_BOTH == D_BOTH) {
-      if (!UpdateOrders(D_LONG))  return(false);
-      if (!UpdateOrders(D_SHORT)) return(false);
-      return(true);
-   }
-   // (1) separation between D_LONG and D_SHORT
+   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | simple  | Grid.AddLimit(level)
+   //                                                         |                                                |         |
+   // (2) For scaling up (pyramid) we can use:                |                                                |         |
+   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | simple  | Grid.AddStop(level)
+   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |         | Grid.AddPosition(level)
+   //     - observe the market and add limit orders           | if levels are reached new limits are added     | complex | Grid.AddLimit(level)
    //
-   // (2) for scaling down (martingale) we use limit orders   | if limits are filled new limits are added      | most simple  | Grid.AddLimit(level)
-   //                                                         |                                                |              |
-   // (3) for scaling up (pyramid) we can use:                |                                                |              |
-   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | most simple  | Grid.AddStop(level)
-   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |              | Grid.AddPosition(level)
-   //     - observe the market and add limit orders           | if levels are reached new limits are added     | most complex | Grid.AddLimit(level)
-   //
-   // (4) depending on the used approach UpdateStatus() needs to monitor different conditions
+   // (3) Depending on the approach used in (2) UpdateStatus() needs to monitor different conditions.
 
-   int orders, minLevel=EMPTY_VALUE, maxLevel=EMPTY_VALUE;
-
-   if (direction == D_LONG) {
+   if (direction & D_LONG && 1) {
       if (long.enabled) {
-         orders = ArraySize(long.ticket);
+         int orders = ArraySize(long.ticket);
+         if (!orders) return(!catch("UpdateOrders(3)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
 
-         for (int i=0; i < orders; i++) {
-            minLevel = long.level[0];
-            maxLevel = long.level[orders-1];
+         if (sequence.isMartingale) {                 // on Martingale ensure the next order for scaling down exists
+            if (long.level[0] == long.minLevel) {
+               if (!Grid.AddLimit(D_LONG, Min(long.minLevel-1, -1))) return(false);
+               orders++;
+            }
          }
-         return(!catch("UpdateOrders(2)", ERR_NOT_IMPLEMENTED));
+         if (sequence.isPyramid) {                    // on Pyramid ensure the next order for scaling up exists
+            if (long.level[orders-1] == long.maxLevel) {
+               if (!Grid.AddStop(D_LONG, long.maxLevel+1)) return(false);
+               orders++;
+            }
+         }
       }
-      return(true);
    }
 
-   if (direction == D_SHORT) {
+   if (direction & D_SHORT && 1) {
       if (short.enabled) {
          orders = ArraySize(short.ticket);
+         if (!orders) return(!catch("UpdateOrders(4)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
 
-         for (i=0; i < orders; i++) {
-            minLevel = short.level[0];
-            maxLevel = short.level[orders-1];
+         if (sequence.isMartingale) {                 // on Martingale ensure the next order for scaling down exists
+            if (short.level[0] == short.minLevel) {
+               if (!Grid.AddLimit(D_SHORT, Min(short.minLevel-1, -1))) return(false);
+               orders++;
+            }
          }
-         return(!catch("UpdateOrders(3)", ERR_NOT_IMPLEMENTED));
+         if (sequence.isPyramid) {                    // on Pyramid ensure the next order for scaling up exists
+            if (short.level[orders-1] == short.maxLevel) {
+               if (!Grid.AddStop(D_SHORT, short.maxLevel+1)) return(false);
+               orders++;
+            }
+         }
       }
-      return(true);
    }
-
-   return(!catch("UpdateOrders(4)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   return(!catch("UpdateOrders(5)"));
 }
 
 
@@ -557,7 +564,38 @@ int CreateMagicNumber() {
 
 
 /**
- * Caluclate the order volume to use for the specified trade direction and grid level.
+ * Calculate the price of the specified trade direction and grid level.
+ *
+ * @param  int direction - trade direction
+ * @param  int level     - gridlevel
+ *
+ * @return double - price or NULL in case of errors
+ */
+double CalculateGridLevel(int direction, int level) {
+   if (IsLastError())                                   return(NULL);
+   if      (direction == D_LONG)  { if (!long.enabled)  return(NULL); }
+   else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
+   else                                                 return(!catch("CalculateGridLevel(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)                                          return(!catch("CalculateGridLevel(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+
+   double price = 0;
+
+   if (direction == D_LONG) {
+      if (level > 0) price = sequence.gridbase + (level-1) * GridSize*Pip;
+      else           price = sequence.gridbase +  level    * GridSize*Pip;
+   }
+   else {
+      if (level > 0) price = sequence.gridbase - (level-1) * GridSize*Pip;
+      else           price = sequence.gridbase -  level    * GridSize*Pip;
+   }
+   price = NormalizeDouble(price, Digits);
+
+   return(ifDouble(catch("CalculateGridLevel(3)"), NULL, price));
+}
+
+
+/**
+ * Calculate the order volume to use for the specified trade direction and grid level.
  *
  * @param  int direction - trade direction
  * @param  int level     - gridlevel
@@ -565,29 +603,29 @@ int CreateMagicNumber() {
  * @return double - normalized order volume or NULL in case of errors
  */
 double CalculateLots(int direction, int level) {
-   if (IsLastError()) return(NULL);
+   if (IsLastError())                                   return(NULL);
    if      (direction == D_LONG)  { if (!long.enabled)  return(NULL); }
    else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
-   else               return(!catch("CalculateLots(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)        return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   else                                                 return(!catch("CalculateLots(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)                                          return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
    double lots = 0;
 
    if (level > 0) {
-      if (Pyramid.Multiplier > 0) lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
-      else if (level == 1)        lots = sequence.unitsize;
+      if (sequence.isPyramid) lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
+      else if (level == 1)    lots = sequence.unitsize;
    }
-   else if (Martingale.Multiplier > 0) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level);
-
+   else if (sequence.isMartingale) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level);
    lots = NormalizeLots(lots);
+
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
 }
 
 
 /**
  * Open a market position for the specified grid level and add the order data to the order arrays. The function doesn't check
- * whether the specified grid level matches the current market price. It's the responsibility of the caller to call the
- * function in the correct moment.
+ * whether the specified grid level matches the current market price. It's the responsibility of the caller to call it at the
+ * correct time.
  *
  * @param  int direction - trade direction: D_LONG | D_SHORT
  * @param  int level     - grid level of the position to open: -n...-1 | +1...+n
@@ -595,10 +633,8 @@ double CalculateLots(int direction, int level) {
  * @return bool - success status
  */
 bool Grid.AddPosition(int direction, int level) {
-   if (IsLastError())                           return(false);
-   if (sequence.status != STATUS_PROGRESSING)   return(!catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("Grid.AddPosition(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level)                                  return(!catch("Grid.AddPosition(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    int oe[];
    int ticket = SubmitMarketOrder(direction, level, oe);
@@ -610,7 +646,7 @@ bool Grid.AddPosition(int direction, int level) {
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
    double   pendingPrice = NULL;
-   int      type         = oe.Type(oe);
+   int      openType     = oe.Type(oe);
    datetime openTime     = oe.OpenTime(oe);
    double   openPrice    = oe.OpenPrice(oe);
    datetime closeTime    = NULL;
@@ -619,8 +655,77 @@ bool Grid.AddPosition(int direction, int level) {
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
-   Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, type, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
-   return(!last_error);
+   return(Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+}
+
+
+/**
+ * Open a limit order for the specified grid level and add the order data to the order arrays.
+ *
+ * @param  int direction - trade direction: D_LONG | D_SHORT
+ * @param  int level     - grid level of the limit order to open: -n...-1 | +1...+n
+ *
+ * @return bool - success status
+ */
+bool Grid.AddLimit(int direction, int level) {
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddLimit(1)  "+ sequence.name +" cannot add limit order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   int oe[];
+   int ticket = SubmitLimitOrder(direction, level, oe);
+   if (!ticket) return(false);
+
+   // prepare dataset
+   //int    ticket       = ...                     // use as is
+   //int    level        = ...                     // ...
+   int      pendingType  = oe.Type(oe);
+   datetime pendingTime  = oe.OpenTime(oe);
+   double   pendingPrice = oe.OpenPrice(oe);
+   int      openType     = OP_UNDEFINED;
+   datetime openTime     = NULL;
+   double   openPrice    = NULL;
+   datetime closeTime    = NULL;
+   double   closePrice   = NULL;
+   double   swap         = NULL;
+   double   commission   = NULL;
+   double   profit       = NULL;
+
+   return(Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+}
+
+
+/**
+ * Open a stop order for the specified grid level and add the order data to the order arrays.
+ *
+ * @param  int direction - trade direction: D_LONG | D_SHORT
+ * @param  int level     - grid level of the stop order to open: -n...-1 | +1...+n
+ *
+ * @return bool - success status
+ */
+bool Grid.AddStop(int direction, int level) {
+   if (IsLastError())                         return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddStop(1)  "+ sequence.name +" cannot add stop order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   int oe[];
+   int ticket = SubmitStopOrder(direction, level, oe);
+   if (!ticket) return(false);
+
+   // prepare dataset
+   //int    ticket       = ...                     // use as is
+   //int    level        = ...                     // ...
+   int      pendingType  = oe.Type(oe);
+   datetime pendingTime  = oe.OpenTime(oe);
+   double   pendingPrice = oe.OpenPrice(oe);
+   int      openType     = OP_UNDEFINED;
+   datetime openTime     = NULL;
+   double   openPrice    = NULL;
+   datetime closeTime    = NULL;
+   double   closePrice   = NULL;
+   double   swap         = NULL;
+   double   commission   = NULL;
+   double   profit       = NULL;
+
+   return(Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
 }
 
 
@@ -730,6 +835,74 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
 
 
 /**
+ * Open a pending limit order.
+ *
+ * @param  _In_  int direction - trade direction
+ * @param  _In_  int level     - order gridlevel
+ * @param  _Out_ int oe[]      - execution details (struct ORDER_EXECUTION)
+ *
+ * @return int - order ticket or NULL in case of errors
+ */
+int SubmitLimitOrder(int direction, int level, int &oe[]) {
+   if (IsLastError())                           return(NULL);
+   if (sequence.status!=STATUS_PROGRESSING)     return(!catch("SubmitLimitOrder(1)  "+ sequence.name +" cannot submit limit order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("SubmitLimitOrder(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)                                  return(!catch("SubmitLimitOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+
+   int      type        = ifInt(direction==D_LONG, OP_BUYLIMIT, OP_SELLLIMIT);
+   double   lots        = CalculateLots(direction, level);
+   double   price       = CalculateGridLevel(direction, level);
+   double   slippage    = NULL;
+   double   stopLoss    = NULL;
+   double   takeProfit  = NULL;
+   int      magicNumber = CreateMagicNumber();
+   datetime expires     = NULL;
+   string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
+   color    markerColor = CLR_PENDING;
+   int      oeFlags     = NULL;
+
+   int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   if (ticket > 0) return(ticket);
+
+   return(!SetLastError(oe.Error(oe)));
+}
+
+
+/**
+ * Open a pending stop order.
+ *
+ * @param  _In_  int direction - trade direction
+ * @param  _In_  int level     - order gridlevel
+ * @param  _Out_ int oe[]      - execution details (struct ORDER_EXECUTION)
+ *
+ * @return int - order ticket or NULL in case of errors
+ */
+int SubmitStopOrder(int direction, int level, int &oe[]) {
+   if (IsLastError())                           return(NULL);
+   if (sequence.status!=STATUS_PROGRESSING)     return(!catch("SubmitStopOrder(1)  "+ sequence.name +" cannot submit stop order for "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("SubmitStopOrder(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!level)                                  return(!catch("SubmitStopOrder(3)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+
+   int      type        = ifInt(direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
+   double   lots        = CalculateLots(direction, level);
+   double   price       = CalculateGridLevel(direction, level);
+   double   slippage    = NULL;
+   double   stopLoss    = NULL;
+   double   takeProfit  = NULL;
+   int      magicNumber = CreateMagicNumber();
+   datetime expires     = NULL;
+   string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
+   color    markerColor = CLR_PENDING;
+   int      oeFlags     = NULL;
+
+   int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   if (ticket > 0) return(ticket);
+
+   return(!SetLastError(oe.Error(oe)));
+}
+
+
+/**
  * Return a description of a sequence status code.
  *
  * @param  int status
@@ -807,8 +980,8 @@ void SS.All() {
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(!Pyramid.Multiplier, "", NumberToStr(Pyramid.Multiplier, ".1+"));
-      sMartingale = ifString(!Martingale.Multiplier, "", NumberToStr(Martingale.Multiplier, ".1+"));
+      sPyramid    = ifString(sequence.isPyramid,    NumberToStr(Pyramid.Multiplier, ".1+"),    "");
+      sMartingale = ifString(sequence.isMartingale, NumberToStr(Martingale.Multiplier, ".1+"), "");
    }
 }
 
