@@ -420,13 +420,11 @@ int deinit() {
    if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
       return(error|last_error|LeaveContext(__ExecutionContext));
 
-
    // User-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    // (falls implementiert) -1 zurückgeben.
-
 
    // User-spezifische deinit()-Routinen aufrufen                                //
    error = onDeinit();                                                           // preprocessing hook
@@ -451,7 +449,7 @@ int deinit() {
       }                                                                          //
    }                                                                             //
    if (!error) error = afterDeinit();                                            // postprocessing hook
-   if (!error && !last_error) DeleteRegisteredObjects();
+   if (!error && !last_error && !This.IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(2)");
    return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
