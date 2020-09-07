@@ -25,8 +25,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string GridDirection         = "Long | Short | Both*";
-extern int    GridSize              = 10;
+extern string GridDirections        = "Long | Short | Both*";
+extern int    GridSize              = 20;
 extern double UnitSize              = 0.1;               // lots at the first grid level
 
 extern double Pyramid.Multiplier    = 1;                 // lot multiplier per grid level on the winning side
@@ -106,6 +106,7 @@ string   slPct.description = "";
 bool     long.enabled;
 int      long.ticket      [];
 int      long.level       [];                            // grid level: -n...-1 | +1...+n
+double   long.lots        [];
 int      long.pendingType [];
 datetime long.pendingTime [];
 double   long.pendingPrice[];
@@ -128,6 +129,7 @@ double   long.maxDrawdown;
 bool     short.enabled;
 int      short.ticket      [];
 int      short.level       [];
+double   short.lots        [];
 int      short.pendingType [];
 datetime short.pendingTime [];
 double   short.pendingPrice[];
@@ -450,7 +452,41 @@ bool UpdateStatus_(int direction, double &floatingPL, double &closedPL, double &
  * @return string
  */
 string UpdateStatus.OrderFillMsg(int direction, int i) {
-   return(_EMPTY_STR(catch("UpdateStatus.OrderFillMsg(1)", ERR_NOT_IMPLEMENTED)));
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was filled[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   int ticket, level, pendingType;
+   double lots, pendingPrice, openPrice;
+
+   if (direction == D_LONG) {
+      ticket       = long.ticket[i];
+      level        = long.level[i];
+      lots         = long.lots[i];
+      pendingType  = long.pendingType[i];
+      pendingPrice = long.pendingPrice[i];
+      openPrice    = long.openPrice[i];
+   }
+   else if (direction == D_SHORT) {
+      ticket       = short.ticket[i];
+      level        = short.level[i];
+      lots         = short.lots[i];
+      pendingType  = short.pendingType[i];
+      pendingPrice = short.pendingPrice[i];
+      openPrice    = short.openPrice[i];
+   }
+   else return(!catch("UpdateStatus.OrderFillMsg(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   string sType         = OperationTypeDescription(pendingType);
+   string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
+   string comment       = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
+   string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
+
+   if (NE(pendingPrice, openPrice)) {
+      double slippage = (openPrice - pendingPrice)/Pip; if (direction == OP_SELL) slippage = -slippage;
+      string sSlippage;
+      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
+      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
+      message = message +" at "+ NumberToStr(openPrice, PriceFormat) +" ("+ sSlippage +")";
+   }
+   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 }
 
 
@@ -643,6 +679,7 @@ bool Grid.AddPosition(int direction, int level) {
    // prepare dataset
    //int    ticket       = ...                     // use as is
    //int    level        = ...                     // ...
+   double   lots         = oe.Lots(oe);
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
    double   pendingPrice = NULL;
@@ -655,7 +692,7 @@ bool Grid.AddPosition(int direction, int level) {
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
-   return(Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   return(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
 }
 
 
@@ -678,6 +715,7 @@ bool Grid.AddLimit(int direction, int level) {
    // prepare dataset
    //int    ticket       = ...                     // use as is
    //int    level        = ...                     // ...
+   double   lots         = oe.Lots(oe);
    int      pendingType  = oe.Type(oe);
    datetime pendingTime  = oe.OpenTime(oe);
    double   pendingPrice = oe.OpenPrice(oe);
@@ -690,7 +728,7 @@ bool Grid.AddLimit(int direction, int level) {
    double   commission   = NULL;
    double   profit       = NULL;
 
-   return(Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   return(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
 }
 
 
@@ -713,6 +751,7 @@ bool Grid.AddStop(int direction, int level) {
    // prepare dataset
    //int    ticket       = ...                     // use as is
    //int    level        = ...                     // ...
+   double   lots         = oe.Lots(oe);
    int      pendingType  = oe.Type(oe);
    datetime pendingTime  = oe.OpenTime(oe);
    double   pendingPrice = oe.OpenPrice(oe);
@@ -725,7 +764,7 @@ bool Grid.AddStop(int direction, int level) {
    double   commission   = NULL;
    double   profit       = NULL;
 
-   return(Orders.AddRecord(direction, ticket, level, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   return(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
 }
 
 
@@ -736,6 +775,7 @@ bool Grid.AddStop(int direction, int level) {
  * @param  int      direction
  * @param  int      ticket
  * @param  int      level
+ * @param  double   lots
  * @param  int      pendingType
  * @param  datetime pendingTime
  * @param  double   pendingPrice
@@ -750,7 +790,7 @@ bool Grid.AddStop(int direction, int level) {
  *
  * @return bool - success status
  */
-bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
+bool Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
    if (direction == D_LONG) {
       int size = ArraySize(long.ticket);
 
@@ -760,6 +800,7 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
       }
       ArrayInsertInt   (long.ticket,       i, ticket                               );
       ArrayInsertInt   (long.level,        i, level                                );
+      ArrayInsertDouble(long.lots,         i, lots                                 );
       ArrayInsertInt   (long.pendingType,  i, pendingType                          );
       ArrayInsertInt   (long.pendingTime,  i, pendingTime                          );
       ArrayInsertDouble(long.pendingPrice, i, NormalizeDouble(pendingPrice, Digits));
@@ -782,6 +823,7 @@ bool Orders.AddRecord(int direction, int ticket, int level, int pendingType, dat
       }
       ArrayInsertInt   (short.ticket,       i, ticket                               );
       ArrayInsertInt   (short.level,        i, level                                );
+      ArrayInsertDouble(short.lots,         i, lots                                 );
       ArrayInsertInt   (short.pendingType,  i, pendingType                          );
       ArrayInsertInt   (short.pendingTime,  i, pendingTime                          );
       ArrayInsertDouble(short.pendingPrice, i, NormalizeDouble(pendingPrice, Digits));
@@ -1106,7 +1148,7 @@ int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
-   color  bgColor = C'248,248,248';                      // chart background color
+   color  bgColor = Cyan; //C'248,248,248';                      // chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
@@ -1130,7 +1172,7 @@ int CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("GridDirection=",         DoubleQuoteStr(GridDirection),             ";", NL,
+   return(StringConcatenate("GridDirections=",        DoubleQuoteStr(GridDirections),            ";", NL,
                             "GridSize=",              GridSize,                                  ";", NL,
                             "UnitSize=",              NumberToStr(UnitSize, ".1+"),              ";", NL,
                             "Pyramid.Multiplier=",    NumberToStr(Pyramid.Multiplier, ".1+"),    ";", NL,
