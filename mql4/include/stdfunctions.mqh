@@ -1612,9 +1612,9 @@ string __NAME() {
 
 
 /**
- * Integer-Version von MathMin()
+ * Integer version of MathMin()
  *
- * Ermittelt die kleinere mehrerer Ganzzahlen.
+ * Return the smallest of all specified values.
  *
  * @param  int value1
  * @param  int value2
@@ -1639,9 +1639,9 @@ int Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int valu
 
 
 /**
- * Integer-Version von MathMax()
+ * Integer version of MathMax()
  *
- * Ermittelt die größere mehrerer Ganzzahlen.
+ * Return the largest of all specified values.
  *
  * @param  int value1
  * @param  int value2
