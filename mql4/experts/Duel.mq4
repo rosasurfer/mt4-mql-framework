@@ -122,8 +122,9 @@ double   long.commission  [];
 double   long.profit      [];
 double   long.totalLots;                                 // total open long lots: 0...+n
 double   long.avgPrice;
-int      long.minLevel;                                  // lowest reached grid level
-int      long.maxLevel;                                  // highest reached grid level
+int      long.minLevel = INT_MAX;                        // lowest reached grid level
+int      long.maxLevel = INT_MIN;                        // highest reached grid level
+double   long.slippage;                                  // cumulated slippage in pip
 double   long.floatingPL;
 double   long.closedPL;
 double   long.totalPL;
@@ -147,8 +148,9 @@ double   short.commission  [];
 double   short.profit      [];
 double   short.totalLots;                                // total open short lots: 0...+n
 double   short.avgPrice;
-int      short.minLevel;
-int      short.maxLevel;
+int      short.minLevel = INT_MAX;
+int      short.maxLevel = INT_MIN;
+double   short.slippage;
 double   short.floatingPL;
 double   short.closedPL;
 double   short.totalPL;
@@ -283,18 +285,13 @@ bool StartSequence() {
 
    if (long.enabled) {
       int i = Grid.AddPosition(D_LONG, 1); if (i < 0) return(false);    // open a long position for level 1
-      long.minLevel  = 1;
-      long.maxLevel  = 1;
-      long.totalLots = long.lots[i];
-      long.avgPrice  = long.openPrice[i];
+      long.avgPrice = long.openPrice[i];
    }
    if (short.enabled) {
       i = Grid.AddPosition(D_SHORT, 1); if (i < 0) return(false);       // open a short position for level 1
-      short.minLevel  = 1;
-      short.maxLevel  = 1;
-      short.totalLots = short.lots[i];
-      short.avgPrice  = short.openPrice[i];
+      short.avgPrice = short.openPrice[i];
    }
+
    sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.TotalLots();
 
    if (!UpdateOrders()) return(false);                                  // update pending orders
@@ -404,8 +401,8 @@ bool UpdateStatus(bool &gridChanged) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    gridChanged = gridChanged!=0;
 
-   if (!UpdateStatus_(D_LONG,  gridChanged, long.totalLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus_(D_SHORT, gridChanged, short.totalLots, short.avgPrice, short.minLevel, short.maxLevel, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.lots, short.pendingType, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus_(D_LONG,  gridChanged, long.totalLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.slippage,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus_(D_SHORT, gridChanged, short.totalLots, short.avgPrice, short.minLevel, short.maxLevel, short.slippage, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    if (gridChanged) {
       sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2);
@@ -430,7 +427,7 @@ bool UpdateStatus(bool &gridChanged) {
  *
  * @return bool - success status
  */
-bool UpdateStatus_(int direction, bool &gridChanged, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], double lots[], int pendingTypes[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus_(int direction, bool &gridChanged, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -455,6 +452,7 @@ bool UpdateStatus_(int direction, bool &gridChanged, double &totalLots, double &
             maxLevel    = MathMax(levels[i], maxLevel);
             totalLots  += lots[i];
             sumPrices  += lots[i] * openPrices[i];
+            slippage    = NormalizeDouble(slippage + ifDouble(direction==D_LONG, openPrices[i]-pendingPrices[i], pendingPrices[i]-openPrices[i]), 1);
             gridChanged = true;
          }
       }
@@ -710,7 +708,22 @@ int Grid.AddPosition(int direction, int level) {
    double   commission   = oe.Commission(oe);
    double   profit       = NULL;
 
-   return(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   int i = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
+   if (i >= 0) {
+      if (direction == D_LONG) {
+         long.minLevel   = MathMin(level, long.minLevel);
+         long.maxLevel   = MathMax(level, long.maxLevel);
+         long.slippage   = NormalizeDouble(long.slippage + openPrice - CalculateGridLevel(direction, level), 1);
+         long.totalLots += lots;
+      }
+      else {
+         short.minLevel   = MathMin(level, short.minLevel);
+         short.maxLevel   = MathMax(level, short.maxLevel);
+         short.slippage   = NormalizeDouble(short.slippage + CalculateGridLevel(direction, level) - openPrice, 1);
+         short.totalLots += lots;
+      }
+   }
+   return(i);
 }
 
 
@@ -808,7 +821,7 @@ bool Grid.AddStop(int direction, int level) {
  * @param  double   commission
  * @param  double   profit
  *
- * @return int - index the record was inserted or -1 (EMPTY) in case of errors
+ * @return int - index at the record was inserted or -1 (EMPTY) in case of errors
  */
 int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
    int i = EMPTY;
@@ -1146,13 +1159,13 @@ void SS.StopConditions() {
 void SS.TotalLots() {
    if (__CHART()) {
       if (!long.totalLots) sLongLots = "-";
-      else                 sLongLots = NumberToStr(long.totalLots, "+.+") +" lot @ "+ NumberToStr(long.avgPrice, PriceFormat);
+      else                 sLongLots = NumberToStr(long.totalLots, "+.+") +" lot @ "+ NumberToStr(long.avgPrice, PriceFormat) + ifString(long.slippage, ", slippage: "+ DoubleToStr(long.slippage, 1) +" pip", "");
 
       if (!short.totalLots) sShortLots = "-";
-      else                  sShortLots = NumberToStr(-short.totalLots, "+.+") +" lot @ "+ NumberToStr(short.avgPrice, PriceFormat);
+      else                  sShortLots = NumberToStr(-short.totalLots, "+.+") +" lot @ "+ NumberToStr(short.avgPrice, PriceFormat) + ifString(short.slippage, ", slippage: "+ DoubleToStr(short.slippage, 1) +" pip", "");
 
       if (!long.totalLots && !short.totalLots) sTotalLots = "-";
-      else if (!sequence.totalLots)            sTotalLots = "±0";
+      else if (!sequence.totalLots)            sTotalLots = "±0 (hedged)";
       else                                     sTotalLots = NumberToStr(sequence.totalLots, "+.+") +" lot @ "+ NumberToStr(sequence.avgPrice, PriceFormat);
    }
 }
