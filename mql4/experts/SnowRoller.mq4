@@ -2822,16 +2822,16 @@ int ShowStatus(int error = NO_ERROR) {
       default:
          return(catch("ShowStatus(1)  "+ sequence.longName +" illegal sequence status = "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-   msg = StringConcatenate(__NAME(), "     ", msg, sError,                           NL,
-                                                                                     NL,
-                           "Grid:              ", GridSize, " pip", sGridBase,       NL,
-                           "LotSize:          ",  sLotSize, sSequenceProfitPerLevel, NL,
-                           "Start:             ", sStartConditions,                  NL,
-                           "Stop:              ", sStopConditions,                   NL,
-                           sAutoRestart,                 // if set the var ends with NL,
-                           "Stops:             ", sSequenceStops, sSequenceStopsPL,  NL,
-                           "Profit/Loss:    ",   sSequenceTotalPL, sSequencePlStats, NL,
-                           sStartStopStats,              // if set the var ends with NL,
+   msg = StringConcatenate(__NAME(), "     ", msg, sError,                            NL,
+                                                                                      NL,
+                           "Grid:              ", GridSize, " pip", sGridBase,        NL,
+                           "LotSize:          ",  sLotSize, sSequenceProfitPerLevel,  NL,
+                           "Start:             ", sStartConditions,                   NL,
+                           "Stop:              ", sStopConditions,                    NL,
+                           sAutoRestart,                  // if set the var ends with NL,
+                           "Stops:             ", sSequenceStops, sSequenceStopsPL,   NL,
+                           "Profit/Loss:    ",    sSequenceTotalPL, sSequencePlStats, NL,
+                           sStartStopStats,               // if set the var ends with NL,
                            sRestartStats
    );
 
