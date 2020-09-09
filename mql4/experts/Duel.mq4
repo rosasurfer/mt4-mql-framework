@@ -84,26 +84,6 @@ double   sequence.totalPL;                               // current total P/L of
 double   sequence.maxProfit;                             // max. experienced total sequence profit:   0...+n
 double   sequence.maxDrawdown;                           // max. experienced total sequence drawdown: -n...0
 
-// takeprofit conditions
-bool     tpAbs.condition;                                // whether an absolute TP condition is active
-double   tpAbs.value;
-string   tpAbs.description = "";
-
-bool     tpPct.condition;                                // whether a percentage TP condition is active
-double   tpPct.value;
-double   tpPct.absValue    = INT_MAX;
-string   tpPct.description = "";
-
-// stoploss conditions
-bool     slAbs.condition;                                // whether an absolute SL condition is active
-double   slAbs.value;
-string   slAbs.description = "";
-
-bool     slPct.condition;                                // whether a percentage SL condition is active
-double   slPct.value;
-double   slPct.absValue    = INT_MIN;
-string   slPct.description = "";
-
 // order management
 bool     long.enabled;
 int      long.ticket      [];
@@ -157,7 +137,28 @@ double   short.totalPL;
 double   short.maxProfit;
 double   short.maxDrawdown;
 
-string   sUnitSize            = "";                      // caching vars to speed-up ShowStatus()
+// takeprofit conditions
+bool     tpAbs.condition;                                // whether an absolute TP condition is active
+double   tpAbs.value;
+string   tpAbs.description = "";
+
+bool     tpPct.condition;                                // whether a percentage TP condition is active
+double   tpPct.value;
+double   tpPct.absValue    = INT_MAX;
+string   tpPct.description = "";
+
+// stoploss conditions
+bool     slAbs.condition;                                // whether an absolute SL condition is active
+double   slAbs.value;
+string   slAbs.description = "";
+
+bool     slPct.condition;                                // whether a percentage SL condition is active
+double   slPct.value;
+double   slPct.absValue    = INT_MIN;
+string   slPct.description = "";
+
+// caching vars to speed-up ShowStatus()
+string   sUnitSize            = "";
 string   sGridBase            = "";
 string   sPyramid             = "";
 string   sMartingale          = "";
@@ -1159,10 +1160,10 @@ void SS.StopConditions() {
 void SS.TotalLots() {
    if (__CHART()) {
       if (!long.totalLots) sLongLots = "-";
-      else                 sLongLots = NumberToStr(long.totalLots, "+.+") +" lot @ "+ NumberToStr(long.avgPrice, PriceFormat) + ifString(long.slippage, ", slippage: "+ DoubleToStr(long.slippage, 1) +" pip", "");
+      else                 sLongLots = NumberToStr(long.totalLots, "+.+") +" lot at level "+ long.maxLevel + ifString(long.slippage, ", slippage: "+ DoubleToStr(long.slippage, 1) +" pip", "");
 
       if (!short.totalLots) sShortLots = "-";
-      else                  sShortLots = NumberToStr(-short.totalLots, "+.+") +" lot @ "+ NumberToStr(short.avgPrice, PriceFormat) + ifString(short.slippage, ", slippage: "+ DoubleToStr(short.slippage, 1) +" pip", "");
+      else                  sShortLots = NumberToStr(-short.totalLots, "+.+") +" lot at level "+ short.maxLevel + ifString(short.slippage, ", slippage: "+ DoubleToStr(short.slippage, 1) +" pip", "");
 
       if (!long.totalLots && !short.totalLots) sTotalLots = "-";
       else if (!sequence.totalLots)            sTotalLots = "±0 (hedged)";
