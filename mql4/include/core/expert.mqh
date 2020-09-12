@@ -546,19 +546,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
    // suppress compiler warnings
    __DummyCalls();
-   SetCustomLog(NULL);
-}
-
-
-/**
- * Configure the use of a custom logfile.
- *
- * @param  string filename - name of a custom logfile or an empty string to disable custom logging
- *
- * @return bool - success status
- */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
 }
 
 
@@ -732,7 +719,6 @@ bool Tester.RecordEquity() {
    bool   ec_SetLogToDebugEnabled   (int ec[], int status  );
    bool   ec_SetLogToTerminalEnabled(int ec[], int status  );
    int    ec_SetProgramCoreFunction (int ec[], int function);
-   bool   SetCustomLogA             (int ec[], string file );
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
