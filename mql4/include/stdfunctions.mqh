@@ -1,8 +1,9 @@
 /**
- * Globale Funktionen.
+ * Global functions
  */
 #include <configuration.mqh>
-#include <metaquotes.mqh>                                            // MetaQuotes-Aliase
+#include <log.mqh>
+#include <metaquotes.mqh>
 #include <rsfExpander.mqh>
 
 
@@ -13,8 +14,6 @@
  * @param  int    error [optional] - error code (default: none)
  *
  * @return int - the same error
- *
- * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 int debug(string message, int error = NO_ERROR) {
    if (!IsDllsAllowed()) {
@@ -42,12 +41,12 @@ int debug(string message, int error = NO_ERROR) {
 
 
 /**
- * Check if an error occurred and signal it. The error is stored in the global var "last_error". After the function returned
- * the internal MQL error code as returned by GetLastError() is always reset.
+ * Check whether an error occurred and handle it. If an error occurred the error is signaled and stored in the global var
+ * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
  *
- * @param  string location            - the error's location identifier incl. optional message
- * @param  int    error    [optional] - enforce a specific error (default: none)
- * @param  bool   orderPop [optional] - whether the last order context should be restored from the order context stack (default: no)
+ * @param  string location            - the error's location identifier and/or an error message
+ * @param  int    error    [optional] - enforces a specific error (default: no)
+ * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
  *
  * @return int - the same error
  */
@@ -107,7 +106,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       }
 
       // set last_error
-      SetLastError(error, NULL);
+      SetLastError(error);
       recursiveCall = false;
    }
 
@@ -138,12 +137,11 @@ int warn(string message, int error = NO_ERROR) {
 
    // log the warning
    string name = __NAME();
-   bool logged, alerted;
+   bool logged=false, alerted=false;
    if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                          // custom log, on error fall-back to terminal log
       logged = logged || LogMessageA(__ExecutionContext, "WARN: "+ name +"::"+ message, error);
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message); // terminal log
-      logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
    message = name +"::"+ message;
@@ -162,10 +160,7 @@ int warn(string message, int error = NO_ERROR) {
    }
    else {
       message = "WARN:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
-      if (!alerted) {
-         Alert(message);
-         alerted = true;
-      }
+      if (!alerted) Alert(message);
       if (IsExpert()) {
          string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
          if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
@@ -212,13 +207,26 @@ int log(string message, int error = NO_ERROR) {
 
 
 /**
- * Set the last error code of the module. If called in a library the error will bubble up to the program's main module. If called in an
- * indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR will never bubble up.
+ * Configure the use of a custom logfile (simple wrapper for the Expander function).
+ *
+ * @param  string filename - full filename to enable or an empty string to disable custom logging
+ *
+ * @return bool - success status
+ */
+bool SetCustomLog(string filename) {
+   return(SetCustomLogA(__ExecutionContext, filename));
+}
+
+
+/**
+ * Set the last error code of the MQL module. If called in a library the error will bubble up to the program's main module.
+ * If called in an indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR
+ * will never bubble up.
  *
  * @param  int error            - error code
- * @param  int param [optional] - ignored, any value (default: none)
+ * @param  int param [optional] - any value (not processed)
  *
- * @return int - the same error code (for chaining)
+ * @return int - the same error
  */
 int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
@@ -226,6 +234,20 @@ int SetLastError(int error, int param = NULL) {
    if (error != NO_ERROR) /*&&*/ if (IsExpert())
       CheckErrors("SetLastError(1)");                             // update __STATUS_OFF in experts
    return(error);
+
+
+   logger_catch(NULL);
+   logger_debug(NULL);
+   logger_log(NULL);
+
+   logDebug(NULL);
+   logInfo(NULL);
+   logNotice(NULL);
+   logWarn(NULL);
+   logError(NULL);
+   logFatal(NULL);
+
+   log2Mail(NULL);
 }
 
 
@@ -1112,7 +1134,7 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
 
 /**
  * Whether logging in general is enabled (read from the configuration). By default online logging is enabled and offline
- * logging (tester) is disabled. Called only from init.GlobalVars().
+ * logging (tester) is disabled. Called only from initGlobalVars().
  *
  * @return bool
  */
@@ -6861,6 +6883,7 @@ void __DummyCalls() {
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
+   SetCustomLog(NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);

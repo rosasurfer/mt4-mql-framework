@@ -567,7 +567,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
    // suppress compiler warnings
    __DummyCalls();
-   SetCustomLog(NULL);
 }
 
 
@@ -599,18 +598,6 @@ bool EventListener_ChartCommand(string &commands[]) {
 }
 
 
-/**
- * Configure the use of a custom logfile.
- *
- * @param  string filename - name of a custom logfile or an empty string to disable custom logging
- *
- * @return bool - success status
- */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
-}
-
-
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -624,7 +611,6 @@ bool SetCustomLog(string filename) {
    bool   ec_SetLogToDebugEnabled   (int ec[], int status  );
    bool   ec_SetLogToTerminalEnabled(int ec[], int status  );
    int    ec_SetProgramCoreFunction (int ec[], int function);
-   bool   SetCustomLogA             (int ec[], string file);
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
