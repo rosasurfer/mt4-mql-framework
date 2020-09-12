@@ -19,14 +19,14 @@
 
 
 // log level
-#define L_OFF                          0x80000000        // same as INT_MIN which in C++ is internally defined
-#define L_FATAL                             10000        //
-#define L_ERROR                             20000        // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
-#define L_WARN                              30000        // or more simple:          if (__LOG_DEBUG)              debug(...);
-#define L_INFO                              40000        //
-#define L_NOTICE                            50000        //
-#define L_DEBUG                             60000        //
-#define L_ALL                          0x7FFFFFFF        // same as INT_MAX which in C++ is internally defined
+#define LOG_ALL                                 0        // levels can be used to filter log messages
+#define LOG_DEBUG                               1        //
+#define LOG_INFO                                2        // if (msg_level >= log_level) log(...);
+#define LOG_NOTICE                              4
+#define LOG_WARN                                8
+#define LOG_ERROR                              16
+#define LOG_FATAL                              32
+#define LOG_OFF                           INT_MAX
 
 
 // MQL module type flags
