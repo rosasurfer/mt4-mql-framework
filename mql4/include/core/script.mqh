@@ -45,7 +45,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!init.GlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -82,7 +82,7 @@ int init() {
  *
  * @return bool - success status
  */
-bool init.GlobalVars() {
+bool initGlobalVars() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -102,7 +102,7 @@ bool init.GlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("init.GlobalVars(1)"));
+   return(!catch("initGlobalVars(1)"));
 }
 
 

@@ -57,7 +57,7 @@ int init() {
 
 
    // (2) finish initialization
-   if (!init.GlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) execute custom init tasks
@@ -167,7 +167,7 @@ int init() {
  *
  * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
  */
-bool init.GlobalVars() {
+bool initGlobalVars() {
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
    //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
@@ -208,7 +208,7 @@ bool init.GlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("init.GlobalVars(1)"));
+   return(!catch("initGlobalVars(1)"));
 }
 
 
