@@ -74,18 +74,13 @@ int logger_debug(string message, int error = NO_ERROR) {
  * @return int - the same error
  */
 int logger_log(string message, int error=NO_ERROR, int level=LOG_INFO) {
-   if (level >= LOG_WARN) Alert(message, error, level);
+   log2Alert(message, error, level);
 
-   // ...
+   // log2Terminal()
+   // log2Custom()
 
-   if (level == LOG_WARN) {
-      //if (isWarn2Mail) MailAppender(message, error, level);
-      //if (isWarn2SMS)  SMSAppender(message, error, level);
-   }
-   else if (level == LOG_ERROR) {
-      //if (isError2Mail) MailAppender(message, error, level);
-      //if (isError2SMS)  SMSAppender(message, error, level);
-   }
+   log2Mail(message, error, level);
+   log2SMS(message, error, level);
    return(error);
 }
 
@@ -169,18 +164,107 @@ int logFatal(string message, int error = NO_ERROR) {
 
 
 /**
- * Send a log message to the mail appender.
+ * Send a log message to the terminal's alerting system.
  *
- * @param  string message          - log message
- * @param  int    error [optional] - error linked to the message (default: none)
- * @param  int    level [optional] - log level of the message (default: LOG_INFO)
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
  *
  * @return int - the same error
  */
-int log2Mail(string message, int error=NO_ERROR, int level=LOG_INFO) {
+int log2Alert(string message, int error, int level) {
+   int alertLevel = LOG_WARN;
 
-   // ERROR:   GBPJPY,M5  Duel::rsfLib1::OrderSendEx(27)  error while trying to Stop Buy 0.01 GBPJPY "Duel.L.2911.+17" at 136.08'8, stop distance=0 pip (market: 136.11'0/136.11'5) after 0.609 s  [ERR_INVALID_STOP]
-   // (13:29:01, ICM-DM-EUR)
+   if (level >= alertLevel) {
+      Alert(message, error, level);
+   }
+   return(error);
+}
 
+
+/**
+ * Send a log message to the debug output appender.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error
+ */
+int log2Debug(string message, int error, int level) {
+   int debugLevel = LOG_WARN;
+
+   if (level >= debugLevel) {
+      //debug(message, error, level);
+   }
+   return(error);
+}
+
+
+/**
+ * Send a log message to the mail appender.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error
+ */
+int log2Mail(string message, int error, int level) {
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");   // send to terminal log instead
+      return(error);
+   }
+   isRecursion = true;
+   string sender="", receiver="", symbol="", sTimeframe="", sAccountAlias="";
+
+   // read the configuration on first usage
+   static int configLevel = EMPTY; if (configLevel == EMPTY) {
+      string sValue = GetConfigString("Log", "Log2Mail", "off");
+      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+
+      if (configLevel != EMPTY) {                                          // logging to mail is enabled
+         sender   = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
+         receiver = GetConfigString("Mail", "Receiver");
+         if (!StrIsEmailAddress(sender))   configLevel = _int(LOG_OFF, catch("log2Mail(2)  invalid mail sender address configuration [Mail]->Sender = "+ sender, ERR_INVALID_CONFIG_VALUE));
+         if (!StrIsEmailAddress(receiver)) configLevel = _int(LOG_OFF, catch("log2Mail(3)  invalid mail receiver address configuration [Mail]->Receiver = "+ receiver, ERR_INVALID_CONFIG_VALUE));
+         symbol        = Symbol();
+         sTimeframe    = PeriodDescription(Period());
+         sAccountAlias = GetAccountAlias();
+      }
+      else configLevel = _int(LOG_OFF, catch("log2Mail(4)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+   }
+
+   // apply the configured loglevel filter
+   if (level >= configLevel) {
+      message = LogLevelDescription(level) +":  "+ symbol +","+ sTimeframe +"  "+ __NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      string subject = message;
+      string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ sAccountAlias +")";
+
+      if (!SendEmail(sender, receiver, subject, body)) {
+         configLevel = LOG_OFF;                                            // disable the mail appender if sending failed
+      }
+   }
+
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Send a log message to the SMS appender.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error
+ */
+int log2SMS(string message, int error, int level) {
+   int smsLevel = LOG_ERROR;
+
+   if (level >= smsLevel) {
+      //SMSAppender(message, error, level);
+   }
    return(error);
 }

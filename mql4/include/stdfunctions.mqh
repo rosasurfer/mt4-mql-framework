@@ -100,7 +100,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          }
          if (IsExpert()) {
             string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-            if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
+            //if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
             if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
       }
@@ -163,7 +163,7 @@ int warn(string message, int error = NO_ERROR) {
       if (!alerted) Alert(message);
       if (IsExpert()) {
          string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-         if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
+         //if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
          if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
    }
@@ -247,7 +247,10 @@ int SetLastError(int error, int param = NULL) {
    logError(NULL);
    logFatal(NULL);
 
-   log2Mail(NULL);
+   log2Alert(NULL, NULL, NULL);
+   log2Debug(NULL, NULL, NULL);
+   log2Mail(NULL, NULL, NULL);
+   log2SMS(NULL, NULL, NULL);
 }
 
 
@@ -2356,6 +2359,44 @@ int ArrayUnshiftString(string array[], string value) {
    int size = ArrayPushString(array, value);
    ReverseStringArray(array);
    return(size);
+}
+
+
+/**
+ * Return the integer constant of a loglevel identifier.
+ *
+ * @param  string value            - loglevel identifier: LOG_DEBUG | LOG_INFO | LOG_NOTICE...
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
+ *
+ * @return int - loglevel constant oder -1 (EMPTY) in case of errors
+ */
+int StrToLogLevel(string value, int flags = NULL) {
+   string str = StrToUpper(StrTrim(value));
+
+   if (StrStartsWith(str, "LOG_"))
+      str = StrSubstr(str, 4);
+
+   if (str ==        "ALL"   ) return(LOG_ALL   );
+   if (str == ""+ LOG_ALL    ) return(LOG_ALL   );
+   if (str ==        "DEBUG" ) return(LOG_DEBUG );
+   if (str == ""+ LOG_DEBUG  ) return(LOG_DEBUG );
+   if (str ==        "INFO"  ) return(LOG_INFO  );
+   if (str == ""+ LOG_INFO   ) return(LOG_INFO  );
+   if (str ==        "NOTICE") return(LOG_NOTICE);
+   if (str == ""+ LOG_NOTICE ) return(LOG_NOTICE);
+   if (str ==        "WARN"  ) return(LOG_WARN  );
+   if (str == ""+ LOG_WARN   ) return(LOG_WARN  );
+   if (str ==        "ERROR" ) return(LOG_ERROR );
+   if (str == ""+ LOG_ERROR  ) return(LOG_ERROR );
+   if (str ==        "FATAL" ) return(LOG_FATAL );
+   if (str == ""+ LOG_FATAL  ) return(LOG_FATAL );
+   if (str ==        "OFF"   ) return(LOG_OFF   );
+   if (str == ""+ LOG_OFF    ) return(LOG_OFF   );
+
+   if (flags & F_ERR_INVALID_PARAMETER && 1)
+      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   return(_EMPTY(catch("StrToLogLevel(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5196,13 +5237,35 @@ datetime ParseDateTime(string value) {
 
 
 /**
+ * Return the description of a loglevel constant.
+ *
+ * @param  int level - loglevel
+ *
+ * @return string
+ */
+string LogLevelDescription(int level) {
+   switch (level) {
+      case LOG_ALL   : return("ALL"   );
+      case LOG_DEBUG : return("DEBUG" );
+      case LOG_INFO  : return("INFO"  );
+      case LOG_NOTICE: return("NOTICE");
+      case LOG_WARN  : return("WARN"  );
+      case LOG_ERROR : return("ERROR" );
+      case LOG_FATAL : return("FATAL" );
+      case LOG_OFF   : return("OFF"   );
+   }
+   return(""+ level);
+}
+
+
+/**
  * Return the description of a timeframe identifier. Supports custom timeframes.
  *
  * @param  int period - timeframe identifier or amount of minutes per bar period
  *
  * @return string
  *
- * Note: Implemented in MQL and the MT4Expander to be available if DLL calls are disabled.
+ * Note: Implemented in MQL and in MT4Expander to be available if DLL calls are disabled.
  */
 string PeriodDescription(int period) {
    if (!period) period = Period();
@@ -5559,9 +5622,8 @@ int StrToPeriod(string value, int flags = NULL) {
       if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );
    }
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1) {
+   if (flags & F_ERR_INVALID_PARAMETER && 1)
       return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
-   }
    return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
 }
 
@@ -5913,38 +5975,6 @@ double NormalizeLots(double lots, string symbol = "") {
 
 
 /**
- * Initialize the status of logging warnings to email (available for experts only).
- *
- * @return bool - whether warning logging to email is enabled
- */
-bool init.LogWarningsToMail() {
-   __LOG_WARN.mail          = false;
-   __LOG_WARN.mail.sender   = "";
-   __LOG_WARN.mail.receiver = "";
-
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "WarnToMail")) {
-      // enabled
-      string mailSection = "Mail";
-      string senderKey   = "Sender";
-      string receiverKey = "Receiver";
-
-      string defaultSender = "mt4@"+ GetHostName() +".localdomain";
-      string sender        = GetConfigString(mailSection, senderKey, defaultSender);
-      if (!StrIsEmailAddress(sender))   return(!catch("init.LogWarningsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_VALUE));
-
-      string receiver = GetConfigString(mailSection, receiverKey);
-      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogWarningsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
-
-      __LOG_WARN.mail          = true;
-      __LOG_WARN.mail.sender   = sender;
-      __LOG_WARN.mail.receiver = receiver;
-      return(true);
-   }
-   return(false);
-}
-
-
-/**
  * Initialize the status of logging warnings to text message (available for experts only).
  *
  * @return bool - whether warning logging to text message is enabled
@@ -5963,38 +5993,6 @@ bool init.LogWarningsToSMS() {
 
       __LOG_WARN.sms          = true;
       __LOG_WARN.sms.receiver = receiver;
-      return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Initialize the status of logging errors to email (available for experts only).
- *
- * @return bool - whether error logging to email is enabled
- */
-bool init.LogErrorsToMail() {
-   __LOG_ERROR.mail          = false;
-   __LOG_ERROR.mail.sender   = "";
-   __LOG_ERROR.mail.receiver = "";
-
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "ErrorToMail")) {
-      // enabled
-      string mailSection = "Mail";
-      string senderKey   = "Sender";
-      string receiverKey = "Receiver";
-
-      string defaultSender = "mt4@"+ GetHostName() +".localdomain";
-      string sender        = GetConfigString(mailSection, senderKey, defaultSender);
-      if (!StrIsEmailAddress(sender))   return(!catch("init.LogErrorsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_VALUE));
-
-      string receiver = GetConfigString(mailSection, receiverKey);
-      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogErrorsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
-
-      __LOG_ERROR.mail          = true;
-      __LOG_ERROR.mail.sender   = sender;
-      __LOG_ERROR.mail.receiver = receiver;
       return(true);
    }
    return(false);
@@ -6806,9 +6804,7 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    init.IsLogEnabled();
-   init.LogErrorsToMail();
    init.LogErrorsToSMS();
-   init.LogWarningsToMail();
    init.LogWarningsToSMS();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
@@ -6839,6 +6835,7 @@ void __DummyCalls() {
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
+   LogLevelDescription(NULL);
    LogTicket(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
@@ -6914,6 +6911,7 @@ void __DummyCalls() {
    StrSubstr(NULL, NULL);
    StrToBool(NULL);
    StrToHexStr(NULL);
+   StrToLogLevel(NULL);
    StrToLower(NULL);
    StrToMaMethod(NULL);
    StrToOperationType(NULL);
