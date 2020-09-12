@@ -14,7 +14,6 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                    // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
 
-int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_WARN.mail;                                   // whether warnings are logged to email
 string   __LOG_WARN.mail.sender;                            // warning mail sender
 string   __LOG_WARN.mail.receiver;                          // warning mail receiver
