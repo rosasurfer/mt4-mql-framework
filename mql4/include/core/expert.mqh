@@ -231,10 +231,8 @@ bool initGlobalVars() {
    ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "LogToDebug", true));
    ec_SetLogToTerminalEnabled(__ExecutionContext, true);
 
-   __LOG_WARN.mail  = init.LogWarningsToMail();
-   __LOG_WARN.sms   = init.LogWarningsToSMS();
-   __LOG_ERROR.mail = init.LogErrorsToMail();
-   __LOG_ERROR.sms  = init.LogErrorsToSMS();
+   __LOG_WARN.sms  = init.LogWarningsToSMS();
+   __LOG_ERROR.sms = init.LogErrorsToSMS();
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
