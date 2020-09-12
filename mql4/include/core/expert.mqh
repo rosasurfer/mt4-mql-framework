@@ -228,7 +228,7 @@ bool initGlobalVars() {
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
    ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Logging", "LogToDebug", true));
+   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "LogToDebug", true));
    ec_SetLogToTerminalEnabled(__ExecutionContext, true);
 
    __LOG_WARN.mail  = init.LogWarningsToMail();

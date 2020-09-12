@@ -1140,8 +1140,8 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
  */
 bool init.IsLogEnabled() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "Tester", false));                         // tester: default=off
-   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // online: default=on
+      return(GetConfigBool("Log", "Tester", false));                                // tester: default=off
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));      // online: default=on
 }
 
 
@@ -5922,7 +5922,7 @@ bool init.LogWarningsToMail() {
    __LOG_WARN.mail.sender   = "";
    __LOG_WARN.mail.receiver = "";
 
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "WarnToMail")) {    // available for experts only
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "WarnToMail")) {
       // enabled
       string mailSection = "Mail";
       string senderKey   = "Sender";
@@ -5953,7 +5953,7 @@ bool init.LogWarningsToSMS() {
    __LOG_WARN.sms          = false;
    __LOG_WARN.sms.receiver = "";
 
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "WarnToSMS")) {     // available for experts only
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "WarnToSMS")) {
       // enabled
       string smsSection  = "SMS";
       string receiverKey = "Receiver";
@@ -5979,7 +5979,7 @@ bool init.LogErrorsToMail() {
    __LOG_ERROR.mail.sender   = "";
    __LOG_ERROR.mail.receiver = "";
 
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "ErrorToMail")) {   // available for experts only
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "ErrorToMail")) {
       // enabled
       string mailSection = "Mail";
       string senderKey   = "Sender";
@@ -6010,7 +6010,7 @@ bool init.LogErrorsToSMS() {
    __LOG_ERROR.sms          = false;
    __LOG_ERROR.sms.receiver = "";
 
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "ErrorToSMS")) {    // available for experts only
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "ErrorToSMS")) {
       // enabled
       string smsSection  = "SMS";
       string receiverKey = "Receiver";
