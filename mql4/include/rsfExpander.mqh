@@ -30,6 +30,7 @@
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
+   //int    LeaveContext(int ec[]);
    bool     TerminalIsPortableMode();
    int      WM_MT4();
 
@@ -82,7 +83,8 @@
    bool     IsSymlinkA(string name);
 
    // logging
-   bool     LogMessageA(int ec[], string message, int error);
+   bool     LogMessageA  (int ec[], string message, int error);
+   bool     SetCustomLogA(int ec[], string file);
 
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
@@ -126,7 +128,6 @@
    string   OperationTypeToStr(int type);
    string   OrderTypeDescription(int type);           // alias
    string   OrderTypeToStr(int type);                 // alias
-   //string PeriodDescription(int period);            // also implemented in MQL
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);

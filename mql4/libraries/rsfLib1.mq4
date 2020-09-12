@@ -4076,11 +4076,6 @@ string IntegerToBinaryStr(int integer) {
 }
 
 
-#import "test/testlibrary.ex4"
-   int ex4_GetIntValue(int value);
-#import
-
-
 /**
  * Gibt die nächstkleinere Periode der angegebenen Periode zurück.
  *
@@ -4866,10 +4861,10 @@ color ModifyColor(color rgb, double hue, double saturation, double lightness) {
 
 
 /**
- * Konvertiert einen Double mit bis zu 16 Nachkommastellen in einen String.
+ * Convert a double to a string with up to 16 decimal digits.
  *
- * @param  double value  - zu konvertierender Wert
- * @param  int    digits - Anzahl von Nachkommastellen
+ * @param  double value  - value
+ * @param  int    digits - number of decimals
  *
  * @return string
  */

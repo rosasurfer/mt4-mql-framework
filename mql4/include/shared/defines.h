@@ -19,9 +19,9 @@
 
 
 // log level
-#define LOG_ALL                                 0        // levels can be used to filter log messages
-#define LOG_DEBUG                               1        //
-#define LOG_INFO                                2        // if (msg_level >= log_level) log(...);
+#define LOG_ALL                                 0        // to filter log messages:
+#define LOG_DEBUG                               1        // if (msg_level >= log_level) log(...);
+#define LOG_INFO                                2
 #define LOG_NOTICE                              4
 #define LOG_WARN                                8
 #define LOG_ERROR                              16
