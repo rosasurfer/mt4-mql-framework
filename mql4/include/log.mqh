@@ -229,7 +229,7 @@ int log2Debugger(string message, int error, int level) {
 
    // read the configuration on first usage
    static int configLevel = EMPTY; if (configLevel == EMPTY) {
-      string sValue = GetConfigString("Log", "Log2Debugger", "all");          // default: all
+      string sValue = GetConfigString("Log", "Log2Debugger", "off");          // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (configLevel == EMPTY) configLevel = _int(LOG_OFF, catch("log2Debugger(2)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
    }
@@ -254,6 +254,22 @@ int log2Debugger(string message, int error, int level) {
  * @return int - the same error
  */
 int log2File(string message, int error, int level) {
+   // note: to only initialize the appender send a message of level LOG_OFF
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log2File(1)  recursion (", message, "error: ", error, ")");      // should never happen, directly alert instead
+      return(error);
+   }
+   isRecursion = true;
+
+   bool enabled = (__ExecutionContext[EC.logToCustomEnabled] != 0);
+   int configLevel = __ExecutionContext[EC.logToCustomEnabled];               // TODO
+
+   // apply the configured loglevel filter
+   if (enabled && level >= configLevel && level!=LOG_OFF) {
+      LogMessageA(__ExecutionContext, message, error, level);
+   }
+
+   isRecursion = false;
    return(error);
 }
 

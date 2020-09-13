@@ -83,7 +83,7 @@
    bool     IsSymlinkA(string name);
 
    // logging
-   bool     LogMessageA  (int ec[], string message, int error);
+   bool     LogMessageA  (int ec[], string message, int error, int level);
    bool     SetCustomLogA(int ec[], string file);
 
    // pointer and memory helpers

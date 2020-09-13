@@ -62,11 +62,10 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       if (recursiveCall) return(debug("catch(1)  recursive call: "+ location, error));
       recursiveCall = true;
 
-      // log to custom log or the terminal
-      string message = location +"  ["+ ErrorToStr(error) +"]";
-      if (!__ExecutionContext[EC.logToCustomEnabled]) Print("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", __NAME(), "::", message);
-      else                                            LogMessageA(__ExecutionContext, "ERROR: "+ __NAME() +"::"+ message, error);
-
+      if (__ExecutionContext[EC.logToCustomEnabled] != 0) {
+         LogMessageA(__ExecutionContext, "ERROR: "+ __NAME() +"::"+ location, error, LOG_ERROR);
+      }
+      log2Terminal(location, error, LOG_ERROR);
       log2Alert(location, error, LOG_ERROR);
       log2Debugger(location, error, LOG_ERROR);
       log2Mail(location, error, LOG_ERROR);
@@ -84,25 +83,24 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 /**
  * Show a warning with an optional error but don't set the error.
  *
- * @param  string location         - location identifier and/or warning message
+ * @param  string message          - location identifier and/or warning message
  * @param  int    error [optional] - error to display (default: none)
  *
  * @return int - the same error
  */
-int warn(string location, int error = NO_ERROR) {
+int warn(string message, int error = NO_ERROR) {
    static bool recursiveCall = false;
-   if (recursiveCall) return(debug("warn(1)  recursive call: "+ location, error));
+   if (recursiveCall) return(debug("warn(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
-   // log to custom log or the terminal
-   string message = location + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
-   if (!__ExecutionContext[EC.logToCustomEnabled]) Print("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", __NAME(), "::", message);
-   else                                            LogMessageA(__ExecutionContext, "WARN: "+ __NAME() +"::"+ message, error);
-
-   log2Alert(location, error, LOG_WARN);
-   log2Debugger(location, error, LOG_WARN);
-   log2Mail(location, error, LOG_WARN);
-   log2SMS(location, error, LOG_WARN);
+   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {
+      LogMessageA(__ExecutionContext, "WARN: "+ __NAME() +"::"+ message, error, LOG_WARN);
+   }
+   log2Terminal(message, error, LOG_WARN);
+   log2Alert(message, error, LOG_WARN);
+   log2Debugger(message, error, LOG_WARN);
+   log2Mail(message, error, LOG_WARN);
+   log2SMS(message, error, LOG_WARN);
 
    recursiveCall = false;
    return(error);
@@ -134,7 +132,7 @@ int log(string message, int error = NO_ERROR) {
       Print(__NAME(), "::", StrReplace(message, NL, " "), sError);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {             // send the message to a custom logger
-      LogMessageA(__ExecutionContext, message, error);
+      LogMessageA(__ExecutionContext, message, error, LOG_INFO);
    }
 
    recursiveCall = false;
