@@ -33,8 +33,8 @@
  * @see  https://www.mql5.com/en/code/8997                                                                   [FGDI with fixed FDI issues, LastViking]
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 

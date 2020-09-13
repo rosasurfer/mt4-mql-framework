@@ -26,7 +26,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=EMPTY) {
    if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");
    else                  sApp = sLoglevel +"MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -51,7 +51,7 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
    static bool isRecursion = false; if (isRecursion) {
       string msg = "catch(1)  recursion ("+ location +")";
-      Alert(msg, ", error: ", error);                                               // should never happen
+      Alert(msg, ", error: ", error);                       // should never happen
       return(debug(msg, error, LOG_ERROR));
    }
    isRecursion = true;
@@ -77,11 +77,12 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - the same error
  */
 int logger_log(string message, int error, int level) {
-   log2Terminal(message, error, level);
-   log2File(message, error, level);
-   log2Alert(message, error, level);
-   log2Mail(message, error, level);
-   log2SMS(message, error, level);
+   log2Terminal(message, error, level);            // all fast appenders first
+   log2Debugger(message, error, level);            // ...
+   log2File(message, error, level);                // ...
+   log2Alert(message, error, level);               // after fast appenders as it can block the executing thread in tester
+   log2Mail(message, error, level);                // all slow appenders last (launches a new process)
+   log2SMS(message, error, level);                 // ...
    return(error);
 }
 
@@ -199,7 +200,7 @@ int log2Alert(string message, int error, int level) {
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
       }
       else {
-         Alert(LogLevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(Period()), "  ", __NAME(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+         Alert(LogLevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(Period()), "  ", NAME(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
       }
    }
 
@@ -306,7 +307,7 @@ int log2Mail(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      message = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ __NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      message = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = message;
       string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -352,7 +353,7 @@ int log2SMS(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      string text = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ __NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      string text = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (!SendSMS(receiver, text + NL + accountTime)) {

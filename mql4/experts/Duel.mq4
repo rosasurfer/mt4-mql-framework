@@ -20,8 +20,8 @@
  * @todo  in tester generate consecutive sequence ids
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -217,7 +217,7 @@ bool IsStopSignal() {
       if (sequence.totalPL >= tpAbs.value) {
          message = "IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ tpAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
          if (!IsTesting()) warn(message);
-         else if (__LOG()) log(message);
+         else if (IsLog()) log(message);
          tpAbs.condition = false;
          return(true);
       }
@@ -231,7 +231,7 @@ bool IsStopSignal() {
       if (sequence.totalPL >= tpPct.absValue) {
          message = "IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ tpPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
          if (!IsTesting()) warn(message);
-         else if (__LOG()) log(message);
+         else if (IsLog()) log(message);
          tpPct.condition = false;
          return(true);
       }
@@ -242,7 +242,7 @@ bool IsStopSignal() {
       if (sequence.totalPL <= slAbs.value) {
          message = "IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ slAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
          if (!IsTesting()) warn(message);
-         else if (__LOG()) log(message);
+         else if (IsLog()) log(message);
          slAbs.condition = false;
          return(true);
       }
@@ -257,7 +257,7 @@ bool IsStopSignal() {
       if (sequence.totalPL <= slPct.absValue) {
          message = "IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
          if (!IsTesting()) warn(message);
-         else if (__LOG()) log(message);
+         else if (IsLog()) log(message);
          slPct.condition = false;
          return(true);
       }
@@ -274,7 +274,7 @@ bool IsStopSignal() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (__LOG()) log("StartSequence(2)  "+ sequence.name +" starting sequence...");
+   if (IsLog()) log("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
@@ -297,7 +297,7 @@ bool StartSequence() {
 
    if (!UpdateOrders()) return(false);                                  // update pending orders
 
-   if (__LOG()) log("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLog()) log("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
 }
 
@@ -379,7 +379,7 @@ bool StopSequence() {
 
    sequence.status = STATUS_STOPPED;
    SS.StopConditions();
-   if (__LOG()) log("StopSequence(4)  "+ sequence.name +" sequence stopped");
+   if (IsLog()) log("StopSequence(4)  "+ sequence.name +" sequence stopped");
 
    // pause/stop the tester according to the debug configuration
    if (IsTesting()) {
@@ -448,7 +448,7 @@ bool UpdateStatus_(int direction, bool &gridChanged, double &totalLots, double &
             commissions[i] = OrderCommission();
             profits    [i] = OrderProfit();
 
-            if (__LOG()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
+            if (IsLog()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
             minLevel    = MathMin(levels[i], minLevel);
             maxLevel    = MathMax(levels[i], maxLevel);
             totalLots  += lots[i];
@@ -1006,7 +1006,7 @@ string StatusDescription(int status) {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   if (!__CHART()) return(error);
+   if (!IsChart()) return(error);
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.directions) {
@@ -1026,7 +1026,7 @@ int ShowStatus(int error = NO_ERROR) {
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   string msg = StringConcatenate(__NAME(), "               ", sSequence, sError,                                  NL,
+   string msg = StringConcatenate(NAME(), "               ", sSequence, sError,                                  NL,
                                                                                                                    NL,
                                   "Grid:              ",       GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
                                   "UnitSize:        ",         sUnitSize,                                          NL,
@@ -1053,7 +1053,7 @@ int ShowStatus(int error = NO_ERROR) {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (__CHART()) {
+   if (IsChart()) {
       SS.SequenceName();
       SS.GridBase();
       SS.UnitSize();
@@ -1072,7 +1072,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the grid base.
  */
 void SS.GridBase() {
-   if (__CHART()) {
+   if (IsChart()) {
       sGridBase = "";
       if (!sequence.gridbase) return;
       sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
@@ -1084,7 +1084,7 @@ void SS.GridBase() {
  * ShowStatus: Update the string representation of "sequence.maxDrawdown".
  */
 void SS.MaxDrawdown() {
-   if (__CHART()) {
+   if (IsChart()) {
       if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
       else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
       SS.PLStats();
@@ -1096,7 +1096,7 @@ void SS.MaxDrawdown() {
  * ShowStatus: Update the string representation of "sequence.maxProfit".
  */
 void SS.MaxProfit() {
-   if (__CHART()) {
+   if (IsChart()) {
       if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
       else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
       SS.PLStats();
@@ -1108,7 +1108,7 @@ void SS.MaxProfit() {
  * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
-   if (__CHART()) {
+   if (IsChart()) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
          sSequencePlStats = StringConcatenate("  (", sSequenceMaxProfit, "/", sSequenceMaxDrawdown, ")");
       }
@@ -1121,7 +1121,7 @@ void SS.PLStats() {
  * ShowStatus: Update the string representations of standard and long sequence name.
  */
 void SS.SequenceName() {
-   if (__CHART()) {
+   if (IsChart()) {
       sequence.name = "";
       if (long.enabled)  sequence.name = sequence.name +"L";
       if (short.enabled) sequence.name = sequence.name +"S";
@@ -1134,7 +1134,7 @@ void SS.SequenceName() {
  * ShowStatus: Update the string representation of the configured stop conditions.
  */
 void SS.StopConditions() {
-   if (__CHART()) {
+   if (IsChart()) {
       string sValue = "";
       if (tpAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " || ") + ifString(tpAbs.condition, "@", "!") + tpAbs.description;
@@ -1158,7 +1158,7 @@ void SS.StopConditions() {
  * ShowStatus: Update the string representation of "long.totalLots", "short.totalLots" and "sequence.totalLots".
  */
 void SS.TotalLots() {
-   if (__CHART()) {
+   if (IsChart()) {
       if (!long.totalLots) sLongLots = "-";
       else                 sLongLots = NumberToStr(long.totalLots, "+.+") +" lot at level "+ long.maxLevel + ifString(long.slippage, ", slippage: "+ DoubleToStr(long.slippage, 1) +" pip", "");
 
@@ -1176,7 +1176,7 @@ void SS.TotalLots() {
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
-   if (__CHART()) {
+   if (IsChart()) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
          if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
          else                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
@@ -1190,7 +1190,7 @@ void SS.TotalPL() {
  * ShowStatus: Update the string representation of the unitsize.
  */
 void SS.UnitSize() {
-   if (__CHART()) {
+   if (IsChart()) {
       sUnitSize = NumberToStr(sequence.unitsize, ".+") +" lot";
    }
 }
@@ -1203,14 +1203,14 @@ void SS.UnitSize() {
  * @return int - error status
  */
 int CreateStatusBox() {
-   if (!__CHART()) return(NO_ERROR);
+   if (!IsChart()) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=83, rectangles=ArraySize(x);   // 75
    color  bgColor = LemonChiffon;                                       // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
    for (int i=0; i < rectangles; i++) {
-      label = __NAME() +".statusbox."+ (i+1);
+      label = NAME() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
          RegisterObject(label);

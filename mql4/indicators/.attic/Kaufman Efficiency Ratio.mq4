@@ -4,8 +4,8 @@
  * Ratio between the amount price moved in one way (direction) to the amount price moved in any way (volatility).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -155,7 +155,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt(__NAME() +".input.Periods", Periods);
+   Chart.StoreInt(NAME() +".input.Periods", Periods);
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -166,7 +166,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt(__NAME() +".input.Periods", Periods);
+   Chart.RestoreInt(NAME() +".input.Periods", Periods);
    return(!catch("RestoreInputParameters(1)"));
 }
 

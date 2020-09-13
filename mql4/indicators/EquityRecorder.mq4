@@ -4,8 +4,8 @@
  * Records the current account's equity curve. The actual value is adjusted for duplicated trading costs (fees and spreads).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 

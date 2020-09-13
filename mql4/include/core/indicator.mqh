@@ -40,7 +40,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -57,7 +57,7 @@ int init() {
 
 
    // (2) finish initialization
-   if (!initGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) execute custom init tasks
@@ -86,7 +86,7 @@ int init() {
 
    // (4) before onInit(): if loaded by iCustom() log original input parameters
    string initialInput = "";
-   if (IsSuperContext() && __LOG()) {
+   if (IsSuperContext() && IsLog()) {
       //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
@@ -140,7 +140,7 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
    // (6) after onInit(): if loaded by iCustom() log modified input parameters
-   if (IsSuperContext() && __LOG()) {
+   if (IsSuperContext() && IsLog()) {
       string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
@@ -161,13 +161,13 @@ int init() {
 
 
 /**
- * Update global variables and the indicator's EXECUTION_CONTEXT.
+ * Update global variables and the indicator's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  *
- * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
+ * Note: The memory location of an indicator's EXECUTION_CONTEXT changes on every init cycle.
  */
-bool initGlobalVars() {
+bool initContext() {
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
    //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
@@ -203,7 +203,7 @@ bool initGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("initGlobalVars(1)"));
+   return(!catch("initContext(1)"));
 }
 
 
@@ -573,10 +573,10 @@ bool CheckErrors(string location, int setError = NULL) {
  * @return bool
  */
 bool EventListener_ChartCommand(string &commands[]) {
-   if (!__CHART()) return(false);
+   if (!IsChart()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
-      label = __NAME() +".command";
+      label = NAME() +".command";
       mutex = "mutex."+ label;
    }
 

@@ -22,8 +22,8 @@
  *    - check required run-up period
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -231,7 +231,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.StoreInt   (name +".input.Fisher.Periods",        Fisher.Periods       );
    Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
@@ -246,7 +246,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.RestoreInt  (name +".input.Fisher.Periods",        Fisher.Periods       );
    Chart.RestoreColor(name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.RestoreColor(name +".input.Histogram.Color.Lower", Histogram.Color.Lower);

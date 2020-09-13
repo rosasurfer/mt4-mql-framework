@@ -71,7 +71,7 @@ int onInitUser() {
    short.enabled    = (sequence.directions & D_SHORT && 1);
    SS.SequenceName();
 
-   if (__LOG()) log("onInitUser(8)  sequence "+ sequence.name +" created");
+   if (IsLog()) log("onInitUser(8)  sequence "+ sequence.name +" created");
    return(catch("onInitUser(9)"));
 }
 
@@ -86,7 +86,7 @@ int afterInit() {
    SS.All();
 
    if (IsTesting()) {                                    // initialize tester configuration
-      string section = __NAME() +".Tester";
+      string section = NAME() +".Tester";
       tester.onStopPause = GetConfigBool(section, "OnStopPause", false);
    }
    return(catch("afterInit(1)"));

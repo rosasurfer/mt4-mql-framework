@@ -8,8 +8,8 @@
  *    number of completed range bars per time. The displayed unit is "pip", that's range bars of 1 pip size.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -181,7 +181,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.StoreInt   (name +".input.Vola.Periods", Vola.Periods);
    Chart.StoreString(name +".input.Vola.Type",    Vola.Type   );
    return(!catch("StoreInputParameters(1)"));
@@ -194,7 +194,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.RestoreInt   (name +".input.Vola.Periods", Vola.Periods);
    Chart.RestoreString(name +".input.Vola.Type",    Vola.Type   );
    return(!catch("RestoreInputParameters(1)"));

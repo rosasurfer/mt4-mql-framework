@@ -30,7 +30,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       recursiveCall = true;
 
       if (__ExecutionContext[EC.logToCustomEnabled] != 0) {
-         LogMessageA(__ExecutionContext, "ERROR: "+ __NAME() +"::"+ location, error, LOG_ERROR);
+         LogMessageA(__ExecutionContext, "ERROR: "+ NAME() +"::"+ location, error, LOG_ERROR);
       }
       log2Terminal(location, error, LOG_ERROR);
       log2Alert(location, error, LOG_ERROR);
@@ -61,7 +61,7 @@ int warn(string message, int error = NO_ERROR) {
    recursiveCall = true;
 
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {
-      LogMessageA(__ExecutionContext, "WARN: "+ __NAME() +"::"+ message, error, LOG_WARN);
+      LogMessageA(__ExecutionContext, "WARN: "+ NAME() +"::"+ message, error, LOG_WARN);
    }
    log2Terminal(message, error, LOG_WARN);
    log2Alert(message, error, LOG_WARN);
@@ -96,7 +96,7 @@ int log(string message, int error = NO_ERROR) {
    if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {           // send the message to the terminal log
       string sError = "";
       if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
-      Print(__NAME(), "::", StrReplace(message, NL, " "), sError);
+      Print(NAME(), "::", StrReplace(message, NL, " "), sError);
    }
    if (__ExecutionContext[EC.logToCustomEnabled] != 0) {             // send the message to a custom logger
       LogMessageA(__ExecutionContext, message, error, LOG_INFO);
@@ -533,7 +533,7 @@ void ForceAlert(string message) {
    debug(message);                                                   // send the message to the debug output
 
    string sPeriod = PeriodDescription(Period());
-   Alert(Symbol(), ",", sPeriod, ": ", __NAME(), ":  ", message);   // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", NAME(), ":  ", message);   // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -1039,7 +1039,7 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
 
 /**
  * Whether logging in general is enabled (read from the configuration). By default online logging is enabled and offline
- * logging (tester) is disabled. Called only from initGlobalVars().
+ * logging (tester) is disabled. Called only from initContext().
  *
  * @return bool
  */
@@ -1492,7 +1492,7 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  *
  * @return bool
  */
-bool __CHART() {
+bool IsChart() {
    return(__ExecutionContext[EC.hChart] != 0);
 }
 
@@ -1502,7 +1502,7 @@ bool __CHART() {
  *
  * @return bool
  */
-bool __LOG() {
+bool IsLog() {
    return(__ExecutionContext[EC.logEnabled] != 0);
 }
 
@@ -1513,7 +1513,7 @@ bool __LOG() {
  *
  * @return string
  */
-string __NAME() {
+string NAME() {
    static string name = ""; if (!StringLen(name)) {
       if (!IsDllsAllowed())
          return(WindowExpertName());
@@ -3223,7 +3223,7 @@ int Chart.Refresh() {
  */
 bool Chart.StoreBool(string key, bool value) {
    value = value!=0;
-   if (!__CHART())  return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())  return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3248,7 +3248,7 @@ bool Chart.StoreBool(string key, bool value) {
  * @return bool - success status
  */
 bool Chart.StoreInt(string key, int value) {
-   if (!__CHART())  return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())  return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3273,7 +3273,7 @@ bool Chart.StoreInt(string key, int value) {
  * @return bool - success status
  */
 bool Chart.StoreColor(string key, color value) {
-   if (!__CHART())  return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())  return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3298,7 +3298,7 @@ bool Chart.StoreColor(string key, color value) {
  * @return bool - success status
  */
 bool Chart.StoreDouble(string key, double value) {
-   if (!__CHART())  return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())  return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3323,7 +3323,7 @@ bool Chart.StoreDouble(string key, double value) {
  * @return bool - success status
  */
 bool Chart.StoreString(string key, string value) {
-   if (!__CHART())    return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())    return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)       return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3355,7 +3355,7 @@ bool Chart.StoreString(string key, string value) {
  * @return bool - success status
  */
 bool Chart.RestoreBool(string key, bool &var) {
-   if (!__CHART())             return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())             return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                return(!catch("Chart.RestoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3382,7 +3382,7 @@ bool Chart.RestoreBool(string key, bool &var) {
  * @return bool - success status
  */
 bool Chart.RestoreInt(string key, int &var) {
-   if (!__CHART())             return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())             return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                return(!catch("Chart.RestoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3407,7 +3407,7 @@ bool Chart.RestoreInt(string key, int &var) {
  * @return bool - success status
  */
 bool Chart.RestoreColor(string key, color &var) {
-   if (!__CHART())               return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())               return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                  return(!catch("Chart.RestoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3435,7 +3435,7 @@ bool Chart.RestoreColor(string key, color &var) {
  * @return bool - success status
  */
 bool Chart.RestoreDouble(string key, double &var) {
-   if (!__CHART())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3460,7 +3460,7 @@ bool Chart.RestoreDouble(string key, double &var) {
  * @return bool - success status
  */
 bool Chart.RestoreString(string key, string &var) {
-   if (!__CHART())  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!IsChart())  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.RestoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3485,7 +3485,7 @@ bool Chart.RestoreString(string key, string &var) {
  * @return bool - success status
  */
 bool Chart.DeleteValue(string key) {
-   if (!__CHART())  return(true);
+   if (!IsChart())  return(true);
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.DeleteValue(1)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3527,7 +3527,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLog()) log(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
  //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
@@ -3547,7 +3547,7 @@ int Tester.Stop(string location = "") {
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (__LOG()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLog()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -4797,7 +4797,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (__LOG()) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLog()) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5773,7 +5773,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (__LOG()) log("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   if (IsLog()) log("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(15)"));
 }
 
@@ -6551,9 +6551,9 @@ void __DummyCalls() {
    double dNull;
    string sNull, sNulls[];
 
-   __CHART();
-   __LOG();
-   __NAME();
+   IsChart();
+   IsLog();
+   NAME();
    _bool(NULL);
    _double(NULL);
    _EMPTY();

@@ -63,7 +63,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -75,7 +75,7 @@ int init() {
    }
 
    // finish initialization of global vars
-   if (!initGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -123,7 +123,7 @@ int init() {
 
    // log original input parameters
    string input1="", input2="", inputDiff="";
-   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE && IsLog()) {
       input1 = InputsToStr();
       if (StringLen(input1) > 0) {
          input1 = StringConcatenate(input1,
@@ -174,7 +174,7 @@ int init() {
    if (CheckErrors("init(16)")) return(last_error);
 
    // log modified input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE && IsLog()) {
       input2 = InputsToStr();
       if (StringLen(input2) > 0) {
          input2 = StringConcatenate(input2,
@@ -220,7 +220,7 @@ int init() {
  *
  * @return bool - success status
  */
-bool initGlobalVars() {
+bool initContext() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -235,7 +235,7 @@ bool initGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("initGlobalVars(1)"));
+   return(!catch("initContext(1)"));
 }
 
 
@@ -248,7 +248,7 @@ bool initGlobalVars() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
-         if (__CHART()) ShowStatus(__STATUS_OFF.reason);
+         if (IsChart()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // ctop the tester in case of errors
             Tester.Stop("start(1)");                                                // covers errors in init(), too
@@ -558,7 +558,7 @@ bool Tester.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = StrLeft(__NAME(), MAX_SYMBOL_GROUP_LENGTH);
+      string symbolGroup    = StrLeft(NAME(), MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -584,7 +584,7 @@ bool Tester.InitReporting() {
       FileClose(hFile);
 
       // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(__NAME(), " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(NAME(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
@@ -599,7 +599,7 @@ bool Tester.InitReporting() {
       symbol = name + StrPadLeft(id, 3, "0");
 
       // create a symbol description                                                      // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = StrLeft(NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
@@ -626,7 +626,7 @@ bool Tester.InitReporting() {
  * @return bool - success status
  */
 bool Tester.LogMarketInfo() {
-   if (!__LOG()) return(true);
+   if (!IsLog()) return(true);
 
    string message = "";
 
