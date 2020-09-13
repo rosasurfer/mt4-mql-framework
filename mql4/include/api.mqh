@@ -669,7 +669,7 @@ int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
 string   LocalTimeFormat(datetime timestamp, string format);;
-bool     LogMessageA(int ec[], string message, int error);;
+bool     LogMessageA(int ec[], string message, int error, int level);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
 string   MD5Hash(int &input[], int length);;
 string   MD5HashA(string str);;
