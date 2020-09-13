@@ -21,9 +21,6 @@ int init() {
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
-   __LOG_WARN.sms  = init.LogWarningsToSMS();
-   __LOG_ERROR.sms = init.LogErrorsToSMS();
-
    // EA-Tasks
    if (IsExpert()) {
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
