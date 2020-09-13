@@ -91,6 +91,13 @@
    int      ec_DllWarning          (int ec[]);
    //       ec.dllWarningMsg
 
+   int      ec_Loglevel            (int ec[]);
+   int      ec_LoglevelAlert       (int ec[]);
+   int      ec_LoglevelTerminal    (int ec[]);
+   int      ec_LoglevelDebugger    (int ec[]);
+   int      ec_LoglevelFile        (int ec[]);
+   int      ec_LoglevelMail        (int ec[]);
+   int      ec_LoglevelSMS         (int ec[]);
    bool     ec_LogEnabled          (int ec[]);
    bool     ec_LogToDebugEnabled   (int ec[]);
    bool     ec_LogToTerminalEnabled(int ec[]);
@@ -109,6 +116,6 @@
 
 
    // helpers
-   string EXECUTION_CONTEXT_toStr  (int ec[], int outputDebug);
-   string lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);
+   string   EXECUTION_CONTEXT_toStr  (int ec[], int outputDebug);
+   string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);
 #import

@@ -999,7 +999,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
    // (1) die angegebenen Fehler "leise" abfangen
    if (fCatch & F_ERR_CONCURRENT_MODIFICATION && 1) {
       if (error == ERR_CONCURRENT_MODIFICATION) {
-         if (__LOG()) log(message, error);
+         if (IsLog()) log(message, error);
          return(error);
       }
    }
@@ -1119,7 +1119,7 @@ bool QC.StopTradeCmdSender() {
  */
 bool QC.StartTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) return(true);
-   if (!__CHART())                     return(false);
+   if (!IsChart())                     return(false);
 
    // Channelnamen definieren
    int hWnd = __ExecutionContext[EC.hChart];
@@ -1238,7 +1238,7 @@ bool QC.StopLfxSenders() {
  */
 bool QC.StartLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) return(true);
-   if (!__CHART())                       return(false);
+   if (!IsChart())                       return(false);
    if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
    int hWnd = __ExecutionContext[EC.hChart];                         // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"

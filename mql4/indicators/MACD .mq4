@@ -17,8 +17,8 @@
  * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -401,7 +401,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.StoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.StoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.StoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
@@ -428,7 +428,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.RestoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.RestoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.RestoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );

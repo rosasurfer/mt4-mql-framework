@@ -6,8 +6,8 @@
  * @see  SnowRoller::ToggleOrderDisplayMode()
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 
@@ -24,7 +24,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(__NAME(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(NAME(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(1)"));
 }

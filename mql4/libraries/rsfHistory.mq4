@@ -13,8 +13,8 @@
 #property library
 
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>

@@ -17,8 +17,8 @@
  * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_TIMEZONE};
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -554,7 +554,7 @@ int ShowOpenOrders() {
  */
 bool GetOpenOrderDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".OpenOrderDisplay.status";
+   string label = NAME() +".OpenOrderDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -572,7 +572,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".OpenOrderDisplay.status";
+   string label = NAME() +".OpenOrderDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -642,7 +642,7 @@ bool ToggleTradeHistory() {
  */
 bool GetTradeHistoryDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".TradeHistoryDisplay.status";
+   string label = NAME() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -660,7 +660,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".TradeHistoryDisplay.status";
+   string label = NAME() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -947,7 +947,7 @@ bool ToggleAuM() {
  */
 bool GetAuMDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".AuMDisplay.status";
+   string label = NAME() +".AuMDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -965,7 +965,7 @@ bool SetAuMDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".AuMDisplay.status";
+   string label = NAME() +".AuMDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -983,7 +983,7 @@ bool SetAuMDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   string programName = __NAME();
+   string programName = NAME();
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
    label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
@@ -1222,7 +1222,7 @@ bool UpdatePositions() {
 
 
    // (2) PendingTickets-Marker unten rechts ein-/ausblenden
-   string label = __NAME() +".PendingTickets";
+   string label = NAME() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (isPendings) {
@@ -3505,7 +3505,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleLfxTerminalMessages() {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartLfxReceiver())
@@ -3594,7 +3594,7 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (__LOG()) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      if (success) { if (IsLog()) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
       else         {             warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
@@ -3602,14 +3602,14 @@ bool ProcessLfxTerminalMessage(string message) {
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (__LOG()) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
+      if (IsLog()) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (__LOG()) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
+      if (IsLog()) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
@@ -3745,7 +3745,7 @@ bool SaveLfxOrderCache() {
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleTradeCommands() {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
@@ -3861,7 +3861,7 @@ bool StoreRuntimeStatus() {
 
    // Konfiguration im Fenster speichern
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int  value = ifInt(positions.absoluteProfits, 1, -1);
    SetWindowIntegerA(hWnd, key, value);
 
@@ -3886,7 +3886,7 @@ bool RestoreRuntimeStatus() {
 
    // Konfiguration im Fenster suchen
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value  = GetWindowIntegerA(hWnd, key);
    bool success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
@@ -4068,7 +4068,7 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG()) log("onOrderFail(2)  "+ message);
+      if (IsLog()) log("onOrderFail(2)  "+ message);
 
       // Signale für jede Order einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4107,7 +4107,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG()) log("onPositionOpen(2)  "+ message);
+      if (IsLog()) log("onPositionOpen(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4151,7 +4151,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG()) log("onPositionClose(2)  "+ message);
+      if (IsLog()) log("onPositionClose(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);

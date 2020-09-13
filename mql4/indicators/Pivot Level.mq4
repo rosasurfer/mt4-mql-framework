@@ -2,8 +2,8 @@
  * Pivot levels
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_TIMEZONE};
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -311,7 +311,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.StoreInt   (name +".input.Periods",          Periods         );
    Chart.StoreInt   (name +".input.SR.Levels",        SR.Levels       );
    Chart.StoreColor (name +".input.Color.Resistance", Color.Resistance);
@@ -327,7 +327,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.RestoreInt  (name +".input.Periods",          Periods         );
    Chart.RestoreInt  (name +".input.SR.Levels",        SR.Levels       );
    Chart.RestoreColor(name +".input.Color.Resistance", Color.Resistance);

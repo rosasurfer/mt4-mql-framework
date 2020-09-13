@@ -5,8 +5,8 @@
  * @return int - error status
  */
 int onInit() {
-   SNOWROLLER = StrStartsWithI(__NAME(), "SnowRoller");     // MQL4 doesn't allow constant bool definitions
-   SISYPHUS   = StrStartsWithI(__NAME(), "Sisyphus");
+   SNOWROLLER = StrStartsWithI(NAME(), "SnowRoller");     // MQL4 doesn't allow constant bool definitions
+   SISYPHUS   = StrStartsWithI(NAME(), "Sisyphus");
    return(NO_ERROR);
 }
 
@@ -47,7 +47,7 @@ int onInitUser() {
       SS.SequenceName();
       SaveStatus();
 
-      if (__LOG()) {
+      if (IsLog()) {
          log("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       }
       else if (IsTesting() && !IsVisualMode()) {
@@ -144,7 +144,7 @@ int afterInit() {
    // initialize status display
    CreateStatusBox();
    SS.All();
-   string section = __NAME();
+   string section = NAME();
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {

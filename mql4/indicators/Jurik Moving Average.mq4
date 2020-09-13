@@ -13,8 +13,8 @@
  * @see  https://www.mql5.com/en/articles/1450
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -143,7 +143,7 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
-   if (!ConfigureSignal(__NAME(), Signal.onTrendChange, signals))                                             return(last_error);
+   if (!ConfigureSignal(NAME(), Signal.onTrendChange, signals))                                             return(last_error);
    if (signals) {
       if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -277,7 +277,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onTrendChange(1)  "+ message);
+      if (IsLog()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -288,7 +288,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onTrendChange(2)  "+ message);
+      if (IsLog()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
@@ -322,7 +322,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.StoreInt   (name +".input.Periods",              Periods              );
    Chart.StoreInt   (name +".input.Phase",                Phase                );
    Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice         );
@@ -345,7 +345,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = NAME();
    Chart.RestoreInt   (name +".input.Periods",              Periods              );
    Chart.RestoreInt   (name +".input.Phase",                Phase                );
    Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice         );

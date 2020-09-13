@@ -63,9 +63,9 @@ bool     ScriptRunner.SetParameters(string parameters);;
 
 
 // include/stdfunctions.mqh
-bool     __CHART();;
-bool     __LOG();;
-string   __NAME();;
+bool     IsChart();;
+bool     IsLog();;
+string   NAME();;
 bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
@@ -560,6 +560,13 @@ int      ec_hChart                 (int &ec[]);;
 int      ec_hChartWindow           (int &ec[]);;
 datetime ec_CurrTickTime           (int &ec[]);;
 bool     ec_LogEnabled             (int &ec[]);;
+int      ec_Loglevel               (int &ec[]);;
+int      ec_LoglevelAlert          (int &ec[]);;
+int      ec_LoglevelTerminal       (int &ec[]);;
+int      ec_LoglevelDebugger       (int &ec[]);;
+int      ec_LoglevelFile           (int &ec[]);;
+int      ec_LoglevelMail           (int &ec[]);;
+int      ec_LoglevelSMS            (int &ec[]);;
 bool     ec_LogToDebugEnabled      (int &ec[]);;
 bool     ec_LogToTerminalEnabled   (int &ec[]);;
 bool     ec_LogToCustomEnabled     (int &ec[]);;

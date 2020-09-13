@@ -8,8 +8,8 @@
  * @see  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -99,7 +99,7 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = __NAME();
+   indicatorName = NAME();
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_BUFFER1, indicatorName +" 1");  // chart tooltips and "Data" window
    SetIndexLabel(MODE_BUFFER2, indicatorName +" 2");

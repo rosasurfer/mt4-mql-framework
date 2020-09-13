@@ -33,7 +33,7 @@ int init() {
       return(last_error);
    }
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -45,7 +45,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!initGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -78,11 +78,11 @@ int init() {
 
 
 /**
- * Update global variables and the script's EXECUTION_CONTEXT.
+ * Update global variables and the script's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool initGlobalVars() {
+bool initContext() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -97,7 +97,7 @@ bool initGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("initGlobalVars(1)"));
+   return(!catch("initContext(1)"));
 }
 
 
@@ -246,7 +246,7 @@ int HandleScriptError(string location, string message, int error) {
       location = " :: "+ location;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ __NAME() + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ NAME() + location, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }

@@ -4,8 +4,8 @@
  * Send a chart command to a stopped but active SnowRoller to wait for the next start signal.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <apps/snowroller/defines.mqh>
@@ -38,14 +38,14 @@ int onStart() {
    if (isWaitable) {
       if (!This.IsTesting()) {
          PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-         int button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to activate sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+         int button = MessageBoxEx(NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to activate sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK) return(catch("onStart(1)"));
       }
       SendChartCommand("SnowRoller.command", "wait");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(__NAME(), "No sequence to activate found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(NAME(), "No sequence to activate found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

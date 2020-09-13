@@ -7,8 +7,8 @@
  * @see  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -346,7 +346,7 @@ bool RefreshLfxOrders() {
  */
 int CreateLabels() {
    // trade account
-   label.tradeAccount = __NAME() +".TradeAccount";
+   label.tradeAccount = NAME() +".TradeAccount";
    if (ObjectFind(label.tradeAccount) == 0)
       ObjectDelete(label.tradeAccount);
    if (ObjectCreate(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) {
@@ -361,7 +361,7 @@ int CreateLabels() {
    // index display
    int counter = 10;                                     // a counter for creating unique labels (with at least 2 digits)
    // background rectangles
-   string label = StringConcatenate(__NAME(), ".", counter, ".Background");
+   string label = StringConcatenate(NAME(), ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -374,7 +374,7 @@ int CreateLabels() {
    else GetLastError();
 
    counter++;
-   label = StringConcatenate(__NAME(), ".", counter, ".Background");
+   label = StringConcatenate(NAME(), ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -391,7 +391,7 @@ int CreateLabels() {
 
    // animation
    counter++;
-   label = StringConcatenate(__NAME(), ".", counter, ".Header.animation");
+   label = StringConcatenate(NAME(), ".", counter, ".Header.animation");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -405,7 +405,7 @@ int CreateLabels() {
    else GetLastError();
 
    // recording status
-   label = StringConcatenate(__NAME(), ".", counter, ".Recording.status");
+   label = StringConcatenate(NAME(), ".", counter, ".Recording.status");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -425,7 +425,7 @@ int CreateLabels() {
       counter++;
 
       // symbol
-      label = StringConcatenate(__NAME(), ".", counter, ".", symbols[i]);
+      label = StringConcatenate(NAME(), ".", counter, ".", symbols[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -849,7 +849,7 @@ bool UpdateAccountDisplay() {
 bool StoreRuntimeStatus() {
    // store company alias in chart window
    int    hWnd = __ExecutionContext[EC.hChart];
-   string key  = __NAME() +".runtime.tradeAccount.company";       // TODO: add program pid and manage keys globally
+   string key  = NAME() +".runtime.tradeAccount.company";       // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
    // store company alias in chart
@@ -860,7 +860,7 @@ bool StoreRuntimeStatus() {
    ObjectSetText(key, tradeAccount.company);
 
    // store account number in chart window
-   key = __NAME() +".runtime.tradeAccount.number";                // TODO: add program pid and manage keys globally
+   key = NAME() +".runtime.tradeAccount.number";                // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
    // store account number in chart
@@ -885,7 +885,7 @@ bool StoreRuntimeStatus() {
 bool RestoreRuntimeStatus() {
    // lookup company alias in chart window
    int    hWnd = __ExecutionContext[EC.hChart];
-   string key  = __NAME() +".runtime.tradeAccount.company";       // TODO: add program pid and manage keys globally
+   string key  = NAME() +".runtime.tradeAccount.company";       // TODO: add program pid and manage keys globally
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
       // lookup company alias in chart
@@ -894,7 +894,7 @@ bool RestoreRuntimeStatus() {
    }
 
    // lookup account number in chart window
-   key = __NAME() +".runtime.tradeAccount.number";                // TODO: add program pid and manage keys globally
+   key = NAME() +".runtime.tradeAccount.number";                // TODO: add program pid and manage keys globally
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
       // lookup account number in chart
