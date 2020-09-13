@@ -52,6 +52,10 @@ double   GetIniDouble(string fileName, string section, string key, double defaul
 bool     WriteIniString(string fileName, string section, string key, string value);;
 
 
+// include/log.mqh
+int      debug(string message, int error=NO_ERROR, int loglevel=EMPTY);;
+
+
 // include/scriptrunner.mqh
 bool     RunScript(string name, string parameters = "");;
 bool     ScriptRunner.GetParameters(string &parameters[]);;
@@ -102,7 +106,6 @@ int      CountDecimals(double number);;
 string   CreateLegendLabel();;
 string   CreateString(int length);;
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
-int      debug(string message, int error = NO_ERROR);;
 int      DebugMarketInfo(string location);;
 int      Div(int a, int b, int onZero = 0);;
 bool     EnumChildWindows(int hWnd, bool recursive = false);;

@@ -8,39 +8,6 @@
 
 
 /**
- * Send a message to the system debugger.
- *
- * @param  string message          - message
- * @param  int    error [optional] - error code (default: none)
- *
- * @return int - the same error
- */
-int debug(string message, int error = NO_ERROR) {
-   if (!IsDllsAllowed()) {
-      Print("debug(1)  ", message);
-      return(error);
-   }
-
-   static bool recursiveCall = false;
-   if (recursiveCall) {                               // prevent recursive calls
-      Print("debug(2)  recursive call: ", message);
-      return(error);
-   }
-   recursiveCall = true;
-
-   if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
-
-   if (This.IsTesting()) string sApplication = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
-   else                         sApplication = "MetaTrader::";
-
-   OutputDebugStringA(StringConcatenate(sApplication, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
-
-   recursiveCall = false;
-   return(error);
-}
-
-
-/**
  * Check whether an error occurred and handle it. If an error occurred the error is signaled and stored in the global var
  * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
  *
@@ -171,7 +138,6 @@ int SetLastError(int error, int param = NULL) {
 
 
    logger_catch(NULL);
-   logger_debug(NULL);
    logger_log(NULL, NULL, NULL);
 
    logDebug(NULL);
