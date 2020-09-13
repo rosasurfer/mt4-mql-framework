@@ -195,7 +195,7 @@ bool initGlobalVars() {
    __lpSuperContext = __ExecutionContext[EC.superContext];
    if (!__lpSuperContext) {                                       // with a supercontext this context is already up-to-date
       ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-      ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "LogToDebug", true));
+      ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "Log2Debugger", true));
       ec_SetLogToTerminalEnabled(__ExecutionContext, true);
    }
 
