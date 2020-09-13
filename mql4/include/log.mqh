@@ -35,28 +35,31 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
 /**
  * Send a message to the system debugger.
  *
- * @param  string message          - message
- * @param  int    error [optional] - error code (default: none)
+ * @param  string message             - message
+ * @param  int    error    [optional] - error code (default: none)
+ * @param  int    loglevel [optional] - log level to add to the message (default: none)
  *
  * @return int - the same error
  */
-int logger_debug(string message, int error = NO_ERROR) {
-   // This function must not use MQL library functions. Using DLLs is ok.
+int logger_debug(string message, int error=NO_ERROR, int loglevel=EMPTY) {
+   // note: This function must not use MQL library functions. Using DLLs is ok.
    if (!IsDllsAllowed()) {
-      Alert("debug(1)  DLLs are not enabled (", message, ")");    // send to terminal log instead
+      Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");  // send to terminal log instead
       return(error);
    }
-   string sApp="", sError="";
-   if (error != 0) sError = StringConcatenate("  [", ErrorToStr(error), "]");
-
    static bool isRecursion = false; if (isRecursion) {
-      Alert("debug(2)  recursion (", message, sError, ")");       // send to terminal log instead
+      Alert("debug(2)  recursion (", message, ", error: ", error, ")");             // send to terminal log instead
       return(error);
    }
    isRecursion = true;
 
-   if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " Tester::");
-   else                  sApp = "MetaTrader::";
+   string sLoglevel="", sApp="", sError="";
+   if (loglevel != EMPTY) sLoglevel = StringConcatenate(LogLevelDescription(loglevel), " ");
+   if (error != 0)        sError    = StringConcatenate("  [", ErrorToStr(error), "]");
+
+   if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");
+   else                  sApp = sLoglevel +"MetaTrader::";
+
    OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
 
    isRecursion = false;
@@ -67,13 +70,13 @@ int logger_debug(string message, int error = NO_ERROR) {
 /**
  * Process a log message and pass it to the configured log appenders.
  *
- * @param  string message          - log message
- * @param  int    error [optional] - error linked to the message (default: none)
- * @param  int    level [optional] - log level of the message (default: LOG_INFO)
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message
+ * @param  int    level   - log level of the message
  *
  * @return int - the same error
  */
-int logger_log(string message, int error=NO_ERROR, int level=LOG_INFO) {
+int logger_log(string message, int error, int level) {
    log2Alert(message, error, level);
 
    // log2Terminal()
@@ -173,11 +176,36 @@ int logFatal(string message, int error = NO_ERROR) {
  * @return int - the same error
  */
 int log2Alert(string message, int error, int level) {
-   int alertLevel = LOG_WARN;
-
-   if (level >= alertLevel) {
-      Alert(message, error, level);
+   // note: to only initialize the appender send a message of level LOG_OFF
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log2Alert(1)  recursion (", message, "error: ", error, ")");        // send to terminal log instead
+      return(error);
    }
+   isRecursion = true;
+
+   // read the configuration on first usage
+   static int configLevel = EMPTY; if (configLevel == EMPTY) {
+      string sValue = GetConfigString("Log", "Log2Alert", "notice");             // default: notice
+      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+      if (configLevel == EMPTY) configLevel = _int(LOG_OFF, catch("log2Alert(2)  invalid loglevel configuration [Log]->Log2Alert = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+   }
+
+   // apply the configured loglevel filter
+   if (level >= configLevel && level!=LOG_OFF) {
+      if (IsTesting()) {                                                         // neither Alert() nor MessageBox() can be used
+         string caption = "Tester "+ Symbol() +","+ PeriodDescription(Period());
+         int pos = StringFind(message, ") ");                                    // line-wrap message after the closing function brace
+         if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
+         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LogLevelDescription(level) +" in "+ message;
+         PlaySoundEx("alert.wav");
+         MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
+      }
+      else {
+         Alert(LogLevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(Period()), "  ", __NAME(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+      }
+   }
+
+   isRecursion = false;
    return(error);
 }
 
@@ -191,12 +219,27 @@ int log2Alert(string message, int error, int level) {
  *
  * @return int - the same error
  */
-int log2Debug(string message, int error, int level) {
-   int debugLevel = LOG_WARN;
-
-   if (level >= debugLevel) {
-      //debug(message, error, level);
+int log2Debugger(string message, int error, int level) {
+   // note: to only initialize the appender send a message of level LOG_OFF
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log2Debugger(1)  recursion (", message, "error: ", error, ")");  // send to terminal log instead
+      return(error);
    }
+   isRecursion = true;
+
+   // read the configuration on first usage
+   static int configLevel = EMPTY; if (configLevel == EMPTY) {
+      string sValue = GetConfigString("Log", "Log2Debugger", "all");          // default: all
+      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+      if (configLevel == EMPTY) configLevel = _int(LOG_OFF, catch("log2Debugger(2)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+   }
+
+   // apply the configured loglevel filter
+   if (level >= configLevel && level!=LOG_OFF) {
+      logger_debug(message, error, level);
+   }
+
+   isRecursion = false;
    return(error);
 }
 
@@ -211,9 +254,9 @@ int log2Debug(string message, int error, int level) {
  * @return int - the same error
  */
 int log2Mail(string message, int error, int level) {
-   // note: to only initialize the appender you may send a message of level LOG_OFF
+   // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");   // send to terminal log instead
+      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");      // send to terminal log instead
       return(error);
    }
    isRecursion = true;
@@ -221,10 +264,10 @@ int log2Mail(string message, int error, int level) {
 
    // read the configuration on first usage
    static int configLevel = EMPTY; if (configLevel == EMPTY) {
-      string sValue = GetConfigString("Log", "Log2Mail", "off");           // default: off
+      string sValue = GetConfigString("Log", "Log2Mail", "off");              // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
 
-      if (configLevel != EMPTY) {                                          // logging to mail is enabled
+      if (configLevel != EMPTY) {                                             // logging to mail is enabled
          sender   = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
          receiver = GetConfigString("Mail", "Receiver");
          if (!StrIsEmailAddress(sender))   configLevel = _int(LOG_OFF, catch("log2Mail(2)  invalid mail sender address configuration [Mail]->Sender = "+ sender, ERR_INVALID_CONFIG_VALUE));
@@ -240,7 +283,7 @@ int log2Mail(string message, int error, int level) {
       string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (!SendEmail(sender, receiver, subject, body)) {
-         configLevel = LOG_OFF;                                            // disable the appender if sending failed
+         configLevel = LOG_OFF;                                               // disable the appender if sending failed
       }
    }
 
@@ -259,9 +302,9 @@ int log2Mail(string message, int error, int level) {
  * @return int - the same error
  */
 int log2SMS(string message, int error, int level) {
-   // note: to only initialize the appender you may send a message of level LOG_OFF
+   // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");    // send to terminal log instead
+      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");       // send to terminal log instead
       return(error);
    }
    isRecursion = true;
@@ -269,10 +312,10 @@ int log2SMS(string message, int error, int level) {
 
    // read the configuration on first usage
    static int configLevel = EMPTY; if (configLevel == EMPTY) {
-      string sValue = GetConfigString("Log", "Log2SMS", "off");            // default: off
+      string sValue = GetConfigString("Log", "Log2SMS", "off");               // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
 
-      if (configLevel != EMPTY) {                                          // logging to SMS is enabled
+      if (configLevel != EMPTY) {                                             // logging to SMS is enabled
          receiver = GetConfigString("SMS", "Receiver");
          if (!StrIsPhoneNumber(receiver)) configLevel = _int(LOG_OFF, catch("log2SMS(2)  invalid phone number configuration: [SMS]->Receiver = "+ receiver, ERR_INVALID_CONFIG_VALUE));
       }
@@ -285,7 +328,7 @@ int log2SMS(string message, int error, int level) {
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (!SendSMS(receiver, text + NL + accountTime)) {
-         configLevel = LOG_OFF;                                            // disable the appender if sending failed
+         configLevel = LOG_OFF;                                               // disable the appender if sending failed
       }
    }
 

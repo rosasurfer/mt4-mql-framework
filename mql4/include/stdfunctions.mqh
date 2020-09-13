@@ -81,8 +81,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       message = name +"::"+ message;
 
       // display the error
-      if (IsTesting()) {
-         // neither Alert() nor MessageBox() can be used
+      if (IsTesting()) {                                                                              // neither Alert() nor MessageBox() can be used
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
          int pos = StringFind(message, ") ");
          if (pos == -1) message = "ERROR in "+ message;                                               // wrap message after the closing function brace
@@ -90,14 +89,10 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
                         message = TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL) + NL + message;
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
-         alerted = true;
       }
       else {
          message = "ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
-         if (!alerted) {
-            Alert(message);
-            alerted = true;
-         }
+         if (!alerted) Alert(message);
          log2Mail(message, error, LOG_ERROR);
          log2SMS(message, error, LOG_ERROR);
       }
@@ -232,7 +227,7 @@ int SetLastError(int error, int param = NULL) {
 
    logger_catch(NULL);
    logger_debug(NULL);
-   logger_log(NULL);
+   logger_log(NULL, NULL, NULL);
 
    logDebug(NULL);
    logInfo(NULL);
@@ -242,7 +237,7 @@ int SetLastError(int error, int param = NULL) {
    logFatal(NULL);
 
    log2Alert(NULL, NULL, NULL);
-   log2Debug(NULL, NULL, NULL);
+   log2Debugger(NULL, NULL, NULL);
    log2Mail(NULL, NULL, NULL);
    log2SMS(NULL, NULL, NULL);
 }
