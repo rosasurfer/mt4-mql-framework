@@ -16,7 +16,7 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
    static bool isRecursion = false; if (isRecursion) {
       string msg = "catch(1)  recursion ("+ location +")";
-      Alert(msg, "  [", ErrorToStr(error), "]");                  // send message to terminal log instead
+      Alert(msg, "  [", ErrorToStr(error), "]");                                    // should never happen, directly alert instead
       return(logger_debug(msg, error));
    }
    isRecursion = true;
@@ -44,11 +44,11 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
 int logger_debug(string message, int error=NO_ERROR, int loglevel=EMPTY) {
    // note: This function must not use MQL library functions. Using DLLs is ok.
    if (!IsDllsAllowed()) {
-      Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");  // send to terminal log instead
+      Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");  // directly alert instead
       return(error);
    }
    static bool isRecursion = false; if (isRecursion) {
-      Alert("debug(2)  recursion (", message, ", error: ", error, ")");             // send to terminal log instead
+      Alert("debug(2)  recursion (", message, ", error: ", error, ")");             // should never happen, directly alert instead
       return(error);
    }
    isRecursion = true;
@@ -178,7 +178,7 @@ int logFatal(string message, int error = NO_ERROR) {
 int log2Alert(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Alert(1)  recursion (", message, "error: ", error, ")");        // send to terminal log instead
+      Alert("log2Alert(1)  recursion (", message, "error: ", error, ")");        // should never happen, directly alert instead
       return(error);
    }
    isRecursion = true;
@@ -211,7 +211,7 @@ int log2Alert(string message, int error, int level) {
 
 
 /**
- * Send a log message to the debug output appender.
+ * Send a log message to the system debugger.
  *
  * @param  string message - log message
  * @param  int    error   - error linked to the message (if any)
@@ -222,7 +222,7 @@ int log2Alert(string message, int error, int level) {
 int log2Debugger(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Debugger(1)  recursion (", message, "error: ", error, ")");  // send to terminal log instead
+      Alert("log2Debugger(1)  recursion (", message, "error: ", error, ")");  // should never happen, directly alert instead
       return(error);
    }
    isRecursion = true;
@@ -245,6 +245,20 @@ int log2Debugger(string message, int error, int level) {
 
 
 /**
+ * Send a log message to a custom logfile appender.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error
+ */
+int log2File(string message, int error, int level) {
+   return(error);
+}
+
+
+/**
  * Send a log message to the mail appender.
  *
  * @param  string message - log message
@@ -256,7 +270,7 @@ int log2Debugger(string message, int error, int level) {
 int log2Mail(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");      // send to terminal log instead
+      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");      // should never happen, directly alert instead
       return(error);
    }
    isRecursion = true;
@@ -304,7 +318,7 @@ int log2Mail(string message, int error, int level) {
 int log2SMS(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");       // send to terminal log instead
+      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");       // should never happen, directly alert instead
       return(error);
    }
    isRecursion = true;
@@ -330,6 +344,40 @@ int log2SMS(string message, int error, int level) {
       if (!SendSMS(receiver, text + NL + accountTime)) {
          configLevel = LOG_OFF;                                               // disable the appender if sending failed
       }
+   }
+
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Send a log message to the terminal's log system.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error
+ */
+int log2Terminal(string message, int error, int level) {
+   // note: to only initialize the appender send a message of level LOG_OFF
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log2Terminal(1)  recursion (", message, "error: ", error, ")");  // should never happen, directly alert instead
+      return(error);
+   }
+   isRecursion = true;
+
+   // read the configuration on first usage
+   static int configLevel = EMPTY; if (configLevel == EMPTY) {
+      string sValue = GetConfigString("Log", "Log2Terminal", "all");          // default: all
+      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+      if (configLevel == EMPTY) configLevel = _int(LOG_OFF, catch("log2Terminal(2)  invalid loglevel configuration [Log]->Log2Terminal = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+   }
+
+   // apply the configured loglevel filter
+   if (level >= configLevel && level!=LOG_OFF) {
+      Print("  ", LogLevelDescription(level), ":   ", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
    }
 
    isRecursion = false;
