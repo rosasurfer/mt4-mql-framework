@@ -1,38 +1,4 @@
 /**
- * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
- * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
- *
- * @param  string location            - a possible error's location identifier and/or an error message
- * @param  int    error    [optional] - trigger a specific error (default: no)
- * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
- *
- * @return int - the same error
- */
-int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   orderPop = orderPop!=0;
-   if      (!error                  ) { error  =                      GetLastError(); }
-   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
-   else                               {                               GetLastError(); }
-
-   static bool isRecursion = false; if (isRecursion) {
-      string msg = "catch(1)  recursion ("+ location +")";
-      Alert(msg, "  [", ErrorToStr(error), "]");                                    // should never happen, directly alert instead
-      return(logger_debug(msg, error));
-   }
-   isRecursion = true;
-
-   if (error != 0) {
-      logError(location, error);
-      SetLastError(error);
-   }
-
-   if (orderPop) OrderPop(location);
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
  * Send a message to the system debugger.
  *
  * @param  string message             - message
@@ -41,14 +7,14 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
  *
  * @return int - the same error
  */
-int logger_debug(string message, int error=NO_ERROR, int loglevel=EMPTY) {
-   // note: This function must not use MQL library functions. Using DLLs is ok.
+int debug(string message, int error=NO_ERROR, int loglevel=EMPTY) {
+   // note: The function must not use MQL library functions. Using DLLs is ok.
    if (!IsDllsAllowed()) {
       Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");  // directly alert instead
       return(error);
    }
    static bool isRecursion = false; if (isRecursion) {
-      Alert("debug(2)  recursion (", message, ", error: ", error, ")");             // should never happen, directly alert instead
+      Alert("debug(2)  recursion (", message, ", error: ", error, ")");             // should never happen
       return(error);
    }
    isRecursion = true;
@@ -68,20 +34,52 @@ int logger_debug(string message, int error=NO_ERROR, int loglevel=EMPTY) {
 
 
 /**
- * Process a log message and pass it to the configured log appenders.
+ * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
+ * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
+ *
+ * @param  string location            - a possible error's location identifier and/or an error message
+ * @param  int    error    [optional] - trigger a specific error (default: no)
+ * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
+ *
+ * @return int - the same error
+ */
+int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
+   orderPop = orderPop!=0;
+   if      (!error                  ) { error  =                      GetLastError(); }
+   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
+   else                               {                               GetLastError(); }
+
+   static bool isRecursion = false; if (isRecursion) {
+      string msg = "catch(1)  recursion ("+ location +")";
+      Alert(msg, ", error: ", error);                                               // should never happen
+      return(debug(msg, error, LOG_ERROR));
+   }
+   isRecursion = true;
+
+   if (error != 0) {
+      logError(location, error);
+      SetLastError(error);
+   }
+
+   if (orderPop) OrderPop(location);
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Logger main function. Process a log message and dispatch it to the enabled log appenders.
  *
  * @param  string message - log message
- * @param  int    error   - error linked to the message
+ * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
  * @return int - the same error
  */
 int logger_log(string message, int error, int level) {
+   log2Terminal(message, error, level);
+   log2File(message, error, level);
    log2Alert(message, error, level);
-
-   // log2Terminal()
-   // log2Custom()
-
    log2Mail(message, error, level);
    log2SMS(message, error, level);
    return(error);
@@ -178,7 +176,7 @@ int logFatal(string message, int error = NO_ERROR) {
 int log2Alert(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Alert(1)  recursion (", message, "error: ", error, ")");        // should never happen, directly alert instead
+      Alert("log2Alert(1)  recursion (", message, "error: ", error, ")");        // should never happen
       return(error);
    }
    isRecursion = true;
@@ -222,7 +220,7 @@ int log2Alert(string message, int error, int level) {
 int log2Debugger(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Debugger(1)  recursion (", message, "error: ", error, ")");  // should never happen, directly alert instead
+      Alert("log2Debugger(1)  recursion (", message, "error: ", error, ")");  // should never happen
       return(error);
    }
    isRecursion = true;
@@ -236,7 +234,7 @@ int log2Debugger(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      logger_debug(message, error, level);
+      debug(message, error, level);
    }
 
    isRecursion = false;
@@ -256,7 +254,7 @@ int log2Debugger(string message, int error, int level) {
 int log2File(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2File(1)  recursion (", message, "error: ", error, ")");      // should never happen, directly alert instead
+      Alert("log2File(1)  recursion (", message, "error: ", error, ")");      // should never happen
       return(error);
    }
    isRecursion = true;
@@ -286,7 +284,7 @@ int log2File(string message, int error, int level) {
 int log2Mail(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");      // should never happen, directly alert instead
+      Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");      // should never happen
       return(error);
    }
    isRecursion = true;
@@ -334,7 +332,7 @@ int log2Mail(string message, int error, int level) {
 int log2SMS(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");       // should never happen, directly alert instead
+      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");       // should never happen
       return(error);
    }
    isRecursion = true;
@@ -379,7 +377,7 @@ int log2SMS(string message, int error, int level) {
 int log2Terminal(string message, int error, int level) {
    // note: to only initialize the appender send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
-      Alert("log2Terminal(1)  recursion (", message, "error: ", error, ")");  // should never happen, directly alert instead
+      Alert("log2Terminal(1)  recursion (", message, "error: ", error, ")");  // should never happen
       return(error);
    }
    isRecursion = true;
