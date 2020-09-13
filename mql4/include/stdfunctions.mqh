@@ -56,54 +56,27 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if      (!error                  ) { error  =                      GetLastError(); }
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
    else                               {                               GetLastError(); }
-
    static bool recursiveCall = false;
 
    if (error != NO_ERROR) {
-      if (recursiveCall)                                                                              // prevent recursive calls
-         return(debug("catch(1)  recursive call: "+ location, error));
+      if (recursiveCall) return(debug("catch(1)  recursive call: "+ location, error));
       recursiveCall = true;
 
-      // always send the error to the system debugger
-      debug("ERROR: "+ location, error);
-
-      // log the error
-      string name    = __NAME();
+      // log to custom log or the terminal
       string message = location +"  ["+ ErrorToStr(error) +"]";
-      bool logged, alerted;
-      if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                             // custom log, on error fall-back to terminal log
-         logged = logged || LogMessageA(__ExecutionContext, "ERROR: "+ name +"::"+ message, error);
-      if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message);   // terminal log
-         logged  = true;
-         alerted = alerted || !IsExpert() || !IsTesting();
-      }
-      message = name +"::"+ message;
+      if (!__ExecutionContext[EC.logToCustomEnabled]) Print("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", __NAME(), "::", message);
+      else                                            LogMessageA(__ExecutionContext, "ERROR: "+ __NAME() +"::"+ message, error);
 
-      // display the error
-      if (IsTesting()) {                                                                              // neither Alert() nor MessageBox() can be used
-         string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
-         int pos = StringFind(message, ") ");
-         if (pos == -1) message = "ERROR in "+ message;                                               // wrap message after the closing function brace
-         else           message = "ERROR in "+ StrLeft(message, pos+1) + NL + StringTrimLeft(StrSubstr(message, pos+2));
-                        message = TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL) + NL + message;
-         PlaySoundEx("alert.wav");
-         MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
-      }
-      else {
-         message = "ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
-         if (!alerted) Alert(message);
-         log2Mail(message, error, LOG_ERROR);
-         log2SMS(message, error, LOG_ERROR);
-      }
+      log2Alert(location, error, LOG_ERROR);
+      log2Debugger(location, error, LOG_ERROR);
+      log2Mail(location, error, LOG_ERROR);
+      log2SMS(location, error, LOG_ERROR);
 
-      // set last_error
       SetLastError(error);
       recursiveCall = false;
    }
 
-   if (orderPop)
-      OrderPop(location);
+   if (orderPop) OrderPop(location);
    return(error);
 }
 
@@ -111,51 +84,25 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 /**
  * Show a warning with an optional error but don't set the error.
  *
- * @param  string message          - message to display
+ * @param  string location         - location identifier and/or warning message
  * @param  int    error [optional] - error to display (default: none)
  *
  * @return int - the same error
  */
-int warn(string message, int error = NO_ERROR) {
+int warn(string location, int error = NO_ERROR) {
    static bool recursiveCall = false;
-   if (recursiveCall)                                                                           // prevent recursive calls
-      return(debug("warn(1)  recursive call: "+ message, error));
+   if (recursiveCall) return(debug("warn(1)  recursive call: "+ location, error));
    recursiveCall = true;
 
-   // always send the warning to the system debugger
-   debug("WARN: "+ message, error);
+   // log to custom log or the terminal
+   string message = location + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+   if (!__ExecutionContext[EC.logToCustomEnabled]) Print("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", __NAME(), "::", message);
+   else                                            LogMessageA(__ExecutionContext, "WARN: "+ __NAME() +"::"+ message, error);
 
-   if (error != NO_ERROR) message = message +"  ["+ ErrorToStr(error) +"]";
-
-   // log the warning
-   string name = __NAME();
-   bool logged=false, alerted=false;
-   if (__ExecutionContext[EC.logToCustomEnabled] != 0)                                          // custom log, on error fall-back to terminal log
-      logged = logged || LogMessageA(__ExecutionContext, "WARN: "+ name +"::"+ message, error);
-   if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name, "::", message); // terminal log
-      alerted = !IsExpert() || !IsTesting();
-   }
-   message = name +"::"+ message;
-
-   // display the warning
-   if (IsTesting()) {
-      // neither Alert() nor MessageBox() can be used
-      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
-      int pos = StringFind(message, ") ");
-      if (pos == -1) message = "WARN in "+ message;                                             // wrap message after the closing function brace
-      else           message = "WARN in "+ StrLeft(message, pos+1) + NL + StringTrimLeft(StrSubstr(message, pos+2));
-                     message = TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL) + NL + message;
-
-      PlaySoundEx("alert.wav");
-      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
-   }
-   else {
-      message = "WARN:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
-      if (!alerted) Alert(message);
-      log2Mail(message, error, LOG_WARN);
-      log2SMS(message, error, LOG_WARN);
-   }
+   log2Alert(location, error, LOG_WARN);
+   log2Debugger(location, error, LOG_WARN);
+   log2Mail(location, error, LOG_WARN);
+   log2SMS(location, error, LOG_WARN);
 
    recursiveCall = false;
    return(error);
