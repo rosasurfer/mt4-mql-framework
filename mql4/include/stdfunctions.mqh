@@ -185,8 +185,10 @@ int SetLastError(int error, int param = NULL) {
 
    log2Alert(NULL, NULL, NULL);
    log2Debugger(NULL, NULL, NULL);
+   log2File(NULL, NULL, NULL);
    log2Mail(NULL, NULL, NULL);
    log2SMS(NULL, NULL, NULL);
+   log2Terminal(NULL, NULL, NULL);
 }
 
 
