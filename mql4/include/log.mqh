@@ -211,16 +211,17 @@ int log2Debug(string message, int error, int level) {
  * @return int - the same error
  */
 int log2Mail(string message, int error, int level) {
+   // note: to only initialize the appender you may send a message of level LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");   // send to terminal log instead
       return(error);
    }
    isRecursion = true;
-   string sender="", receiver="", symbol="", sTimeframe="", sAccountAlias="";
+   string sender="", receiver="";
 
    // read the configuration on first usage
    static int configLevel = EMPTY; if (configLevel == EMPTY) {
-      string sValue = GetConfigString("Log", "Log2Mail", "off");
+      string sValue = GetConfigString("Log", "Log2Mail", "off");           // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
 
       if (configLevel != EMPTY) {                                          // logging to mail is enabled
@@ -228,21 +229,18 @@ int log2Mail(string message, int error, int level) {
          receiver = GetConfigString("Mail", "Receiver");
          if (!StrIsEmailAddress(sender))   configLevel = _int(LOG_OFF, catch("log2Mail(2)  invalid mail sender address configuration [Mail]->Sender = "+ sender, ERR_INVALID_CONFIG_VALUE));
          if (!StrIsEmailAddress(receiver)) configLevel = _int(LOG_OFF, catch("log2Mail(3)  invalid mail receiver address configuration [Mail]->Receiver = "+ receiver, ERR_INVALID_CONFIG_VALUE));
-         symbol        = Symbol();
-         sTimeframe    = PeriodDescription(Period());
-         sAccountAlias = GetAccountAlias();
       }
       else configLevel = _int(LOG_OFF, catch("log2Mail(4)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
    }
 
    // apply the configured loglevel filter
-   if (level >= configLevel) {
-      message = LogLevelDescription(level) +":  "+ symbol +","+ sTimeframe +"  "+ __NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+   if (level >= configLevel && level!=LOG_OFF) {
+      message = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ __NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = message;
-      string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ sAccountAlias +")";
+      string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (!SendEmail(sender, receiver, subject, body)) {
-         configLevel = LOG_OFF;                                            // disable the mail appender if sending failed
+         configLevel = LOG_OFF;                                            // disable the appender if sending failed
       }
    }
 
@@ -261,10 +259,36 @@ int log2Mail(string message, int error, int level) {
  * @return int - the same error
  */
 int log2SMS(string message, int error, int level) {
-   int smsLevel = LOG_ERROR;
-
-   if (level >= smsLevel) {
-      //SMSAppender(message, error, level);
+   // note: to only initialize the appender you may send a message of level LOG_OFF
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");    // send to terminal log instead
+      return(error);
    }
+   isRecursion = true;
+   string receiver = "";
+
+   // read the configuration on first usage
+   static int configLevel = EMPTY; if (configLevel == EMPTY) {
+      string sValue = GetConfigString("Log", "Log2SMS", "off");            // default: off
+      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+
+      if (configLevel != EMPTY) {                                          // logging to SMS is enabled
+         receiver = GetConfigString("SMS", "Receiver");
+         if (!StrIsPhoneNumber(receiver)) configLevel = _int(LOG_OFF, catch("log2SMS(2)  invalid phone number configuration: [SMS]->Receiver = "+ receiver, ERR_INVALID_CONFIG_VALUE));
+      }
+      else configLevel = _int(LOG_OFF, catch("log2SMS(3)  invalid loglevel configuration [Log]->Log2SMS = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+   }
+
+   // apply the configured loglevel filter
+   if (level >= configLevel && level!=LOG_OFF) {
+      string text = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ __NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
+      if (!SendSMS(receiver, text + NL + accountTime)) {
+         configLevel = LOG_OFF;                                            // disable the appender if sending failed
+      }
+   }
+
+   isRecursion = false;
    return(error);
 }

@@ -14,14 +14,6 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                    // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
 
-bool     __LOG_WARN.sms;                                    // whether warnings are logged to text message
-string   __LOG_WARN.sms.receiver;                           // warning text message receiver
-bool     __LOG_ERROR.sms;                                   // whether errors are logged to text message
-string   __LOG_ERROR.sms.receiver;                          // error text message receiver
-
-bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind
-string   __SMS.receiver;                                    // Empfänger-Nr. für SMS-Benachrichtigungen
-
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu öffnen

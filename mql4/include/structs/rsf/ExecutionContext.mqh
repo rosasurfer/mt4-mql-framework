@@ -14,8 +14,6 @@
  *
  * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodul-
  *         kontexts arbeiten.
- *       • __SMS.alerts        integrieren
- *       • __SMS.receiver      integrieren
  *       • __STATUS_OFF        integrieren
  *       • __STATUS_OFF.reason integrieren
  */

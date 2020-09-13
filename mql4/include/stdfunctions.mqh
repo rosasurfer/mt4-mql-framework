@@ -98,11 +98,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             Alert(message);
             alerted = true;
          }
-         if (IsExpert()) {
-            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-            //if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
-            if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
-         }
+         log2Mail(message, error, LOG_ERROR);
+         log2SMS(message, error, LOG_ERROR);
       }
 
       // set last_error
@@ -161,11 +158,8 @@ int warn(string message, int error = NO_ERROR) {
    else {
       message = "WARN:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ message;
       if (!alerted) Alert(message);
-      if (IsExpert()) {
-         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-         //if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
-         if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
-      }
+      log2Mail(message, error, LOG_WARN);
+      log2SMS(message, error, LOG_WARN);
    }
 
    recursiveCall = false;
@@ -5877,12 +5871,12 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
 
 /**
- * Schickt eine SMS an die angegebene Telefonnummer.
+ * Send a text message to the specified phone number.
  *
- * @param  string receiver - Telefonnummer des Empfängers (internationales Format: +49-123-456789)
- * @param  string message  - Text der SMS
+ * @param  string receiver - phone number (international format: +49-123-456789)
+ * @param  string message  - text
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SendSMS(string receiver, string message) {
    string _receiver = StrReplaceR(StrReplace(StrTrim(receiver), "-", ""), " ", "");
@@ -5891,25 +5885,22 @@ bool SendSMS(string receiver, string message) {
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
    if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
-   // (1) Zugangsdaten für SMS-Gateway holen
-   // Service-Provider
+   // get SMS gateway details
+   // service
    string section  = "SMS";
    string key      = "Provider";
    string provider = GetGlobalConfigString(section, key);
    if (!StringLen(provider)) return(!catch("SendSMS(2)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-
-   // Username
+   // user
    section = "SMS."+ provider;
    key     = "username";
    string username = GetGlobalConfigString(section, key);
    if (!StringLen(username)) return(!catch("SendSMS(3)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-
-   // Password
+   // pass
    key = "password";
    string password = GetGlobalConfigString(section, key);
    if (!StringLen(password)) return(!catch("SendSMS(4)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-
-   // API-ID
+   // API id
    key = "api_id";
    int api_id = GetGlobalConfigInt(section, key);
    if (api_id <= 0) {
@@ -5918,7 +5909,7 @@ bool SendSMS(string receiver, string message) {
                              return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
-   // (2) Befehlszeile für Shellaufruf zusammensetzen
+   // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlFilesPath();
    string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
@@ -5927,22 +5918,20 @@ bool SendSMS(string receiver, string message) {
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
 
-   // (3) Shellaufruf
+   // execute shell command
    int result = WinExec(cmdLine, SW_HIDE);
    if (result < 32) return(!catch("SendSMS(7)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   /**
-    * TODO: Fehlerauswertung nach dem Versand:
-    *
-    * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
-    * Resolving api.clickatell.com... failed: Unknown host.
-    * wget: unable to resolve host address `api.clickatell.com'
-    *
-    *
-    * --2014-06-15 22:44:21--  (try:20)  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
-    * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
-    * Giving up.
-    */
+   // TODO: analyse the response
+   // --------------------------
+   // --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={pass}&api_id={id}&to={receiver}&text={text}
+   // Resolving api.clickatell.com... failed: Unknown host.
+   // wget: unable to resolve host address `api.clickatell.com'
+   //
+   // --2014-06-15 22:44:21--  (try:20)  https://api.clickatell.com/http/sendmsg?user={user}&password={pass}&api_id={id}&to={receiver}&text={text}
+   // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
+   // Giving up.
+
    log("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
    return(!catch("SendSMS(9)"));
 }
@@ -5971,56 +5960,6 @@ double NormalizeLots(double lots, string symbol = "") {
       symbol = Symbol();
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
    return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
-}
-
-
-/**
- * Initialize the status of logging warnings to text message (available for experts only).
- *
- * @return bool - whether warning logging to text message is enabled
- */
-bool init.LogWarningsToSMS() {
-   __LOG_WARN.sms          = false;
-   __LOG_WARN.sms.receiver = "";
-
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "WarnToSMS")) {
-      // enabled
-      string smsSection  = "SMS";
-      string receiverKey = "Receiver";
-
-      string receiver = GetConfigString(smsSection, receiverKey);
-      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogWarningsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
-
-      __LOG_WARN.sms          = true;
-      __LOG_WARN.sms.receiver = receiver;
-      return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Initialize the status of logging errors to text message (available for experts only).
- *
- * @return bool - whether error logging to text message is enabled
- */
-bool init.LogErrorsToSMS() {
-   __LOG_ERROR.sms          = false;
-   __LOG_ERROR.sms.receiver = "";
-
-   if (IsExpert()) /*&&*/ if (GetConfigBool("Log", "ErrorToSMS")) {
-      // enabled
-      string smsSection  = "SMS";
-      string receiverKey = "Receiver";
-
-      string receiver = GetConfigString(smsSection, receiverKey);
-      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogErrorsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
-
-      __LOG_ERROR.sms          = true;
-      __LOG_ERROR.sms.receiver = receiver;
-      return(true);
-   }
-   return(false);
 }
 
 
@@ -6804,8 +6743,6 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    init.IsLogEnabled();
-   init.LogErrorsToSMS();
-   init.LogWarningsToSMS();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
