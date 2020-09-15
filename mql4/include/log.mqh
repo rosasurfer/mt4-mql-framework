@@ -77,11 +77,11 @@ int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - the same error
  */
 int logger_log(string message, int error, int level) {
-   log2Terminal(message, error, level);            // all fast appenders first
+   log2Terminal(message, error, level);            // fast appenders first
    log2Debugger(message, error, level);            // ...
    log2File(message, error, level);                // ...
-   log2Alert(message, error, level);               // after fast appenders as it can block the executing thread in tester
-   log2Mail(message, error, level);                // all slow appenders last (launches a new process)
+   log2Alert(message, error, level);               // after fast appenders as it may dead-lock the thread in tester
+   log2Mail(message, error, level);                // slow appenders last (launches a new process)
    log2SMS(message, error, level);                 // ...
    return(error);
 }
