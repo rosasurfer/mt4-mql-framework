@@ -193,15 +193,15 @@ bool initContext() {
    Tick.Time      = __ExecutionContext[EC.currTickTime];
 
    __lpSuperContext = __ExecutionContext[EC.superContext];
-   if (!__lpSuperContext) {                                       // with a supercontext this context is already up-to-date
+   if (!__lpSuperContext) {                                 // with a supercontext this context is already up-to-date
       ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
       ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "Log2Debugger", true));
       ec_SetLogToTerminalEnabled(__ExecutionContext, true);
    }
 
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
    return(!catch("initContext(1)"));
 }

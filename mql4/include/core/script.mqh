@@ -93,9 +93,9 @@ bool initContext() {
    ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "Log2Debugger", true));
    ec_SetLogToTerminalEnabled(__ExecutionContext, true);
 
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
    return(!catch("initContext(1)"));
 }
