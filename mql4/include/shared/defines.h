@@ -18,15 +18,15 @@
 #define TAB                                  "\t"        // tab: 0x09
 
 
-// log level
-#define LOG_ALL                                 0        // to filter log messages:
-#define LOG_DEBUG                               1        // if (msg_level >= log_level) log(...);
-#define LOG_INFO                                2
+// log levels
+#define LOG_DEBUG                               1        // messages are logged if the message's loglevel (severity) matches
+#define LOG_INFO                                2        // or exceeds the program's configured loglevel
 #define LOG_NOTICE                              4
 #define LOG_WARN                                8
 #define LOG_ERROR                              16
 #define LOG_FATAL                              32
-#define LOG_OFF                           INT_MAX
+#define LOG_ALL                         LOG_DEBUG        // alias for the lowest loglevel
+#define LOG_OFF                           INT_MAX        // not a valid loglevel
 
 
 // MQL module type flags

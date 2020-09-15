@@ -2271,7 +2271,7 @@ int ArrayUnshiftString(string array[], string value) {
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
  *
- * @return int - loglevel constant oder -1 (EMPTY) in case of errors
+ * @return int - loglevel constant oder NULL in case of errors
  */
 int StrToLogLevel(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -2279,8 +2279,6 @@ int StrToLogLevel(string value, int flags = NULL) {
    if (StrStartsWith(str, "LOG_"))
       str = StrSubstr(str, 4);
 
-   if (str ==        "ALL"   ) return(LOG_ALL   );
-   if (str == ""+ LOG_ALL    ) return(LOG_ALL   );
    if (str ==        "DEBUG" ) return(LOG_DEBUG );
    if (str == ""+ LOG_DEBUG  ) return(LOG_DEBUG );
    if (str ==        "INFO"  ) return(LOG_INFO  );
@@ -2293,12 +2291,14 @@ int StrToLogLevel(string value, int flags = NULL) {
    if (str == ""+ LOG_ERROR  ) return(LOG_ERROR );
    if (str ==        "FATAL" ) return(LOG_FATAL );
    if (str == ""+ LOG_FATAL  ) return(LOG_FATAL );
-   if (str ==        "OFF"   ) return(LOG_OFF   );
-   if (str == ""+ LOG_OFF    ) return(LOG_OFF   );
+   if (str ==        "ALL"   ) return(LOG_ALL   );       // alias for the lowest loglevel
+   if (str == ""+ LOG_ALL    ) return(LOG_ALL   );       // unreachable
+   if (str ==        "OFF"   ) return(LOG_OFF   );       //
+   if (str == ""+ LOG_OFF    ) return(LOG_OFF   );       // not a loglevel
 
    if (flags & F_ERR_INVALID_PARAMETER && 1)
-      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
-   return(_EMPTY(catch("StrToLogLevel(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+      return(!SetLastError(ERR_INVALID_PARAMETER));
+   return(!catch("StrToLogLevel(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER));
 }
 
 
@@ -5147,14 +5147,14 @@ datetime ParseDateTime(string value) {
  */
 string LogLevelDescription(int level) {
    switch (level) {
-      case LOG_ALL   : return("ALL"   );
       case LOG_DEBUG : return("DEBUG" );
       case LOG_INFO  : return("INFO"  );
       case LOG_NOTICE: return("NOTICE");
       case LOG_WARN  : return("WARN"  );
       case LOG_ERROR : return("ERROR" );
       case LOG_FATAL : return("FATAL" );
-      case LOG_OFF   : return("OFF"   );
+      case LOG_OFF   : return("OFF"   );     // not a loglevel
+      case LOG_ALL   : return("ALL"   );     // unreachable: alias for the lowest loglevel
    }
    return(""+ level);
 }
