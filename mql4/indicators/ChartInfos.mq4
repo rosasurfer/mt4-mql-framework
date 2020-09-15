@@ -1855,9 +1855,7 @@ bool CalculatePositionSize() {
          else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
          else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
          else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
-         else if (mm.positionSize <=    3.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //      1.2-3: Vielfaches von   0.1
-         else if (mm.positionSize <=    7.5 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.2  ) *   0.2  , 1);     //      3-7.5: Vielfaches von   0.2
-         else if (mm.positionSize <=   12.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.5  ) *   0.5  , 1);     //     7.5-12: Vielfaches von   0.5
+         else if (mm.positionSize <=   10.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //     1.2-10: Vielfaches von   0.1
          else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
          else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
          else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
