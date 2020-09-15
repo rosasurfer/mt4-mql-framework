@@ -110,6 +110,13 @@
    int      ec_SetProgramCoreFunction (int ec[], int function);
    int      ec_SetMqlError            (int ec[], int error   );
    int      ec_SetDllError            (int ec[], int error   );
+   int      ec_SetLoglevel            (int ec[], int level   );
+   int      ec_SetLoglevelAlert       (int ec[], int level   );
+   int      ec_SetLoglevelTerminal    (int ec[], int level   );
+   int      ec_SetLoglevelDebugger    (int ec[], int level   );
+   int      ec_SetLoglevelFile        (int ec[], int level   );
+   int      ec_SetLoglevelMail        (int ec[], int level   );
+   int      ec_SetLoglevelSMS         (int ec[], int level   );
    bool     ec_SetLogEnabled          (int ec[], int status  );
    bool     ec_SetLogToDebugEnabled   (int ec[], int status  );
    bool     ec_SetLogToTerminalEnabled(int ec[], int status  );
