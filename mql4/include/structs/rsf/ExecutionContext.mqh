@@ -98,10 +98,6 @@
    int      ec_LoglevelFile        (int ec[]);
    int      ec_LoglevelMail        (int ec[]);
    int      ec_LoglevelSMS         (int ec[]);
-   bool     ec_LogEnabled          (int ec[]);
-   bool     ec_LogToDebugEnabled   (int ec[]);
-   bool     ec_LogToTerminalEnabled(int ec[]);
-   bool     ec_LogToCustomEnabled  (int ec[]);
    //       ec.customLog
    string   ec_CustomLogFilename   (int ec[]);
 
@@ -117,9 +113,6 @@
    int      ec_SetLoglevelFile        (int ec[], int level   );
    int      ec_SetLoglevelMail        (int ec[], int level   );
    int      ec_SetLoglevelSMS         (int ec[], int level   );
-   bool     ec_SetLogEnabled          (int ec[], int status  );
-   bool     ec_SetLogToDebugEnabled   (int ec[], int status  );
-   bool     ec_SetLogToTerminalEnabled(int ec[], int status  );
 
 
    // helpers

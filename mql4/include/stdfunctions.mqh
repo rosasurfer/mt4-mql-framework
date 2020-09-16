@@ -8,46 +8,6 @@
 
 
 /**
- * Check whether an error occurred and handle it. If an error occurred the error is signaled and stored in the global var
- * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
- *
- * @param  string location            - the error's location identifier and/or an error message
- * @param  int    error    [optional] - enforces a specific error (default: no)
- * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
- *
- * @return int - the same error
- */
-int catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   orderPop = orderPop!=0;
-
-   if      (!error                  ) { error  =                      GetLastError(); }
-   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
-   else                               {                               GetLastError(); }
-   static bool recursiveCall = false;
-
-   if (error != NO_ERROR) {
-      if (recursiveCall) return(debug("catch(1)  recursive call: "+ location, error));
-      recursiveCall = true;
-
-      if (__ExecutionContext[EC.logToCustomEnabled] != 0) {
-         LogMessageA(__ExecutionContext, "ERROR: "+ NAME() +"::"+ location, error, LOG_ERROR);
-      }
-      log2Terminal(location, error, LOG_ERROR);
-      log2Alert(location, error, LOG_ERROR);
-      log2Debugger(location, error, LOG_ERROR);
-      log2Mail(location, error, LOG_ERROR);
-      log2SMS(location, error, LOG_ERROR);
-
-      SetLastError(error);
-      recursiveCall = false;
-   }
-
-   if (orderPop) OrderPop(location);
-   return(error);
-}
-
-
-/**
  * Show a warning with an optional error but don't set the error.
  *
  * @param  string message          - location identifier and/or warning message
@@ -60,9 +20,8 @@ int warn(string message, int error = NO_ERROR) {
    if (recursiveCall) return(debug("warn(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
-   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {
-      LogMessageA(__ExecutionContext, "WARN: "+ NAME() +"::"+ message, error, LOG_WARN);
-   }
+   //LogMessageA(__ExecutionContext, "WARN: "+ NAME() +"::"+ message, error, LOG_WARN);
+
    log2Terminal(message, error, LOG_WARN);
    log2Alert(message, error, LOG_WARN);
    log2Debugger(message, error, LOG_WARN);
@@ -102,23 +61,6 @@ int SetLastError(int error, int param = NULL) {
    if (error != NO_ERROR) /*&&*/ if (IsExpert())
       CheckErrors("SetLastError(1)");                             // update __STATUS_OFF in experts
    return(error);
-
-
-   logger_catch(NULL);
-
-   logDebug(NULL);
-   logInfo(NULL);
-   logNotice(NULL);
-   logWarn(NULL);
-   logError(NULL);
-   logFatal(NULL);
-
-   log2Alert(NULL, NULL, NULL);
-   log2Debugger(NULL, NULL, NULL);
-   log2File(NULL, NULL, NULL);
-   log2Mail(NULL, NULL, NULL);
-   log2SMS(NULL, NULL, NULL);
-   log2Terminal(NULL, NULL, NULL);
 }
 
 
@@ -1004,19 +946,6 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
 
 
 /**
- * Whether logging in general is enabled (read from the configuration). By default online logging is enabled and offline
- * logging (tester) is disabled. Called only from initContext().
- *
- * @return bool
- */
-bool init.IsLogEnabled() {
-   if (This.IsTesting())
-      return(GetConfigBool("Log", "Tester", false));                          // tester: default=off
-   return(GetConfigBool("Log", ec_ProgramName(__ExecutionContext), true));    // online: default=on
-}
-
-
-/**
  * Inlined conditional Boolean statement.
  *
  * @param  bool condition
@@ -1469,7 +1398,12 @@ bool IsChart() {
  * @return bool
  */
 bool IsLog() {
-   return(__ExecutionContext[EC.logEnabled] != 0);
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) {
+      log("", NULL, LOG_OFF);
+      loglevel = __ExecutionContext[EC.loglevel];
+   }
+   return(loglevel != LOG_OFF);
 }
 
 
@@ -6616,7 +6550,6 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   init.IsLogEnabled();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
