@@ -48,7 +48,7 @@ int onInitUser() {
       SaveStatus();
 
       if (IsLog()) {
-         log("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
+         logInfo("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       }
       else if (IsTesting() && !IsVisualMode()) {
          debug("onInitUser(2)  sequence "+ sequence.name +" created");

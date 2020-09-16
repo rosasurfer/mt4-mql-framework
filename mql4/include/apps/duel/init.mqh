@@ -71,7 +71,7 @@ int onInitUser() {
    short.enabled    = (sequence.directions & D_SHORT && 1);
    SS.SequenceName();
 
-   if (IsLog()) log("onInitUser(8)  sequence "+ sequence.name +" created");
+   if (IsLog()) logInfo("onInitUser(8)  sequence "+ sequence.name +" created");
    return(catch("onInitUser(9)"));
 }
 

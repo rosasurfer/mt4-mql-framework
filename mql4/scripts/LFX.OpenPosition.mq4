@@ -192,13 +192,13 @@ int onStart() {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, NL, GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
-      log("onStart(4)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  result="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
+      logInfo("onStart(4)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  result="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 
       // (2.7) resultierende Units berechnen (nach Auf-/Abrunden)
       realUnits += (roundedLots[i] / exactLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * Units, 1);
-   log("onStart(5)  units: input="+ DoubleToStr(Units, 1) +"  result="+ DoubleToStr(realUnits, 1));
+   logInfo("onStart(5)  units: input="+ DoubleToStr(Units, 1) +"  result="+ DoubleToStr(realUnits, 1));
 
    // (2.8) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
    if (StringLen(overLeverageMsg) > 0) {
@@ -291,7 +291,7 @@ int onStart() {
 
 
    // (8) Logmessage ausgeben
-   log("onStart(9)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   logInfo("onStart(9)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    // (9) Order freigeben

@@ -216,8 +216,7 @@ bool IsStopSignal() {
    if (tpAbs.condition) {
       if (sequence.totalPL >= tpAbs.value) {
          message = "IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ tpAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
-         if (!IsTesting()) warn(message);
-         else if (IsLog()) log(message);
+         if (IsLog()) logNotice(message);
          tpAbs.condition = false;
          return(true);
       }
@@ -230,8 +229,7 @@ bool IsStopSignal() {
       }
       if (sequence.totalPL >= tpPct.absValue) {
          message = "IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ tpPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
-         if (!IsTesting()) warn(message);
-         else if (IsLog()) log(message);
+         if (IsLog()) logNotice(message);
          tpPct.condition = false;
          return(true);
       }
@@ -241,8 +239,7 @@ bool IsStopSignal() {
    if (slAbs.condition) {
       if (sequence.totalPL <= slAbs.value) {
          message = "IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ slAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
-         if (!IsTesting()) warn(message);
-         else if (IsLog()) log(message);
+         if (IsLog()) logNotice(message);
          slAbs.condition = false;
          return(true);
       }
@@ -256,8 +253,7 @@ bool IsStopSignal() {
 
       if (sequence.totalPL <= slPct.absValue) {
          message = "IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
-         if (!IsTesting()) warn(message);
-         else if (IsLog()) log(message);
+         if (IsLog()) logNotice(message);
          slPct.condition = false;
          return(true);
       }
@@ -274,7 +270,7 @@ bool IsStopSignal() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (IsLog()) log("StartSequence(2)  "+ sequence.name +" starting sequence...");
+   if (IsLog()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
@@ -297,7 +293,7 @@ bool StartSequence() {
 
    if (!UpdateOrders()) return(false);                                  // update pending orders
 
-   if (IsLog()) log("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLog()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
 }
 
@@ -379,7 +375,7 @@ bool StopSequence() {
 
    sequence.status = STATUS_STOPPED;
    SS.StopConditions();
-   if (IsLog()) log("StopSequence(4)  "+ sequence.name +" sequence stopped");
+   if (IsLog()) logInfo("StopSequence(4)  "+ sequence.name +" sequence stopped");
 
    // pause/stop the tester according to the debug configuration
    if (IsTesting()) {
@@ -448,7 +444,7 @@ bool UpdateStatus_(int direction, bool &gridChanged, double &totalLots, double &
             commissions[i] = OrderCommission();
             profits    [i] = OrderProfit();
 
-            if (IsLog()) log("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
+            if (IsLog()) logInfo("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
             minLevel    = MathMin(levels[i], minLevel);
             maxLevel    = MathMax(levels[i], maxLevel);
             totalLots  += lots[i];

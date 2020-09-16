@@ -75,39 +75,6 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Log a message to the configured log appenders.
- *
- * @param  string message
- * @param  int    error [optional] - error to log (default: none)
- *
- * @return int - the same error
- */
-int log(string message, int error = NO_ERROR) {
-   if (!__ExecutionContext[EC.logEnabled]) return(error);            // skip logging if fully disabled
-
-   static bool recursiveCall = false;
-   if (recursiveCall)                                                // prevent recursive calls
-      return(debug("log(1)  recursive call: "+ message, error));
-   recursiveCall = true;
-
-   if (__ExecutionContext[EC.logToDebugEnabled] != 0) {              // send the message to the system debugger
-      debug(message, error);
-   }
-   if (__ExecutionContext[EC.logToTerminalEnabled] != 0) {           // send the message to the terminal log
-      string sError = "";
-      if (error != NO_ERROR) sError = "  ["+ ErrorToStr(error) +"]";
-      Print(NAME(), "::", StrReplace(message, NL, " "), sError);
-   }
-   if (__ExecutionContext[EC.logToCustomEnabled] != 0) {             // send the message to a custom logger
-      LogMessageA(__ExecutionContext, message, error, LOG_INFO);
-   }
-
-   recursiveCall = false;
-   return(error);
-}
-
-
-/**
  * Configure the use of a custom logfile (simple wrapper for the Expander function).
  *
  * @param  string filename - full filename to enable or an empty string to disable custom logging
@@ -138,7 +105,6 @@ int SetLastError(int error, int param = NULL) {
 
 
    logger_catch(NULL);
-   logger_log(NULL, NULL, NULL);
 
    logDebug(NULL);
    logInfo(NULL);
@@ -474,7 +440,7 @@ bool PlaySoundEx(string soundfile, int flags = NULL) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName)) {
          if (!(flags & MB_DONT_LOG))
-            log("PlaySoundEx(1)  sound file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND);
+            logWarn("PlaySoundEx(1)  sound file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
@@ -573,8 +539,8 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    else        button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) {
-      log("MessageBoxEx(1)  "+ message);
-      log("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
+      logDebug("MessageBoxEx(1)  "+ message);
+      logDebug("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
    }
    return(button);
 }
@@ -1045,8 +1011,8 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
  */
 bool init.IsLogEnabled() {
    if (This.IsTesting())
-      return(GetConfigBool("Log", "Tester", false));                                // tester: default=off
-   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));      // online: default=on
+      return(GetConfigBool("Log", "Tester", false));                          // tester: default=off
+   return(GetConfigBool("Log", ec_ProgramName(__ExecutionContext), true));    // online: default=on
 }
 
 
@@ -2875,10 +2841,10 @@ bool StrToBool(string value, bool strict = false) {
    if (strict) return(!catch("StrToBool(1)  cannot convert string "+ DoubleQuoteStr(value) +" to boolean (strict mode enabled)", ERR_INVALID_PARAMETER));
 
    if (value  == ""   ) return( false);
-   if (value  == "O"  ) return(_false(log("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
-   if (lValue == "0n" ) return(_true (log("StrToBool(3)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
-   if (lValue == "0ff") return(_false(log("StrToBool(4)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
-   if (lValue == "n0" ) return(_false(log("StrToBool(5)  string "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
+   if (value  == "O"  ) return(_false(logNotice("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
+   if (lValue == "0n" ) return(_true (logNotice("StrToBool(3)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
+   if (lValue == "0ff") return(_false(logNotice("StrToBool(4)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
+   if (lValue == "n0" ) return(_false(logNotice("StrToBool(5)  string "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
 
    if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
@@ -3527,7 +3493,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (IsLog()) log(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLog()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
  //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
@@ -3547,7 +3513,7 @@ int Tester.Stop(string location = "") {
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (IsLog()) log(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLog()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -4797,7 +4763,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (IsLog()) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLog()) logInfo("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5637,7 +5603,7 @@ bool LogTicket(int ticket) {
    string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
-   log("LogTicket()  "+ message);
+   logInfo("LogTicket()  "+ message);
 
    return(OrderPop("LogTicket(2)"));
 }
@@ -5773,7 +5739,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (IsLog()) log("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   if (IsLog()) logInfo("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(15)"));
 }
 
@@ -5840,7 +5806,7 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   log("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
+   logInfo("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
    return(!catch("SendSMS(9)"));
 }
 
@@ -6679,7 +6645,7 @@ void __DummyCalls() {
    IsSuperContext();
    IsTicket(NULL);
    LE(NULL, NULL);
-   log(NULL);
+   log(NULL, NULL, NULL);
    LogLevelDescription(NULL);
    LogTicket(NULL);
    LT(NULL, NULL);
