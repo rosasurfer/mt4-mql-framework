@@ -227,10 +227,6 @@ bool initContext() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "Log2Debugger", true));
-   ec_SetLogToTerminalEnabled(__ExecutionContext, true);
-
    N_INF = MathLog(0);                                      // negative infinity
    P_INF = -N_INF;                                          // positive infinity
    NaN   =  N_INF - N_INF;                                  // not-a-number
@@ -709,11 +705,8 @@ bool Tester.RecordEquity() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_SetDllError            (int ec[], int error   );
-   bool   ec_SetLogEnabled          (int ec[], int status  );
-   bool   ec_SetLogToDebugEnabled   (int ec[], int status  );
-   bool   ec_SetLogToTerminalEnabled(int ec[], int status  );
-   int    ec_SetProgramCoreFunction (int ec[], int function);
+   int    ec_SetDllError           (int ec[], int error   );
+   int    ec_SetProgramCoreFunction(int ec[], int function);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 

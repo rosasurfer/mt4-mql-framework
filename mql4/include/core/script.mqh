@@ -89,10 +89,6 @@ bool initContext() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Log", "Log2Debugger", true));
-   ec_SetLogToTerminalEnabled(__ExecutionContext, true);
-
    N_INF = MathLog(0);                                      // negative infinity
    P_INF = -N_INF;                                          // positive infinity
    NaN   =  N_INF - N_INF;                                  // not-a-number
@@ -324,12 +320,9 @@ bool CheckErrors(string location, int setError = NULL) {
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
-   bool   ec_SetLogEnabled          (int ec[], int status);
-   bool   ec_SetLogToDebugEnabled   (int ec[], int status);
-   bool   ec_SetLogToTerminalEnabled(int ec[], int status);
-   int    SyncMainContext_init      (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start     (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int    SyncMainContext_deinit    (int ec[], int uninitReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
    int    GetParent(int hWnd);

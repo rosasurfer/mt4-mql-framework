@@ -53,6 +53,7 @@ bool     WriteIniString(string fileName, string section, string key, string valu
 
 
 // include/log.mqh
+int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
 int      log(string message, int error, int level);;
 
@@ -82,7 +83,6 @@ string   _string     (string param1,      int param2=NULL, int param3=NULL, int 
 bool     _true       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 int      Abs(int value);;
 int      ArrayUnshiftString(string &array[], string value);;
-int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
 int      Ceil(double value);;
 bool     Chart.DeleteValue(string key);;
 int      Chart.Expert.Properties();;
@@ -559,7 +559,6 @@ bool     ec_ExtReporting           (int &ec[]);;
 int      ec_hChart                 (int &ec[]);;
 int      ec_hChartWindow           (int &ec[]);;
 datetime ec_CurrTickTime           (int &ec[]);;
-bool     ec_LogEnabled             (int &ec[]);;
 int      ec_Loglevel               (int &ec[]);;
 int      ec_LoglevelAlert          (int &ec[]);;
 int      ec_LoglevelTerminal       (int &ec[]);;
@@ -567,9 +566,6 @@ int      ec_LoglevelDebugger       (int &ec[]);;
 int      ec_LoglevelFile           (int &ec[]);;
 int      ec_LoglevelMail           (int &ec[]);;
 int      ec_LoglevelSMS            (int &ec[]);;
-bool     ec_LogToDebugEnabled      (int &ec[]);;
-bool     ec_LogToTerminalEnabled   (int &ec[]);;
-bool     ec_LogToCustomEnabled     (int &ec[]);;
 int      ec_lpSuperContext         (int &ec[]);;
 int      ec_ModuleDeinitFlags      (int &ec[]);;
 int      ec_ModuleInitFlags        (int &ec[]);;
@@ -594,7 +590,6 @@ int      ec_ProgramType            (int &ec[]);;
 int      ec_ProgramUninitReason    (int &ec[]);;
 bool     ec_RecordEquity           (int &ec[]);;
 int      ec_SetDllError            (int &ec[], int error);;
-bool     ec_SetLogEnabled          (int &ec[], int status);;
 int      ec_SetLoglevel            (int &ec[], int level);;
 int      ec_SetLoglevelAlert       (int &ec[], int level);;
 int      ec_SetLoglevelDebugger    (int &ec[], int level);;
@@ -602,8 +597,6 @@ int      ec_SetLoglevelFile        (int &ec[], int level);;
 int      ec_SetLoglevelMail        (int &ec[], int level);;
 int      ec_SetLoglevelSMS         (int &ec[], int level);;
 int      ec_SetLoglevelTerminal    (int &ec[], int level);;
-bool     ec_SetLogToDebugEnabled   (int &ec[], int status);;
-bool     ec_SetLogToTerminalEnabled(int &ec[], int status);;
 int      ec_SetMqlError            (int &ec[], int error);;
 int      ec_SetProgramCoreFunction (int &ec[], int function);;
 int      ec_SubPipDigits           (int &ec[]);;

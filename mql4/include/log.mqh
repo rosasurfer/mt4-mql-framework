@@ -1,4 +1,48 @@
 /**
+ * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
+ * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
+ *
+ * @param  string location            - a possible error's location identifier and/or an error message
+ * @param  int    error    [optional] - trigger a specific error (default: no)
+ * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
+ *
+ * @return int - the same error
+ */
+int catch(string location, int error=NO_ERROR, bool orderPop=false) {
+   orderPop = orderPop!=0;
+   if      (!error                  ) { error  =                      GetLastError(); }
+   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
+   else                               {                               GetLastError(); }
+   static bool isRecursion = false;
+
+   if (error != 0) {
+      if (isRecursion) {
+         string msg = "catch(1)  recursion ("+ location +")";
+         Alert(msg, ", error: ", error);                       // should never happen
+         return(debug(msg, error, LOG_ERROR));
+      }
+      isRecursion = true;
+
+      int oldLoglevel = __ExecutionContext[EC.loglevel];       // store the existing loglevel
+      if (!oldLoglevel) {
+         log("", NULL, LOG_OFF);
+         oldLoglevel = __ExecutionContext[EC.loglevel];
+      }
+
+      ec_SetLoglevel(__ExecutionContext, LOG_ERROR);           // override it
+      log(location, error, LOG_ERROR);                         // handle the error
+      ec_SetLoglevel(__ExecutionContext, oldLoglevel);         // restore the old loglevel
+
+      SetLastError(error);                                     // set the error
+   }
+
+   if (orderPop) OrderPop(location);
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
  * Send a message to the system debugger.
  *
  * @param  string message             - message
@@ -28,40 +72,6 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
 
    OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
 
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
- * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
- * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
- *
- * @param  string location            - a possible error's location identifier and/or an error message
- * @param  int    error    [optional] - trigger a specific error (default: no)
- * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
- *
- * @return int - the same error
- */
-int logger_catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   orderPop = orderPop!=0;
-   if      (!error                  ) { error  =                      GetLastError(); }
-   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
-   else                               {                               GetLastError(); }
-
-   static bool isRecursion = false; if (isRecursion) {
-      string msg = "catch(1)  recursion ("+ location +")";
-      Alert(msg, ", error: ", error);                       // should never happen
-      return(debug(msg, error, LOG_ERROR));
-   }
-   isRecursion = true;
-
-   if (error != 0) {
-      log(location, error, LOG_ERROR);
-      SetLastError(error);
-   }
-
-   if (orderPop) OrderPop(location);
    isRecursion = false;
    return(error);
 }
@@ -435,6 +445,14 @@ int log2Terminal(string message, int error, int level) {
 
    isRecursion = false;
    return(error);
+
+   // dummy calls
+   logDebug(NULL);
+   logInfo(NULL);
+   logNotice(NULL);
+   logWarn(NULL);
+   logError(NULL);
+   logFatal(NULL);
 }
 
 
