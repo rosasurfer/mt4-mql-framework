@@ -53,7 +53,8 @@ bool     WriteIniString(string fileName, string section, string key, string valu
 
 
 // include/log.mqh
-int      debug(string message, int error=NO_ERROR, int loglevel=EMPTY);;
+int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
+int      log(string message, int error, int level);;
 
 
 // include/scriptrunner.mqh
@@ -169,7 +170,6 @@ bool     IsSuperContext();;
 bool     IsTicket(int ticket);;
 bool     IsVisualModeFix();;
 bool     LE(double double1, double double2, int digits = 8);;
-int      log(string message, int error = NO_ERROR);;
 string   LogLevelDescription(int level);;
 bool     LogTicket(int ticket);;
 bool     LT(double double1, double double2, int digits = 8);;

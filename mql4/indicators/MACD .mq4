@@ -261,7 +261,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMACD)) return(log("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -354,7 +354,7 @@ bool onCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" turned positive";
-      log("onCross(1)  "+ message);
+      logInfo("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
@@ -365,7 +365,7 @@ bool onCross(int section) {
 
    if (section == MODE_LOWER_SECTION) {
       message = indicatorName +" turned negative";
-      log("onCross(2)  "+ message);
+      logInfo("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);

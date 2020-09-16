@@ -78,7 +78,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferKER)) return(log("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferKER)) return(logInfo("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!UnchangedBars) {

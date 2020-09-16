@@ -180,7 +180,7 @@ int onStart() {
 
 
       // (8) Logmessage ausgeben
-      log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+      logInfo("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
 
       // (9) LFX-Terminal benachrichtigen
