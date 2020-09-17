@@ -242,7 +242,7 @@ int HandleScriptError(string location, string message, int error) {
       location = " :: "+ location;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ NAME() + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ ProgramName() + location, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }

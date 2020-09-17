@@ -569,7 +569,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    if (!IsChart()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
-      label = NAME() +".command";
+      label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
 

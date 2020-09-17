@@ -1,7 +1,7 @@
 /**
  * Configure event signaling.
  *
- * @param  _In_    string  name        - program name to check signal configuration for (may differ from NAME())
+ * @param  _In_    string  name        - program name to check signal configuration for, may differ from ProgramName()
  * @param  _InOut_ string &configValue - configuration value
  * @param  _Out_   bool   &enabled     - whether general event signaling is enabled
  *

@@ -86,7 +86,7 @@ int afterInit() {
    SS.All();
 
    if (IsTesting()) {                                    // initialize tester configuration
-      string section = NAME() +".Tester";
+      string section = ProgramName() +".Tester";
       tester.onStopPause = GetConfigBool(section, "OnStopPause", false);
    }
    return(catch("afterInit(1)"));

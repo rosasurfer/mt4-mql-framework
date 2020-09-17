@@ -251,7 +251,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
    Chart.StoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
@@ -270,7 +270,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
    Chart.RestoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );

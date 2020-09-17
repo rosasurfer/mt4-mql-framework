@@ -83,7 +83,7 @@ int CreateLabels() {
    int n = 10;                   // Counter für eindeutige Labels (mind. zweistellig)
 
    // Background
-   string label = StringConcatenate(NAME(), ".", n, ".Background");
+   string label = StringConcatenate(ProgramName(), ".", n, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -96,7 +96,7 @@ int CreateLabels() {
    else GetLastError();
 
    n++;
-   label = StringConcatenate(NAME(), ".", n, ".Background");
+   label = StringConcatenate(ProgramName(), ".", n, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -112,7 +112,7 @@ int CreateLabels() {
    int yCoord = y + 4;
    for (int i=0; i < ArraySize(labels); i++) {
       n++;
-      label = StringConcatenate(NAME(), ".", n, ".", labels[i]);
+      label = StringConcatenate(ProgramName(), ".", n, ".", labels[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

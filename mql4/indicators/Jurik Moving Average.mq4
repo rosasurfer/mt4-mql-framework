@@ -143,7 +143,7 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
-   if (!ConfigureSignal(NAME(), Signal.onTrendChange, signals))                                             return(last_error);
+   if (!ConfigureSignal(ProgramName(), Signal.onTrendChange, signals))                                        return(last_error);
    if (signals) {
       if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -322,7 +322,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.Periods",              Periods              );
    Chart.StoreInt   (name +".input.Phase",                Phase                );
    Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice         );
@@ -345,7 +345,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.Periods",              Periods              );
    Chart.RestoreInt   (name +".input.Phase",                Phase                );
    Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice         );

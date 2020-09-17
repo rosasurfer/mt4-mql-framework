@@ -20,7 +20,7 @@ int warn(string message, int error = NO_ERROR) {
    if (recursiveCall) return(debug("warn(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
-   //LogMessageA(__ExecutionContext, "WARN: "+ NAME() +"::"+ message, error, LOG_WARN);
+   //LogMessageA(__ExecutionContext, "WARN: "+ FullModuleName() +"::"+ message, error, LOG_WARN);
 
    log2Terminal(message, error, LOG_WARN);
    log2Alert(message, error, LOG_WARN);
@@ -438,10 +438,10 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                   // send the message to the debug output
+   debug(message);                                                          // send the message to the debug output
 
    string sPeriod = PeriodDescription(Period());
-   Alert(Symbol(), ",", sPeriod, ": ", NAME(), ":  ", message);   // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(), ":  ", message);   // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -1408,31 +1408,47 @@ bool IsLog() {
 
 
 /**
- * Return the current program's full name. For MQL main modules this value matches the return value of WindowExpertName().
- * For libraries this value includes the name of the main module, e.g. "{expert-name}::{library-name}".
+ * Return the current MQL module's program name, i.e. the name of the program's main module.
  *
  * @return string
  */
-string NAME() {
+string ProgramName() {
    static string name = ""; if (!StringLen(name)) {
-      if (!IsDllsAllowed())
-         return(WindowExpertName());
-
-      string program = ec_ProgramName(__ExecutionContext);
-      string module  = ec_ModuleName (__ExecutionContext);
-
-      if (StringLen(program) && StringLen(module)) {
-         name = program;
-         if (IsLibrary()) name = StringConcatenate(name, "::", module);
-      }
-      else if (IsLibrary()) {
-         if (!StringLen(program)) program = "???";
-         if (!StringLen(module))  module = WindowExpertName();
-         return(StringConcatenate(program, "::", module));
+      if (IsLibrary()) {
+         if (!IsDllsAllowed()) return("???");
+         name = ec_ProgramName(__ExecutionContext);
       }
       else {
-         return(WindowExpertName());
+         name = ModuleName();
       }
+      if (!StringLen(name)) return("???");
+   }
+   return(name);
+}
+
+
+/**
+ * Return the current MQL module's simple name. Alias of WindowExpertName().
+ *
+ * @return string
+ */
+string ModuleName() {
+   return(WindowExpertName());
+}
+
+
+/**
+ * Return the current MQL module's full name. For main modules this value matches the value of ProgramName(). For libraries
+ * this value includes the name of the MQL main module, e.g. "{expert-name}::{library-name}".
+ *
+ * @return string
+ */
+string FullModuleName() {
+   static string name = ""; if (!StringLen(name)) {
+      string program = ProgramName();
+      if (program == "???")
+         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));
+      name = program + ifString(IsLibrary(), "::"+ ModuleName(), "");
    }
    return(name);
 }
@@ -6451,9 +6467,6 @@ void __DummyCalls() {
    double dNull;
    string sNull, sNulls[];
 
-   IsChart();
-   IsLog();
-   NAME();
    _bool(NULL);
    _double(NULL);
    _EMPTY();
@@ -6507,6 +6520,7 @@ void __DummyCalls() {
    FileAccessModeToStr(NULL);
    Floor(NULL);
    ForceAlert(NULL);
+   FullModuleName();
    GE(NULL, NULL);
    GetAccountAlias();
    GetAccountCompany();
@@ -6553,6 +6567,7 @@ void __DummyCalls() {
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
+   IsChart();
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();
@@ -6567,6 +6582,7 @@ void __DummyCalls() {
    IsLeapYear(NULL);
    IsLibrary();
    IsLimitOrderType(NULL);
+   IsLog();
    IsLongOrderType(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
@@ -6590,6 +6606,7 @@ void __DummyCalls() {
    Max(NULL, NULL);
    MessageBoxButtonToStr(NULL);
    Min(NULL, NULL);
+   ModuleName();
    ModuleTypesToStr(NULL);
    MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
@@ -6613,6 +6630,7 @@ void __DummyCalls() {
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    ProgramInitReason();
+   ProgramName();
    QuoteStr(NULL);
    ResetLastError();
    RGBStrToColor(NULL);
