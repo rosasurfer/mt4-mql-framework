@@ -155,7 +155,7 @@ int onStart() {
             continue;
          }
          PlaySoundEx("Windows Notify.wav");                                            // bei weiterem Mißerfolg Bestätigung für Fortsetzung einholen
-         button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, NAME(), MB_ICONINFORMATION|MB_RETRYCANCEL);
+         button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, ProgramName(), MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
             continue;                                                                  // Datenerhebung wiederholen...
@@ -209,7 +209,7 @@ int onStart() {
                          +"Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not obtainable)", "")) + NL
                          + NL
                          +"Continue?",
-                         NAME(),
+                         ProgramName(),
                          MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(6)"));
@@ -228,7 +228,7 @@ int onStart() {
    button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n")
                      +"Do you really want to "+ StrToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"
                      + ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not obtainable)", ""),
-                     NAME(),
+                     ProgramName(),
                      MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(7)"));

@@ -1316,7 +1316,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    if (!IsChart()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
-      label = NAME() +".command";
+      label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
 
@@ -2810,16 +2810,16 @@ int ShowStatus(int error = NO_ERROR) {
       default:
          return(catch("ShowStatus(1)  "+ sequence.longName +" illegal sequence status = "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-   msg = StringConcatenate(NAME(), "     ", msg, sError,                            NL,
-                                                                                      NL,
-                           "Grid:              ", GridSize, " pip", sGridBase,        NL,
-                           "LotSize:          ",  sLotSize, sSequenceProfitPerLevel,  NL,
-                           "Start:             ", sStartConditions,                   NL,
-                           "Stop:              ", sStopConditions,                    NL,
-                           sAutoRestart,                  // if set the var ends with NL,
-                           "Stops:             ", sSequenceStops, sSequenceStopsPL,   NL,
-                           "Profit/Loss:    ",    sSequenceTotalPL, sSequencePlStats, NL,
-                           sStartStopStats,               // if set the var ends with NL,
+   msg = StringConcatenate(ProgramName(), "     ", msg, sError,                        NL,
+                                                                                       NL,
+                           "Grid:              ",  GridSize, " pip", sGridBase,        NL,
+                           "LotSize:          ",   sLotSize, sSequenceProfitPerLevel,  NL,
+                           "Start:             ",  sStartConditions,                   NL,
+                           "Stop:              ",  sStopConditions,                    NL,
+                           sAutoRestart,                   // if set the var ends with NL,
+                           "Stops:             ",  sSequenceStops, sSequenceStopsPL,   NL,
+                           "Profit/Loss:    ",     sSequenceTotalPL, sSequencePlStats, NL,
+                           sStartStopStats,                // if set the var ends with NL,
                            sRestartStats
    );
 
@@ -3686,7 +3686,7 @@ bool SynchronizeStatus() {
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
                PlaySoundEx("Windows Notify.wav");
-               int button = MessageBoxEx(NAME() +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
+               int button = MessageBoxEx(ProgramName() +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
                if (button != IDRETRY)
                   return(!SetLastError(ERR_CANCELLED_BY_USER));
                return(SynchronizeStatus());
@@ -3764,7 +3764,7 @@ bool SynchronizeStatus() {
    if (size > 0) {
       ArraySort(orphanedClosedPositions);
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBoxEx(NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Sequence "+ sequence.name +" orphaned closed position"+ Pluralize(size) +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBoxEx(ProgramName() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Sequence "+ sequence.name +" orphaned closed position"+ Pluralize(size) +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       MergeIntArrays(ignoreClosedPositions, orphanedClosedPositions, ignoreClosedPositions);

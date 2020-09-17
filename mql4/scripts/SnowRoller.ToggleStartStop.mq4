@@ -22,7 +22,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(NAME(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(1)"));
 }

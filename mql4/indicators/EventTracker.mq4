@@ -1233,7 +1233,7 @@ int ShowStatus(int error=NULL) {
    if (!error)                        sError    = "";
    else                               sError    = "  ["+ ErrorDescription(error) +"]";
 
-   string msg = StringConcatenate(NAME(), sSettings, sError, NL);
+   string msg = StringConcatenate(ProgramName(), sSettings, sError, NL);
 
    if (track.orders || track.signals) {
       msg    = StringConcatenate(msg, "-------------------",   NL);

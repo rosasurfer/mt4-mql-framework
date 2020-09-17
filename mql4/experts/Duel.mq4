@@ -1022,17 +1022,17 @@ int ShowStatus(int error = NO_ERROR) {
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   string msg = StringConcatenate(NAME(), "               ", sSequence, sError,                                  NL,
-                                                                                                                   NL,
-                                  "Grid:              ",       GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
-                                  "UnitSize:        ",         sUnitSize,                                          NL,
-                                  "Stop:             ",        sStopConditions,                                    NL,
-                                                                                                                   NL,
-                                  "Long:            ",         sLongLots,                                          NL,
-                                  "Short:            ",        sShortLots,                                         NL,
-                                  "Total:            ",        sTotalLots,                                         NL,
-                                                                                                                   NL,
-                                  "Profit/Loss:   ",           sSequenceTotalPL, sSequencePlStats,                 NL
+   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                                  NL,
+                                                                                                                        NL,
+                                  "Grid:              ",            GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
+                                  "UnitSize:        ",              sUnitSize,                                          NL,
+                                  "Stop:             ",             sStopConditions,                                    NL,
+                                                                                                                        NL,
+                                  "Long:            ",              sLongLots,                                          NL,
+                                  "Short:            ",             sShortLots,                                         NL,
+                                  "Total:            ",             sTotalLots,                                         NL,
+                                                                                                                        NL,
+                                  "Profit/Loss:   ",                sSequenceTotalPL, sSequencePlStats,                 NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -1206,7 +1206,7 @@ int CreateStatusBox() {
    string label;
 
    for (int i=0; i < rectangles; i++) {
-      label = NAME() +".statusbox."+ (i+1);
+      label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
          RegisterObject(label);

@@ -223,7 +223,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
    Chart.StoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
@@ -242,7 +242,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
    Chart.RestoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );

@@ -527,7 +527,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(NAME() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
       RefreshRates();
    }
    confirmed = true;
@@ -597,7 +597,7 @@ int CreateStatusBox() {
    string label;
 
    for (int i=0; i < rectangles; i++) {
-      label = NAME() +".statusbox."+ (i+1);
+      label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
          RegisterObject(label);
@@ -792,7 +792,7 @@ void RedrawStartStop() {
  * @return bool - whether a sequence id was found and restored
  */
 bool RestoreChartStatus() {
-   string name=NAME(), key=name +".runtime.Sequence.ID", sValue="";
+   string name=ProgramName(), key=name +".runtime.Sequence.ID", sValue="";
 
    if (ObjectFind(key) == 0) {
       Chart.RestoreString(key, sValue);
@@ -828,7 +828,7 @@ bool RestoreChartStatus() {
  * @return int - error status
  */
 int DeleteChartStatus() {
-   string label, prefix=NAME() +".runtime.";
+   string label, prefix=ProgramName() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -1165,7 +1165,7 @@ string StatusToStr(int status) {
  * @return int - error status
  */
 int StoreChartStatus() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
    Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
    Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
@@ -1637,7 +1637,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
    if (IsLog()) logNotice(location +"   "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
    if (button == IDRETRY)
       __STATUS_RELAUNCH_INPUT = true;
 

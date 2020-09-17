@@ -554,7 +554,7 @@ bool Tester.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = StrLeft(NAME(), MAX_SYMBOL_GROUP_LENGTH);
+      string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -580,7 +580,7 @@ bool Tester.InitReporting() {
       FileClose(hFile);
 
       // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(NAME(), " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
@@ -595,7 +595,7 @@ bool Tester.InitReporting() {
       symbol = name + StrPadLeft(id, 3, "0");
 
       // create a symbol description                                                      // sizeof(SYMBOL.description) = 64
-      description = StrLeft(NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = StrLeft(ProgramName(), 38) +" #"+ id;                                 // 38 + 2 +  3 = 43 chars
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol

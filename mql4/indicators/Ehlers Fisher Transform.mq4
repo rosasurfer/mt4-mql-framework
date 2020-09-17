@@ -231,7 +231,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.Fisher.Periods",        Fisher.Periods       );
    Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
@@ -246,7 +246,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreInt  (name +".input.Fisher.Periods",        Fisher.Periods       );
    Chart.RestoreColor(name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.RestoreColor(name +".input.Histogram.Color.Lower", Histogram.Color.Lower);

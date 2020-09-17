@@ -40,14 +40,14 @@ int onStart() {
    if (isStoppable) {
       if (!This.IsTesting()) {
          PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-         int button = MessageBoxEx(NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+         int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK) return(catch("onStart(1)"));
       }
       SendChartCommand("SnowRoller.command", "stop");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(NAME(), "No stoppable sequence found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No stoppable sequence found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

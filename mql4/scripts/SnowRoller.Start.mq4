@@ -39,14 +39,14 @@ int onStart() {
    if (isStartable) {
       if (!This.IsTesting()) {
          PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-         int button = MessageBoxEx(NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to "+ ifString(status==STATUS_WAITING, "start", "resume") +" sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+         int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to "+ ifString(status==STATUS_WAITING, "start", "resume") +" sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK) return(catch("onStart(1)"));
       }
       SendChartCommand("SnowRoller.command", "start");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(NAME(), "No sequence to start or resume found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No sequence to start or resume found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

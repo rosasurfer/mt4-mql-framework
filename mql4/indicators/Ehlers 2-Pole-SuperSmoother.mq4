@@ -336,7 +336,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.Periods",              Periods             );
    Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice        );
    Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
@@ -358,7 +358,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.Periods",              Periods             );
    Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice        );
    Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );

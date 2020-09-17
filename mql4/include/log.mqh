@@ -70,7 +70,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
    if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");
    else                  sApp = sLoglevel +"MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -234,12 +234,12 @@ int log2Alert(string message, int error, int level) {
          string caption = "Tester "+ Symbol() +","+ PeriodDescription(Period());
          int pos = StringFind(message, ") ");                                    // line-wrap message after the closing function brace
          if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
-         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LogLevelDescription(level) +" in "+ message;
+         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LogLevelDescription(level) +" in "+ FullModuleName() +"::"+ message;
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
       }
       else {
-         Alert(LogLevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(Period()), "  ", NAME(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+         Alert(LogLevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(Period()), "  ", FullModuleName(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
       }
    }
 
@@ -353,7 +353,7 @@ int log2Mail(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      message = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      message = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = message;
       string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -400,7 +400,7 @@ int log2SMS(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      string text = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ NAME() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      string text = LogLevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (!SendSMS(receiver, text + NL + accountTime)) {

@@ -155,7 +155,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt(NAME() +".input.Periods", Periods);
+   Chart.StoreInt(ProgramName() +".input.Periods", Periods);
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -166,7 +166,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt(NAME() +".input.Periods", Periods);
+   Chart.RestoreInt(ProgramName() +".input.Periods", Periods);
    return(!catch("RestoreInputParameters(1)"));
 }
 

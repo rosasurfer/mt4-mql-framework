@@ -135,7 +135,7 @@ int onInit() {
 
 
    // (4) data display configuration, names and labels
-   indicatorName = NAME();
+   indicatorName = ProgramName();
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), 2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // chart subwindow and context menu
    SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // chart tooltips and "Data" window
@@ -368,7 +368,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
    Chart.StoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
@@ -388,7 +388,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
    Chart.RestoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);

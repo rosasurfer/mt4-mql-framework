@@ -120,7 +120,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = NAME() +": "+ Timeframes + signalInfo;
+   string text = ProgramName() +": "+ Timeframes + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(4)"));
@@ -877,7 +877,7 @@ bool GetRates() {
  * @return string - the label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = NAME() +" status ["+ __ExecutionContext[EC.pid] +"]";
+   string label = ProgramName() +" status ["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);

@@ -5,8 +5,8 @@
  * @return int - error status
  */
 int onInit() {
-   SNOWROLLER = StrStartsWithI(NAME(), "SnowRoller");     // MQL4 doesn't allow constant bool definitions
-   SISYPHUS   = StrStartsWithI(NAME(), "Sisyphus");
+   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");    // MQL4 doesn't allow constant bool definitions
+   SISYPHUS   = StrStartsWithI(ProgramName(), "Sisyphus");
    return(NO_ERROR);
 }
 
@@ -144,7 +144,7 @@ int afterInit() {
    // initialize status display
    CreateStatusBox();
    SS.All();
-   string section = NAME();
+   string section = ProgramName();
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {

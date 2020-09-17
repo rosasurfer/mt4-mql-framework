@@ -401,7 +401,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.StoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.StoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
@@ -428,7 +428,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.RestoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.RestoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
