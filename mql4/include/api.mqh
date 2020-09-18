@@ -170,7 +170,7 @@ bool     IsSuperContext();;
 bool     IsTicket(int ticket);;
 bool     IsVisualModeFix();;
 bool     LE(double double1, double double2, int digits = 8);;
-string   LogLevelDescription(int level);;
+string   LoglevelDescription(int level);;                   // also implemented in MT4Expander
 bool     LogTicket(int ticket);;
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method, bool strict = true);;
@@ -200,7 +200,7 @@ string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
 datetime ParseDate(string value);;
 datetime ParseDateTime(string value);;
-string   PeriodDescription(int period);;           // also implemented in MT4Expander
+string   PeriodDescription(int period);;                    // also implemented in MT4Expander
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
@@ -563,11 +563,11 @@ int      ec_hChartWindow           (int &ec[]);;
 datetime ec_CurrTickTime           (int &ec[]);;
 int      ec_Loglevel               (int &ec[]);;
 int      ec_LoglevelAlert          (int &ec[]);;
-int      ec_LoglevelTerminal       (int &ec[]);;
 int      ec_LoglevelDebugger       (int &ec[]);;
 int      ec_LoglevelFile           (int &ec[]);;
 int      ec_LoglevelMail           (int &ec[]);;
 int      ec_LoglevelSMS            (int &ec[]);;
+int      ec_LoglevelTerminal       (int &ec[]);;
 int      ec_lpSuperContext         (int &ec[]);;
 int      ec_ModuleDeinitFlags      (int &ec[]);;
 int      ec_ModuleInitFlags        (int &ec[]);;
@@ -600,7 +600,7 @@ int      ec_SetLoglevelMail        (int &ec[], int level);;
 int      ec_SetLoglevelSMS         (int &ec[], int level);;
 int      ec_SetLoglevelTerminal    (int &ec[], int level);;
 int      ec_SetMqlError            (int &ec[], int error);;
-int      ec_SetProgramCoreFunction (int &ec[], int function);;
+int      ec_SetProgramCoreFunction (int &ec[], int id);;
 int      ec_SubPipDigits           (int &ec[]);;
 string   ec_SubPipPriceFormat      (int &ec[]);;
 bool     ec_SuperContext           (int &ec[], int &target[]);;
@@ -681,6 +681,8 @@ int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
 string   LocalTimeFormat(datetime timestamp, string format);;
+string   LoglevelDescription(int level);;                   // also implemented in MQL::stdfunctions
+string   LoglevelToStr(int level);;
 bool     LogMessageA(int ec[], string message, int error, int level);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
 string   MD5Hash(int &input[], int length);;
@@ -700,7 +702,7 @@ int      onDeinitRecompile();;
 int      onDeinitRemove();;
 int      onDeinitTemplate();;
 int      onDeinitUndefined();;
-string   PeriodDescription(int period);;           // also implemented in MQL
+string   PeriodDescription(int period);;                    // also implemented in MQL::stdfunctions
 string   PeriodToStr(int period);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;

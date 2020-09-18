@@ -92,8 +92,8 @@
    //       ec.dllWarningMsg
 
    int      ec_Loglevel            (int ec[]);
-   int      ec_LoglevelAlert       (int ec[]);
    int      ec_LoglevelTerminal    (int ec[]);
+   int      ec_LoglevelAlert       (int ec[]);
    int      ec_LoglevelDebugger    (int ec[]);
    int      ec_LoglevelFile        (int ec[]);
    int      ec_LoglevelMail        (int ec[]);
@@ -103,16 +103,16 @@
 
 
    // used setters
-   int      ec_SetProgramCoreFunction (int ec[], int function);
-   int      ec_SetMqlError            (int ec[], int error   );
-   int      ec_SetDllError            (int ec[], int error   );
-   int      ec_SetLoglevel            (int ec[], int level   );
-   int      ec_SetLoglevelAlert       (int ec[], int level   );
-   int      ec_SetLoglevelTerminal    (int ec[], int level   );
-   int      ec_SetLoglevelDebugger    (int ec[], int level   );
-   int      ec_SetLoglevelFile        (int ec[], int level   );
-   int      ec_SetLoglevelMail        (int ec[], int level   );
-   int      ec_SetLoglevelSMS         (int ec[], int level   );
+   int      ec_SetProgramCoreFunction (int ec[], int id);
+   int      ec_SetMqlError            (int ec[], int error);
+   int      ec_SetDllError            (int ec[], int error);
+   int      ec_SetLoglevel            (int ec[], int level);
+   int      ec_SetLoglevelTerminal    (int ec[], int level);
+   int      ec_SetLoglevelAlert       (int ec[], int level);
+   int      ec_SetLoglevelDebugger    (int ec[], int level);
+   int      ec_SetLoglevelFile        (int ec[], int level);
+   int      ec_SetLoglevelMail        (int ec[], int level);
+   int      ec_SetLoglevelSMS         (int ec[], int level);
 
 
    // helpers

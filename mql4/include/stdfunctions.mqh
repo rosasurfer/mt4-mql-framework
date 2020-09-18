@@ -5061,7 +5061,7 @@ datetime ParseDateTime(string value) {
  *
  * @return string
  */
-string LogLevelDescription(int level) {
+string LoglevelDescription(int level) {
    switch (level) {
       case LOG_DEBUG : return("DEBUG" );
       case LOG_INFO  : return("INFO"  );
@@ -6595,7 +6595,7 @@ void __DummyCalls() {
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL, NULL, NULL);
-   LogLevelDescription(NULL);
+   LoglevelDescription(NULL);
    LogTicket(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
@@ -6743,7 +6743,6 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   string   ec_ModuleName(int ec[]);
    string   ec_ProgramName(int ec[]);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
