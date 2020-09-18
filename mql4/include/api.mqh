@@ -55,7 +55,23 @@ bool     WriteIniString(string fileName, string section, string key, string valu
 // include/log.mqh
 int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
-int      log(string message, int error, int level);;
+
+int      log         (string message, int error, int level);;
+int      logDebug    (string message, int error = NO_ERROR);;
+int      logInfo     (string message, int error = NO_ERROR);;
+int      logNotice   (string message, int error = NO_ERROR);;
+int      logWarn     (string message, int error = NO_ERROR);;
+int      logError    (string message, int error = NO_ERROR);;
+int      logFatal    (string message, int error = NO_ERROR);;
+
+int      log2Alert   (string message, int error, int level);;
+int      log2Debugger(string message, int error, int level);;
+int      log2File    (string message, int error, int level);;
+int      log2Mail    (string message, int error, int level);;
+int      log2SMS     (string message, int error, int level);;
+int      log2Terminal(string message, int error, int level);;
+
+bool     SetCustomLog(string filename);;
 
 
 // include/scriptrunner.mqh

@@ -82,10 +82,6 @@
    bool     IsJunctionA(string name);
    bool     IsSymlinkA(string name);
 
-   // logging
-   bool     LogMessageA  (int ec[], string message, int error, int level);
-   bool     SetCustomLogA(int ec[], string file);
-
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
