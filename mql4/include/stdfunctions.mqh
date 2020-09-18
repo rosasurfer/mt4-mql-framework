@@ -34,18 +34,6 @@ int warn(string message, int error = NO_ERROR) {
 
 
 /**
- * Configure the use of a custom logfile (simple wrapper for the Expander function).
- *
- * @param  string filename - full filename to enable or an empty string to disable custom logging
- *
- * @return bool - success status
- */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
-}
-
-
-/**
  * Set the last error code of the MQL module. If called in a library the error will bubble up to the program's main module.
  * If called in an indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR
  * will never bubble up.
@@ -6642,7 +6630,6 @@ void __DummyCalls() {
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
-   SetCustomLog(NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
