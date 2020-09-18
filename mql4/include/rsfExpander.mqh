@@ -90,9 +90,9 @@
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );       // Warning: GetStringAddress() must be used with string array elements only.
-   int      GetStringsAddress(string values[]);       //          Simple strings are passed to DLLs as copies. The resulting address
-   string   GetStringA(int address);                  //          is a dangling pointer and accessing it may cause a terminal crash.
+   int      GetStringAddress (string value   );          // Warning: GetStringAddress() must be used with string array elements only.
+   int      GetStringsAddress(string values[]);          //          Simple strings are passed to DLLs as copies. The resulting address
+   string   GetStringA(int address);                     //          is a dangling pointer and accessing it may cause a terminal crash.
    //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
@@ -118,25 +118,26 @@
    string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
    string   InitFlagsToStr(int flags);
-   string   InitializeReasonToStr(int reason);        // alias of InitReasonToStr()
+   string   InitializeReasonToStr(int reason);           // alias of InitReasonToStr()
    string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
+   string   LoglevelToStr(int level);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
    string   NumberFormat(double value, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
-   string   OrderTypeDescription(int type);           // alias
-   string   OrderTypeToStr(int type);                 // alias
+   string   OrderTypeDescription(int type);              // alias
+   string   OrderTypeToStr(int type);                    // alias
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
    string   ShowWindowCmdToStr(int cmdShow);
-   string   TimeframeDescription(int timeframe);      // alias of PeriodDescription()
-   string   TimeframeToStr(int timeframe);            // alias of PeriodToStr()
+   string   TimeframeDescription(int timeframe);         // alias of PeriodDescription()
+   string   TimeframeToStr(int timeframe);               // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
-   string   UninitializeReasonToStr(int reason);      // alias of UninitReasonToStr()
+   string   UninitializeReasonToStr(int reason);         // alias of UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
    // window property management
