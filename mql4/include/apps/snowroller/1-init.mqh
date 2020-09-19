@@ -22,10 +22,10 @@ int onInitUser() {
 
    // check for a specified sequence id
    if (ValidateInputs.ID()) {                               // on success a valid sequence id was specified
-      SetCustomLog(GetCustomLogFileName());
+      SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;
-      if (!RestoreSequence(interactive)) SetCustomLog("");
+      if (!RestoreSequence(interactive)) SetLogfile("");
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
@@ -43,7 +43,7 @@ int onInitUser() {
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
-      SetCustomLog(GetCustomLogFileName());
+      SetLogfile(GetLogFilename());
       SS.SequenceName();
       SaveStatus();
 
@@ -66,7 +66,7 @@ int onInitUser() {
 int onInitTemplate() {
    // restore sequence data from the chart
    if (RestoreChartStatus()) {
-      SetCustomLog(GetCustomLogFileName());                 // on success a sequence id was restored
+      SetLogfile(GetLogFilename());                         // on success a sequence id was restored
       RestoreSequence(false);
    }
    DeleteChartStatus();
@@ -120,7 +120,7 @@ int onInitTimeframeChange() {
  * @return int - error status
  */
 int onInitSymbolChange() {
-   SetCustomLog("");
+   SetLogfile("");
    return(SetLastError(ERR_CANCELLED_BY_USER));
 }
 

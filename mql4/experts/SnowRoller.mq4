@@ -2901,7 +2901,7 @@ bool SaveStatus() {
    string sActiveStartConditions="", sActiveStopConditions="";
    SaveStatus.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
 
-   string file = GetStatusFileName();
+   string file = GetStatusFilename();
 
    string section = "Common";
    WriteIniString(file, section, "Account",                  GetAccountCompany() +":"+ GetAccountNumber());
@@ -3109,7 +3109,7 @@ bool ReadStatus() {
    if (IsLastError())  return(false);
    if (!sequence.id)   return(!catch("ReadStatus(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
 
-   string file = GetStatusFileName();
+   string file = GetStatusFilename();
    if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [Common]

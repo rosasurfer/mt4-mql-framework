@@ -612,14 +612,14 @@ int CreateStatusBox() {
 
 
 /**
- * Return the full name of the custom logfile.
+ * Return the full name of the instance logfile.
  *
  * @return string - filename or an empty string in tester (no separate logfile)
  */
-string GetCustomLogFileName() {
-   return("");                            // for the time being: disable the custom log
+string GetLogFilename() {
+   return("");                            // for the time being: disable the log
 
-   string name = GetStatusFileName();
+   string name = GetStatusFilename();
    if (!StringLen(name)) return("");
    if (IsTestSequence()) return("");
 
@@ -632,8 +632,8 @@ string GetCustomLogFileName() {
  *
  * @return string - filename or an empty string in case of errors
  */
-string GetStatusFileName() {
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFileName(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
+string GetStatusFilename() {
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    string sSID = "";
    if (SNOWROLLER) sSID = "SR.";

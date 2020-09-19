@@ -71,7 +71,7 @@ int      log2Mail    (string message, int error, int level);;
 int      log2SMS     (string message, int error, int level);;
 int      log2Terminal(string message, int error, int level);;
 
-bool     SetCustomLog(string filename);;
+bool     SetLogfile(string filename);;
 
 
 // include/scriptrunner.mqh
@@ -568,7 +568,6 @@ string   DoubleQuoteStr(string value);;
 double   ec_Ask                    (int &ec[]);;
 int      ec_Bars                   (int &ec[]);;
 double   ec_Bid                    (int &ec[]);;
-string   ec_CustomLogFilename      (int &ec[]);;
 int      ec_CycleTicks             (int &ec[]);;
 int      ec_Digits                 (int &ec[]);;
 int      ec_DllError               (int &ec[]);;
@@ -577,6 +576,7 @@ bool     ec_ExtReporting           (int &ec[]);;
 int      ec_hChart                 (int &ec[]);;
 int      ec_hChartWindow           (int &ec[]);;
 datetime ec_CurrTickTime           (int &ec[]);;
+string   ec_LogfileName            (int &ec[]);;
 int      ec_Loglevel               (int &ec[]);;
 int      ec_LoglevelAlert          (int &ec[]);;
 int      ec_LoglevelDebugger       (int &ec[]);;
@@ -727,7 +727,7 @@ double   RemoveWindowDoubleA(int hWnd, string name);;
 int      RemoveWindowIntegerA(int hWnd, string name);;
 string   RemoveWindowStringA(int hWnd, string name);;
 bool     ReopenAlertDialog(int sound);;
-bool     SetCustomLogA(int ec[], string filename);;
+bool     SetLogfileA(int ec[], string filename);;
 int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowDoubleA(int hWnd, string name, double value);;
 bool     SetWindowIntegerA(int hWnd, string name, int value);;
