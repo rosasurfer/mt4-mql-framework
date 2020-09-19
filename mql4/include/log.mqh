@@ -310,7 +310,7 @@ int log2File(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      LogMessageA(__ExecutionContext, message, error, level);
+      AppendLogMessageA(__ExecutionContext, message, error, level);
    }
 
    isRecursion = false;
@@ -477,6 +477,6 @@ bool SetLogfile(string filename) {
    int  ec_SetLoglevelMail    (int ec[], int level);
    int  ec_SetLoglevelSMS     (int ec[], int level);
    int  ec_SetLoglevelTerminal(int ec[], int level);
-   bool LogMessageA           (int ec[], string message, int error, int level);
+   bool AppendLogMessageA     (int ec[], string message, int error, int level);
    bool SetLogfileA           (int ec[], string file);
 #import

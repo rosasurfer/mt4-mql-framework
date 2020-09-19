@@ -20,7 +20,7 @@ int warn(string message, int error = NO_ERROR) {
    if (recursiveCall) return(debug("warn(1)  recursive call: "+ message, error));
    recursiveCall = true;
 
-   //LogMessageA(__ExecutionContext, "WARN: "+ FullModuleName() +"::"+ message, error, LOG_WARN);
+   //AppendLogMessageA(__ExecutionContext, "WARN: "+ FullModuleName() +"::"+ message, error, LOG_WARN);
 
    log2Terminal(message, error, LOG_WARN);
    log2Alert(message, error, LOG_WARN);
