@@ -1,4 +1,36 @@
 /**
+ * Error reporting and logging
+ *
+ * +----------------+--------------------------------------------+-------------------------+
+ * | Function       | Functionality                              | Notes                   |
+ * +----------------+--------------------------------------------+-------------------------+
+ * | debug()        | send messages to the system debugger       | no configuration        |
+ * | triggerWarn()  | enforce log(LOG_WARN)                      | overrides configuration |
+ * | triggerError() | enforce log(LOG_ERROR) + SetLastError()    | overrides configuration |
+ * | triggerFatal() | enforce log(LOG_FATAL) + SetLastError()    | overrides configuration |
+ * | catch()        | if (GetLastError()) triggerError()         | error detection         |
+ * +----------------+--------------------------------------------+-------------------------+
+ * | log()          | dispatch messages to enabled log appenders | configurable            |
+ * | logDebug()     | alias of log(LOG_DEBUG)                    |                         |
+ * | logInfo()      | alias of log(LOG_INFO)                     |                         |
+ * | logNotice()    | alias of log(LOG_NOTICE)                   |                         |
+ * | logWarn()      | alias of log(LOG_WARN)                     |                         |
+ * | logError()     | alias of log(LOG_ERROR)                    |                         |
+ * | logFatal()     | alias of log(LOG_FATAL)                    |                         |
+ * +----------------+--------------------------------------------+-------------------------+
+ * | log2Terminal() | TerminalLogAppender                        | configurable            |
+ * | log2Alert()    | TerminalAlertAppender                      | configurable            |
+ * | log2Debugger() | DebugOutputAppender                        | configurable            |
+ * | log2File()     | LogfileAppender                            | configurable            |
+ * | log2Mail()     | MailAppender                               | configurable            |
+ * | log2SMS()      | SMSAppender                                | configurable            |
+ * +----------------+--------------------------------------------+-------------------------+
+ * | SetLogfile()   | set a logfile for LogfileAppender          | per MQL program         |
+ * +----------------+--------------------------------------------+-------------------------+
+ */
+
+
+/**
  * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
  * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
  *
