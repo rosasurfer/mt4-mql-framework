@@ -284,7 +284,7 @@ int log2Debugger(string message, int error, int level) {
 
 
 /**
- * Send a log message to a custom logfile appender.
+ * Send a log message to the separate logfile appender.
  *
  * @param  string message - log message
  * @param  int    error   - error linked to the message (if any)
@@ -453,19 +453,19 @@ int log2Terminal(string message, int error, int level) {
    logWarn(NULL);
    logError(NULL);
    logFatal(NULL);
-   SetCustomLog(NULL);
+   SetLogfile(NULL);
 }
 
 
 /**
- * Configure the use of a custom logfile (simple wrapper for the Expander function).
+ * Configure the use of a separate logfile (simple wrapper for the MT4Expander function).
  *
- * @param  string filename - full filename to enable or an empty string to disable custom logging
+ * @param  string filename - full filename to enable or an empty string to disable a separate logfile
  *
  * @return bool - success status
  */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
+bool SetLogfile(string filename) {
+   return(SetLogfileA(__ExecutionContext, filename));
 }
 
 
@@ -478,5 +478,5 @@ bool SetCustomLog(string filename) {
    int  ec_SetLoglevelSMS     (int ec[], int level);
    int  ec_SetLoglevelTerminal(int ec[], int level);
    bool LogMessageA           (int ec[], string message, int error, int level);
-   bool SetCustomLogA         (int ec[], string file);
+   bool SetLogfileA           (int ec[], string file);
 #import

@@ -2946,9 +2946,9 @@ bool MQL.IsDirectory(string dirname) {
 
 
 /**
- * Whether the specified file exists in the MQL "files/" directory.
+ * Whether the specified file exists in the MQL "files" directory.
  *
- * @param  string filename - Filename relative to "files/", may be a symbolic link. Supported directory separators are
+ * @param  string filename - Filename relative to "files", may be a symbolic link. Supported directory separators are
  *                           forward and backward slash.
  * @return bool
  */
