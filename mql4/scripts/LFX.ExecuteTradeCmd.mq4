@@ -95,7 +95,7 @@ int onStart() {
          case TC_LFX_ORDER_DELETE : triggerWarn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
                                     break;
          default:
-            triggerWarn"onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
+            triggerWarn("onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
       }
    }
 
