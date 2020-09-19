@@ -14,7 +14,6 @@ double __rates[][6];
  * @return int - error status
  */
 int init() {
-   debug("init(0.1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
@@ -213,7 +212,6 @@ bool initContext() {
  * @return int - Fehlerstatus
  */
 int start() {
-   debug("start(0.1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
@@ -399,7 +397,6 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   debug("deinit(0.1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
    __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
