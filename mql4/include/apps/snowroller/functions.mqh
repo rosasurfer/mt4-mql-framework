@@ -12,7 +12,7 @@
  */
 bool onCommand(string commands[]) {
    if (!ArraySize(commands))
-      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
+      return(!triggerWarn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}"));
 
    string cmd = commands[0];
 
@@ -24,7 +24,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_STOPPED:
             if (!start.conditions)                       // whether any start condition is active
-               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
+               return(!triggerWarn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)"));
             sequence.status = STATUS_WAITING;
       }
       return(true);
@@ -65,7 +65,7 @@ bool onCommand(string commands[]) {
    if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
 
    // log unknown commands and let the EA continue
-   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
+   return(!triggerWarn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd)));
 }
 
 
