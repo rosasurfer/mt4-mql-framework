@@ -123,7 +123,7 @@ int init() {
 
    // log original input parameters
    string input1="", input2="", inputDiff="";
-   if (UninitializeReason()!=UR_CHARTCHANGE && IsLog()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLog()) {
       input1 = InputsToStr();
       if (StringLen(input1) > 0) {
          input1 = StringConcatenate(input1,
@@ -174,7 +174,7 @@ int init() {
    if (CheckErrors("init(16)")) return(last_error);
 
    // log modified input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE && IsLog()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLog()) {
       input2 = InputsToStr();
       if (StringLen(input2) > 0) {
          input2 = StringConcatenate(input2,

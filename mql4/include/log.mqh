@@ -54,7 +54,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
    isRecursion = true;
 
    string sLoglevel="", sApp="", sError="";
-   if (loglevel != 0) sLoglevel = StringConcatenate(LoglevelDescription(loglevel), " ");
+   if (loglevel != 0) sLoglevel = StringConcatenate(LoglevelDescription(loglevel), "  ");
    if (error != 0)    sError    = StringConcatenate("  [", ErrorToStr(error), "]");
 
    if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");

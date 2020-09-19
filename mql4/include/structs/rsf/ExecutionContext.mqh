@@ -98,8 +98,8 @@
    int      ec_LoglevelFile        (int ec[]);
    int      ec_LoglevelMail        (int ec[]);
    int      ec_LoglevelSMS         (int ec[]);
-   //       ec.logfile
-   string   ec_LogfileName         (int ec[]);
+   //       ec.logger
+   string   ec_LogFilename         (int ec[]);
 
 
    // used setters
