@@ -92,10 +92,10 @@ int onStart() {
          case TC_LFX_ORDER_CLOSEBY: //CloseLfxOrderBy(); break;
          case TC_LFX_ORDER_HEDGE  : //HedgeLfxOrder  (); break;
          case TC_LFX_ORDER_MODIFY : //ModifyLfxOrder (); break;
-         case TC_LFX_ORDER_DELETE : warn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
+         case TC_LFX_ORDER_DELETE : triggerWarn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
                                     break;
          default:
-            warn("onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
+            triggerWarn"onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
       }
    }
 

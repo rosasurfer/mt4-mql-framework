@@ -359,7 +359,7 @@ bool AquireLock(string mutexName, bool wait) {
          continue;                                                   // retry
       }
       if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(_false(warn("AquireLock(4)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +", stopping...")));
+      if (IsStopped())    return(triggerWarn("AquireLock(4)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
       if (!wait)
          return(false);
 
@@ -368,7 +368,7 @@ bool AquireLock(string mutexName, bool wait) {
       if (duration >= seconds*1000) {
          if (seconds >= 10)
             return(!catch("AquireLock(5)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
-         warn("AquireLock(6)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
+         triggerWarn("AquireLock(6)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
          seconds++;
       }
 
@@ -430,7 +430,7 @@ int __CheckLocks() {
    int error = NO_ERROR;
 
    for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
-      warn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
+      triggerWarn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
       if (!ReleaseLock(lock.names[i]))
          error = last_error;
    }
@@ -4577,7 +4577,7 @@ int DeleteRegisteredObjects() {
 
    for (int i=0; i < size; i++) {
       if (ObjectFind(registeredObjects[i]) != -1)
-         if (!ObjectDelete(registeredObjects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+         if (!ObjectDelete(registeredObjects[i])) triggerWarn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
    }
    ArrayResize(registeredObjects, 0);
 
@@ -4969,23 +4969,23 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
       filter |= F_ERS_EXECUTION_STOPPING;
 
    // filter the specified errors and log them
-   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(logInfo(message, error));
-   if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return(logInfo(message, error));
-   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(logInfo(message, error));
-   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return(logInfo(message, error));
-   if (error==ERR_INVALID_STOP             && filter & F_ERR_INVALID_STOP            ) return(logInfo(message, error));
-   if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return(logInfo(message, error));
-   if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return(logInfo(message, error));
-   if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(logInfo(message, error));
-   if (error==ERR_NO_CONNECTION            && filter & F_ERR_NO_CONNECTION           ) return(   warn(message, error));
-   if (error==ERR_NO_RESULT                && filter & F_ERR_NO_RESULT               ) return(logInfo(message, error));
-   if (error==ERR_OFF_QUOTES               && filter & F_ERR_OFF_QUOTES              ) return(logInfo(message, error));
-   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(logInfo(message, error));
-   if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(logInfo(message, error));
-   if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(logInfo(message, error));
-   if (error==ERR_TRADE_DISABLED           && filter & F_ERR_TRADE_DISABLED          ) return(   warn(message, error));
-   if (error==ERR_TRADE_MODIFY_DENIED      && filter & F_ERR_TRADE_MODIFY_DENIED     ) return(logInfo(message, error));
-   if (error==ERR_TRADESERVER_GONE         && filter & F_ERR_TRADESERVER_GONE        ) return(   warn(message, error));
+   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(    logInfo(message, error));
+   if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return(    logInfo(message, error));
+   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(    logInfo(message, error));
+   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return(    logInfo(message, error));
+   if (error==ERR_INVALID_STOP             && filter & F_ERR_INVALID_STOP            ) return(    logInfo(message, error));
+   if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return(    logInfo(message, error));
+   if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return(    logInfo(message, error));
+   if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(    logInfo(message, error));
+   if (error==ERR_NO_CONNECTION            && filter & F_ERR_NO_CONNECTION           ) return(triggerWarn(message, error));
+   if (error==ERR_NO_RESULT                && filter & F_ERR_NO_RESULT               ) return(    logInfo(message, error));
+   if (error==ERR_OFF_QUOTES               && filter & F_ERR_OFF_QUOTES              ) return(    logInfo(message, error));
+   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(    logInfo(message, error));
+   if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(    logInfo(message, error));
+   if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(    logInfo(message, error));
+   if (error==ERR_TRADE_DISABLED           && filter & F_ERR_TRADE_DISABLED          ) return(triggerWarn(message, error));
+   if (error==ERR_TRADE_MODIFY_DENIED      && filter & F_ERR_TRADE_MODIFY_DENIED     ) return(    logInfo(message, error));
+   if (error==ERR_TRADESERVER_GONE         && filter & F_ERR_TRADESERVER_GONE        ) return(triggerWarn(message, error));
 
    // trigger a runtime error for everything else
    return(catch(message, error));
@@ -5199,7 +5199,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          case ERR_OFF_QUOTES:
             tempErrors++;
             if (tempErrors > 5) break;
-            warn("OrderSendEx(25)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
+            triggerWarn("OrderSendEx(25)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          case ERR_REQUOTE:
@@ -5417,7 +5417,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double prevOpenPrice=OrderOpenPrice(), prevStopLoss=OrderStopLoss(), prevTakeProfit=OrderTakeProfit();
 
    if (EQ(openPrice, prevOpenPrice, digits)) /*&&*/ if (EQ(stopLoss, prevStopLoss, digits)) /*&&*/ if (EQ(takeProfit, prevTakeProfit, digits)) {
-      warn("OrderModifyEx(24)  nothing to modify for ticket #"+ ticket);
+      triggerWarn("OrderModifyEx(24)  nothing to modify for ticket #"+ ticket);
       return(_false(Order.HandleError("OrderModifyEx(25)", ERR_NO_RESULT, oeFlags, oe), OrderPop("OrderModifyEx(26)")));
    }
    int  tempErrors, startTime = GetTickCount();
@@ -5474,7 +5474,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          case ERR_TRADE_TIMEOUT:
             tempErrors++;
             if (tempErrors > 5) break;
-            warn("OrderModifyEx(36)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            triggerWarn("OrderModifyEx(36)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          // map terminal generated errors
@@ -5769,7 +5769,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          case ERR_OFF_QUOTES:
             tempErrors++;
             if (tempErrors > 5) break;
-            warn("OrderCloseEx(40)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            triggerWarn("OrderCloseEx(40)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          case ERR_REQUOTE:
@@ -6115,7 +6115,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
          case ERR_TRADE_TIMEOUT:
             tempErrors++;
             if (tempErrors > 5) break;
-            warn("OrderCloseByEx(29)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            triggerWarn("OrderCloseByEx(29)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          // map terminal generated errors
@@ -6867,7 +6867,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
          case ERR_TRADE_TIMEOUT:
             tempErrors++;
             if (tempErrors > 5) break;
-            warn("OrderDeleteEx(16)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            triggerWarn("OrderDeleteEx(16)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          // map terminal generated errors

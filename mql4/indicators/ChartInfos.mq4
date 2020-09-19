@@ -288,7 +288,7 @@ bool CheckLastError(string location) {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!triggerWarn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if (commands[i] == "cmd=EditAccountConfig") {
@@ -329,7 +329,7 @@ bool onCommand(string commands[]) {
          ArrayResize(positions.config.comments, 0);
          continue;
       }
-      warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
+      triggerWarn("onCommand(2)  unknown command \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
 }
@@ -2989,7 +2989,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
    else if (type == TERM_OPEN_ALL) {
       // offene Positionen aller Symbole eines Zeitraumes
-      warn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
+      triggerWarn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
    }
 
    else if (type==TERM_HISTORY_SYMBOL || type==TERM_HISTORY_ALL) {
@@ -3565,10 +3565,10 @@ bool ProcessLfxTerminalMessage(string message) {
 
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\"")));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(!triggerWarn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\""));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)")));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(!triggerWarn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)"));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(!triggerWarn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)"));
    // LFX-Parameter
    double profit;
    bool   success;
@@ -3593,7 +3593,7 @@ bool ProcessLfxTerminalMessage(string message) {
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
       if (success) { if (IsLog()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {                 warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      else         {          triggerWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
@@ -3612,7 +3612,7 @@ bool ProcessLfxTerminalMessage(string message) {
    }
 
    // ???
-   return(_true(warn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\"")));
+   return(!triggerWarn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\""));
 }
 
 

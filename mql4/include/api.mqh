@@ -55,6 +55,9 @@ bool     WriteIniString(string fileName, string section, string key, string valu
 // include/log.mqh
 int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
+int      triggerWarn (string message, int error=NO_ERROR);;
+int      triggerError(string message, int error);;
+int      triggerFatal(string message, int error);;
 
 int      log         (string message, int error, int level);;
 int      logDebug    (string message, int error = NO_ERROR);;
@@ -300,7 +303,6 @@ string   TradeCommandToStr(int cmd);;
 string   UninitializeReasonDescription(int reason);;
 string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool select = false);;
-int      warn(string message, int error = NO_ERROR);;
 
 
 // include/functions/

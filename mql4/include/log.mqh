@@ -23,17 +23,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       }
       isRecursion = true;
 
-      int oldLoglevel = __ExecutionContext[EC.loglevel];       // store the existing loglevel
-      if (!oldLoglevel) {
-         log("", NULL, LOG_OFF);
-         oldLoglevel = __ExecutionContext[EC.loglevel];
-      }
-
-      ec_SetLoglevel(__ExecutionContext, LOG_ERROR);           // override it
-      log(location, error, LOG_ERROR);                         // handle the error
-      ec_SetLoglevel(__ExecutionContext, oldLoglevel);         // restore the old loglevel
-
-      SetLastError(error);                                     // set the error
+      triggerError(location, error);
    }
 
    if (orderPop) OrderPop(location);
@@ -52,7 +42,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - the same error
  */
 int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
-   // note: The function must not use MQL library functions. Using DLLs is ok.
+   // note: This function must not call MQL library functions. Using DLLs is ok.
    if (!IsDllsAllowed()) {
       Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");  // directly alert instead
       return(error);
@@ -71,6 +61,115 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
    else                  sApp = sLoglevel +"MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
+
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Trigger a warning with an optional error code and override a disabled logging. Don't set the error.
+ *
+ * @param  string message          - location identifier and/or warning message
+ * @param  int    error [optional] - error code (default: none)
+ *
+ * @return int - the same error
+ */
+int triggerWarn(string message, int error = NO_ERROR) {
+   static bool isRecursion = false; if (isRecursion) {
+      string msg = "triggerWarn(1)  recursion ("+ message +")";
+      Alert(msg, ", error: ", error);                       // should never happen
+      return(debug(msg, error, LOG_ERROR));
+   }
+   isRecursion = true;
+
+   int oldLevel = __ExecutionContext[EC.loglevel];          // initialize the logger and store the existing loglevel
+   if (!oldLevel) {
+      log("", NULL, LOG_OFF);
+      oldLevel = __ExecutionContext[EC.loglevel];
+   }
+
+   if (oldLevel > LOG_WARN)
+      ec_SetLoglevel(__ExecutionContext, LOG_WARN);         // override the current loglevel
+
+   log(message, error, LOG_WARN);                           // handle the warning
+
+   if (oldLevel > LOG_WARN)
+      ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
+
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Trigger an error and override a disabled logging.
+ *
+ * @param  string message - location identifier and/or error message
+ * @param  int    error   - error code
+ *
+ * @return int - the same error
+ */
+int triggerError(string message, int error) {
+   static bool isRecursion = false; if (isRecursion) {
+      string msg = "triggerError(1)  recursion ("+ message +")";
+      Alert(msg, ", error: ", error);                       // should never happen
+      return(debug(msg, error, LOG_ERROR));
+   }
+   isRecursion = true;
+
+   int oldLevel = __ExecutionContext[EC.loglevel];          // initialize the logger and store the existing loglevel
+   if (!oldLevel) {
+      log("", NULL, LOG_OFF);
+      oldLevel = __ExecutionContext[EC.loglevel];
+   }
+
+   if (oldLevel > LOG_ERROR)
+      ec_SetLoglevel(__ExecutionContext, LOG_ERROR);        // override the current loglevel
+
+   log(message, error, LOG_ERROR);                          // handle the error
+
+   if (oldLevel > LOG_ERROR)
+      ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
+
+   SetLastError(error);                                     // set the error
+
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Trigger a fatal error and override a disabled logging.
+ *
+ * @param  string message - location identifier and/or error message
+ * @param  int    error   - error code
+ *
+ * @return int - the same error
+ */
+int triggerFatal(string message, int error) {
+   static bool isRecursion = false; if (isRecursion) {
+      string msg = "triggerFatal(1)  recursion ("+ message +")";
+      Alert(msg, ", error: ", error);                       // should never happen
+      return(debug(msg, error, LOG_ERROR));
+   }
+   isRecursion = true;
+
+   int oldLevel = __ExecutionContext[EC.loglevel];          // initialize the logger and store the existing loglevel
+   if (!oldLevel) {
+      log("", NULL, LOG_OFF);
+      oldLevel = __ExecutionContext[EC.loglevel];
+   }
+
+   if (oldLevel > LOG_FATAL)
+      ec_SetLoglevel(__ExecutionContext, LOG_FATAL);        // override the current loglevel
+
+   log(message, error, LOG_FATAL);                          // handle the error
+
+   if (oldLevel > LOG_FATAL)
+      ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
+
+   SetLastError(error);                                     // set the error
 
    isRecursion = false;
    return(error);
@@ -447,12 +546,27 @@ int log2Terminal(string message, int error, int level) {
    return(error);
 
    // dummy calls
-   logDebug(NULL);
-   logInfo(NULL);
+   catch(NULL);
+   debug(NULL);
+   triggerWarn(NULL);
+   triggerError(NULL, NULL);
+   triggerFatal(NULL, NULL);
+
+   log(NULL, NULL, NULL);
+   logDebug (NULL);
+   logInfo  (NULL);
    logNotice(NULL);
-   logWarn(NULL);
-   logError(NULL);
-   logFatal(NULL);
+   logWarn  (NULL);
+   logError (NULL);
+   logFatal (NULL);
+
+   log2Alert   (NULL, NULL, NULL);
+   log2Debugger(NULL, NULL, NULL);
+   log2File    (NULL, NULL, NULL);
+   log2Mail    (NULL, NULL, NULL);
+   log2SMS     (NULL, NULL, NULL);
+   log2Terminal(NULL, NULL, NULL);
+
    SetLogfile(NULL);
 }
 
