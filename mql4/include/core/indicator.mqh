@@ -14,6 +14,7 @@ double __rates[][6];
  * @return int - error status
  */
 int init() {
+   debug("init(0.1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
@@ -86,7 +87,7 @@ int init() {
 
    // (4) before onInit(): if loaded by iCustom() log original input parameters
    string initialInput = "";
-   if (IsSuperContext() && IsLog()) {
+   if (IsSuperContext()) /*&&*/ if (IsLog()) {
       //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
@@ -140,7 +141,7 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
    // (6) after onInit(): if loaded by iCustom() log modified input parameters
-   if (IsSuperContext() && IsLog()) {
+   if (IsSuperContext()) /*&&*/ if (IsLog()) {
       string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
@@ -212,6 +213,7 @@ bool initContext() {
  * @return int - Fehlerstatus
  */
 int start() {
+   debug("start(0.1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
@@ -397,6 +399,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   debug("deinit(0.1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
    __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)

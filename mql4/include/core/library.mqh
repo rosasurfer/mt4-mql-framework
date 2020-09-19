@@ -8,10 +8,12 @@ int __lpSuperContext = NULL;
  * @return int - error status
  */
 int init() {
-   debug("init(0.1)");
+   debug("init(0.1)  before SyncLibContext_init: ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
 
    int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
    if (IsError(error)) return(error);
+
+   debug("init(0.2)  after  SyncLibContext_init: ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
 
    // globale Variablen initialisieren
    __lpSuperContext = __ExecutionContext[EC.superContext];

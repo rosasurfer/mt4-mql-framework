@@ -579,7 +579,7 @@ bool     ec_ExtReporting           (int &ec[]);;
 int      ec_hChart                 (int &ec[]);;
 int      ec_hChartWindow           (int &ec[]);;
 datetime ec_CurrTickTime           (int &ec[]);;
-string   ec_LogfileName            (int &ec[]);;
+string   ec_LogFilename            (int &ec[]);;
 int      ec_Loglevel               (int &ec[]);;
 int      ec_LoglevelAlert          (int &ec[]);;
 int      ec_LoglevelDebugger       (int &ec[]);;
