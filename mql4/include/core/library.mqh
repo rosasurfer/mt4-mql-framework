@@ -8,6 +8,8 @@ int __lpSuperContext = NULL;
  * @return int - error status
  */
 int init() {
+   debug("init(0.1)");
+
    int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
    if (IsError(error)) return(error);
 
@@ -65,6 +67,8 @@ int start() {
  *       - Beachten, daß die Library in diesem Fall bei Start des nächsten Tests einen Init-Cycle durchführt.
  */
 int deinit() {
+   debug("deinit(0.1)");
+
    int error = SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
    if (!error) {
       onDeinit();

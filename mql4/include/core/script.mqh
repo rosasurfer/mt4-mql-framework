@@ -12,6 +12,8 @@ double __rates[][6];
  * @return int - Fehlerstatus
  */
 int init() {
+   debug("init(0.1)");
+
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
@@ -161,6 +163,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   debug("deinit(0.1)");
    __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
