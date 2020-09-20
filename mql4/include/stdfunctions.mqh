@@ -6702,7 +6702,7 @@ void __DummyCalls() {
 #import "rsfExpander.dll"
    string   ec_ProgramName(int ec[]);
    int      ec_SetMqlError(int ec[], int lastError);
-   string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
+   string   EXECUTION_CONTEXT_toStr(int ec[]);
    int      LeaveContext(int ec[]);
 
 #import "kernel32.dll"
