@@ -25,7 +25,7 @@
  * | log2Mail()     | MailAppender                               | configurable            |
  * | log2SMS()      | SMSAppender                                | configurable            |
  * +----------------+--------------------------------------------+-------------------------+
- * | SetLogfile()   | set a logfile for LogfileAppender          | per MQL program         |
+ * | SetLogfile()   | set a logfile for the LogfileAppender      | per MQL program         |
  * +----------------+--------------------------------------------+-------------------------+
  */
 

@@ -202,18 +202,14 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer struct ORDER_EXECUTION zurück.
+ * Gibt die lesbare Repräsentation ein oder mehrerer ORDER_EXECUTION-Structs zurück.
  *
- * @param  int  oe[]        - struct ORDER_EXECUTION
- * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  int oe[] - struct ORDER_EXECUTION
  *
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
  */
-string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false) {
-   outputDebug = outputDebug!=0;
-
+string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    int dimensions = ArrayDimension(oe);
-
    if (dimensions > 2)                                          return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(1)  too many dimensions of parameter oe = "+ dimensions, ERR_INVALID_PARAMETER)));
    if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
@@ -251,8 +247,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
                                      ", comment=\""      ,                    oe.Comment        (oe), "\"",
                                      ", remainingTicket=",                    oe.RemainingTicket(oe),
                                      ", remainingLots="  ,        NumberToStr(oe.RemainingLots  (oe), ".+"), "}");
-      if (outputDebug)
-         debug("ORDER_EXECUTION.toStr()  "+ line);
       ArrayPushString(lines, line);
    }
    else {
@@ -288,8 +282,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
                                                   ", comment=\""      ,                    oes.Comment        (oe, i), "\"",
                                                   ", remainingTicket=",                    oes.RemainingTicket(oe, i),
                                                   ", remainingLots="  ,        NumberToStr(oes.RemainingLots  (oe, i), ".+"), "}");
-         if (outputDebug)
-            debug("ORDER_EXECUTION.toStr()  "+ line);
          ArrayPushString(lines, line);
       }
    }

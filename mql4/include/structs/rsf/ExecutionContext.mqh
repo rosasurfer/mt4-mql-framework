@@ -116,6 +116,6 @@
 
 
    // helpers
-   string   EXECUTION_CONTEXT_toStr  (int ec[], int outputDebug);
-   string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);
+   string   EXECUTION_CONTEXT_toStr  (int ec[]);
+   string   lpEXECUTION_CONTEXT_toStr(int lpEc);
 #import
