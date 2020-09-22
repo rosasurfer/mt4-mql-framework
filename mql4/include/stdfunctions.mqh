@@ -3622,7 +3622,7 @@ datetime TimeServer() {
 
    if (This.IsTesting()) {
       // im Tester entspricht die Serverzeit immer der Zeit des letzten Ticks
-      serverTime = TimeCurrentEx("TimeServer(1)"); if (!serverTime) return(NULL);
+      serverTime = TimeCurrentEx("TimeServer(1)");
    }
    else {
       // Außerhalb des Testers darf TimeCurrent[Ex]() nicht verwendet werden. Der Rückgabewert ist in Kurspausen bzw. am Wochenende oder wenn keine
@@ -5063,7 +5063,7 @@ string LoglevelDescription(int level) {
       case LOG_WARN  : return("WARN"  );
       case LOG_ERROR : return("ERROR" );
       case LOG_FATAL : return("FATAL" );
-      case LOG_OFF   : return("OFF"   );     // not a loglevel
+      case LOG_OFF   : return("OFF"   );        // not a regular loglevel
    }
    return(""+ level);
 }

@@ -89,7 +89,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
    if (loglevel != 0) sLoglevel = StringConcatenate(LoglevelDescription(loglevel), "  ");
    if (error != 0)    sError    = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");
+   if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");
    else                  sApp = sLoglevel +"MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
@@ -362,10 +362,10 @@ int log2Alert(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
       if (IsTesting()) {                                                         // neither Alert() nor MessageBox() can be used
-         string caption = "Tester "+ Symbol() +","+ PeriodDescription(Period());
-         int pos = StringFind(message, ") ");                                    // line-wrap message after the closing function brace
+         string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
+         int pos = StringFind(message, ") ");                                    // insert a line-wrap after the first closing function brace
          if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
-         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ FullModuleName() +"::"+ message;
+         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
       }
@@ -441,7 +441,7 @@ int log2File(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel && level!=LOG_OFF) {
-      AppendLogMessageA(__ExecutionContext, message, error, level);
+      AppendLogMessageA(__ExecutionContext, TimeCurrent(), message, error, level);
    }
 
    isRecursion = false;
@@ -623,6 +623,6 @@ bool SetLogfile(string filename) {
    int  ec_SetLoglevelMail    (int ec[], int level);
    int  ec_SetLoglevelSMS     (int ec[], int level);
    int  ec_SetLoglevelTerminal(int ec[], int level);
-   bool AppendLogMessageA     (int ec[], string message, int error, int level);
+   bool AppendLogMessageA     (int ec[], datetime time, string message, int error, int level);
    bool SetLogfileA           (int ec[], string file);
 #import
