@@ -85,14 +85,12 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
    }
    isRecursion = true;
 
-   string sLoglevel="", sApp="", sError="";
-   if (loglevel != 0) sLoglevel = StringConcatenate(LoglevelDescription(loglevel), "  ");
-   if (error != 0)    sError    = StringConcatenate("  [", ErrorToStr(error), "]");
+   string sPrefix   = "MetaTrader"; if (This.IsTesting()) sPrefix = StringConcatenate("Tester ", GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"));
+   string sLoglevel = ""; if (loglevel && loglevel!=LOG_INFO) sLoglevel = LoglevelDescription(loglevel);
+   sLoglevel = StrPadRight(sLoglevel, 6);
+   string sError    = ""; if (error != 0) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) sApp = StringConcatenate(GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"), " ", sLoglevel, "Tester::");
-   else                  sApp = sLoglevel +"MetaTrader::";
-
-   OutputDebugStringA(StringConcatenate(sApp, Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -312,7 +310,7 @@ int log(string message, int error, int level) {
       }
       else {
          key   = ProgramName();
-         value = GetConfigString("Log", key, "info");                                              // online default: info
+         value = GetConfigString("Log", key, "info");                                              // live default: info
       }
       configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
