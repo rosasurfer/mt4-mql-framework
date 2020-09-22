@@ -69,8 +69,8 @@
    // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
-   string   GmtTimeFormat(datetime timestamp, string format);
-   string   LocalTimeFormat(datetime timestamp, string format);
+   string   GmtTimeFormatA(datetime timestamp, string format);
+   string   LocalTimeFormatA(datetime timestamp, string format);
 
    // file functions
    int      CreateDirectoryA(string path, int flags);
