@@ -8,8 +8,8 @@
  * @see  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -99,7 +99,7 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = __NAME();
+   indicatorName = ProgramName();
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_BUFFER1, indicatorName +" 1");  // chart tooltips and "Data" window
    SetIndexLabel(MODE_BUFFER2, indicatorName +" 2");
@@ -127,7 +127,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(buffer1)) return(log("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(buffer1)) return(logInfo("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -381,7 +381,7 @@ double iMTF(int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iMTF(1)", error));
-      warn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      triggerWarn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts

@@ -10,8 +10,8 @@
  *       Positionen werden dadurch Commission und Spread mehrfach berechnet.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 #property show_inputs
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -106,14 +106,14 @@ int onStart() {
    int magicsSize = ArraySize(magics);
    if (!magicsSize) {
       PlaySoundEx("Windows Notify.wav");
-      MessageBox("No matching LFX positions found.", __NAME(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching LFX positions found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(1)"));
    }
 
 
    // (2) Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
-   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ Pluralize(magicsSize) +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
+   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ Pluralize(magicsSize) +"?", ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(2)"));
 
@@ -180,7 +180,7 @@ int onStart() {
 
 
       // (8) Logmessage ausgeben
-      log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+      logInfo("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
 
       // (9) LFX-Terminal benachrichtigen

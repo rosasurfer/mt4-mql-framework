@@ -40,7 +40,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -57,7 +57,7 @@ int init() {
 
 
    // (2) finish initialization
-   if (!init.GlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) execute custom init tasks
@@ -71,26 +71,26 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
-            return(_last_error(log("init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
+            return(_last_error(logInfo("init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(_last_error(log("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
+      if (!TickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
          if (CheckErrors("init(9)", error)) return( last_error);
-      if (!tickValue)                       return(_last_error(log("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
+      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
    // (4) before onInit(): if loaded by iCustom() log original input parameters
    string initialInput = "";
-   if (IsSuperContext() && __LOG()) {
+   if (IsSuperContext()) /*&&*/ if (IsLog()) {
       //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
-         log("init()  input: "+ initialInput);
+         logInfo("init()  input: "+ initialInput);
       }
    }
 
@@ -140,13 +140,13 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
    // (6) after onInit(): if loaded by iCustom() log modified input parameters
-   if (IsSuperContext() && __LOG()) {
+   if (IsSuperContext()) /*&&*/ if (IsLog()) {
       string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0)
-            log("init()  input: "+ modifiedInput);
+            logInfo("init()  input: "+ modifiedInput);
       }
    }
 
@@ -161,13 +161,13 @@ int init() {
 
 
 /**
- * Update global variables and the indicator's EXECUTION_CONTEXT.
+ * Update global variables and the indicator's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  *
- * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
+ * Note: The memory location of an indicator's EXECUTION_CONTEXT changes on every init cycle.
  */
-bool init.GlobalVars() {
+bool initContext() {
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
    //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
@@ -192,23 +192,11 @@ bool init.GlobalVars() {
    Tick           = __ExecutionContext[EC.ticks       ];
    Tick.Time      = __ExecutionContext[EC.currTickTime];
 
-   __lpSuperContext = __ExecutionContext[EC.superContext];
-   if (!__lpSuperContext) {                                       // with a supercontext this context is already up-to-date
-      ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-      ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Logging", "LogToDebug", true));
-      ec_SetLogToTerminalEnabled(__ExecutionContext, true);
-   }
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
-   __LOG_WARN.mail  = false;
-   __LOG_WARN.sms   = false;
-   __LOG_ERROR.mail = false;
-   __LOG_ERROR.sms  = false;
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-   return(!catch("init.GlobalVars(1)"));
+   return(!catch("initContext(1)"));
 }
 
 
@@ -251,7 +239,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
-   if (!Bars) return(_last_error(log("start(2)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(3)")));
+   if (!Bars) return(_last_error(logInfo("start(2)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(3)")));
 
 
    // (3) Tickstatus bestimmen
@@ -567,7 +555,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
    // suppress compiler warnings
    __DummyCalls();
-   SetCustomLog(NULL);
 }
 
 
@@ -579,10 +566,10 @@ bool CheckErrors(string location, int setError = NULL) {
  * @return bool
  */
 bool EventListener_ChartCommand(string &commands[]) {
-   if (!__CHART()) return(false);
+   if (!IsChart()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
-      label = __NAME() +".command";
+      label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
 
@@ -599,18 +586,6 @@ bool EventListener_ChartCommand(string &commands[]) {
 }
 
 
-/**
- * Configure the use of a custom logfile.
- *
- * @param  string filename - name of a custom logfile or an empty string to disable custom logging
- *
- * @return bool - success status
- */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
-}
-
-
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -619,12 +594,8 @@ bool SetCustomLog(string filename) {
    bool   ReleaseLock(string mutexName);
 
 #import "rsfExpander.dll"
-   int    ec_SetDllError            (int ec[], int error   );
-   bool   ec_SetLogEnabled          (int ec[], int status  );
-   bool   ec_SetLogToDebugEnabled   (int ec[], int status  );
-   bool   ec_SetLogToTerminalEnabled(int ec[], int status  );
-   int    ec_SetProgramCoreFunction (int ec[], int function);
-   bool   SetCustomLogA             (int ec[], string file);
+   int    ec_SetDllError           (int ec[], int error   );
+   int    ec_SetProgramCoreFunction(int ec[], int function);
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 

@@ -33,7 +33,7 @@ int init() {
       return(last_error);
    }
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -45,7 +45,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!init.GlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -78,31 +78,22 @@ int init() {
 
 
 /**
- * Update global variables and the script's EXECUTION_CONTEXT.
+ * Update global variables and the script's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool init.GlobalVars() {
+bool initContext() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Logging", "LogToDebug", true));
-   ec_SetLogToTerminalEnabled(__ExecutionContext, true);
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
-   __LOG_WARN.mail  = false;
-   __LOG_WARN.sms   = false;
-   __LOG_ERROR.mail = false;
-   __LOG_ERROR.sms  = false;
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-   return(!catch("init.GlobalVars(1)"));
+   return(!catch("initContext(1)"));
 }
 
 
@@ -251,7 +242,7 @@ int HandleScriptError(string location, string message, int error) {
       location = " :: "+ location;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ __NAME() + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ ProgramName() + location, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }
@@ -319,19 +310,6 @@ bool CheckErrors(string location, int setError = NULL) {
    // suppress compiler warnings
    __DummyCalls();
    HandleScriptError(NULL, NULL, NULL);
-   SetCustomLog(NULL);
-}
-
-
-/**
- * Configure the use of a custom logfile.
- *
- * @param  string filename - name of a custom logfile or an empty string to disable custom logging
- *
- * @return bool - success status
- */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
 }
 
 
@@ -342,13 +320,9 @@ bool SetCustomLog(string filename) {
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
-   bool   ec_SetLogEnabled          (int ec[], int status);
-   bool   ec_SetLogToDebugEnabled   (int ec[], int status);
-   bool   ec_SetLogToTerminalEnabled(int ec[], int status);
-   bool   SetCustomLogA             (int ec[], string file);
-   int    SyncMainContext_init      (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start     (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int    SyncMainContext_deinit    (int ec[], int uninitReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
    int    GetParent(int hWnd);

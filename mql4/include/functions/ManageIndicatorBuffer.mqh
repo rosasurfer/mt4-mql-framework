@@ -36,7 +36,7 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
 
    if (Bars == prevBars) {                                     // number of Bars unchanged
       if (Time[Bars-1] != prevLastBarTime) {                   // last bar changed: bars have been shifted off the end
-         warn("ManageIndicatorBuffer(4)  Tick="+ Tick +", number of bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", lastBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBarTime="+ TimeToStr(prevLastBarTime, TIME_FULL) +")");
+         triggerWarn("ManageIndicatorBuffer(4)  Tick="+ Tick +", number of bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", lastBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBarTime="+ TimeToStr(prevLastBarTime, TIME_FULL) +")");
          // TODO: find previous FirstBarTime and shift content accordingly
       }
    }
@@ -48,7 +48,7 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
       //debug("ManageIndicatorBuffer(6)  Tick="+ Tick +", increased buffer size from "+ prevBars +" to "+ Bars +", ChangedBars="+ ChangedBars);
 
       if (prevBars && Time[Bars-1]!=prevLastBarTime) {         // last bar changed: additionally bars have been shifted off the end
-         warn("ManageIndicatorBuffer(7)  Tick="+ Tick +", number of bars and oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", prevBars="+ prevBars +", lastBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBarTime="+ TimeToStr(prevLastBarTime, TIME_FULL) +")");
+         triggerWarn("ManageIndicatorBuffer(7)  Tick="+ Tick +", number of bars and oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", prevBars="+ prevBars +", lastBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevLastBarTime="+ TimeToStr(prevLastBarTime, TIME_FULL) +")");
          // TODO: find previous FirstBarTime and shift content accordingly
       }
    }

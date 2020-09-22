@@ -4,8 +4,8 @@
  * Records the current account's equity curve. The actual value is adjusted for duplicated trading costs (fees and spreads).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -318,14 +318,11 @@ bool RecordAccountData() {
 
       // record virtual ticks only if the equity value changed
       if (Tick.isVirtual) {
-         if (!lastTickValue || EQ(tickValue, lastTickValue, 2)) {
-            if (symbolSuffixes[i]==".AB") debug("RecordAccountData(1)  Tick.isVirtual="+ Tick.isVirtual +"  skipping "+ symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
-            continue;
-         }
+         if (!lastTickValue || EQ(tickValue, lastTickValue, 2)) continue;
       }
 
       if (!hHstSet[i]) {
-         string symbol      = GetAccountNumber() + symbolSuffixes[i];
+         string symbol      = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
          string description = StrReplace(symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
          int    digits      = 2;
          int    format      = 400;

@@ -36,8 +36,8 @@
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
-#define EXECUTION_CONTEXT.size            1036
-#define EXECUTION_CONTEXT.intSize          259
+#define EXECUTION_CONTEXT.size            1048
+#define EXECUTION_CONTEXT.intSize          262
 
 #define EC.pid                               0     // All offsets must be in sync with the MT4Expander.
 #define EC.previousPid                       1
@@ -78,13 +78,13 @@
 #define EC.mqlError                        184
 #define EC.dllError                        185
 #define EC.dllWarning                      187
-#define EC.logEnabled                      189
-#define EC.logToDebugEnabled               190
-#define EC.logToTerminalEnabled            191
-#define EC.logToCustomEnabled              192
-
-
-
+#define EC.loglevel                        189
+#define EC.loglevelTerminal                190
+#define EC.loglevelAlert                   191
+#define EC.loglevelDebugger                192
+#define EC.loglevelFile                    193
+#define EC.loglevelMail                    194
+#define EC.loglevelSMS                     195
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30

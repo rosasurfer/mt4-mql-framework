@@ -12,8 +12,8 @@
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of level 50)
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -146,7 +146,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferRSI)) return(log("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferRSI)) return(logInfo("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -223,7 +223,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
    Chart.StoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
@@ -242,7 +242,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
    Chart.RestoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );

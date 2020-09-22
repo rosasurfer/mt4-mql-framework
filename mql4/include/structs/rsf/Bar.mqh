@@ -58,14 +58,11 @@ int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume) { bar[i]
 /**
  * Gibt die lesbare Repräsentation ein oder mehrerer struct BAR zurück.
  *
- * @param  double bar[]       - struct BAR
- * @param  bool   outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  double bar[] - struct BAR
  *
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
  */
-string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
-   outputDebug = outputDebug!=0;
-
+string BAR.toStr(/*BAR*/double bar[]) {
    int dimensions = ArrayDimension(bar);
    if (dimensions > 2)                                  return(_EMPTY_STR(catch("BAR.toStr(1)  too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_PARAMETER)));
    if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_EMPTY_STR(catch("BAR.toStr(2)  invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_PARAMETER)));
@@ -81,8 +78,6 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
                               ", low="   , NumberToStr(bar.Low   (bar), ".+"),
                               ", close=" , NumberToStr(bar.Close (bar), ".+"),
                               ", volume=",             bar.Volume(bar), "}");
-      if (outputDebug)
-         debug("BAR.toStr()  "+ line);
       ArrayPushString(lines, line);
    }
    else {
@@ -96,8 +91,6 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
                                            ", low="   , NumberToStr(bars.Low   (bar, i), ".+"),
                                            ", close=" , NumberToStr(bars.Close (bar, i), ".+"),
                                            ", volume=",             bars.Volume(bar, i), "}");
-         if (outputDebug)
-            debug("BAR.toStr()  "+ line);
          ArrayPushString(lines, line);
       }
    }
@@ -105,7 +98,7 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
    string output = JoinStrings(lines, NL);
    ArrayResize(lines, 0);
 
-   catch("BAR.toStr(3)");
+   catch("BAR.toStr(1)");
    return(output);
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
