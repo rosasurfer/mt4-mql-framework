@@ -1355,21 +1355,6 @@ bool IsChart() {
 
 
 /**
- * Whether logging is enabled for the current program.
- *
- * @return bool
- */
-bool IsLog() {
-   int loglevel = __ExecutionContext[EC.loglevel];
-   if (!loglevel) {
-      log("", NULL, LOG_OFF);
-      loglevel = __ExecutionContext[EC.loglevel];
-   }
-   return(loglevel != LOG_OFF);
-}
-
-
-/**
  * Return the current MQL module's program name, i.e. the name of the program's main module.
  *
  * @return string

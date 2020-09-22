@@ -10,6 +10,14 @@
  * | triggerFatal() | enforce log(LOG_FATAL) + SetLastError()    | overrides configuration |
  * | catch()        | if (GetLastError()) triggerError()         | error detection         |
  * +----------------+--------------------------------------------+-------------------------+
+ * | IsLog()        | whether any loglevel is active             |                         |
+ * | IsLogDebug()   | whether LOG_DEBUG is active                |                         |
+ * | IsLogInfo()    | whether LOG_INFO is active                 |                         |
+ * | IsLogNotice()  | whether LOG_NOTICE is active               |                         |
+ * | IsLogWarn()    | whether LOG_WARN is active                 |                         |
+ * | IsLogError()   | whether LOG_ERROR is active                |                         |
+ * | IsLogFatal()   | whether LOG_FATAL is active                |                         |
+ * +----------------+--------------------------------------------+-------------------------+
  * | log()          | dispatch messages to enabled log appenders | configurable            |
  * | logDebug()     | alias of log(LOG_DEBUG)                    |                         |
  * | logInfo()      | alias of log(LOG_INFO)                     |                         |
@@ -207,6 +215,141 @@ int triggerFatal(string message, int error) {
 
 
 /**
+ * Whether logging is enabled for the current program.
+ *
+ * @return bool
+ */
+bool IsLog() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel < LOG_OFF);
+}
+
+
+/**
+ * Whether the loglevel LOG_DEBUG is active for the current program.
+ *
+ * @return bool
+ */
+bool IsLogDebug() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel <= LOG_DEBUG);
+}
+
+
+/**
+ * Whether the loglevel LOG_INFO is active for the current program.
+ *
+ * @return bool
+ */
+bool IsLogInfo() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel <= LOG_INFO);
+}
+
+
+/**
+ * Whether the loglevel LOG_NOTICE is active for the current program.
+ *
+ * @return bool
+ */
+bool IsLogNotice() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel <= LOG_NOTICE);
+}
+
+
+/**
+ * Whether the loglevel LOG_WARN is active for the current program.
+ *
+ * @return bool
+ */
+bool IsLogWarn() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel <= LOG_WARN);
+}
+
+
+/**
+ * Whether the loglevel LOG_ERROR is active for the current program.
+ *
+ * @return bool
+ */
+bool IsLogError() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel <= LOG_ERROR);
+}
+
+
+/**
+ * Whether the loglevel LOG_FATAL is active for the current program.
+ *
+ * @return bool
+ */
+bool IsLogFatal() {
+   int loglevel = __ExecutionContext[EC.loglevel];
+   if (!loglevel) loglevel = log("", NULL, LOG_OFF);
+   return(loglevel && loglevel <= LOG_FATAL);
+}
+
+
+/**
+ * Logger main function. Process a log message and dispatch it to the enabled log appenders.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error or the configured loglevel if parameter level is LOG_OFF
+ */
+int log(string message, int error, int level) {
+   static bool isRecursion = false; if (isRecursion) {
+      Alert("log(1)  recursion (", message, "error: ", error, ")");                                // should never happen
+      return(error);
+   }
+   isRecursion = true;
+
+   // read the configuration on first usage
+   int configLevel = __ExecutionContext[EC.loglevel]; if (!configLevel) {
+      string key, value;
+      if (This.IsTesting()) {
+         key = "Tester";
+         value = GetConfigString("Log", key, "off");                                               // tester default: off
+      }
+      else {
+         key = ProgramName();
+         value = GetConfigString("Log", key, "info");                                              // live default: info
+      }
+      configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
+      if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
+      ec_SetLoglevel(__ExecutionContext, configLevel);
+   }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
+
+   // apply the configured loglevel filter
+   if (level >= configLevel) {
+      if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level); // fast appenders first
+      if (__ExecutionContext[EC.loglevelDebugger] != LOG_OFF) log2Debugger(message, error, level); // ...
+      if (__ExecutionContext[EC.loglevelFile    ] != LOG_OFF) log2File(message, error, level);     // ...
+      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert(message, error, level);    // after fast appenders as it may lock the UI thread in tester
+      if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail(message, error, level);     // slow appenders last (launches a new process)
+      if (__ExecutionContext[EC.loglevelSMS     ] != LOG_OFF) log2SMS(message, error, level);      // ...
+   }
+
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
  * Helper function to simplify logging of a message of level LOG_DEBUG.
  *
  * @param  string message          - location identifier and/or log message
@@ -285,64 +428,15 @@ int logFatal(string message, int error = NO_ERROR) {
 
 
 /**
- * Logger main function. Process a log message and dispatch it to the enabled log appenders.
- *
- * @param  string message - log message
- * @param  int    error   - error linked to the message (if any)
- * @param  int    level   - log level of the message
- *
- * @return int - the same error
- */
-int log(string message, int error, int level) {
-   // note: to initialize the logger call it with level=LOG_OFF
-   static bool isRecursion = false; if (isRecursion) {
-      Alert("log(1)  recursion (", message, "error: ", error, ")");                                // should never happen
-      return(error);
-   }
-   isRecursion = true;
-
-   // read the configuration on first usage
-   int configLevel = __ExecutionContext[EC.loglevel]; if (!configLevel) {
-      string key, value;
-      if (This.IsTesting()) {
-         key   = "Tester";
-         value = GetConfigString("Log", key, "off");                                               // tester default: off
-      }
-      else {
-         key   = ProgramName();
-         value = GetConfigString("Log", key, "info");                                              // live default: info
-      }
-      configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
-      ec_SetLoglevel(__ExecutionContext, configLevel);
-   }
-
-   // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
-      if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level); // fast appenders first
-      if (__ExecutionContext[EC.loglevelDebugger] != LOG_OFF) log2Debugger(message, error, level); // ...
-      if (__ExecutionContext[EC.loglevelFile    ] != LOG_OFF) log2File(message, error, level);     // ...
-      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert(message, error, level);    // after fast appenders as it may lock the UI thread in tester
-      if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail(message, error, level);     // slow appenders last (launches a new process)
-      if (__ExecutionContext[EC.loglevelSMS     ] != LOG_OFF) log2SMS(message, error, level);      // ...
-   }
-
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
  * Send a log message to the terminal's alerting system.
  *
  * @param  string message - log message
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - loglevel of the message
  *
- * @return int - the same error
+ * @return int - the same error or the configured alert loglevel if parameter level is LOG_OFF
  */
 int log2Alert(string message, int error, int level) {
-   // note: to initialize the appender call it with level=LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2Alert(1)  recursion (", message, "error: ", error, ")");        // should never happen
       return(error);
@@ -356,9 +450,13 @@ int log2Alert(string message, int error, int level) {
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Alert(2)  invalid loglevel configuration [Log]->Log2Alert = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelAlert(__ExecutionContext, configLevel);
    }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
 
    // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
+   if (level >= configLevel) {
       if (IsTesting()) {                                                         // neither Alert() nor MessageBox() can be used
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
          int pos = StringFind(message, ") ");                                    // insert a line-wrap after the first closing function brace
@@ -384,10 +482,9 @@ int log2Alert(string message, int error, int level) {
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
- * @return int - the same error
+ * @return int - the same error or the configured debugger loglevel if parameter level is LOG_OFF
  */
 int log2Debugger(string message, int error, int level) {
-   // note: to initialize the appender call it with level=LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2Debugger(1)  recursion (", message, "error: ", error, ")");  // should never happen
       return(error);
@@ -401,9 +498,13 @@ int log2Debugger(string message, int error, int level) {
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(2)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelDebugger(__ExecutionContext, configLevel);
    }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
 
    // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
+   if (level >= configLevel) {
       debug(message, error, level);
    }
 
@@ -419,10 +520,9 @@ int log2Debugger(string message, int error, int level) {
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
- * @return int - the same error
+ * @return int - the same error or the configured logfile loglevel if parameter level is LOG_OFF
  */
 int log2File(string message, int error, int level) {
-   // note: to initialize the appender call it with level=LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2File(1)  recursion (", message, "error: ", error, ")");      // should never happen
       return(error);
@@ -436,9 +536,13 @@ int log2File(string message, int error, int level) {
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(2)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelFile(__ExecutionContext, configLevel);
    }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
 
    // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
+   if (level >= configLevel) {
       AppendLogMessageA(__ExecutionContext, TimeCurrent(), message, error, level);
    }
 
@@ -454,10 +558,9 @@ int log2File(string message, int error, int level) {
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
- * @return int - the same error
+ * @return int - the same error or the configured mail loglevel if parameter level is LOG_OFF
  */
 int log2Mail(string message, int error, int level) {
-   // note: to initialize the appender call it with level=LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2Mail(1)  recursion (", message, "error: ", error, ")");      // should never happen
       return(error);
@@ -479,9 +582,13 @@ int log2Mail(string message, int error, int level) {
       else configLevel = _int(LOG_OFF, catch("log2Mail(4)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelMail(__ExecutionContext, configLevel);
    }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
 
    // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
+   if (level >= configLevel) {
       message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = message;
       string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
@@ -503,10 +610,9 @@ int log2Mail(string message, int error, int level) {
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
- * @return int - the same error
+ * @return int - the same error or the configured SMS loglevel if parameter level is LOG_OFF
  */
 int log2SMS(string message, int error, int level) {
-   // note: to initialize the appender call it with level=LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2SMS(1)  recursion (", message, "error: ", error, ")");       // should never happen
       return(error);
@@ -526,9 +632,13 @@ int log2SMS(string message, int error, int level) {
       else configLevel = _int(LOG_OFF, catch("log2SMS(3)  invalid loglevel configuration [Log]->Log2SMS = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelSMS(__ExecutionContext, configLevel);
    }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
 
    // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
+   if (level >= configLevel) {
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -549,10 +659,9 @@ int log2SMS(string message, int error, int level) {
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
- * @return int - the same error
+ * @return int - the same error or the configured terminal loglevel if parameter level is LOG_OFF
  */
 int log2Terminal(string message, int error, int level) {
-   // note: to initialize the appender send a message of level=LOG_OFF
    static bool isRecursion = false; if (isRecursion) {
       Alert("log2Terminal(1)  recursion (", message, "error: ", error, ")");  // should never happen
       return(error);
@@ -566,9 +675,13 @@ int log2Terminal(string message, int error, int level) {
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Terminal(2)  invalid loglevel configuration [Log]->Log2Terminal = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
    }
+   if (level == LOG_OFF) {
+      isRecursion = false;
+      return(configLevel);
+   }
 
    // apply the configured loglevel filter
-   if (level >= configLevel && level!=LOG_OFF) {
+   if (level >= configLevel) {
       Print("  ", LoglevelDescription(level), ":   ", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
    }
 
@@ -581,6 +694,14 @@ int log2Terminal(string message, int error, int level) {
    triggerWarn(NULL);
    triggerError(NULL, NULL);
    triggerFatal(NULL, NULL);
+
+   IsLog();
+   IsLogDebug();
+   IsLogInfo();
+   IsLogNotice();
+   IsLogWarn();
+   IsLogError();
+   IsLogFatal();
 
    log(NULL, NULL, NULL);
    logDebug (NULL);
