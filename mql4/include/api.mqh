@@ -671,7 +671,7 @@ string   TimesToStr(datetime &array[], string separator);;
 
 // libraries/rsfExpander.dll
 int      AnsiToWCharStr(string ansi, int &wchar[], int wcharSize);;
-bool     AppendLogMessageA(int ec[], string message, int error, int level);;
+bool     AppendLogMessageA(int ec[], datetime time, string message, int error, int level);;
 string   BarModelDescription(int id);;
 string   BarModelToStr(int id);;
 string   BoolToStr(bool value);;
@@ -814,7 +814,7 @@ int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
 string   LocalTimeFormat(datetime timestamp, string format);;
-string   LoglevelDescription(int level);;                   // also implemented in MQL::stdfunctions
+string   LoglevelDescriptionA(int level);;                  // also implemented in MQL::stdfunctions
 string   LoglevelToStr(int level);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc);;
 string   MD5Hash(int &input[], int length);;
