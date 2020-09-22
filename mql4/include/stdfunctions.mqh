@@ -3710,6 +3710,38 @@ datetime TimeCurrentEx(string location="") {
 
 
 /**
+ * Format a timestamp as a string representing GMT time. MQL wrapper for the ANSI function of the MT4Expander.
+ *
+ * @param  datetime timestamp - Unix timestamp (GMT)
+ * @param  string   format    - format control string supported by strftime()
+ *
+ * @return string - GMT time string or an empty string in case of errors
+ *
+ * @see  http://www.cplusplus.com/reference/ctime/strftime/
+ * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ */
+string GmtTimeFormat(datetime timestamp, string format) {
+   return(GmtTimeFormatA(timestamp, format));
+}
+
+
+/**
+ * Format a timestamp as a string representing local time. MQL wrapper for the ANSI function of the MT4Expander.
+ *
+ * @param  datetime timestamp - Unix timestamp (GMT)
+ * @param  string   format    - format control string supported by strftime()
+ *
+ * @return string - local time string or an empty string in case of errors
+ *
+ * @see  http://www.cplusplus.com/reference/ctime/strftime/
+ * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ */
+string LocalTimeFormat(datetime timestamp, string format) {
+   return(LocalTimeFormatA(timestamp, format));
+}
+
+
+/**
  * Return a readable version of a module type flag.
  *
  * @param  int fType - combination of one or more module type flags
@@ -5032,7 +5064,6 @@ string LoglevelDescription(int level) {
       case LOG_ERROR : return("ERROR" );
       case LOG_FATAL : return("FATAL" );
       case LOG_OFF   : return("OFF"   );     // not a loglevel
-      case LOG_ALL   : return("ALL"   );     // unreachable: alias for the lowest loglevel
    }
    return(""+ level);
 }
