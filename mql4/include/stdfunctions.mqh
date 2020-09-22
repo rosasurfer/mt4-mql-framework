@@ -6534,6 +6534,7 @@ void __DummyCalls() {
    GetIniInt(NULL, NULL, NULL);
    GetMqlFilesPath();
    GetServerTime();
+   GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HandleCommands();
    HistoryFlagsToStr(NULL);
@@ -6585,6 +6586,7 @@ void __DummyCalls() {
    IsSuperContext();
    IsTicket(NULL);
    LE(NULL, NULL);
+   LocalTimeFormat(NULL, NULL);
    LoglevelDescription(NULL);
    LogTicket(NULL);
    LT(NULL, NULL);

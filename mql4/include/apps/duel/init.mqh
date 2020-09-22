@@ -1,3 +1,13 @@
+/**
+ * Initialization pre-processing hook.
+ *
+ * @return int - error status
+ */
+int onInit() {
+   SetLogfile(GetMqlFilesPath() +"\\"+ ProgramName() +".log");
+   return(NO_ERROR);
+}
+
 
 /**
  * Called after the expert was manually loaded by the user. Also in Strategy Tester with both "VisualMode=On|Off".

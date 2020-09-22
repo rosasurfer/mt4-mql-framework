@@ -145,6 +145,7 @@ double   GetExternalAssets(string companyId, string accountId, bool refresh = fa
 datetime GetFxtTime();;
 string   GetMqlFilesPath();;
 datetime GetServerTime();;
+string   GmtTimeFormat(datetime timestamp, string format);;
 bool     GT(double double1, double double2, int digits = 8);;
 bool     HandleCommands();;
 string   HistoryFlagsToStr(int flags);;
@@ -189,7 +190,8 @@ bool     IsSuperContext();;
 bool     IsTicket(int ticket);;
 bool     IsVisualModeFix();;
 bool     LE(double double1, double double2, int digits = 8);;
-string   LoglevelDescription(int level);;                   // also implemented in MT4Expander
+string   LocalTimeFormat(datetime timestamp, string format);;
+string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
 bool     LogTicket(int ticket);;
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method, bool strict = true);;
@@ -219,7 +221,7 @@ string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
 datetime ParseDate(string value);;
 datetime ParseDateTime(string value);;
-string   PeriodDescription(int period);;                    // also implemented in MT4Expander
+string   PeriodDescription(int period);;                       // also implemented in MT4Expander
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
@@ -791,7 +793,7 @@ int      GetUIThreadId();;
 double   GetWindowDoubleA(int hWnd, string name);;
 int      GetWindowIntegerA(int hWnd, string name);;
 string   GetWindowStringA(int hWnd, string name);;
-string   GmtTimeFormat(datetime timestamp, string format);;
+string   GmtTimeFormatA(datetime timestamp, string format);;
 string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
@@ -813,8 +815,7 @@ bool     IsUIThread(int threadId = NULL);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
-string   LocalTimeFormat(datetime timestamp, string format);;
-string   LoglevelDescriptionA(int level);;                  // also implemented in MQL::stdfunctions
+string   LocalTimeFormatA(datetime timestamp, string format);;
 string   LoglevelToStr(int level);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc);;
 string   MD5Hash(int &input[], int length);;
