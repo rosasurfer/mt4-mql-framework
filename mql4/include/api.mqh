@@ -59,6 +59,14 @@ int      triggerWarn (string message, int error=NO_ERROR);;
 int      triggerError(string message, int error);;
 int      triggerFatal(string message, int error);;
 
+bool     IsLog();;
+bool     IsLogDebug();;
+bool     IsLogInfo();;
+bool     IsLogNotice();;
+bool     IsLogWarn();;
+bool     IsLogError();;
+bool     IsLogFatal();;
+
 int      log         (string message, int error, int level);;
 int      logDebug    (string message, int error = NO_ERROR);;
 int      logInfo     (string message, int error = NO_ERROR);;
