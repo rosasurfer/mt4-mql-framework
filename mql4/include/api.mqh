@@ -52,6 +52,39 @@ double   GetIniDouble(string fileName, string section, string key, double defaul
 bool     WriteIniString(string fileName, string section, string key, string value);;
 
 
+// include/log.mqh
+int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
+int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
+int      triggerWarn (string message, int error=NO_ERROR);;
+int      triggerError(string message, int error);;
+int      triggerFatal(string message, int error);;
+
+bool     IsLog();;
+bool     IsLogDebug();;
+bool     IsLogInfo();;
+bool     IsLogNotice();;
+bool     IsLogWarn();;
+bool     IsLogError();;
+bool     IsLogFatal();;
+
+int      log         (string message, int error, int level);;
+int      logDebug    (string message, int error = NO_ERROR);;
+int      logInfo     (string message, int error = NO_ERROR);;
+int      logNotice   (string message, int error = NO_ERROR);;
+int      logWarn     (string message, int error = NO_ERROR);;
+int      logError    (string message, int error = NO_ERROR);;
+int      logFatal    (string message, int error = NO_ERROR);;
+
+int      log2Alert   (string message, int error, int level);;
+int      log2Debugger(string message, int error, int level);;
+int      log2File    (string message, int error, int level);;
+int      log2Mail    (string message, int error, int level);;
+int      log2SMS     (string message, int error, int level);;
+int      log2Terminal(string message, int error, int level);;
+
+bool     SetLogfile(string filename);;
+
+
 // include/scriptrunner.mqh
 bool     RunScript(string name, string parameters = "");;
 bool     ScriptRunner.GetParameters(string &parameters[]);;
@@ -59,9 +92,6 @@ bool     ScriptRunner.SetParameters(string parameters);;
 
 
 // include/stdfunctions.mqh
-bool     __CHART();;
-bool     __LOG();;
-string   __NAME();;
 bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
@@ -77,7 +107,6 @@ string   _string     (string param1,      int param2=NULL, int param3=NULL, int 
 bool     _true       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 int      Abs(int value);;
 int      ArrayUnshiftString(string &array[], string value);;
-int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
 int      Ceil(double value);;
 bool     Chart.DeleteValue(string key);;
 int      Chart.Expert.Properties();;
@@ -102,7 +131,6 @@ int      CountDecimals(double number);;
 string   CreateLegendLabel();;
 string   CreateString(int length);;
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
-int      debug(string message, int error = NO_ERROR);;
 int      DebugMarketInfo(string location);;
 int      Div(int a, int b, int onZero = 0);;
 bool     EnumChildWindows(int hWnd, bool recursive = false);;
@@ -112,6 +140,7 @@ bool     EventListener.NewTick();;
 string   FileAccessModeToStr(int mode);;
 int      Floor(double value);;
 void     ForceAlert(string message);;
+string   FullModuleName();;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetAccountAlias(string company="", int number=NULL);;
 string   GetAccountCompany();;
@@ -124,6 +153,7 @@ double   GetExternalAssets(string companyId, string accountId, bool refresh = fa
 datetime GetFxtTime();;
 string   GetMqlFilesPath();;
 datetime GetServerTime();;
+string   GmtTimeFormat(datetime timestamp, string format);;
 bool     GT(double double1, double double2, int digits = 8);;
 bool     HandleCommands();;
 string   HistoryFlagsToStr(int flags);;
@@ -146,6 +176,7 @@ double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
 string   ifString(bool condition, string thenValue, string elseValue);;
 string   InitReasonDescription(int reason);;
+bool     IsChart();;
 bool     IsCurrency(string value);;
 bool     IsEmpty(double value);;
 bool     IsEmptyString(string value);;
@@ -155,6 +186,7 @@ bool     IsInfinity(double value);;
 bool     IsLastError();;
 bool     IsLeapYear(int year);;
 bool     IsLimitOrderType(int value);;
+bool     IsLog();;
 bool     IsLongOrderType(int value);;
 bool     IsNaN(double value);;
 bool     IsNaT(datetime value);;
@@ -166,7 +198,8 @@ bool     IsSuperContext();;
 bool     IsTicket(int ticket);;
 bool     IsVisualModeFix();;
 bool     LE(double double1, double double2, int digits = 8);;
-int      log(string message, int error = NO_ERROR);;
+string   LocalTimeFormat(datetime timestamp, string format);;
+string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
 bool     LogTicket(int ticket);;
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method, bool strict = true);;
@@ -179,6 +212,7 @@ string   MessageBoxButtonToStr(int id);;
 int      MessageBoxEx(string caption, string message, int flags = MB_OK);;
 int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX);;
 string   ModuleTypesToStr(int fType);;
+string   ModuleName();;
 bool     MQL.IsDirectory(string dirname);;
 bool     MQL.IsFile(string filename);;
 int      Mul(int a, int b);;
@@ -195,7 +229,7 @@ string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
 datetime ParseDate(string value);;
 datetime ParseDateTime(string value);;
-string   PeriodDescription(int period);;           // also implemented in MT4Expander
+string   PeriodDescription(int period);;                       // also implemented in MT4Expander
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
@@ -206,6 +240,7 @@ string   Pluralize(int count, string singular="", string plural="s");;
 string   PriceTypeDescription(int type);;
 string   PriceTypeToStr(int type);;
 int      ProgramInitReason();;
+string   ProgramName();;
 string   QuoteStr(string value);;
 int      ResetLastError();;
 color    RGBStrToColor(string value);;
@@ -246,6 +281,7 @@ bool     StrStartsWithI(string value, string prefix);;
 string   StrSubstr(string str, int start, int length = INT_MAX);;
 bool     StrToBool(string value, bool strict = false);;
 string   StrToHexStr(string value);;
+int      StrToLogLevel(string value, int flags = NULL);;
 string   StrToLower(string value);;
 int      StrToMaMethod(string value, int flags = NULL);;
 int      StrToOperationType(string value);;
@@ -277,7 +313,6 @@ string   TradeCommandToStr(int cmd);;
 string   UninitializeReasonDescription(int reason);;
 string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool select = false);;
-int      warn(string message, int error = NO_ERROR);;
 
 
 // include/functions/
@@ -312,12 +347,12 @@ bool     ManageIndicatorBuffer(int id, double buffer[]);;
 
 
 // include/structs/rsf/Bar.mqh
-datetime bar.Time      (/*BAR*/double &bar[]);;
-double   bar.Open      (/*BAR*/double &bar[]);;
-double   bar.Low       (/*BAR*/double &bar[]);;
-double   bar.High      (/*BAR*/double &bar[]);;
-double   bar.Close     (/*BAR*/double &bar[]);;
-int      bar.Volume    (/*BAR*/double &bar[]);;
+datetime bar.Time      (/*BAR*/double bar[]);;
+double   bar.Open      (/*BAR*/double bar[]);;
+double   bar.Low       (/*BAR*/double bar[]);;
+double   bar.High      (/*BAR*/double bar[]);;
+double   bar.Close     (/*BAR*/double bar[]);;
+int      bar.Volume    (/*BAR*/double bar[]);;
 
 datetime bar.setTime   (/*BAR*/double &bar[], datetime time  );;
 double   bar.setOpen   (/*BAR*/double &bar[], double   open  );;
@@ -326,12 +361,12 @@ double   bar.setHigh   (/*BAR*/double &bar[], double   high  );;
 double   bar.setClose  (/*BAR*/double &bar[], double   close );;
 int      bar.setVolume (/*BAR*/double &bar[], int      volume);;
 
-datetime bars.Time     (/*BAR*/double &bar[][], int i);;
-double   bars.Open     (/*BAR*/double &bar[][], int i);;
-double   bars.Low      (/*BAR*/double &bar[][], int i);;
-double   bars.High     (/*BAR*/double &bar[][], int i);;
-double   bars.Close    (/*BAR*/double &bar[][], int i);;
-int      bars.Volume   (/*BAR*/double &bar[][], int i);;
+datetime bars.Time     (/*BAR*/double bar[][], int i);;
+double   bars.Open     (/*BAR*/double bar[][], int i);;
+double   bars.Low      (/*BAR*/double bar[][], int i);;
+double   bars.High     (/*BAR*/double bar[][], int i);;
+double   bars.Close    (/*BAR*/double bar[][], int i);;
+int      bars.Volume   (/*BAR*/double bar[][], int i);;
 
 datetime bars.setTime  (/*BAR*/double &bar[][], int i, datetime time  );;
 double   bars.setOpen  (/*BAR*/double &bar[][], int i, double   open  );;
@@ -340,7 +375,121 @@ double   bars.setHigh  (/*BAR*/double &bar[][], int i, double   high  );;
 double   bars.setClose (/*BAR*/double &bar[][], int i, double   close );;
 int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume);;
 
-string   BAR.toStr     (/*BAR*/double bar[], bool outputDebug = false);;
+string   BAR.toStr     (/*BAR*/double bar[]);;
+
+
+// include/structs/rsf/OrderExecution.mqh
+int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);;
+string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);;
+int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Bid                (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Ask                (/*ORDER_EXECUTION*/int oe[]);;
+int      oe.Ticket             (/*ORDER_EXECUTION*/int oe[]);;
+int      oe.Type               (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Lots               (/*ORDER_EXECUTION*/int oe[]);;
+datetime oe.OpenTime           (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.OpenPrice          (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.StopLoss           (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.TakeProfit         (/*ORDER_EXECUTION*/int oe[]);;
+datetime oe.CloseTime          (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]);;
+string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]);;
+int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]);;
+int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]);;
+int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]);;
+double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]);;
+
+int      oe.setError           (/*ORDER_EXECUTION*/int &oe[], int      error     );;
+string   oe.setSymbol          (/*ORDER_EXECUTION*/int &oe[], string   symbol    );;
+int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[], int      digits    );;
+double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[], double   distance  );;
+double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[], double   distance  );;
+double   oe.setBid             (/*ORDER_EXECUTION*/int &oe[], double   bid       );;
+double   oe.setAsk             (/*ORDER_EXECUTION*/int &oe[], double   ask       );;
+int      oe.setTicket          (/*ORDER_EXECUTION*/int &oe[], int      ticket    );;
+int      oe.setType            (/*ORDER_EXECUTION*/int &oe[], int      type      );;
+double   oe.setLots            (/*ORDER_EXECUTION*/int &oe[], double   lots      );;
+datetime oe.setOpenTime        (/*ORDER_EXECUTION*/int &oe[], datetime openTime  );;
+double   oe.setOpenPrice       (/*ORDER_EXECUTION*/int &oe[], double   openPrice );;
+double   oe.setStopLoss        (/*ORDER_EXECUTION*/int &oe[], double   stopLoss  );;
+double   oe.setTakeProfit      (/*ORDER_EXECUTION*/int &oe[], double   takeProfit);;
+datetime oe.setCloseTime       (/*ORDER_EXECUTION*/int &oe[], datetime closeTime );;
+double   oe.setClosePrice      (/*ORDER_EXECUTION*/int &oe[], double   closePrice);;
+double   oe.setSwap            (/*ORDER_EXECUTION*/int &oe[], double   swap      );;
+double   oe.addSwap            (/*ORDER_EXECUTION*/int &oe[], double   swap      );;
+double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[], double   comission );;
+double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[], double   comission );;
+double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[], double   profit    );;
+double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[], double   profit    );;
+string   oe.setComment         (/*ORDER_EXECUTION*/int &oe[], string   comment   );;
+int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[], int      milliSec  );;
+int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[], int      requotes  );;
+double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[], double   slippage  );;
+int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[], int      ticket    );;
+double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[], double   lots      );;
+
+int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i);;
+string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i);;
+int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i);;
+int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i);;
+int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i);;
+datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i);;
+datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i);;
+string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i);;
+int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i);;
+int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i);;
+int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i);;
+double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i);;
+
+int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error          );;
+string   oes.setSymbol         (/*ORDER_EXECUTION*/int &oe[][], int i, string   symbol    );;
+int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    );;
+double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  );;
+double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  );;
+double   oes.setBid            (/*ORDER_EXECUTION*/int &oe[][], int i, double   bid       );;
+double   oes.setAsk            (/*ORDER_EXECUTION*/int &oe[][], int i, double   ask       );;
+int      oes.setTicket         (/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    );;
+int      oes.setType           (/*ORDER_EXECUTION*/int &oe[][], int i, int      type      );;
+double   oes.setLots           (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      );;
+datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int &oe[][], int i, datetime openTime  );;
+double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int &oe[][], int i, double   openPrice );;
+double   oes.setStopLoss       (/*ORDER_EXECUTION*/int &oe[][], int i, double   stopLoss  );;
+double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int &oe[][], int i, double   takeProfit);;
+datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int &oe[][], int i, datetime closeTime );;
+double   oes.setClosePrice     (/*ORDER_EXECUTION*/int &oe[][], int i, double   closePrice);;
+double   oes.setSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      );;
+double   oes.addSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      );;
+double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission );;
+double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission );;
+double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    );;
+double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    );;
+string   oes.setComment        (/*ORDER_EXECUTION*/int &oe[][], int i, string   comment   );;
+int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  );;
+int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  );;
+double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  );;
+int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    );;
+double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      );;
+
+string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 
 
 // include/structs/win32/
@@ -532,6 +681,7 @@ string   TimesToStr(datetime &array[], string separator);;
 
 // libraries/rsfExpander.dll
 int      AnsiToWCharStr(string ansi, int &wchar[], int wcharSize);;
+bool     AppendLogMessageA(int ec[], datetime time, string message, int error, int level);;
 string   BarModelDescription(int id);;
 string   BarModelToStr(int id);;
 string   BoolToStr(bool value);;
@@ -545,7 +695,6 @@ string   DoubleQuoteStr(string value);;
 double   ec_Ask                    (int &ec[]);;
 int      ec_Bars                   (int &ec[]);;
 double   ec_Bid                    (int &ec[]);;
-string   ec_CustomLogFilename      (int &ec[]);;
 int      ec_CycleTicks             (int &ec[]);;
 int      ec_Digits                 (int &ec[]);;
 int      ec_DllError               (int &ec[]);;
@@ -554,10 +703,14 @@ bool     ec_ExtReporting           (int &ec[]);;
 int      ec_hChart                 (int &ec[]);;
 int      ec_hChartWindow           (int &ec[]);;
 datetime ec_CurrTickTime           (int &ec[]);;
-bool     ec_LogEnabled             (int &ec[]);;
-bool     ec_LogToDebugEnabled      (int &ec[]);;
-bool     ec_LogToTerminalEnabled   (int &ec[]);;
-bool     ec_LogToCustomEnabled     (int &ec[]);;
+string   ec_LogFilename            (int &ec[]);;
+int      ec_Loglevel               (int &ec[]);;
+int      ec_LoglevelAlert          (int &ec[]);;
+int      ec_LoglevelDebugger       (int &ec[]);;
+int      ec_LoglevelFile           (int &ec[]);;
+int      ec_LoglevelMail           (int &ec[]);;
+int      ec_LoglevelSMS            (int &ec[]);;
+int      ec_LoglevelTerminal       (int &ec[]);;
 int      ec_lpSuperContext         (int &ec[]);;
 int      ec_ModuleDeinitFlags      (int &ec[]);;
 int      ec_ModuleInitFlags        (int &ec[]);;
@@ -582,11 +735,15 @@ int      ec_ProgramType            (int &ec[]);;
 int      ec_ProgramUninitReason    (int &ec[]);;
 bool     ec_RecordEquity           (int &ec[]);;
 int      ec_SetDllError            (int &ec[], int error);;
-bool     ec_SetLogEnabled          (int &ec[], int status);;
-bool     ec_SetLogToDebugEnabled   (int &ec[], int status);;
-bool     ec_SetLogToTerminalEnabled(int &ec[], int status);;
+int      ec_SetLoglevel            (int &ec[], int level);;
+int      ec_SetLoglevelAlert       (int &ec[], int level);;
+int      ec_SetLoglevelDebugger    (int &ec[], int level);;
+int      ec_SetLoglevelFile        (int &ec[], int level);;
+int      ec_SetLoglevelMail        (int &ec[], int level);;
+int      ec_SetLoglevelSMS         (int &ec[], int level);;
+int      ec_SetLoglevelTerminal    (int &ec[], int level);;
 int      ec_SetMqlError            (int &ec[], int error);;
-int      ec_SetProgramCoreFunction (int &ec[], int function);;
+int      ec_SetProgramCoreFunction (int &ec[], int id);;
 int      ec_SubPipDigits           (int &ec[]);;
 string   ec_SubPipPriceFormat      (int &ec[]);;
 bool     ec_SuperContext           (int &ec[], int &target[]);;
@@ -610,7 +767,7 @@ bool     ec_VisualMode             (int &ec[]);;
 bool     EmptyIniSectionA(string fileName, string section);;
 string   ErrorToStr(int error);;
 bool     EventListener_ChartCommand(string &commands[]);;
-string   EXECUTION_CONTEXT_toStr(int &ec[], int outputDebug);;
+string   EXECUTION_CONTEXT_toStr(int &ec[]);;
 int      FindInputDialog(int programType, string programName);;
 int      FindTesterWindow();;
 int      GetBoolsAddress(bool &array[]);;
@@ -644,7 +801,7 @@ int      GetUIThreadId();;
 double   GetWindowDoubleA(int hWnd, string name);;
 int      GetWindowIntegerA(int hWnd, string name);;
 string   GetWindowStringA(int hWnd, string name);;
-string   GmtTimeFormat(datetime timestamp, string format);;
+string   GmtTimeFormatA(datetime timestamp, string format);;
 string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
@@ -666,9 +823,9 @@ bool     IsUIThread(int threadId = NULL);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
-string   LocalTimeFormat(datetime timestamp, string format);;
-bool     LogMessageA(int ec[], string message, int error);;
-string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
+string   LocalTimeFormatA(datetime timestamp, string format);;
+string   LoglevelToStr(int level);;
+string   lpEXECUTION_CONTEXT_toStr(int lpEc);;
 string   MD5Hash(int &input[], int length);;
 string   MD5HashA(string str);;
 bool     MemCompare(int lpBufferA, int lpBufferB, int size);;
@@ -686,7 +843,7 @@ int      onDeinitRecompile();;
 int      onDeinitRemove();;
 int      onDeinitTemplate();;
 int      onDeinitUndefined();;
-string   PeriodDescription(int period);;           // also implemented in MQL
+string   PeriodDescription(int period);;                    // also implemented in MQL::stdfunctions
 string   PeriodToStr(int period);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;
@@ -695,7 +852,7 @@ double   RemoveWindowDoubleA(int hWnd, string name);;
 int      RemoveWindowIntegerA(int hWnd, string name);;
 string   RemoveWindowStringA(int hWnd, string name);;
 bool     ReopenAlertDialog(int sound);;
-bool     SetCustomLogA(int ec[], string filename);;
+bool     SetLogfileA(int ec[], string filename);;
 int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowDoubleA(int hWnd, string name, double value);;
 bool     SetWindowIntegerA(int hWnd, string name, int value);;

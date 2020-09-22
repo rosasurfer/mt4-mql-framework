@@ -8,7 +8,7 @@ int __lpSuperContext = NULL;
  * @return int - error status
  */
 int init() {
-   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
+   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
@@ -21,10 +21,9 @@ int init() {
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
-   __LOG_WARN.mail  = init.LogWarningsToMail();
-   __LOG_WARN.sms   = init.LogWarningsToSMS();
-   __LOG_ERROR.mail = init.LogErrorsToMail();
-   __LOG_ERROR.sms  = init.LogErrorsToSMS();
+   N_INF = MathLog(0);                                               // negative infinity
+   P_INF = -N_INF;                                                   // positive infinity
+   NaN   =  N_INF - N_INF;                                           // not-a-number
 
    // EA-Tasks
    if (IsExpert()) {

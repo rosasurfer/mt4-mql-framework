@@ -23,8 +23,8 @@
  *  LfxOrderDeleteCommand    extends LfxTradeCommand { int ticket; ... }
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
@@ -38,6 +38,9 @@ int __DEINIT_FLAGS__[];
 #include <structs/rsf/LFXOrder.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+bool   signal.sms;
+string signal.sms.receiver = "";
+
 
 /**
  * Initialisierung
@@ -45,12 +48,11 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) TradeAccount initialisieren
    if (!InitTradeAccount())
       return(last_error);
 
    // (2) SMS-Konfiguration des Accounts einlesen
-   if (!ConfigureSignalSMS("auto", __SMS.alerts, __SMS.receiver))
+   if (!ConfigureSignalSMS("auto", signal.sms, signal.sms.receiver))
       return(last_error);
 
    return(catch("onInit(3)"));
@@ -90,10 +92,10 @@ int onStart() {
          case TC_LFX_ORDER_CLOSEBY: //CloseLfxOrderBy(); break;
          case TC_LFX_ORDER_HEDGE  : //HedgeLfxOrder  (); break;
          case TC_LFX_ORDER_MODIFY : //ModifyLfxOrder (); break;
-         case TC_LFX_ORDER_DELETE : warn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
+         case TC_LFX_ORDER_DELETE : triggerWarn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
                                     break;
          default:
-            warn("onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
+            triggerWarn("onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
       }
    }
 
@@ -231,7 +233,7 @@ bool OpenLfxOrder(int ticket, string trigger="") {
    int result = LFX.GetOrder(ticket, order);
    if (result < 1) { if (!result) return(last_error); return(catch("OpenLfxOrder(1)  LFX ticket #"+ ticket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
 
-   log("OpenLfxOrder(2)  open #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
+   logInfo("OpenLfxOrder(2)  open #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
 
    int  subPositions, error;
 
@@ -363,17 +365,17 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
-      log("OpenLfxOrder.Execute(8)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
+      logInfo("OpenLfxOrder.Execute(8)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 
       // (4.7) tatsächlich zu handelnde Units berechnen (nach Auf-/Abrunden)
       realUnits += (roundedLots[i] / exactLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * units, 1);
-   log("OpenLfxOrder.Execute(9)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
+   logInfo("OpenLfxOrder.Execute(9)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
 
    // (4.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
-      log("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StrSubstr(overLeverageMsg, 2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
+      logInfo("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StrSubstr(overLeverageMsg, 2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
 
 
    // (5) Directions der Teilpositionen bestimmen
@@ -424,7 +426,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (8) Logmessage ausgeben
-   log("OpenLfxOrder.Execute(11)  "+ StrToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   logInfo("OpenLfxOrder.Execute(11)  "+ StrToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    ArrayResize(symbols    , 0);
@@ -472,7 +474,7 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       if (!lo.IsOpenError(stored))                        return(!catch("OpenLfxOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
       // (2.2) gespeicherten OpenError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
-      if (!isOpenError) log("OpenLfxOrder.Save(3)  over-writing stored LFX_ORDER.OpenError");
+      if (!isOpenError) logInfo("OpenLfxOrder.Save(3)  over-writing stored LFX_ORDER.OpenError");
 
       lo.setVersion(lo, lo.Version(stored));
       ArrayResize(stored, 0);
@@ -507,7 +509,7 @@ bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  * @return bool - Erfolgsstatus
  */
 bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigger, int error) {
-   if (__SMS.alerts) {
+   if (signal.sms) {
       string comment=lo.Comment(lo), currency=lo.Currency(lo);
          if (StrStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
          if (StrStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
@@ -519,7 +521,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(GetLocalTime(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(signal.sms.receiver, TimeToStr(GetLocalTime(), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);
@@ -548,7 +550,7 @@ bool CloseLfxOrder(int ticket, string trigger) {
    int result = LFX.GetOrder(ticket, order);
    if (result < 1) { if (!result) return(last_error); return(catch("CloseLfxOrder(1)  LFX ticket #"+ ticket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
 
-   log("CloseLfxOrder(2)  close #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
+   logInfo("CloseLfxOrder(2)  close #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
 
    string comment = lo.Comment(order);
    int    error;
@@ -627,7 +629,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    int    counter  = StrToInteger(oldComment);
    string symbol.i = currency +"."+ counter;
 
-   log("CloseLfxOrder.Execute(3)  "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   logInfo("CloseLfxOrder.Execute(3)  "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    ArrayResize(tickets, 0);
    ArrayResize(oes    , 0);
@@ -671,7 +673,7 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 
 
       // (2.2) gespeicherten CloseError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
-      if (!isCloseError) log("CloseLfxOrder.Save(3)  over-writing stored LFX_ORDER.CloseError");
+      if (!isCloseError) logInfo("CloseLfxOrder.Save(3)  over-writing stored LFX_ORDER.CloseError");
 
       lo.setVersion(lo, lo.Version(stored));
       ArrayResize(stored, 0);
@@ -706,7 +708,7 @@ bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  * @return bool - Erfolgsstatus
  */
 bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger, int error) {
-   if (__SMS.alerts) {
+   if (signal.sms) {
       string currency = lo.Currency(lo);
       if (StrStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
       if (StrStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
@@ -718,7 +720,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(GetLocalTime(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(signal.sms.receiver, TimeToStr(GetLocalTime(), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);

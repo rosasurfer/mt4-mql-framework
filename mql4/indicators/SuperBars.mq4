@@ -5,8 +5,8 @@
  * two accompanying scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown" (should be called with keyboard hotkeys).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_TIMEZONE};
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -124,12 +124,12 @@ int onTick() {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!triggerWarn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if      (commands[i] == "Timeframe=Up"  ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
       else if (commands[i] == "Timeframe=Down") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
-      else warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
+      else triggerWarn("onCommand(2)  unknown command \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
 }
@@ -194,7 +194,7 @@ bool SwitchSuperTimeframe(int direction) {
          case  INT_MAX      : PlaySoundEx("Plonk.wav");          break;    // we hit a wall
       }
    }
-   else warn("SwitchSuperTimeframe(1)  unknown parameter direction = "+ direction);
+   else triggerWarn("SwitchSuperTimeframe(1)  unknown parameter direction = "+ direction);
 
    CheckSuperTimeframeAvailability();                                      // check availability of the new setting
    return(true);
@@ -588,7 +588,7 @@ bool UpdateDescription() {
       default:             description = "Superbars: n/a";                       // automatisch abgeschaltet
    }
    //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
-   string label    = __NAME() +"."+ label.description;
+   string label    = ProgramName() +"."+ label.description;
    string fontName = "";
    int    fontSize = 8;                                                          // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
    ObjectSetText(label, description, fontSize, fontName, Black);
@@ -606,7 +606,7 @@ bool UpdateDescription() {
  * @return int - Fehlerstatus
  */
 int CreateDescriptionLabel() {
-   string label = __NAME() +"."+ label.description;
+   string label = ProgramName() +"."+ label.description;
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -639,7 +639,7 @@ bool StoreRuntimeStatus() {
    SetWindowIntegerA(hWnd, "rsf.SuperBars.Timeframe", superBars.timeframe);   // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    // Konfiguration im Chart speichern                                        // TODO: nur bei Terminal-Shutdown
-   string label = __NAME() +".runtime.timeframe";
+   string label = ProgramName() +".runtime.timeframe";
    string value = superBars.timeframe;                                        // (string) int
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -663,7 +663,7 @@ bool RestoreRuntimeStatus() {
 
    if (!result) {
       // Konfiguration im Chart suchen
-      string label = __NAME() +".runtime.timeframe";
+      string label = ProgramName() +".runtime.timeframe";
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);
          if (StrIsInteger(value))

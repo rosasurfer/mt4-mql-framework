@@ -26,8 +26,8 @@
  *       SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -148,7 +148,7 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signals
-   if (!ConfigureSignal(__NAME(), Signal.onTrendChange, signals))                                             return(last_error);
+   if (!ConfigureSignal(ProgramName(), Signal.onTrendChange, signals))                                        return(last_error);
    if (signals) {
       if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -175,7 +175,7 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = __NAME() +"("+ ATR.Periods +")";
+   indicatorName = ProgramName() +"("+ ATR.Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
@@ -217,7 +217,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before doing a full recalculation
    if (!UnchangedBars) {
@@ -338,7 +338,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onTrendChange(1)  "+ message);
+      if (IsLog()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -349,7 +349,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onTrendChange(2)  "+ message);
+      if (IsLog()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
@@ -382,12 +382,12 @@ void SetIndicatorOptions() {
       SetIndexLabel(MODE_LOWER_BAND, NULL);
    }
    else {
-      SetIndexLabel(MODE_UPPER_BAND, __NAME() +" upper band");
-      SetIndexLabel(MODE_LOWER_BAND, __NAME() +" lower band");
+      SetIndexLabel(MODE_UPPER_BAND, ProgramName() +" upper band");
+      SetIndexLabel(MODE_LOWER_BAND, ProgramName() +" lower band");
    }
 
    if (Color.MovingAverage == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
-   else                                 SetIndexLabel(MODE_MA, __NAME() +" SMA("+ SMA.Periods +")");
+   else                                 SetIndexLabel(MODE_MA, ProgramName() +" SMA("+ SMA.Periods +")");
 }
 
 
@@ -397,7 +397,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.ATR.Periods",          ATR.Periods         );
    Chart.StoreInt   (name +".input.SMA.Periods",          SMA.Periods         );
    Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
@@ -421,7 +421,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.ATR.Periods",          ATR.Periods         );
    Chart.RestoreInt   (name +".input.SMA.Periods",          SMA.Periods         );
    Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );

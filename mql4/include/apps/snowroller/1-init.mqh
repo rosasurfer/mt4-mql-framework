@@ -5,8 +5,8 @@
  * @return int - error status
  */
 int onInit() {
-   SNOWROLLER = StrStartsWithI(__NAME(), "SnowRoller");     // MQL4 doesn't allow constant bool definitions
-   SISYPHUS   = StrStartsWithI(__NAME(), "Sisyphus");
+   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");    // MQL4 doesn't allow constant bool definitions
+   SISYPHUS   = StrStartsWithI(ProgramName(), "Sisyphus");
    return(NO_ERROR);
 }
 
@@ -22,10 +22,10 @@ int onInitUser() {
 
    // check for a specified sequence id
    if (ValidateInputs.ID()) {                               // on success a valid sequence id was specified
-      SetCustomLog(GetCustomLogFileName());
+      SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;
-      if (!RestoreSequence(interactive)) SetCustomLog("");
+      if (!RestoreSequence(interactive)) SetLogfile("");
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
@@ -43,12 +43,12 @@ int onInitUser() {
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
-      SetCustomLog(GetCustomLogFileName());
+      SetLogfile(GetLogFilename());
       SS.SequenceName();
       SaveStatus();
 
-      if (__LOG()) {
-         log("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
+      if (IsLog()) {
+         logInfo("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       }
       else if (IsTesting() && !IsVisualMode()) {
          debug("onInitUser(2)  sequence "+ sequence.name +" created");
@@ -66,7 +66,7 @@ int onInitUser() {
 int onInitTemplate() {
    // restore sequence data from the chart
    if (RestoreChartStatus()) {
-      SetCustomLog(GetCustomLogFileName());                 // on success a sequence id was restored
+      SetLogfile(GetLogFilename());                         // on success a sequence id was restored
       RestoreSequence(false);
    }
    DeleteChartStatus();
@@ -120,7 +120,7 @@ int onInitTimeframeChange() {
  * @return int - error status
  */
 int onInitSymbolChange() {
-   SetCustomLog("");
+   SetLogfile("");
    return(SetLastError(ERR_CANCELLED_BY_USER));
 }
 
@@ -144,7 +144,7 @@ int afterInit() {
    // initialize status display
    CreateStatusBox();
    SS.All();
-   string section = __NAME();
+   string section = ProgramName();
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {

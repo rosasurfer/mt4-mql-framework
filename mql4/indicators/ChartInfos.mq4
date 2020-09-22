@@ -17,8 +17,8 @@
  * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_TIMEZONE};
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -288,7 +288,7 @@ bool CheckLastError(string location) {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!triggerWarn("onCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if (commands[i] == "cmd=EditAccountConfig") {
@@ -329,7 +329,7 @@ bool onCommand(string commands[]) {
          ArrayResize(positions.config.comments, 0);
          continue;
       }
-      warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
+      triggerWarn("onCommand(2)  unknown command \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
 }
@@ -554,7 +554,7 @@ int ShowOpenOrders() {
  */
 bool GetOpenOrderDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".OpenOrderDisplay.status";
+   string label = ProgramName() +".OpenOrderDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -572,7 +572,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".OpenOrderDisplay.status";
+   string label = ProgramName() +".OpenOrderDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -642,7 +642,7 @@ bool ToggleTradeHistory() {
  */
 bool GetTradeHistoryDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".TradeHistoryDisplay.status";
+   string label = ProgramName() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -660,7 +660,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".TradeHistoryDisplay.status";
+   string label = ProgramName() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -947,7 +947,7 @@ bool ToggleAuM() {
  */
 bool GetAuMDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".AuMDisplay.status";
+   string label = ProgramName() +".AuMDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -965,7 +965,7 @@ bool SetAuMDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".AuMDisplay.status";
+   string label = ProgramName() +".AuMDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -983,7 +983,7 @@ bool SetAuMDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   string programName = __NAME();
+   string programName = ProgramName();
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
    label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
@@ -1222,7 +1222,7 @@ bool UpdatePositions() {
 
 
    // (2) PendingTickets-Marker unten rechts ein-/ausblenden
-   string label = __NAME() +".PendingTickets";
+   string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (isPendings) {
@@ -1795,8 +1795,8 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
    isVirtual = isVirtual!=0;
 
    if (ArraySize(tickets) > 0) {
-      if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-      else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      if (commentIndex > -1) logInfo("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      else                   logInfo("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
    }
    return(true);
 }
@@ -1855,9 +1855,7 @@ bool CalculatePositionSize() {
          else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
          else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
          else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
-         else if (mm.positionSize <=    3.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //      1.2-3: Vielfaches von   0.1
-         else if (mm.positionSize <=    7.5 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.2  ) *   0.2  , 1);     //      3-7.5: Vielfaches von   0.2
-         else if (mm.positionSize <=   12.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.5  ) *   0.5  , 1);     //     7.5-12: Vielfaches von   0.5
+         else if (mm.positionSize <=   10.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //     1.2-10: Vielfaches von   0.1
          else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
          else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
          else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
@@ -2991,7 +2989,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
    else if (type == TERM_OPEN_ALL) {
       // offene Positionen aller Symbole eines Zeitraumes
-      warn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
+      triggerWarn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
    }
 
    else if (type==TERM_HISTORY_SYMBOL || type==TERM_HISTORY_ALL) {
@@ -3505,7 +3503,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleLfxTerminalMessages() {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartLfxReceiver())
@@ -3567,10 +3565,10 @@ bool ProcessLfxTerminalMessage(string message) {
 
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\"")));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(!triggerWarn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\""));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)")));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(!triggerWarn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)"));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(!triggerWarn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)"));
    // LFX-Parameter
    double profit;
    bool   success;
@@ -3594,27 +3592,27 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (__LOG()) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {             warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      if (success) { if (IsLog()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      else         {          triggerWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (__LOG()) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
+      if (IsLog()) logInfo("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (__LOG()) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
+      if (IsLog()) logInfo("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // ???
-   return(_true(warn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\"")));
+   return(!triggerWarn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\""));
 }
 
 
@@ -3745,7 +3743,7 @@ bool SaveLfxOrderCache() {
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleTradeCommands() {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
@@ -3777,7 +3775,7 @@ bool QC.HandleTradeCommands() {
    for (int i=0; i < msgsSize; i++) {
       if (!StringLen(msgs[i])) continue;
       msgs[i] = StrReplace(msgs[i], HTML_TAB, TAB);
-      log("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
+      logInfo("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
 
       string cmdType = StrTrim(StrLeftTo(msgs[i], "{"));
 
@@ -3861,7 +3859,7 @@ bool StoreRuntimeStatus() {
 
    // Konfiguration im Fenster speichern
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName() +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int  value = ifInt(positions.absoluteProfits, 1, -1);
    SetWindowIntegerA(hWnd, key, value);
 
@@ -3886,7 +3884,7 @@ bool RestoreRuntimeStatus() {
 
    // Konfiguration im Fenster suchen
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName() +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value  = GetWindowIntegerA(hWnd, key);
    bool success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
@@ -4068,7 +4066,7 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG()) log("onOrderFail(2)  "+ message);
+      if (IsLog()) logInfo("onOrderFail(2)  "+ message);
 
       // Signale für jede Order einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4107,7 +4105,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG()) log("onPositionOpen(2)  "+ message);
+      if (IsLog()) logInfo("onPositionOpen(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4151,7 +4149,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG()) log("onPositionClose(2)  "+ message);
+      if (IsLog()) logInfo("onPositionClose(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);

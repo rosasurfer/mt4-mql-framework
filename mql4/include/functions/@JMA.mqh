@@ -49,7 +49,7 @@ double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, doubl
 
    // validate bar parameters
    if (iStartBar>=iMaxBar && !bar && iMaxBar>30 && !dtTime[h])
-      warn("JMASeries(4)  h="+ h +": illegal bar parameters", ERR_INVALID_PARAMETER);
+      triggerWarn("JMASeries(4)  h="+ h +": illegal bar parameters", ERR_INVALID_PARAMETER);
    if (bar > iMaxBar)
       return(0);
 
