@@ -63,7 +63,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -75,7 +75,7 @@ int init() {
    }
 
    // finish initialization of global vars
-   if (!init.GlobalVars()) if (CheckErrors("init(3)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -87,15 +87,15 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // synthetic symbol in offline chart
-            return(log("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            return(logInfo("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(log("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(logInfo("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
-      if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -123,7 +123,7 @@ int init() {
 
    // log original input parameters
    string input1="", input2="", inputDiff="";
-   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLog()) {
       input1 = InputsToStr();
       if (StringLen(input1) > 0) {
          input1 = StringConcatenate(input1,
@@ -131,7 +131,7 @@ int init() {
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         log("init()  input: "+ input1);
+         logInfo("init()  input: "+ input1);
       }
    }
 
@@ -174,7 +174,7 @@ int init() {
    if (CheckErrors("init(16)")) return(last_error);
 
    // log modified input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLog()) {
       input2 = InputsToStr();
       if (StringLen(input2) > 0) {
          input2 = StringConcatenate(input2,
@@ -184,7 +184,7 @@ int init() {
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
          inputDiff = InputParamsDiff(input1, input2);
          if (StringLen(inputDiff) > 0)
-            log("init()  input: "+ inputDiff);
+            logInfo("init()  input: "+ inputDiff);
       }
    }
 
@@ -220,27 +220,18 @@ int init() {
  *
  * @return bool - success status
  */
-bool init.GlobalVars() {
+bool initContext() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   ec_SetLogEnabled          (__ExecutionContext, init.IsLogEnabled());
-   ec_SetLogToDebugEnabled   (__ExecutionContext, GetConfigBool("Logging", "LogToDebug", true));
-   ec_SetLogToTerminalEnabled(__ExecutionContext, true);
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
-   __LOG_WARN.mail  = init.LogWarningsToMail();
-   __LOG_WARN.sms   = init.LogWarningsToSMS();
-   __LOG_ERROR.mail = init.LogErrorsToMail();
-   __LOG_ERROR.sms  = init.LogErrorsToSMS();
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-   return(!catch("init.GlobalVars(1)"));
+   return(!catch("initContext(1)"));
 }
 
 
@@ -253,7 +244,7 @@ bool init.GlobalVars() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
-         if (__CHART()) ShowStatus(__STATUS_OFF.reason);
+         if (IsChart()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // ctop the tester in case of errors
             Tester.Stop("start(1)");                                                // covers errors in init(), too
@@ -280,7 +271,7 @@ int start() {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);     // __STATUS_OFF is FALSE here, but an error may be set
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
-         log("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         logInfo("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          int error = init();                                                        // call init() again
@@ -306,7 +297,7 @@ int start() {
    }
 
    // check a finished chart initialisation (may fail on terminal start)
-   if (!Bars) return(ShowStatus(SetLastError(log("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
+   if (!Bars) return(ShowStatus(SetLastError(logInfo("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
    // in tester wait until the configured start time/price is reached
    if (IsTesting()) {
@@ -546,19 +537,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
    // suppress compiler warnings
    __DummyCalls();
-   SetCustomLog(NULL);
-}
-
-
-/**
- * Configure the use of a custom logfile.
- *
- * @param  string filename - name of a custom logfile or an empty string to disable custom logging
- *
- * @return bool - success status
- */
-bool SetCustomLog(string filename) {
-   return(SetCustomLogA(__ExecutionContext, filename));
 }
 
 
@@ -576,7 +554,7 @@ bool Tester.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = StrLeft(__NAME(), MAX_SYMBOL_GROUP_LENGTH);
+      string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -602,7 +580,7 @@ bool Tester.InitReporting() {
       FileClose(hFile);
 
       // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(__NAME(), " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
@@ -617,7 +595,7 @@ bool Tester.InitReporting() {
       symbol = name + StrPadLeft(id, 3, "0");
 
       // create a symbol description                                                      // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = StrLeft(ProgramName(), 38) +" #"+ id;                                 // 38 + 2 +  3 = 43 chars
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
@@ -644,7 +622,7 @@ bool Tester.InitReporting() {
  * @return bool - success status
  */
 bool Tester.LogMarketInfo() {
-   if (!__LOG()) return(true);
+   if (!IsLog()) return(true);
 
    string message = "";
 
@@ -673,7 +651,7 @@ bool Tester.LogMarketInfo() {
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
-   log("MarketInfo()"+ message);
+   logInfo("MarketInfo()"+ message);
 
    return(!catch("Tester.LogMarketInfo(1)"));
 }
@@ -727,12 +705,8 @@ bool Tester.RecordEquity() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_SetDllError            (int ec[], int error   );
-   bool   ec_SetLogEnabled          (int ec[], int status  );
-   bool   ec_SetLogToDebugEnabled   (int ec[], int status  );
-   bool   ec_SetLogToTerminalEnabled(int ec[], int status  );
-   int    ec_SetProgramCoreFunction (int ec[], int function);
-   bool   SetCustomLogA             (int ec[], string file );
+   int    ec_SetDllError           (int ec[], int error   );
+   int    ec_SetProgramCoreFunction(int ec[], int function);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 

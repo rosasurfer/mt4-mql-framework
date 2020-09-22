@@ -2,8 +2,8 @@
  * Zeigt die Eigenschaften eines Instruments an.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
@@ -83,7 +83,7 @@ int CreateLabels() {
    int n = 10;                   // Counter für eindeutige Labels (mind. zweistellig)
 
    // Background
-   string label = StringConcatenate(__NAME(), ".", n, ".Background");
+   string label = StringConcatenate(ProgramName(), ".", n, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -96,7 +96,7 @@ int CreateLabels() {
    else GetLastError();
 
    n++;
-   label = StringConcatenate(__NAME(), ".", n, ".Background");
+   label = StringConcatenate(ProgramName(), ".", n, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -112,7 +112,7 @@ int CreateLabels() {
    int yCoord = y + 4;
    for (int i=0; i < ArraySize(labels); i++) {
       n++;
-      label = StringConcatenate(__NAME(), ".", n, ".", labels[i]);
+      label = StringConcatenate(ProgramName(), ".", n, ".", labels[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -230,11 +230,11 @@ int UpdateInfos() {
          }
          serverTimezone = serverTimezone + ifString(StrStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
       }
-                                                   ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "      + serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
+                                                   ObjectSetText(labels[I_SERVER_TIMEZONE], "Server timezone:  "+ serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
 
-   string serverSession   = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", GmtTimeFormat(D'1970.01.02' + tzOffset, "%H:%M-%H:%M")));
+   string serverSession = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", GmtTimeFormat(D'1970.01.02' + tzOffset, "%H:%M-%H:%M")));
 
-                                                   ObjectSetText(labels[I_SERVER_SESSION  ], "Server session:     "    + serverSession,  fg.fontSize, fg.fontName, ifInt(!StringLen(serverSession),  fg.fontColor.Disabled, fg.fontColor));
+                                                   ObjectSetText(labels[I_SERVER_SESSION], "Server session:     "+ serverSession, fg.fontSize, fg.fontName, ifInt(!StringLen(serverSession), fg.fontColor.Disabled, fg.fontColor));
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);

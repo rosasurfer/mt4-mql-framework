@@ -17,8 +17,8 @@
  * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -169,7 +169,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(trixMain)) return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(trixMain)) return(logInfo("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -251,7 +251,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
    Chart.StoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
@@ -270,7 +270,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
    Chart.RestoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );

@@ -18,15 +18,15 @@
 #define TAB                                  "\t"        // tab: 0x09
 
 
-// log level
-#define L_OFF                          0x80000000        // same as INT_MIN which in C++ is internally defined
-#define L_FATAL                             10000        //
-#define L_ERROR                             20000        // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
-#define L_WARN                              30000        // or more simple:          if (__LOG_DEBUG)              debug(...);
-#define L_INFO                              40000        //
-#define L_NOTICE                            50000        //
-#define L_DEBUG                             60000        //
-#define L_ALL                          0x7FFFFFFF        // same as INT_MAX which in C++ is internally defined
+// log levels
+#define LOG_DEBUG                               1        // messages are logged if the message's loglevel (severity) matches
+#define LOG_INFO                                2        // or exceeds the program's configured loglevel
+#define LOG_NOTICE                              4
+#define LOG_WARN                                8
+#define LOG_ERROR                              16
+#define LOG_FATAL                              32
+#define LOG_ALL                         LOG_DEBUG        // alias for the lowest loglevel
+#define LOG_OFF                           INT_MAX        // not a valid loglevel
 
 
 // MQL module type flags

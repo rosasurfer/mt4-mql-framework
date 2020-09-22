@@ -8,8 +8,8 @@
  *    number of completed range bars per time. The displayed unit is "pip", that's range bars of 1 pip size.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -98,7 +98,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferVola)) return(log("onTick(1)  size(bufferVola) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferVola)) return(logInfo("onTick(1)  size(bufferVola) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!UnchangedBars) {
@@ -181,7 +181,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.Vola.Periods", Vola.Periods);
    Chart.StoreString(name +".input.Vola.Type",    Vola.Type   );
    return(!catch("StoreInputParameters(1)"));
@@ -194,7 +194,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.Vola.Periods", Vola.Periods);
    Chart.RestoreString(name +".input.Vola.Type",    Vola.Type   );
    return(!catch("RestoreInputParameters(1)"));

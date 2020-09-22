@@ -2,8 +2,8 @@
  * Send the command to the ChartInfos indicator to load the current account configuration into the editor.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
+int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 
