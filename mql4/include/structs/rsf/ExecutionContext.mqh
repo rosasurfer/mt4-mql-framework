@@ -14,8 +14,6 @@
  *
  * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodul-
  *         kontexts arbeiten.
- *       • __SMS.alerts        integrieren
- *       • __SMS.receiver      integrieren
  *       • __STATUS_OFF        integrieren
  *       • __STATUS_OFF.reason integrieren
  */
@@ -93,24 +91,31 @@
    int      ec_DllWarning          (int ec[]);
    //       ec.dllWarningMsg
 
-   bool     ec_LogEnabled          (int ec[]);
-   bool     ec_LogToDebugEnabled   (int ec[]);
-   bool     ec_LogToTerminalEnabled(int ec[]);
-   bool     ec_LogToCustomEnabled  (int ec[]);
-   //       ec.customLog
-   string   ec_CustomLogFilename   (int ec[]);
+   int      ec_Loglevel            (int ec[]);
+   int      ec_LoglevelTerminal    (int ec[]);
+   int      ec_LoglevelAlert       (int ec[]);
+   int      ec_LoglevelDebugger    (int ec[]);
+   int      ec_LoglevelFile        (int ec[]);
+   int      ec_LoglevelMail        (int ec[]);
+   int      ec_LoglevelSMS         (int ec[]);
+   //       ec.logger
+   string   ec_LogFilename         (int ec[]);
 
 
    // used setters
-   int      ec_SetProgramCoreFunction (int ec[], int function);
-   int      ec_SetMqlError            (int ec[], int error   );
-   int      ec_SetDllError            (int ec[], int error   );
-   bool     ec_SetLogEnabled          (int ec[], int status  );
-   bool     ec_SetLogToDebugEnabled   (int ec[], int status  );
-   bool     ec_SetLogToTerminalEnabled(int ec[], int status  );
+   int      ec_SetProgramCoreFunction (int ec[], int id);
+   int      ec_SetMqlError            (int ec[], int error);
+   int      ec_SetDllError            (int ec[], int error);
+   int      ec_SetLoglevel            (int ec[], int level);
+   int      ec_SetLoglevelTerminal    (int ec[], int level);
+   int      ec_SetLoglevelAlert       (int ec[], int level);
+   int      ec_SetLoglevelDebugger    (int ec[], int level);
+   int      ec_SetLoglevelFile        (int ec[], int level);
+   int      ec_SetLoglevelMail        (int ec[], int level);
+   int      ec_SetLoglevelSMS         (int ec[], int level);
 
 
    // helpers
-   string EXECUTION_CONTEXT_toStr  (int ec[], int outputDebug);
-   string lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);
+   string   EXECUTION_CONTEXT_toStr  (int ec[]);
+   string   lpEXECUTION_CONTEXT_toStr(int lpEc);
 #import

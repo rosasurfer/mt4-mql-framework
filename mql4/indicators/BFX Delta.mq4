@@ -14,8 +14,8 @@
  * @see  https://github.com/rosasurfer/bfx-core-volume
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -135,7 +135,7 @@ int onInit() {
 
 
    // (4) data display configuration, names and labels
-   indicatorName = __NAME();
+   indicatorName = ProgramName();
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), 2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // chart subwindow and context menu
    SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // chart tooltips and "Data" window
@@ -176,10 +176,10 @@ int onDeinitRecompile() {
 int onTick() {
    // wait for account number initialization (required for BFX license validation)
    if (!AccountNumber())
-      return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(logInfo("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMain)) return(log("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMain)) return(logInfo("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -263,7 +263,7 @@ bool onLevelCross(int mode) {
 
    if (mode == MODE_UPPER) {
       message = indicatorName +" crossed level "+ Signal.Level;
-      log("onLevelCross(1)  "+ message);
+      logInfo("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.long);
@@ -274,7 +274,7 @@ bool onLevelCross(int mode) {
 
    if (mode == MODE_LOWER) {
       message = indicatorName +" crossed level "+ (-Signal.Level);
-      log("onLevelCross(2)  "+ message);
+      logInfo("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.short);
@@ -368,7 +368,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
    Chart.StoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
@@ -388,7 +388,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
    Chart.RestoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);

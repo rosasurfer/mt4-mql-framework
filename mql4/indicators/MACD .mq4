@@ -17,8 +17,8 @@
  * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -261,7 +261,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMACD)) return(log("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -354,7 +354,7 @@ bool onCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" turned positive";
-      log("onCross(1)  "+ message);
+      logInfo("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
@@ -365,7 +365,7 @@ bool onCross(int section) {
 
    if (section == MODE_LOWER_SECTION) {
       message = indicatorName +" turned negative";
-      log("onCross(2)  "+ message);
+      logInfo("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
@@ -401,7 +401,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.StoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.StoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
@@ -428,7 +428,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.RestoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.RestoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );

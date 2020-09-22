@@ -4,8 +4,8 @@
  *  TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 #property show_inputs
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -114,7 +114,7 @@ int onStart() {
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" will be triggered immediately (current price "+ NumberToStr(Close[0], SubPipPriceFormat) +").\n\n"
                         +"Do you really want to buy "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?",
-                        __NAME(),
+                        ProgramName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(3)"));
@@ -127,7 +127,7 @@ int onStart() {
                         +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                         + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat))
                         + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat)),
-                        __NAME(),
+                        ProgramName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(4)"));
