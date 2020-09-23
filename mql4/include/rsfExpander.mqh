@@ -19,7 +19,6 @@
    string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
-   string   InputParamsDiff(string initial, string current);
    bool     IsUIThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    bool     LoadMqlProgramW(int hChart, int programType, string programName);

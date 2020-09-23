@@ -4,7 +4,7 @@
  * @return int - error status
  */
 int onInit() {
-   //SetLogfile(GetMqlFilesPath() +"\\"+ ProgramName() +".log");
+   SetLogfile(GetMqlFilesPath() +"\\"+ ProgramName() +".log");
    return(NO_ERROR);
 }
 

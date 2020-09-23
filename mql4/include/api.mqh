@@ -805,7 +805,6 @@ string   GmtTimeFormatA(datetime timestamp, string format);;
 string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
-string   InputParamsDiff(string initial, string current);;
 string   InputsToStr();;
 string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
