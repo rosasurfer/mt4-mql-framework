@@ -15,8 +15,6 @@ double __rates[][6];                                                 // current 
 int    tickTimerId;                                                  // timer id for virtual ticks
 
 // test metadata
-string tester.starttime         = "";
-string tester.startprice        = "";
 double tester.startEquity       = 0;
 string tester.reportServer      = "XTrade-Testresults";
 int    tester.reportId          = 0;
@@ -114,24 +112,27 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-   // reset the window title in tester (might have been modified by the previous test)
-   if (IsTesting()) {                                                // TODO: wait until done
+   // if in tester
+   if (IsTesting()) {
+      // reset the window title (might have been modified by the previous test)     // TODO: wait until done
       if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // resolve the account number (optimistic: if called in deinit() it will deadlock the UI thread)
       if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
+      // log MarketInfo() data
+      if (IsLogInfo()) Tester.LogMarketInfo();
+      tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
 
-   // log original input parameters
-   string input1="", input2="", inputDiff="";
-   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLog()) {
-      input1 = InputsToStr();
-      if (StringLen(input1) > 0) {
-         input1 = StringConcatenate(input1,
+   // log input parameters
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogInfo()) {
+      string sInput = InputsToStr();
+      if (StringLen(sInput) > 0) {
+         sInput = StringConcatenate(sInput,
             ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
-            ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
+            ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logInfo("init()  input: "+ input1);
+         logInfo("init(14)  input: "+ sInput);
       }
    }
 
@@ -153,7 +154,7 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = ProgramInitReason();                                   //
-      if (!initReason) if (CheckErrors("init(14)")) return(last_error);       //
+      if (!initReason) if (CheckErrors("init(15)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInitUser();            break;    // init reasons
@@ -164,54 +165,29 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(15)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(16)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // post-processing hook
-   if (CheckErrors("init(16)")) return(last_error);
+   if (CheckErrors("init(17)")) return(last_error);
 
-   // log modified input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLog()) {
-      input2 = InputsToStr();
-      if (StringLen(input2) > 0) {
-         input2 = StringConcatenate(input2,
-            ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
-            ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
-            ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
-            ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         inputDiff = InputParamsDiff(input1, input2);
-         if (StringLen(inputDiff) > 0)
-            logInfo("init()  input: "+ inputDiff);
-      }
-   }
-
-   // log MarketInfo() data if in tester
-   if (IsTesting()) {
-      Tester.LogMarketInfo();
-      tester.starttime   = ifString(!Tester.StartTime, "", TimeToStr(Tester.StartTime, TIME_FULL));
-      tester.startprice  = ifString(!Tester.StartPrice, "", NumberToStr(Tester.StartPrice, PriceFormat));
-      tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
-   }
-
-   if (CheckErrors("init(17)"))
-      return(last_error);
    ShowStatus(last_error);
 
    // setup virtual ticks to continue operation on a stalled data feed
    if (!IsTesting()) {
       int hWnd    = __ExecutionContext[EC.hChart];
-      int millis  = 10 * 1000;                                             // every 10 seconds
+      int millis  = 10 * 1000;                                                // every 10 seconds
       tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!tickTimerId) return(catch("init(18)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick (except on UR_CHARTCHANGE)
-   if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the Windows message
-      Chart.SendTick();                                                    // queue may be processed before this function is
-   return(last_error);                                                     // left and the tick gets lost.
+   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the Windows message
+      Chart.SendTick();                                                       // queue may be processed before this function is
+   return(last_error);                                                        // left and the tick gets lost.
 }
 
 
@@ -302,26 +278,28 @@ int start() {
    // in tester wait until the configured start time/price is reached
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
+         static string startTime; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
          if (Tick.Time < Tester.StartTime) {
-            Comment(NL, NL, NL, "Tester: starting at ", tester.starttime);
+            Comment(NL, NL, NL, "Tester: starting at ", startTime);
             return(last_error);
          }
          Tester.StartTime = 0;
       }
       if (Tester.StartPrice != 0) {
+         static string startPrice; if (!StringLen(startPrice)) startPrice = NumberToStr(Tester.StartPrice, PriceFormat);
          static double tester.lastPrice; if (!tester.lastPrice) {
             tester.lastPrice = Bid;
-            Comment(NL, NL, NL, "Tester: starting at ", tester.startprice);
+            Comment(NL, NL, NL, "Tester: starting at ", startPrice);
             return(last_error);
          }
          if (LT(tester.lastPrice, Tester.StartPrice)) /*&&*/ if (LT(Bid, Tester.StartPrice)) {
             tester.lastPrice = Bid;
-            Comment(NL, NL, NL, "Tester: starting at ", tester.startprice);
+            Comment(NL, NL, NL, "Tester: starting at ", startPrice);
             return(last_error);
          }
          if (GT(tester.lastPrice, Tester.StartPrice)) /*&&*/ if (GT(Bid, Tester.StartPrice)) {
             tester.lastPrice = Bid;
-            Comment(NL, NL, NL, "Tester: starting at ", tester.startprice);
+            Comment(NL, NL, NL, "Tester: starting at ", startPrice);
             return(last_error);
          }
          Tester.StartPrice = 0;
@@ -622,8 +600,6 @@ bool Tester.InitReporting() {
  * @return bool - success status
  */
 bool Tester.LogMarketInfo() {
-   if (!IsLog()) return(true);
-
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";

@@ -39,40 +39,6 @@
 
 
 /**
- * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
- * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
- *
- * @param  string location            - a possible error's location identifier and/or an error message
- * @param  int    error    [optional] - trigger a specific error (default: no)
- * @param  bool   orderPop [optional] - whether the last order context on the order stack should be restored (default: no)
- *
- * @return int - the same error
- */
-int catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   orderPop = orderPop!=0;
-   if      (!error                  ) { error  =                      GetLastError(); }
-   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
-   else                               {                               GetLastError(); }
-   static bool isRecursion = false;
-
-   if (error != 0) {
-      if (isRecursion) {
-         string msg = "catch(1)  recursion ("+ location +")";
-         Alert(msg, ", error: ", error);                       // should never happen
-         return(debug(msg, error, LOG_ERROR));
-      }
-      isRecursion = true;
-
-      triggerError(location, error);
-   }
-
-   if (orderPop) OrderPop(location);
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
  * Send a message to the system debugger.
  *
  * @param  string message             - message
@@ -143,14 +109,16 @@ int triggerWarn(string message, int error = NO_ERROR) {
 /**
  * Trigger an error and override a disabled logging.
  *
- * @param  string message - location identifier and/or error message
- * @param  int    error   - error code
+ * @param  string location            - error location identifier and/or error message
+ * @param  int    error               - error code
+ * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
  *
  * @return int - the same error
  */
-int triggerError(string message, int error) {
+int triggerError(string location, int error, bool popOrder=false) {
+   popOrder = popOrder!=0;
    static bool isRecursion = false; if (isRecursion) {
-      string msg = "triggerError(1)  recursion ("+ message +")";
+      string msg = "triggerError(1)  recursion ("+ location +")";
       Alert(msg, ", error: ", error);                       // should never happen
       return(debug(msg, error, LOG_ERROR));
    }
@@ -165,13 +133,14 @@ int triggerError(string message, int error) {
    if (oldLevel > LOG_ERROR)
       ec_SetLoglevel(__ExecutionContext, LOG_ERROR);        // override the current loglevel
 
-   log(message, error, LOG_ERROR);                          // handle the error
+   log(location, error, LOG_ERROR);                         // handle the error
 
    if (oldLevel > LOG_ERROR)
       ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
 
    SetLastError(error);                                     // set the error
 
+   if (popOrder) OrderPop(location);
    isRecursion = false;
    return(error);
 }
@@ -180,14 +149,16 @@ int triggerError(string message, int error) {
 /**
  * Trigger a fatal error and override a disabled logging.
  *
- * @param  string message - location identifier and/or error message
- * @param  int    error   - error code
+ * @param  string location            - error location identifier and/or error message
+ * @param  int    error               - error code
+ * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
  *
  * @return int - the same error
  */
-int triggerFatal(string message, int error) {
+int triggerFatal(string location, int error, bool popOrder=false) {
+   popOrder = popOrder!=0;
    static bool isRecursion = false; if (isRecursion) {
-      string msg = "triggerFatal(1)  recursion ("+ message +")";
+      string msg = "triggerFatal(1)  recursion ("+ location +")";
       Alert(msg, ", error: ", error);                       // should never happen
       return(debug(msg, error, LOG_ERROR));
    }
@@ -202,13 +173,48 @@ int triggerFatal(string message, int error) {
    if (oldLevel > LOG_FATAL)
       ec_SetLoglevel(__ExecutionContext, LOG_FATAL);        // override the current loglevel
 
-   log(message, error, LOG_FATAL);                          // handle the error
+   log(location, error, LOG_FATAL);                         // handle the error
 
    if (oldLevel > LOG_FATAL)
       ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
 
    SetLastError(error);                                     // set the error
 
+   if (popOrder) OrderPop(location);
+   isRecursion = false;
+   return(error);
+}
+
+
+/**
+ * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
+ * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
+ *
+ * @param  string location            - a possible error's location identifier and/or an error message
+ * @param  int    error    [optional] - trigger a specific error (default: no)
+ * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
+ *
+ * @return int - the same error
+ */
+int catch(string location, int error=NO_ERROR, bool popOrder=false) {
+   popOrder = popOrder!=0;
+   if      (!error                  ) { error  =                      GetLastError(); }
+   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
+   else                               {                               GetLastError(); }
+   static bool isRecursion = false;
+
+   if (error != 0) {
+      if (isRecursion) {
+         string msg = "catch(1)  recursion ("+ location +")";
+         Alert(msg, ", error: ", error);                       // should never happen
+         return(debug(msg, error, LOG_ERROR));
+      }
+      isRecursion = true;
+
+      triggerError(location, error);
+   }
+
+   if (popOrder) OrderPop(location);
    isRecursion = false;
    return(error);
 }
