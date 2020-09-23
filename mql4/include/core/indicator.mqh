@@ -84,13 +84,12 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
-   // (4) before onInit(): if loaded by iCustom() log original input parameters
-   string initialInput = "";
-   if (IsSuperContext()) /*&&*/ if (IsLog()) {
-      //initialInput = InputsToStr();                                // un-comment for debugging only
-      if (StringLen(initialInput) > 0) {
-         initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
-         logInfo("init()  input: "+ initialInput);
+   // (4) before onInit(): if loaded by iCustom() log input parameters
+   if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
+      string sInput = InputsToStr();
+      if (StringLen(sInput) > 0) {
+         sInput = sInput + NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
+         logDebug("init(11)  input: "+ sInput);
       }
    }
 
@@ -139,18 +138,7 @@ int init() {
    if (error != -1)                                                                    //
       error = afterInit();                                                             // Postprocessing-Hook
 
-   // (6) after onInit(): if loaded by iCustom() log modified input parameters
-   if (IsSuperContext()) /*&&*/ if (IsLog()) {
-      string modifiedInput = InputsToStr();
-      if (StringLen(modifiedInput) > 0) {
-         modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
-         modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0)
-            logInfo("init()  input: "+ modifiedInput);
-      }
-   }
-
-   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
