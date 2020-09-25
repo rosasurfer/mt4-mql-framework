@@ -28,9 +28,9 @@ bardown_color=-1
 bullcandle_color=-1
 bearcandle_color=-1
 chartline_color=-1
-volumes_color=30720
+volumes_color=-1
 grid_color=-1
-askline_color=9639167
+askline_color=-1
 stops_color=17919
 
 <window>
