@@ -2,23 +2,23 @@
  * FX Turbo Marksman
  *
  *
- * EURCHF: int lookbackPeriods =  9;
- * EURGBP: int lookbackPeriods = 16;
- * EURJPY: int lookbackPeriods =  6;
- * EURUSD: int lookbackPeriods = 15;
- * GBPCHF: int lookbackPeriods = 15;
- * GBPJPY: int lookbackPeriods = 10;
- * GBPUSD: int lookbackPeriods =  5;
- * USDCAD: int lookbackPeriods =  9;
- * USDCHF: int lookbackPeriods = 20;
- * USDJPY: int lookbackPeriods =  9;
+ * EURCHF: int stochPercents =  9;
+ * EURGBP: int stochPercents = 16;
+ * EURJPY: int stochPercents =  6;
+ * EURUSD: int stochPercents = 15;
+ * GBPCHF: int stochPercents = 15;
+ * GBPJPY: int stochPercents = 10;
+ * GBPUSD: int stochPercents =  5;
+ * USDCAD: int stochPercents =  9;
+ * USDCHF: int stochPercents = 20;
+ * USDJPY: int stochPercents =  9;
  *
- * DAX:    int lookbackPeriods =  2;
- * DJIA:   int lookbackPeriods = 15;
- * SP500:  int lookbackPeriods = 16;
+ * DAX:    int stochPercents =  2;
+ * DJIA:   int stochPercents = 15;
+ * SP500:  int stochPercents = 16;
  *
- * CRUDE:  int lookbackPeriods =  4;
- * XAUUSD: int lookbackPeriods = 10;
+ * CRUDE:  int stochPercents =  4;
+ * XAUUSD: int stochPercents = 10;
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -26,7 +26,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern bool SoundAlarm = true;
+extern bool SoundAlarm = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,8 +49,7 @@ extern bool SoundAlarm = true;
 double bufferDown[];
 double bufferUp  [];
 
-int    lookbackPeriods = 6;               // EURJPY
-
+int    stochPercents = 6;               // EURJPY
 bool   isLongSignal  = false;
 bool   isShortSignal = false;
 
@@ -64,32 +63,7 @@ int onInit() {
    SetIndexBuffer(MODE_DOWN, bufferDown);
    SetIndexBuffer(MODE_UP,   bufferUp);
    SetIndicatorOptions();
-
-   GlobalVariableSet("SignalTime"+ Symbol() + Period(), TimeCurrent());
-   GlobalVariableSet("SignalType"+ Symbol() + Period(), 0);
    return(catch("onInit(1)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   if (!catch("onDeinit(1)")) {
-
-      GlobalVariableDel("SignalTime"+ Symbol() + Period());
-      GlobalVariableDel("SignalType"+ Symbol() + Period());
-
-      if (IsTesting()) {
-         int error = GetLastError();
-         if (error != ERR_GLOBAL_VARIABLES_PROCESSING) {
-            catch("onDeinit(2)", error);
-         }
-      }
-   }
-   return(last_error);
 }
 
 
@@ -117,38 +91,40 @@ int onTick() {
 
 
    int startBar     = 500;
-   int li_36        = lookbackPeriods + 67;
-   int li_44        = 33 - lookbackPeriods;
-   int stochPeriods = lookbackPeriods * 2 + 3;
+   int stochPeriods = stochPercents * 2 + 3;
+   double stochHigh = 67 + stochPercents;
+   double stochLow  = 33 - stochPercents;
 
    double stoch[1000];
 
    for (int bar=startBar-12; bar >= 0; bar--) {
-      double ld_84 = 0;
+      double sumRange = 0;
       for (int i=bar; i <= bar+9; i++) {
-         ld_84 += MathAbs(High[i] - Low[i]);
+         sumRange += MathAbs(High[i] - Low[i]);
       }
-      double ld_76 = ld_84 / 10;
+      double avgRange = sumRange/10;
 
-      bool found = false;
+      bool strongMomentum = false;
       for (i=bar; i < bar+6; i++) {
-         if (MathAbs(Close[i]-Close[i+3]) >= 4.6 * ld_76) {
-            found = true;
+         if (MathAbs(Close[i]-Close[i+3]) >= 4.6*avgRange) {
+            strongMomentum = true;
+            Alert("Strong momentum at bar "+ bar);
             break;
          }
       }
-      if (found) stochPeriods = 4;
 
-      stoch[bar] = iStochastic(NULL, NULL, stochPeriods, 1, 1, MODE_SMA, 0, MODE_MAIN, bar);     // pricefield: 0=Low/High, 1=Close/Close
+      if (strongMomentum) int periods = 4;
+      else                    periods = stochPeriods;
+      stoch[bar] = iStochastic(NULL, NULL, periods, 1, 1, MODE_SMA, 0, MODE_MAIN, bar);      // pricefield: 0=Low/High, 1=Close/Close
 
       bufferUp  [bar] = 0;
       bufferDown[bar] = 0;
 
-      if (stoch[bar] < li_44) {
-         for (int li_16=1; stoch[bar+li_16] >= li_44 && stoch[bar+li_16] <= li_36; li_16++) {}
+      if (stoch[bar] < stochLow) {
+         for (i=1; stoch[bar+i] >= stochLow && stoch[bar+i] <= stochHigh; i++) {}
 
-         if (stoch[bar+li_16] > li_36) {
-            bufferDown[bar] = High[bar] + ld_76/2;
+         if (stoch[bar+i] > stochHigh) {
+            bufferDown[bar] = High[bar] + avgRange/2;
             if (bar==1 && !isShortSignal) {
                isShortSignal = true;
                isLongSignal  = false;
@@ -156,11 +132,11 @@ int onTick() {
          }
       }
 
-      if (stoch[bar] > li_36) {
-         for (li_16=1; stoch[bar+li_16] >= li_44 && stoch[bar+li_16] <= li_36; li_16++) {}
+      if (stoch[bar] > stochHigh) {
+         for (i=1; stoch[bar+i] >= stochLow && stoch[bar+i] <= stochHigh; i++) {}
 
-         if (stoch[bar+li_16] < li_44) {
-            bufferUp[bar] = Low[bar] - ld_76/2;
+         if (stoch[bar+i] < stochLow) {
+            bufferUp[bar] = Low[bar] - avgRange/2;
             if (bar==1 && !isLongSignal) {
                isLongSignal  = true;
                isShortSignal = false;
@@ -169,6 +145,7 @@ int onTick() {
       }
    }
 
+   /*
    if (isLongSignal && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType" + Symbol() + Period()) != SIGNAL_LONG) {
       if (SoundAlarm) logNotice("onTick(1)  Buy signal");
 
@@ -183,7 +160,7 @@ int onTick() {
       GlobalVariableSet("SignalTime" + Symbol() + Period(), time);
       GlobalVariableSet("SignalType" + Symbol() + Period(), SIGNAL_SHORT);
    }
-
+   */
    return(catch("onTick(3)"));
 }
 
