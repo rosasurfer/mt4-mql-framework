@@ -1,15 +1,4 @@
 /**
- * Initialization pre-processing hook.
- *
- * @return int - error status
- */
-int onInit() {
-   SetLogfile(GetMqlFilesPath() +"\\"+ ProgramName() +".log");
-   return(NO_ERROR);
-}
-
-
-/**
  * Called after the expert was manually loaded by the user. Also in Strategy Tester with both "VisualMode=On|Off".
  * There was an input dialog.
  *
@@ -80,6 +69,7 @@ int onInitUser() {
    long.enabled     = (sequence.directions & D_LONG  && 1);
    short.enabled    = (sequence.directions & D_SHORT && 1);
    SS.SequenceName();
+   SetLogfile(GetMqlFilesPath() +"\\"+ ProgramName() +"."+ sequence.id +".log");
 
    if (IsLog()) logInfo("onInitUser(8)  sequence "+ sequence.name +" created");
    return(catch("onInitUser(9)"));
