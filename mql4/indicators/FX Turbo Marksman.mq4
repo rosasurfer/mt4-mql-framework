@@ -22,13 +22,17 @@
  */
 #property indicator_chart_window
 #property indicator_buffers 2
-#property indicator_color1 Red
-#property indicator_color2 Olive
+
+#property indicator_color1  Magenta
+#property indicator_color2  Blue
 
 extern bool SoundAlarm = true;
 
-double g_ibuf_92[];
-double g_ibuf_96[];
+#define SIGNAL_LONG     1
+#define SIGNAL_SHORT    2
+
+double bufferDown[];
+double bufferUp  [];
 
 int    gi_76 = 6;             // EURJPY
 int    gi_80 = 500;
@@ -36,15 +40,16 @@ bool   gi_100;
 bool   gi_104;
 
 
+
 /**
  *
  */
 int init() {
-   SetIndexBuffer(0, g_ibuf_92); SetIndexStyle(0, DRAW_ARROW); SetIndexArrow(0, 234);
-   SetIndexBuffer(1, g_ibuf_96); SetIndexStyle(1, DRAW_ARROW); SetIndexArrow(1, 233);
+   SetIndexBuffer(0, bufferDown); SetIndexStyle(0, DRAW_ARROW); SetIndexArrow(0, 234);  // arrow down
+   SetIndexBuffer(1, bufferUp);   SetIndexStyle(1, DRAW_ARROW); SetIndexArrow(1, 233);  // arrow up
 
-   GlobalVariableSet("AlertTime"+ Symbol() + Period(), TimeCurrent());
-   GlobalVariableSet("SignalType"+ Symbol() + Period(), 5);
+   GlobalVariableSet("SignalTime"+ Symbol() + Period(), TimeCurrent());
+   GlobalVariableSet("SignalType"+ Symbol() + Period(), 0);
    return(0);
 }
 
@@ -53,7 +58,7 @@ int init() {
  *
  */
 int deinit() {
-   GlobalVariableDel("AlertTime"+ Symbol() + Period());
+   GlobalVariableDel("SignalTime"+ Symbol() + Period());
    GlobalVariableDel("SignalType"+ Symbol() + Period());
    return(0);
 }
@@ -65,7 +70,6 @@ int deinit() {
 int start() {
    int    li_12;
    double ld_52;
-   double ld_60;
    double ld_76;
    double ld_84;
    double ld_92;
@@ -96,18 +100,20 @@ int start() {
       ld_76 = ld_84 / 10;
       li_12 = i;
 
-      for (double ld_68=0; li_12 < i+9 && ld_68 < 1.0; li_12++) {
-         if (MathAbs(Open[li_12] - (Close[li_12 + 1])) >= 2.0 * ld_76)
+      for (double ld_68=0; li_12 < i+9 && ld_68 < 1; li_12++) {
+         if (MathAbs(Open[li_12]-Close[li_12+1]) >= 2.0 * ld_76) {
             ld_68 += 1;
+         }
       }
 
-      if (ld_68 >= 1.0) ld_92 = li_12;
-      else              ld_92 = -1;
+      if (ld_68 >= 1) ld_92 = li_12;
+      else            ld_92 = -1;
       li_12 = i;
 
-      for (ld_68=0; li_12 < i+6 && ld_68 < 1.0; li_12++) {
-         if (MathAbs(Close[li_12 + 3] - Close[li_12]) >= 4.6 * ld_76)
+      for (ld_68=0; li_12 < i+6 && ld_68 < 1; li_12++) {
+         if (MathAbs(Close[li_12+3]-Close[li_12]) >= 4.6 * ld_76) {
             ld_68 += 1.0;
+         }
       }
 
       if (ld_68 >= 1)  ld_100 = li_12;
@@ -121,21 +127,19 @@ int start() {
 
       ld_52 = 100 - MathAbs(iWPR(NULL, 0, period_24, i));
 
-      lda_108[i]   = ld_52;
-      g_ibuf_92[i] = 0;
-      g_ibuf_96[i] = 0;
-      ld_60        = 0;
+      lda_108   [i] = ld_52;
+      bufferUp  [i] = 0;
+      bufferDown[i] = 0;
 
       if (ld_52 < ld_44) {
          for (int li_16=1; lda_108[i+li_16] >= ld_44 && lda_108[i+li_16] <= ld_36; li_16++) {}
 
          if (lda_108[i+li_16] > ld_36) {
-            ld_60 = High[i] + ld_76 / 2;
+            bufferDown[i] = High[i] + ld_76 / 2;
             if (i==1 && !gi_100) {
                gi_100 = true;
                gi_104 = false;
             }
-            g_ibuf_92[i] = ld_60;
          }
       }
 
@@ -143,29 +147,28 @@ int start() {
          for (li_16=1; lda_108[i+li_16] >= ld_44 && lda_108[i+li_16] <= ld_36; li_16++) {}
 
          if (lda_108[i+li_16] < ld_44) {
-            ld_60 = Low[i] - ld_76 / 2;
+            bufferUp[i] = Low[i] - ld_76 / 2;
             if (i==1 && !gi_104) {
                gi_100 = false;
                gi_104 = true;
             }
-            g_ibuf_96[i] = ld_60;
          }
       }
    }
 
-   if (gi_104 && TimeCurrent() > GlobalVariableGet("AlertTime" + Symbol() + Period()) && GlobalVariableGet("SignalType" + Symbol() + Period()) != 1) {
+   if (gi_104 && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType" + Symbol() + Period()) != SIGNAL_LONG) {
       if (SoundAlarm) Alert("Buy signal @ "+ Symbol() +" Period "+ Period());
 
       datetime time = TimeCurrent() + 60 * (Period() - MathMod(Minute(), Period()));
-      GlobalVariableSet("AlertTime" + Symbol() + Period(), time);
-      GlobalVariableSet("SignalType" + Symbol() + Period(), 1);
+      GlobalVariableSet("SignalTime" + Symbol() + Period(), time);
+      GlobalVariableSet("SignalType" + Symbol() + Period(), SIGNAL_LONG);
    }
-   if (gi_100 && TimeCurrent() > GlobalVariableGet("AlertTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType"+ Symbol() + Period()) != 0) {
+   if (gi_100 && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType"+ Symbol() + Period()) != SIGNAL_SHORT) {
       if (SoundAlarm) Alert("Sell signal @ "+ Symbol() +" Period "+ Period());
 
       time = TimeCurrent() + 60 * (Period() - MathMod(Minute(), Period()));
-      GlobalVariableSet("AlertTime" + Symbol() + Period(), time);
-      GlobalVariableSet("SignalType" + Symbol() + Period(), 0);
+      GlobalVariableSet("SignalTime" + Symbol() + Period(), time);
+      GlobalVariableSet("SignalType" + Symbol() + Period(), SIGNAL_SHORT);
    }
    return (0);
 }
