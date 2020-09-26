@@ -2,173 +2,208 @@
  * FX Turbo Marksman
  *
  *
- * EURCHF: int gi_76 =  9;
- * EURGBP: int gi_76 = 16;
- * EURJPY: int gi_76 =  6;
- * EURUSD: int gi_76 = 15;
- * GBPCHF: int gi_76 = 15;
- * GBPJPY: int gi_76 = 10;
- * GBPUSD: int gi_76 =  5;
- * USDCAD: int gi_76 =  9;
- * USDCHF: int gi_76 = 20;
- * USDJPY: int gi_76 =  9;
+ * EURCHF: int lookbackPeriods =  9;
+ * EURGBP: int lookbackPeriods = 16;
+ * EURJPY: int lookbackPeriods =  6;
+ * EURUSD: int lookbackPeriods = 15;
+ * GBPCHF: int lookbackPeriods = 15;
+ * GBPJPY: int lookbackPeriods = 10;
+ * GBPUSD: int lookbackPeriods =  5;
+ * USDCAD: int lookbackPeriods =  9;
+ * USDCHF: int lookbackPeriods = 20;
+ * USDJPY: int lookbackPeriods =  9;
  *
- * DAX:    int gi_76 =  2;
- * DJIA:   int gi_76 = 15;
- * SP500:  int gi_76 = 16;
+ * DAX:    int lookbackPeriods =  2;
+ * DJIA:   int lookbackPeriods = 15;
+ * SP500:  int lookbackPeriods = 16;
  *
- * CRUDE:  int gi_76 =  4;
- * XAUUSD: int gi_76 = 10;
+ * CRUDE:  int lookbackPeriods =  4;
+ * XAUUSD: int lookbackPeriods = 10;
  */
-#property indicator_chart_window
-#property indicator_buffers 2
+#include <stddefines.mqh>
+int   __InitFlags[];
+int __DeinitFlags[];
 
-#property indicator_color1  Magenta
-#property indicator_color2  Blue
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern bool SoundAlarm = true;
 
-#define SIGNAL_LONG     1
-#define SIGNAL_SHORT    2
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
+
+#define MODE_DOWN             0           // indicator buffer ids
+#define MODE_UP               1
+
+#define SIGNAL_LONG           1           // signal ids used in GlobalVariable*()
+#define SIGNAL_SHORT          2
+
+#property indicator_chart_window
+#property indicator_buffers   2
+
+#property indicator_color1    Magenta
+#property indicator_color2    Blue
 
 double bufferDown[];
 double bufferUp  [];
 
-int    gi_76 = 6;             // EURJPY
-int    gi_80 = 500;
-bool   gi_100;
-bool   gi_104;
+int    lookbackPeriods = 6;               // EURJPY
 
+bool   isLongSignal  = false;
+bool   isShortSignal = false;
 
 
 /**
+ * Initialization
  *
+ * @return int - error status
  */
-int init() {
-   SetIndexBuffer(0, bufferDown); SetIndexStyle(0, DRAW_ARROW); SetIndexArrow(0, 234);  // arrow down
-   SetIndexBuffer(1, bufferUp);   SetIndexStyle(1, DRAW_ARROW); SetIndexArrow(1, 233);  // arrow up
+int onInit() {
+   SetIndexBuffer(MODE_DOWN, bufferDown);
+   SetIndexBuffer(MODE_UP,   bufferUp);
+   SetIndicatorOptions();
 
    GlobalVariableSet("SignalTime"+ Symbol() + Period(), TimeCurrent());
    GlobalVariableSet("SignalType"+ Symbol() + Period(), 0);
-   return(0);
+   return(catch("onInit(1)"));
 }
 
 
 /**
+ * Deinitialization
  *
+ * @return int - error status
  */
-int deinit() {
-   GlobalVariableDel("SignalTime"+ Symbol() + Period());
-   GlobalVariableDel("SignalType"+ Symbol() + Period());
-   return(0);
+int onDeinit() {
+   if (!catch("onDeinit(1)")) {
+
+      GlobalVariableDel("SignalTime"+ Symbol() + Period());
+      GlobalVariableDel("SignalType"+ Symbol() + Period());
+
+      if (IsTesting()) {
+         int error = GetLastError();
+         if (error != ERR_GLOBAL_VARIABLES_PROCESSING) {
+            catch("onDeinit(2)", error);
+         }
+      }
+   }
+   return(last_error);
 }
 
 
 /**
+ * Main function
  *
+ * @return int - error status
  */
-int start() {
-   int    li_12;
-   double ld_52;
-   double ld_76;
-   double ld_84;
-   double ld_92;
-   double ld_100;
+int onTick() {
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(bufferUp)) return(logInfo("onTick(1)  size(bufferUp) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   if (!UnchangedBars) {
+      ArrayInitialize(bufferUp,   EMPTY_VALUE);
+      ArrayInitialize(bufferDown, EMPTY_VALUE);
+      SetIndicatorOptions();
+   }
+
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferUp,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferDown, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
+   int startBar   = 500;
+   int li_36      = lookbackPeriods + 67;
+   int li_44      = 33 - lookbackPeriods;
+   int wprPeriods = lookbackPeriods * 2 + 3;
+
    double lda_108[1000];
 
-   if (gi_80 >= 1000) gi_80 = 950;
-
-   SetIndexDrawBegin(0, Bars - gi_80 + 12);
-   SetIndexDrawBegin(1, Bars - gi_80 + 12);
-
-   int    ind_counted_8 = IndicatorCounted();
-   int    li_20 = gi_76 * 2 + 3;
-   double ld_36 = gi_76 + 67;
-   double ld_44 = 33 - gi_76;
-   int    period_24 = li_20;
-
-   if (Bars <= 12) return (0);
-
-   for (int i=gi_80-12; i >= 0; i--) {
-      li_12 = i;
-      ld_76 = 0;
-      ld_84 = 0;
-
-      for (li_12=i; li_12 <= i+9; li_12++) {
-         ld_84 += MathAbs(High[li_12] - Low[li_12]);
+   for (int bar=startBar-12; bar >= 0; bar--) {
+      double ld_84 = 0;
+      for (int i=bar; i <= bar+9; i++) {
+         ld_84 += MathAbs(High[i] - Low[i]);
       }
-      ld_76 = ld_84 / 10;
-      li_12 = i;
+      double ld_76 = ld_84 / 10;
 
-      for (double ld_68=0; li_12 < i+9 && ld_68 < 1; li_12++) {
-         if (MathAbs(Open[li_12]-Close[li_12+1]) >= 2.0 * ld_76) {
-            ld_68 += 1;
+      bool found = false;
+      for (i=bar; i < bar+6; i++) {
+         if (MathAbs(Close[i]-Close[i+3]) >= 4.6 * ld_76) {
+            found = true;
+            break;
          }
       }
+      if (found) wprPeriods = 4;
 
-      if (ld_68 >= 1) ld_92 = li_12;
-      else            ld_92 = -1;
-      li_12 = i;
+      lda_108   [bar] = 100 - MathAbs(iWPR(NULL, NULL, wprPeriods, bar));
+      bufferUp  [bar] = 0;
+      bufferDown[bar] = 0;
 
-      for (ld_68=0; li_12 < i+6 && ld_68 < 1; li_12++) {
-         if (MathAbs(Close[li_12+3]-Close[li_12]) >= 4.6 * ld_76) {
-            ld_68 += 1.0;
-         }
-      }
+      if (lda_108[bar] < li_44) {
+         for (int li_16=1; lda_108[bar+li_16] >= li_44 && lda_108[bar+li_16] <= li_36; li_16++) {}
 
-      if (ld_68 >= 1)  ld_100 = li_12;
-      else             ld_100 = -1;
-
-      if (ld_92 > -1)  period_24 = 3;
-      else             period_24 = li_20;
-
-      if (ld_100 > -1) period_24 = 4;
-      else             period_24 = li_20;
-
-      ld_52 = 100 - MathAbs(iWPR(NULL, 0, period_24, i));
-
-      lda_108   [i] = ld_52;
-      bufferUp  [i] = 0;
-      bufferDown[i] = 0;
-
-      if (ld_52 < ld_44) {
-         for (int li_16=1; lda_108[i+li_16] >= ld_44 && lda_108[i+li_16] <= ld_36; li_16++) {}
-
-         if (lda_108[i+li_16] > ld_36) {
-            bufferDown[i] = High[i] + ld_76 / 2;
-            if (i==1 && !gi_100) {
-               gi_100 = true;
-               gi_104 = false;
+         if (lda_108[bar+li_16] > li_36) {
+            bufferDown[bar] = High[bar] + ld_76/2;
+            if (bar==1 && !isShortSignal) {
+               isShortSignal = true;
+               isLongSignal  = false;
             }
          }
       }
 
-      if (ld_52 > ld_36) {
-         for (li_16=1; lda_108[i+li_16] >= ld_44 && lda_108[i+li_16] <= ld_36; li_16++) {}
+      if (lda_108[bar] > li_36) {
+         for (li_16=1; lda_108[bar+li_16] >= li_44 && lda_108[bar+li_16] <= li_36; li_16++) {}
 
-         if (lda_108[i+li_16] < ld_44) {
-            bufferUp[i] = Low[i] - ld_76 / 2;
-            if (i==1 && !gi_104) {
-               gi_100 = false;
-               gi_104 = true;
+         if (lda_108[bar+li_16] < li_44) {
+            bufferUp[bar] = Low[bar] - ld_76/2;
+            if (bar==1 && !isLongSignal) {
+               isLongSignal  = true;
+               isShortSignal = false;
             }
          }
       }
    }
 
-   if (gi_104 && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType" + Symbol() + Period()) != SIGNAL_LONG) {
-      if (SoundAlarm) Alert("Buy signal @ "+ Symbol() +" Period "+ Period());
+   if (isLongSignal && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType" + Symbol() + Period()) != SIGNAL_LONG) {
+      if (SoundAlarm) logNotice("onTick(1)  Buy signal");
 
       datetime time = TimeCurrent() + 60 * (Period() - MathMod(Minute(), Period()));
       GlobalVariableSet("SignalTime" + Symbol() + Period(), time);
       GlobalVariableSet("SignalType" + Symbol() + Period(), SIGNAL_LONG);
    }
-   if (gi_100 && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType"+ Symbol() + Period()) != SIGNAL_SHORT) {
-      if (SoundAlarm) Alert("Sell signal @ "+ Symbol() +" Period "+ Period());
+   if (isShortSignal && TimeCurrent() > GlobalVariableGet("SignalTime"+ Symbol() + Period()) && GlobalVariableGet("SignalType"+ Symbol() + Period()) != SIGNAL_SHORT) {
+      if (SoundAlarm) logNotice("onTick(2)  Sell signal");
 
       time = TimeCurrent() + 60 * (Period() - MathMod(Minute(), Period()));
       GlobalVariableSet("SignalTime" + Symbol() + Period(), time);
       GlobalVariableSet("SignalType" + Symbol() + Period(), SIGNAL_SHORT);
    }
-   return (0);
+
+   return(catch("onTick(3)"));
+}
+
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not be ignored.
+ */
+void SetIndicatorOptions() {
+   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL);
+
+   SetIndexStyle(MODE_UP,   DRAW_ARROW); SetIndexArrow(MODE_UP,   233);    // arrow up
+   SetIndexStyle(MODE_DOWN, DRAW_ARROW); SetIndexArrow(MODE_DOWN, 234);    // arrow down
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("SoundAlarm=", BoolToStr(SoundAlarm), ";"));
 }
