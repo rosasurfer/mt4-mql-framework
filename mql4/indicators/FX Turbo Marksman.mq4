@@ -43,7 +43,7 @@ extern bool SoundAlarm = true;
 #property indicator_chart_window
 #property indicator_buffers   2
 
-#property indicator_color1    Magenta
+#property indicator_color1    Yellow
 #property indicator_color2    Blue
 
 double bufferDown[];
@@ -116,12 +116,12 @@ int onTick() {
    }
 
 
-   int startBar   = 500;
-   int li_36      = lookbackPeriods + 67;
-   int li_44      = 33 - lookbackPeriods;
-   int wprPeriods = lookbackPeriods * 2 + 3;
+   int startBar     = 500;
+   int li_36        = lookbackPeriods + 67;
+   int li_44        = 33 - lookbackPeriods;
+   int stochPeriods = lookbackPeriods * 2 + 3;
 
-   double lda_108[1000];
+   double stoch[1000];
 
    for (int bar=startBar-12; bar >= 0; bar--) {
       double ld_84 = 0;
@@ -137,16 +137,17 @@ int onTick() {
             break;
          }
       }
-      if (found) wprPeriods = 4;
+      if (found) stochPeriods = 4;
 
-      lda_108   [bar] = 100 - MathAbs(iWPR(NULL, NULL, wprPeriods, bar));
+      stoch[bar] = iStochastic(NULL, NULL, stochPeriods, 1, 1, MODE_SMA, 0, MODE_MAIN, bar);     // pricefield: 0=Low/High, 1=Close/Close
+
       bufferUp  [bar] = 0;
       bufferDown[bar] = 0;
 
-      if (lda_108[bar] < li_44) {
-         for (int li_16=1; lda_108[bar+li_16] >= li_44 && lda_108[bar+li_16] <= li_36; li_16++) {}
+      if (stoch[bar] < li_44) {
+         for (int li_16=1; stoch[bar+li_16] >= li_44 && stoch[bar+li_16] <= li_36; li_16++) {}
 
-         if (lda_108[bar+li_16] > li_36) {
+         if (stoch[bar+li_16] > li_36) {
             bufferDown[bar] = High[bar] + ld_76/2;
             if (bar==1 && !isShortSignal) {
                isShortSignal = true;
@@ -155,10 +156,10 @@ int onTick() {
          }
       }
 
-      if (lda_108[bar] > li_36) {
-         for (li_16=1; lda_108[bar+li_16] >= li_44 && lda_108[bar+li_16] <= li_36; li_16++) {}
+      if (stoch[bar] > li_36) {
+         for (li_16=1; stoch[bar+li_16] >= li_44 && stoch[bar+li_16] <= li_36; li_16++) {}
 
-         if (lda_108[bar+li_16] < li_44) {
+         if (stoch[bar+li_16] < li_44) {
             bufferUp[bar] = Low[bar] - ld_76/2;
             if (bar==1 && !isLongSignal) {
                isLongSignal  = true;
