@@ -81,12 +81,12 @@ int maxValues;
 int onInit() {
    // validate inputs
    if (Stochastic.Periods < 2)     return(catch("onInit(1)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 0) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 0) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (RSI.Periods < 2)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    stochPeriods = Stochastic.Periods;
-   ma1Periods   = Stochastic.MA1.Periods;
-   ma2Periods   = Stochastic.MA2.Periods;
+   ma1Periods   = ifInt(!Stochastic.MA1.Periods, 1, Stochastic.MA1.Periods);
+   ma2Periods   = ifInt(!Stochastic.MA2.Periods, 1, Stochastic.MA2.Periods);
    rsiPeriods   = RSI.Periods;
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
