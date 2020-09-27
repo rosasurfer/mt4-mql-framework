@@ -10,11 +10,11 @@
  *
  * Indicator buffers for iCustom():
  *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
- *  • Stochastic.MODE_SIGNAL: indicator signal line (the last moving average)
+ *  • Stochastic.MODE_SIGNAL: indicator signal line (last moving average)
  *
  * If only one Moving Average is configured (MA1 or MA2) the indicator calculates the "Fast Stochastic" and MODE_MAIN contains
  * the raw Stochastic. If both Moving Averages are configured the indicator calculates the "Slow Stochastic" and MODE_MAIN
- * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average of MODE_MAIN.
+ * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
