@@ -1,24 +1,43 @@
 /**
- * FX Turbo Marksman
+ * Stochastic Oscillator
  *
  *
- * EURCHF: int StochPercents =  9;
- * EURGBP: int StochPercents = 16;
- * EURJPY: int StochPercents =  6;
- * EURUSD: int StochPercents = 15;
- * GBPCHF: int StochPercents = 15;
- * GBPJPY: int StochPercents = 10;
- * GBPUSD: int StochPercents =  5;
- * USDCAD: int StochPercents =  9;
- * USDCHF: int StochPercents = 20;
- * USDJPY: int StochPercents =  9;
+ * The Stochastic oscillator shows the relative position of current price compared to the price range of the lookback period,
+ * normalized to a value from 0 to 100. The fast Stochastic is smoothed once, the slow Stochastic is smoothed twice.
  *
- * DAX:    int StochPercents =  2;
- * DJIA:   int StochPercents = 15;
- * SP500:  int StochPercents = 16;
+ * Indicator buffers for iCustom():
+ *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
+ *  • Stochastic.MODE_SIGNAL: indicator signal line (last moving average)
  *
- * CRUDE:  int StochPercents =  4;
- * XAUUSD: int StochPercents = 10;
+ * If only one Moving Average is configured (MA1 or MA2) the indicator calculates the "Fast Stochastic" and MODE_MAIN contains
+ * the raw Stochastic. If both Moving Averages are configured the indicator calculates the "Slow Stochastic" and MODE_MAIN
+ * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average.
+ *
+ *
+ *
+ *
+ *
+ *
+ * --------------------------------------------------------------------------------------------------------------------------
+ * FX Turbo Marksman values:
+ * -------------------------
+ * GBPUSD: StochPercents =  5,   Stoch(13),   LS=72:28
+ * EURJPY: StochPercents =  6,   Stoch(15),   LS=73:27
+ * EURCHF: StochPercents =  9,   Stoch(21),   LS=76:24
+ * USDCAD: StochPercents =  9,   Stoch(21),   LS=76:24
+ * USDJPY: StochPercents =  9,   Stoch(21),   LS=76:24
+ * GBPJPY: StochPercents = 10,   Stoch(23),   LS=77:23
+ * EURUSD: StochPercents = 15,   Stoch(33),   LS=82:18
+ * GBPCHF: StochPercents = 15,   Stoch(33),   LS=82:18
+ * EURGBP: StochPercents = 16,   Stoch(35),   LS=83:17
+ * USDCHF: StochPercents = 20,   Stoch(43),   LS=87:13
+ *
+ * DAX:    StochPercents =  2,   Stoch(7),    LS=69:31
+ * DJIA:   StochPercents = 15,   Stoch(33),   LS=82:18
+ * SP500:  StochPercents = 16,   Stoch(35),   LS=83:17
+ *
+ * CRUDE:  StochPercents =  4,   Stoch(11),   LS=71:29
+ * XAUUSD: StochPercents = 10,   Stoch(23),   LS=77:23
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -39,9 +58,6 @@ extern bool SoundAlarm    = true;
 #define MODE_DOWN             0           // indicator buffer ids
 #define MODE_UP               1
 
-#define SIGNAL_LONG           1           // signal ids used in GlobalVariable*()
-#define SIGNAL_SHORT          2
-
 #property indicator_chart_window
 #property indicator_buffers   2
 
@@ -51,9 +67,9 @@ extern bool SoundAlarm    = true;
 double bufferDown[];
 double bufferUp  [];
 
-int    stochPeriods;
-double stochLevelHigh;
-double stochLevelLow;
+int    periods;
+int    signalLevelLong;
+int    signalLevelShort;
 
 
 /**
@@ -66,9 +82,9 @@ int onInit() {
    SetIndexBuffer(MODE_DOWN, bufferDown); SetIndexEmptyValue(MODE_DOWN, 0);
    SetIndicatorOptions();
 
-   stochPeriods   = StochPercents * 2 + 3;
-   stochLevelHigh = 67 + StochPercents;
-   stochLevelLow  = 33 - StochPercents;
+   periods          = StochPercents * 2 + 3;
+   signalLevelLong  = 67 + StochPercents;
+   signalLevelShort = 33 - StochPercents;
 
    return(catch("onInit(1)"));
 }
@@ -103,15 +119,15 @@ int onTick() {
       bufferUp  [bar] = 0;
       bufferDown[bar] = 0;
 
-      double stoch = iStochastic(NULL, NULL, stochPeriods, 1, 1, MODE_SMA, 0, MODE_MAIN, bar);    // pricefield: 0=Low/High, 1=Close/Close
+      double stoch = iStochastic(NULL, NULL, periods, 1, 1, MODE_SMA, 0, MODE_MAIN, bar);    // pricefield: 0=Low/High, 1=Close/Close
 
-      if (stoch > stochLevelHigh) {
+      if (stoch >= signalLevelLong) {
          for (int i=1; bar+i < Bars; i++) {
             if (bufferUp[bar+i] || bufferDown[bar+i]) break;
          }
          if (!bufferUp[bar+i]) bufferUp[bar] = Low[bar] - iATR(NULL, NULL, 10, bar)/2;
       }
-      else if (stoch < stochLevelLow) {
+      else if (stoch <= signalLevelShort) {
          for (i=1; bar+i < Bars; i++) {
             if (bufferUp[bar+i] || bufferDown[bar+i]) break;
          }
