@@ -28,7 +28,7 @@ extern int    Stochastic.MA2.Periods = 6;                // second moving averag
 extern int    RSI.Periods            = 96;
 
 extern color  Main.Color             = CLR_NONE;
-extern color  Signal.Color           = DodgerBlue;
+extern color  Signal.Color           = Blue;
 extern string Signal.DrawType        = "Line* | Dot";
 extern int    Signal.DrawWidth       = 2;
 
@@ -128,9 +128,9 @@ int onInit() {
 
    // names, labels and display options
    string sStochMa1Periods="", sStochMa2Periods="";
-   if (ma1Periods!=1)                  sStochMa1Periods = ", "+ ma1Periods;
-   if (ma1Periods==1 || ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
-   string indicatorName  = "Stochastic(RSI("+ rsiPeriods +"), "+ stochPeriods + sStochMa1Periods + sStochMa2Periods +")";
+   if (ma1Periods!=1) sStochMa1Periods = ", "+ ma1Periods;
+   if (ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
+   string indicatorName  = "Stochastic("+ stochPeriods +" x RSI("+ rsiPeriods +")"+ sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
    SetIndexLabel(MODE_RSI,       NULL);                  // chart tooltips and "Data" window
