@@ -2940,7 +2940,7 @@ string GetMqlFilesPath() {
          string mqlDirectory = GetMqlDirectoryA();
          if (!StringLen(mqlDirectory))
             return(EMPTY_STR);
-         filesDir = mqlDirectory  +"\\files";
+         filesDir = mqlDirectory +"\\files";
       }
    }
    return(filesDir);
