@@ -27,7 +27,7 @@ barup_color=30720
 bardown_color=210
 bullcandle_color=30720
 bearcandle_color=210
-chartline_color=4294967295
+chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
 askline_color=9639167
@@ -38,7 +38,6 @@ height=300
 
 <indicator>
 name=main
-
 <object>
 type=1
 object_name=Horizontal Line 0.50

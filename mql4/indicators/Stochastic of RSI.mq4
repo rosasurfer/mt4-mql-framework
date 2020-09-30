@@ -10,11 +10,11 @@
  *
  * Indicator buffers for iCustom():
  *  • Stochastic.MODE_MAIN:   indicator base line (fast Stochastic) or first moving average (slow Stochastic)
- *  • Stochastic.MODE_SIGNAL: indicator signal line (the last moving average)
+ *  • Stochastic.MODE_SIGNAL: indicator signal line (last moving average)
  *
  * If only one Moving Average is configured (MA1 or MA2) the indicator calculates the "Fast Stochastic" and MODE_MAIN contains
  * the raw Stochastic. If both Moving Averages are configured the indicator calculates the "Slow Stochastic" and MODE_MAIN
- * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average of MODE_MAIN.
+ * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -28,7 +28,7 @@ extern int    Stochastic.MA2.Periods = 6;                // second moving averag
 extern int    RSI.Periods            = 96;
 
 extern color  Main.Color             = CLR_NONE;
-extern color  Signal.Color           = DodgerBlue;
+extern color  Signal.Color           = Blue;
 extern string Signal.DrawType        = "Line* | Dot";
 extern int    Signal.DrawWidth       = 2;
 
@@ -81,12 +81,12 @@ int maxValues;
 int onInit() {
    // validate inputs
    if (Stochastic.Periods < 2)     return(catch("onInit(1)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 0) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 0) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (RSI.Periods < 2)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    stochPeriods = Stochastic.Periods;
-   ma1Periods   = Stochastic.MA1.Periods;
-   ma2Periods   = Stochastic.MA2.Periods;
+   ma1Periods   = ifInt(!Stochastic.MA1.Periods, 1, Stochastic.MA1.Periods);
+   ma2Periods   = ifInt(!Stochastic.MA2.Periods, 1, Stochastic.MA2.Periods);
    rsiPeriods   = RSI.Periods;
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -128,9 +128,9 @@ int onInit() {
 
    // names, labels and display options
    string sStochMa1Periods="", sStochMa2Periods="";
-   if (ma1Periods!=1)                  sStochMa1Periods = ", "+ ma1Periods;
-   if (ma1Periods==1 || ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
-   string indicatorName  = "Stochastic(RSI("+ rsiPeriods +"), "+ stochPeriods + sStochMa1Periods + sStochMa2Periods +")";
+   if (ma1Periods!=1) sStochMa1Periods = ", "+ ma1Periods;
+   if (ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
+   string indicatorName  = "Stochastic("+ stochPeriods +" x RSI("+ rsiPeriods +")"+ sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
    SetIndexLabel(MODE_RSI,       NULL);                  // chart tooltips and "Data" window
