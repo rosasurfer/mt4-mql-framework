@@ -36,8 +36,8 @@
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
-#define EXECUTION_CONTEXT.size            1048
-#define EXECUTION_CONTEXT.intSize          262
+#define EXECUTION_CONTEXT.size            1052
+#define EXECUTION_CONTEXT.intSize          263
 
 #define EC.pid                               0     // All offsets must be in sync with the MT4Expander.
 #define EC.previousPid                       1
