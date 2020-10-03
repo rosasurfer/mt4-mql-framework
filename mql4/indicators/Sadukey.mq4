@@ -18,7 +18,7 @@ extern color  Color.DownTrend = Red;
 
 extern string MTF.Timeframe   = "current* | M15 | M30 | H1 | ...";   // empty: current
 extern string StartDate       = "yyyy.mm.dd";                        // start date of calculated values
-extern int    Max.Bars        = 10000;                               // max. number of bars to display (-1: all available)
+extern int    Max.Bars        = 10000;                               // max. number of values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -23,7 +23,7 @@ extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Bars              = 5000;                    // max. number of bars to display (-1: all available)
+extern int    Max.Bars              = 10000;                   // max. number of values to calculate (-1: all available)
 
 extern string __________________________;
 
