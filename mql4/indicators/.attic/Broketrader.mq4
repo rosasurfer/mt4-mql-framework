@@ -27,7 +27,7 @@ extern color  Color.Short            = C'81,211,255';       // lightblue-ish
 extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
 extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
-extern int    Max.Bars               = 10000;               // max. number of bars to display (-1: all available)
+extern int    Max.Bars               = 10000;               // max. number of values to calculate (-1: all available)
 extern string __________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
