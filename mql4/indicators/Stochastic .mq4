@@ -102,8 +102,8 @@ int onInit() {
    string indicatorName  = sName +"("+ stochPeriods + sMa1Periods + sMa2Periods +")";
 
    IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
-   SetIndexLabel(MODE_MAIN,   "StochMain");   if (Main.Color  ==CLR_NONE)                  SetIndexLabel(MODE_MAIN,   NULL);
-   SetIndexLabel(MODE_SIGNAL, "StochSignal"); if (Signal.Color==CLR_NONE || ma2Periods==1) SetIndexLabel(MODE_SIGNAL, NULL);
+   SetIndexLabel(MODE_MAIN,   "StochMain");   if (Main.Color  ==CLR_NONE) SetIndexLabel(MODE_MAIN,   NULL);
+   SetIndexLabel(MODE_SIGNAL, "StochSignal"); if (Signal.Color==CLR_NONE) SetIndexLabel(MODE_SIGNAL, NULL);
    SetIndexLabel(MODE_TREND,  "StochTrend");
 
    SetIndexEmptyValue(MODE_TREND, 0);
@@ -187,26 +187,42 @@ bool UpdateTrend(double signal[], double &trend[], int bar) {
       return(true);
    }
 
-   double curValue  = signal[bar  ];
+   int    prevTrend = trend[bar+1];
+   double curValue  = signal[bar];
    double prevValue = signal[bar+1];
 
-   if (prevValue == EMPTY_VALUE) {
-      trend[bar] = 0;
+   if (prevTrend > 0) {
+      // existing long trend
+      if (curValue <= levelShort) trend[bar] = -1;                            // trend change short
+      else                        trend[bar] = prevTrend + Sign(prevTrend);   // trend continuation
    }
-   else if (trend[bar+1] == 0) {
-      trend[bar] = 0;
-
-      if (bar < Bars-2) {
-         double pre2Value = signal[bar+2];
-         if      (pre2Value == EMPTY_VALUE)                       trend[bar] =  0;
-         else if (pre2Value <= prevValue && prevValue > curValue) trend[bar] = -1;  // curValue is a change of direction
-         else if (pre2Value >= prevValue && prevValue < curValue) trend[bar] =  1;  // curValue is a change of direction
-      }
+   else if (prevTrend < 0) {
+      // existing short trend
+      if (curValue >= levelLong) trend[bar] = +1;                             // trend change long
+      else                       trend[bar] = prevTrend + Sign(prevTrend);    // trend continuation
    }
    else {
-      if      (curValue > prevValue) trend[bar] =  Max(trend[bar+1], 0) + 1;
-      else if (curValue < prevValue) trend[bar] =  Min(trend[bar+1], 0) - 1;
-      else   /*curValue== prevValue*/trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
+      // no trend yet
+      trend[bar] =  0;
+
+      if (curValue >= levelLong) {
+         for (int i=bar+1; i < Bars; i++) {
+            if (signal[i] == EMPTY_VALUE) break;
+            if (signal[i] <= levelShort) {                                    // look for a previous down cross
+               trend[bar] = +1;                                               // found: first trend long
+               break;
+            }
+         }
+      }
+      else if (curValue <= levelShort) {
+         for (i=bar+1; i < Bars; i++) {
+            if (signal[i] == EMPTY_VALUE) break;
+            if (signal[i] >= levelLong) {                                     // look for a previous up cross
+               trend[bar] = -1;                                               // found: first trend short
+               break;
+            }
+         }
+      }
    }
    return(true);
 }
@@ -219,7 +235,7 @@ bool UpdateTrend(double signal[], double &trend[], int bar) {
 void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
 
-   int signalType = ifInt(ma2Periods==1 || Signal.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
+   int signalType = ifInt(Signal.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
    SetIndexStyle(MODE_MAIN,   DRAW_LINE,  EMPTY, EMPTY, Main.Color);
    SetIndexStyle(MODE_SIGNAL, signalType, EMPTY, EMPTY, Signal.Color);
