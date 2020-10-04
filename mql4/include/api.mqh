@@ -166,7 +166,7 @@ double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string m
 double   icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar);;
 double   icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSATL(NULL, NULL, NULL);;
-double   icStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar);;
+double   icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar);;
 double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 double   icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
@@ -320,7 +320,7 @@ void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
-void     @Trend.UpdateDirection(double &values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
+bool     @Trend.UpdateDirection(double &values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
 bool     ConfigureSignal(string name, string &configValue, bool &enabled);;
 bool     ConfigureSignalMail(string configValue, bool &enabled, string &sender, string &receiver);;

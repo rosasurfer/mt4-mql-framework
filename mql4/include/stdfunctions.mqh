@@ -5877,7 +5877,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    double value = iCustom(NULL, timeframe, "HalfTrend",
                           periods,                                         // int    Periods
 
-                          DodgerBlue,                                      // color  Color.UpTrend
+                          Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           CLR_NONE,                                        // color  Color.Channel
                           "Line",                                          // string Draw.Type
@@ -5928,7 +5928,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           phase,                                           // int    Phase
                           appliedPrice,                                    // string AppliedPrice
 
-                          DodgerBlue,                                      // color  Color.UpTrend
+                          Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
@@ -5985,9 +5985,9 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           slowMaMethod,                                    // string Slow.MA.Method
                           slowMaAppliedPrice,                              // string Slow.MA.AppliedPrice
 
-                          DodgerBlue,                                      // color  MainLine.Color
+                          Blue,                                            // color  MainLine.Color
                           1,                                               // int    MainLine.Width
-                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Green,                                           // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
@@ -6037,7 +6037,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           maAppliedPrice,                                  // string MA.AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
-                          Orange,                                          // color  Color.DownTrend
+                          Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Bars
@@ -6084,7 +6084,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           cycleLength,                                     // int    Cycle.Length
                           appliedPrice,                                    // string AppliedPrice
 
-                          RoyalBlue,                                       // color  Color.UpTrend
+                          Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.Width
@@ -6203,27 +6203,27 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
 /**
  * Load the "Stochastic of RSI" indicator and return a value.
  *
- * @param  int timeframe            - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int stochasticPeriods    - indicator parameter
- * @param  int stochasticMa1Periods - indicator parameter
- * @param  int stochasticMa2Periods - indicator parameter
- * @param  int rsiPeriods           - indicator parameter
- * @param  int iBuffer              - indicator buffer index of the value to return
- * @param  int iBar                 - bar index of the value to return
+ * @param  int timeframe              - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int stochMainPeriods       - indicator parameter
+ * @param  int stochSlowedMainPeriods - indicator parameter
+ * @param  int stochSignalPeriods     - indicator parameter
+ * @param  int rsiPeriods             - indicator parameter
+ * @param  int iBuffer                - indicator buffer index of the value to return
+ * @param  int iBar                   - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar) {
+double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Stochastic of RSI",
-                          stochasticPeriods,                               // int    Stochastic.Periods
-                          stochasticMa1Periods,                            // int    Stochastic.MA1.Periods
-                          stochasticMa2Periods,                            // int    Stochastic.MA2.Periods
+                          stochMainPeriods,                                // int    Stoch.Main.Periods
+                          stochSlowedMainPeriods,                          // int    Stoch.SlowedMain.Periods
+                          stochSignalPeriods,                              // int    Stoch.Signal.Periods
                           rsiPeriods,                                      // int    RSI.Periods
-                          CLR_NONE,                                        // color  Main.Color
-                          DodgerBlue,                                      // color  Signal.Color
+                          Blue,                                            // color  Main.Color
+                          Red,                                             // color  Signal.Color
                           "Line",                                          // string Signal.DrawType
                           1,                                               // int    Signal.DrawWidth
                           -1,                                              // int    Max.Bars
@@ -6266,7 +6266,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           appliedPrice,                                    // string AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
-                          Orange,                                          // color  Color.DownTrend
+                          Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Bars
@@ -6411,9 +6411,9 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
                           periods,                                         // int    EMA.Periods
                           appliedPrice,                                    // string EMA.AppliedPrice
 
-                          DodgerBlue,                                      // color  MainLine.Color
+                          Blue,                                            // color  MainLine.Color
                           1,                                               // int    MainLine.Width
-                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Green,                                           // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
