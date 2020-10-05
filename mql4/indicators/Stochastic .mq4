@@ -6,8 +6,11 @@
  * normalized to a value from 0 to 100. The fast Stochastic is smoothed once, the slow Stochastic is smoothed twice.
  *
  * Indicator buffers for iCustom():
- *  • MODE_MAIN:   indicator main line (%K or slowed %K)
- *  • MODE_SIGNAL: indicator signal line (%D)
+ *  • Stochastic.MODE_MAIN:   indicator main line (%K or slowed %K)
+ *  • Stochastic.MODE_SIGNAL: indicator signal line (%D)
+ *  • Stochastic.MODE_TREND:  the type of the last signal and its age
+ *    - signal type:          positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
+ *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -15,17 +18,17 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    StochMain.Periods     = 14;                // %K line                                                        // EURJPY: 15
-extern int    SlowedMain.MA.Periods = 3;                 // slowed %K line (MA)                                            //         1
-extern int    Signal.MA.Periods     = 3;                 // %D line (MA of resulting %K)                                   //         1
+extern int   StochMain.Periods     = 14;                 // %K line                                                        // EURJPY: 15
+extern int   SlowedMain.MA.Periods = 3;                  // slowed %K line (MA)                                            //         1
+extern int   Signal.MA.Periods     = 3;                  // %D line (MA of resulting %K)                                   //         1
                                                                                                                            //
-extern int    SignalLevel.Long      = 70;                // signal level to cross upwards to trigger a long signal         //         73
-extern int    SignalLevel.Short     = 30;                // signal level to cross downwards to trigger a short signal      //         27
+extern int   SignalLevel.Long      = 70;                 // signal level to cross upwards to trigger a long signal         //         73
+extern int   SignalLevel.Short     = 30;                 // signal level to cross downwards to trigger a short signal      //         27
 
-extern color  Main.Color            = DodgerBlue;
-extern color  Signal.Color          = Red;
+extern color Main.Color            = DodgerBlue;
+extern color Signal.Color          = Red;
 
-extern int    Max.Bars              = 10000;             // max. number of values to calculate (-1: all available)
+extern int   Max.Bars              = 10000;              // max. number of values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +45,6 @@ extern int    Max.Bars              = 10000;             // max. number of value
 
 #property indicator_separate_window
 #property indicator_buffers   3                          // buffers visible in input dialog
-int       terminal_buffers  = 3;                         // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -198,7 +200,7 @@ bool UpdateTrend(double signal[], double &trend[], int bar) {
    }
    else if (prevTrend < 0) {
       // existing short trend
-      if (curValue >= levelLong) trend[bar] = +1;                             // trend change long
+      if (curValue >= levelLong) trend[bar] = 1;                              // trend change long
       else                       trend[bar] = prevTrend + Sign(prevTrend);    // trend continuation
    }
    else {
@@ -209,7 +211,7 @@ bool UpdateTrend(double signal[], double &trend[], int bar) {
          for (int i=bar+1; i < Bars; i++) {
             if (signal[i] == EMPTY_VALUE) break;
             if (signal[i] <= levelShort) {                                    // look for a previous down cross
-               trend[bar] = +1;                                               // found: first trend long
+               trend[bar] = 1;                                                // found: first trend long
                break;
             }
          }
@@ -233,8 +235,6 @@ bool UpdateTrend(double signal[], double &trend[], int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(terminal_buffers);
-
    int signalType = ifInt(Signal.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
    SetIndexStyle(MODE_MAIN,   DRAW_LINE,  EMPTY, EMPTY, Main.Color);
