@@ -2638,7 +2638,7 @@ bool This.IsTesting() {
 
 /**
  * Whether the current program runs on a demo account. Workaround for a bug in terminal builds <= 509 where the built-in
- * function IsDemo() returns FALSE in the tester.
+ * function IsDemo() returns FALSE in tester.
  *
  * @return bool
  */
@@ -3809,29 +3809,39 @@ string InitReasonDescription(int reason) {
  * Get the configured value of externally hold assets of an account. The returned value can be negative to scale-down an
  * account's size (e.g. for testing in a real account).
  *
- * @param  string companyId          - account company identifier
- * @param  string accountId          - account identifier
+ * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  int    account [optional] - account number (default: the current account number)
  * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
  *
  * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalAssets(string companyId, string accountId, bool refresh = false) {
+double GetExternalAssets(string company="", int account=NULL, bool refresh=false) {
    refresh = refresh!=0;
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId: "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
-   static string lastCompanyId = "";
-   static string lastAccountId = "";
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompany();
+      if (!StringLen(company)) return(EMPTY_VALUE);
+   }
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_VALUE);
+   }
+
+   static string lastCompany = "";
+   static int    lastAccount = 0;
    static double lastResult;
 
-   if (refresh || companyId!=lastCompanyId || accountId!=lastAccountId) {
-      string file  = GetAccountConfigPath(companyId, accountId);
+   if (refresh || company!=lastCompany || account!=lastAccount) {
+      string file = GetAccountConfigPath(company, account);
+      if (!StringLen(file)) return(EMPTY_VALUE);
+
       double value = GetIniDouble(file, "General", "ExternalAssets");
       if (IsEmptyValue(value)) return(EMPTY_VALUE);
 
-      lastCompanyId = companyId;
-      lastAccountId = accountId;
-      lastResult    = value;
+      lastCompany = company;
+      lastAccount = account;
+      lastResult  = value;
    }
    return(lastResult);
 }
@@ -3885,20 +3895,25 @@ string GetAccountCompany() {
  * actual account number with all characters except the last 4 digits replaced by wildcards.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
- * @param  int    number  [optional] - account number (default: the current account number)
+ * @param  int    account [optional] - account number (default: the current account number)
  *
  * @return string - account alias or an empty string in case of errors
  */
-string GetAccountAlias(string company="", int number=NULL) {
-   if (number < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter number: "+ number, ERR_INVALID_PARAMETER)));
-   if (!StringLen(company) || company=="0") company = GetAccountCompany();
-   if (!number)                             number = GetAccountNumber();
+string GetAccountAlias(string company="", int account=NULL) {
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompany();
+      if (!StringLen(company)) return(EMPTY_STR);
+   }
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_STR);
+   }
 
-   string result = GetGlobalConfigString("Accounts", number +".alias");
+   string result = GetGlobalConfigString("Accounts", account +".alias");
    if (!StringLen(result)) {
-      debug("GetAccountAlias(2)  alias not found for account \""+ company +":"+ number +"\"");
-      result = ""+ number;
-      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
+      logNotice("GetAccountAlias(2)  account alias not found for account "+ DoubleQuoteStr(company +":"+ account));
+      result = account;
    }
    return(result);
 }
@@ -6511,7 +6526,7 @@ void __DummyCalls() {
    GetConfigStringRaw(NULL, NULL);
    GetCurrency(NULL);
    GetCurrencyId(NULL);
-   GetExternalAssets(NULL, NULL);
+   GetExternalAssets();
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);

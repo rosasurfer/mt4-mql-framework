@@ -4,24 +4,24 @@
 
 
 /**
- * Return the full filename of an account's configuration file.
+ * Return the full filename of an account configuration file.
  *
- * @param  string companyId [optional] - the account's company identifier (default: the current account's short company name)
- * @param  string accountId [optional] - the account's id; depending on the company an account number or an alias
- *                                       (default: the current account number)
+ * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  int    account [optional] - account number (default: the current account number)
  *
  * @return string - filename or an empty string in case of errors
  */
-string GetAccountConfigPath(string companyId="", string accountId="") {
-   if (!StringLen(companyId) && !StringLen(accountId)) {
-      companyId = GetAccountCompany(); if (!StringLen(companyId)) return(EMPTY_STR);
-      accountId = GetAccountNumber();  if (accountId == "0")      return(EMPTY_STR);
+string GetAccountConfigPath(string company="", int account=NULL) {
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompany();
+      if (!StringLen(company)) return(EMPTY_STR);
    }
-   else {
-      if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId: "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-      if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_STR);
    }
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", companyId, "\\", accountId, "-config.ini"));
+   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\", account, "-config.ini"));
 }
 
 

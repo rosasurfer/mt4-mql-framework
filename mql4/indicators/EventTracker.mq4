@@ -147,6 +147,7 @@ bool Configure() {
    bool signal.enabled;
    double dValue, dValue1, dValue2, dValue3;
    string keys[], subKeys[], section, key, subKey, sDigits, sParam, iniValue, accountConfig = GetAccountConfigPath();
+   if (!StringLen(accountConfig)) return(false);
 
    // Track.Orders
    track.orders = false;
