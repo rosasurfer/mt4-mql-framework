@@ -156,15 +156,15 @@ int UpdateInfos() {
    double atr.M            = @ATR(NULL, PERIOD_MN1,  24, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_D         ], "ATR(D200):   "    + ifString(!atr.D,          "", Round(atr.D/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.D, Close[0])*100, 1) +"% = "+ ifString(!atr.W, "...", DoubleToStr(MathDiv(atr.D, atr.W), 2) +" ATR(W)" )), fg.fontSize, fg.fontName, fg.fontColor);
                                                                              ObjectSetText(labels[I_ATR_W         ], "ATR(W100):  "     + ifString(!atr.W,          "", Round(atr.W/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.W, Close[0])*100, 1) +"% = "+ ifString(!atr.M, "...", DoubleToStr(MathDiv(atr.W, atr.M), 2) +" ATR(MN)")), fg.fontSize, fg.fontName, fg.fontColor);
-                                                                             ObjectSetText(labels[I_ATR_M         ], "ATR(MN24):   "    + ifString(!atr.M,          "", Round(atr.M/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.M, Close[0])*100, 1) +"%"                                                                               ), fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_ATR_M         ], "ATR(MN24):  "     + ifString(!atr.M,          "", Round(atr.M/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.M, Close[0])*100, 1) +"%"                                                                               ), fg.fontSize, fg.fontName, fg.fontColor);
 
-   double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   +                               DoubleToStr(stopLevel,   Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
+   double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                               DoubleToStr(stopLevel,   Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
    double freezeLevel      = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                               DoubleToStr(freezeLevel, Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
 
    double lotSize          = MarketInfo(symbol, MODE_LOTSIZE);               ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + ifString(!lotSize,        "", NumberToStr(lotSize, ", .+") +" units"),              fg.fontSize, fg.fontName, fg.fontColor);
    double minLot           = MarketInfo(symbol, MODE_MINLOT );               ObjectSetText(labels[I_MINLOT        ], "Min lot:    "     + ifString(!minLot,         "", NumberToStr(minLot,  ", .+")),                        fg.fontSize, fg.fontName, fg.fontColor);
-   double lotStep          = MarketInfo(symbol, MODE_LOTSTEP);               ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + ifString(!lotStep,        "", NumberToStr(lotStep, ", .+")),                        fg.fontSize, fg.fontName, fg.fontColor);
-   double maxLot           = MarketInfo(symbol, MODE_MAXLOT );               ObjectSetText(labels[I_MAXLOT        ], "Max lot:   "      + ifString(!maxLot,         "", NumberToStr(maxLot,  ", .+")),                        fg.fontSize, fg.fontName, fg.fontColor);
+   double lotStep          = MarketInfo(symbol, MODE_LOTSTEP);               ObjectSetText(labels[I_LOTSTEP       ], "Lot step:  "      + ifString(!lotStep,        "", NumberToStr(lotStep, ", .+")),                        fg.fontSize, fg.fontName, fg.fontColor);
+   double maxLot           = MarketInfo(symbol, MODE_MAXLOT );               ObjectSetText(labels[I_MAXLOT        ], "Max lot:  "       + ifString(!maxLot,         "", NumberToStr(maxLot,  ", .+")),                        fg.fontSize, fg.fontName, fg.fontColor);
 
    double marginRequired   = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = NULL;
    double lotValue         = MathDiv(Close[0], tickSize) * tickValue;
@@ -212,13 +212,13 @@ int UpdateInfos() {
             if (MathAbs(swapShortDaily) <= 0.05) swapShortDaily = Sign(swapShortDaily) * 0.1;
             strSwapShort = NumberToStr(swapShortDaily, "+.1R") +" pip = "+ NumberToStr(swapShortYearly, "+.1R") +"% p.a.";
          }
-      }                                            ObjectSetText(labels[I_SWAPLONG        ], "Swap long:  "+ strSwapLong,                fg.fontSize, fg.fontName, fg.fontColor);
-                                                   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+ strSwapShort,               fg.fontSize, fg.fontName, fg.fontColor);
+      }                                            ObjectSetText(labels[I_SWAPLONG        ], "Swap long:   "+ strSwapLong,  fg.fontSize, fg.fontName, fg.fontColor);
+                                                   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+  strSwapShort, fg.fontSize, fg.fontName, fg.fontColor);
 
-   int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
-   int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "", ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", stopoutLevel +".00 "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
+   int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:      "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
+   int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: "+ ifString(!accountLeverage, "", ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", stopoutLevel +".00 "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
 
-   string serverName      = GetAccountServer();    ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "  + serverName,     fg.fontSize, fg.fontName, ifInt(!StringLen(serverName),     fg.fontColor.Disabled, fg.fontColor));
+   string serverName      = GetAccountServer();    ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+  serverName, fg.fontSize, fg.fontName, ifInt(!StringLen(serverName), fg.fontColor.Disabled, fg.fontColor));
    string serverTimezone  = GetServerTimezone();
       string strOffset = "";
       if (StringLen(serverTimezone) > 0) {

@@ -9,7 +9,8 @@
 
 
 // include/configuration.mqh
-string   GetAccountConfigPath(string companyId = "", string accountId = "");;
+string   GetAccountConfigPath(string company="", int account=NULL);;
+
 
 bool     IsConfigKey              (string section, string key);;
 bool     IsAccountConfigKey       (string section, string key);;
@@ -142,14 +143,14 @@ int      Floor(double value);;
 void     ForceAlert(string message);;
 string   FullModuleName();;
 bool     GE(double double1, double double2, int digits = 8);;
-string   GetAccountAlias(string company="", int number=NULL);;
+string   GetAccountAlias(string company="", int account=NULL);;
 string   GetAccountCompany();;
 int      GetAccountNumberFromAlias(string company, string alias);;
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY);;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
-double   GetExternalAssets(string companyId, string accountId, bool refresh = false);;
+double   GetExternalAssets(string company="", int account=NULL, bool refresh=false);;
 datetime GetFxtTime();;
 string   GetMqlFilesPath();;
 datetime GetServerTime();;
