@@ -1,5 +1,5 @@
 /**
- * Stochastic Oscillator (was FX Turbo Marksman)
+ * Stochastic Oscillator
  *
  *
  * The Stochastic oscillator shows the relative position of current price compared to the price range of the lookback period,
@@ -8,8 +8,8 @@
  * Indicator buffers for iCustom():
  *  • Stochastic.MODE_MAIN:   indicator main line (%K or slowed %K)
  *  • Stochastic.MODE_SIGNAL: indicator signal line (%D)
- *  • Stochastic.MODE_TREND:  the type of the last signal and its age
- *    - signal type:          positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
+ *  • Stochastic.MODE_TREND:  direction and age of the last signal
+ *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
  */
 #include <stddefines.mqh>
@@ -18,17 +18,19 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int   StochMain.Periods     = 14;                 // %K line                                                        // EURJPY: 15
-extern int   SlowedMain.MA.Periods = 3;                  // slowed %K line (MA)                                            //         1
-extern int   Signal.MA.Periods     = 3;                  // %D line (MA of resulting %K)                                   //         1
-                                                                                                                           //
-extern int   SignalLevel.Long      = 70;                 // signal level to cross upwards to trigger a long signal         //         73
-extern int   SignalLevel.Short     = 30;                 // signal level to cross downwards to trigger a short signal      //         27
+extern int    MainLine.Periods      = 14;                // %K line                                                        // EURJPY: 15
+extern int    SlowedMain.MA.Periods = 3;                 // slowed %K line (MA)                                            //         1
+extern int    SignalLine.MA.Periods = 3;                 // %D line (MA of resulting %K)                                   //         1
+extern color  MainLine.Color        = DodgerBlue;
+extern color  SignalLine.Color      = Red;
+extern int    MaxBars               = 10000;             // max. number of values to calculate (-1: all available)
+extern string __________________________;
 
-extern color Main.Color            = DodgerBlue;
-extern color Signal.Color          = Red;
-
-extern int   Max.Bars              = 10000;              // max. number of values to calculate (-1: all available)
+extern int    SignalLevel.Long      = 70;                // signal level to cross upwards to trigger a long signal         //         73
+extern int    SignalLevel.Short     = 30;                // signal level to cross downwards to trigger a short signal      //         27
+extern color  SignalColor.Long      = Blue;
+extern color  SignalColor.Short     = Magenta;
+extern int    SignalBars            = 1000;              // max. number of bars to mark signals for
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -61,10 +63,11 @@ int stochPeriods;
 int ma1Periods;
 int ma2Periods;
 
-int levelLong;
-int levelShort;
+int signalLevelLong;
+int signalLevelShort;
 
 int maxValues;
+int maxSignalBars;
 
 
 /**
@@ -74,23 +77,28 @@ int maxValues;
  */
 int onInit() {
    // validate inputs
-   if (StochMain.Periods < 2)                            return(catch("onInit(1)  Invalid input parameter StochMain.Periods: "+ StochMain.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Periods < 2)                             return(catch("onInit(1)  Invalid input parameter MainLine.Periods: "+ MainLine.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    if (SlowedMain.MA.Periods < 0)                        return(catch("onInit(2)  Invalid input parameter SlowedMain.MA.Periods: "+ SlowedMain.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Signal.MA.Periods < 0)                            return(catch("onInit(3)  Invalid input parameter Signal.MA.Periods: "+ Signal.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   stochPeriods = StochMain.Periods;
+   if (SignalLine.MA.Periods < 0)                        return(catch("onInit(3)  Invalid input parameter SignalLine.MA.Periods: "+ SignalLine.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   stochPeriods = MainLine.Periods;
    ma1Periods   = ifInt(!SlowedMain.MA.Periods, 1, SlowedMain.MA.Periods);
-   ma2Periods   = ifInt(!Signal.MA.Periods, 1, Signal.MA.Periods);
-   // levels
+   ma2Periods   = ifInt(!SignalLine.MA.Periods, 1, SignalLine.MA.Periods);
+   // signal levels
    if (SignalLevel.Long  < 0 || SignalLevel.Long  > 100) return(catch("onInit(4)  Invalid input parameter SignalLevel.Long: "+ SignalLevel.Long +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
    if (SignalLevel.Short < 0 || SignalLevel.Short > 100) return(catch("onInit(5)  Invalid input parameter SignalLevel.Short: "+ SignalLevel.Short +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
-   levelLong  = SignalLevel.Long;
-   levelShort = SignalLevel.Short;
+   signalLevelLong  = SignalLevel.Long;
+   signalLevelShort = SignalLevel.Short;
+   // MaxBars
+   if (MaxBars < -1)                                     return(catch("onInit(6)  Invalid input parameter MaxBars: "+ MaxBars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(MaxBars==-1, INT_MAX, MaxBars);
+   // SignalBars
+   if (SignalBars < 0)                                   return(catch("onInit(7)  Invalid input parameter SignalBars: "+ SignalBars, ERR_INVALID_INPUT_PARAMETER));
+   maxSignalBars = SignalBars;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Main.Color   == 0xFF000000) Main.Color   = CLR_NONE;
-   if (Signal.Color == 0xFF000000) Signal.Color = CLR_NONE;
-   // Max.Bars
-   if (Max.Bars < -1)                                    return(catch("onInit(6)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   if (MainLine.Color    == 0xFF000000) MainLine.Color    = CLR_NONE;
+   if (SignalLine.Color  == 0xFF000000) SignalLine.Color  = CLR_NONE;
+   if (SignalColor.Long  == 0xFF000000) SignalColor.Long  = CLR_NONE;
+   if (SignalColor.Short == 0xFF000000) SignalColor.Short = CLR_NONE;
 
    // buffer management
    SetIndexBuffer(MODE_MAIN,   main);                    // (slowed) %K line: visible
@@ -104,15 +112,15 @@ int onInit() {
    string indicatorName  = sName +"("+ stochPeriods + sMa1Periods + sMa2Periods +")";
 
    IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
-   SetIndexLabel(MODE_MAIN,   "StochMain");   if (Main.Color  ==CLR_NONE) SetIndexLabel(MODE_MAIN,   NULL);
-   SetIndexLabel(MODE_SIGNAL, "StochSignal"); if (Signal.Color==CLR_NONE) SetIndexLabel(MODE_SIGNAL, NULL);
+   SetIndexLabel(MODE_MAIN,   "StochMain");   if (MainLine.Color  ==CLR_NONE) SetIndexLabel(MODE_MAIN,   NULL);
+   SetIndexLabel(MODE_SIGNAL, "StochSignal"); if (SignalLine.Color==CLR_NONE) SetIndexLabel(MODE_SIGNAL, NULL);
    SetIndexLabel(MODE_TREND,  "StochTrend");
 
    SetIndexEmptyValue(MODE_TREND, 0);
    IndicatorDigits(2);
    SetIndicatorOptions();
 
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -144,7 +152,7 @@ int onTick() {
    // +------------------------------------------------------+----------------------------------------------------+
    // | Top down                                             | Bottom up                                          |
    // +------------------------------------------------------+----------------------------------------------------+
-   // | RequestedBars   = 5000                               | ResultingBars   = startBar(MA2) + 1                |
+   // | RequestedBars   = 10000                              | ResultingBars   = startBar(MA2) + 1                |
    // | startBar(MA2)   = RequestedBars - 1                  | startBar(MA2)   = startBar(MA1)   - ma2Periods + 1 |
    // | startBar(MA1)   = startBar(MA2)   + ma2Periods   - 1 | startBar(MA1)   = startBar(Stoch) - ma1Periods + 1 |
    // | startBar(Stoch) = startBar(MA1)   + ma1Periods   - 1 | startBar(Stoch) = oldestBar - stochPeriods + 1     |
@@ -165,68 +173,97 @@ int onTick() {
    for (int bar=stochStartBar; bar >= 0; bar--) {
       main  [bar] = iStochastic(NULL, NULL, stochPeriods, ma2Periods, ma1Periods, MODE_SMA, PRICERANGE_HIGHLOW, MODE_MAIN, bar);
       signal[bar] = iStochastic(NULL, NULL, stochPeriods, ma2Periods, ma1Periods, MODE_SMA, PRICERANGE_HIGHLOW, MODE_SIGNAL, bar);
+      trend [bar] = CalculateTrend(bar);
 
-      UpdateTrend(signal, trend, bar);
+      if (bar < maxSignalBars) UpdateSignalMarker(bar);
    }
-
    return(catch("onTick(2)"));
 }
 
 
 /**
- * Update the buffer for the trend signals generated by the signal line crossing the configured indicator levels.
+ * Update the signal marker for the specified bar.
  *
- * @param  _In_  double signal[] - signal buffer
- * @param  _Out_ double trend[]  - trend buffer: -n...-1 ... +1...+n
- * @param  _In_  int    bar      - bar offset to update
+ * @param  int bar - bar offset
  *
  * @return bool - success status
  */
-bool UpdateTrend(double signal[], double &trend[], int bar) {
-   if (bar >= Bars-1) {
-      if (bar >= Bars) return(!catch("UpdateTrend(1)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-      trend[bar] = 0;
-      return(true);
+bool UpdateSignalMarker(int bar) {
+   static string prefix = ""; if (!StringLen(prefix)) {
+      prefix = StringConcatenate(StrTrim(ProgramName()), "[", __ExecutionContext[EC.pid], "].signal.");
+   }
+   string label = StringConcatenate(prefix, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
+
+   if (trend[bar] == 1) {                                      // set marker long
+      if (!ObjectFind(label) == 0)
+         ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
+      ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet(label, OBJPROP_COLOR,     SignalColor.Long);
+      ObjectSet(label, OBJPROP_TIME1,     Time[bar]);
+      ObjectSet(label, OBJPROP_PRICE1,    Close[bar]);
+      //ObjectSetText(label, comment);
+   }
+   else if (trend[bar] == -1) {                                // set marker short
+      if (!ObjectFind(label) == 0)
+         ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
+      ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet(label, OBJPROP_COLOR,     SignalColor.Short);
+      ObjectSet(label, OBJPROP_TIME1,     Time[bar]);
+      ObjectSet(label, OBJPROP_PRICE1,    Close[bar]);
+      //ObjectSetText(label, comment);
+   }
+   else if (ObjectFind(label) == 0) {                          // unset an existing marker
+      ObjectDelete(label);
    }
 
-   int    prevTrend = trend[bar+1];
+   return(!catch("UpdateSignalMarker(1)"));
+}
+
+
+/**
+ * Calculate the trend for the specified bar.
+ *
+ * @param  int bar - bar offset
+ *
+ * @return int
+ */
+int CalculateTrend(int bar) {
+   int    prevTrend = trend[bar+1], newTrend = 0;
    double curValue  = signal[bar];
    double prevValue = signal[bar+1];
 
    if (prevTrend > 0) {
       // existing long trend
-      if (curValue <= levelShort) trend[bar] = -1;                            // trend change short
-      else                        trend[bar] = prevTrend + Sign(prevTrend);   // trend continuation
+      if (curValue <= signalLevelShort) newTrend = -1;                              // trend change short
+      else                              newTrend = prevTrend + Sign(prevTrend);     // trend continuation
    }
    else if (prevTrend < 0) {
       // existing short trend
-      if (curValue >= levelLong) trend[bar] = 1;                              // trend change long
-      else                       trend[bar] = prevTrend + Sign(prevTrend);    // trend continuation
+      if (curValue >= signalLevelLong) newTrend = 1;                                // trend change long
+      else                             newTrend = prevTrend + Sign(prevTrend);      // trend continuation
    }
    else {
       // no trend yet
-      trend[bar] =  0;
-
-      if (curValue >= levelLong) {
+      if (curValue >= signalLevelLong) {
          for (int i=bar+1; i < Bars; i++) {
             if (signal[i] == EMPTY_VALUE) break;
-            if (signal[i] <= levelShort) {                                    // look for a previous down cross
-               trend[bar] = 1;                                                // found: first trend long
+            if (signal[i] <= signalLevelShort) {                                    // look for a previous cross downward
+               newTrend = 1;                                                        // found: first trend long
                break;
             }
          }
       }
-      else if (curValue <= levelShort) {
+      else if (curValue <= signalLevelShort) {
          for (i=bar+1; i < Bars; i++) {
             if (signal[i] == EMPTY_VALUE) break;
-            if (signal[i] >= levelLong) {                                     // look for a previous up cross
-               trend[bar] = -1;                                               // found: first trend short
+            if (signal[i] >= signalLevelLong) {                                     // look for a previous cross upward
+               newTrend = -1;                                                       // found: first trend short
                break;
             }
          }
       }
    }
-   return(true);
+   return(newTrend);
 }
 
 
@@ -235,14 +272,14 @@ bool UpdateTrend(double signal[], double &trend[], int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   int signalType = ifInt(Signal.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
+   int signalType = ifInt(SignalLine.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
-   SetIndexStyle(MODE_MAIN,   DRAW_LINE,  EMPTY, EMPTY, Main.Color);
-   SetIndexStyle(MODE_SIGNAL, signalType, EMPTY, EMPTY, Signal.Color);
+   SetIndexStyle(MODE_MAIN,   DRAW_LINE,  EMPTY, EMPTY, MainLine.Color);
+   SetIndexStyle(MODE_SIGNAL, signalType, EMPTY, EMPTY, SignalLine.Color);
    SetIndexStyle(MODE_TREND,  DRAW_NONE,  EMPTY, EMPTY, CLR_NONE);
 
-   SetLevelValue(0, levelLong);
-   SetLevelValue(1, levelShort);
+   SetLevelValue(0, signalLevelLong);
+   SetLevelValue(1, signalLevelShort);
 }
 
 
@@ -252,13 +289,16 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("StochMain.Periods=",     StochMain.Periods,        ";"+ NL,
-                            "SlowedMain.MA.Periods=", SlowedMain.MA.Periods,    ";"+ NL,
-                            "Signal.MA.Periods=",     Signal.MA.Periods,        ";"+ NL,
-                            "SignalLevel.Long=",      SignalLevel.Long,         ";"+ NL,
-                            "SignalLevel.Short=",     SignalLevel.Short,        ";"+ NL,
-                            "Main.Color=",            ColorToStr(Main.Color),   ";"+ NL,
-                            "Signal.Color=",          ColorToStr(Signal.Color), ";"+ NL,
-                            "Max.Bars=",              Max.Bars,                 ";")
+   return(StringConcatenate("MainLine.Periods=",      MainLine.Periods,              ";"+ NL,
+                            "SlowedMain.MA.Periods=", SlowedMain.MA.Periods,         ";"+ NL,
+                            "SignalLine.MA.Periods=", SignalLine.MA.Periods,         ";"+ NL,
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),    ";"+ NL,
+                            "SignalLine.Color=",      ColorToStr(SignalLine.Color),  ";"+ NL,
+                            "MaxBars=",               MaxBars,                       ";"+ NL,
+                            "SignalLevel.Long=",      SignalLevel.Long,              ";"+ NL,
+                            "SignalLevel.Short=",     SignalLevel.Short,             ";"+ NL,
+                            "SignalColor.Long=",      ColorToStr(SignalColor.Long),  ";"+ NL,
+                            "SignalColor.Short=",     ColorToStr(SignalColor.Short), ";"+ NL,
+                            "SignalBars=",            SignalBars,                    ";")
    );
 }
