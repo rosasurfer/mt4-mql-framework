@@ -17,7 +17,7 @@ extern int   MMI.Periods = 100;
 extern color Line.Color  = Blue;
 extern int   Line.Width  = 1;
 
-extern int   Max.Bars    = 5000;                            // max. number of bars to display (-1: all available)
+extern int   Max.Bars    = 10000;                           // max. number of values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

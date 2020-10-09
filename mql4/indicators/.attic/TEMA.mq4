@@ -23,7 +23,7 @@ extern color  MA.Color        = OrangeRed;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.Width      = 2;
 
-extern int    Max.Bars        = 5000;                    // max. number of bars to display (-1: all available)
+extern int    Max.Bars        = 10000;                   // max. number of values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
