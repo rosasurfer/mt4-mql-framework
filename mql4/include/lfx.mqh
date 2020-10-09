@@ -13,13 +13,11 @@
 bool   mode.intern = true;          // Default                       // Orderdaten und Trading im aktuellen Account
 bool   mode.extern = false;                                          // Orderdaten und Trading in externem Account
 
-string tradeAccount.company  = "";
+string tradeAccount.company = "";
 int    tradeAccount.number;
 string tradeAccount.currency = "";
 int    tradeAccount.type;                                            // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
-string tradeAccount.name     = "";                                   // Inhaber
-string tradeAccount.alias    = "";                                   // Alias für Logs, SMS etc.
-
+string tradeAccount.name = "";                                       // Inhaber
 
 string lfxCurrency = "";
 int    lfxCurrencyId;
@@ -46,107 +44,92 @@ int    hQC.TradeCmdReceiver;
 
 
 /**
- * Initialisiert die Statusvariablen des zu verwendenden Trade-Accounts. Dazu wird die entsprechende TradeAccount-Konfiguration ausgewertet
- * und ein angegebener Account-Parameter vorrangig behandelt.
+ * Initialize global vars holding data of the current trade account.
  *
- * @param  string accountKey - Account-Identifier im Format "{AccountCompany}:{Account}"
- *                             • {AccountCompany} kann ein String (CompanyName) oder ein Integer (CompanyID) sein
- *                             • {Account} kann ein String (AccountAlias) oder ein Integer (AccountNumber) sein. Ist dieser Wert ein Alias,
- *                               muß dieser Alias für die AccountCompany eindeutig sein.
+ * @param  string accountId [optional] - account identifier in format "{account-company}:{account-number}"
+ *                                       (default: the current account)
  *
- * @return bool - Erfolgsstatus. Nicht, ob ein angegebener Schlüssel einen gültigen Account darstellt. Ist ein angegebener Schlüssel
- *                ungültig, ändert sich der selektierte TradeAccount nicht.
+ * @return bool - success status i.e. whether the new account data was successfully applied
  */
-bool InitTradeAccount(string accountKey="") {
-   if (accountKey == "0")                                            // (string) NULL
-      accountKey = "";
+bool InitTradeAccount(string accountId = "") {
+   if (accountId == "0") accountId = "";              // (string) NULL
 
-   // Im Verlauf modifizierte globale Variablen
-   // -----------------------------------------
-   // bool   mode.intern;
-   // bool   mode.extern;
-   //
-   // string tradeAccount.company;
-   // int    tradeAccount.number;
-   // string tradeAccount.currency;
-   // int    tradeAccount.type;
-   // string tradeAccount.name;
-   // string tradeAccount.alias;
+   string currAccountCompany = GetAccountCompany(); if (!StringLen(currAccountCompany)) return(false);
+   int    currAccountNumber  = GetAccountNumber();  if (!currAccountNumber)             return(false);
 
-   string _accountCompany;
+   //string tradeAccount.company;      // global vars: modified only if account initialization succeeds
+   //int    tradeAccount.number;
+   //string tradeAccount.currency;
+   //int    tradeAccount.type;
+   //string tradeAccount.name;
+   //bool   mode.intern;
+   //bool   mode.extern;
+
+   string _accountCompany;             // local vars
    int    _accountNumber;
    string _accountCurrency;
    int    _accountType;
    string _accountName;
-   string _accountAlias;
 
+   if (StringLen(accountId) > 0) {
+      // resolve the specified trade account
+      _accountCompany = StrLeftTo(accountId, ":"); if (!StringLen(_accountCompany)) return(!triggerWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))        return(!triggerWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountNumber = StrToInteger(sValue); if (!_accountNumber)                   return(!triggerWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+   }
+   else {
+      // use the current account and resolve a configured trade account
+      _accountCompany = currAccountCompany;
+      _accountNumber  = currAccountNumber;
 
-   if (!StringLen(accountKey)) {
-      // kein Account-Parameter angegeben: aktuellen Account bestimmen und durch einen ggf. konfigurierten TradeAccount ersetzen
-      _accountCompany = GetAccountCompany(); if (!StringLen(_accountCompany)) return(false);
-      _accountNumber  = GetAccountNumber();  if (!_accountNumber)             return(false);
-
-      string file    = GetAccountConfigPath();
+      string file    = GetAccountConfigPath(); if (!StringLen(file)) return(false);
       string section = "General";
-      string key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
-
-      string sValue = GetIniStringA(file, section, key, "");
+      string key     = "TradeAccount"+ ifString(This.IsTesting(), ".Tester", "");
+      sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue))                                                                       return(!triggerWarn("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
-         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                                    return(!triggerWarn("InitTradeAccount(2)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
-
+         if (!StrIsDigit(sValue))                                                   return(!triggerWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!triggerWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
          section = "Accounts";
          key     = _accountNumber +".company";
-         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                         return(!triggerWarn("InitTradeAccount(3)  missing global account setting ["+ section +"]->"+ key));
+         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))     return(!triggerWarn("InitTradeAccount(6)  missing global account setting ["+ section +"]->"+ key));
          _accountCompany = sValue;
       }
    }
-   else {
-      // Account-Parameter validieren und Account ermitteln
-      _accountCompany = StrLeftTo(accountKey, ":"); if (!StringLen(_accountCompany))                    return(!triggerWarn("InitTradeAccount(4)  invalid parameter accountKey \""+ accountKey +"\""));
 
-      // sAccountKey zuordnen
-      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                  return(!triggerWarn("InitTradeAccount(5)  invalid parameter accountKey \""+ accountKey +"\""));
-      if (StrIsDigit(sAccountKey)) {
-         _accountNumber = StrToInteger(sAccountKey); if (!_accountNumber)                               return(!triggerWarn("InitTradeAccount(6)  invalid parameter accountKey \""+ accountKey +"\""));
-      }
-      else {
-         _accountNumber = GetAccountNumberFromAlias(_accountCompany, sAccountKey); if (!_accountNumber) return(!triggerWarn("InitTradeAccount(7)  unsupported account key \""+ accountKey +"\""));
-      }
-   }
-
-
-   // Abbruch, wenn der ermittelte Account bereits selektiert ist
+   // cancel execution if the resolved trade account is already active
    if (tradeAccount.company==_accountCompany && tradeAccount.number==_accountNumber)
       return(true);
 
+   // resolve the remaining vars
+   _accountCurrency = AccountCurrency();
+   _accountType     = ifInt(IsDemoFix(), ACCOUNT_TYPE_DEMO, ACCOUNT_TYPE_REAL);
+   _accountName     = AccountName();
 
-   // Restliche Variablen ermitteln
-   _accountAlias = GetAccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))     return(!triggerWarn("InitTradeAccount(8)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\""));
+   if (_accountCompany!=currAccountCompany || _accountNumber!=currAccountNumber) {
+      // AccountCurrency
+      section = "Accounts";
+      key     = _accountNumber +".currency";
+      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!triggerWarn("InitTradeAccount(7)  missing global account setting ["+ section +"]->"+ key));
+      if (!IsCurrency(sValue))                                                      return(!triggerWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+      _accountCurrency = StrToUpper(sValue);
 
-   // AccountCurrency
-   section = "Accounts";
-   key     = _accountNumber +".currency";
-   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                               return(!triggerWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
-   if (!IsCurrency(sValue))                                                                             return(!triggerWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
-   _accountCurrency = StrToUpper(sValue);
+      // AccountType
+      section = "Accounts";
+      key     = _accountNumber +".type";
+      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!triggerWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
+      if      (StrCompareI(sValue, "demo")) _accountType = ACCOUNT_TYPE_DEMO;
+      else if (StrCompareI(sValue, "real")) _accountType = ACCOUNT_TYPE_REAL;
+      else                                                                          return(!triggerWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
 
-   // AccountType
-   section = "Accounts";
-   key     = _accountNumber +".type";
-   sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                   return(!triggerWarn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key));
-   if      (sValue == "demo") _accountType = ACCOUNT_TYPE_DEMO;
-   else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                    return(!triggerWarn("InitTradeAccount(12)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\""));
+      // AccountName
+      section = "Accounts";
+      key     = _accountNumber +".name";
+      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!triggerWarn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key));
+      _accountName = sValue;
+   }
 
-   // AccountName
-   section = "Accounts";
-   key     = _accountNumber +".name";
-   sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                               return(!triggerWarn("InitTradeAccount(13)  missing global account setting ["+ section +"]->"+ key));
-   _accountName = sValue;
-
-
-   // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   mode.intern = (_accountCompany==GetAccountCompany() && _accountNumber==GetAccountNumber());
+   // at the end: overwrite global vars after
+   mode.intern = (_accountCompany==currAccountCompany && _accountNumber==currAccountNumber);
    mode.extern = !mode.intern;
 
    tradeAccount.company  = _accountCompany;
@@ -154,11 +137,10 @@ bool InitTradeAccount(string accountKey="") {
    tradeAccount.currency = _accountCurrency;
    tradeAccount.type     = _accountType;
    tradeAccount.name     = _accountName;
-   tradeAccount.alias    = _accountAlias;
 
    if (mode.extern) {
       if (StrEndsWith(Symbol(), "LFX")) {
-         lfxCurrency   = StrLeft(Symbol(), -3);                      // TODO: lfx-Variablen durch Symbol() ersetzen
+         lfxCurrency   = StrLeft(Symbol(), -3);                      // TODO: replace LFX vars with actual symbol
          lfxCurrencyId = GetCurrencyId(lfxCurrency);
       }
    }
@@ -557,7 +539,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (1) Orderdaten lesen
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(0);
    string section = "LFX-Orders";
    string key     = ticket;
    string value   = GetIniStringA(file, section, key, "");
@@ -808,13 +790,10 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
    int error = InitializeByteBuffer(orders, LFX_ORDER.size);               // validiert Dimensionierung
    if (IsError(error)) return(_EMPTY(SetLastError(error)));
 
-
    // (2) alle Tickets einlesen
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
-   string section = "LFX-Orders";
+   string file = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string keys[];
-   int keysSize = GetIniKeys(file, section, keys);
-
+   int keysSize = GetIniKeys(file, "LFX-Orders", keys);
 
    // (3) Orders nacheinander einlesen und gegen Currency und Selektionflags prüfen
    /*LFX_ORDER*/int order[];
@@ -946,7 +925,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
 
 
    // (4) Daten schreiben
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
    string section = "LFX-Orders";
    string key     = ticket;
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sTakeProfitPrice, ", ", sTakeProfitValue, ", ", sTakeProfitPercent, ", ", sTakeProfitTriggered, ", ", sStopLossPrice, ", ", sStopLossValue, ", ", sStopLossPercent, ", ", sStopLossTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
