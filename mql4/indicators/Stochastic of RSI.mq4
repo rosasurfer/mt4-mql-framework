@@ -22,17 +22,17 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Stochastic.Periods     = 96;
-extern int    Stochastic.MA1.Periods = 10;               // first moving average periods
-extern int    Stochastic.MA2.Periods = 6;                // second moving average periods
-extern int    RSI.Periods            = 96;
+extern int    Stoch.Main.Periods       = 96;             // %K line
+extern int    Stoch.SlowedMain.Periods = 10;             // slowed %K line (MA)
+extern int    Stoch.Signal.Periods     = 6;              // %D line (MA of resulting %K)
+extern int    RSI.Periods              = 96;
 
-extern color  Main.Color             = CLR_NONE;
-extern color  Signal.Color           = Blue;
-extern string Signal.DrawType        = "Line* | Dot";
-extern int    Signal.DrawWidth       = 2;
+extern color  Main.Color               = DodgerBlue;
+extern color  Signal.Color             = Red;
+extern string Signal.DrawType          = "Line* | Dot";
+extern int    Signal.DrawWidth         = 1;
 
-extern int    Max.Bars               = 10000;            // max. number of bars to display (-1: all available)
+extern int    Max.Bars                 = 10000;          // max. number of values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -58,10 +58,10 @@ int       terminal_buffers  = 4;                         // buffers managed by t
 #property indicator_minimum   0
 #property indicator_maximum   100
 
-double bufferRsi  [];                                    // RSI value:            invisible
-double bufferStoch[];                                    // Stochastic raw value: invisible
-double bufferMa1  [];                                    // first MA(Stoch):      visible
-double bufferMa2  [];                                    // second MA(MA1):       visible, displayed in "Data" window
+double bufferRsi  [];                                    // RSI value:      invisible
+double bufferStoch[];                                    // raw %K line:    invisible
+double bufferMa1  [];                                    // slowed %K line: visible
+double bufferMa2  [];                                    // %D line:        visible, displayed in "Data" window
 
 int stochPeriods;
 int ma1Periods;
@@ -80,13 +80,13 @@ int maxValues;
  */
 int onInit() {
    // validate inputs
-   if (Stochastic.Periods < 2)     return(catch("onInit(1)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 0) return(catch("onInit(2)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 0) return(catch("onInit(3)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 2)            return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   stochPeriods = Stochastic.Periods;
-   ma1Periods   = ifInt(!Stochastic.MA1.Periods, 1, Stochastic.MA1.Periods);
-   ma2Periods   = ifInt(!Stochastic.MA2.Periods, 1, Stochastic.MA2.Periods);
+   if (Stoch.Main.Periods < 2)       return(catch("onInit(1)  Invalid input parameter Stoch.Main.Periods: "+ Stoch.Main.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stoch.SlowedMain.Periods < 0) return(catch("onInit(2)  Invalid input parameter Stoch.SlowedMain.Periods: "+ Stoch.SlowedMain.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stoch.Signal.Periods < 0)     return(catch("onInit(3)  Invalid input parameter Stoch.Signal.Periods: "+ Stoch.Signal.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)              return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   stochPeriods = Stoch.Main.Periods;
+   ma1Periods   = ifInt(!Stoch.SlowedMain.Periods, 1, Stoch.SlowedMain.Periods);
+   ma2Periods   = ifInt(!Stoch.Signal.Periods, 1, Stoch.Signal.Periods);
    rsiPeriods   = RSI.Periods;
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -114,10 +114,10 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
-   SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:            invisible
-   SetIndexBuffer(MODE_STOCH_RAW, bufferStoch);          // Stochastic raw value: invisible
-   SetIndexBuffer(MODE_STOCH_MA1, bufferMa1  );          // first MA(Stoch):      visible
-   SetIndexBuffer(MODE_STOCH_MA2, bufferMa2  );          // second MA(MA1):       visible, displayed in "Data" window
+   SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:      invisible
+   SetIndexBuffer(MODE_STOCH_RAW, bufferStoch);          // raw %K line:    invisible
+   SetIndexBuffer(MODE_STOCH_MA1, bufferMa1  );          // slowed %K line: visible
+   SetIndexBuffer(MODE_STOCH_MA2, bufferMa2  );          // %D line:        visible, displayed in "Data" window
 
    // swap MA periods for fast Stochastic
    if (ma2Periods == 1) {
@@ -224,7 +224,6 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
    int ma2Type  = ifInt(signalDrawWidth, signalDrawType, DRAW_NONE);
    int ma2Width = signalDrawWidth;
@@ -240,14 +239,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Stochastic.Periods=",     Stochastic.Periods,       ";"+ NL,
-                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,   ";"+ NL,
-                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,   ";"+ NL,
-                            "RSI.Periods=",            RSI.Periods,              ";"+ NL,
-                            "Main.Color=",             ColorToStr(Main.Color),   ";"+ NL,
-                            "Signal.Color=",           ColorToStr(Signal.Color), ";"+ NL,
-                            "Signal.DrawType=",        Signal.DrawType,          ";"+ NL,
-                            "Signal.DrawWidth=",       Signal.DrawWidth,         ";"+ NL,
-                            "Max.Bars=",               Max.Bars,                 ";")
+   return(StringConcatenate("Stoch.Main.Periods=",       Stoch.Main.Periods,       ";"+ NL,
+                            "Stoch.SlowedMain.Periods=", Stoch.SlowedMain.Periods, ";"+ NL,
+                            "Stoch.Signal.Periods=",     Stoch.Signal.Periods,     ";"+ NL,
+                            "RSI.Periods=",              RSI.Periods,              ";"+ NL,
+                            "Main.Color=",               ColorToStr(Main.Color),   ";"+ NL,
+                            "Signal.Color=",             ColorToStr(Signal.Color), ";"+ NL,
+                            "Signal.DrawType=",          Signal.DrawType,          ";"+ NL,
+                            "Signal.DrawWidth=",         Signal.DrawWidth,         ";"+ NL,
+                            "Max.Bars=",                 Max.Bars,                 ";")
    );
 }

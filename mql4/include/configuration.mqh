@@ -18,8 +18,8 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
       accountId = GetAccountNumber();  if (accountId == "0")      return(EMPTY_STR);
    }
    else {
-      if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-      if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
+      if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId: "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
+      if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
    }
    return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", companyId, "\\", accountId, "-config.ini"));
 }
