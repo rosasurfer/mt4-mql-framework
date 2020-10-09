@@ -683,7 +683,7 @@ int ShowTradeHistory() {
    string   sOpenPrice, sClosePrice, comment, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
    // Anzeigekonfiguration auslesen
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.alias);
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
    bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
@@ -1961,7 +1961,7 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(1)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -3649,7 +3649,6 @@ bool RestoreLfxOrders(bool fromCache) {
       return(true);
    }
 
-
    // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden im Cache noch vorhandene Daten vorm Überschreiben gespeichert.
    if (ArrayRange(lfxOrders.iCache, 0) > 0) {
       if (!SaveLfxOrderCache()) return(false);
@@ -4064,7 +4063,7 @@ bool onOrderFail(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
       if (IsLog()) logInfo("onOrderFail(2)  "+ message);
 
@@ -4103,7 +4102,7 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
       if (IsLog()) logInfo("onPositionOpen(2)  "+ message);
 
@@ -4147,7 +4146,7 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
       if (IsLog()) logInfo("onPositionClose(2)  "+ message);
 
@@ -4169,11 +4168,14 @@ bool onPositionClose(int tickets[][]) {
  * @return bool - success status
  */
 bool EditAccountConfig() {
-   string files[];
+   string file, files[];
 
-   if (mode.extern)
-      ArrayPushString(files, GetAccountConfigPath());
-   ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
+   if (mode.extern) {
+      file = GetAccountConfigPath(); if (!StringLen(file)) return(false);
+      ArrayPushString(files, file);
+   }
+   file = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
+   ArrayPushString(files, file);
 
    return(EditFiles(files));
 }
