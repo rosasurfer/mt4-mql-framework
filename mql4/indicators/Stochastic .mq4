@@ -18,16 +18,16 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MainLine.Periods      = 14;                // %K line                                                        // EURJPY: 15
-extern int    SlowedMain.MA.Periods = 3;                 // slowed %K line (MA)                                            //         1
-extern int    SignalLine.MA.Periods = 3;                 // %D line (MA of resulting %K)                                   //         1
+extern int    MainLine.Periods      = 15;                // %K line                                                        // EURJPY: 15        14
+extern int    SlowedMain.MA.Periods = 1;                 // slowed %K line (MA)                                            //         1          3
+extern int    SignalLine.MA.Periods = 1;                 // %D line (MA of resulting %K)                                   //         1          3
 extern color  MainLine.Color        = DodgerBlue;
 extern color  SignalLine.Color      = Red;
 extern int    MaxBars               = 10000;             // max. number of values to calculate (-1: all available)
 extern string __________________________;
 
-extern int    SignalLevel.Long      = 70;                // signal level to cross upwards to trigger a long signal         //         73
-extern int    SignalLevel.Short     = 30;                // signal level to cross downwards to trigger a short signal      //         27
+extern int    SignalLevel.Long      = 73;                // signal level to cross upwards to trigger a long signal         //         73        70
+extern int    SignalLevel.Short     = 27;                // signal level to cross downwards to trigger a short signal      //         27        30
 extern color  SignalColor.Long      = Blue;
 extern color  SignalColor.Short     = Magenta;
 extern int    SignalBars            = 1000;              // max. number of bars to mark signals for
@@ -190,27 +190,20 @@ int onTick() {
  */
 bool UpdateSignalMarker(int bar) {
    static string prefix = ""; if (!StringLen(prefix)) {
-      prefix = StringConcatenate(StrTrim(ProgramName()), "[", __ExecutionContext[EC.pid], "].signal.");
+      prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
    string label = StringConcatenate(prefix, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
 
-   if (trend[bar] == 1) {                                      // set marker long
-      if (!ObjectFind(label) == 0)
+   if (trend[bar]==1 || trend[bar]==-1) {                      // set marker long or short
+      if (!ObjectFind(label) == 0) {
          ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
+         RegisterObject(label);
+      }
       ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet(label, OBJPROP_COLOR,     SignalColor.Long);
+      ObjectSet(label, OBJPROP_COLOR,     ifInt(trend[bar]==1, SignalColor.Long, SignalColor.Short));
       ObjectSet(label, OBJPROP_TIME1,     Time[bar]);
       ObjectSet(label, OBJPROP_PRICE1,    Close[bar]);
-      //ObjectSetText(label, comment);
-   }
-   else if (trend[bar] == -1) {                                // set marker short
-      if (!ObjectFind(label) == 0)
-         ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
-      ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet(label, OBJPROP_COLOR,     SignalColor.Short);
-      ObjectSet(label, OBJPROP_TIME1,     Time[bar]);
-      ObjectSet(label, OBJPROP_PRICE1,    Close[bar]);
-      //ObjectSetText(label, comment);
+      ObjectSetText(label, ifString(trend[bar]==1, "Long", "Short"));
    }
    else if (ObjectFind(label) == 0) {                          // unset an existing marker
       ObjectDelete(label);
