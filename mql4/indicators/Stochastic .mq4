@@ -193,9 +193,10 @@ bool UpdateSignalMarker(int bar) {
       prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
    string label = StringConcatenate(prefix, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
+   bool objExists = !ObjectFind(label);
 
-   if (trend[bar]==1 || trend[bar]==-1) {                      // set marker long or short
-      if (!ObjectFind(label) == 0) {
+   if (trend[bar]==1 || trend[bar]==-1) {                      // set marker long|short
+      if (!objExists) {
          ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
          RegisterObject(label);
       }
@@ -205,7 +206,7 @@ bool UpdateSignalMarker(int bar) {
       ObjectSet(label, OBJPROP_PRICE1,    Close[bar]);
       ObjectSetText(label, ifString(trend[bar]==1, "Long", "Short"));
    }
-   else if (ObjectFind(label) == 0) {                          // unset an existing marker
+   else if (objExists) {                                       // unset existing marker
       ObjectDelete(label);
    }
 
