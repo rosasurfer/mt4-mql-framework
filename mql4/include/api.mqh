@@ -147,7 +147,7 @@ string   GetAccountAlias(string company="", int account=NULL);;
 string   GetAccountCompany();;
 int      GetAccountNumberFromAlias(string company, string alias);;
 string   GetClassName(int hWnd);;
-double   GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY);;
+double   GetCommission(double lots=1.0, int mode=MODE_MONEY);;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string company="", int account=NULL, bool refresh=false);;
