@@ -858,16 +858,14 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  * Calculate the current symbol's commission value for the specified lotsize.
  *
  * @param  double lots [optional] - lotsize (default: 1 lot)
- * @param  int    mode [optional] - COMMISSION_MODE_MONEY:  in account currency (default)
- *                                  COMMISSION_MODE_MARKUP: as price markup in quote currency (independant of lotsize)
+ * @param  int    mode [optional] - MODE_MONEY:  in account currency (default)
+ *                                  MODE_MARKUP: as price markup in quote currency (independant of lotsize)
  *
  * @return double - commission value or EMPTY (-1) in case of errors
  */
-double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
+double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
    static double baseCommission;
-   static bool resolved;
-
-   if (!resolved) {
+   static bool resolved; if (!resolved) {
       double value;
 
       if (This.IsTesting()) {
@@ -879,31 +877,31 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
          string currency = AccountCurrency();
          int    account  = GetAccountNumber(); if (!account) return(EMPTY);
 
-         string section = "Commissions";
-         string key     = company +"."+ currency +"."+ account;
+         string section="Commissions", key="";
+         if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
+         else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
+         else if (IsGlobalConfigKeyA(section, company))                              key = company;
 
-         if (!IsGlobalConfigKeyA(section, key)) {
-            key = company +"."+ currency;
-            if (!IsGlobalConfigKeyA(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(key) > 0) {
+            value = GetGlobalConfigDouble(section, key);
+            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
-         value = GetGlobalConfigDouble(section, key);
-         if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
       }
       baseCommission = value;
       resolved = true;
    }
 
    switch (mode) {
-      case COMMISSION_MODE_MONEY:
+      case MODE_MONEY:
          if (lots == 1)
             return(baseCommission);
          return(baseCommission * lots);
 
-      case COMMISSION_MODE_MARKUP:
+      case MODE_MARKUP:
          double pipValue = PipValue(); if (!pipValue) return(EMPTY);
          return(baseCommission/pipValue * Pip);
    }
-   return(_EMPTY(catch("GetCommission(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY(catch("GetCommission(2)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
