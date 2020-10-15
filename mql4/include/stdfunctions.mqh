@@ -886,6 +886,9 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             value = GetGlobalConfigDouble(section, key);
             if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
+         else {
+            logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+         }
       }
       baseCommission = value;
       resolved = true;
@@ -901,7 +904,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          double pipValue = PipValue(); if (!pipValue) return(EMPTY);
          return(baseCommission/pipValue * Pip);
    }
-   return(_EMPTY(catch("GetCommission(2)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY(catch("GetCommission(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
