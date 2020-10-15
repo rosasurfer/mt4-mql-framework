@@ -1,5 +1,5 @@
 /**
- * Zeigt die Eigenschaften eines Instruments an.
+ * Display instrument specifications and properties.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -10,7 +10,6 @@ int __DeinitFlags[];
 #include <functions/@ATR.mqh>
 
 #property indicator_chart_window
-
 
 color  fg.fontColor.Enabled  = Blue;
 color  fg.fontColor.Disabled = Gray;
@@ -47,43 +46,44 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ATR_D","ATR_W",
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
-
-   CreateLabels();
-   return(catch("onInit()"));
+   SetIndexLabel(0, NULL);          // not displayed in "Data" window
+   CreateChartObjects();
+   return(catch("onInit(1)"));
 }
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
-   UpdateInfos();
+   UpdateInstrumentInfos();
    return(last_error);
 }
 
 
 /**
+ * Create needed chart objects.
  *
+ * @return int - error status
  */
-int CreateLabels() {
+int CreateChartObjects() {
    color  bg.color    = C'212,208,200';
    string bg.fontName = "Webdings";
    int    bg.fontSize = 212;
 
-   int x =  3;                   // X-Ausgangskoordinate
-   int y = 73;                   // Y-Ausgangskoordinate
-   int n = 10;                   // Counter für eindeutige Labels (mind. zweistellig)
+   int x =  3;                            // X start coordinate
+   int y = 73;                            // Y start coordinate
+   int n = 10;                            // counter for unique labels (min. 2 digits)
 
-   // Background
-   string label = StringConcatenate(ProgramName(), ".", n, ".Background");
+   // background
+   string label = ProgramName() +"."+ n +".background";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -96,7 +96,7 @@ int CreateLabels() {
    else GetLastError();
 
    n++;
-   label = StringConcatenate(ProgramName(), ".", n, ".Background");
+   label = ProgramName() +"."+ n +".background";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -108,20 +108,20 @@ int CreateLabels() {
    }
    else GetLastError();
 
-   // Textlabel
+   // text labels
    int yCoord = y + 4;
    for (int i=0; i < ArraySize(labels); i++) {
       n++;
-      label = StringConcatenate(ProgramName(), ".", n, ".", labels[i]);
+      label = ProgramName() +"."+ n +"."+ labels[i];
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet    (label, OBJPROP_XDISTANCE, x+6);
-            // größerer Zeilenabstand vor den folgenden Labeln
+            // lines followed by extra space (paragraph end)
             static int fields[] = {I_POINT, I_ATR_D, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
-            if (IntInArray(fields, i))
-               yCoord += 8;
+            if (IntInArray(fields, i)) yCoord += 8;
+
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", fg.fontSize, fg.fontName);
          RegisterObject(label);
@@ -129,16 +129,16 @@ int CreateLabels() {
       }
       else GetLastError();
    }
-
-   return(catch("CreateLabels()"));
+   return(catch("CreateChartObjects(1)"));
 }
 
 
 /**
+ * Update instrument infos.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
-int UpdateInfos() {
+int UpdateInstrumentInfos() {
    string symbol           = Symbol();
    string accountCurrency  = AccountCurrency();
    bool   tradeAllowed     = (MarketInfo(symbol, MODE_TRADEALLOWED) && 1);
@@ -151,9 +151,9 @@ int UpdateInfos() {
    double pointValue       = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue         = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue,       "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fg.fontSize, fg.fontName, fg.fontColor);
 
-   double atr.D            = @ATR(NULL, PERIOD_D1,  200, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
-   double atr.W            = @ATR(NULL, PERIOD_W1,  100, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
-   double atr.M            = @ATR(NULL, PERIOD_MN1,  24, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.D            = @ATR(NULL, PERIOD_D1, 200, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.W            = @ATR(NULL, PERIOD_W1, 100, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.M            = @ATR(NULL, PERIOD_MN1, 24, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_D         ], "ATR(D200):   "    + ifString(!atr.D,          "", Round(atr.D/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.D, Close[0])*100, 1) +"% = "+ ifString(!atr.W, "...", DoubleToStr(MathDiv(atr.D, atr.W), 2) +" ATR(W)" )), fg.fontSize, fg.fontName, fg.fontColor);
                                                                              ObjectSetText(labels[I_ATR_W         ], "ATR(W100):  "     + ifString(!atr.W,          "", Round(atr.W/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.W, Close[0])*100, 1) +"% = "+ ifString(!atr.M, "...", DoubleToStr(MathDiv(atr.W, atr.M), 2) +" ATR(MN)")), fg.fontSize, fg.fontName, fg.fontColor);
                                                                              ObjectSetText(labels[I_ATR_M         ], "ATR(MN24):  "     + ifString(!atr.M,          "", Round(atr.M/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.M, Close[0])*100, 1) +"%"                                                                               ), fg.fontSize, fg.fontName, fg.fontColor);
@@ -175,8 +175,8 @@ int UpdateInfos() {
    double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits & 1) +" pip"+ ifString(!atr.D, "", " = "+ DoubleToStr(MathDiv(spread*Point, atr.D) * 100, 1) +"% ATR(D)"), fg.fontSize, fg.fontName, fg.fontColor);
    double commission       = GetCommission();
    double commissionPip    = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
-                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
-   double totalFees        = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:       "                                                                                                            , fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip"), fg.fontSize, fg.fontName, fg.fontColor);
+   double totalFees        = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:           "+ ifString(IsEmpty(commission), "...", ""),                                                                                                     fg.fontSize, fg.fontName, fg.fontColor);
 
    int    swapMode         = MarketInfo(symbol, MODE_SWAPTYPE );
    double swapLong         = MarketInfo(symbol, MODE_SWAPLONG );
@@ -190,7 +190,7 @@ int UpdateInfos() {
       }
       else {
          /*
-         if (swapMode == SCM_INTEREST) {                             // TODO: prüfen "in percentage terms" z.B. LiteForex Aktien-CFDs
+         if (swapMode == SCM_INTEREST) {                             // TODO: check "in percentage terms", e.g. LiteForex stock CFDs
             //swapLongDaily  = swapLong *Close[0]/100/365/Pip; swapLongY  = swapLong;
             //swapShortDaily = swapShort*Close[0]/100/365/Pip; swapShortY = swapShort;
          }
@@ -238,39 +238,5 @@ int UpdateInfos() {
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);
-   return(catch("UpdateInfos(2)", error));
-
-   ConvertCurrency(NULL, NULL, NULL);
-}
-
-
-/**
- * Konvertiert den angegebenen Betrag einer Währung in eine andere Währung.
- *
- * @param  double amount - Betrag
- * @param  string from   - Ausgangswährung
- * @param  string to     - Zielwährung
- *
- * @return double
- */
-double ConvertCurrency(double amount, string from, string to) {
-   double result = amount;
-
-   if (!EQ(amount, 0)) {
-      from = StrToUpper(from);
-      to   = StrToUpper(to);
-      if (from != to) {
-         // direktes Currency-Pair suchen
-         // bei Mißerfolg Crossrates zum USD bestimmen
-         // Kurse ermitteln
-         // Ergebnis berechnen
-      }
-   }
-
-   static bool done;
-   if (!done) {
-      //debug("ConvertCurrency()  "+ NumberToStr(amount, ".2+") +" "+ from +" = "+ NumberToStr(result, ".2+R") +" "+ to);
-      done = true;
-   }
-   return(result);
+   return(catch("UpdateInstrumentInfos(1)", error));
 }
