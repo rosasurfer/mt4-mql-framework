@@ -37,8 +37,6 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -148,7 +146,6 @@ int      lfxOrders.pendingPositions;                              // Anzahl der 
 
 // Textlabel für die einzelnen Anzeigen
 string label.instrument     = "${__NAME__}.Instrument";
-string label.ohlc           = "${__NAME__}.OHLC";
 string label.price          = "${__NAME__}.Price";
 string label.spread         = "${__NAME__}.Spread";
 string label.externalAssets = "${__NAME__}.ExternalAssets";
@@ -162,7 +159,6 @@ string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 // Font-Settings der CustomPositions-Anzeige
 string positions.fontName          = "MS Sans Serif";
 int    positions.fontSize          = 8;
-
 color  positions.fontColor.intern  = Blue;
 color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
@@ -224,20 +220,19 @@ int onTick() {
 
    HandleCommands();                                                                               // ChartCommands verarbeiten
 
-   if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
-   if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
+   if (!UpdatePrice())                     if (CheckLastError("onTick(1)")) return(last_error);    // aktualisiert die Kursanzeige oben rechts
 
    if (mode.extern) {
-      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
+      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(2)")) return(last_error);    // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdatePositions())              if (CheckLastError("onTick(3)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdateSpread())                 if (CheckLastError("onTick(6)"))  return(last_error);
-      if (!UpdatePositionSize())           if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(4)")) return(last_error);    // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdateSpread())                 if (CheckLastError("onTick(5)")) return(last_error);
+      if (!UpdatePositionSize())           if (CheckLastError("onTick(6)")) return(last_error);    // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              if (CheckLastError("onTick(7)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(8)")) return(last_error);    // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           if (CheckLastError("onTick(9)")) return(last_error);    // aktualisiert die Anzeige der Anzahl der offenen Orders
 
       // ggf. Orders überwachen
       if (mode.intern && track.orders) {
@@ -985,7 +980,6 @@ bool CreateLabels() {
    // Label definieren
    string programName = ProgramName();
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
-   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
    label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
    label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", programName);
@@ -1012,18 +1006,6 @@ bool CreateLabels() {
       else if (StrEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
-
-   // OHLC-Label
-   if (ObjectFind(label.ohlc) == 0)
-      ObjectDelete(label.ohlc);
-   if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 110);
-      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
-      ObjectSetText(label.ohlc, " ", 1);
-      RegisterObject(label.ohlc);
-   }
-   else GetLastError();
 
    // Price-Label
    if (ObjectFind(label.price) == 0)
@@ -1521,62 +1503,6 @@ bool UpdateStopoutLevel() {
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateStopoutLevel(2)", error));
-}
-
-
-/**
- * Aktualisiert die OHLC-Anzeige.
- *
- * @return bool - Erfolgsstatus
- */
-bool UpdateOHLC() {
-   // TODO: noch nicht zufriedenstellend implementiert
-   return(true);
-
-
-   // (1) Zeit des letzten Ticks holen
-   datetime lastTickTime = MarketInfo(Symbol(), MODE_TIME);
-   if (!lastTickTime) {                                                          // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      if (!SetLastError(GetLastError()))
-         SetLastError(ERR_SYMBOL_NOT_AVAILABLE);
-      return(false);
-   }
-
-
-   // (2) Beginn und Ende der aktuellen Session ermitteln
-   datetime sessionStart = GetSessionStartTime.srv(lastTickTime);                // throws ERR_MARKET_CLOSED
-   if (sessionStart == NaT) {
-      if (__ExecutionContext[EC.mqlError] != ERR_MARKET_CLOSED)                  // am Wochenende die letzte Session verwenden
-         return(false);
-      sessionStart = GetPrevSessionStartTime.srv(lastTickTime);
-   }
-   datetime sessionEnd = sessionStart + 1*DAY;
-
-
-   // (3) Baroffsets von Sessionbeginn und -ende ermitteln
-   int openBar = iBarShiftNext(NULL, NULL, sessionStart);
-      if (openBar == EMPTY_VALUE) return(false);                                 // Fehler
-      if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart
-   int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
-      if (closeBar == EMPTY_VALUE) return(false);
-      if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart
-   if (openBar < closeBar)
-      return(!catch("UpdateOHLC(1)  illegal open/close bar offsets for session from="+ GmtTimeFormat(sessionStart, "%a %d.%m.%Y %H:%M") +" (bar="+ openBar +")  to="+ GmtTimeFormat(sessionEnd, "%a %d.%m.%Y %H:%M") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
-
-
-   // (4) Baroffsets von Session-High und -Low ermitteln
-   int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
-   int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
-
-
-   // (5) Anzeige aktualisieren
-   string strOHLC = "O="+ NumberToStr(Open[openBar], PriceFormat) +"   H="+ NumberToStr(High[highBar], PriceFormat) +"   L="+ NumberToStr(Low[lowBar], PriceFormat);
-   ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
-
-   int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
-      return(true);
-   return(!catch("UpdateOHLC(2)", error));
 }
 
 
@@ -4211,8 +4137,6 @@ string InputsToStr() {
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   datetime GetPrevSessionStartTime.srv(datetime serverTime);
-   datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
    int      RegisterObject(string label);
