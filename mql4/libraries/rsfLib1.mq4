@@ -636,12 +636,10 @@ int GetIniSections(string fileName, string &names[]) {
  * @return string - directory name or an empty string in case of errors
  */
 string GetAccountServer() {
-   // Der Servername wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Der Servername wird zwischengespeichert und der Cache bei UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
-   //
-   // @see  analoge Logik in GetServerTimezone()
-   //
+
    static string static.serverName[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
@@ -669,7 +667,6 @@ string GetAccountServer() {
 
          // search the created file
          string pattern = GetTerminalDataPathA() +"\\history\\*";
-         //debug("GetAccountServer(3)  searching "+ DoubleQuoteStr(pattern));
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
@@ -4212,9 +4209,6 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
 int GetAccountNumber() {
-
-   //debug("GetAccountNumber()");
-
    static int tester.result;
    if (tester.result != 0)
       return(tester.result);
@@ -4422,47 +4416,50 @@ int GetLocalToGmtTimeOffset() {
 
 
 /**
- * Gibt die Zeitzone des aktuellen MetaTrader-Servers zurück (nach Olson Timezone Database).
+ * Return the current trade server's timezone identifier.
  *
- * @return string - Zeitzonen-Identifier oder Leerstring, falls ein Fehler auftrat
+ * @return string - timezone identifier or an empty string in case of errors
  *
- * @see  http://en.wikipedia.org/wiki/Tz_database
+ * @see    http://en.wikipedia.org/wiki/Tz_database   [Olson Timezone Database]
  */
 string GetServerTimezone() {
-   // Die Timezone-ID wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
-   // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
-   // aktiv ist.
-   //
-   // @see  analoge Logik in GetAccountServer()
-   //
-   static string static.timezone[1];
-   static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
+   // - The resolved timezone can only change when the trade account changes.
+   // - On account change indicators do not perform an init cycle.
+   // - The builtin account functions can't be used to detect an account change. They already return new account data even if
+   //   the program still operates on previous chart data and processes old ticks. On the first tick received for the new
+   //   account UnchangedBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
+   // - This function is stored in the library to make the cache survive an indicator init cyle.
 
-   // invalidate cache after UnchangedBars == 0 on a new tick
-   int tick = __ExecutionContext[EC.ticks];
-   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
-      static.timezone[0] = "";
-   static.lastTick = tick;
+   #define IDX_SERVER   0
+   #define IDX_TIMEZONE 1
 
+   int Tick=__ExecutionContext[EC.ticks], UnchangedBars=__ExecutionContext[EC.unchangedBars];
+   static int lastTick = -1;
+   static string lastResult[2]; // {lastServer, lastTimezone};
 
-   if (!StringLen(static.timezone[0])) {
-      string server = GetAccountServer(); if (!StringLen(server)) return("");
-
-      // look-up server name
-      string timezone = GetGlobalConfigString("Timezones", server);
-
-      // look-up company name
-      if (!StringLen(timezone))
-         timezone = GetGlobalConfigString("Timezones", StrLeftTo(server, "-"));
-
-      if (!StringLen(timezone))
-         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ server +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
-
-      //debug("GetServerTimezone(0)  timezone: "+ timezone);
-      static.timezone[0] = timezone;
+   if (Tick != lastTick) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) > 0 && !UnchangedBars) {
+         string server = GetAccountServer(); if (!StringLen(server)) return("");
+         if (!StrCompare(server, lastResult[IDX_SERVER])) {
+            lastResult[IDX_TIMEZONE] = "";
+         }
+      }
    }
-   return(static.timezone[0]);
+
+   if (!StringLen(lastResult[IDX_TIMEZONE])) {
+      lastResult[IDX_SERVER  ] = GetAccountServer(); if (!StringLen(lastResult[IDX_SERVER])) return("");
+      lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_SERVER]);
+      if (!StringLen(lastResult[IDX_TIMEZONE])) {
+         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", StrLeftTo(lastResult[IDX_SERVER], "-"));
+      }
+      if (!StringLen(lastResult[IDX_TIMEZONE])) {
+         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +", using default timezone \"FXT\"");
+         lastResult[IDX_TIMEZONE] = "FXT";
+      }
+   }
+
+   lastTick = Tick;
+   return(lastResult[IDX_TIMEZONE]);
 }
 
 
