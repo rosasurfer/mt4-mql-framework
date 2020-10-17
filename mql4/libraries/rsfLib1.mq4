@@ -639,9 +639,7 @@ string GetAccountServer() {
    // Der Servername wird zwischengespeichert und der Cache bei UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
-   //
-   // @see  analoge Logik in GetServerTimezone()
-   //
+
    static string static.serverName[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
@@ -669,7 +667,6 @@ string GetAccountServer() {
 
          // search the created file
          string pattern = GetTerminalDataPathA() +"\\history\\*";
-         //debug("GetAccountServer(3)  searching "+ DoubleQuoteStr(pattern));
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
@@ -4430,14 +4427,14 @@ string GetServerTimezone() {
    // - On account change indicators do not perform an init cycle.
    // - The builtin account functions can't be used to detect an account change. They already return new account data even if
    //   the program still operates on previous chart data and processes old ticks. On the first tick received for the new
-   //   account EC.unchangedBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
+   //   account UnchangedBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
    // - This function is stored in the library to make the cache survive an indicator init cyle.
 
    #define IDX_SERVER   0
    #define IDX_TIMEZONE 1
 
    int Tick=__ExecutionContext[EC.ticks], UnchangedBars=__ExecutionContext[EC.unchangedBars];
-   static int    lastTick = -1;
+   static int lastTick = -1;
    static string lastResult[2]; // {lastServer, lastTimezone};
 
    if (Tick != lastTick) {
