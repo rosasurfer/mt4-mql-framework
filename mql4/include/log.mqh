@@ -329,7 +329,8 @@ int log(string message, int error, int level) {
       }
       else {
          key = ProgramName();
-         value = GetConfigString("Log", key, "info");                                              // live default: info
+         if (!IsConfigKey("Log", key)) key = "Online";
+         value = GetConfigString("Log", key, "info");                                              // online default: info
       }
       configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
