@@ -56,9 +56,6 @@ bool     WriteIniString(string fileName, string section, string key, string valu
 // include/log.mqh
 int      catch(string location, int error=NO_ERROR, bool popOrder=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
-int      triggerWarn (string message, int error=NO_ERROR);;
-int      triggerError(string location, int error, bool popOrder=false);;
-int      triggerFatal(string location, int error, bool popOrder=false);;
 
 bool     IsLog();;
 bool     IsLogDebug();;

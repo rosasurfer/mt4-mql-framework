@@ -73,9 +73,9 @@ bool InitTradeAccount(string accountId = "") {
 
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
-      _accountCompany = StrLeftTo(accountId, ":"); if (!StringLen(_accountCompany)) return(!triggerWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))        return(!triggerWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      _accountNumber = StrToInteger(sValue); if (!_accountNumber)                   return(!triggerWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountCompany = StrLeftTo(accountId, ":"); if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountNumber = StrToInteger(sValue); if (!_accountNumber)                   return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
    }
    else {
       // use the current account and resolve a configured trade account
@@ -87,11 +87,11 @@ bool InitTradeAccount(string accountId = "") {
       string key     = "TradeAccount"+ ifString(This.IsTesting(), ".Tester", "");
       sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue))                                                   return(!triggerWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
-         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!triggerWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+         if (!StrIsDigit(sValue))                                                   return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!logWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
          section = "Accounts";
          key     = _accountNumber +".company";
-         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))     return(!triggerWarn("InitTradeAccount(6)  missing global account setting ["+ section +"]->"+ key));
+         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))     return(!logWarn("InitTradeAccount(6)  missing global account setting ["+ section +"]->"+ key));
          _accountCompany = sValue;
       }
    }
@@ -109,22 +109,22 @@ bool InitTradeAccount(string accountId = "") {
       // AccountCurrency
       section = "Accounts";
       key     = _accountNumber +".currency";
-      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!triggerWarn("InitTradeAccount(7)  missing global account setting ["+ section +"]->"+ key));
-      if (!IsCurrency(sValue))                                                      return(!triggerWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(7)  missing global account setting ["+ section +"]->"+ key));
+      if (!IsCurrency(sValue))                                                      return(!logWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
       _accountCurrency = StrToUpper(sValue);
 
       // AccountType
       section = "Accounts";
       key     = _accountNumber +".type";
-      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!triggerWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
+      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
       if      (StrCompareI(sValue, "demo")) _accountType = ACCOUNT_TYPE_DEMO;
       else if (StrCompareI(sValue, "real")) _accountType = ACCOUNT_TYPE_REAL;
-      else                                                                          return(!triggerWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+      else                                                                          return(!logWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
 
       // AccountName
       section = "Accounts";
       key     = _accountNumber +".name";
-      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!triggerWarn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key));
+      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key));
       _accountName = sValue;
    }
 
@@ -513,7 +513,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       }
       else {
          // Order ist unverändert, Fehler melden und speichern.
-         triggerWarn("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
+         logWarn("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Sollte die Order nach dieser Zeit doch noch erfolgreich ausgeführt werden, wird dieser
          else                                   los.setCloseTime(orders, i, -now);     // Fehler mit dem letztendlichen Erfolg überschrieben. Dies tritt z.B. auf, wenn der
          if (!LFX.SaveOrder(orders, i)) return(false);                                 // Trade-Server vor der letztendlichen Ausführung mehrere Minuten hängt (z.B. Demo-Server).
@@ -1057,7 +1057,7 @@ bool QC.StartTradeCmdSender() {
       }
    }
    if (i >= keysSize) {                                            // break wurde nicht getriggert
-      triggerWarn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account "+ DoubleQuoteStr(tradeAccount.company +":"+ tradeAccount.number) +" account found (keys="+ keysSize +"). Is the trade terminal running?");
+      logWarn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account "+ DoubleQuoteStr(tradeAccount.company +":"+ tradeAccount.number) +" account found (keys="+ keysSize +"). Is the trade terminal running?");
       return(false);
    }
 
