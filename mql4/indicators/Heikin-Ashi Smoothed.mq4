@@ -60,17 +60,16 @@ int       framework_buffers = 1;                      // buffers managed by the 
 #property indicator_color3    CLR_NONE
 #property indicator_color4    CLR_NONE
 
-double haOpen [];
+double haOpen [];                                     // Heikin-Ashi values
 double haHigh [];
 double haLow  [];
 double haClose[];
 
-double outOpen   [];
-double outClose  [];
+double outOpen   [];                                  // indicator output values
+double outClose  [];                                  //
 double outHighLow[];                                  // holds the High of a bearish output bar
 double outLowHigh[];                                  // holds the High of a bullish output bar
-
-double trend[];
+double trend     [];
 
 int    inputMaMethod;
 int    inputMaPeriods;
@@ -163,7 +162,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // after legend/label processing: replace disabled smoothing with equal SMA(1) to simplify calculations
+   // after legend/label processing: replace inactive MAs with SMA(1) to simplify calculations
    if (IsEmpty(inputMaMethod)) {
       inputMaMethod  = MODE_SMA;
       inputMaPeriods = 1;
@@ -225,18 +224,16 @@ int onTick() {
       ShiftIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
    }
 
-
    // calculate start bars
    int haBars      = Bars-inputMaPeriods;
    int haStartBar  = Min(haBars, ChangedBars) - 1;
    int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0);    // IIR filters need at least 10 bars for initialization
    int outBars     = haBars-outInitBars+1;
    int outStartBar = Min(outBars, ChangedBars) - 1;
-   if (outStartBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (outStartBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    double inO,  inH,  inL,  inC;                      // input prices
    double outO, outH, outL, outC, dNull[];            // output prices
-
 
    // initialize HA values of the oldest bar
    int bar = haStartBar;
