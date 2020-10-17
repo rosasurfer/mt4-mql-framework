@@ -4453,7 +4453,7 @@ string GetServerTimezone() {
          lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", StrLeftTo(lastResult[IDX_SERVER], "-"));
       }
       if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +", using default \"FXT\"");
+         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +", using default timezone \"FXT\"");
          lastResult[IDX_TIMEZONE] = "FXT";
       }
    }

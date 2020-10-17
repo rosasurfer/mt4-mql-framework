@@ -17,7 +17,7 @@
  * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE};
+int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
