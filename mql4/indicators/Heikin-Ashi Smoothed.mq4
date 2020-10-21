@@ -19,15 +19,17 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA*";           // averaging of input prices        Genesis: SMMA(6) = EMA(11)
 extern int    Input.MA.Periods  = 11;
-extern string Output.MA.Method  = "none | SMA | LWMA* | EMA";           // averaging of HA values           Genesis: LWMA(2)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA"; // averaging of input prices                          Genesis: SMMA(6) = EMA(11)
+
 extern int    Output.MA.Periods = 2;
+extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA"; // averaging of HA values                             Genesis: LWMA(2)
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
 
 extern bool   ShowWicks         = false;
+extern int    Max.Bars          = 10000;                             // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,15 +40,13 @@ extern bool   ShowWicks         = false;
 #include <functions/ManageIndicatorBuffer.mqh>
 
 #define MODE_OUT_OPEN         0                       // indicator buffer ids
-#define MODE_OUT_CLOSE        1
-#define MODE_OUT_HIGHLOW      2
-#define MODE_OUT_LOWHIGH      3
-
+#define MODE_OUT_CLOSE        1                       //
+#define MODE_OUT_HIGHLOW      2                       //
+#define MODE_OUT_LOWHIGH      3                       //
 #define MODE_TREND            HeikinAshi.MODE_TREND   // 4
-
-#define MODE_HA_OPEN          5
-#define MODE_HA_HIGH          6
-#define MODE_HA_LOW           7
+#define MODE_HA_OPEN          5                       //
+#define MODE_HA_HIGH          6                       //
+#define MODE_HA_LOW           7                       //
 #define MODE_HA_CLOSE         8                       // managed by the framework
 
 
@@ -79,6 +79,7 @@ int    outputMaPeriods;
 
 string indicatorName;
 string legendLabel;
+int    maxValues;
 
 
 /**
@@ -132,6 +133,10 @@ int onInit() {
    if (Color.BarUp   == 0xFF000000) Color.BarUp   = CLR_NONE;
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 
+   // Max.Bars
+   if (Max.Bars < -1)            return(catch("onInit(5)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+
 
    // buffer management
    SetIndexBuffer(MODE_OUT_OPEN,    outOpen   );
@@ -171,7 +176,7 @@ int onInit() {
       outputMaMethod  = MODE_SMA;
       outputMaPeriods = 1;
    }
-   return(catch("onInit(7)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -223,6 +228,22 @@ int onTick() {
       ShiftIndicatorBuffer(outLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
    }
+
+   // +----------------------------------------------------+--------------------------------------------------+
+   // | Top down                                           | Bottom up                                        |
+   // +----------------------------------------------------+--------------------------------------------------+
+   // | RequestedBars = 5000                               | ResultingBars =                                  |
+   // |                                                    |                                                  |
+   // |                                                    |                                                  |
+   // |                                                    |                                                  |
+   // |                                                    |                                                  |
+   // |                                                    |                                                  |
+   // | RequiredBars  =                                    | AvailableBars = Bars                             |
+   // +----------------------------------------------------+--------------------------------------------------+
+   // |               --->                                                ---^                                |
+   // +-------------------------------------------------------------------------------------------------------+
+
+
 
    // calculate start bars
    int haBars      = Bars-inputMaPeriods;
@@ -334,10 +355,10 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Input.MA.Method=",   DoubleQuoteStr(Input.MA.Method),  ";", NL,
-                            "Input.MA.Periods=",  Input.MA.Periods,                 ";", NL,
-                            "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
+   return(StringConcatenate("Input.MA.Periods=",  Input.MA.Periods,                 ";", NL,
+                            "Input.MA.Method=",   DoubleQuoteStr(Input.MA.Method),  ";", NL,
                             "Output.MA.Periods=", Output.MA.Periods,                ";", NL,
+                            "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
                             "Color.BarUp=",       ColorToStr(Color.BarUp),          ";", NL,
                             "Color.BarDown=",     ColorToStr(Color.BarDown),        ";", NL,
                             "ShowWicks=",         BoolToStr(ShowWicks),             ";")

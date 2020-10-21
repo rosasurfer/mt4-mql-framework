@@ -43,7 +43,7 @@ extern color  Color.Ranging  = Blue;
 extern color  Color.Trending = Red;
 extern string DrawType       = "Line* | Dot";
 extern int    DrawWidth      = 1;
-extern int    Max.Bars       = 10000;                    // max. number of values to calculate (-1: all available)
+extern int    Max.Bars       = 10000;                    // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
