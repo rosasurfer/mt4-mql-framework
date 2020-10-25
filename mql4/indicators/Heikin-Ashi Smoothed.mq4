@@ -9,7 +9,9 @@
  *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
  *
  * Indicator buffers for iCustom():
- *  • HeikinAshi.MODE_TREND: trend direction and length
+ *  • HeikinAshi.MODE_OPEN:  Heikin-Ashi bar open price
+ *  • HeikinAshi.MODE_CLOSE: Heikin-Ashi bar close price
+ *  • HeikinAshi.MODE_TREND: Heikin-Ashi trend direction and length
  *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
  */
@@ -20,10 +22,10 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Input.MA.Periods  = 11;
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA"; // averaging of input prices                          Genesis: SMMA(6) = EMA(11)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA"; // smoothing of input prices                             Genesis: SMMA(6) = EMA(11)
 
 extern int    Output.MA.Periods = 2;
-extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA"; // averaging of HA values                             Genesis: LWMA(2)
+extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA"; // smoothing of HA values                                Genesis: LWMA(2)
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
@@ -39,8 +41,8 @@ extern int    Max.Bars          = 10000;                             // max. val
 #include <functions/@Trend.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
 
-#define MODE_OUT_OPEN         0                       // indicator buffer ids
-#define MODE_OUT_CLOSE        1                       //
+#define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
+#define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
 #define MODE_OUT_HIGHLOW      2                       //
 #define MODE_OUT_LOWHIGH      3                       //
 #define MODE_TREND            HeikinAshi.MODE_TREND   // 4
@@ -48,7 +50,6 @@ extern int    Max.Bars          = 10000;                             // max. val
 #define MODE_HA_HIGH          6                       //
 #define MODE_HA_LOW           7                       //
 #define MODE_HA_CLOSE         8                       // managed by the framework
-
 
 #property indicator_chart_window
 #property indicator_buffers   4                       // buffers visible in input dialog
@@ -71,15 +72,18 @@ double outHighLow[];                                  // holds the High of a bea
 double outLowHigh[];                                  // holds the High of a bullish output bar
 double trend     [];
 
-int    inputMaMethod;
-int    inputMaPeriods;
+int inputMaMethod;
+int inputMaPeriods;
+int inputInitPeriods;
 
-int    outputMaMethod;
-int    outputMaPeriods;
+int outputMaMethod;
+int outputMaPeriods;
+int outputInitPeriods;
+
+int maxValues;
 
 string indicatorName;
 string legendLabel;
-int    maxValues;
 
 
 /**
@@ -176,6 +180,11 @@ int onInit() {
       outputMaMethod  = MODE_SMA;
       outputMaPeriods = 1;
    }
+
+   // initialize lookback periods: IIR filters need at least 10 bars for initialization
+   inputInitPeriods  = ifInt( inputMaMethod==MODE_EMA ||  inputMaMethod==MODE_SMMA, Max(10,  inputMaPeriods*3),  inputMaPeriods);
+   outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
+
    return(catch("onInit(6)"));
 }
 
@@ -229,32 +238,30 @@ int onTick() {
       ShiftIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
    }
 
-   // +----------------------------------------------------+--------------------------------------------------+
-   // | Top down                                           | Bottom up                                        |
-   // +----------------------------------------------------+--------------------------------------------------+
-   // | RequestedBars = 5000                               | ResultingBars =                                  |
-   // |                                                    |                                                  |
-   // |                                                    |                                                  |
-   // |                                                    |                                                  |
-   // |                                                    |                                                  |
-   // |                                                    |                                                  |
-   // | RequiredBars  =                                    | AvailableBars = Bars                             |
-   // +----------------------------------------------------+--------------------------------------------------+
-   // |               --->                                                ---^                                |
-   // +-------------------------------------------------------------------------------------------------------+
-
-
+   // +-----------------------------------------------------------+-------------------------------------------------------+
+   // | Top down                                                  | Bottom up                                             |
+   // +-----------------------------------------------------------+-------------------------------------------------------+
+   // | RequestedBars    = 5000                                   | ResultingBars    = startBar(Output) + 1               |
+   // | startBar(Output) = RequestedBars - 1                      | startBar(Output) = startBar(HA) - outputMaPeriods + 1 |
+   // | startBar(HA)     = startBar(Output) + outputMaPeriods - 1 | startBar(HA)     = startBar(Input) - 1                |
+   // | startBar(Input)  = startBar(HA) + 1                       | startBar(Input)  = oldestBar - inputMaPeriods + 1     |
+   // | oldestBar        = startBar(Input) + inputMaPeriods - 1   | oldestBar        = AvailableBars - 1                  |
+   // | RequiredBars     = oldestBar + 1                          | AvailableBars    = Bars                               |
+   // +-----------------------------------------------------------+-------------------------------------------------------+
+   // |                  --->                                                     ---^                                    |
+   // +-------------------------------------------------------------------------------------------------------------------+
 
    // calculate start bars
-   int haBars      = Bars-inputMaPeriods;
-   int haStartBar  = Min(haBars, ChangedBars) - 1;
-   int outInitBars = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), 0);    // IIR filters need at least 10 bars for initialization
-   int outBars     = haBars-outInitBars+1;
-   int outStartBar = Min(outBars, ChangedBars) - 1;
-   if (outStartBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int requestedBars = Min(ChangedBars, maxValues);
+   int resultingBars = Bars - inputInitPeriods - outputInitPeriods + 1; // max. resulting bars
+   if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
-   double inO,  inH,  inL,  inC;                      // input prices
-   double outO, outH, outL, outC, dNull[];            // output prices
+   int bars           = Min(requestedBars, resultingBars);              // actual number of bars to be updated
+   int outputStartBar = bars - 1;
+   int haStartBar     = outputStartBar + outputInitPeriods - 1;
+
+   double inO,  inH,  inL,  inC;                                        // input prices
+   double outO, outH, outL, outC, dNull[];                              // output prices
 
    // initialize HA values of the oldest bar
    int bar = haStartBar;
@@ -267,7 +274,7 @@ int onTick() {
       haClose[bar+1] = (inO + inH + inL + inC)/4;
    }
 
-   // recalculate changed HA bars
+   // recalculate changed HA bars (1st smoothing)
    for (; bar >= 0; bar--) {
       inO = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_OPEN,  bar);
       inH = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_HIGH,  bar);
@@ -281,7 +288,7 @@ int onTick() {
    }
 
    // recalculate changed output bars (2nd smoothing)
-   for (bar=outStartBar; bar >= 0; bar--) {
+   for (bar=outputStartBar; bar >= 0; bar--) {
       outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
       outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
       outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
@@ -291,11 +298,11 @@ int onTick() {
       outClose[bar] = outC;
 
       if (outO < outC) {
-         outLowHigh[bar] = outH;                      // bullish bar, the High goes into the up-colored buffer
+         outLowHigh[bar] = outH;                                        // bullish bar, the High goes into the up-colored buffer
          outHighLow[bar] = outL;
       }
       else {
-         outHighLow[bar] = outH;                      // bearish bar, the High goes into the down-colored buffer
+         outHighLow[bar] = outH;                                        // bearish bar, the High goes into the down-colored buffer
          outLowHigh[bar] = outL;
       }
       UpdateTrend(bar);
@@ -361,6 +368,7 @@ string InputsToStr() {
                             "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
                             "Color.BarUp=",       ColorToStr(Color.BarUp),          ";", NL,
                             "Color.BarDown=",     ColorToStr(Color.BarDown),        ";", NL,
-                            "ShowWicks=",         BoolToStr(ShowWicks),             ";")
+                            "ShowWicks=",         BoolToStr(ShowWicks),             ";", NL,
+                            "Max.Bars=",          Max.Bars,                         ";")
    );
 }
