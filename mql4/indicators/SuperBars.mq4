@@ -124,12 +124,12 @@ int onTick() {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!triggerWarn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
 
    for (int i=0; i < size; i++) {
       if      (commands[i] == "Timeframe=Up"  ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
       else if (commands[i] == "Timeframe=Down") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
-      else triggerWarn("onCommand(2)  unknown command \""+ commands[i] +"\"");
+      else logWarn("onCommand(2)  unknown command: \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
 }
@@ -194,7 +194,7 @@ bool SwitchSuperTimeframe(int direction) {
          case  INT_MAX      : PlaySoundEx("Plonk.wav");          break;    // we hit a wall
       }
    }
-   else triggerWarn("SwitchSuperTimeframe(1)  unknown parameter direction = "+ direction);
+   else logWarn("SwitchSuperTimeframe(1)  unknown parameter direction: "+ direction);
 
    CheckSuperTimeframeAvailability();                                      // check availability of the new setting
    return(true);
