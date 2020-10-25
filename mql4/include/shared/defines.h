@@ -212,8 +212,8 @@
 
 
 // commission calculation modes, see GetCommission()
-#define COMMISSION_MODE_MONEY                   0        // commission value in account currency for 1 lot
-#define COMMISSION_MODE_MARKUP                  1        // commission markup in quote currency
+#define MODE_MONEY                              0        // commission value in account currency for 1 lot
+#define MODE_MARKUP                             1        // commission markup in quote currency
 
 
 // file system related constants

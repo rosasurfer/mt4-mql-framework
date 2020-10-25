@@ -650,8 +650,8 @@ bool WaitForTicket(int ticket, bool select = false) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())       triggerWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
-      else if (i && !(i%10)) triggerWarn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 1) +" s");
+      if (IsTesting())       logWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
+      else if (i && !(i%10)) logWarn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 1) +" s");
       Sleep(delay);
       i++;
    }
@@ -797,7 +797,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       string message = "Exact tickvalue not available."+ NL
                       +"The test will use the current online tickvalue ("+ tickValue +") which is an approximation. "
                       +"Test with another account currency if you need exact values.";
-      triggerWarn("PipValue(10)  "+ message);
+      logWarn("PipValue(10)  "+ message);
       doWarn = false;
    }
    return(Pip/tickSize * tickValue * lots);
@@ -858,16 +858,14 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  * Calculate the current symbol's commission value for the specified lotsize.
  *
  * @param  double lots [optional] - lotsize (default: 1 lot)
- * @param  int    mode [optional] - COMMISSION_MODE_MONEY:  in account currency (default)
- *                                  COMMISSION_MODE_MARKUP: as price markup in quote currency (independant of lotsize)
+ * @param  int    mode [optional] - MODE_MONEY:  in account currency (default)
+ *                                  MODE_MARKUP: as price markup in quote currency (independant of lotsize)
  *
  * @return double - commission value or EMPTY (-1) in case of errors
  */
-double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
+double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
    static double baseCommission;
-   static bool resolved;
-
-   if (!resolved) {
+   static bool resolved; if (!resolved) {
       double value;
 
       if (This.IsTesting()) {
@@ -879,27 +877,30 @@ double GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY) {
          string currency = AccountCurrency();
          int    account  = GetAccountNumber(); if (!account) return(EMPTY);
 
-         string section = "Commissions";
-         string key     = company +"."+ currency +"."+ account;
+         string section="Commissions", key="";
+         if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
+         else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
+         else if (IsGlobalConfigKeyA(section, company))                              key = company;
 
-         if (!IsGlobalConfigKeyA(section, key)) {
-            key = company +"."+ currency;
-            if (!IsGlobalConfigKeyA(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(key) > 0) {
+            value = GetGlobalConfigDouble(section, key);
+            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
-         value = GetGlobalConfigDouble(section, key);
-         if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
+         else {
+            logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+         }
       }
       baseCommission = value;
       resolved = true;
    }
 
    switch (mode) {
-      case COMMISSION_MODE_MONEY:
+      case MODE_MONEY:
          if (lots == 1)
             return(baseCommission);
          return(baseCommission * lots);
 
-      case COMMISSION_MODE_MARKUP:
+      case MODE_MARKUP:
          double pipValue = PipValue(); if (!pipValue) return(EMPTY);
          return(baseCommission/pipValue * Pip);
    }
@@ -2638,7 +2639,7 @@ bool This.IsTesting() {
 
 /**
  * Whether the current program runs on a demo account. Workaround for a bug in terminal builds <= 509 where the built-in
- * function IsDemo() returns FALSE in the tester.
+ * function IsDemo() returns FALSE in tester.
  *
  * @return bool
  */
@@ -3809,29 +3810,39 @@ string InitReasonDescription(int reason) {
  * Get the configured value of externally hold assets of an account. The returned value can be negative to scale-down an
  * account's size (e.g. for testing in a real account).
  *
- * @param  string companyId          - account company identifier
- * @param  string accountId          - account identifier
+ * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  int    account [optional] - account number (default: the current account number)
  * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
  *
  * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalAssets(string companyId, string accountId, bool refresh = false) {
+double GetExternalAssets(string company="", int account=NULL, bool refresh=false) {
    refresh = refresh!=0;
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId: "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
-   static string lastCompanyId = "";
-   static string lastAccountId = "";
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompany();
+      if (!StringLen(company)) return(EMPTY_VALUE);
+   }
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_VALUE);
+   }
+
+   static string lastCompany = "";
+   static int    lastAccount = 0;
    static double lastResult;
 
-   if (refresh || companyId!=lastCompanyId || accountId!=lastAccountId) {
-      string file  = GetAccountConfigPath(companyId, accountId);
+   if (refresh || company!=lastCompany || account!=lastAccount) {
+      string file = GetAccountConfigPath(company, account);
+      if (!StringLen(file)) return(EMPTY_VALUE);
+
       double value = GetIniDouble(file, "General", "ExternalAssets");
       if (IsEmptyValue(value)) return(EMPTY_VALUE);
 
-      lastCompanyId = companyId;
-      lastAccountId = accountId;
-      lastResult    = value;
+      lastCompany = company;
+      lastAccount = account;
+      lastResult  = value;
    }
    return(lastResult);
 }
@@ -3885,20 +3896,25 @@ string GetAccountCompany() {
  * actual account number with all characters except the last 4 digits replaced by wildcards.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
- * @param  int    number  [optional] - account number (default: the current account number)
+ * @param  int    account [optional] - account number (default: the current account number)
  *
  * @return string - account alias or an empty string in case of errors
  */
-string GetAccountAlias(string company="", int number=NULL) {
-   if (number < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter number: "+ number, ERR_INVALID_PARAMETER)));
-   if (!StringLen(company) || company=="0") company = GetAccountCompany();
-   if (!number)                             number = GetAccountNumber();
+string GetAccountAlias(string company="", int account=NULL) {
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompany();
+      if (!StringLen(company)) return(EMPTY_STR);
+   }
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_STR);
+   }
 
-   string result = GetGlobalConfigString("Accounts", number +".alias");
+   string result = GetGlobalConfigString("Accounts", account +".alias");
    if (!StringLen(result)) {
-      debug("GetAccountAlias(2)  alias not found for account \""+ company +":"+ number +"\"");
-      result = ""+ number;
-      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
+      logNotice("GetAccountAlias(2)  account alias not found for account "+ DoubleQuoteStr(company +":"+ account));
+      result = account;
    }
    return(result);
 }
@@ -5807,7 +5823,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icALMA(1)", error));
-      triggerWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -5850,7 +5866,7 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icFATL(1)", error));
-      triggerWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -5877,7 +5893,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    double value = iCustom(NULL, timeframe, "HalfTrend",
                           periods,                                         // int    Periods
 
-                          DodgerBlue,                                      // color  Color.UpTrend
+                          Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           CLR_NONE,                                        // color  Color.Channel
                           "Line",                                          // string Draw.Type
@@ -5897,7 +5913,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icHalfTrend(1)", error));
-      triggerWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -5928,7 +5944,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           phase,                                           // int    Phase
                           appliedPrice,                                    // string AppliedPrice
 
-                          DodgerBlue,                                      // color  Color.UpTrend
+                          Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
@@ -5947,7 +5963,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icJMA(1)", error));
-      triggerWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -5985,9 +6001,9 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           slowMaMethod,                                    // string Slow.MA.Method
                           slowMaAppliedPrice,                              // string Slow.MA.AppliedPrice
 
-                          DodgerBlue,                                      // color  MainLine.Color
+                          Blue,                                            // color  MainLine.Color
                           1,                                               // int    MainLine.Width
-                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Green,                                           // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
@@ -6005,7 +6021,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMACD(1)", error));
-      triggerWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6037,7 +6053,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           maAppliedPrice,                                  // string MA.AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
-                          Orange,                                          // color  Color.DownTrend
+                          Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Bars
@@ -6055,7 +6071,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMovingAverage(1)", error));
-      triggerWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6084,7 +6100,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           cycleLength,                                     // int    Cycle.Length
                           appliedPrice,                                    // string AppliedPrice
 
-                          RoyalBlue,                                       // color  Color.UpTrend
+                          Blue,                                            // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
                           "Dot",                                           // string Draw.Type
                           1,                                               // int    Draw.Width
@@ -6103,7 +6119,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icNonLagMA(1)", error));
-      triggerWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6147,7 +6163,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icRSI(1)", error));
-      triggerWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6190,7 +6206,7 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSATL(1)", error));
-      triggerWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6203,27 +6219,27 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
 /**
  * Load the "Stochastic of RSI" indicator and return a value.
  *
- * @param  int timeframe            - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int stochasticPeriods    - indicator parameter
- * @param  int stochasticMa1Periods - indicator parameter
- * @param  int stochasticMa2Periods - indicator parameter
- * @param  int rsiPeriods           - indicator parameter
- * @param  int iBuffer              - indicator buffer index of the value to return
- * @param  int iBar                 - bar index of the value to return
+ * @param  int timeframe              - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int stochMainPeriods       - indicator parameter
+ * @param  int stochSlowedMainPeriods - indicator parameter
+ * @param  int stochSignalPeriods     - indicator parameter
+ * @param  int rsiPeriods             - indicator parameter
+ * @param  int iBuffer                - indicator buffer index of the value to return
+ * @param  int iBar                   - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar) {
+double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Stochastic of RSI",
-                          stochasticPeriods,                               // int    Stochastic.Periods
-                          stochasticMa1Periods,                            // int    Stochastic.MA1.Periods
-                          stochasticMa2Periods,                            // int    Stochastic.MA2.Periods
+                          stochMainPeriods,                                // int    Stoch.Main.Periods
+                          stochSlowedMainPeriods,                          // int    Stoch.SlowedMain.Periods
+                          stochSignalPeriods,                              // int    Stoch.Signal.Periods
                           rsiPeriods,                                      // int    RSI.Periods
-                          CLR_NONE,                                        // color  Main.Color
-                          DodgerBlue,                                      // color  Signal.Color
+                          Blue,                                            // color  Main.Color
+                          Red,                                             // color  Signal.Color
                           "Line",                                          // string Signal.DrawType
                           1,                                               // int    Signal.DrawWidth
                           -1,                                              // int    Max.Bars
@@ -6236,7 +6252,7 @@ double icStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icStochasticOfRSI(1)", error));
-      triggerWarn("icStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6266,7 +6282,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           appliedPrice,                                    // string AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
-                          Orange,                                          // color  Color.DownTrend
+                          Red,                                             // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
                           1,                                               // int    Draw.Width
                           -1,                                              // int    Max.Bars
@@ -6284,7 +6300,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperSmoother(1)", error));
-      triggerWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6334,7 +6350,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperTrend(1)", error));
-      triggerWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6382,7 +6398,7 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTriEMA(1)", error));
-      triggerWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6411,9 +6427,9 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
                           periods,                                         // int    EMA.Periods
                           appliedPrice,                                    // string EMA.AppliedPrice
 
-                          DodgerBlue,                                      // color  MainLine.Color
+                          Blue,                                            // color  MainLine.Color
                           1,                                               // int    MainLine.Width
-                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Green,                                           // color  Histogram.Color.Upper
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
@@ -6426,7 +6442,7 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTrix(1)", error));
-      triggerWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6511,7 +6527,7 @@ void __DummyCalls() {
    GetConfigStringRaw(NULL, NULL);
    GetCurrency(NULL);
    GetCurrencyId(NULL);
-   GetExternalAssets(NULL, NULL);
+   GetExternalAssets();
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);

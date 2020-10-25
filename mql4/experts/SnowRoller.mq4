@@ -713,8 +713,8 @@ bool StopSequence(int signal) {
 bool ResetSequence(double gridbase, int level) {
    if (IsLastError())                                       return(false);
    if (sequence.status!=STATUS_STOPPED)                     return(!catch("ResetSequence(1)  "+ sequence.longName +" cannot reset "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (AutoRestart=="Off")                                  return(!triggerWarn("ResetSequence(2)  "+ sequence.longName +" cannot reset sequence to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
-   if (AutoRestart=="Reset" && start.trend.description=="") return(!triggerWarn("ResetSequence(3)  "+ sequence.longName +" cannot reset sequence without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoRestart=="Off")                                  return(!logWarn("ResetSequence(2)  "+ sequence.longName +" cannot reset sequence to \"waiting\" (AutoRestart not enabled)", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoRestart=="Reset" && start.trend.description=="") return(!logWarn("ResetSequence(3)  "+ sequence.longName +" cannot reset sequence without a trend start condition", ERR_INVALID_INPUT_PARAMETER));
 
    // memorize needed vars
    int    iCycle   = sequence.cycle;
@@ -1133,7 +1133,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
       else if (orders.type[i] == OP_UNDEFINED) {                              // a now closed pending order
-         triggerWarn("UpdateStatus(5)  "+ sequence.longName +" "+ UpdateStatus.OrderCancelledMsg(i));
+         logWarn("UpdateStatus(5)  "+ sequence.longName +" "+ UpdateStatus.OrderCancelledMsg(i));
          Orders.RemoveRecord(i);                                              // cancelled pending orders are removed from
          sizeOfTickets--;                                                     // the order arrays
          if (OrderComment() == "deleted [no money]") {
@@ -1161,7 +1161,7 @@ bool UpdateStatus(bool &gridChanged) {
             gridChanged      = true;
          }
          else if (StrStartsWithI(OrderComment(), "so:")) {                    // margin call
-            triggerWarn("UpdateStatus(8)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
+            logWarn("UpdateStatus(8)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i), ERR_NOT_ENOUGH_MONEY);
             if (StopSequence(NULL))
                SetLastError(ERR_NOT_ENOUGH_MONEY);
             return(false);
@@ -1702,7 +1702,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
                if (NE(orders.stopLoss[i], stoploss, Digits)) {
                   int error = ModifyStopLoss(i, gridbase, stoploss);
                   if (error > 0)       return(false);
-                  if (error == -1)     triggerWarn("UpdatePendingOrders(3)  "+ sequence.longName +" SL already being executed", ERR_NOT_IMPLEMENTED);
+                  if (error == -1)     logWarn("UpdatePendingOrders(3)  "+ sequence.longName +" SL already being executed", ERR_NOT_IMPLEMENTED);
                   else if (error != 0) return(!catch("UpdatePendingOrders(4)->ModifyStopLoss()  "+ sequence.longName +" unexpected return value", error));
                }
             }
@@ -2154,7 +2154,7 @@ int Grid.TrailPendingOrder(int i) {
             error = ModifyStopLoss(i, gridbase, stopLoss);  // modify stoploss of the now open position
             if (IsError(error)) {
                if (error != -1) return(NULL);               // another error
-               triggerWarn("Grid.TrailPendingOrder(7)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" entry limit and SL were already executed");
+               logWarn("Grid.TrailPendingOrder(7)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" entry limit and SL were already executed");
                stopLoss = prevStoploss;
             }
          }
@@ -4899,7 +4899,7 @@ int SetLastNetworkError(int oe[]) {
    else          { error = oes.Error(oe, 0); duration = oes.Duration(oe, 0); }
 
    if (lastNetworkError && !error) {
-      triggerWarn("SetLastNetworkError(1)  "+ sequence.longName +" network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
+      logWarn("SetLastNetworkError(1)  "+ sequence.longName +" network conditions after "+ ErrorToStr(lastNetworkError) +" successfully restored");
    }
    lastNetworkError = error;
 

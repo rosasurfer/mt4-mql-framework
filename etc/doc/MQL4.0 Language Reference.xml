@@ -6919,49 +6919,47 @@ a loss of significance in the result occurs and the function returns <span class
       caption=ObjectCreate()
       type=bool
       <content>
-      Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending
-      on the object type. Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a>
-      to set <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
-      If the function succeeds it returns <span class="const">true</span>, otherwise it returns <span class="const">false</span>. To get detailed error information call
-      <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+      Creates an object of the specified type in a chart window, with the provided name and coordinates properties. The number of required coordinates pairs depends 
+      on the object type and varies between 1 and 3.<br/>
+      <br/>
+      Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use 
+      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_XDISTANCE</span>, ...) and 
+      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_YDISTANCE</span>, ...) instead.<br/>
+      <br/>      
+      Returns the success status of the operation. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
       <br/>
 
       Notes:<br/>
-      <li>The main chart window always exists and has the index 0. Chart subwindows are indexed starting from 1.</li>
-      <li>Coordinates can be specified only in pairs of a time and a price value. Even if an object needs only a time value (for example <span class="const">OBJ_VLINE</span>)
-          a price (any value) has to be passed, too.</li>
+      <li>The main chart window always exists and has the index <span class="number">0</span>. Chart subwindows are indexed starting from <span class="number">1</span>.</li>
+      
+      <li>Coordinates must be specified in pairs of a time and a price value, even if some object types need only a single value of a pair 
+          (e.g. <span class="const">OBJ_VLINE</span> objects).</li>
       </content>
 
 <example>
-// new text object
-<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(<span class="string">&quot;text_object&quot;</span>, <span class="const">OBJ_TEXT</span>, <span class="number">0</span>, D<span class="string">'2004.02.20 12:30'</span>, <span class="number">1.0045</span>)) {
-   <span class="function">Print</span>(<span class="string">&quot;error: can't create text_object, error=&quot;</span>, <span class="function">GetLastError</span>());
-   <span class="keyword">return</span>(<span class="number">0</span>);
-}<br/>
+<span class="comment code">// new text object</span>
+<span class="function code">ObjectCreate</span>(<span class="string code">"text-id"</span>, <span class="const code">OBJ_TEXT</span>, <span class="number code">0</span>, D<span class="string code">'2004.02.20 12:30'</span>, <span class="number code">1.0045</span>);
+<br/>
 
-// new label object
-<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJ_LABEL</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)) {
-   <span class="function">Print</span>(<span class="string">&quot;error: can't create label_object, error=&quot;</span>, <span class="function">GetLastError</span>());
-   <span class="keyword">return</span>(<span class="number">0</span>);
-}<br/>
-
-<span class="function">ObjectSet</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJPROP_XDISTANCE</span>, <span class="number">200</span>);
-<span class="function">ObjectSet</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJPROP_YDISTANCE</span>, <span class="number">100</span>);
+<span class="comment code">// new label object</span>
+<span class="function code">ObjectCreate</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJ_LABEL</span>, <span class="number code">0</span>, <span class="number code">0</span>, <span class="number code">0</span>);
+<span class="function code">ObjectSet</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJPROP_XDISTANCE</span>, <span class="number code">200</span>);
+<span class="function code">ObjectSet</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJPROP_YDISTANCE</span>, <span class="number code">100</span>);
 </example>
       <parameter>
         type=string
         name=name
-        description=unique object name with a maximum length of 63 characters (may contain line breaks)
+        description=object name with a max. length of 63 characters (may contain line breaks)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=object type, can be any of the <a href="help://constants_objects">object type enumeration</a> values
+        description=object type, can be any of the <a href="help://constants_objects">object type</a> values
       </parameter>
       <parameter>
         type=int
         name=window
-        description=index of the chart window to add the object to, the range is from 0 (main chart window) to one less than <a href="help://windows_WindowsTotal">WindowsTotal()</a>
+        description=index of the chart window to create the object in
       </parameter>
       <parameter>
         type=datetime

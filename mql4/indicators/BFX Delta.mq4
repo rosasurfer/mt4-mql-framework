@@ -23,7 +23,7 @@ extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Bars              = 5000;                    // max. number of bars to display (-1: all available)
+extern int    Max.Bars              = 10000;                   // max. values to calculate (-1: all available)
 
 extern string __________________________;
 
@@ -204,7 +204,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startBar = changedBars-1;
-   if (startBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars

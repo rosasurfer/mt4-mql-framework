@@ -52,7 +52,6 @@ int onInit() {
       // order tracker
       if (!OrderTracker.Configure()) return(last_error);
    }
-
    return(catch("onInit(6)"));
 }
 

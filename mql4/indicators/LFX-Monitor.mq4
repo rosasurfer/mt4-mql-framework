@@ -274,7 +274,7 @@ int onTick() {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!triggerWarn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
 
    for (int i=0; i < size; i++) {
       if (StrStartsWith(commands[i], "cmd=account:")) {
@@ -289,7 +289,7 @@ bool onCommand(string commands[]) {
          }
          continue;
       }
-      triggerWarn("onCommand(2)  unknown command = "+ DoubleQuoteStr(commands[i]));
+      logWarn("onCommand(2)  unknown command: "+ DoubleQuoteStr(commands[i]));
    }
    return(!catch("onCommand(3)"));
 }

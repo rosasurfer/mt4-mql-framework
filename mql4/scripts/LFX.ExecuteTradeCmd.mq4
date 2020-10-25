@@ -92,10 +92,10 @@ int onStart() {
          case TC_LFX_ORDER_CLOSEBY: //CloseLfxOrderBy(); break;
          case TC_LFX_ORDER_HEDGE  : //HedgeLfxOrder  (); break;
          case TC_LFX_ORDER_MODIFY : //ModifyLfxOrder (); break;
-         case TC_LFX_ORDER_DELETE : triggerWarn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
+         case TC_LFX_ORDER_DELETE : logWarn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
                                     break;
          default:
-            triggerWarn("onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
+            logNotice("onStart(2)  unsupported trade command: "+ command);
       }
    }
 
@@ -516,7 +516,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
          if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
-      string message  = tradeAccount.alias +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      string message  = GetAccountAlias(tradeAccount.company, tradeAccount.number) +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
       if (lo.IsOpenError(lo))     message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ Pluralize(subPositions) +" opened";
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
@@ -715,7 +715,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
-      string message  = tradeAccount.alias +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      string message  = GetAccountAlias(tradeAccount.company, tradeAccount.number) +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
       if (lo.IsCloseError(lo))    message = message + " closing of position failed ("+ ErrorToStr(error) +")";
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";

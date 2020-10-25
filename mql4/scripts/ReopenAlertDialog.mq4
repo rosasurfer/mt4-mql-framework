@@ -14,7 +14,8 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   if (!ReopenAlertDialog(true))
-      logInfo("onStart(1)  Alert dialog was not opened before.");
-   return(catch("onStart(2)"));
+   if (!ReopenAlertDialog(false)) {
+      PlaySoundEx("Plonk.wav");                 // "Alert" window not found
+   }
+   return(catch("onStart(1)"));
 }
