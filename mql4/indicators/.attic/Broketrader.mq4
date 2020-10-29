@@ -27,7 +27,7 @@ extern color  Color.Short            = C'81,211,255';       // lightblue-ish
 extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
 extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
-extern int    Max.Bars               = 10000;               // max. number of bars to display (-1: all available)
+extern int    Max.Bars               = 10000;               // max. values to calculate (-1: all available)
 extern string __________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
@@ -241,7 +241,7 @@ int onTick() {
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
    if (Time[startBar]+Period()*MINUTES-1 < startTime)
       startBar = iBarShiftNext(NULL, NULL, startTime);
 

@@ -17,7 +17,7 @@
  * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE};
+int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -37,8 +37,6 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -148,7 +146,6 @@ int      lfxOrders.pendingPositions;                              // Anzahl der 
 
 // Textlabel für die einzelnen Anzeigen
 string label.instrument     = "${__NAME__}.Instrument";
-string label.ohlc           = "${__NAME__}.OHLC";
 string label.price          = "${__NAME__}.Price";
 string label.spread         = "${__NAME__}.Spread";
 string label.externalAssets = "${__NAME__}.ExternalAssets";
@@ -162,7 +159,6 @@ string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 // Font-Settings der CustomPositions-Anzeige
 string positions.fontName          = "MS Sans Serif";
 int    positions.fontSize          = 8;
-
 color  positions.fontColor.intern  = Blue;
 color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
@@ -224,20 +220,19 @@ int onTick() {
 
    HandleCommands();                                                                               // ChartCommands verarbeiten
 
-   if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
-   if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
+   if (!UpdatePrice())                     if (CheckLastError("onTick(1)")) return(last_error);    // aktualisiert die Kursanzeige oben rechts
 
    if (mode.extern) {
-      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
+      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(2)")) return(last_error);    // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdatePositions())              if (CheckLastError("onTick(3)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdateSpread())                 if (CheckLastError("onTick(6)"))  return(last_error);
-      if (!UpdatePositionSize())           if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(4)")) return(last_error);    // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdateSpread())                 if (CheckLastError("onTick(5)")) return(last_error);
+      if (!UpdatePositionSize())           if (CheckLastError("onTick(6)")) return(last_error);    // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              if (CheckLastError("onTick(7)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(8)")) return(last_error);    // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           if (CheckLastError("onTick(9)")) return(last_error);    // aktualisiert die Anzeige der Anzahl der offenen Orders
 
       // ggf. Orders überwachen
       if (mode.intern && track.orders) {
@@ -288,7 +283,7 @@ bool CheckLastError(string location) {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!triggerWarn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
 
    for (int i=0; i < size; i++) {
       if (commands[i] == "cmd=EditAccountConfig") {
@@ -329,7 +324,7 @@ bool onCommand(string commands[]) {
          ArrayResize(positions.config.comments, 0);
          continue;
       }
-      triggerWarn("onCommand(2)  unknown command \""+ commands[i] +"\"");
+      logWarn("onCommand(2)  unknown command: \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
 }
@@ -683,7 +678,7 @@ int ShowTradeHistory() {
    string   sOpenPrice, sClosePrice, comment, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
    // Anzeigekonfiguration auslesen
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.alias);
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
    bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
@@ -985,7 +980,6 @@ bool CreateLabels() {
    // Label definieren
    string programName = ProgramName();
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
-   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
    label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
    label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", programName);
@@ -1012,18 +1006,6 @@ bool CreateLabels() {
       else if (StrEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
-
-   // OHLC-Label
-   if (ObjectFind(label.ohlc) == 0)
-      ObjectDelete(label.ohlc);
-   if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 110);
-      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
-      ObjectSetText(label.ohlc, " ", 1);
-      RegisterObject(label.ohlc);
-   }
-   else GetLastError();
 
    // Price-Label
    if (ObjectFind(label.price) == 0)
@@ -1242,28 +1224,28 @@ bool UpdatePositions() {
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
       if (positions.absoluteProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    275,   362,      423};
+         // col.xShifts[] = {20,   66,    149, 174,      240,    279,   366,      427};
          ArrayResize(col.xShifts, 8);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
          col.xShifts[3] = 174;
          col.xShifts[4] = 240;
-         col.xShifts[5] = 275;
-         col.xShifts[6] = 362;
-         col.xShifts[7] = 423;
+         col.xShifts[5] = 279;
+         col.xShifts[6] = 366;
+         col.xShifts[7] = 427;
       }
       else {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    275,      336};
+         // col.xShifts[] = {20,   66,    149, 174,      240,    279,      340};
          ArrayResize(col.xShifts, 7);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
          col.xShifts[3] = 174;
          col.xShifts[4] = 240;
-         col.xShifts[5] = 275;
-         col.xShifts[6] = 336;
+         col.xShifts[5] = 279;
+         col.xShifts[6] = 340;
       }
       cols                = ArraySize(col.xShifts);
       percentCol          = cols - 2;
@@ -1521,62 +1503,6 @@ bool UpdateStopoutLevel() {
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateStopoutLevel(2)", error));
-}
-
-
-/**
- * Aktualisiert die OHLC-Anzeige.
- *
- * @return bool - Erfolgsstatus
- */
-bool UpdateOHLC() {
-   // TODO: noch nicht zufriedenstellend implementiert
-   return(true);
-
-
-   // (1) Zeit des letzten Ticks holen
-   datetime lastTickTime = MarketInfo(Symbol(), MODE_TIME);
-   if (!lastTickTime) {                                                          // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      if (!SetLastError(GetLastError()))
-         SetLastError(ERR_SYMBOL_NOT_AVAILABLE);
-      return(false);
-   }
-
-
-   // (2) Beginn und Ende der aktuellen Session ermitteln
-   datetime sessionStart = GetSessionStartTime.srv(lastTickTime);                // throws ERR_MARKET_CLOSED
-   if (sessionStart == NaT) {
-      if (__ExecutionContext[EC.mqlError] != ERR_MARKET_CLOSED)                  // am Wochenende die letzte Session verwenden
-         return(false);
-      sessionStart = GetPrevSessionStartTime.srv(lastTickTime);
-   }
-   datetime sessionEnd = sessionStart + 1*DAY;
-
-
-   // (3) Baroffsets von Sessionbeginn und -ende ermitteln
-   int openBar = iBarShiftNext(NULL, NULL, sessionStart);
-      if (openBar == EMPTY_VALUE) return(false);                                 // Fehler
-      if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart
-   int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
-      if (closeBar == EMPTY_VALUE) return(false);
-      if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart
-   if (openBar < closeBar)
-      return(!catch("UpdateOHLC(1)  illegal open/close bar offsets for session from="+ GmtTimeFormat(sessionStart, "%a %d.%m.%Y %H:%M") +" (bar="+ openBar +")  to="+ GmtTimeFormat(sessionEnd, "%a %d.%m.%Y %H:%M") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
-
-
-   // (4) Baroffsets von Session-High und -Low ermitteln
-   int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
-   int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
-
-
-   // (5) Anzeige aktualisieren
-   string strOHLC = "O="+ NumberToStr(Open[openBar], PriceFormat) +"   H="+ NumberToStr(High[highBar], PriceFormat) +"   L="+ NumberToStr(Low[lowBar], PriceFormat);
-   ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
-
-   int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
-      return(true);
-   return(!catch("UpdateOHLC(2)", error));
 }
 
 
@@ -1961,7 +1887,7 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(1)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -2989,7 +2915,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
    else if (type == TERM_OPEN_ALL) {
       // offene Positionen aller Symbole eines Zeitraumes
-      triggerWarn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
+      logWarn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
    }
 
    else if (type==TERM_HISTORY_SYMBOL || type==TERM_HISTORY_ALL) {
@@ -3565,10 +3491,10 @@ bool ProcessLfxTerminalMessage(string message) {
 
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(!triggerWarn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\""));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(!logWarn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\""));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(!triggerWarn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)"));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(!triggerWarn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)"));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(!logWarn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)"));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(!logWarn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)"));
    // LFX-Parameter
    double profit;
    bool   success;
@@ -3593,7 +3519,7 @@ bool ProcessLfxTerminalMessage(string message) {
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
       if (success) { if (IsLog()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {          triggerWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      else         {              logWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
@@ -3612,7 +3538,7 @@ bool ProcessLfxTerminalMessage(string message) {
    }
 
    // ???
-   return(!triggerWarn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\""));
+   return(!logWarn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\""));
 }
 
 
@@ -3648,7 +3574,6 @@ bool RestoreLfxOrders(bool fromCache) {
       }
       return(true);
    }
-
 
    // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden im Cache noch vorhandene Daten vorm Überschreiben gespeichert.
    if (ArrayRange(lfxOrders.iCache, 0) > 0) {
@@ -4064,7 +3989,7 @@ bool onOrderFail(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
       if (IsLog()) logInfo("onOrderFail(2)  "+ message);
 
@@ -4103,7 +4028,7 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
       if (IsLog()) logInfo("onPositionOpen(2)  "+ message);
 
@@ -4147,7 +4072,7 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
       if (IsLog()) logInfo("onPositionClose(2)  "+ message);
 
@@ -4169,11 +4094,14 @@ bool onPositionClose(int tickets[][]) {
  * @return bool - success status
  */
 bool EditAccountConfig() {
-   string files[];
+   string file, files[];
 
-   if (mode.extern)
-      ArrayPushString(files, GetAccountConfigPath());
-   ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
+   if (mode.extern) {
+      file = GetAccountConfigPath(); if (!StringLen(file)) return(false);
+      ArrayPushString(files, file);
+   }
+   file = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
+   ArrayPushString(files, file);
 
    return(EditFiles(files));
 }
@@ -4209,8 +4137,6 @@ string InputsToStr() {
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   datetime GetPrevSessionStartTime.srv(datetime serverTime);
-   datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
    int      RegisterObject(string label);

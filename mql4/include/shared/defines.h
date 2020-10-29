@@ -212,8 +212,8 @@
 
 
 // commission calculation modes, see GetCommission()
-#define COMMISSION_MODE_MONEY                   0        // commission value in account currency for 1 lot
-#define COMMISSION_MODE_MARKUP                  1        // commission markup in quote currency
+#define MODE_MONEY                              0        // commission value in account currency for 1 lot
+#define MODE_MARKUP                             1        // commission markup in quote currency
 
 
 // file system related constants
@@ -318,7 +318,8 @@
 #define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // executable without history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // executable without chart history (scripts only)
+#define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
 
 
 // MT4 internal messages

@@ -250,7 +250,7 @@ double iMTF(int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iMTF(1)", error));
-      triggerWarn("iMTF(2)  "+ TimeframeDescription(systemTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("iMTF(2)  "+ TimeframeDescription(systemTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts
@@ -316,7 +316,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iBroketrader(1)", error));
-      triggerWarn("iBroketrader(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("iBroketrader(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts
