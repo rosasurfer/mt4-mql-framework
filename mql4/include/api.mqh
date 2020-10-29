@@ -9,7 +9,8 @@
 
 
 // include/configuration.mqh
-string   GetAccountConfigPath(string companyId = "", string accountId = "");;
+string   GetAccountConfigPath(string company="", int account=NULL);;
+
 
 bool     IsConfigKey              (string section, string key);;
 bool     IsAccountConfigKey       (string section, string key);;
@@ -55,9 +56,6 @@ bool     WriteIniString(string fileName, string section, string key, string valu
 // include/log.mqh
 int      catch(string location, int error=NO_ERROR, bool popOrder=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
-int      triggerWarn (string message, int error=NO_ERROR);;
-int      triggerError(string location, int error, bool popOrder=false);;
-int      triggerFatal(string location, int error, bool popOrder=false);;
 
 bool     IsLog();;
 bool     IsLogDebug();;
@@ -142,14 +140,14 @@ int      Floor(double value);;
 void     ForceAlert(string message);;
 string   FullModuleName();;
 bool     GE(double double1, double double2, int digits = 8);;
-string   GetAccountAlias(string company="", int number=NULL);;
+string   GetAccountAlias(string company="", int account=NULL);;
 string   GetAccountCompany();;
 int      GetAccountNumberFromAlias(string company, string alias);;
 string   GetClassName(int hWnd);;
-double   GetCommission(double lots=1.0, int mode=COMMISSION_MODE_MONEY);;
+double   GetCommission(double lots=1.0, int mode=MODE_MONEY);;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
-double   GetExternalAssets(string companyId, string accountId, bool refresh = false);;
+double   GetExternalAssets(string company="", int account=NULL, bool refresh=false);;
 datetime GetFxtTime();;
 string   GetMqlFilesPath();;
 datetime GetServerTime();;
@@ -166,7 +164,7 @@ double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string m
 double   icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar);;
 double   icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSATL(NULL, NULL, NULL);;
-double   icStochasticOfRSI(int timeframe, int stochasticPeriods, int stochasticMa1Periods, int stochasticMa2Periods, int rsiPeriods, int iBuffer, int iBar);;
+double   icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar);;
 double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 double   icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
@@ -320,7 +318,7 @@ void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
-void     @Trend.UpdateDirection(double &values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
+bool     @Trend.UpdateDirection(double &values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
 bool     ConfigureSignal(string name, string &configValue, bool &enabled);;
 bool     ConfigureSignalMail(string configValue, bool &enabled, string &sender, string &receiver);;

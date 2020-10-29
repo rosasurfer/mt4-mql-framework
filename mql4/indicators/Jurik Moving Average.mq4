@@ -16,6 +16,88 @@
 int   __InitFlags[];
 int __DeinitFlags[];
 
+
+
+/*
+www.tradingview.com
+-------------------
+
+//@version=1
+// Copyright (c) 2007-present Jurik Research and Consulting. All rights reserved.
+// Copyright (c) 2018-present, Alex Orekhov (everget)
+// Jurik Moving Average script may be freely distributed under the MIT license.
+study("Jurik Moving Average", shorttitle="JMA", overlay=true)
+
+length = input(title="Length", type=integer, defval=14)
+power = input(title="Power", type=integer, defval=1)
+rMult = input(title="R Multiplier", type=float, step=0.1, defval=2.5)
+src = input(title="Source", type=source, defval=close)
+
+jma(src, length, power, rMult) =>
+    beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2)
+    alpha = pow(beta, power)
+
+    e0 = 0.0
+    e1 = 0.0
+    e2 = 0.0
+    jma = 0.0
+
+    e0 := (1 - alpha) * src + alpha * nz(e0[1])
+    e1 := (src - e0) * (1 - beta) + beta * nz(e1[1])
+    e2 := pow(1 - alpha, 2) * (e0 + rMult * e1 - nz(jma[1])) + pow(alpha, 2) * nz(e2[1])
+    jma := nz(jma[1]) + e2
+
+plot(jma(src, length, power, rMult), title="JMA", linewidth=2, color=#6d1e7f, transp=0)
+-----------------------------------------------------------------------------------------------------------------------------
+
+//@version=2
+// Copyright (c) 2007-present Jurik Research and Consulting. All rights reserved.
+// Copyright (c) 2018-present, Alex Orekhov (everget)
+// Jurik Moving Average script may be freely distributed under the MIT license.
+study("Jurik Moving Average", shorttitle="JMA", overlay=true)
+
+length = input(title="Length", type=integer, defval=7)
+phase = input(title="Phase", type=integer, defval=50)
+power = input(title="Power", type=integer, defval=2)
+src = input(title="Source", type=source, defval=close)
+highlightMovements = input(title="Highlight Movements ?", type=bool, defval=true)
+
+phaseRatio = phase < -100 ? 0.5 : phase > 100 ? 2.5 : phase / 100 + 1.5
+
+beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2)
+alpha = pow(beta, power)
+
+jma = 0.0
+
+e0 = 0.0
+e0 := (1 - alpha) * src + alpha * nz(e0[1])
+
+e1 = 0.0
+e1 := (src - e0) * (1 - beta) + beta * nz(e1[1])
+
+e2 = 0.0
+e2 := (e0 + phaseRatio * e1 - nz(jma[1])) * pow(1 - alpha, 2) + pow(alpha, 2) * nz(e2[1])
+
+jma := e2 + nz(jma[1])
+
+jmaColor = highlightMovements ? (jma > jma[1] ? green : red) : #6d1e7f
+plot(jma, title="JMA", linewidth=2, color=jmaColor, transp=0)
+-----------------------------------------------------------------------------------------------------------------------------
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Periods              = 14;
@@ -26,7 +108,7 @@ extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
-extern int    Max.Bars             = 5000;               // max. number of bars to display (-1: all available)
+extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -236,7 +318,7 @@ int onTick() {
    }
 
    // calculate start bar
-   if (Bars < 32) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (Bars < 32) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
    int validBars = UnchangedBars, error;
    if (validBars > 0) validBars--;
    int oldestBar = Bars-1;

@@ -333,23 +333,14 @@ int start() {
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
       if      (prev_error == ERS_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
       else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) UnchangedBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
-      if      (__STATUS_HISTORY_INSUFFICIENT           ) UnchangedBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
+      if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
    }
    if (!UnchangedBars) ShiftedBars = 0;
    ChangedBars = Bars - UnchangedBars;                                              // ChangedBars aktualisieren (UnchangedBars wurde evt. neu gesetzt)
 
-
-   /*
-   // (6) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
-   if (ArraySize(buffer) == 0)
-      return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // kann bei Terminal-Start auftreten
-   */
-
-   __STATUS_HISTORY_UPDATE       = false;
-   __STATUS_HISTORY_INSUFFICIENT = false;
+   __STATUS_HISTORY_UPDATE = false;
 
    ArrayCopyRates(__rates);
 
@@ -357,24 +348,21 @@ int start() {
       if (CheckErrors("start(8)")) return(last_error);
    }
 
-
-   // (7) bei Bedarf Input-Dialog aufrufen
+   // bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       return(_last_error(start.RelaunchInputDialog(), CheckErrors("start(9)")));
    }
 
+   // Main-Funktion aufrufen
+   error = onTick();
+   if (error && error!=last_error) SetLastError(error);
 
-   // (8) Main-Funktion aufrufen
-   onTick();
-
-
-   // (9) check errors
+   // check errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       CheckErrors("start(10)", error);
-   if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
-   else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
+   if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
 
@@ -491,18 +479,18 @@ int DeinitReason() {
  * @return bool - whether the flag __STATUS_OFF is set
  */
 bool CheckErrors(string location, int setError = NULL) {
-   // (1) check and signal DLL errors
+   // check DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
 
-
-   // (2) check MQL errors
+   // check MQL errors
    int mql_error = __ExecutionContext[EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
+      case ERR_HISTORY_INSUFFICIENT:
       case ERS_HISTORY_UPDATE:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
@@ -512,10 +500,10 @@ bool CheckErrors(string location, int setError = NULL) {
          __STATUS_OFF.reason = mql_error;                            // MQL errors have higher severity than DLL errors
    }
 
-
-   // (3) check last_error
+   // check last_error
    switch (last_error) {
       case NO_ERROR:
+      case ERR_HISTORY_INSUFFICIENT:
       case ERS_HISTORY_UPDATE:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
@@ -525,8 +513,7 @@ bool CheckErrors(string location, int setError = NULL) {
          __STATUS_OFF.reason = last_error;                           // local errors have higher severity than library errors
    }
 
-
-   // (4) check uncatched errors
+   // check uncatched errors
    if (!setError) setError = GetLastError();
    if (setError && 1) {
       catch(location, setError);
@@ -534,8 +521,7 @@ bool CheckErrors(string location, int setError = NULL) {
       __STATUS_OFF.reason = setError;                                // all uncatched errors are terminating errors
    }
 
-
-   // (5) update variable last_error
+   // update variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 

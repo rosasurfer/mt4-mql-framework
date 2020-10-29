@@ -1,40 +1,37 @@
 /**
  * Error reporting and logging
  *
- * +----------------+--------------------------------------------+-------------------------+
- * | Function       | Functionality                              | Notes                   |
- * +----------------+--------------------------------------------+-------------------------+
- * | debug()        | send messages to the system debugger       | no configuration        |
- * | triggerWarn()  | enforce log(LOG_WARN)                      | overrides configuration |
- * | triggerError() | enforce log(LOG_ERROR) + SetLastError()    | overrides configuration |
- * | triggerFatal() | enforce log(LOG_FATAL) + SetLastError()    | overrides configuration |
- * | catch()        | if (GetLastError()) triggerError()         | error detection         |
- * +----------------+--------------------------------------------+-------------------------+
- * | IsLog()        | whether any loglevel is active             |                         |
- * | IsLogDebug()   | whether LOG_DEBUG is active                |                         |
- * | IsLogInfo()    | whether LOG_INFO is active                 |                         |
- * | IsLogNotice()  | whether LOG_NOTICE is active               |                         |
- * | IsLogWarn()    | whether LOG_WARN is active                 |                         |
- * | IsLogError()   | whether LOG_ERROR is active                |                         |
- * | IsLogFatal()   | whether LOG_FATAL is active                |                         |
- * +----------------+--------------------------------------------+-------------------------+
- * | log()          | dispatch messages to enabled log appenders | configurable            |
- * | logDebug()     | alias of log(LOG_DEBUG)                    |                         |
- * | logInfo()      | alias of log(LOG_INFO)                     |                         |
- * | logNotice()    | alias of log(LOG_NOTICE)                   |                         |
- * | logWarn()      | alias of log(LOG_WARN)                     |                         |
- * | logError()     | alias of log(LOG_ERROR)                    |                         |
- * | logFatal()     | alias of log(LOG_FATAL)                    |                         |
- * +----------------+--------------------------------------------+-------------------------+
- * | log2Terminal() | TerminalLogAppender                        | configurable            |
- * | log2Alert()    | TerminalAlertAppender                      | configurable            |
- * | log2Debugger() | DebugOutputAppender                        | configurable            |
- * | log2File()     | LogfileAppender                            | configurable            |
- * | log2Mail()     | MailAppender                               | configurable            |
- * | log2SMS()      | SMSAppender                                | configurable            |
- * +----------------+--------------------------------------------+-------------------------+
- * | SetLogfile()   | set a logfile for the LogfileAppender      | per MQL program         |
- * +----------------+--------------------------------------------+-------------------------+
+ * +----------------+-------------------------------------------------+------------------+
+ * | Function       | Functionality                                   | Notes            |
+ * +----------------+-------------------------------------------------+------------------+
+ * | debug()        | send a message to the system debugger           | no configuration |
+ * | catch()        | if (GetLastError()) logError() + SetLastError() | error detection  |
+ * +----------------+-------------------------------------------------+------------------+
+ * | IsLog()        | whether any loglevel is active                  |                  |
+ * | IsLogDebug()   | whether LOG_DEBUG is active                     |                  |
+ * | IsLogInfo()    | whether LOG_INFO is active                      |                  |
+ * | IsLogNotice()  | whether LOG_NOTICE is active                    |                  |
+ * | IsLogWarn()    | whether LOG_WARN is active                      |                  |
+ * | IsLogError()   | whether LOG_ERROR is active                     |                  |
+ * | IsLogFatal()   | whether LOG_FATAL is active                     |                  |
+ * +----------------+-------------------------------------------------+------------------+
+ * | log()          | dispatch a message to active log appenders      | configurable     |
+ * | logDebug()     | alias of log(LOG_DEBUG)                         |                  |
+ * | logInfo()      | alias of log(LOG_INFO)                          |                  |
+ * | logNotice()    | alias of log(LOG_NOTICE)                        |                  |
+ * | logWarn()      | alias of log(LOG_WARN)                          |                  |
+ * | logError()     | alias of log(LOG_ERROR)                         |                  |
+ * | logFatal()     | alias of log(LOG_FATAL)                         |                  |
+ * +----------------+-------------------------------------------------+------------------+
+ * | log2Terminal() | TerminalLogAppender                             | configurable     |
+ * | log2Alert()    | TerminalAlertAppender                           | configurable     |
+ * | log2Debugger() | DebugOutputAppender                             | configurable     |
+ * | log2File()     | LogfileAppender                                 | configurable     |
+ * | log2Mail()     | MailAppender                                    | configurable     |
+ * | log2SMS()      | SMSAppender                                     | configurable     |
+ * +----------------+-------------------------------------------------+------------------+
+ * | SetLogfile()   | set a logfile for the LogfileAppender           | per MQL program  |
+ * +----------------+-------------------------------------------------+------------------+
  */
 
 
@@ -72,121 +69,6 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
 
 
 /**
- * Trigger a warning with an optional error code and override a disabled logging. Don't set the error.
- *
- * @param  string message          - location identifier and/or warning message
- * @param  int    error [optional] - error code (default: none)
- *
- * @return int - the same error
- */
-int triggerWarn(string message, int error = NO_ERROR) {
-   static bool isRecursion = false; if (isRecursion) {
-      string msg = "triggerWarn(1)  recursion ("+ message +")";
-      Alert(msg, ", error: ", error);                       // should never happen
-      return(debug(msg, error, LOG_ERROR));
-   }
-   isRecursion = true;
-
-   int oldLevel = __ExecutionContext[EC.loglevel];          // initialize the logger and store the existing loglevel
-   if (!oldLevel) {
-      log("", NULL, LOG_OFF);
-      oldLevel = __ExecutionContext[EC.loglevel];
-   }
-
-   if (oldLevel > LOG_WARN)
-      ec_SetLoglevel(__ExecutionContext, LOG_WARN);         // override the current loglevel
-
-   log(message, error, LOG_WARN);                           // handle the warning
-
-   if (oldLevel > LOG_WARN)
-      ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
-
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
- * Trigger an error and override a disabled logging.
- *
- * @param  string location            - error location identifier and/or error message
- * @param  int    error               - error code
- * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
- *
- * @return int - the same error
- */
-int triggerError(string location, int error, bool popOrder=false) {
-   popOrder = popOrder!=0;
-   static bool isRecursion = false; if (isRecursion) {
-      string msg = "triggerError(1)  recursion ("+ location +")";
-      Alert(msg, ", error: ", error);                       // should never happen
-      return(debug(msg, error, LOG_ERROR));
-   }
-   isRecursion = true;
-
-   int oldLevel = __ExecutionContext[EC.loglevel];          // initialize the logger and store the existing loglevel
-   if (!oldLevel) {
-      log("", NULL, LOG_OFF);
-      oldLevel = __ExecutionContext[EC.loglevel];
-   }
-
-   if (oldLevel > LOG_ERROR)
-      ec_SetLoglevel(__ExecutionContext, LOG_ERROR);        // override the current loglevel
-
-   log(location, error, LOG_ERROR);                         // handle the error
-
-   if (oldLevel > LOG_ERROR)
-      ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
-
-   SetLastError(error);                                     // set the error
-
-   if (popOrder) OrderPop(location);
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
- * Trigger a fatal error and override a disabled logging.
- *
- * @param  string location            - error location identifier and/or error message
- * @param  int    error               - error code
- * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
- *
- * @return int - the same error
- */
-int triggerFatal(string location, int error, bool popOrder=false) {
-   popOrder = popOrder!=0;
-   static bool isRecursion = false; if (isRecursion) {
-      string msg = "triggerFatal(1)  recursion ("+ location +")";
-      Alert(msg, ", error: ", error);                       // should never happen
-      return(debug(msg, error, LOG_ERROR));
-   }
-   isRecursion = true;
-
-   int oldLevel = __ExecutionContext[EC.loglevel];          // initialize the logger and store the existing loglevel
-   if (!oldLevel) {
-      log("", NULL, LOG_OFF);
-      oldLevel = __ExecutionContext[EC.loglevel];
-   }
-
-   if (oldLevel > LOG_FATAL)
-      ec_SetLoglevel(__ExecutionContext, LOG_FATAL);        // override the current loglevel
-
-   log(location, error, LOG_FATAL);                         // handle the error
-
-   if (oldLevel > LOG_FATAL)
-      ec_SetLoglevel(__ExecutionContext, oldLevel);         // restore the old loglevel
-
-   SetLastError(error);                                     // set the error
-
-   if (popOrder) OrderPop(location);
-   isRecursion = false;
-   return(error);
-}
-
-
-/**
  * Check for and handle runtime errors. If an error occurred the error is signaled, logged and stored in the global var
  * "last_error". After return the internal MQL error as returned by GetLastError() is always reset.
  *
@@ -211,7 +93,8 @@ int catch(string location, int error=NO_ERROR, bool popOrder=false) {
       }
       isRecursion = true;
 
-      triggerError(location, error);
+      log(location, error, LOG_ERROR);                         // handle the error
+      SetLastError(error);                                     // set the error
    }
 
    if (popOrder) OrderPop(location);
@@ -329,7 +212,8 @@ int log(string message, int error, int level) {
       }
       else {
          key = ProgramName();
-         value = GetConfigString("Log", key, "info");                                              // live default: info
+         if (!IsConfigKey("Log", key)) key = "Online";
+         value = GetConfigString("Log", key, "info");                                              // online default: info
       }
       configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
@@ -697,9 +581,6 @@ int log2Terminal(string message, int error, int level) {
    // dummy calls
    catch(NULL);
    debug(NULL);
-   triggerWarn(NULL);
-   triggerError(NULL, NULL);
-   triggerFatal(NULL, NULL);
 
    IsLog();
    IsLogDebug();
