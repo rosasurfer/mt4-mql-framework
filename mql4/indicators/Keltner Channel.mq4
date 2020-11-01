@@ -28,7 +28,7 @@ extern int    ATR.Periods     = 60;
 extern double ATR.Multiplier  = 1;
 extern color  Bands.Color     = Blue;
 
-extern int    Max.Bars        = 10000;                            // max. number of values to calculate (-1: all available)
+extern int    Max.Bars        = 10000;                            // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

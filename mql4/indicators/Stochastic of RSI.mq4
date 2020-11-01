@@ -32,7 +32,7 @@ extern color  Signal.Color             = Red;
 extern string Signal.DrawType          = "Line* | Dot";
 extern int    Signal.DrawWidth         = 1;
 
-extern int    Max.Bars                 = 10000;          // max. number of values to calculate (-1: all available)
+extern int    Max.Bars                 = 10000;          // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -14,8 +14,8 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   if (!ReopenAlertDialog(true)) {
-      PlaySoundEx("Plonk.wav");        // "Alert" dialog window not found
+   if (!ReopenAlertDialog(false)) {
+      PlaySoundEx("Plonk.wav");                 // "Alert" window not found
    }
    return(catch("onStart(1)"));
 }
