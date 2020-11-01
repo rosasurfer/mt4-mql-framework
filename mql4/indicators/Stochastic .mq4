@@ -195,22 +195,25 @@ bool UpdateSignalMarker(int bar) {
    }
    string label = StringConcatenate(prefix, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
    bool objExists = !ObjectFind(label);
+   double price;
 
-   if (trend[bar]==1 || trend[bar]==-1) {                      // set marker long|short
+   if (trend[bar]==1 || trend[bar]==-1) {                                     // set marker long|short
       if (!objExists) {
          ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
          RegisterObject(label);
       }
-      ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar);
+      else               price = High[bar] + iATR(NULL, NULL, 10, bar);
+
+      ObjectSet(label, OBJPROP_ARROWCODE, ifInt(trend[bar]==1, 233, 234));    // arrow up/down
       ObjectSet(label, OBJPROP_COLOR,     ifInt(trend[bar]==1, SignalColor.Long, SignalColor.Short));
       ObjectSet(label, OBJPROP_TIME1,     Time[bar]);
-      ObjectSet(label, OBJPROP_PRICE1,    Close[bar]);
-      ObjectSetText(label, ifString(trend[bar]==1, "Long", "Short"));
+      ObjectSet(label, OBJPROP_PRICE1,    price);
+      ObjectSetText(label, ifString(trend[bar]==1, "Long", "Short") +" @ "+ NumberToStr(Close[bar], PriceFormat));
    }
-   else if (objExists) {                                       // unset existing marker
+   else if (objExists) {                                                      // unset existing marker
       ObjectDelete(label);
    }
-
    return(!catch("UpdateSignalMarker(1)"));
 }
 
