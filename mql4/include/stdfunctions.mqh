@@ -77,7 +77,7 @@ string ErrorDescription(int error) {
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                  );    //    150
 
       // runtime errors
-      case ERR_NO_MQLERROR                : return("no MQL error"                                              );    //   4000 never generated error
+      case ERR_NO_MQLERROR                : return("never generated error"                                     );    //   4000 never generated error
       case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                    );    //   4001
       case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                  );    //   4002
       case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                         );    //   4003
