@@ -29,7 +29,7 @@ extern color  Color.UpTrend        = RoyalBlue;
 extern color  Color.DownTrend      = Gold;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
-extern int    Max.Bars             = 10000;              // max. number of values to calculate (-1: all available)
+extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
