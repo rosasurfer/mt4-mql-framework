@@ -193,7 +193,7 @@ bool UpdateSignalMarker(int bar) {
    static string prefix = ""; if (!StringLen(prefix)) {
       prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
-   string label = StringConcatenate(prefix, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
+   string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES, TIME_DATE|TIME_MINUTES));
    bool objExists = !ObjectFind(label);
    double price;
 
@@ -202,8 +202,8 @@ bool UpdateSignalMarker(int bar) {
          ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
          RegisterObject(label);
       }
-      if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar);
-      else               price = High[bar] + iATR(NULL, NULL, 10, bar);
+      if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar) * 1.1;
+      else               price = High[bar] + iATR(NULL, NULL, 10, bar) * 1.1;
 
       ObjectSet(label, OBJPROP_ARROWCODE, ifInt(trend[bar]==1, 233, 234));    // arrow up/down
       ObjectSet(label, OBJPROP_COLOR,     ifInt(trend[bar]==1, SignalColor.Long, SignalColor.Short));
