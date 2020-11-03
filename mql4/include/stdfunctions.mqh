@@ -6217,52 +6217,6 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
 
 
 /**
- * Load the "Stochastic of RSI" indicator and return a value.
- *
- * @param  int timeframe              - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int stochMainPeriods       - indicator parameter
- * @param  int stochSlowedMainPeriods - indicator parameter
- * @param  int stochSignalPeriods     - indicator parameter
- * @param  int rsiPeriods             - indicator parameter
- * @param  int iBuffer                - indicator buffer index of the value to return
- * @param  int iBar                   - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, "Stochastic of RSI",
-                          stochMainPeriods,                                // int    Stoch.Main.Periods
-                          stochSlowedMainPeriods,                          // int    Stoch.SlowedMain.Periods
-                          stochSignalPeriods,                              // int    Stoch.Signal.Periods
-                          rsiPeriods,                                      // int    RSI.Periods
-                          Blue,                                            // color  Main.Color
-                          Red,                                             // color  Signal.Color
-                          "Line",                                          // string Signal.DrawType
-                          1,                                               // int    Signal.DrawWidth
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ______________________
-                          lpSuperContext,                                  // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icStochasticOfRSI(1)", error));
-      logWarn("icStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Load "Ehlers 2-Pole-SuperSmoother" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
@@ -6548,7 +6502,6 @@ void __DummyCalls() {
    icNonLagMA(NULL, NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
    icSATL(NULL, NULL, NULL);
-   icStochasticOfRSI(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
