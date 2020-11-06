@@ -2928,19 +2928,17 @@ bool MQL.IsFile(string filename) {
  * @return string - directory path not ending with a slash or an empty string in case of errors
  */
 string GetMqlFilesPath() {
-   static string filesDir;
-
-   if (!StringLen(filesDir)) {
+   static string filesDir; if (!StringLen(filesDir)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
-         if (!StringLen(dataDirectory))
-            return(EMPTY_STR);
+         if (!StringLen(dataDirectory)) return(EMPTY_STR);
+
          filesDir = dataDirectory +"\\tester\\files";
       }
       else {
          string mqlDirectory = GetMqlDirectoryA();
-         if (!StringLen(mqlDirectory))
-            return(EMPTY_STR);
+         if (!StringLen(mqlDirectory)) return(EMPTY_STR);
+
          filesDir = mqlDirectory +"\\files";
       }
    }
