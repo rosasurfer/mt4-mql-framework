@@ -69,8 +69,9 @@ int onInitUser() {
    long.enabled     = (sequence.directions & D_LONG  && 1);
    short.enabled    = (sequence.directions & D_SHORT && 1);
    SS.SequenceName();
-
    logInfo("onInitUser(8)  sequence "+ sequence.name +" created");
+
+   if (!IsTestSequence()) SetLogfile(GetLogFilename());        // set a custom logfile
    return(catch("onInitUser(9)"));
 }
 

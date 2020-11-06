@@ -20,7 +20,7 @@
  * @todo  in tester generate consecutive sequence ids
  */
 #include <stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -669,6 +669,36 @@ double CalculateLots(int direction, int level) {
 
 
 /**
+ * Return the full name of the instance logfile.
+ *
+ * @return string - filename or an empty string in tester (no separate logfile)
+ */
+string GetLogFilename() {
+   string name = GetStatusFilename();
+   if (!StringLen(name)) return("");
+   return(StrLeft(name, -3) +"log");
+}
+
+
+/**
+ * Return the full name of the instance status file.
+ *
+ * @return string - filename or an empty string in case of errors
+ */
+string GetStatusFilename() {
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
+
+   string subdirectory = "\\presets\\";
+   if (!IsTestSequence())
+      subdirectory = subdirectory + GetAccountCompany() +"\\";
+
+   string baseName = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
+
+   return(GetMqlFilesPath() + subdirectory + baseName);
+}
+
+
+/**
  * Open a market position for the specified grid level and add the order data to the order arrays. There is no check whether
  * the specified grid level matches the current market price.
  *
@@ -791,6 +821,17 @@ bool Grid.AddStop(int direction, int level) {
 
    int index = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
    return(!IsEmpty(index));
+}
+
+
+/**
+ * Whether the current sequence was created in the tester. Considers the fact that a test sequence may be loaded into an
+ * online chart after the test (for visualization).
+ *
+ * @return bool
+ */
+bool IsTestSequence() {
+   return(sequence.isTest || IsTesting());
 }
 
 
@@ -1113,12 +1154,10 @@ void SS.PLStats() {
  * ShowStatus: Update the string representations of standard and long sequence name.
  */
 void SS.SequenceName() {
-   if (IsChart()) {
-      sequence.name = "";
-      if (long.enabled)  sequence.name = sequence.name +"L";
-      if (short.enabled) sequence.name = sequence.name +"S";
-      sequence.name = sequence.name +"."+ sequence.id;
-   }
+   sequence.name = "";
+   if (long.enabled)  sequence.name = sequence.name +"L";
+   if (short.enabled) sequence.name = sequence.name +"S";
+   sequence.name = sequence.name +"."+ sequence.id;
 }
 
 
