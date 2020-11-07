@@ -40,12 +40,12 @@
  *
  * @param  string message             - message
  * @param  int    error    [optional] - error code (default: none)
- * @param  int    loglevel [optional] - loglevel to add to the message (default: none)
+ * @param  int    loglevel [optional] - loglevel to add to the message (default: debug)
  *
  * @return int - the same error
  */
-int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
-   // note: This function must not call MQL library functions. Using DLLs is ok.
+int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
+   // Note: This function must not call MQL library functions. Using DLLs is ok.
    if (!IsDllsAllowed()) {
       Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");  // directly alert instead
       return(error);
@@ -57,8 +57,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=NULL) {
    isRecursion = true;
 
    string sPrefix   = "MetaTrader"; if (This.IsTesting()) sPrefix = StringConcatenate("Tester ", GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"));
-   string sLoglevel = ""; if (loglevel && loglevel!=LOG_INFO) sLoglevel = LoglevelDescription(loglevel);
-   sLoglevel = StrPadRight(sLoglevel, 6);
+   string sLoglevel = StrPadRight(ifString(loglevel==LOG_INFO, "", LoglevelDescription(loglevel)), 6);
    string sError    = ""; if (error != 0) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
    OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
@@ -617,7 +616,6 @@ int log2Terminal(string message, int error, int level) {
  * @return bool - success status
  */
 bool SetLogfile(string filename) {
-   debug("SetLogfile(0.1)  calling SetLogfileA("+ filename +")");
    return(SetLogfileA(__ExecutionContext, filename));
 }
 
