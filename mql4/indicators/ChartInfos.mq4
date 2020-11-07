@@ -3518,22 +3518,22 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (IsLog()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {              logWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      if (success) { if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      else         {                  logWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (IsLog()) logInfo("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
+      if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (IsLog()) logInfo("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
+      if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
@@ -3991,7 +3991,7 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
-      if (IsLog()) logInfo("onOrderFail(2)  "+ message);
+      if (IsLogInfo()) logInfo("onOrderFail(2)  "+ message);
 
       // Signale für jede Order einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4030,7 +4030,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
-      if (IsLog()) logInfo("onPositionOpen(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4074,7 +4074,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
 
-      if (IsLog()) logInfo("onPositionClose(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);

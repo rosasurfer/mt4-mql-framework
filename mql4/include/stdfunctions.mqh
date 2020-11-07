@@ -3389,7 +3389,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (IsLog()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLogInfo()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
  //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
@@ -3409,7 +3409,7 @@ int Tester.Stop(string location = "") {
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (IsLog()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLogInfo()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -4706,7 +4706,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (IsLog()) logInfo("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLogInfo()) logInfo("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5681,7 +5681,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (IsLog()) logInfo("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   if (IsLogInfo()) logInfo("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(15)"));
 }
 

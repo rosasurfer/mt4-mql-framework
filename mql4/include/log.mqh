@@ -617,6 +617,7 @@ int log2Terminal(string message, int error, int level) {
  * @return bool - success status
  */
 bool SetLogfile(string filename) {
+   debug("SetLogfile(0.1)  calling SetLogfileA("+ filename +")");
    return(SetLogfileA(__ExecutionContext, filename));
 }
 
