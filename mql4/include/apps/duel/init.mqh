@@ -71,7 +71,7 @@ int onInitUser() {
    SS.SequenceName();
    logInfo("onInitUser(8)  sequence "+ sequence.name +" created");
 
-   if (!IsTestSequence()) SetLogfile(GetLogFilename());        // set a custom logfile
+   SetLogfile(GetLogFilename());
    return(catch("onInitUser(9)"));
 }
 

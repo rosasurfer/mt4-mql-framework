@@ -47,7 +47,7 @@ int onInitUser() {
       SS.SequenceName();
       SaveStatus();
 
-      if (IsLog()) {
+      if (IsLogInfo()) {
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       }
       else if (IsTesting() && !IsVisualMode()) {

@@ -1630,7 +1630,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
    int error = ERR_INVALID_INPUT_PARAMETER;
    __STATUS_INVALID_INPUT = true;
 
-   if (IsLog()) logNotice(location +"   "+ message, error);
+   if (IsLogNotice()) logNotice(location +"   "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
    int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
