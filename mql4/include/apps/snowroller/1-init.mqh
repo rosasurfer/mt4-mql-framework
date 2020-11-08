@@ -5,7 +5,7 @@
  * @return int - error status
  */
 int onInit() {
-   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");    // MQL4 doesn't allow constant bool definitions
+   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");   // MQL4 doesn't allow constant bool definitions
    SISYPHUS   = StrStartsWithI(ProgramName(), "Sisyphus");
    return(NO_ERROR);
 }
@@ -21,7 +21,7 @@ int onInitUser() {
    bool interactive = true;
 
    // check for a specified sequence id
-   if (ValidateInputs.ID()) {                               // on success a valid sequence id was specified
+   if (ValidateInputs.ID()) {                                  // on success a valid sequence id was specified
       SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;
@@ -29,7 +29,7 @@ int onInitUser() {
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                   // on error: invalid sequence id
+      return(last_error);                                      // on error: invalid sequence id
    }
 
    // create a new sequence
@@ -47,7 +47,7 @@ int onInitUser() {
       SS.SequenceName();
       SaveStatus();
 
-      if (IsLog()) {
+      if (IsLogInfo()) {
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       }
       else if (IsTesting() && !IsVisualMode()) {
@@ -66,7 +66,7 @@ int onInitUser() {
 int onInitTemplate() {
    // restore sequence data from the chart
    if (RestoreChartStatus()) {
-      SetLogfile(GetLogFilename());                         // on success a sequence id was restored
+      SetLogfile(GetLogFilename());                            // on success a sequence id was restored
       RestoreSequence(false);
    }
    DeleteChartStatus();
@@ -80,7 +80,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                     // input itself has been backed-up in onDeinitParameters()
+   BackupInputStatus();                                        // input itself has been backed-up in onDeinitParameters()
 
    bool interactive = true;
    if (!ValidateInputs(interactive)) {
@@ -94,10 +94,10 @@ int onInitParameters() {
       }
    }
    else if (sequence.status == STATUS_WAITING) {
-      if (!start.conditions) {                              // TODO: evaluate sessionbreak.waiting
+      if (!start.conditions) {                                 // TODO: evaluate sessionbreak.waiting
       }
    }
-   if (sequence.status != STATUS_UNDEFINED)                 // parameter change of a valid sequence
+   if (sequence.status != STATUS_UNDEFINED)                    // parameter change of a valid sequence
       SaveStatus();
    return(last_error);
 }
@@ -131,7 +131,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitRecompile() {
-   return(onInitTemplate());                                // same requirements as for onInitTemplate()
+   return(onInitTemplate());                                   // same requirements as for onInitTemplate()
 }
 
 
@@ -161,7 +161,7 @@ int afterInit() {
    }
    else if (IsTestSequence()) {
       // a finished test loaded into an online chart
-      sequence.status = STATUS_STOPPED;                           // TODO: move to SynchronizeStatus()
+      sequence.status = STATUS_STOPPED;                        // TODO: move to SynchronizeStatus()
    }
    return(last_error);
 }
