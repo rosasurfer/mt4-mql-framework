@@ -14,7 +14,7 @@
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
 
-#define NL                                   "\n"        // new line: 0x0A (MQL file functions auto-convert 0x0A to 0x0D0A)
+#define NL                                   "\n"        // new line: 0x0A (in text mode MQL/Win32 file functions auto-convert 0x0A to 0x0D0A)
 #define TAB                                  "\t"        // tab: 0x09
 
 
