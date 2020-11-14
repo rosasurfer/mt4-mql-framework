@@ -32,8 +32,8 @@ extern double UnitSize              = 0.1;               // lots at the first gr
 extern double Pyramid.Multiplier    = 1;                 // unitsize multiplier per grid level on the winning side
 extern double Martingale.Multiplier = 1;                 // unitsize multiplier per grid level on the losing side
 
-extern string TakeProfit            = "{double}[%]";     // TP in absolute or percentage terms
-extern string StopLoss              = "{double}[%]";     // SL in absolute or percentage terms
+extern string TakeProfit            = "{numeric}[%]";    // TP in absolute or percentage terms
+extern string StopLoss              = "{numeric}[%]";    // SL in absolute or percentage terms
 extern bool   ShowProfitInPercent   = false;             // whether PL is displayed in absolute or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

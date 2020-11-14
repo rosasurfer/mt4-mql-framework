@@ -28,37 +28,41 @@ int onInitUser() {
    sequence.isMartingale = (Martingale.Multiplier > 0);
    // TakeProfit
    sValue = StrTrim(TakeProfit);
-   bool isPercent = StrEndsWith(sValue, "%");
-   if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-   if (!StrIsNumeric(sValue))     return(catch("onInitUser(6)  Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), ERR_INVALID_INPUT_PARAMETER));
-   double dValue = StrToDouble(sValue);
-   if (isPercent) {
-      tpPct.condition   = true;
-      tpPct.value       = dValue;
-      tpPct.absValue    = INT_MAX;
-      tpPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
-   }
-   else {
-      tpAbs.condition   = true;
-      tpAbs.value       = NormalizeDouble(dValue, 2);
-      tpAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
+   if (StringLen(sValue) && sValue!="{numeric}[%]") {
+      bool isPercent = StrEndsWith(sValue, "%");
+      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+      if (!StrIsNumeric(sValue))     return(catch("onInitUser(6)  Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), ERR_INVALID_INPUT_PARAMETER));
+      double dValue = StrToDouble(sValue);
+      if (isPercent) {
+         tpPct.condition   = true;
+         tpPct.value       = dValue;
+         tpPct.absValue    = INT_MAX;
+         tpPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
+      }
+      else {
+         tpAbs.condition   = true;
+         tpAbs.value       = NormalizeDouble(dValue, 2);
+         tpAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
+      }
    }
    // StopLoss
    sValue = StrTrim(StopLoss);
-   isPercent = StrEndsWith(sValue, "%");
-   if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-   if (!StrIsNumeric(sValue))     return(catch("onInitUser(7)  Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), ERR_INVALID_INPUT_PARAMETER));
-   dValue = StrToDouble(sValue);
-   if (isPercent) {
-      slPct.condition   = true;
-      slPct.value       = dValue;
-      slPct.absValue    = INT_MIN;
-      slPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
-   }
-   else {
-      slAbs.condition   = true;
-      slAbs.value       = NormalizeDouble(dValue, 2);
-      slAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
+   if (StringLen(sValue) && sValue!="{numeric}[%]") {
+      isPercent = StrEndsWith(sValue, "%");
+      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+      if (!StrIsNumeric(sValue))     return(catch("onInitUser(7)  Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), ERR_INVALID_INPUT_PARAMETER));
+      dValue = StrToDouble(sValue);
+      if (isPercent) {
+         slPct.condition   = true;
+         slPct.value       = dValue;
+         slPct.absValue    = INT_MIN;
+         slPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
+      }
+      else {
+         slAbs.condition   = true;
+         slAbs.value       = NormalizeDouble(dValue, 2);
+         slAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
+      }
    }
 
    // create a new sequence
