@@ -237,8 +237,8 @@ bool     tester.reduceStatusWrites  = true;        // whether to minimize status
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
 
-#include <apps/snowroller/1-init.mqh>
-#include <apps/snowroller/2-deinit.mqh>
+#include <apps/snowroller/init.mqh>
+#include <apps/snowroller/deinit.mqh>
 #include <apps/snowroller/functions.mqh>
 
 
