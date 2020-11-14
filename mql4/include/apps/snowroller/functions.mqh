@@ -83,13 +83,13 @@ datetime last.Sessionbreak.EndTime;
 
 
 /**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
-   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
-   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
+   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // string inputs are references to internal C literals
+   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference
    last.GridSize               = GridSize;
    last.UnitSize               = UnitSize;
    last.StartLevel             = StartLevel;
@@ -1240,7 +1240,7 @@ bool ToggleStartStopDisplayMode() {
 
 /**
  * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
- * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at restart).
+ * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
  *
  * @param  bool interactive - whether parameters have been entered through the input dialog
  *
@@ -1625,18 +1625,16 @@ bool ValidateInputs.ID() {
 int ValidateInputs.OnError(string location, string message, bool interactive) {
    interactive = interactive!=0;
    if (IsTesting() || !interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
+      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
 
    int error = ERR_INVALID_INPUT_PARAMETER;
    __STATUS_INVALID_INPUT = true;
 
-   if (IsLogNotice()) logNotice(location +"   "+ message, error);
+   if (IsLogNotice()) logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
    int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY)
-      __STATUS_RELAUNCH_INPUT = true;
-
+   if (button == IDRETRY) __STATUS_RELAUNCH_INPUT = true;
    return(error);
 }
 
