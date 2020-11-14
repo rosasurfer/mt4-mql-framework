@@ -83,13 +83,13 @@ datetime last.Sessionbreak.EndTime;
 
 
 /**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
-   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
-   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
+   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // string inputs are references to internal C literals
+   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference
    last.GridSize               = GridSize;
    last.UnitSize               = UnitSize;
    last.StartLevel             = StartLevel;
@@ -614,37 +614,33 @@ int CreateStatusBox() {
 /**
  * Return the full name of the instance logfile.
  *
- * @return string - filename or an empty string in tester (no separate logfile)
+ * @return string - filename or an empty string in case of errors
  */
 string GetLogFilename() {
-   return("");                            // for the time being: disable the log
-
    string name = GetStatusFilename();
    if (!StringLen(name)) return("");
-   if (IsTestSequence()) return("");
-
    return(StrLeft(name, -3) +"log");
 }
 
 
 /**
- * Return the full name of the status file.
+ * Return the full name of the instance status file.
  *
  * @return string - filename or an empty string in case of errors
  */
 string GetStatusFilename() {
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.longName +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   string sSID = "";
-   if (SNOWROLLER) sSID = "SR.";
-   if (SISYPHUS)   sSID = "SPH.";
+   string subdirectory = "\\presets\\";
+   if (!IsTestSequence()) subdirectory = subdirectory + GetAccountCompany() +"\\";
 
-   string directory, baseName=StrToLower(Symbol()) +"."+ sSID + sequence.id +".set";
+   string strategy = "";
+   if (SNOWROLLER) strategy = "SR";
+   if (SISYPHUS)   strategy = "SPH";
 
-   if (IsTestSequence()) directory = "\\presets\\";
-   else                  directory = "\\presets\\"+ GetAccountCompany() +"\\";
+   string baseName=StrToLower(Symbol()) +"."+ strategy +"."+ sequence.id +".set";
 
-   return(GetMqlFilesPath() + directory + baseName);
+   return(GetMqlFilesPath() + subdirectory + baseName);
 }
 
 
@@ -696,8 +692,8 @@ bool HandleNetworkErrors() {
 
 
 /**
- * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
- * sequence may be loaded in an online chart after the test (for visualization).
+ * Whether the current sequence was created in the tester. Considers the fact that a test sequence may be loaded into an
+ * online chart after the test (for visualization).
  *
  * @return bool
  */
@@ -1244,7 +1240,7 @@ bool ToggleStartStopDisplayMode() {
 
 /**
  * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
- * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at restart).
+ * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
  *
  * @param  bool interactive - whether parameters have been entered through the input dialog
  *
@@ -1629,18 +1625,16 @@ bool ValidateInputs.ID() {
 int ValidateInputs.OnError(string location, string message, bool interactive) {
    interactive = interactive!=0;
    if (IsTesting() || !interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
+      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
 
    int error = ERR_INVALID_INPUT_PARAMETER;
    __STATUS_INVALID_INPUT = true;
 
-   if (IsLog()) logNotice(location +"   "+ message, error);
+   if (IsLogNotice()) logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
    int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY)
-      __STATUS_RELAUNCH_INPUT = true;
-
+   if (button == IDRETRY) __STATUS_RELAUNCH_INPUT = true;
    return(error);
 }
 
