@@ -77,7 +77,7 @@ string ErrorDescription(int error) {
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                  );    //    150
 
       // runtime errors
-      case ERR_NO_MQLERROR                : return("no MQL error"                                              );    //   4000 never generated error
+      case ERR_NO_MQLERROR                : return("never generated error"                                     );    //   4000 never generated error
       case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                    );    //   4001
       case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                  );    //   4002
       case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                         );    //   4003
@@ -2928,19 +2928,17 @@ bool MQL.IsFile(string filename) {
  * @return string - directory path not ending with a slash or an empty string in case of errors
  */
 string GetMqlFilesPath() {
-   static string filesDir;
-
-   if (!StringLen(filesDir)) {
+   static string filesDir; if (!StringLen(filesDir)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
-         if (!StringLen(dataDirectory))
-            return(EMPTY_STR);
+         if (!StringLen(dataDirectory)) return(EMPTY_STR);
+
          filesDir = dataDirectory +"\\tester\\files";
       }
       else {
          string mqlDirectory = GetMqlDirectoryA();
-         if (!StringLen(mqlDirectory))
-            return(EMPTY_STR);
+         if (!StringLen(mqlDirectory)) return(EMPTY_STR);
+
          filesDir = mqlDirectory +"\\files";
       }
    }
@@ -3391,7 +3389,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (IsLog()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLogInfo()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
  //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
@@ -3411,7 +3409,7 @@ int Tester.Stop(string location = "") {
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (IsLog()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLogInfo()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -4708,7 +4706,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (IsLog()) logInfo("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLogInfo()) logInfo("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5683,7 +5681,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (IsLog()) logInfo("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   if (IsLogInfo()) logInfo("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(15)"));
 }
 
@@ -5771,12 +5769,18 @@ bool IsSuperContext() {
  * @param  double lots              - lot size
  * @param  string symbol [optional] - symbol (default: the current symbol)
  *
- * @return double - rounded lot size
+ * @return double - rounded lot size or NULL in case of errors
  */
 double NormalizeLots(double lots, string symbol = "") {
    if (!StringLen(symbol))
       symbol = Symbol();
+
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
+
+   if (!lotstep) {
+      int error = GetLastError();
+      return(!catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifInt(error, error, ERR_INVALID_MARKET_DATA)));
+   }
    return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
 }
 
@@ -6217,52 +6221,6 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
 
 
 /**
- * Load the "Stochastic of RSI" indicator and return a value.
- *
- * @param  int timeframe              - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int stochMainPeriods       - indicator parameter
- * @param  int stochSlowedMainPeriods - indicator parameter
- * @param  int stochSignalPeriods     - indicator parameter
- * @param  int rsiPeriods             - indicator parameter
- * @param  int iBuffer                - indicator buffer index of the value to return
- * @param  int iBar                   - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, "Stochastic of RSI",
-                          stochMainPeriods,                                // int    Stoch.Main.Periods
-                          stochSlowedMainPeriods,                          // int    Stoch.SlowedMain.Periods
-                          stochSignalPeriods,                              // int    Stoch.Signal.Periods
-                          rsiPeriods,                                      // int    RSI.Periods
-                          Blue,                                            // color  Main.Color
-                          Red,                                             // color  Signal.Color
-                          "Line",                                          // string Signal.DrawType
-                          1,                                               // int    Signal.DrawWidth
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ______________________
-                          lpSuperContext,                                  // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icStochasticOfRSI(1)", error));
-      logWarn("icStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Load "Ehlers 2-Pole-SuperSmoother" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
@@ -6548,7 +6506,6 @@ void __DummyCalls() {
    icNonLagMA(NULL, NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
    icSATL(NULL, NULL, NULL);
-   icStochasticOfRSI(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
