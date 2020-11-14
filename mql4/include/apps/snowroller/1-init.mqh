@@ -32,8 +32,8 @@ int onInitUser() {
       return(last_error);                                      // on error: invalid sequence id
    }
 
-   // create a new sequence
    if (ValidateInputs(interactive)) {
+      // create a new sequence
       if (!ConfirmFirstTickTrade("", "Do you really want to start a new sequence?"))   // TODO: this must be Confirm() only
          return(SetLastError(ERR_CANCELLED_BY_USER));
 

@@ -688,13 +688,10 @@ string GetLogFilename() {
 string GetStatusFilename() {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   string subdirectory = "\\presets\\";
-   if (!IsTestSequence())
-      subdirectory = subdirectory + GetAccountCompany() +"\\";
+   string directory = "\\presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+   string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
 
-   string baseName = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
-
-   return(GetMqlFilesPath() + subdirectory + baseName);
+   return(GetMqlFilesPath() + directory + baseName);
 }
 
 
@@ -832,6 +829,296 @@ bool Grid.AddStop(int direction, int level) {
  */
 bool IsTestSequence() {
    return(sequence.isTest || IsTesting());
+}
+
+
+string last.GridDirections = "";
+int    last.GridSize;
+double last.UnitSize;
+double last.Pyramid.Multiplier;
+double last.Martingale.Multiplier;
+string last.TakeProfit = "";
+string last.StopLoss = "";
+bool   last.ShowProfitInPercent;
+
+
+/**
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ */
+void BackupInputs() {
+   // backed-up inputs are also accessed from ValidateInputs()
+   last.GridDirections        = StringConcatenate(GridDirections, "");  // string inputs are references to internal C literals
+   last.GridSize              = GridSize;                               // and must be copied to break the reference
+   last.UnitSize              = UnitSize;
+   last.Pyramid.Multiplier    = Pyramid.Multiplier;
+   last.Martingale.Multiplier = Martingale.Multiplier;
+   last.TakeProfit            = StringConcatenate(TakeProfit, "");
+   last.StopLoss              = StringConcatenate(StopLoss, "");
+   last.ShowProfitInPercent   = ShowProfitInPercent;
+}
+
+
+/**
+ * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
+ */
+void RestoreInputs() {
+   GridDirections         = last.GridDirections;
+   GridSize               = last.GridSize;
+   UnitSize               = last.UnitSize;
+   Pyramid.Multiplier     = last.Pyramid.Multiplier;
+   Martingale.Multiplier  = last.Martingale.Multiplier;
+   TakeProfit             = last.TakeProfit;
+   StopLoss               = last.StopLoss;
+   ShowProfitInPercent    = last.ShowProfitInPercent;
+}
+
+
+/**
+ * Backup status variables which may change by modifying input parameters. This way status can be restored in case of input
+ * errors. Called only from onInitParameters().
+ */
+void BackupInputStatus() {
+   CopyInputStatus(true);
+}
+
+
+/**
+ * Restore status variables from the backup. Called only from onInitParameters().
+ */
+void RestoreInputStatus() {
+   CopyInputStatus(false);
+}
+
+
+/**
+ * Backup or restore status variables related to input parameter changes. Called only from BackupInputStatus() and
+ * RestoreInputStatus() in onInitParameters().
+ *
+ * @param  bool store - TRUE:  copy status to internal storage (backup)
+ *                      FALSE: copy internal storage to status (restore)
+ */
+void CopyInputStatus(bool store) {
+   store = store!=0;
+
+   static int      _sequence.id;
+   static datetime _sequence.created;
+   static bool     _sequence.isTest;
+   static string   _sequence.name = "";
+   static int      _sequence.status;
+   static int      _sequence.directions;
+   static bool     _sequence.isPyramid;
+   static bool     _sequence.isMartingale;
+   static double   _sequence.unitsize;
+
+   static bool     _tpAbs.condition;
+   static double   _tpAbs.value;
+   static string   _tpAbs.description = "";
+
+   static bool     _tpPct.condition;
+   static double   _tpPct.value;
+   static double   _tpPct.absValue;
+   static string   _tpPct.description = "";
+
+   static bool     _slAbs.condition;
+   static double   _slAbs.value;
+   static string   _slAbs.description = "";
+
+   static bool     _slPct.condition;
+   static double   _slPct.value;
+   static double   _slPct.absValue;
+   static string   _slPct.description = "";
+
+   if (store) {
+      _sequence.id           = sequence.id;
+      _sequence.created      = sequence.created;
+      _sequence.isTest       = sequence.isTest;
+      _sequence.name         = sequence.name;
+      _sequence.status       = sequence.status;
+      _sequence.directions   = sequence.directions;
+      _sequence.isPyramid    = sequence.isPyramid;
+      _sequence.isMartingale = sequence.isMartingale;
+      _sequence.unitsize     = sequence.unitsize;
+
+      _tpAbs.condition       = tpAbs.condition;
+      _tpAbs.value           = tpAbs.value;
+      _tpAbs.description     = tpAbs.description;
+
+      _tpPct.condition       = tpPct.condition;
+      _tpPct.value           = tpPct.value;
+      _tpPct.absValue        = tpPct.absValue;
+      _tpPct.description     = tpPct.description;
+
+      _slAbs.condition       = slAbs.condition;
+      _slAbs.value           = slAbs.value;
+      _slAbs.description     = slAbs.description;
+
+      _slPct.condition       = slPct.condition;
+      _slPct.value           = slPct.value;
+      _slPct.absValue        = slPct.absValue;
+      _slPct.description     = slPct.description;
+   }
+   else {
+      sequence.id            = _sequence.id;
+      sequence.created       = _sequence.created;
+      sequence.isTest        = _sequence.isTest;
+      sequence.name          = _sequence.name;
+      sequence.status        = _sequence.status;
+      sequence.directions    = _sequence.directions;
+      sequence.isPyramid     = _sequence.isPyramid;
+      sequence.isMartingale  = _sequence.isMartingale;
+      sequence.unitsize      = _sequence.unitsize;
+
+      tpAbs.condition        = _tpAbs.condition;
+      tpAbs.value            = _tpAbs.value;
+      tpAbs.description      = _tpAbs.description;
+
+      tpPct.condition        = _tpPct.condition;
+      tpPct.value            = _tpPct.value;
+      tpPct.absValue         = _tpPct.absValue;
+      tpPct.description      = _tpPct.description;
+
+      slAbs.condition        = _slAbs.condition;
+      slAbs.value            = _slAbs.value;
+      slAbs.description      = _slAbs.description;
+
+      slPct.condition        = _slPct.condition;
+      slPct.value            = _slPct.value;
+      slPct.absValue         = _slPct.absValue;
+      slPct.description      = _slPct.description;
+   }
+}
+
+
+/**
+ * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
+ * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
+ *
+ * @param  bool interactive - whether parameters have been entered through the input dialog
+ *
+ * @return bool - whether input parameters are valid
+ */
+bool ValidateInputs(bool interactive) {
+   interactive = interactive!=0;
+   if (IsLastError()) return(false);
+
+   bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
+   if (isParameterChange)
+      interactive = true;
+
+   // GridDirections
+   string sValues[], sValue = GridDirections;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (iValue == -1)                                         return(_false(ValidateInputs.OnError("ValidateInputs(1)", "Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), interactive)));
+   if (isParameterChange && !StrCompareI(sValue, last.GridDirections)) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(2)", "Cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+   }
+   sequence.directions = iValue;
+   GridDirections = TradeDirectionDescription(sequence.directions);
+
+   // GridSize
+   if (isParameterChange && GridSize!=last.GridSize) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(3)", "Cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+   }
+   if (GridSize < 1)                                         return(_false(ValidateInputs.OnError("ValidateInputs(4)", "Invalid input parameter GridSize: "+ GridSize, interactive)));
+
+   // UnitSize
+   if (isParameterChange && NE(UnitSize, last.UnitSize)) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(5)", "Cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+   }
+   if (LT(UnitSize, 0.01))                                   return(_false(ValidateInputs.OnError("ValidateInputs(6)", "Invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+"), interactive)));
+   sequence.unitsize = UnitSize;
+
+   // Pyramid.Multiplier
+   if (isParameterChange && NE(Pyramid.Multiplier, last.Pyramid.Multiplier)) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+   }
+   if (Pyramid.Multiplier < 0)                               return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
+   sequence.isPyramid = (Pyramid.Multiplier > 0);
+
+   // Martingale.Multiplier
+   if (isParameterChange && NE(Martingale.Multiplier, last.Martingale.Multiplier)) {
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+   }
+   if (Martingale.Multiplier < 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
+   sequence.isMartingale = (Martingale.Multiplier > 0);
+
+   // TakeProfit
+   tpAbs.condition = false;
+   tpPct.condition = false;
+   sValue = StrTrim(TakeProfit);
+   if (StringLen(sValue) && sValue!="{numeric}[%]") {
+      bool isPercent = StrEndsWith(sValue, "%");
+      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+      if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
+      double dValue = StrToDouble(sValue);
+      if (isPercent) {
+         tpPct.condition   = true;
+         tpPct.value       = dValue;
+         tpPct.absValue    = INT_MAX;
+         tpPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
+      }
+      else {
+         tpAbs.condition   = true;
+         tpAbs.value       = NormalizeDouble(dValue, 2);
+         tpAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
+      }
+   }
+
+   // StopLoss
+   slPct.condition = false;
+   slAbs.condition = false;
+   sValue = StrTrim(StopLoss);
+   if (StringLen(sValue) && sValue!="{numeric}[%]") {
+      isPercent = StrEndsWith(sValue, "%");
+      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+      if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
+      dValue = StrToDouble(sValue);
+      if (isPercent) {
+         slPct.condition   = true;
+         slPct.value       = dValue;
+         slPct.absValue    = INT_MIN;
+         slPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
+      }
+      else {
+         slAbs.condition   = true;
+         slAbs.value       = NormalizeDouble(dValue, 2);
+         slAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
+      }
+   }
+   return(!catch("ValidateInputs(13)"));
+}
+
+
+/**
+ * Error handler for invalid input parameters. Either prompts for input correction or passes on execution to the standard
+ * error handler.
+ *
+ * @param  string location    - error location identifier
+ * @param  string message     - error message
+ * @param  bool   interactive - whether the error occurred in an interactive or programatic context
+ *
+ * @return int - resulting error status
+ */
+int ValidateInputs.OnError(string location, string message, bool interactive) {
+   interactive = interactive!=0;
+   if (IsTesting() || !interactive)
+      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
+
+   int error = ERR_INVALID_INPUT_PARAMETER;
+   __STATUS_INVALID_INPUT = true;
+
+   if (IsLogNotice()) logNotice(location +"  "+ message, error);
+
+   PlaySoundEx("Windows Chord.wav");
+   int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   if (button == IDRETRY) __STATUS_RELAUNCH_INPUT = true;
+   return(error);
 }
 
 
