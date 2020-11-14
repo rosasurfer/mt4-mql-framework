@@ -7,7 +7,7 @@
  * The scars of old romances still on their cheeks
  *
  *
- * A uni-directional or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
+ * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * - If both multipliers are "0" the EA trades like a regular single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
@@ -185,7 +185,8 @@ bool     tester.onStopPause = false;                     // whether to pause the
  */
 int onTick() {
    if (sequence.status == STATUS_WAITING) {              // start a new sequence
-      StartSequence();
+      //if (false)
+         StartSequence();
    }
    else if (sequence.status == STATUS_PROGRESSING) {     // manage a running sequence
       bool gridChanged = false;                          // whether the current gridbase or gridlevel changed
@@ -1049,8 +1050,7 @@ bool ValidateInputs(bool interactive) {
    sequence.isMartingale = (Martingale.Multiplier > 0);
 
    // TakeProfit
-   tpAbs.condition = false;
-   tpPct.condition = false;
+   bool unsetTpPct = false, unsetTpAbs = false;
    sValue = StrTrim(TakeProfit);
    if (StringLen(sValue) && sValue!="{numeric}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
@@ -1062,17 +1062,30 @@ bool ValidateInputs(bool interactive) {
          tpPct.value       = dValue;
          tpPct.absValue    = INT_MAX;
          tpPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
+         unsetTpAbs        = true;
       }
       else {
          tpAbs.condition   = true;
          tpAbs.value       = NormalizeDouble(dValue, 2);
          tpAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
+         unsetTpPct        = true;
       }
+   }
+   else {
+      unsetTpPct = true;
+      unsetTpAbs = true;
+   }
+   if (tpPct.condition && unsetTpPct) {
+      tpPct.condition   = false;
+      tpPct.description = "";
+   }
+   if (tpAbs.condition && unsetTpAbs) {
+      tpAbs.condition   = false;
+      tpAbs.description = "";
    }
 
    // StopLoss
-   slPct.condition = false;
-   slAbs.condition = false;
+   bool unsetSlPct = false, unsetSlAbs = false;
    sValue = StrTrim(StopLoss);
    if (StringLen(sValue) && sValue!="{numeric}[%]") {
       isPercent = StrEndsWith(sValue, "%");
@@ -1084,12 +1097,26 @@ bool ValidateInputs(bool interactive) {
          slPct.value       = dValue;
          slPct.absValue    = INT_MIN;
          slPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
+         unsetSlAbs        = true;
       }
       else {
          slAbs.condition   = true;
          slAbs.value       = NormalizeDouble(dValue, 2);
          slAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
+         unsetSlPct        = true;
       }
+   }
+   else {
+      unsetSlPct = true;
+      unsetSlAbs = true;
+   }
+   if (slPct.condition && unsetSlPct) {
+      slPct.condition   = false;
+      slPct.description = "";
+   }
+   if (slAbs.condition && unsetSlAbs) {
+      slAbs.condition   = false;
+      slAbs.description = "";
    }
    return(!catch("ValidateInputs(13)"));
 }
