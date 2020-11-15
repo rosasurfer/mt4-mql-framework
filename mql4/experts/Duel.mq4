@@ -84,8 +84,8 @@ double   sequence.avgPrice;
 double   sequence.floatingPL;                            // accumulated P/L of all open positions
 double   sequence.closedPL;                              // accumulated P/L of all closed positions
 double   sequence.totalPL;                               // current total P/L of the sequence: totalPL = floatingPL + closedPL
-double   sequence.maxProfit;                             // max. experienced total sequence profit:   0...+n
-double   sequence.maxDrawdown;                           // max. experienced total sequence drawdown: -n...0
+double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
+double   sequence.maxDrawdown;                           // max. observed total sequence drawdown: -n...0
 
 // order management
 bool     long.enabled;

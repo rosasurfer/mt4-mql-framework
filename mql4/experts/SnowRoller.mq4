@@ -92,8 +92,8 @@ double   sequence.stopsPL;                         // accumulated P/L of all sto
 double   sequence.closedPL;                        // accumulated P/L of all positions closed at sequence stop
 double   sequence.floatingPL;                      // accumulated P/L of all open positions
 double   sequence.totalPL;                         // current total P/L of the sequence: totalPL = stopsPL + closedPL + floatingPL
-double   sequence.maxProfit;                       // max. experienced total sequence profit:   0...+n
-double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
+double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
+double   sequence.maxDrawdown;                     // max. observed total sequence drawdown: -n...0
 double   sequence.profitPerLevel;                  // current profit amount per gridlevel
 double   sequence.breakeven;                       // current breakeven price
 double   sequence.commission;                      // commission value per gridlevel: -n...0
