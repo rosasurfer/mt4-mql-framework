@@ -1607,7 +1607,7 @@ bool IsStopSignal(int &signal) {
 
 /**
  * Whether the current server time falls into a sessionbreak. After function return the global vars sessionbreak.starttime
- * and sessionbreak.endtime are up-to-date (sessionbreak.active is not modified).
+ * and sessionbreak.endtime are up-to-date (sessionbreak.waiting is not modified).
  *
  * @return bool
  */
@@ -1648,7 +1648,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.longName +" recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.longName +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
