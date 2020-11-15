@@ -20,21 +20,24 @@
  * @todo  in tester generate consecutive sequence ids
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_BUFFERED_LOG};
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string GridDirections        = "Long | Short | Both*";
-extern int    GridSize              = 20;
-extern double UnitSize              = 0.1;               // lots at the first grid level
+extern string   GridDirections         = "Long | Short | Both*";
+extern int      GridSize               = 20;
+extern double   UnitSize               = 0.1;                     // lots at the first grid level
 
-extern double Pyramid.Multiplier    = 1;                 // unitsize multiplier per grid level on the winning side
-extern double Martingale.Multiplier = 1;                 // unitsize multiplier per grid level on the losing side
+extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
+extern double   Martingale.Multiplier  = 1;                       // unitsize multiplier per grid level on the losing side
 
-extern string TakeProfit            = "{numeric}[%]";    // TP in absolute or percentage terms
-extern string StopLoss              = "{numeric}[%]";    // SL in absolute or percentage terms
-extern bool   ShowProfitInPercent   = false;             // whether PL is displayed in absolute or percentage terms
+extern string   TakeProfit             = "{numeric}[%]";          // TP in absolute or percentage terms
+extern string   StopLoss               = "{numeric}[%]";          // SL in absolute or percentage terms
+extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed in absolute or percentage terms
+
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // in FXT, the date part is ignored
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -157,6 +160,10 @@ double   slPct.value;
 double   slPct.absValue    = INT_MIN;
 string   slPct.description = "";
 
+// sessionbreak management
+datetime sessionbreak.starttime;                         // configurable via inputs and framework config
+datetime sessionbreak.endtime;
+
 // caching vars to speed-up ShowStatus()
 string   sUnitSize            = "";
 string   sGridBase            = "";
@@ -185,8 +192,7 @@ bool     tester.onStopPause = false;                     // whether to pause the
  */
 int onTick() {
    if (sequence.status == STATUS_WAITING) {              // start a new sequence
-      //if (false)
-         StartSequence();
+      if (IsStartSignal()) StartSequence();
    }
    else if (sequence.status == STATUS_PROGRESSING) {     // manage a running sequence
       bool gridChanged = false;                          // whether the current gridbase or gridlevel changed
@@ -199,6 +205,21 @@ int onTick() {
    }
 
    return(catch("onTick(1)"));
+}
+
+
+/**
+ * Whether a start condition is satisfied for a waiting sequence.
+ *
+ * @return bool
+ */
+bool IsStartSignal() {
+   if (last_error || sequence.status!=STATUS_WAITING) return(false);
+
+   if (IsSessionBreak()) {
+      return(false);
+   }
+   return(true);
 }
 
 
@@ -257,6 +278,57 @@ bool IsStopSignal() {
    }
 
    return(false);
+}
+
+
+/**
+ * Whether the current server time falls into a sessionbreak. After function return the global vars sessionbreak.starttime
+ * and sessionbreak.endtime are up-to-date.
+ *
+ * @return bool
+ */
+bool IsSessionBreak() {
+   if (IsLastError()) return(false);
+
+   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
+
+   // check whether to recalculate sessionbreak times
+   if (serverTime >= sessionbreak.endtime) {
+      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
+      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
+      if (!startOffset && !endOffset)
+         return(false);                                           // skip session breaks if both values are set to Midnight
+
+      // calculate today's sessionbreak end time
+      datetime fxtNow  = ServerToFxtTime(serverTime);
+      datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
+      datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
+
+      // determine the next regular sessionbreak end time
+      int dow = TimeDayOfWeekEx(fxtTime);
+      while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime += 1*DAY;
+         dow = TimeDayOfWeekEx(fxtTime);
+      }
+      datetime fxtResumeTime = fxtTime;
+      sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
+
+      // determine the corresponding sessionbreak start time
+      datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
+      fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
+
+      dow = TimeDayOfWeekEx(fxtTime);
+      while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime -= 1*DAY;
+         dow = TimeDayOfWeekEx(fxtTime);
+      }
+      sessionbreak.starttime = FxtToServerTime(fxtTime);
+
+      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+   }
+
+   // perform the actual check
+   return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
 }
 
 
@@ -833,14 +905,16 @@ bool IsTestSequence() {
 }
 
 
-string last.GridDirections = "";
-int    last.GridSize;
-double last.UnitSize;
-double last.Pyramid.Multiplier;
-double last.Martingale.Multiplier;
-string last.TakeProfit = "";
-string last.StopLoss = "";
-bool   last.ShowProfitInPercent;
+string   last.GridDirections = "";
+int      last.GridSize;
+double   last.UnitSize;
+double   last.Pyramid.Multiplier;
+double   last.Martingale.Multiplier;
+string   last.TakeProfit = "";
+string   last.StopLoss = "";
+bool     last.ShowProfitInPercent;
+datetime last.Sessionbreak.StartTime;
+datetime last.Sessionbreak.EndTime;
 
 
 /**
@@ -849,14 +923,16 @@ bool   last.ShowProfitInPercent;
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
-   last.GridDirections        = StringConcatenate(GridDirections, "");  // string inputs are references to internal C literals
-   last.GridSize              = GridSize;                               // and must be copied to break the reference
-   last.UnitSize              = UnitSize;
-   last.Pyramid.Multiplier    = Pyramid.Multiplier;
-   last.Martingale.Multiplier = Martingale.Multiplier;
-   last.TakeProfit            = StringConcatenate(TakeProfit, "");
-   last.StopLoss              = StringConcatenate(StopLoss, "");
-   last.ShowProfitInPercent   = ShowProfitInPercent;
+   last.GridDirections         = StringConcatenate(GridDirections, ""); // string inputs are references to internal C literals
+   last.GridSize               = GridSize;                              // and must be copied to break the reference
+   last.UnitSize               = UnitSize;
+   last.Pyramid.Multiplier     = Pyramid.Multiplier;
+   last.Martingale.Multiplier  = Martingale.Multiplier;
+   last.TakeProfit             = StringConcatenate(TakeProfit, "");
+   last.StopLoss               = StringConcatenate(StopLoss, "");
+   last.ShowProfitInPercent    = ShowProfitInPercent;
+   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
+   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
 }
 
 
@@ -872,6 +948,8 @@ void RestoreInputs() {
    TakeProfit             = last.TakeProfit;
    StopLoss               = last.StopLoss;
    ShowProfitInPercent    = last.ShowProfitInPercent;
+   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
+   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
 }
 
 
@@ -915,7 +993,6 @@ void CopyInputStatus(bool store) {
    static bool     _tpAbs.condition;
    static double   _tpAbs.value;
    static string   _tpAbs.description = "";
-
    static bool     _tpPct.condition;
    static double   _tpPct.value;
    static double   _tpPct.absValue;
@@ -924,40 +1001,43 @@ void CopyInputStatus(bool store) {
    static bool     _slAbs.condition;
    static double   _slAbs.value;
    static string   _slAbs.description = "";
-
    static bool     _slPct.condition;
    static double   _slPct.value;
    static double   _slPct.absValue;
    static string   _slPct.description = "";
 
+   static datetime _sessionbreak.starttime;
+   static datetime _sessionbreak.endtime;
+
    if (store) {
-      _sequence.id           = sequence.id;
-      _sequence.created      = sequence.created;
-      _sequence.isTest       = sequence.isTest;
-      _sequence.name         = sequence.name;
-      _sequence.status       = sequence.status;
-      _sequence.directions   = sequence.directions;
-      _sequence.isPyramid    = sequence.isPyramid;
-      _sequence.isMartingale = sequence.isMartingale;
-      _sequence.unitsize     = sequence.unitsize;
+      _sequence.id            = sequence.id;
+      _sequence.created       = sequence.created;
+      _sequence.isTest        = sequence.isTest;
+      _sequence.name          = sequence.name;
+      _sequence.status        = sequence.status;
+      _sequence.directions    = sequence.directions;
+      _sequence.isPyramid     = sequence.isPyramid;
+      _sequence.isMartingale  = sequence.isMartingale;
+      _sequence.unitsize      = sequence.unitsize;
 
-      _tpAbs.condition       = tpAbs.condition;
-      _tpAbs.value           = tpAbs.value;
-      _tpAbs.description     = tpAbs.description;
+      _tpAbs.condition        = tpAbs.condition;
+      _tpAbs.value            = tpAbs.value;
+      _tpAbs.description      = tpAbs.description;
+      _tpPct.condition        = tpPct.condition;
+      _tpPct.value            = tpPct.value;
+      _tpPct.absValue         = tpPct.absValue;
+      _tpPct.description      = tpPct.description;
 
-      _tpPct.condition       = tpPct.condition;
-      _tpPct.value           = tpPct.value;
-      _tpPct.absValue        = tpPct.absValue;
-      _tpPct.description     = tpPct.description;
+      _slAbs.condition        = slAbs.condition;
+      _slAbs.value            = slAbs.value;
+      _slAbs.description      = slAbs.description;
+      _slPct.condition        = slPct.condition;
+      _slPct.value            = slPct.value;
+      _slPct.absValue         = slPct.absValue;
+      _slPct.description      = slPct.description;
 
-      _slAbs.condition       = slAbs.condition;
-      _slAbs.value           = slAbs.value;
-      _slAbs.description     = slAbs.description;
-
-      _slPct.condition       = slPct.condition;
-      _slPct.value           = slPct.value;
-      _slPct.absValue        = slPct.absValue;
-      _slPct.description     = slPct.description;
+      _sessionbreak.starttime = sessionbreak.starttime;
+      _sessionbreak.endtime   = sessionbreak.endtime;
    }
    else {
       sequence.id            = _sequence.id;
@@ -973,7 +1053,6 @@ void CopyInputStatus(bool store) {
       tpAbs.condition        = _tpAbs.condition;
       tpAbs.value            = _tpAbs.value;
       tpAbs.description      = _tpAbs.description;
-
       tpPct.condition        = _tpPct.condition;
       tpPct.value            = _tpPct.value;
       tpPct.absValue         = _tpPct.absValue;
@@ -982,11 +1061,13 @@ void CopyInputStatus(bool store) {
       slAbs.condition        = _slAbs.condition;
       slAbs.value            = _slAbs.value;
       slAbs.description      = _slAbs.description;
-
       slPct.condition        = _slPct.condition;
       slPct.value            = _slPct.value;
       slPct.absValue         = _slPct.absValue;
       slPct.description      = _slPct.description;
+
+      sessionbreak.starttime = _sessionbreak.starttime;
+      sessionbreak.endtime   = _sessionbreak.endtime;
    }
 }
 
@@ -1117,6 +1198,12 @@ bool ValidateInputs(bool interactive) {
    if (slAbs.condition && unsetSlAbs) {
       slAbs.condition   = false;
       slAbs.description = "";
+   }
+
+   // Sessionbreak.StartTime/EndTime
+   if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
+      sessionbreak.starttime = NULL;
+      sessionbreak.endtime   = NULL;                              // real times are updated automatically on next use
    }
    return(!catch("ValidateInputs(13)"));
 }
@@ -1575,13 +1662,15 @@ int CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("GridDirections=",        DoubleQuoteStr(GridDirections),            ";", NL,
-                            "GridSize=",              GridSize,                                  ";", NL,
-                            "UnitSize=",              NumberToStr(UnitSize, ".1+"),              ";", NL,
-                            "Pyramid.Multiplier=",    NumberToStr(Pyramid.Multiplier, ".1+"),    ";", NL,
-                            "Martingale.Multiplier=", NumberToStr(Martingale.Multiplier, ".1+"), ";", NL,
-                            "TakeProfit=",            DoubleQuoteStr(TakeProfit),                ";", NL,
-                            "StopLoss=",              DoubleQuoteStr(StopLoss),                  ";", NL,
-                            "ShowProfitInPercent=",   BoolToStr(ShowProfitInPercent),            ";")
+   return(StringConcatenate("GridDirections=",         DoubleQuoteStr(GridDirections),               ";", NL,
+                            "GridSize=",               GridSize,                                     ";", NL,
+                            "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
+                            "Pyramid.Multiplier=",     NumberToStr(Pyramid.Multiplier, ".1+"),       ";", NL,
+                            "Martingale.Multiplier=",  NumberToStr(Martingale.Multiplier, ".1+"),    ";", NL,
+                            "TakeProfit=",             DoubleQuoteStr(TakeProfit),                   ";", NL,
+                            "StopLoss=",               DoubleQuoteStr(StopLoss),                     ";", NL,
+                            "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
+                            "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
+                            "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
    );
 }
