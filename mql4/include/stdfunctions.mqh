@@ -5599,7 +5599,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
 bool SendEmail(string sender, string receiver, string subject, string message) {
    string filesDir = GetMqlFilesPath() +"\\";
 
-   // (1) Validierung
+   // Validierung
    // Sender
    string _sender = StrTrim(sender);
    if (!StringLen(_sender)) {
@@ -5632,7 +5632,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
-   // (2) Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
+   // Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
    message = StrTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
@@ -5643,11 +5643,11 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       if (bytes <= 0) return(!catch("SendEmail(9)->FileWriteString() => "+ bytes +" written"));
    }
 
-   // (3) benötigte Binaries ermitteln: Bash und Mailclient
+   // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
    if (!IsFileA(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
-   // (3.1) absoluter Pfad
-   // (3.2) relativer Pfad: Systemverzeichnisse durchsuchen; Variable $PATH durchsuchen
+   // TODO: absoluter Pfad => direkt testen
+   // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
    string sendmail = GetConfigString("Mail", "Sendmail");
    if (!StringLen(sendmail)) {
@@ -5656,7 +5656,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
 
-   // (4) Befehlszeile für Shell-Aufruf zusammensetzen
+   // Befehlszeile für Shell-Aufruf zusammensetzen
    //
    //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
    //    Client-Aufruf mit Umleitung ist nicht möglich).
