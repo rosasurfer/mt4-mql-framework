@@ -51,9 +51,9 @@ extern string   StartConditions        = "";                            // @tren
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @tp(double[%]) | @sl(double[%])
 extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue or reset a sequence after StopSequence(SIGNAL_TP|SIGNAL_SL)
 extern int      StartLevel             = 0;                             //
-extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed in absolute or percentage terms
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // in FXT, the date part is ignored
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // in FXT, the date part is ignored
+extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed as absolute or percentage value
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // server time, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // server time, the date part is ignored
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,8 +92,8 @@ double   sequence.stopsPL;                         // accumulated P/L of all sto
 double   sequence.closedPL;                        // accumulated P/L of all positions closed at sequence stop
 double   sequence.floatingPL;                      // accumulated P/L of all open positions
 double   sequence.totalPL;                         // current total P/L of the sequence: totalPL = stopsPL + closedPL + floatingPL
-double   sequence.maxProfit;                       // max. experienced total sequence profit:   0...+n
-double   sequence.maxDrawdown;                     // max. experienced total sequence drawdown: -n...0
+double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
+double   sequence.maxDrawdown;                     // max. observed total sequence drawdown: -n...0
 double   sequence.profitPerLevel;                  // current profit amount per gridlevel
 double   sequence.breakeven;                       // current breakeven price
 double   sequence.commission;                      // commission value per gridlevel: -n...0
@@ -1607,7 +1607,7 @@ bool IsStopSignal(int &signal) {
 
 /**
  * Whether the current server time falls into a sessionbreak. After function return the global vars sessionbreak.starttime
- * and sessionbreak.endtime are up-to-date (sessionbreak.active is not modified).
+ * and sessionbreak.endtime are up-to-date (sessionbreak.waiting is not modified).
  *
  * @return bool
  */
@@ -1648,7 +1648,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.longName +" recalculated next sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.longName +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
