@@ -32,12 +32,12 @@ extern double   UnitSize               = 0.1;                     // lots at the
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 1;                       // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{numeric}[%]";          // TP in absolute or percentage terms
-extern string   StopLoss               = "{numeric}[%]";          // SL in absolute or percentage terms
-extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed in absolute or percentage terms
+extern string   TakeProfit             = "{numeric}[%]";          // TP as absolute or percentage value
+extern string   StopLoss               = "{numeric}[%]";          // SL as absolute or percentage value
+extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed as absolute or percentage value
 
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // in FXT, the date part is ignored
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // in FXT, the date part is ignored
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // server time, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time, the date part is ignored
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
