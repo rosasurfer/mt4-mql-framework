@@ -5656,22 +5656,25 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
 
-   // Befehlszeile für Shell-Aufruf zusammensetzen
-   //
-   //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
+   // Notes:
+   // ------
+   //  - Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
    //    Client-Aufruf mit Umleitung ist nicht möglich).
-   //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen
+   //  - Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen
    //    enthalten: cmd /c echo hello \n world | {program} => Fehler
-   //  • Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in
+   //  - Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in
    //    Kauf genommen werden).
-   //  • Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß
+   //  - Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß
    //    der Versand jedoch in einem eigenen Thread erfolgen, wenn er nicht blockieren soll.
    //
-   // Cleancode.email:
-   // ----------------
-   //  • unterstützt keine Exit-Codes
-   //  • validiert die übergebenen Adressen nicht
+   // Cleancode email
+   // ---------------
+   //  - https://github.com/deanproxy/eMail
+   //  - gibt keinen Exit-Code zurück
+   //  - validiert die übergebenen Adressen nicht
    //
+
+   // Befehlszeile für Shell-Aufruf zusammensetzen
    message.txt     = StrReplace(message.txt, "\\", "/");
    string mail.log = StrReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
