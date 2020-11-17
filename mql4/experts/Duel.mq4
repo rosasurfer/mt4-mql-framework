@@ -598,12 +598,12 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | ok | Grid.AddLimit(level)
-   //                                                         |                                                |    |
-   // (2) For scaling up (pyramid) we can use:                |                                                |    |
-   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | ok | Grid.AddStop(level)
-   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level)
-   //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddLimit(level)
+   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | ok | Grid.AddLimit(level)    |
+   //                                                         |                                                |    |                         |
+   // (2) For scaling up (pyramid) we may use:                |                                                |    |                         |
+   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | ok | Grid.AddStop(level)     | curently used
+   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level) |
+   //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddLimit(level)    |
    //
    // (3) Depending on the approach used in (2) UpdateStatus() needs to monitor different conditions.
 
