@@ -5347,8 +5347,8 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * Notes: Typical trade operation errors returned in oe.Error are:
  *        - ERR_INVALID_TICKET:           unknown ticket id
- *        - ERR_NO_RESULT:                the request doesn't change any trade parameters
- *        - ERR_INVALID_STOP:             the request violates the market or the broker's stop distance
+ *        - ERR_NO_RESULT:                the request doesn't change any order parameters
+ *        - ERR_INVALID_STOP:             the request violates either the market or the broker's stop distance
  *        - ERR_TRADE_MODIFY_DENIED:      the request violates the broker's freeze level
  *        - ERR_INVALID_TRADE_PARAMETERS: order status changed (order limit already executed or position already closed)
  */
