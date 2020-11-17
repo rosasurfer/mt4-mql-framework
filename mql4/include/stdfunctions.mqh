@@ -229,6 +229,7 @@ string ErrorDescription(int error) {
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
       case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
+      case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65558
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
