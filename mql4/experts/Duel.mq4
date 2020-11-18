@@ -832,9 +832,20 @@ bool Grid.AddLimit(int direction, int level) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddLimit(1)  "+ sequence.name +" cannot add limit order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int oe[];
-   int ticket = SubmitLimitOrder(direction, level, oe);
-   if (!ticket) return(false);
+   int counter = 0, ticket, oe[], error;
+
+   // loop until an order was opened or an unexpected error occurred
+   while (true) {
+      if (counter % 2 == 0) ticket = SubmitLimitOrder(direction, level, oe);
+      else                  ticket = SubmitStopOrder(direction, level, oe);
+      if (ticket > 0) break;
+
+      error = oe.Error(oe);
+      if (error != ERR_INVALID_STOP) return(false);
+
+      counter++; if (counter > 9) return(!catch("Grid.AddLimit(2)  "+ sequence.name +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
+      if (IsLogInfo()) logInfo("Grid.AddLimit(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead", error);
+   }
 
    // prepare dataset
    //int    ticket       = ...                     // use as is
@@ -869,9 +880,20 @@ bool Grid.AddStop(int direction, int level) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddStop(1)  "+ sequence.name +" cannot add stop order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int oe[];
-   int ticket = SubmitStopOrder(direction, level, oe);
-   if (!ticket) return(false);
+   int counter = 0, ticket, oe[], error;
+
+   // loop until an order was opened or an unexpected error occurred
+   while (true) {
+      if (counter % 2 == 0) ticket = SubmitStopOrder(direction, level, oe);
+      else                  ticket = SubmitLimitOrder(direction, level, oe);
+      if (ticket > 0) break;
+
+      error = oe.Error(oe);
+      if (error != ERR_INVALID_STOP) return(false);
+
+      counter++; if (counter > 9) return(!catch("Grid.AddStop(2)  "+ sequence.name +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
+      if (IsLogInfo()) logInfo("Grid.AddStop(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead", error);
+   }
 
    // prepare dataset
    //int    ticket       = ...                     // use as is
@@ -1371,12 +1393,15 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING;
-   int      oeFlags     = NULL;
+   int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) return(ticket);
 
-   return(!SetLastError(oe.Error(oe)));
+   int error = oe.Error(oe);
+   if (error != ERR_INVALID_STOP)
+      SetLastError(error);
+   return(NULL);
 }
 
 
@@ -1405,12 +1430,15 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_PENDING;
-   int      oeFlags     = NULL;
+   int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0) return(ticket);
 
-   return(!SetLastError(oe.Error(oe)));
+   int error = oe.Error(oe);
+   if (error != ERR_INVALID_STOP)
+      SetLastError(error);
+   return(NULL);
 }
 
 
