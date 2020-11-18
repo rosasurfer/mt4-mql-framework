@@ -5148,7 +5148,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
             return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(20)")));
 
-         // On slow OrderSend() response or in a fast market limits/stops may have already been executed, or the order may
+         // On a slow OrderSend() response or in a fast market limits/stops may have already been executed, or the order may
          // have been modified or closed. The returned values must describe the original order, not the current order status.
          oe.setTicket    (oe, ticket         );
          oe.setOpenTime  (oe, OrderOpenTime());
