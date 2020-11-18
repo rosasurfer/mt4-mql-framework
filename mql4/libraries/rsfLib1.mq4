@@ -4927,19 +4927,20 @@ string DoubleToStrEx(double value, int digits) {
 
 
 /**
- * Handler for order related errors which occurred in one of the library's order functions. The execution flags passed to the
- * calling order function determine whether an error is filtered and silently set or whether the error causes a terminating
- * ERROR alert. Filtered errors must be handled by a custom error handler.
+ * Handler for order related errors which occurred in one of the library's order functions.
  *
- * @param  string message                  - error message
- * @param  int    error                    - the occurred error
- * @param  int    filter                   - filter flags specifying the errors to be set silently (@see F_ERR_* constants)
- * @param  int    oe[]                     - one or multiple order execution details (struct ORDER_EXECUTION)
- * @param  bool   refreshPrices [optional] - whether to refresh market prices in the passed struct ORDER_EXECUTION
- *                                           (default: no)
+ * The error is always set in the passed struct ORDER_EXECUTION. After the passed execution flags determine how the error is
+ * handled. All errors not matched by an execution flag (@see F_ERR_* constants) cause a fatal runtime error.
+ *
+ * @param  _In_    string message                  - error message
+ * @param  _In_    int    error                    - the occurred error
+ * @param  _In_    int    oeFlags                  - order execution flags
+ * @param  _InOut_ int    oe[]                     - one or multiple order execution details (struct ORDER_EXECUTION)
+ * @param  _In_    bool   refreshPrices [optional] - whether to refresh market prices in the passed struct ORDER_EXECUTION
+ *                                                   (default: no)
  * @return int - the same error
  */
-int Order.HandleError(string message, int error, int filter, int oe[], bool refreshPrices = false) {
+int Order.HandleError(string message, int error, int oeFlags, int oe[], bool refreshPrices = false) {
    refreshPrices = refreshPrices!=0;
 
    bool singleOE = ArrayDimension(oe)==1;                   // whether a single or multiple ORDER_EXECUTIONs were passed
@@ -4961,30 +4962,30 @@ int Order.HandleError(string message, int error, int filter, int oe[], bool refr
       }
    }
 
-   // in tester always add ERS_EXECUTION_STOPPING to the filter
+   // in tester always add ERS_EXECUTION_STOPPING to parameter oeFlags
    if (This.IsTesting() && IsStopped())
-      filter |= F_ERS_EXECUTION_STOPPING;
+      oeFlags |= F_ERS_EXECUTION_STOPPING;
 
-   // filter the specified errors and log them
-   if (error==ERR_CONCURRENT_MODIFICATION  && filter & F_ERR_CONCURRENT_MODIFICATION ) return(logInfo(message, error));
-   if (error==ERS_EXECUTION_STOPPING       && filter & F_ERS_EXECUTION_STOPPING      ) return(logInfo(message, error));
-   if (error==ERS_HISTORY_UPDATE           && filter & F_ERS_HISTORY_UPDATE          ) return(logInfo(message, error));
-   if (error==ERR_INVALID_PARAMETER        && filter & F_ERR_INVALID_PARAMETER       ) return(logInfo(message, error));
-   if (error==ERR_INVALID_STOP             && filter & F_ERR_INVALID_STOP            ) return(logInfo(message, error));
-   if (error==ERR_INVALID_TICKET           && filter & F_ERR_INVALID_TICKET          ) return(logInfo(message, error));
-   if (error==ERR_INVALID_TRADE_PARAMETERS && filter & F_ERR_INVALID_TRADE_PARAMETERS) return(logInfo(message, error));
-   if (error==ERR_MARKET_CLOSED            && filter & F_ERR_MARKET_CLOSED           ) return(logInfo(message, error));
-   if (error==ERR_NO_CONNECTION            && filter & F_ERR_NO_CONNECTION           ) return(logWarn(message, error));
-   if (error==ERR_NO_RESULT                && filter & F_ERR_NO_RESULT               ) return(logInfo(message, error));
-   if (error==ERR_OFF_QUOTES               && filter & F_ERR_OFF_QUOTES              ) return(logInfo(message, error));
-   if (error==ERR_ORDER_CHANGED            && filter & F_ERR_ORDER_CHANGED           ) return(logInfo(message, error));
-   if (error==ERR_SERIES_NOT_AVAILABLE     && filter & F_ERR_SERIES_NOT_AVAILABLE    ) return(logInfo(message, error));
-   if (error==ERS_TERMINAL_NOT_YET_READY   && filter & F_ERS_TERMINAL_NOT_YET_READY  ) return(logInfo(message, error));
-   if (error==ERR_TRADE_DISABLED           && filter & F_ERR_TRADE_DISABLED          ) return(logWarn(message, error));
-   if (error==ERR_TRADE_MODIFY_DENIED      && filter & F_ERR_TRADE_MODIFY_DENIED     ) return(logInfo(message, error));
-   if (error==ERR_TRADESERVER_GONE         && filter & F_ERR_TRADESERVER_GONE        ) return(logWarn(message, error));
+   // filter the specified errors and just log them
+   if (error==ERR_CONCURRENT_MODIFICATION  && oeFlags & F_ERR_CONCURRENT_MODIFICATION ) return(logInfo(message, error));
+   if (error==ERS_EXECUTION_STOPPING       && oeFlags & F_ERS_EXECUTION_STOPPING      ) return(logInfo(message, error));
+   if (error==ERS_HISTORY_UPDATE           && oeFlags & F_ERS_HISTORY_UPDATE          ) return(logInfo(message, error));
+   if (error==ERR_INVALID_PARAMETER        && oeFlags & F_ERR_INVALID_PARAMETER       ) return(logInfo(message, error));
+   if (error==ERR_INVALID_STOP             && oeFlags & F_ERR_INVALID_STOP            ) return(logInfo(message, error));
+   if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(logInfo(message, error));
+   if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(logInfo(message, error));
+   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(logInfo(message, error));
+   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(logWarn(message, error));
+   if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(logInfo(message, error));
+   if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(logInfo(message, error));
+   if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(logInfo(message, error));
+   if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(logInfo(message, error));
+   if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(logInfo(message, error));
+   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(logWarn(message, error));
+   if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(logInfo(message, error));
+   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(logWarn(message, error));
 
-   // trigger a runtime error for everything else
+   // trigger a fatal error for everything else
    return(catch(message, error));
 }
 

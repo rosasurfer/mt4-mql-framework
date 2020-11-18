@@ -132,7 +132,7 @@
 #define F_PERIODS_ALL                  0x7FFFFFFF        // INT_MAX: covers all standard and custom timeframes
 
 
-// flags marking errors handled by custom error handlers (these errors don't trigger a terminating ERROR alert)
+// flags marking errors handled by custom error handlers (these errors don't trigger a fatal runtime error)
 #define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //       1
 #define F_ERS_EXECUTION_STOPPING       0x00000002        //       2  temporary state
 #define F_ERS_HISTORY_UPDATE           0x00000004        //       4  temporary state
@@ -149,17 +149,18 @@
 #define F_ERS_TERMINAL_NOT_YET_READY   0x00002000        //    8192  temporary state
 #define F_ERR_TRADE_DISABLED           0x00004000        //   16384
 #define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //   32768
-#define F_ERR_TRADESERVER_GONE         0x00010000        //   65536
+#define F_ERR_STOP_DISTANCE_VIOLATED   0x00010000        //   65536
+#define F_ERR_TRADESERVER_GONE         0x00020000        //  131072
 
 
-// flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00020000        //  131072  don't hedge multiple positions on close
-#define F_OE_DONT_CHECK_STATUS         0x00040000        //  262144  don't check order status before proceeding
+// flags controlling client-side order execution
+#define F_OE_DONT_HEDGE                0x00040000        //  262144  don't hedge multiple positions on close
+#define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
 
 
 // other flags
-#define F_CUSTOM_TIMEFRAME             0x00080000        //  524288  support for custom timeframes
-#define F_PARTIAL_ID                   0x00100000        // 1048576  parser support for incomplete identifiers
+#define F_CUSTOM_TIMEFRAME             0x00100000        // 1048576  support for custom timeframes
+#define F_PARTIAL_ID                   0x00200000        // 2097152  parser support for incomplete identifiers
 
 
 // order and operation types
