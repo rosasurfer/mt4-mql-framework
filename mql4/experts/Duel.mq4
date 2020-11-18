@@ -89,7 +89,7 @@ double   sequence.maxDrawdown;                           // max. observed total 
 
 // order management
 bool     long.enabled;
-int      long.ticket      [];
+int      long.ticket      [];                            // records are ordered ascending by grid level
 int      long.level       [];                            // grid level: -n...-1 | +1...+n
 double   long.lots        [];
 int      long.pendingType [];
@@ -115,8 +115,8 @@ double   long.maxProfit;
 double   long.maxDrawdown;
 
 bool     short.enabled;
-int      short.ticket      [];
-int      short.level       [];
+int      short.ticket      [];                           // records are ordered ascending by grid level
+int      short.level       [];                           // grid level: -n...-1 | +1...+n
 double   short.lots        [];
 int      short.pendingType [];
 datetime short.pendingTime [];
@@ -587,7 +587,7 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
 
 
 /**
- * Update all existing orders and add new or missing ones.
+ * Update existing orders and add new or missing ones.
  *
  * @param  int direction [optional] - order direction flags (default: all currently active trade directions)
  *
@@ -605,7 +605,7 @@ bool UpdateOrders(int direction = D_BOTH) {
    //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level) |
    //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddLimit(level)    |
    //
-   // (3) Depending on the approach used in (2) UpdateStatus() needs to monitor different conditions.
+   // (3) Depending on the used approach UpdateStatus() needs to monitor different conditions.
 
    if (direction & D_LONG && 1) {
       if (long.enabled) {
@@ -1237,7 +1237,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
 
 
 /**
- * Add an order record to the order arrays. Records are ordered by grid level and the new record is automatically inserted at
+ * Add an order record to the order arrays. All records are ordered ascending by grid level and the new record is inserted at
  * the correct position. No data is overwritten.
  *
  * @param  int      direction
