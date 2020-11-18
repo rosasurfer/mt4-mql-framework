@@ -153,7 +153,7 @@
 #define F_ERR_TRADESERVER_GONE         0x00020000        //  131072
 
 
-// flags controlling client-side order execution
+// flags controlling order execution
 #define F_OE_DONT_HEDGE                0x00040000        //  262144  don't hedge multiple positions on close
 #define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
 
@@ -164,7 +164,7 @@
 
 
 // order and operation types
-#define OP_UNDEFINED                           -1        // custom: default value of a non-initialized type var
+#define OP_UNDEFINED                           -1        // custom: default value of a non-initialized order type variable
 #define OP_BUY                                  0        // long position
 #define OP_LONG                            OP_BUY
 #define OP_SELL                                 1        // short position
