@@ -4975,15 +4975,16 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
    if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(logInfo(message, error));
    if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(logInfo(message, error));
    if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(logInfo(message, error));
-   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(logWarn(message, error));
+   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(logWarn(message, error));   // LOG_WARN
    if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(logInfo(message, error));
    if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(logInfo(message, error));
    if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(logInfo(message, error));
    if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(logInfo(message, error));
    if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(logInfo(message, error));
-   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(logWarn(message, error));
+   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(logWarn(message, error));   // LOG_WARN
    if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(logInfo(message, error));
-   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(logWarn(message, error));
+   if (error==ERR_STOP_DISTANCE_VIOLATED   && oeFlags & F_ERR_STOP_DISTANCE_VIOLATED  ) return(logInfo(message, error));
+   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(logWarn(message, error));   // LOG_WARN
 
    // trigger a fatal error for everything else
    return(catch(message, error));
