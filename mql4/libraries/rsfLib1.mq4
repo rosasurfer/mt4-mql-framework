@@ -4962,11 +4962,11 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
       }
    }
 
-   // in tester always add ERS_EXECUTION_STOPPING to parameter oeFlags
+   // in tester always add ERS_EXECUTION_STOPPING to the passed flags
    if (This.IsTesting() && IsStopped())
       oeFlags |= F_ERS_EXECUTION_STOPPING;
 
-   // filter the specified errors and just log them
+   // filter the flagged errors and only log them
    if (error==ERR_CONCURRENT_MODIFICATION  && oeFlags & F_ERR_CONCURRENT_MODIFICATION ) return(logInfo(message, error));
    if (error==ERS_EXECUTION_STOPPING       && oeFlags & F_ERS_EXECUTION_STOPPING      ) return(logInfo(message, error));
    if (error==ERS_HISTORY_UPDATE           && oeFlags & F_ERS_HISTORY_UPDATE          ) return(logInfo(message, error));
