@@ -12,13 +12,10 @@
 //      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
 //      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
 //      OrderModify().
-#define ERR_TRADESERVER_GONE                                          2    // framework name
-#define ERR_COMMON_ERROR                           ERR_TRADESERVER_GONE    // MetaQuotes alias
-//      The trade request failed. A trade server related execution error.
-#define ERR_INVALID_TRADE_PARAMETERS                                  3
-//      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
-#define ERR_SERVER_BUSY                                               4
-//      The trade server is busy. The attempt can be repeated after a rather long period of time (more than several minutes).
+#define ERR_TRADESERVER_GONE                                          2    // framework alias of ERR_COMMON_ERROR
+#define ERR_COMMON_ERROR                           ERR_TRADESERVER_GONE    // trade request failed (trade server error)
+#define ERR_INVALID_TRADE_PARAMETERS                                  3    // invalid parameters passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket
+#define ERR_SERVER_BUSY                                               4    // trade server is busy
 #define ERR_OLD_VERSION                                               5    // too old version of the client terminal
 #define ERR_NO_CONNECTION                                             6    // no connection to the trade server
 #define ERR_NOT_ENOUGH_RIGHTS                                         7
@@ -30,12 +27,9 @@
 //      The timeout for the trade request has been reached. Before retrying (after at least 1 minute) make sure the trade
 //      operation has not yet succeeded (a new position has not been opened, or an existing order has not been modified or
 //      deleted, or an existing position has not been closed).
-#define ERR_INVALID_PRICE                                           129
-//      Invalid bid or ask price, perhaps unnormalized price or price moves too fast (away).
-#define ERR_INVALID_STOP                                            130
-//      Stops are too close or prices are mis-calculated or not normalized.
-#define ERR_INVALID_TRADE_VOLUME                                    131
-//      Invalid trade volume, error in the volume granularity.
+#define ERR_INVALID_PRICE                                           129    // Invalid bid or ask price, perhaps unnormalized price or price moves too fast (away).
+#define ERR_INVALID_STOP                                            130    // Stops are too close or prices are mis-calculated or not normalized (MODE_STOPLEVEL).
+#define ERR_INVALID_TRADE_VOLUME                                    131    // Invalid trade volume, error in the volume granularity.
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133
 #define ERR_NOT_ENOUGH_MONEY                                        134
@@ -52,8 +46,7 @@
 #define ERR_ORDER_ACCEPTED                                          143
 //      The order was accepted for execution. This is an interaction code between client terminal and trade server. It can
 //      appear for the same reason as ERR_ORDER_QUEUED and should be processed similar to ERR_TRADE_TIMEOUT.
-#define ERR_ORDER_DISCARDED                                         144
-//      The order was discarded by the broker during manual confirmation. Interaction code between client terminal and trade server.
+#define ERR_ORDER_DISCARDED                                         144    // order discarded by broker during manual confirmation (interaction code between client terminal and trade server)
 #define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market (MODE_FREEZELEVEL)
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147    // trade expirations are not supported
@@ -196,7 +189,7 @@
 #define ERR_WEBREQUEST_TIMEOUT                                     5202    // timeout exceeded
 #define ERR_WEBREQUEST_REQUEST_FAILED                              5203    // HTTP request failed
 
-// user defined errors: 65536-99999 (0x10000-0x1869F)
+// user errors: 65536-99999 (0x10000-0x1869F)
 #define ERR_USER_ERROR_FIRST                                      65536    // MetaQuotes definition
 #define ERR_CANCELLED_BY_USER                                     65537    // execution cancelled by user
 #define ERR_CONCURRENT_MODIFICATION                               65538    // concurrent modification
@@ -219,6 +212,7 @@
 #define ERS_TERMINAL_NOT_YET_READY                                65555    // terminal not yet ready (temporary state; in scripts treated as error)
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 #define ERR_UNDEFINED_STATE                                       65557    // undefined state or behavior
+#define ERR_STOP_DISTANCE_VIOLATED                                65558    // stop or limit price violate the broker's stop distance
 
 // user defined errors >=100000 are mapped Win32 errors: win32-error + 100000 = mql-error
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

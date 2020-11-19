@@ -64,8 +64,7 @@ bool RunScript(string name, string parameters="") {
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
 string ScriptRunner.GetChannelName() {
-   static string name;
-   if (!StringLen(name)) {
+   static string name; if (!StringLen(name)) {
       int hWnd = __ExecutionContext[EC.hChart];
       name = "ScriptParameters."+ IntToHexStr(hWnd);
    }
