@@ -5703,30 +5703,30 @@ bool SendSMS(string receiver, string message) {
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
-   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
    // get SMS gateway details
    // service
    string section  = "SMS";
    string key      = "Provider";
-   string provider = GetGlobalConfigString(section, key);
-   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   string provider = GetConfigString(section, key);
+   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // user
    section = "SMS."+ provider;
    key     = "username";
-   string username = GetGlobalConfigString(section, key);
-   if (!StringLen(username)) return(!catch("SendSMS(3)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // pass
+   string username = GetConfigString(section, key);
+   if (!StringLen(username)) return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   // password
    key = "password";
-   string password = GetGlobalConfigString(section, key);
-   if (!StringLen(password)) return(!catch("SendSMS(4)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   string password = GetConfigString(section, key);
+   if (!StringLen(password)) return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // API id
    key = "api_id";
-   int api_id = GetGlobalConfigInt(section, key);
+   int api_id = GetConfigInt(section, key);
    if (api_id <= 0) {
-      string value = GetGlobalConfigString(section, key);
-      if (!StringLen(value)) return(!catch("SendSMS(5)  missing global configuration ["+ section +"]->"+ key,                       ERR_INVALID_CONFIG_VALUE));
-                             return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
+      string value = GetConfigString(section, key);
+      if (!StringLen(value)) return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key,                      ERR_INVALID_CONFIG_VALUE));
+                             return(!catch("SendSMS(6)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
    // compose shell command line
@@ -5752,7 +5752,7 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   logInfo("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
+   if (IsLogInfo()) logInfo("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
    return(!catch("SendSMS(9)"));
 }
 
