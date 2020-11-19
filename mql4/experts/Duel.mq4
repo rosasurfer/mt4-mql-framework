@@ -821,8 +821,8 @@ int Grid.AddPosition(int direction, int level) {
 
 
 /**
- * Open a pending order for the specified grid level and add the order data to the order arrays. Depending on the current
- * market a stop or limit order will be opened.
+ * Open a pending order for the specified grid level and add the order to the order arrays. Depending on the market a stop or
+ * limit order will be opened.
  *
  * @param  int direction - trade direction: D_LONG | D_SHORT
  * @param  int level     - grid level of the order to open: -n...-1 | +1...+n
@@ -1231,7 +1231,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
  * @param  double   commission
  * @param  double   profit
  *
- * @return int - index at the record was inserted or -1 (EMPTY) in case of errors
+ * @return int - index the record was inserted at or -1 (EMPTY) in case of errors
  */
 int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
    int i = EMPTY;
