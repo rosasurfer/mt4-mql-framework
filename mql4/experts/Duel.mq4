@@ -74,8 +74,8 @@ bool     sequence.isTest;                                // whether the sequence
 string   sequence.name = "";                             // "[LS].{sequence.id}"
 int      sequence.status;
 int      sequence.directions;
-bool     sequence.isPyramid;                             // whether the sequence scales in on the winning side (pyramid)
-bool     sequence.isMartingale;                          // whether the sequence scales in on the losing side (martingale)
+bool     sequence.pyramidEnabled;                        // whether the sequence scales in on the winning side (pyramid)
+bool     sequence.martingaleEnabled;                     // whether the sequence scales in on the losing side (martingale)
 double   sequence.startEquity;
 double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
@@ -598,12 +598,12 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | ok | Grid.AddLimit(level)    |
-   //                                                         |                                                |    |                         |
-   // (2) For scaling up (pyramid) we may use:                |                                                |    |                         |
-   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | ok | Grid.AddStop(level)     | curently used
-   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level) |
-   //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddLimit(level)    |
+   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | ok | Grid.AddPendingOrder(level) |
+   //                                                         |                                                |    |                             |
+   // (2) For scaling up (pyramid) we may use:                |                                                |    |                             |
+   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | ok | Grid.AddPendingOrder(level) | curently used
+   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level)     |
+   //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddPendingOrder(level) |
    //
    // (3) Depending on the used approach UpdateStatus() needs to monitor different conditions.
 
@@ -612,15 +612,15 @@ bool UpdateOrders(int direction = D_BOTH) {
          int orders = ArraySize(long.ticket);
          if (!orders) return(!catch("UpdateOrders(3)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.isMartingale) {                 // on Martingale ensure the next limit order for scaling down exists
+         if (sequence.martingaleEnabled) {            // on Martingale ensure the next limit order for scaling down exists
             if (long.level[0] == long.minLevel) {
-               if (!Grid.AddLimit(D_LONG, Min(long.minLevel-1, -2))) return(false);
+               if (!Grid.AddPendingOrder(D_LONG, Min(long.minLevel-1, -2))) return(false);
                orders++;
             }
          }
-         if (sequence.isPyramid) {                    // on Pyramid ensure the next stop order for scaling up exists
+         if (sequence.pyramidEnabled) {               // on Pyramid ensure the next stop order for scaling up exists
             if (long.level[orders-1] == long.maxLevel) {
-               if (!Grid.AddStop(D_LONG, long.maxLevel+1)) return(false);
+               if (!Grid.AddPendingOrder(D_LONG, long.maxLevel+1)) return(false);
                orders++;
             }
          }
@@ -632,15 +632,15 @@ bool UpdateOrders(int direction = D_BOTH) {
          orders = ArraySize(short.ticket);
          if (!orders) return(!catch("UpdateOrders(4)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.isMartingale) {                 // on Martingale ensure the next limit order for scaling down exists
+         if (sequence.martingaleEnabled) {            // on Martingale ensure the next limit order for scaling down exists
             if (short.level[0] == short.minLevel) {
-               if (!Grid.AddLimit(D_SHORT, Min(short.minLevel-1, -2))) return(false);
+               if (!Grid.AddPendingOrder(D_SHORT, Min(short.minLevel-1, -2))) return(false);
                orders++;
             }
          }
-         if (sequence.isPyramid) {                    // on Pyramid ensure the next stop order for scaling up exists
+         if (sequence.pyramidEnabled) {               // on Pyramid ensure the next stop order for scaling up exists
             if (short.level[orders-1] == short.maxLevel) {
-               if (!Grid.AddStop(D_SHORT, short.maxLevel+1)) return(false);
+               if (!Grid.AddPendingOrder(D_SHORT, short.maxLevel+1)) return(false);
                orders++;
             }
          }
@@ -731,10 +731,10 @@ double CalculateLots(int direction, int level) {
    double lots = 0;
 
    if (level > 0) {
-      if (sequence.isPyramid) lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
-      else if (level == 1)    lots = sequence.unitsize;
+      if (sequence.pyramidEnabled)      lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
+      else if (level == 1)              lots = sequence.unitsize;
    }
-   else if (sequence.isMartingale) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
+   else if (sequence.martingaleEnabled) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
    lots = NormalizeLots(lots);
 
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
@@ -821,78 +821,31 @@ int Grid.AddPosition(int direction, int level) {
 
 
 /**
- * Open a limit order for the specified grid level and add the order data to the order arrays.
+ * Open a pending order for the specified grid level and add the order data to the order arrays. Depending on the current
+ * market a stop or limit order will be opened.
  *
  * @param  int direction - trade direction: D_LONG | D_SHORT
- * @param  int level     - grid level of the limit order to open: -n...-1 | +1...+n
+ * @param  int level     - grid level of the order to open: -n...-1 | +1...+n
  *
  * @return bool - success status
  */
-bool Grid.AddLimit(int direction, int level) {
+bool Grid.AddPendingOrder(int direction, int level) {
    if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddLimit(1)  "+ sequence.name +" cannot add limit order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(1)  "+ sequence.name +" cannot add pending order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int counter = 0, ticket, oe[], error;
+   int type = ifInt(level > 0, OA_STOP, OA_LIMIT), ticket, oe[], counter;
 
    // loop until an order was opened or an unexpected error occurred
    while (true) {
-      if (counter % 2 == 0) ticket = SubmitLimitOrder(direction, level, oe);
-      else                  ticket = SubmitStopOrder(direction, level, oe);
+      if (type == OA_STOP) ticket = SubmitStopOrder(direction, level, oe);
+      else                 ticket = SubmitLimitOrder(direction, level, oe);
       if (ticket > 0) break;
 
-      error = oe.Error(oe);
+      int error = oe.Error(oe);
       if (error != ERR_INVALID_STOP) return(false);
 
-      counter++; if (counter > 9) return(!catch("Grid.AddLimit(2)  "+ sequence.name +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
-      if (IsLogInfo()) logInfo("Grid.AddLimit(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead", error);
-   }
-
-   // prepare dataset
-   //int    ticket       = ...                     // use as is
-   //int    level        = ...                     // ...
-   double   lots         = oe.Lots(oe);
-   int      pendingType  = oe.Type(oe);
-   datetime pendingTime  = oe.OpenTime(oe);
-   double   pendingPrice = oe.OpenPrice(oe);
-   int      openType     = OP_UNDEFINED;
-   datetime openTime     = NULL;
-   double   openPrice    = NULL;
-   datetime closeTime    = NULL;
-   double   closePrice   = NULL;
-   double   swap         = NULL;
-   double   commission   = NULL;
-   double   profit       = NULL;
-
-   int index = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
-   return(!IsEmpty(index));
-}
-
-
-/**
- * Open a stop order for the specified grid level and add the order data to the order arrays.
- *
- * @param  int direction - trade direction: D_LONG | D_SHORT
- * @param  int level     - grid level of the stop order to open: -n...-1 | +1...+n
- *
- * @return bool - success status
- */
-bool Grid.AddStop(int direction, int level) {
-   if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddStop(1)  "+ sequence.name +" cannot add stop order to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
-   int counter = 0, ticket, oe[], error;
-
-   // loop until an order was opened or an unexpected error occurred
-   while (true) {
-      if (counter % 2 == 0) ticket = SubmitStopOrder(direction, level, oe);
-      else                  ticket = SubmitLimitOrder(direction, level, oe);
-      if (ticket > 0) break;
-
-      error = oe.Error(oe);
-      if (error != ERR_INVALID_STOP) return(false);
-
-      counter++; if (counter > 9) return(!catch("Grid.AddStop(2)  "+ sequence.name +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
-      if (IsLogInfo()) logInfo("Grid.AddStop(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead", error);
+      counter++; if (counter > 9) return(!catch("Grid.AddPendingOrder(2)  "+ sequence.name +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
+      if (IsLogInfo()) logInfo("Grid.AddPendingOrder(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead", error);
    }
 
    // prepare dataset
@@ -1008,8 +961,8 @@ void CopyInputStatus(bool store) {
    static string   _sequence.name = "";
    static int      _sequence.status;
    static int      _sequence.directions;
-   static bool     _sequence.isPyramid;
-   static bool     _sequence.isMartingale;
+   static bool     _sequence.pyramidEnabled;
+   static bool     _sequence.martingaleEnabled;
    static double   _sequence.unitsize;
 
    static bool     _tpAbs.condition;
@@ -1032,64 +985,64 @@ void CopyInputStatus(bool store) {
    static datetime _sessionbreak.endtime;
 
    if (store) {
-      _sequence.id            = sequence.id;
-      _sequence.created       = sequence.created;
-      _sequence.isTest        = sequence.isTest;
-      _sequence.name          = sequence.name;
-      _sequence.status        = sequence.status;
-      _sequence.directions    = sequence.directions;
-      _sequence.isPyramid     = sequence.isPyramid;
-      _sequence.isMartingale  = sequence.isMartingale;
-      _sequence.unitsize      = sequence.unitsize;
+      _sequence.id                = sequence.id;
+      _sequence.created           = sequence.created;
+      _sequence.isTest            = sequence.isTest;
+      _sequence.name              = sequence.name;
+      _sequence.status            = sequence.status;
+      _sequence.directions        = sequence.directions;
+      _sequence.pyramidEnabled    = sequence.pyramidEnabled;
+      _sequence.martingaleEnabled = sequence.martingaleEnabled;
+      _sequence.unitsize          = sequence.unitsize;
 
-      _tpAbs.condition        = tpAbs.condition;
-      _tpAbs.value            = tpAbs.value;
-      _tpAbs.description      = tpAbs.description;
-      _tpPct.condition        = tpPct.condition;
-      _tpPct.value            = tpPct.value;
-      _tpPct.absValue         = tpPct.absValue;
-      _tpPct.description      = tpPct.description;
+      _tpAbs.condition            = tpAbs.condition;
+      _tpAbs.value                = tpAbs.value;
+      _tpAbs.description          = tpAbs.description;
+      _tpPct.condition            = tpPct.condition;
+      _tpPct.value                = tpPct.value;
+      _tpPct.absValue             = tpPct.absValue;
+      _tpPct.description          = tpPct.description;
 
-      _slAbs.condition        = slAbs.condition;
-      _slAbs.value            = slAbs.value;
-      _slAbs.description      = slAbs.description;
-      _slPct.condition        = slPct.condition;
-      _slPct.value            = slPct.value;
-      _slPct.absValue         = slPct.absValue;
-      _slPct.description      = slPct.description;
+      _slAbs.condition            = slAbs.condition;
+      _slAbs.value                = slAbs.value;
+      _slAbs.description          = slAbs.description;
+      _slPct.condition            = slPct.condition;
+      _slPct.value                = slPct.value;
+      _slPct.absValue             = slPct.absValue;
+      _slPct.description          = slPct.description;
 
-      _sessionbreak.starttime = sessionbreak.starttime;
-      _sessionbreak.endtime   = sessionbreak.endtime;
+      _sessionbreak.starttime     = sessionbreak.starttime;
+      _sessionbreak.endtime       = sessionbreak.endtime;
    }
    else {
-      sequence.id            = _sequence.id;
-      sequence.created       = _sequence.created;
-      sequence.isTest        = _sequence.isTest;
-      sequence.name          = _sequence.name;
-      sequence.status        = _sequence.status;
-      sequence.directions    = _sequence.directions;
-      sequence.isPyramid     = _sequence.isPyramid;
-      sequence.isMartingale  = _sequence.isMartingale;
-      sequence.unitsize      = _sequence.unitsize;
+      sequence.id                = _sequence.id;
+      sequence.created           = _sequence.created;
+      sequence.isTest            = _sequence.isTest;
+      sequence.name              = _sequence.name;
+      sequence.status            = _sequence.status;
+      sequence.directions        = _sequence.directions;
+      sequence.pyramidEnabled    = _sequence.pyramidEnabled;
+      sequence.martingaleEnabled = _sequence.martingaleEnabled;
+      sequence.unitsize          = _sequence.unitsize;
 
-      tpAbs.condition        = _tpAbs.condition;
-      tpAbs.value            = _tpAbs.value;
-      tpAbs.description      = _tpAbs.description;
-      tpPct.condition        = _tpPct.condition;
-      tpPct.value            = _tpPct.value;
-      tpPct.absValue         = _tpPct.absValue;
-      tpPct.description      = _tpPct.description;
+      tpAbs.condition            = _tpAbs.condition;
+      tpAbs.value                = _tpAbs.value;
+      tpAbs.description          = _tpAbs.description;
+      tpPct.condition            = _tpPct.condition;
+      tpPct.value                = _tpPct.value;
+      tpPct.absValue             = _tpPct.absValue;
+      tpPct.description          = _tpPct.description;
 
-      slAbs.condition        = _slAbs.condition;
-      slAbs.value            = _slAbs.value;
-      slAbs.description      = _slAbs.description;
-      slPct.condition        = _slPct.condition;
-      slPct.value            = _slPct.value;
-      slPct.absValue         = _slPct.absValue;
-      slPct.description      = _slPct.description;
+      slAbs.condition            = _slAbs.condition;
+      slAbs.value                = _slAbs.value;
+      slAbs.description          = _slAbs.description;
+      slPct.condition            = _slPct.condition;
+      slPct.value                = _slPct.value;
+      slPct.absValue             = _slPct.absValue;
+      slPct.description          = _slPct.description;
 
-      sessionbreak.starttime = _sessionbreak.starttime;
-      sessionbreak.endtime   = _sessionbreak.endtime;
+      sessionbreak.starttime     = _sessionbreak.starttime;
+      sessionbreak.endtime       = _sessionbreak.endtime;
    }
 }
 
@@ -1143,14 +1096,14 @@ bool ValidateInputs(bool interactive) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    if (Pyramid.Multiplier < 0)                               return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
-   sequence.isPyramid = (Pyramid.Multiplier > 0);
+   sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, last.Martingale.Multiplier)) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    if (Martingale.Multiplier < 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
-   sequence.isMartingale = (Martingale.Multiplier > 0);
+   sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
    bool unsetTpPct = false, unsetTpAbs = false;
@@ -1524,8 +1477,8 @@ void SS.All() {
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.isPyramid,    ", Pyramid: "+    NumberToStr(Pyramid.Multiplier, ".1+"),    "");
-      sMartingale = ifString(sequence.isMartingale, ", Martingale: "+ NumberToStr(Martingale.Multiplier, ".1+"), "");
+      sPyramid    = ifString(sequence.pyramidEnabled,    ", Pyramid: "+    NumberToStr(Pyramid.Multiplier, ".1+"),    "");
+      sMartingale = ifString(sequence.martingaleEnabled, ", Martingale: "+ NumberToStr(Martingale.Multiplier, ".1+"), "");
    }
 }
 
