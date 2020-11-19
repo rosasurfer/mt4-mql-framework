@@ -229,6 +229,7 @@ string ErrorDescription(int error) {
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
       case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
+      case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65558
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -5656,22 +5657,25 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
 
-   // Befehlszeile für Shell-Aufruf zusammensetzen
-   //
-   //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
+   // Notes:
+   // ------
+   //  - Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
    //    Client-Aufruf mit Umleitung ist nicht möglich).
-   //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen
+   //  - Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen
    //    enthalten: cmd /c echo hello \n world | {program} => Fehler
-   //  • Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in
+   //  - Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in
    //    Kauf genommen werden).
-   //  • Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß
+   //  - Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß
    //    der Versand jedoch in einem eigenen Thread erfolgen, wenn er nicht blockieren soll.
    //
-   // Cleancode.email:
-   // ----------------
-   //  • unterstützt keine Exit-Codes
-   //  • validiert die übergebenen Adressen nicht
+   // Cleancode email
+   // ---------------
+   //  - https://github.com/deanproxy/eMail
+   //  - gibt keinen Exit-Code zurück
+   //  - validiert die übergebenen Adressen nicht
    //
+
+   // Befehlszeile für Shell-Aufruf zusammensetzen
    message.txt     = StrReplace(message.txt, "\\", "/");
    string mail.log = StrReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
@@ -5699,30 +5703,30 @@ bool SendSMS(string receiver, string message) {
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
-   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
    // get SMS gateway details
    // service
    string section  = "SMS";
    string key      = "Provider";
-   string provider = GetGlobalConfigString(section, key);
-   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   string provider = GetConfigString(section, key);
+   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // user
    section = "SMS."+ provider;
    key     = "username";
-   string username = GetGlobalConfigString(section, key);
-   if (!StringLen(username)) return(!catch("SendSMS(3)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // pass
+   string username = GetConfigString(section, key);
+   if (!StringLen(username)) return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   // password
    key = "password";
-   string password = GetGlobalConfigString(section, key);
-   if (!StringLen(password)) return(!catch("SendSMS(4)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   string password = GetConfigString(section, key);
+   if (!StringLen(password)) return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // API id
    key = "api_id";
-   int api_id = GetGlobalConfigInt(section, key);
+   int api_id = GetConfigInt(section, key);
    if (api_id <= 0) {
-      string value = GetGlobalConfigString(section, key);
-      if (!StringLen(value)) return(!catch("SendSMS(5)  missing global configuration ["+ section +"]->"+ key,                       ERR_INVALID_CONFIG_VALUE));
-                             return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
+      string value = GetConfigString(section, key);
+      if (!StringLen(value)) return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key,                      ERR_INVALID_CONFIG_VALUE));
+                             return(!catch("SendSMS(6)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
    // compose shell command line
@@ -5748,7 +5752,7 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   logInfo("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
+   if (IsLogInfo()) logInfo("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
    return(!catch("SendSMS(9)"));
 }
 
