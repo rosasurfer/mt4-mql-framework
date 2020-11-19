@@ -415,9 +415,11 @@ int log2File(string message, int error, int level) {
          return(error);
       }
       isRecursion = true;
+      ec_SetLoglevelFile(__ExecutionContext, LOG_OFF);                                                // prevent recursive calls
 
       AppendLogMessageA(__ExecutionContext, TimeCurrent(), message, error, level);
 
+      ec_SetLoglevelFile(__ExecutionContext, configLevel);                                            // restore the configuration
       isRecursion = false;
    }
    return(error);
