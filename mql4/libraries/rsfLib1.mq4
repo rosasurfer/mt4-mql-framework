@@ -7141,12 +7141,12 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
    bool slModified   = NE(stopLoss,   oldStopLoss  );
    bool tpModified   = NE(takeProfit, oldTakeProfit);
 
-   static string label, types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
+   static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
    // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ");
    if (openModified) {
-      label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits));
+      string label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits));
       if (ObjectFind(label) == 0)
          ObjectDelete(label);                                                          // alten Open-Marker löschen
       label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime-60*SECONDS));
