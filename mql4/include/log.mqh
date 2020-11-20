@@ -440,7 +440,7 @@ int log2Mail(string message, int error, int level) {
    int configLevel = __ExecutionContext[EC.loglevelMail]; if (!configLevel) {
       string sValue = GetConfigString("Log", "Log2Mail", "off");                                      // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(4)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(1)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelMail(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
@@ -448,7 +448,7 @@ int log2Mail(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Mail(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));  // should never happen
+         Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));  // should never happen
          return(error);
       }
       isRecursion = true;
@@ -456,12 +456,12 @@ int log2Mail(string message, int error, int level) {
 
       static string sender = ""; if (!StringLen(sender)) {
          sValue = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
-         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(2)  invalid mail sender address configuration [Mail]->Sender = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(3)  invalid mail sender address configuration [Mail]->Sender = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          sender = sValue;
       }
       static string receiver = ""; if (!StringLen(receiver)) {
          sValue = GetConfigString("Mail", "Receiver");
-         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(3)  invalid mail receiver address configuration [Mail]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(4)  invalid mail receiver address configuration [Mail]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          receiver = sValue;
       }
       message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
