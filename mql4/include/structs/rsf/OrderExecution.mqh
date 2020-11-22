@@ -24,7 +24,7 @@
  *    szchar comment[28];     //  28      => oe[22]      // Orderkommentar, <NUL>-terminiert
  *    int    duration;        //   4      => oe[29]      // Dauer der Auführung in Millisekunden
  *    int    requotes;        //   4      => oe[30]      // Anzahl aufgetretener Requotes
- *    int    slippage;        //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ *    int    slippage;        //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu Ungunsten, negativ: zu Gunsten)
  *    int    remainingTicket; //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
  *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } oe;                      // 136 byte = int[34]
