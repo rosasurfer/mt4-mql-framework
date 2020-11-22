@@ -232,7 +232,6 @@ bool     tester.onSessionBreakPause = false;       // whether to pause the teste
 bool     tester.onTrendChangePause  = false;       // whether to pause the tester on a fulfilled trend change condition
 bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when takeprofit is reached
 bool     tester.onStopLossPause     = false;       // whether to pause the tester when stoploss is reached
-
 bool     tester.reduceStatusWrites  = true;        // whether to minimize status file writing in tester
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
@@ -429,7 +428,7 @@ bool StartSequence(int signal) {
 
 
 /**
- * Close all open positions and delete pending orders. Stop the sequence and configure auto-resuming: If auto-resuming for a
+ * Close all open positions and delete pending orders. Stop the sequence and configure auto-resume: If auto-resume for a
  * trend condition is enabled the sequence is automatically resumed the next time the trend condition is fulfilled. If the
  * sequence is stopped due to a session break it is automatically resumed after the session break ends.
  *
@@ -501,7 +500,7 @@ bool StopSequence(int signal) {
 
       // delete all pending limits
       int sizeOfPendings = ArraySize(pendingLimits);
-      for (i=0; i < sizeOfPendings; i++) {                                 // ordered by descending gridlevel
+      for (i=0; i < sizeOfPendings; i++) {                                 // ordered descending by gridlevel
          if (orders.type[pendingLimits[i]] == OP_UNDEFINED) {
             error = Grid.DeleteOrder(pendingLimits[i]);                    // removes the order from the order arrays
             if (!error)      continue;
