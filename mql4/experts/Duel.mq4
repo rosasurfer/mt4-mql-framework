@@ -757,30 +757,30 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-
-   // (1) For scaling down (martingale) we use limit orders.  | if limits are filled new limits are added      | ok | Grid.AddPendingOrder(level) |
-   //                                                         |                                                |    |                             |
-   // (2) For scaling up (pyramid) we may use:                |                                                |    |                             |
-   //     - stop orders (slippage and spread)                 | if stops are filled new stops are added        | ok | Grid.AddPendingOrder(level) | curently used
-   //     - observe the market and add market orders (spread) | if levels are reached new positions are opened |    | Grid.AddPosition(level)     |
-   //     - observe the market and add limit orders           | if levels are reached new limits are added     |    | Grid.AddPendingOrder(level) |
-   //
-   // (3) Depending on the used approach UpdateStatus() needs to monitor different conditions.
+   bool gridChanged = false;
 
    if (direction & D_LONG && 1) {
       if (long.enabled) {
          int orders = ArraySize(long.ticket);
          if (!orders) return(!catch("UpdateOrders(3)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.martingaleEnabled) {            // on Martingale ensure the next limit order for scaling down exists
+         if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
             if (long.level[0] == long.minLevel) {
                if (!Grid.AddPendingOrder(D_LONG, Min(long.minLevel-1, -2))) return(false);
+               if (IsStopOrderType(long.pendingType[0])) {        // handle a missed sequence level
+                  long.minLevel = long.level[0];
+                  gridChanged = true;
+               }
                orders++;
             }
          }
-         if (sequence.pyramidEnabled) {               // on Pyramid ensure the next stop order for scaling up exists
+         if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
             if (long.level[orders-1] == long.maxLevel) {
-               if (!Grid.AddPendingOrder(D_LONG, long.maxLevel+1)) return(false);
+               if (!Grid.AddPendingOrder(D_LONG, Max(long.maxLevel+1, 2))) return(false);
+               if (IsLimitOrderType(long.pendingType[orders])) {  // handle a missed sequence level
+                  long.maxLevel = long.level[orders];
+                  gridChanged = true;
+               }
                orders++;
             }
          }
@@ -792,20 +792,31 @@ bool UpdateOrders(int direction = D_BOTH) {
          orders = ArraySize(short.ticket);
          if (!orders) return(!catch("UpdateOrders(4)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.martingaleEnabled) {            // on Martingale ensure the next limit order for scaling down exists
+         if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
             if (short.level[0] == short.minLevel) {
                if (!Grid.AddPendingOrder(D_SHORT, Min(short.minLevel-1, -2))) return(false);
+               if (IsStopOrderType(short.pendingType[0])) {       // handle a missed sequence level
+                  short.minLevel = short.level[0];
+                  gridChanged = true;
+               }
                orders++;
             }
          }
-         if (sequence.pyramidEnabled) {               // on Pyramid ensure the next stop order for scaling up exists
+         if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
             if (short.level[orders-1] == short.maxLevel) {
-               if (!Grid.AddPendingOrder(D_SHORT, short.maxLevel+1)) return(false);
+               if (!Grid.AddPendingOrder(D_SHORT, Max(short.maxLevel+1, 2))) return(false);
+               if (IsLimitOrderType(short.pendingType[orders])) { // handle a missed sequence level
+                  short.maxLevel = short.level[orders];
+                  gridChanged = true;
+               }
                orders++;
             }
          }
       }
    }
+
+   if (gridChanged)                                               // call the function again if sequence levels have been missed
+      return(UpdateOrders(direction));
    return(!catch("UpdateOrders(5)"));
 }
 
