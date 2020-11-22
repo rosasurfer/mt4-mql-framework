@@ -1827,7 +1827,7 @@ int SearchBoolArray(bool haystack[], bool needle) {
  * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchIntArray(int haystack[], int needle) {
-   if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchIntArray()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchIntArray(1)  too many dimensions of parameter haystack: "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(haystack);
 
    for (int i=0; i < size; i++) {
