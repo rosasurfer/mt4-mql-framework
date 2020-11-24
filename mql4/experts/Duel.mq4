@@ -747,7 +747,7 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
 
 
 /**
- * Update existing orders and add new or missing ones.
+ * Check existing orders and add new or missing ones.
  *
  * @param  int direction [optional] - order direction flags (default: all currently active trade directions)
  *
@@ -758,6 +758,12 @@ bool UpdateOrders(int direction = D_BOTH) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    bool gridChanged = false;
+
+   // Scaling down
+   //  - limit orders: @todo  If market moves too fast positions for missed levels must be opened immediately at the better price.
+   // Scaling up
+   //  - stop orders:  Regular slippage is not an issue. At worst the whole grid moves by the average slippage amount which is neglectable.
+   //  - limit orders: Big slippage on price spikes affects only one (the next) level. For all other levels limit orders will be placed.
 
    if (direction & D_LONG && 1) {
       if (long.enabled) {
