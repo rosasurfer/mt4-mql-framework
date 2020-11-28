@@ -641,8 +641,8 @@ string TicketsToStr.Position(int tickets[]) {
 
    string result;
    if (!isPosition) result = "(none)";
-   else if (!total) result = "±"+ NumberToStr(long,  ".+")                                                         +" lots (hedged)";
-   else             result =      NumberToStr(total, ".+") + ifString(hedged, " ±"+ NumberToStr(hedged, ".+"), "") +" lots";
+   else if (!total) result = "±"+ NumberToStr(long,  ".+")                                                          +" lots (hedged)";
+   else             result =      NumberToStr(total, ".+") + ifString(!hedged, "", " ±"+ NumberToStr(hedged, ".+")) +" lots";
 
    return(result);
 }
