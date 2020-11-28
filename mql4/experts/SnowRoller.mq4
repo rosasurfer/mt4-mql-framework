@@ -1235,7 +1235,7 @@ string UpdateStatus.OrderFillMsg(int i) {
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
-   if (NE(orders.pendingPrice[i], orders.openPrice[i])) {
+   if (NE(orders.pendingPrice[i], orders.openPrice[i], Digits)) {
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
@@ -1289,7 +1289,7 @@ string UpdateStatus.StopLossMsg(int i) {
    string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), stoploss "+ sStopLoss +" was executed";
 
-   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
+   if (NE(orders.closePrice[i], orders.stopLoss[i], Digits)) {
       double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
