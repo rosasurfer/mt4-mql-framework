@@ -172,7 +172,7 @@ int UpdateInstrumentInfos() {
    double marginHedged     = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged     = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),               fg.fontSize, fg.fontName, ifInt(!marginRequired, fg.fontColor.Disabled, fg.fontColor));
 
-   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits & 1) +" pip"+ ifString(!atrD1, "", " = "+ DoubleToStr(MathDiv(spread*Point, atrD1) * 100, 1) +"% ATR(D1)"), fg.fontSize, fg.fontName, fg.fontColor);
+   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread, Digits & 1) +" pip"+ ifString(!atrD1, "", " = "+ DoubleToStr(MathDiv(spread*Point, atrD1) * 100, 1) +"% ATR(D1)"), fg.fontSize, fg.fontName, fg.fontColor);
    double commission       = GetCommission();
    double commissionPip    = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
                                                                              ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip"), fg.fontSize, fg.fontName, fg.fontColor);
