@@ -5258,9 +5258,9 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
-      if (NE(slippage, 0)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
-         if (slippage > 0)   sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
-         else                sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
+      if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
+         if (slippage > 0)           sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
+         else                        sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
@@ -5839,7 +5839,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
-      if (NE(slippage, 0)) {
+      if (NE(slippage, 0, digits)) {
          sPrice = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_BUY, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
          if (slippage > 0) sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
          else              sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";

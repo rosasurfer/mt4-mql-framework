@@ -150,6 +150,7 @@ int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string company="", int account=NULL, bool refresh=false);;
 datetime GetFxtTime();;
 string   GetMqlFilesPath();;
+int      GetRandomValue(int min, int max);;
 datetime GetServerTime();;
 string   GmtTimeFormat(datetime timestamp, string format);;
 bool     GT(double double1, double double2, int digits = 8);;

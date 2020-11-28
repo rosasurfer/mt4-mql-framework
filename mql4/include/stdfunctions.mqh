@@ -3727,6 +3727,27 @@ string LocalTimeFormat(datetime timestamp, string format) {
 
 
 /**
+ * Generate a random integer value between the specified minimum and maximum values.
+ *
+ * @param  int min - minimum value
+ * @param  int max - maximum value
+ *
+ * @return int
+ */
+int GetRandomValue(int min, int max) {
+   static bool seeded = false; if (!seeded) {
+      MathSrand(GetTickCount());
+      seeded = true;
+   }
+   int    value = MathRand();                   // pseudo-random value from 0 to 32767
+   double percent = value/32767.0;
+   double result = min + (max-min) * percent;
+
+   return(MathRound(result));
+}
+
+
+/**
  * Return a readable version of a module type flag.
  *
  * @param  int fType - combination of one or more module type flags
