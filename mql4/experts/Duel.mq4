@@ -656,10 +656,10 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, double &totalLots,
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
-   double sumPrices = 0;
-   floatingPL = 0;
    int orders = ArraySize(tickets);
    bool isLogInfo = IsLogInfo();
+   double sumPrices = 0;
+   floatingPL = 0;
 
    for (int i=0; i < orders; i++) {
       if (!SelectTicket(tickets[i], "UpdateStatus.Direction(1)")) return(false);
@@ -688,7 +688,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, double &totalLots,
          profits    [i] = OrderProfit();
          sumPrices += lots[i] * openPrices[i];
       }
-      floatingPL = floatingPL + swaps[i] + commissions[i] + profits[i];
+      floatingPL += swaps[i] + commissions[i] + profits[i];
    }
 
    avgPrice    = NormalizeDouble(MathDiv(sumPrices, totalLots), Digits);
@@ -708,7 +708,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, double &totalLots,
  * @return string
  */
 string UpdateStatus.OrderFillMsg(int direction, int i) {
-   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was filled[ at 1.5457'2 with 0.3 pip [positive ]slippage] (market: Bid/Ask)
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was filled[ at 1.5457'2] (market: Bid/Ask[, 0.3 pip [positive ]slippage])
    int ticket, level, pendingType;
    double lots, pendingPrice, openPrice;
 
@@ -735,14 +735,14 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
    string comment       = ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
-   if (NE(pendingPrice, openPrice)) {
-      double slippage = (openPrice - pendingPrice)/Pip; if (direction == OP_SELL) slippage = -slippage;
-      string sSlippage;
-      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
-      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
-      message = message +" at "+ NumberToStr(openPrice, PriceFormat) +" with "+ sSlippage;
+   string sSlippage = "";
+   if (NE(openPrice, pendingPrice, Digits)) {
+      double slippage = NormalizeDouble((pendingPrice-openPrice)/Pip, 1); if (direction == D_SHORT) slippage = -slippage;
+         if (slippage > 0) sSlippage = ", "+ DoubleToStr(slippage, Digits & 1) +" pip positive slippage";
+         else              sSlippage = ", "+ DoubleToStr(-slippage, Digits & 1) +" pip slippage";
+      message = message +" at "+ NumberToStr(openPrice, PriceFormat);
    }
-   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
 }
 
 
