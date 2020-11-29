@@ -6517,6 +6517,7 @@ void __DummyCalls() {
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
    GetMqlFilesPath();
+   GetRandomValue(NULL, NULL);
    GetServerTime();
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
