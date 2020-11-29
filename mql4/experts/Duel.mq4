@@ -107,7 +107,7 @@ double   long.openLots;                                  // total open long lots
 double   long.avgPrice;
 int      long.minLevel = INT_MAX;                        // lowest reached grid level
 int      long.maxLevel = INT_MIN;                        // highest reached grid level
-double   long.slippage;                                  // cumulated slippage in pip
+double   long.slippage;                                  // cumulated slippage
 double   long.floatingPL;
 double   long.closedPL;
 double   long.totalPL;
@@ -656,8 +656,8 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, double &totalLots,
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
-   int orders = ArraySize(tickets);
-   bool isLogInfo = IsLogInfo();
+   int    orders    = ArraySize(tickets);
+   bool   isLogInfo = IsLogInfo();
    double sumPrices = 0;
    floatingPL = 0;
 
@@ -678,7 +678,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, double &totalLots,
             maxLevel    = MathMax(levels[i], maxLevel);
             totalLots  += lots[i];
             sumPrices  += lots[i] * openPrices[i];
-            slippage    = NormalizeDouble(slippage + ifDouble(direction==D_LONG, openPrices[i]-pendingPrices[i], pendingPrices[i]-openPrices[i]), 1);
+            slippage    = NormalizeDouble(slippage + ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]), Digits);
             gridChanged = true;
          }
       }
@@ -1810,10 +1810,10 @@ void SS.StopConditions() {
 void SS.OpenLots() {
    if (IsChart()) {
       if (!long.openLots) sOpenLongLots = "-";
-      else                sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot at level "+ long.maxLevel + ifString(long.slippage, ", slippage: "+ DoubleToStr(long.slippage, 1) +" pip", "");
+      else                sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot at level "+ long.maxLevel + ifString(!long.slippage, "", ", slippage: "+ NumberToStr(long.slippage/Pip, "+.1R") +" pip");
 
       if (!short.openLots) sOpenShortLots = "-";
-      else                 sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot at level "+ short.maxLevel + ifString(short.slippage, ", slippage: "+ DoubleToStr(short.slippage, 1) +" pip", "");
+      else                 sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot at level "+ short.maxLevel + ifString(!short.slippage, "", ", slippage: "+ NumberToStr(short.slippage/Pip, "+.1R") +" pip");
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
       else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
