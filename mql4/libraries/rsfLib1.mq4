@@ -86,7 +86,7 @@ bool ArrayAddInt(int &array[], int value) {
  * @return bool - success status
  */
 bool EditFile(string filename) {
-   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename = "+ DoubleQuoteStr(filename), ERR_INVALID_PARAMETER));
+   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename: "+ DoubleQuoteStr(filename), ERR_INVALID_PARAMETER));
 
    string file[1]; file[0] = filename;
    return(EditFiles(file));
