@@ -3983,19 +3983,19 @@ bool onOrderFail(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
 
-      string type        = OperationTypeDescription(OrderType() & 1);      // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
+      string type        = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
+      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\"";
 
-      if (IsLogInfo()) logInfo("onOrderFail(2)  "+ message);
+      logWarn("onOrderFail(2)  "+ message);
 
-      // Signale für jede Order einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Orders gemeinsam abspielen
@@ -4028,13 +4028,13 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price;
 
       if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
-      // Signale für jede Position einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4072,13 +4072,13 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
       if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
-      // Signale für jede Position einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4114,10 +4114,8 @@ bool EditAccountConfig() {
  */
 string InputsToStr() {
    return(StringConcatenate("displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
-
                             "Track.Orders=",         DoubleQuoteStr(Track.Orders),         ";", NL,
                             "Offline.Ticker=",       BoolToStr(Offline.Ticker),            ";", NL,
-
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
                             "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
