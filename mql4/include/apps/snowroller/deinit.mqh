@@ -28,17 +28,17 @@ int onDeinitChartChange() {
  *         - Called in terminal versions up to build 509 when the terminal shuts down.
  * Tester: - Called when the chart is closed (with VisualMode=On).
  *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Scalar variables
- *           (not strings) may contain invalid values.
+ *           may contain invalid values (strings are ok).
  *
  * @return int - error status
  */
 int onDeinitChartClose() {
    if (IsTesting()) {
-      if (!IsLastError())
-         SetLastError(ERR_CANCELLED_BY_USER);
+      if (!IsLastError()) SetLastError(ERR_CANCELLED_BY_USER);
    }
    else {
-      StoreChartStatus();                                            // online: for profile changes and terminal restart
+      // online
+      StoreChartStatus();                                            // for profile changes and terminal restart
    }
    return(catch("onDeinitChartClose(1)"));
 }
@@ -53,8 +53,7 @@ int onDeinitChartClose() {
  */
 int onDeinitUndefined() {
    if (IsTesting()) {
-      if (IsLastError())
-         return(onDeinitChartClose());                               // same as a explicite test interruption
+      if (IsLastError()) return(last_error);
 
       bool success = true;
       if (sequence.status == STATUS_PROGRESSING) {
@@ -67,7 +66,7 @@ int onDeinitUndefined() {
       }
       return(catch("onDeinitUndefined(1)"));
    }
-   return(catch("onDeinitUndefined(2)", ERR_ILLEGAL_STATE));         // do what the Expander would do
+   return(catch("onDeinitUndefined(2)", ERR_UNDEFINED_STATE));       // do what the Expander would do
 }
 
 
