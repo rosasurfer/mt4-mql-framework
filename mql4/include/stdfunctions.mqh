@@ -230,6 +230,7 @@ string ErrorDescription(int error) {
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
       case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
       case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65558
+      case ERR_MARGIN_STOPOUT             : return("margin stopout"                                            );    //  65559
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -5564,12 +5565,12 @@ bool LogTicket(int ticket) {
 
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
-   string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string   priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
-   logInfo("LogTicket()  "+ message);
+   logDebug("LogTicket(2)  "+ message);
 
-   return(OrderPop("LogTicket(2)"));
+   return(OrderPop("LogTicket(3)"));
 }
 
 

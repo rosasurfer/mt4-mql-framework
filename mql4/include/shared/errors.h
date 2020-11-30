@@ -213,6 +213,7 @@
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 #define ERR_UNDEFINED_STATE                                       65557    // undefined state or behavior
 #define ERR_STOP_DISTANCE_VIOLATED                                65558    // stop or limit price violate the broker's stop distance
+#define ERR_MARGIN_STOPOUT                                        65559    // margin stopout
 
 // user defined errors >=100000 are mapped Win32 errors: win32-error + 100000 = mql-error
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

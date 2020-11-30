@@ -838,7 +838,7 @@ int onDeinitAccountChange()
  *         - Called in terminal versions up to build 509 when the terminal shuts down.
  * Tester: - Called when the chart is closed (with VisualMode=On).
  *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Scalar variables
- *           (not strings) may contain invalid values.
+ *           may contain invalid values (strings are ok).
  *
  * @return int - error status
  *
