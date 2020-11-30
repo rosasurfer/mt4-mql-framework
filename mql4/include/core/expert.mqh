@@ -365,7 +365,7 @@ int deinit() {
          int tmp=tester.hEquitySet; tester.hEquitySet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (EA.CreateReport) {
+      if (!__STATUS_OFF && EA.CreateReport) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
          Test_StopReporting(__ExecutionContext, time, Bars);
       }
@@ -378,8 +378,8 @@ int deinit() {
       if (!RemoveTickTimer(id)) return(catch("deinit(2)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
 
-   // Execute user-specific deinit() handlers (if implemented). Handlers are executed as long as the previous handler doesn't
-   // return with an error.
+   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
+   //
    error = onDeinit();                                                     // preprocessing hook
    if (!error) {                                                           //
       switch (UninitializeReason()) {                                      //
@@ -674,9 +674,6 @@ bool Tester.RecordEquity() {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------
-
-
 #import "rsfLib1.ex4"
    bool   IntInArray(int haystack[], int needle);
 
@@ -707,7 +704,7 @@ bool Tester.RecordEquity() {
 #import
 
 
-// -- init() event handler templates (opening curly braces are intentionally missing) ---------------------------------------
+// -- init() event handler templates ----------------------------------------------------------------------------------------
 
 
 /**
@@ -715,13 +712,13 @@ bool Tester.RecordEquity() {
  *
  * @return int - error status
  *
-int onInit()
+int onInit()                                                   // opening curly braces are intentionally missing (UEStudio)
    return(NO_ERROR);
 }
 
 
 /**
- * Called after the expert was manually loaded by the user. Also in Tester with both VisualMode=On|Off.
+ * Called after the expert was manually loaded by the user. Also in tester with both VisualMode=On|Off.
  * There was an input dialog.
  *
  * @return int - error status
@@ -791,7 +788,7 @@ int afterInit()
 }
 
 
-// -- deinit() event handler templates (opening curly braces are intentionally missing) -------------------------------------
+// -- deinit() event handler templates --------------------------------------------------------------------------------------
 
 
 /**
@@ -799,7 +796,7 @@ int afterInit()
  *
  * @return int - error status
  *
-int onDeinit()
+int onDeinit()                                                 // opening curly braces are intentionally missing (UEStudio)
    return(NO_ERROR);
 }
 
@@ -825,7 +822,7 @@ int onDeinitChartChange()
 
 
 /**
- * Never encountered. Tracked in Expander::onDeinitAccountChange().
+ * Never encountered. Tracked in MT4Expander::onDeinitAccountChange().
  *
  * @return int - error status
  *
@@ -835,12 +832,13 @@ int onDeinitAccountChange()
 
 
 /**
- * Online:    - Called when another chart template is applied.
- *            - Called when the chart profile is changed.
- *            - Called when the chart is closed.
- *            - Called in terminal versions up to build 509 when the terminal shuts down.
- * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
- *            - Called when the chart is closed (with VisualMode=On).
+ * Online: - Called when another chart template is applied.
+ *         - Called when the chart profile is changed.
+ *         - Called when the chart is closed.
+ *         - Called in terminal versions up to build 509 when the terminal shuts down.
+ * Tester: - Called when the chart is closed (with VisualMode=On).
+ *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Scalar variables
+ *           (not strings) may contain invalid values.
  *
  * @return int - error status
  *
@@ -850,8 +848,8 @@ int onDeinitChartClose()
 
 
 /**
- * Online:    Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
- * In tester: Never called.
+ * Online: Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
+ * Tester: Never called.
  *
  * @return int - error status
  *
@@ -861,8 +859,9 @@ int onDeinitRemove()
 
 
 /**
- * Online:    Never encountered. Tracked in Expander::onDeinitUndefined().
- * In tester: Called if a test finished regularily, i.e. the test period ended.
+ * Online: - Never encountered. Tracked in MT4Expander::onDeinitUndefined().
+ * Tester: - Called if a test finished regularily, i.e. the test period ended.
+ *         - Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
  *
  * @return int - error status
  *
@@ -892,8 +891,7 @@ int onDeinitClose()
 
 
 /**
- * Deinitialization post-processing hook. Executed if neither the pre-processing hook (if implemented) nor the uninitialize
- * reason specific handlers (if implemented) returned -1.
+ * Deinitialization post-processing hook.
  *
  * @return int - error status
  *
