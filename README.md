@@ -398,6 +398,9 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 ### MetaTrader 4 News
 
+###### November 2020:
+- MetaQuotes stops supporting terminals older than build 1220.
+
 ###### March 2019:
 - MetaQuotes stops supporting terminals older than build 1118.
 
