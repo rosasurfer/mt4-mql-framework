@@ -110,9 +110,9 @@ double   long.commission  [];
 double   long.profit      [];
 double   long.openLots;                                  // total open long lots: 0...+n
 double   long.avgPrice;
+double   long.slippage;                                  // cumulated slippage
 int      long.minLevel = INT_MAX;                        // lowest reached grid level
 int      long.maxLevel = INT_MIN;                        // highest reached grid level
-double   long.slippage;                                  // cumulated slippage
 double   long.floatingPL;
 double   long.closedPL;
 double   long.totalPL;
@@ -136,9 +136,9 @@ double   short.commission  [];
 double   short.profit      [];
 double   short.openLots;                                 // total open short lots: 0...+n
 double   short.avgPrice;
+double   short.slippage;
 int      short.minLevel = INT_MAX;
 int      short.maxLevel = INT_MIN;
-double   short.slippage;
 double   short.floatingPL;
 double   short.closedPL;
 double   short.totalPL;
@@ -200,12 +200,12 @@ int onTick() {
       if (IsStartSignal()) StartSequence();
    }
    else if (sequence.status == STATUS_PROGRESSING) {     // manage a running sequence
-      bool gridChanged=false, gridError=false;           // whether the current gridbase or gridlevel changed, or a grid error occurred
+      bool gridChanged=false, gridError=false;           // whether the current gridlevel changed, and/or a grid error occurred
 
-      if (UpdateStatus(gridChanged, gridError)) {        // check pending orders and update PL
-         if      (gridError)      StopSequence();        // close all positions
-         else if (IsStopSignal()) StopSequence();        // ...
-         else if (gridChanged)    UpdateOrders();        // update pending orders
+      if (UpdateStatus(gridChanged, gridError)) {        // check pending orders and open positions
+         if      (gridError)      StopSequence();
+         else if (IsStopSignal()) StopSequence();
+         else if (gridChanged)    UpdatePendingOrders(); // update pending orders
       }
    }
    else if (sequence.status == STATUS_STOPPED) {
@@ -367,7 +367,7 @@ bool StartSequence() {
 
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
 
-   if (!UpdateOrders()) return(false);                                  // update pending orders
+   if (!UpdatePendingOrders()) return(false);                           // update pending orders
 
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
@@ -622,29 +622,28 @@ bool Grid.RemovePendingOrders() {
 
 
 /**
- * Update order and PL status with current market data.
+ * Update order and PL status with current market data and signal status changes.
  *
- * @param  _Out_ bool gridChanged - whether the current gridlevel changed (a pending order was filled)
- * @param  _Out_ bool gridError   - whether a grid error occurred (e.g. a pending order was cancelled or a stopout due to ERR_NOT_ENOUGH_MONEY)
+ * @param  _Out_ bool gridChanged - whether the current gridlevel changed
+ * @param  _Out_ bool gridError   - whether an external intervention was detected (cancellation or close)
  *
  * @return bool - success status
  */
 bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   gridChanged = gridChanged!=0;
-   gridError   = gridError!=0;
+   bool positionChanged = false;
 
-   if (!UpdateStatus.Direction(D_LONG,  gridChanged, gridError, long.openLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.slippage,  long.floatingPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus.Direction(D_SHORT, gridChanged, gridError, short.openLots, short.avgPrice, short.minLevel, short.maxLevel, short.slippage, short.floatingPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.openLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.slippage,  long.floatingPL,  long.closedPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.openLots, short.avgPrice, short.minLevel, short.maxLevel, short.slippage, short.floatingPL, short.closedPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
-   if (gridChanged) {
+   if (gridChanged || positionChanged) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
       sequence.avgPrice = NormalizeDouble(MathDiv(long.openLots*long.avgPrice - short.openLots*short.avgPrice, sequence.openLots), Digits);
       SS.OpenLots();
    }
-   long.totalPL        = long.floatingPL;
-   short.totalPL       = short.floatingPL;
+   long.totalPL        = long.floatingPL  + long.closedPL;
+   short.totalPL       = short.floatingPL + short.closedPL;
    sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
    sequence.closedPL   = NormalizeDouble(long.closedPL   + short.closedPL,   2);
    sequence.totalPL    = NormalizeDouble(sequence.floatingPL + sequence.closedPL, 2); SS.TotalPL();
@@ -659,62 +658,83 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
 /**
  * UpdateStatus() sub-routine. Updates order and PL status of a single trade direction.
  *
+ * @param  _In_  int  direction       - trade direction
+ * @param  _Out_ bool levelChanged    - whether the gridlevel changed
+ * @param  _Out_ bool positionChanged - whether the total open position changed (position open or close)
+ * @param  _Out_ bool gridError       - whether an external intervention was detected (cancellation or close)
+ * @param  ...
+ *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &gridError, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &closedPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
-   int    orders    = ArraySize(tickets);
-   bool   isLogInfo = IsLogInfo();
-   double sumPrices = 0;
+   int error, orders = ArraySize(tickets);
+   bool isLogInfo = IsLogInfo();
+   double sumPrice = 0;
+   totalLots = 0;
    floatingPL = 0;
 
    for (int i=0; i < orders; i++) {
-      if (!SelectTicket(tickets[i], "UpdateStatus.Direction(1)")) return(false);
+      if (closeTimes[i] > 0) continue;                            // skip tickets already known as closed
+      if (!SelectTicket(tickets[i], "UpdateStatus(3)")) return(false);
 
-      if (types[i] == OP_UNDEFINED) {                             // last time a pending order
-         if (OrderType() != pendingTypes[i]) {                    // the pending order was executed
-            types      [i] = OrderType();
-            openTimes  [i] = OrderOpenTime();
-            openPrices [i] = OrderOpenPrice();
-            swaps      [i] = OrderSwap();
-            commissions[i] = OrderCommission();
-            profits    [i] = OrderProfit();
+      bool wasPending  = (types[i] == OP_UNDEFINED);
+      bool isPending   = (OrderType() > OP_SELL);
+      bool wasPosition = !wasPending;
+      bool isOpen      = !OrderCloseTime();
+      bool isClosed    = !isOpen;
 
-            if (isLogInfo) logInfo("UpdateStatus.Direction(2)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
-            minLevel    = MathMin(levels[i], minLevel);
-            maxLevel    = MathMax(levels[i], maxLevel);
-            totalLots  += lots[i];
-            sumPrices  += lots[i] * openPrices[i];
-            slippage    = NormalizeDouble(slippage + ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]), Digits);
-            gridChanged = true;
+      if (wasPending) {
+         if (!isPending) {                                        // the pending order was filled
+            types     [i] = OrderType();
+            openTimes [i] = OrderOpenTime();
+            openPrices[i] = OrderOpenPrice();
+            slippage = NormalizeDouble(slippage + ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]), Digits);
+
+            if (isLogInfo) logInfo("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
+            minLevel = MathMin(levels[i], minLevel);
+            maxLevel = MathMax(levels[i], maxLevel);
+            levelChanged    = true;
+            positionChanged = true;
+            wasPosition     = true;                               // mark as known open position
+         }
+         else if (isClosed) {                                     // the order was unexpectedly cancelled
+            closeTimes[i] = OrderCloseTime();
+            logNotice("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.OrderCancelledMsg(direction, i, error), error);
+            gridError = true;
          }
       }
-      else {                                                      // last time an open position
+
+      if (wasPosition) {
          swaps      [i] = OrderSwap();
          commissions[i] = OrderCommission();
          profits    [i] = OrderProfit();
-         sumPrices += lots[i] * openPrices[i];
-      }
-      floatingPL += swaps[i] + commissions[i] + profits[i];
 
-      if (!closeTimes[i] && OrderCloseTime()) {                   // last time open but now closed
-         closeTimes [i] = OrderCloseTime();
-         closePrices[i] = OrderClosePrice();
-
-         if (OrderType() == pendingTypes[i]) logError("UpdateStatus.Direction(3)  "+ sequence.name +" "+ UpdateStatus.OrderCancelledMsg(direction, i));
-         else                                logError("UpdateStatus.Direction(4)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i));
-         gridError = true;
+         if (isOpen) {                                            // update floating PL
+            floatingPL += swaps[i] + commissions[i] + profits[i];
+            totalLots  += lots[i];
+            sumPrice   += lots[i] * openPrices[i];
+         }
+         else {                                                   // the position was unexpectedly closed
+            closeTimes [i] = OrderCloseTime();
+            closePrices[i] = OrderClosePrice();
+            closedPL += swaps[i] + commissions[i] + profits[i];   // update closed PL
+            logNotice("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i, error), error);
+            positionChanged = true;
+            gridError       = true;
+         }
       }
    }
 
-   avgPrice    = NormalizeDouble(MathDiv(sumPrices, totalLots), Digits);
    floatingPL  = NormalizeDouble(floatingPL, 2);                  // update PL numbers
-   maxProfit   = MathMax(floatingPL, maxProfit);
-   maxDrawdown = MathMin(floatingPL, maxDrawdown);
+   closedPL    = NormalizeDouble(closedPL, 2);
+   maxProfit   = MathMax(floatingPL + closedPL, maxProfit);
+   maxDrawdown = MathMin(floatingPL + closedPL, maxDrawdown);
+   avgPrice    = NormalizeDouble(MathDiv(sumPrice, totalLots), Digits);
 
-   return(!catch("UpdateStatus.Direction(5)"));
+   return(!catch("UpdateStatus(7)"));
 }
 
 
@@ -768,14 +788,16 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
 /**
  * Compose a log message for a cancelled pending entry order.
  *
- * @param  int direction - trade direction
- * @param  int i         - order index
+ * @param  _In_  int direction - trade direction
+ * @param  _In_  int i         - order index
+ * @param  _Out_ int error     - error code to be attached to the log message (if any)
  *
  * @return string - log message or an empty string in case of errors
  */
-string UpdateStatus.OrderCancelledMsg(int direction, int i) {
+string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
    // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was irregularily cancelled
    // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was irregularily deleted (not enough money)
+   error = NO_ERROR;
    int ticket, level, pendingType;
    double lots, pendingPrice;
 
@@ -799,9 +821,13 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i) {
    string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
    string comment       = ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was irregularily ";
+   string sReason       = "cancelled";
 
    SelectTicket(ticket, "UpdateStatus.OrderCancelledMsg(2)", /*pushTicket=*/true);
-   string sReason = ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled");
+   if (OrderComment() == "deleted [no money]") {
+      sReason = "deleted (not enough money)";
+      error = ERR_NOT_ENOUGH_MONEY;
+   }
    OrderPop("UpdateStatus.OrderCancelledMsg(3)");
 
    return(message + sReason);
@@ -811,13 +837,15 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i) {
 /**
  * Compose a log message for a closed open position.
  *
- * @param  int direction - trade direction
- * @param  int i         - order index
+ * @param  _In_  int direction - trade direction
+ * @param  _In_  int i         - order index
+ * @param  _Out_ int error     - error code to be attached to the log message (if any)
  *
  * @return string - log message or an empty string in case of errors
  */
-string UpdateStatus.PositionCloseMsg(int direction, int i) {
+string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
    // #1 Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was irregularily closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   error = NO_ERROR;
    int ticket, level, type;
    double lots, openPrice, closePrice;
 
@@ -844,9 +872,13 @@ string UpdateStatus.PositionCloseMsg(int direction, int i) {
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
    string comment     = ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was irregularily closed at "+ sClosePrice;
+   string sStopout    = "";
 
    SelectTicket(ticket, "UpdateStatus.PositionCloseMsg(2)", /*pushTicket=*/true);
-   string sStopout = ifString(StrStartsWithI(OrderComment(), "so:"), ", "+ OrderComment(), "");
+   if (StrStartsWithI(OrderComment(), "so:")) {
+      sStopout = ", "+ OrderComment();
+      error = ERR_MARGIN_STOPOUT;
+   }
    OrderPop("UpdateStatus.PositionCloseMsg(3)");
 
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
@@ -854,16 +886,13 @@ string UpdateStatus.PositionCloseMsg(int direction, int i) {
 
 
 /**
- * Check existing orders and add new or missing ones.
- *
- * @param  int direction [optional] - order direction flags (default: all currently active trade directions)
+ * Check existing pending orders and add new or missing ones.
  *
  * @return bool - success status
  */
-bool UpdateOrders(int direction = D_BOTH) {
+bool UpdatePendingOrders() {
    if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction & (~D_BOTH) && 1)            return(!catch("UpdateOrders(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    bool gridChanged = false;
 
    // Scaling down
@@ -872,65 +901,61 @@ bool UpdateOrders(int direction = D_BOTH) {
    //  - stop orders:  Regular slippage is not an issue. At worst the whole grid moves by the average slippage amount which is neglectable.
    //  - limit orders: Big slippage on price spikes affects only one (the next) level. For all other levels limit orders will be placed.
 
-   if (direction & D_LONG && 1) {
-      if (long.enabled) {
-         int orders = ArraySize(long.ticket);
-         if (!orders) return(!catch("UpdateOrders(3)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
+   if (long.enabled) {
+      int orders = ArraySize(long.ticket);
+      if (!orders) return(!catch("UpdatePendingOrders(2)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
-            if (long.level[0] == long.minLevel) {
-               if (!Grid.AddPendingOrder(D_LONG, Min(long.minLevel-1, -2))) return(false);
-               if (IsStopOrderType(long.pendingType[0])) {        // handle a missed sequence level
-                  long.minLevel = long.level[0];
-                  gridChanged = true;
-               }
-               orders++;
+      if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
+         if (long.level[0] == long.minLevel) {
+            if (!Grid.AddPendingOrder(D_LONG, Min(long.minLevel-1, -2))) return(false);
+            if (IsStopOrderType(long.pendingType[0])) {        // handle a missed sequence level
+               long.minLevel = long.level[0];
+               gridChanged = true;
             }
+            orders++;
          }
-         if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
-            if (long.level[orders-1] == long.maxLevel) {
-               if (!Grid.AddPendingOrder(D_LONG, Max(long.maxLevel+1, 2))) return(false);
-               if (IsLimitOrderType(long.pendingType[orders])) {  // handle a missed sequence level
-                  long.maxLevel = long.level[orders];
-                  gridChanged = true;
-               }
-               orders++;
+      }
+      if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
+         if (long.level[orders-1] == long.maxLevel) {
+            if (!Grid.AddPendingOrder(D_LONG, Max(long.maxLevel+1, 2))) return(false);
+            if (IsLimitOrderType(long.pendingType[orders])) {  // handle a missed sequence level
+               long.maxLevel = long.level[orders];
+               gridChanged = true;
             }
+            orders++;
          }
       }
    }
 
-   if (direction & D_SHORT && 1) {
-      if (short.enabled) {
-         orders = ArraySize(short.ticket);
-         if (!orders) return(!catch("UpdateOrders(4)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
+   if (short.enabled) {
+      orders = ArraySize(short.ticket);
+      if (!orders) return(!catch("UpdatePendingOrders(3)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
 
-         if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
-            if (short.level[0] == short.minLevel) {
-               if (!Grid.AddPendingOrder(D_SHORT, Min(short.minLevel-1, -2))) return(false);
-               if (IsStopOrderType(short.pendingType[0])) {       // handle a missed sequence level
-                  short.minLevel = short.level[0];
-                  gridChanged = true;
-               }
-               orders++;
+      if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
+         if (short.level[0] == short.minLevel) {
+            if (!Grid.AddPendingOrder(D_SHORT, Min(short.minLevel-1, -2))) return(false);
+            if (IsStopOrderType(short.pendingType[0])) {       // handle a missed sequence level
+               short.minLevel = short.level[0];
+               gridChanged = true;
             }
+            orders++;
          }
-         if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
-            if (short.level[orders-1] == short.maxLevel) {
-               if (!Grid.AddPendingOrder(D_SHORT, Max(short.maxLevel+1, 2))) return(false);
-               if (IsLimitOrderType(short.pendingType[orders])) { // handle a missed sequence level
-                  short.maxLevel = short.level[orders];
-                  gridChanged = true;
-               }
-               orders++;
+      }
+      if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
+         if (short.level[orders-1] == short.maxLevel) {
+            if (!Grid.AddPendingOrder(D_SHORT, Max(short.maxLevel+1, 2))) return(false);
+            if (IsLimitOrderType(short.pendingType[orders])) { // handle a missed sequence level
+               short.maxLevel = short.level[orders];
+               gridChanged = true;
             }
+            orders++;
          }
       }
    }
 
-   if (gridChanged)                                               // call the function again if sequence levels have been missed
-      return(UpdateOrders(direction));
-   return(!catch("UpdateOrders(5)"));
+   if (gridChanged)                                            // call the function again if sequence levels have been missed
+      return(UpdatePendingOrders());
+   return(!catch("UpdatePendingOrders(4)"));
 }
 
 
@@ -1791,7 +1816,7 @@ int ShowStatus(int error = NO_ERROR) {
                                   "UnitSize:        ",              sUnitSize,                                          NL,
                                   "Stop:             ",             sStopConditions,                                    NL,
                                                                                                                         NL,
-                                  "Long:            ",              sOpenLongLots,                                      NL,
+                                  "Long:             ",             sOpenLongLots,                                      NL,
                                   "Short:            ",             sOpenShortLots,                                     NL,
                                   "Total:            ",             sOpenTotalLots,                                     NL,
                                                                                                                         NL,
