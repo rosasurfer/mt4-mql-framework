@@ -29,8 +29,16 @@ int onDeinitChartChange() {
  */
 int onDeinitUndefined() {
    if (IsTesting()) {
-      return(catch("onDeinitUndefined(1)"));
+      if (IsLastError()) return(last_error);
+
+      if (sequence.status == STATUS_PROGRESSING) {
+         logInfo("onDeinitUndefined(1)  "+ sequence.name +" test stops in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", cleaning up...");
+         bool bNull;
+         UpdateStatus(bNull, bNull);
+         ShowStatus();
+      }
+      return(catch("onDeinitUndefined(2)"));
    }
-   return(catch("onDeinitUndefined(2)", ERR_ILLEGAL_STATE));         // do what the Expander would do
+   return(catch("onDeinitUndefined(3)", ERR_UNDEFINED_STATE));       // do what the Expander would do
 }
 
