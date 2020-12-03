@@ -702,8 +702,8 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
          }
          else if (isClosed) {                                     // the order was unexpectedly cancelled
             closeTimes[i] = OrderCloseTime();
-            logNotice("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.OrderCancelledMsg(direction, i, error), error);
             gridError = true;
+            if (IsError(UpdateStatus.OnGridError("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.OrderCancelledMsg(direction, i, error), error))) return(false);
          }
       }
 
@@ -721,9 +721,9 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
             closeTimes [i] = OrderCloseTime();
             closePrices[i] = OrderClosePrice();
             closedPL += swaps[i] + commissions[i] + profits[i];   // update closed PL
-            logNotice("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i, error), error);
             positionChanged = true;
             gridError       = true;
+            if (IsError(UpdateStatus.OnGridError("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i, error), error))) return(false);
          }
       }
    }
@@ -795,8 +795,8 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
-   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was irregularily cancelled
-   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was irregularily deleted (not enough money)
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was unexpectedly cancelled
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was deleted (not enough money)
    error = NO_ERROR;
    int ticket, level, pendingType;
    double lots, pendingPrice;
@@ -820,13 +820,17 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
    string sType         = OperationTypeDescription(pendingType);
    string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
    string comment       = ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was irregularily ";
+   string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
    string sReason       = "cancelled";
 
    SelectTicket(ticket, "UpdateStatus.OrderCancelledMsg(2)", /*pushTicket=*/true);
+   sReason = "unexpectedly cancelled";
    if (OrderComment() == "deleted [no money]") {
       sReason = "deleted (not enough money)";
       error = ERR_NOT_ENOUGH_MONEY;
+   }
+   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+      error = ERR_CONCURRENT_MODIFICATION;
    }
    OrderPop("UpdateStatus.OrderCancelledMsg(3)");
 
@@ -844,7 +848,7 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was irregularily closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was unexpectedly closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
    error = NO_ERROR;
    int ticket, level, type;
    double lots, openPrice, closePrice;
@@ -871,7 +875,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
    string comment     = ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was irregularily closed at "+ sClosePrice;
+   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was unexpectedly closed at "+ sClosePrice;
    string sStopout    = "";
 
    SelectTicket(ticket, "UpdateStatus.PositionCloseMsg(2)", /*pushTicket=*/true);
@@ -879,9 +883,28 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
       sStopout = ", "+ OrderComment();
       error = ERR_MARGIN_STOPOUT;
    }
+   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+      error = ERR_CONCURRENT_MODIFICATION;
+   }
    OrderPop("UpdateStatus.PositionCloseMsg(3)");
 
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
+}
+
+
+/**
+ * Error handler for unexpected order modifications.
+ *
+ * @param  string message - error message
+ * @param  int    error   - error code
+ *
+ * @return int - the same error
+ */
+int UpdateStatus.OnGridError(string message, int error) {
+   if (!IsTesting()) logError(message, error);        // onTick() will stop the sequence and halt the EA
+   else if (!error)  logInfo(message, error);
+   else              catch(message, error);
+   return(error);
 }
 
 
