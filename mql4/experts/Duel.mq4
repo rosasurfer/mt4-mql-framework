@@ -116,8 +116,6 @@ int      long.maxLevel = INT_MIN;                        // highest reached grid
 double   long.floatingPL;
 double   long.closedPL;
 double   long.totalPL;
-double   long.maxProfit;
-double   long.maxDrawdown;
 
 bool     short.enabled;
 int      short.ticket      [];                           // records are ordered ascending by grid level
@@ -142,8 +140,6 @@ int      short.maxLevel = INT_MIN;
 double   short.floatingPL;
 double   short.closedPL;
 double   short.totalPL;
-double   short.maxProfit;
-double   short.maxDrawdown;
 
 // takeprofit conditions
 bool     tpAbs.condition;                                // whether an absolute TP condition is active
@@ -523,16 +519,12 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
       }
 
       if (long.enabled) {
-         long.floatingPL  = 0;
-         long.totalPL     = long.closedPL;
-         long.maxProfit   = MathMax(long.totalPL, long.maxProfit);
-         long.maxDrawdown = MathMin(long.totalPL, long.maxDrawdown);
+         long.floatingPL = 0;
+         long.totalPL    = long.closedPL;
       }
       if (short.enabled) {
-         short.floatingPL  = 0;
-         short.totalPL     = short.closedPL;
-         short.maxProfit   = MathMax(short.totalPL, short.maxProfit);
-         short.maxDrawdown = MathMin(short.totalPL, short.maxDrawdown);
+         short.floatingPL = 0;
+         short.totalPL    = short.closedPL;
       }
    }
    return(!catch("StopSequence.ClosePositions(2)"));
@@ -634,8 +626,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    bool positionChanged = false;
 
-   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.openLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.slippage,  long.floatingPL,  long.closedPL,  long.maxProfit,  long.maxDrawdown,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.openLots, short.avgPrice, short.minLevel, short.maxLevel, short.slippage, short.floatingPL, short.closedPL, short.maxProfit, short.maxDrawdown, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.openLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.slippage,  long.floatingPL,  long.closedPL,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.openLots, short.avgPrice, short.minLevel, short.maxLevel, short.slippage, short.floatingPL, short.closedPL, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    if (gridChanged || positionChanged) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
@@ -666,7 +658,7 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
  *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &closedPL, double &maxProfit, double &maxDrawdown, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &closedPL, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -728,11 +720,9 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
       }
    }
 
-   floatingPL  = NormalizeDouble(floatingPL, 2);                  // update PL numbers
-   closedPL    = NormalizeDouble(closedPL, 2);
-   maxProfit   = MathMax(floatingPL + closedPL, maxProfit);
-   maxDrawdown = MathMin(floatingPL + closedPL, maxDrawdown);
-   avgPrice    = NormalizeDouble(MathDiv(sumPrice, totalLots), Digits);
+   floatingPL = NormalizeDouble(floatingPL, 2);                   // update PL numbers
+   closedPL   = NormalizeDouble(closedPL, 2);
+   avgPrice   = NormalizeDouble(MathDiv(sumPrice, totalLots), Digits);
 
    return(!catch("UpdateStatus(7)"));
 }

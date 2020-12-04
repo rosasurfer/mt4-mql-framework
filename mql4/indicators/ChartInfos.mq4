@@ -1632,7 +1632,7 @@ bool AnalyzePositions(bool logTickets=false) {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
 
-   // Positionen analysieren und in positions.~data[] speichern
+   // Positionen analysieren und in positions.*Data[] speichern
    if (ArrayRange(positions.iData, 0) > 0) {
       ArrayResize(positions.iData, 0);
       ArrayResize(positions.dData, 0);
@@ -3133,7 +3133,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
 /**
  * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen
- * positions.~data[].
+ * positions.*Data[].
  *
  * @param  _In_ bool   isVirtual
  *
@@ -3163,7 +3163,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    int size, ticketsSize=ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit noch AdjustedProfit, wird sie übersprungen.
-   // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
+   // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
    if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit)
       return(true);
 
