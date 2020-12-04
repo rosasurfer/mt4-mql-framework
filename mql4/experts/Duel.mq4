@@ -9,10 +9,10 @@
  *
  * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
- * - If both multipliers are "0" the EA trades like a regular single-position system (no grid).
+ * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
- * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a Martingale system.
+ * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular Martingale system.
  *
  * @todo  add TP and SL conditions in pip
  * @todo  rounding down mode for CalculateLots()
