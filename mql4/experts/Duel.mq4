@@ -115,7 +115,6 @@ int      long.minLevel = INT_MAX;                        // lowest reached grid 
 int      long.maxLevel = INT_MIN;                        // highest reached grid level
 double   long.floatingPL;
 double   long.closedPL;
-double   long.totalPL;
 
 bool     short.enabled;
 int      short.ticket      [];                           // records are ordered ascending by grid level
@@ -139,7 +138,6 @@ int      short.minLevel = INT_MAX;
 int      short.maxLevel = INT_MIN;
 double   short.floatingPL;
 double   short.closedPL;
-double   short.totalPL;
 
 // takeprofit conditions
 bool     tpAbs.condition;                                // whether an absolute TP condition is active
@@ -518,14 +516,8 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
          short.closedPL += remainingSwap + remainingCommission + remainingProfit;
       }
 
-      if (long.enabled) {
-         long.floatingPL = 0;
-         long.totalPL    = long.closedPL;
-      }
-      if (short.enabled) {
-         short.floatingPL = 0;
-         short.totalPL    = short.closedPL;
-      }
+      long.floatingPL  = 0;
+      short.floatingPL = 0;
    }
    return(!catch("StopSequence.ClosePositions(2)"));
 }
@@ -634,8 +626,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
       sequence.avgPrice = NormalizeDouble(MathDiv(long.openLots*long.avgPrice - short.openLots*short.avgPrice, sequence.openLots), Digits);
       SS.OpenLots();
    }
-   long.totalPL        = long.floatingPL  + long.closedPL;
-   short.totalPL       = short.floatingPL + short.closedPL;
+
+   // TODO: replace with PL calculation as in ChartInfos::AnalyzePositions()
    sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
    sequence.closedPL   = NormalizeDouble(long.closedPL   + short.closedPL,   2);
    sequence.totalPL    = NormalizeDouble(sequence.floatingPL + sequence.closedPL, 2); SS.TotalPL();
