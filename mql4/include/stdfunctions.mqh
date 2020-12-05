@@ -5864,6 +5864,40 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
 
 
 /**
+ * Load and execute the "ChartInfos" indicator.
+ *
+ * @return bool - success status
+ */
+bool icChartInfos() {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   iCustom(NULL, NULL, "ChartInfos",
+           "off",                                                          // string Track.Orders
+           false,                                                          // bool   Offline.Ticker
+           "",                                                             // string ____________________
+           "off",                                                          // string Signal.Sound
+           "off",                                                          // string Signal.Mail.Receiver
+           "off",                                                          // string Signal.SMS.Receiver
+           "",                                                             // string ____________________
+           lpSuperContext,                                                 // int    __lpSuperContext
+           0, 0);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icChartInfos(1)", error));
+      logWarn("icChartInfos(2)  "+ PeriodDescription(Period()) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(true);
+   return(!SetLastError(error));
+}
+
+
+/**
  * Load the "FATL" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
@@ -6525,6 +6559,7 @@ void __DummyCalls() {
    HandleCommands();
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icChartInfos();
    icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);

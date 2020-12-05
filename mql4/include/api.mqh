@@ -157,6 +157,7 @@ bool     GT(double double1, double double2, int digits = 8);;
 bool     HandleCommands();;
 string   HistoryFlagsToStr(int flags);;
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar);;
+bool     icChartInfos();;
 double   icFATL(NULL, NULL, NULL);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
