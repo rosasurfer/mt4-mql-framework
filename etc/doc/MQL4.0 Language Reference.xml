@@ -3304,17 +3304,23 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
       caption=IsVisualMode()
       type=bool
       <content>
-      Returns <span class="const">true</span> if the expert is tested with checked &quot;Visual Mode&quot; button, otherwise returns <span class="const">false</span>.<br/>
+      Whether the program runs in the tester and visual mode is enabled.
+      
       <br/>
-      <span style="color:red">Bug:</span>
       <br/>
-      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zur&uuml;ckgesetzt wird.
-      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zur&uuml;ck (getested mit Build 225-670).<br/>
+      <span style="color:red">Bugs:</span>
       <br/>
-      Workaround: Den VisualMode-Status aus dem Hauptmodul &uuml;ber den Execution-Context in die Library &uuml;bermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
+      <li>In MQL libraries in tester the VisualMode status is not reset between consecutive tests. In all following tests the function returns the status 
+      of the first test, until the library is reloaded (tested with builds 225-670).</li>
+
+      <br/>
+      <br/>
+      Workaround: Use the framework function <span class="function">IsVisualModeFix()</span>.
       </content>
       <example>
-  if (IsVisualModeFix()) Comment("Visual mode certainly turned on");
+<span class="keyword code">if</span> (<span class="function code">IsVisualMode()</span>) {
+    <span class="function code">Comment</span>(<span class="string code">"Visual mode is enabled"</span>);
+} 
       </example>
     </function>
 
