@@ -152,7 +152,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> first build supporting a subset of MQL5 (dubbed MQL4.5) </td>
+    <td nowrap> first build supporting MQL4 and a subset of MQL5 </td>
 </tr>
 
 <tr>
