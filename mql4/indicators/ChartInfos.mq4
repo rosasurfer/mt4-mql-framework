@@ -90,7 +90,7 @@ double totalPosition;
 double longPosition;
 double shortPosition;
 int    positions.iData[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
-double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
+double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool   positions.analyzed;
 bool   positions.absoluteProfits;                                 // default: FALSE
 
