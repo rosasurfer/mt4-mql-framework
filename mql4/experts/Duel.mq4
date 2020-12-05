@@ -86,7 +86,7 @@ double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
 double   sequence.openLots;                              // total open lots: long.totalLots - short.totalLots
 double   sequence.avgPrice;
-double   sequence.floatingPL;                            // accumulated P/L of all open positions
+double   sequence.openPL;                                // accumulated P/L of all open positions
 double   sequence.closedPL;                              // accumulated P/L of all closed positions
 double   sequence.totalPL;                               // current total P/L of the sequence: totalPL = floatingPL + closedPL
 double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
@@ -404,9 +404,9 @@ bool StopSequence() {
    if (!StopSequence.ClosePositions(hedgeTicket)) return(false);
 
    // update total PL numbers
-   sequence.floatingPL = 0;
-   sequence.closedPL   = NormalizeDouble(long.closedPL + short.closedPL, 2);
-   sequence.totalPL    = NormalizeDouble(sequence.closedPL, 2); SS.TotalPL();
+   sequence.openPL   = 0;
+   sequence.closedPL = NormalizeDouble(long.closedPL + short.closedPL, 2);
+   sequence.totalPL  = NormalizeDouble(sequence.closedPL, 2); SS.TotalPL();
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
    else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
@@ -628,9 +628,12 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    }
 
    // TODO: replace with PL calculation as in ChartInfos::AnalyzePositions()
-   sequence.floatingPL = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
-   sequence.closedPL   = NormalizeDouble(long.closedPL   + short.closedPL,   2);
-   sequence.totalPL    = NormalizeDouble(sequence.floatingPL + sequence.closedPL, 2); SS.TotalPL();
+   if (!CalculateProfits()) return(false);
+
+   sequence.openPL   = NormalizeDouble(long.floatingPL + short.floatingPL, 2);
+   sequence.closedPL = NormalizeDouble(long.closedPL   + short.closedPL,   2);
+   sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
+   SS.TotalPL();
 
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
    else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
@@ -650,14 +653,14 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
  *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &totalLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &closedPL, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &openLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &floatingPL, double &closedPL, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
    int error, orders = ArraySize(tickets);
    bool isLogInfo = IsLogInfo();
    double sumPrice = 0;
-   totalLots = 0;
+   openLots  = 0;
    floatingPL = 0;
 
    for (int i=0; i < orders; i++) {
@@ -698,7 +701,7 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
 
          if (isOpen) {                                            // update floating PL
             floatingPL += swaps[i] + commissions[i] + profits[i];
-            totalLots  += lots[i];
+            openLots   += lots[i];
             sumPrice   += lots[i] * openPrices[i];
          }
          else {                                                   // the position was unexpectedly closed
@@ -714,7 +717,8 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
 
    floatingPL = NormalizeDouble(floatingPL, 2);                   // update PL numbers
    closedPL   = NormalizeDouble(closedPL, 2);
-   avgPrice   = NormalizeDouble(MathDiv(sumPrice, totalLots), Digits);
+   openLots   = NormalizeDouble(openLots, 2);
+   avgPrice   = NormalizeDouble(MathDiv(sumPrice, openLots), Digits);
 
    return(!catch("UpdateStatus(7)"));
 }
@@ -1052,6 +1056,248 @@ double CalculateLots(int direction, int level) {
    lots = NormalizeLots(lots);
 
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
+}
+
+
+// PL results
+double plResult[2];
+
+#define I_OPEN_PROFIT   0
+#define I_TOTAL_PROFIT  1
+
+
+/**
+ * Calculate the current total profit/loss value of the sequence.
+ *
+ * @return bool - success status
+ */
+bool CalculateProfits() {
+   // Sortierschlüssel aller offenen Positionen auslesen
+   int orders = OrdersTotal();
+   int sortKeys[][2]; ArrayResize(sortKeys, orders);                          // Sortierschlüssel: {OpenTime, Ticket}
+
+   for (int openPositions, i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderType() > OP_SELL) continue;
+
+      sortKeys[openPositions][0] = OrderOpenTime();                           // Sortierschlüssel der Tickets auslesen
+      sortKeys[openPositions][1] = OrderTicket();
+      openPositions++;
+   }
+   if (openPositions < orders) ArrayResize(sortKeys, openPositions);
+
+   // Tickets sortieren
+   if (openPositions > 1) SortOpenTickets(sortKeys);
+
+   // offene Positionen sortiert einlesen
+   int    tickets    []; ArrayResize(tickets,     openPositions);
+   int    types      []; ArrayResize(types,       openPositions);
+   double lots       []; ArrayResize(lots,        openPositions);
+   double openPrices []; ArrayResize(openPrices,  openPositions);
+   double commissions[]; ArrayResize(commissions, openPositions);
+   double swaps      []; ArrayResize(swaps,       openPositions);
+   double profits    []; ArrayResize(profits,     openPositions);
+
+   for (i=0; i < openPositions; i++) {
+      SelectTicket(sortKeys[i][1], "CalculateProfits(1)");
+      tickets    [i] = OrderTicket();
+      types      [i] = OrderType();
+      lots       [i] = OrderLots();
+      openPrices [i] = OrderOpenPrice();
+      commissions[i] = OrderCommission();
+      swaps      [i] = OrderSwap();
+      profits    [i] = OrderProfit();
+   }
+
+   // PL berechnen und in plResult[] speichern
+   StorePosition(tickets, types, lots, openPrices, commissions, swaps, profits);
+
+   return(!catch("CalculateProfits(2)"));
+}
+
+
+/**
+ * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen
+ * positions.*Data[].
+ *
+ * @param  int    tickets    []
+ * @param  int    types      []
+ * @param  double lots       []
+ * @param  double openPrices []
+ * @param  double commissions[]
+ * @param  double swaps      []
+ * @param  double profits    []
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StorePosition(int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[]) {
+
+   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, hedgedProfit, floatingProfit, openProfit, totalProfit;
+   int ticketsSize = ArraySize(tickets);
+
+   // Enthält die Position weder offene Positionen noch ClosedProfit, wird sie übersprungen.
+   if (!long.openLots && !short.openLots && !sequence.closedPL)
+      return(true);
+
+   // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
+
+   // Profit einer eventuellen Hedgeposition ermitteln
+   if (long.openLots && short.openLots) {
+      hedgedLots     = MathMin(long.openLots, short.openLots);
+      remainingLong  = hedgedLots;
+      remainingShort = hedgedLots;
+
+      for (int i=0; i < ticketsSize; i++) {
+         if (!tickets[i]) continue;
+
+         if (types[i] == OP_BUY) {
+            if (!remainingLong) continue;
+            if (remainingLong >= lots[i]) {
+               // Daten komplett übernehmen, Ticket auf NULL setzen
+               openPrice     = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
+               swap         += swaps      [i];
+               commission   += commissions[i];
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
+               tickets[i]    = NULL;
+            }
+            else {
+               // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
+               factor        = remainingLong/lots[i];
+               openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
+               swap         += swaps[i];                swaps      [i]  = 0;
+               commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+                                                        profits    [i] -= factor * profits    [i];
+                                                        lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+               remainingLong = 0;
+            }
+         }
+         else /*types[i] == OP_SELL*/ {
+            if (!remainingShort) continue;
+            if (remainingShort >= lots[i]) {
+               // Daten komplett übernehmen, Ticket auf NULL setzen
+               closePrice     = NormalizeDouble(closePrice + lots[i] * openPrices[i], 8);
+               swap          += swaps      [i];
+               //commission  += commissions[i];                                        // Commission wird nur für Long-Leg übernommen
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
+               tickets[i]     = NULL;
+            }
+            else {
+               // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
+               factor         = remainingShort/lots[i];
+               closePrice     = NormalizeDouble(closePrice + remainingShort * openPrices[i], 8);
+               swap          += swaps[i]; swaps      [i]  = 0;
+                                          commissions[i] -= factor * commissions[i];   // Commission wird nur für Long-Leg übernommen
+                                          profits    [i] -= factor * profits    [i];
+                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               remainingShort = 0;
+            }
+         }
+      }
+      if (remainingLong  != 0) return(!catch("StorePosition(1)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingShort != 0) return(!catch("StorePosition(2)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
+
+      // Profit berechnen
+      double pipValue    = PipValue(hedgedLots, true);
+      double pipDistance = (closePrice-openPrice)/hedgedLots/Pips + (commission+swap)/pipValue;
+      hedgedProfit = NormalizeDouble(pipDistance * pipValue, 2);
+
+      // wenn kein direktionaler Anteil
+      if (!sequence.openLots) {
+         plResult[I_OPEN_PROFIT ] = hedgedProfit;
+         plResult[I_TOTAL_PROFIT] = hedgedProfit + sequence.closedPL;
+         return(!catch("StorePosition(3)"));
+      }
+   }
+
+   // Direktionaler Anteil
+   // PL einer ungehedgten Longposition ermitteln
+   if (sequence.openLots > 0) {
+      remainingLong  = sequence.openLots;
+      openPrice      = 0;
+      swap           = 0;
+      commission     = 0;
+      floatingProfit = 0;
+
+      for (i=0; i < ticketsSize; i++) {
+         if (!tickets[i]   ) continue;
+         if (!remainingLong) continue;
+
+         if (types[i] == OP_BUY) {
+            if (remainingLong >= lots[i]) {
+               // Daten komplett übernehmen, Ticket auf NULL setzen
+               openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
+               swap           += swaps      [i];
+               commission     += commissions[i];
+               floatingProfit += profits    [i];
+               tickets[i]      = NULL;
+               remainingLong   = NormalizeDouble(remainingLong - lots[i], 3);
+            }
+            else {
+               // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
+               factor          = remainingLong/lots[i];
+               openPrice       = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
+               swap           +=          swaps      [i]; swaps      [i]  = 0;
+               commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                          lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+               remainingLong = 0;
+            }
+         }
+      }
+      if (remainingLong != 0) return(!catch("StorePosition(4)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
+
+      openProfit = hedgedProfit + floatingProfit + commission + swap;
+      plResult[I_OPEN_PROFIT ] = openProfit; totalProfit = openProfit + sequence.closedPL;
+      plResult[I_TOTAL_PROFIT] = totalProfit;
+      return(!catch("StorePosition(5)"));
+   }
+
+   // PL einer ungehedgten Shortposition ermitteln
+   if (sequence.openLots < 0) {
+      remainingShort = -sequence.openLots;
+      openPrice      = 0;
+      swap           = 0;
+      commission     = 0;
+      floatingProfit = 0;
+
+      for (i=0; i < ticketsSize; i++) {
+         if (!tickets[i]    ) continue;
+         if (!remainingShort) continue;
+
+         if (types[i] == OP_SELL) {
+            if (remainingShort >= lots[i]) {
+               // Daten komplett übernehmen, Ticket auf NULL setzen
+               openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
+               swap           += swaps      [i];
+               commission     += commissions[i];
+               floatingProfit += profits    [i];
+               tickets[i]      = NULL;
+               remainingShort  = NormalizeDouble(remainingShort - lots[i], 3);
+            }
+            else {
+               // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
+               factor          = remainingShort/lots[i];
+               openPrice       = NormalizeDouble(openPrice + remainingShort * openPrices[i], 8);
+               swap           +=          swaps      [i]; swaps      [i]  = 0;
+               commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               remainingShort = 0;
+            }
+         }
+      }
+      if (remainingShort != 0) return(!catch("StorePosition(6)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
+
+      openProfit = hedgedProfit + floatingProfit + commission + swap;
+      plResult[I_OPEN_PROFIT ] = openProfit; totalProfit = openProfit + sequence.closedPL;
+      plResult[I_TOTAL_PROFIT] = totalProfit;
+      return(!catch("StorePosition(7)"));
+   }
+
+   // ohne offene Positionen muß ClosedProfit gesetzt sein
+   plResult[I_OPEN_PROFIT ] = 0;
+   plResult[I_TOTAL_PROFIT] = sequence.closedPL;
+   return(!catch("StorePosition(8)"));
 }
 
 
@@ -1546,7 +1792,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
  * @param  double   commission
  * @param  double   profit
  *
- * @return int - index the record was inserted at or -1 (EMPTY) in case of errors
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
 int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
    int i = EMPTY;
@@ -1560,18 +1806,18 @@ int Orders.AddRecord(int direction, int ticket, int level, double lots, int pend
       }
       ArrayInsertInt   (long.ticket,       i, ticket                               );
       ArrayInsertInt   (long.level,        i, level                                );
-      ArrayInsertDouble(long.lots,         i, lots                                 );
+      ArrayInsertDouble(long.lots,         i, NormalizeDouble(lots, 2)             );
       ArrayInsertInt   (long.pendingType,  i, pendingType                          );
       ArrayInsertInt   (long.pendingTime,  i, pendingTime                          );
       ArrayInsertDouble(long.pendingPrice, i, NormalizeDouble(pendingPrice, Digits));
       ArrayInsertInt   (long.type,         i, type                                 );
       ArrayInsertInt   (long.openTime,     i, openTime                             );
-      ArrayInsertDouble(long.openPrice,    i, NormalizeDouble(openPrice, Digits)   );
+      ArrayInsertDouble(long.openPrice,    i, openPrice                            );
       ArrayInsertInt   (long.closeTime,    i, closeTime                            );
-      ArrayInsertDouble(long.closePrice,   i, NormalizeDouble(closePrice, Digits)  );
-      ArrayInsertDouble(long.swap,         i, NormalizeDouble(swap,       2)       );
-      ArrayInsertDouble(long.commission,   i, NormalizeDouble(commission, 2)       );
-      ArrayInsertDouble(long.profit,       i, NormalizeDouble(profit,     2)       );
+      ArrayInsertDouble(long.closePrice,   i, closePrice                           );
+      ArrayInsertDouble(long.swap,         i, swap                                 );
+      ArrayInsertDouble(long.commission,   i, commission                           );
+      ArrayInsertDouble(long.profit,       i, profit                               );
    }
 
    else if (direction == D_SHORT) {
@@ -1583,18 +1829,18 @@ int Orders.AddRecord(int direction, int ticket, int level, double lots, int pend
       }
       ArrayInsertInt   (short.ticket,       i, ticket                               );
       ArrayInsertInt   (short.level,        i, level                                );
-      ArrayInsertDouble(short.lots,         i, lots                                 );
+      ArrayInsertDouble(short.lots,         i, NormalizeDouble(lots, 2)             );
       ArrayInsertInt   (short.pendingType,  i, pendingType                          );
       ArrayInsertInt   (short.pendingTime,  i, pendingTime                          );
       ArrayInsertDouble(short.pendingPrice, i, NormalizeDouble(pendingPrice, Digits));
       ArrayInsertInt   (short.type,         i, type                                 );
       ArrayInsertInt   (short.openTime,     i, openTime                             );
-      ArrayInsertDouble(short.openPrice,    i, NormalizeDouble(openPrice, Digits)   );
+      ArrayInsertDouble(short.openPrice,    i, openPrice                            );
       ArrayInsertInt   (short.closeTime,    i, closeTime                            );
-      ArrayInsertDouble(short.closePrice,   i, NormalizeDouble(closePrice, Digits)  );
-      ArrayInsertDouble(short.swap,         i, NormalizeDouble(swap,       2)       );
-      ArrayInsertDouble(short.commission,   i, NormalizeDouble(commission, 2)       );
-      ArrayInsertDouble(short.profit,       i, NormalizeDouble(profit,     2)       );
+      ArrayInsertDouble(short.closePrice,   i, closePrice                           );
+      ArrayInsertDouble(short.swap,         i, swap                                 );
+      ArrayInsertDouble(short.commission,   i, commission                           );
+      ArrayInsertDouble(short.profit,       i, profit                               );
    }
    else return(_EMPTY(catch("Orders.AddRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
