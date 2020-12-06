@@ -92,7 +92,7 @@ double shortPosition;
 int    positions.iData[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
 double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool   positions.analyzed;
-bool   positions.absoluteProfits;                                 // default: FALSE
+bool   positions.absoluteProfits;                                 // default: online=FALSE, tester=TRUE
 
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
