@@ -109,8 +109,8 @@ double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
 double   long.openLots;                                  // total open long lots: 0...+n
-double   long.avgPrice;
 double   long.slippage;                                  // cumulated slippage
+double   long.avgPrice;
 int      long.minLevel = INT_MAX;                        // lowest reached grid level
 int      long.maxLevel = INT_MIN;                        // highest reached grid level
 double   long.openPL;
@@ -132,8 +132,8 @@ double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
 double   short.openLots;                                 // total open short lots: 0...+n
-double   short.avgPrice;
 double   short.slippage;
+double   short.avgPrice;
 int      short.minLevel = INT_MAX;
 int      short.maxLevel = INT_MIN;
 double   short.openPL;
@@ -1266,7 +1266,7 @@ bool ComputeProfit(bool positionChanged) {
 /**
  * Return the full name of the instance logfile.
  *
- * @return string - filename or an empty string in tester (no separate logfile)
+ * @return string - filename or an empty string in case of errors
  */
 string GetLogFilename() {
    string name = GetStatusFilename();
