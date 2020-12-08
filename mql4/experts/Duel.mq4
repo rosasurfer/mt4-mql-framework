@@ -85,7 +85,6 @@ double   sequence.startEquity;
 double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
 double   sequence.openLots;                              // total open lots: long.totalLots - short.totalLots
-double   sequence.avgPrice;
 double   sequence.openPL;                                // accumulated P/L of all open positions
 double   sequence.closedPL;                              // accumulated P/L of all closed positions
 double   sequence.totalPL;                               // current total P/L of the sequence: totalPL = floatingPL + closedPL
@@ -110,7 +109,6 @@ double   long.commission  [];
 double   long.profit      [];
 double   long.openLots;                                  // total open long lots: 0...+n
 double   long.slippage;                                  // cumulated slippage
-double   long.avgPrice;
 int      long.minLevel = INT_MAX;                        // lowest reached grid level
 int      long.maxLevel = INT_MIN;                        // highest reached grid level
 double   long.openPL;
@@ -133,7 +131,6 @@ double   short.commission  [];
 double   short.profit      [];
 double   short.openLots;                                 // total open short lots: 0...+n
 double   short.slippage;
-double   short.avgPrice;
 int      short.minLevel = INT_MAX;
 int      short.maxLevel = INT_MIN;
 double   short.openPL;
@@ -355,12 +352,10 @@ bool StartSequence() {
    sequence.status      = STATUS_PROGRESSING;
 
    if (long.enabled) {
-      int i = Grid.AddPosition(D_LONG, 1); if (i < 0) return(false);    // open a long position for level 1
-      long.avgPrice = long.openPrice[i];
+      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);              // open a long position for level 1
    }
    if (short.enabled) {
-      i = Grid.AddPosition(D_SHORT, 1); if (i < 0) return(false);       // open a short position for level 1
-      short.avgPrice = short.openPrice[i];
+      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);              // open a short position for level 1
    }
 
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
@@ -622,12 +617,11 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    bool positionChanged = false;
 
-   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.openLots, long.avgPrice,   long.minLevel,  long.maxLevel,  long.slippage,  long.openPL,  long.closedPL,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.openLots, short.avgPrice, short.minLevel, short.maxLevel, short.slippage, short.openPL, short.closedPL, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.openLots,  long.minLevel,  long.maxLevel,  long.slippage,  long.openPL,  long.closedPL,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.openLots, short.minLevel, short.maxLevel, short.slippage, short.openPL, short.closedPL, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    if (gridChanged || positionChanged) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
-      sequence.avgPrice = NormalizeDouble(MathDiv(long.openLots*long.avgPrice - short.openLots*short.avgPrice, sequence.openLots), Digits);
       SS.OpenLots();
    }
    if (!ComputeProfit(positionChanged)) return(false);
@@ -647,7 +641,7 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
  *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &openLots, double &avgPrice, int &minLevel, int &maxLevel, double &slippage, double &openPL, double &closedPL, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &openLots, int &minLevel, int &maxLevel, double &slippage, double &openPL, double &closedPL, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -712,7 +706,6 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
    openPL   = NormalizeDouble(openPL, 2);                         // update PL numbers
    closedPL = NormalizeDouble(closedPL, 2);
    openLots = NormalizeDouble(openLots, 2);
-   avgPrice = NormalizeDouble(MathDiv(sumPrice, openLots), Digits);
 
    return(!catch("UpdateStatus(7)"));
 }
@@ -2162,7 +2155,7 @@ void SS.OpenLots() {
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
       else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
-      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot @ "+ NumberToStr(sequence.avgPrice, PriceFormat);
+      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot";   // +" lot @ "+ NumberToStr(sequence.avgPrice, PriceFormat);
    }
 }
 
