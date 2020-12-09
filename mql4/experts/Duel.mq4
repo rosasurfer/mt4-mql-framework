@@ -98,7 +98,7 @@ int      long.level       [];                            // grid level: -n...-1 
 double   long.lots        [];
 int      long.pendingType [];
 datetime long.pendingTime [];
-double   long.pendingPrice[];
+double   long.pendingPrice[];                            // price of the grid level
 int      long.type        [];
 datetime long.openTime    [];
 double   long.openPrice   [];
@@ -107,12 +107,12 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
+double   long.slippage;                                  // overall ippage of the long side
 double   long.openLots;                                  // total open long lots: 0...+n
-double   long.slippage;                                  // cumulated slippage
-int      long.minLevel = INT_MAX;                        // lowest reached grid level
-int      long.maxLevel = INT_MIN;                        // highest reached grid level
 double   long.openPL;
 double   long.closedPL;
+int      long.minLevel = INT_MAX;                        // lowest reached grid level
+int      long.maxLevel = INT_MIN;                        // highest reached grid level
 
 bool     short.enabled;
 int      short.ticket      [];                           // records are ordered ascending by grid level
@@ -120,7 +120,7 @@ int      short.level       [];                           // grid level: -n...-1 
 double   short.lots        [];
 int      short.pendingType [];
 datetime short.pendingTime [];
-double   short.pendingPrice[];
+double   short.pendingPrice[];                           // price of the grid level
 int      short.type        [];
 datetime short.openTime    [];
 double   short.openPrice   [];
@@ -129,12 +129,12 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
+double   short.slippage;                                 // overall slippage of the short side
 double   short.openLots;                                 // total open short lots: 0...+n
-double   short.slippage;
-int      short.minLevel = INT_MAX;
-int      short.maxLevel = INT_MIN;
 double   short.openPL;
 double   short.closedPL;
+int      short.minLevel = INT_MAX;
+int      short.maxLevel = INT_MIN;
 
 // takeprofit conditions
 bool     tpAbs.condition;                                // whether an absolute TP condition is active
@@ -561,7 +561,7 @@ bool Grid.RemovePendingOrders() {
             long.minLevel  = MathMin(long.level[i], long.minLevel);
             long.maxLevel  = MathMax(long.level[i], long.maxLevel);
             long.openLots += long.lots[i];
-            long.slippage  = NormalizeDouble(long.slippage + oe.Slippage(oe)*Point, 1);
+            long.slippage += oe.Slippage(oe)*Point;
          }
       }
    }
@@ -595,7 +595,7 @@ bool Grid.RemovePendingOrders() {
             short.minLevel  = MathMin(short.level[i], short.minLevel);
             short.maxLevel  = MathMax(short.level[i], short.maxLevel);
             short.openLots += short.lots[i];
-            short.slippage  = NormalizeDouble(short.slippage + oe.Slippage(oe)*Point, 1);
+            short.slippage += oe.Slippage(oe)*Point;
          }
       }
    }
@@ -617,8 +617,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    bool positionChanged = false;
 
-   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.openLots,  long.minLevel,  long.maxLevel,  long.slippage,  long.openPL,  long.closedPL,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.openLots, short.minLevel, short.maxLevel, short.slippage, short.openPL, short.closedPL, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.slippage,  long.openLots,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.slippage, short.openLots, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    if (gridChanged || positionChanged) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
@@ -636,21 +636,21 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
  * @param  _In_  int  direction       - trade direction
  * @param  _Out_ bool levelChanged    - whether the gridlevel changed
  * @param  _Out_ bool positionChanged - whether the total open position changed (position open or close)
- * @param  _Out_ bool gridError       - whether an external intervention was detected (cancellation or close)
+ * @param  _Out_ bool gridError       - whether an external intervention occurred (order cancellation or position close)
  * @param  ...
  *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &openLots, int &minLevel, int &maxLevel, double &slippage, double &openPL, double &closedPL, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &slippage, double &openLots, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
    int error, orders = ArraySize(tickets);
-   bool isLogInfo = IsLogInfo();
-   double sumPrice = 0;
+   bool updateSlippage=false, isLogInfo=IsLogInfo();
    openLots = 0;
-   openPL = 0;
+   openPL   = 0;
 
+   // update ticket status
    for (int i=0; i < orders; i++) {
       if (closeTimes[i] > 0) continue;                            // skip tickets already known as closed
       if (!SelectTicket(tickets[i], "UpdateStatus(3)")) return(false);
@@ -666,13 +666,13 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
             types     [i] = OrderType();
             openTimes [i] = OrderOpenTime();
             openPrices[i] = OrderOpenPrice();
-            slippage = NormalizeDouble(slippage + ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]), Digits);
 
             if (isLogInfo) logInfo("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
             minLevel = MathMin(levels[i], minLevel);
             maxLevel = MathMax(levels[i], maxLevel);
             levelChanged    = true;
             positionChanged = true;
+            updateSlippage  = true;
             wasPosition     = true;                               // mark as known open position
          }
          else if (isClosed) {                                     // the order was unexpectedly cancelled
@@ -690,7 +690,6 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
          if (isOpen) {                                            // update floating PL
             openPL   += swaps[i] + commissions[i] + profits[i];
             openLots += lots[i];
-            sumPrice += lots[i] * openPrices[i];
          }
          else {                                                   // the position was unexpectedly closed
             closeTimes [i] = OrderCloseTime();
@@ -703,7 +702,23 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
       }
    }
 
-   openPL   = NormalizeDouble(openPL, 2);                         // update PL numbers
+   // update overall slippage
+   if (updateSlippage) {
+      double allLots, sumSlippage;
+
+      for (i=0; i < orders; i++) {
+         if (types[i] != OP_UNDEFINED) {
+            if (levels[i] != 1) {                                 // sum slippage
+               sumSlippage += lots[i] * ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]);
+            }
+            allLots += lots[i];                                   // sum all lots
+         }
+      }
+      slippage = sumSlippage/allLots;                             // compute overall slippage
+   }
+
+   // normalize results
+   openPL   = NormalizeDouble(openPL, 2);
    closedPL = NormalizeDouble(closedPL, 2);
    openLots = NormalizeDouble(openLots, 2);
 
@@ -1301,12 +1316,12 @@ int Grid.AddPosition(int direction, int level) {
    if (!ticket) return(EMPTY);
 
    // prepare dataset
-   //int    ticket       = ...                     // use as is
-   //int    level        = ...                     // ...
+   //int    ticket       = ...                                    // use as is
+   //int    level        = ...                                    // ...
    double   lots         = oe.Lots(oe);
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
-   double   pendingPrice = NULL;
+   double   pendingPrice = CalculateGridLevel(direction, level);  // for tracking of slippage
    int      openType     = oe.Type(oe);
    datetime openTime     = oe.OpenTime(oe);
    double   openPrice    = oe.OpenPrice(oe);
@@ -1321,13 +1336,11 @@ int Grid.AddPosition(int direction, int level) {
       if (direction == D_LONG) {
          long.minLevel  = MathMin(level, long.minLevel);
          long.maxLevel  = MathMax(level, long.maxLevel);
-         long.slippage  = NormalizeDouble(long.slippage + openPrice - CalculateGridLevel(direction, level), 1);
          long.openLots += lots;
       }
       else {
          short.minLevel  = MathMin(level, short.minLevel);
          short.maxLevel  = MathMax(level, short.maxLevel);
-         short.slippage  = NormalizeDouble(short.slippage + CalculateGridLevel(direction, level) - openPrice, 1);
          short.openLots += lots;
       }
    }
@@ -1365,8 +1378,8 @@ bool Grid.AddPendingOrder(int direction, int level) {
    }
 
    // prepare dataset
-   //int    ticket       = ...                     // use as is
-   //int    level        = ...                     // ...
+   //int    ticket       = ...                                    // use as is
+   //int    level        = ...                                    // ...
    double   lots         = oe.Lots(oe);
    int      pendingType  = oe.Type(oe);
    datetime pendingTime  = oe.OpenTime(oe);
@@ -1852,16 +1865,6 @@ bool Orders.RemoveRecord(int direction, int offset) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /**
  * Open a market position at the current price.
  *
@@ -2148,10 +2151,10 @@ void SS.StopConditions() {
 void SS.OpenLots() {
    if (IsChart()) {
       if (!long.openLots) sOpenLongLots = "-";
-      else                sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot at level "+ long.maxLevel + ifString(!long.slippage, "", ", slippage: "+ NumberToStr(long.slippage/Pip, "+.1R") +" pip");
+      else                sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot, level "+ long.maxLevel + ifString(!long.slippage, "", ", slippage: "+ NumberToStr(long.slippage/Pip, "+.1R") +" pip");
 
       if (!short.openLots) sOpenShortLots = "-";
-      else                 sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot at level "+ short.maxLevel + ifString(!short.slippage, "", ", slippage: "+ NumberToStr(short.slippage/Pip, "+.1R") +" pip");
+      else                 sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot, level "+ short.maxLevel + ifString(!short.slippage, "", ", slippage: "+ NumberToStr(short.slippage/Pip, "+.1R") +" pip");
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
       else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
