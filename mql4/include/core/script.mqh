@@ -313,9 +313,6 @@ bool CheckErrors(string location, int setError = NULL) {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 #import "rsfLib1.ex4"
    string GetWindowText(int hWnd);
 

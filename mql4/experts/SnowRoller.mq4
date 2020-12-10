@@ -49,7 +49,7 @@ extern int      GridSize               = 20;                            //
 extern string   UnitSize               = "[L]{double} | auto*";         // "{double}"=fix, "L{double}"=compounding or "auto"=externally configured unitsize
 extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
 extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @tp(double[%]) | @sl(double[%])
-extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue or reset a sequence after StopSequence(SIGNAL_TP|SIGNAL_SL)
+extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue or reset a sequence after StopSequence(SIGNAL_TAKEPROFIT|SIGNAL_STOPLOSS)
 extern int      StartLevel             = 0;                             //
 extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed as absolute or percentage value
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';        // server time, the date part is ignored
@@ -232,7 +232,6 @@ bool     tester.onSessionBreakPause = false;       // whether to pause the teste
 bool     tester.onTrendChangePause  = false;       // whether to pause the tester on a fulfilled trend change condition
 bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when takeprofit is reached
 bool     tester.onStopLossPause     = false;       // whether to pause the tester when stoploss is reached
-
 bool     tester.reduceStatusWrites  = true;        // whether to minimize status file writing in tester
 bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
 
@@ -346,11 +345,11 @@ bool StartSequence(int signal) {
    sequence.status = STATUS_STARTING;
 
    double gridbase = GetGridbase();
-   if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level +"..."+ ifString(gridbase, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
+   if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level +"..."+ ifString(gridbase!=0, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
 
    // update start/stop conditions
    switch (signal) {
-      case SIGNAL_SESSIONBREAK:
+      case SIGNAL_SESSION_BREAK:
          break;
 
       case SIGNAL_TREND:
@@ -420,16 +419,16 @@ bool StartSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (tester.onStartPause)                                       Tester.Pause("StartSequence(7)");
-      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("StartSequence(8)");
-      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("StartSequence(9)");
+      if      (tester.onStartPause)                                        Tester.Pause("StartSequence(7)");
+      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StartSequence(8)");
+      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StartSequence(9)");
    }
    return(!catch("StartSequence(10)"));
 }
 
 
 /**
- * Close all open positions and delete pending orders. Stop the sequence and configure auto-resuming: If auto-resuming for a
+ * Close all open positions and delete âll pending orders. Stop the sequence and configure auto-resume: If auto-resume for a
  * trend condition is enabled the sequence is automatically resumed the next time the trend condition is fulfilled. If the
  * sequence is stopped due to a session break it is automatically resumed after the session break ends.
  *
@@ -501,7 +500,7 @@ bool StopSequence(int signal) {
 
       // delete all pending limits
       int sizeOfPendings = ArraySize(pendingLimits);
-      for (i=0; i < sizeOfPendings; i++) {                                 // ordered by descending gridlevel
+      for (i=0; i < sizeOfPendings; i++) {                                 // ordered descending by gridlevel
          if (orders.type[pendingLimits[i]] == OP_UNDEFINED) {
             error = Grid.DeleteOrder(pendingLimits[i]);                    // removes the order from the order arrays
             if (!error)      continue;
@@ -622,7 +621,7 @@ bool StopSequence(int signal) {
 
    // update start/stop conditions (sequence.status is STATUS_STOPPED)
    switch (signal) {
-      case SIGNAL_SESSIONBREAK:
+      case SIGNAL_SESSION_BREAK:
          sessionbreak.waiting = true;
          sequence.status      = STATUS_WAITING;
          break;
@@ -649,12 +648,12 @@ bool StopSequence(int signal) {
          }
          break;
 
-      case SIGNAL_TP:                                       // reactivate a triggered TP condition if EA doesn't stop
+      case SIGNAL_TAKEPROFIT:                               // reactivate a triggered TP condition if EA doesn't stop
          stop.profitAbs.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.profitAbs.description!="");
          stop.profitPct.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.profitPct.description!="");
          break;
 
-      case SIGNAL_SL:                                       // reactivate a triggered SL condition if EA doesn't stop
+      case SIGNAL_STOPLOSS:                                 // reactivate a triggered SL condition if EA doesn't stop
          stop.lossAbs.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.lossAbs.description!="");
          stop.lossPct.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.lossPct.description!="");
          break;
@@ -668,7 +667,7 @@ bool StopSequence(int signal) {
    SaveStatus();
 
    // reset the sequence and start a new cycle using the same sequence id
-   if (signal == SIGNAL_TP) {
+   if (signal == SIGNAL_TAKEPROFIT) {
       if (AutoRestart != "Off") {
          double newGridbase      = NULL;
          int    newSequenceLevel = 0;
@@ -680,7 +679,7 @@ bool StopSequence(int signal) {
          if (AutoRestart == "Continue") StartSequence(NULL);
       }
    }
-   else if (signal == SIGNAL_SL) {
+   else if (signal == SIGNAL_STOPLOSS) {
       if (AutoRestart != "Off") {
          if (!ResetSequence(NULL, NULL)) return(false);     // full reset (never continue after SL)
       }
@@ -689,13 +688,13 @@ bool StopSequence(int signal) {
    // pause/stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (tester.onStopPause)                                        Tester.Pause("StopSequence(12)");
-         else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("StopSequence(13)");
-         else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("StopSequence(14)");
-         else if (tester.onTakeProfitPause   && signal==SIGNAL_TP)           Tester.Pause("StopSequence(15)");
-         else if (tester.onStopLossPause     && signal==SIGNAL_SL)           Tester.Pause("StopSequence(16)");
+         if      (tester.onStopPause)                                         Tester.Pause("StopSequence(12)");
+         else if (tester.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StopSequence(13)");
+         else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StopSequence(14)");
+         else if (tester.onTakeProfitPause   && signal==SIGNAL_TAKEPROFIT)    Tester.Pause("StopSequence(15)");
+         else if (tester.onStopLossPause     && signal==SIGNAL_STOPLOSS)      Tester.Pause("StopSequence(16)");
       }
-      else if (sequence.status == STATUS_STOPPED)                            Tester.Stop("StopSequence(17)");
+      else if (sequence.status == STATUS_STOPPED)                             Tester.Stop("StopSequence(17)");
    }
    return(!catch("StopSequence(18)"));
 }
@@ -855,7 +854,7 @@ bool ResetSequence(double gridbase, int level) {
    SS.All();
    SaveStatus();
 
-   if (IsLogInfo()) logInfo("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
+   if (IsLogInfo()) logInfo("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
    return(!catch("ResetSequence(5)"));
 }
 
@@ -883,7 +882,7 @@ bool ResumeSequence(int signal) {
 
    // update start/stop conditions
    switch (signal) {
-      case SIGNAL_SESSIONBREAK:
+      case SIGNAL_SESSION_BREAK:
          sessionbreak.waiting = false;
          break;
 
@@ -965,9 +964,9 @@ bool ResumeSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (tester.onStartPause)                                       Tester.Pause("ResumeSequence(6)");
-      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSIONBREAK) Tester.Pause("ResumeSequence(7)");
-      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)        Tester.Pause("ResumeSequence(8)");
+      if      (tester.onStartPause)                                        Tester.Pause("ResumeSequence(6)");
+      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("ResumeSequence(7)");
+      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("ResumeSequence(8)");
    }
    return(!catch("ResumeSequence(9)"));
 }
@@ -1203,7 +1202,7 @@ bool UpdateStatus(bool &gridChanged) {
 
 
 /**
- * Compose a log message for a cancelled pending order.
+ * Compose a log message for a cancelled pending entry order. At execution time the order ticket is selected.
  *
  * @param  int i - order index
  *
@@ -1217,8 +1216,7 @@ string UpdateStatus.OrderCancelledMsg(int i) {
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
 
-   message = message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled") +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
-   return(message);
+   return(message + ifString(OrderComment()=="deleted [no money]", "deleted (not enough money)", "cancelled"));
 }
 
 
@@ -1236,7 +1234,7 @@ string UpdateStatus.OrderFillMsg(int i) {
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
 
-   if (NE(orders.pendingPrice[i], orders.openPrice[i])) {
+   if (NE(orders.pendingPrice[i], orders.openPrice[i], Digits)) {
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
@@ -1250,7 +1248,7 @@ string UpdateStatus.OrderFillMsg(int i) {
 
 
 /**
- * Compose a log message for a closed position.
+ * Compose a log message for a closed position. At execution time the order ticket is selected.
  *
  * @param  int i - order index
  *
@@ -1290,7 +1288,7 @@ string UpdateStatus.StopLossMsg(int i) {
    string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), stoploss "+ sStopLoss +" was executed";
 
-   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
+   if (NE(orders.closePrice[i], orders.stopLoss[i], Digits)) {
       double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
@@ -1395,7 +1393,7 @@ bool IsStartSignal(int &signal) {
       // -- after sessionbreak: wait for the stop price to be reached if not in level 0 -------------------------------------
       if (!sequence.level) {
          if (IsLogInfo()) logInfo("IsStartSignal(2)  "+ sequence.longName +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
-         signal = SIGNAL_SESSIONBREAK;
+         signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
       double price = sequence.stop.price[ArraySize(sequence.stop.price)-1];
@@ -1403,7 +1401,7 @@ bool IsStartSignal(int &signal) {
       else                              triggered = (Bid >= price);
       if (triggered) {
          if (IsLogInfo()) logInfo("IsStartSignal(3)  "+ sequence.longName +" resume condition \"@sessionbreak price "+ NumberToStr(price, PriceFormat) +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
-         signal = SIGNAL_SESSIONBREAK;
+         signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
       return(false);                                           // ignore all other conditions for the time of the sessionbreak
@@ -1549,7 +1547,7 @@ bool IsStopSignal(int &signal) {
             message = "IsStopSignal(5)  "+ sequence.longName +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (IsLogNotice()) logNotice(message);
             stop.profitAbs.condition = false;
-            signal = SIGNAL_TP;
+            signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
       }
@@ -1563,7 +1561,7 @@ bool IsStopSignal(int &signal) {
             message = "IsStopSignal(6)  "+ sequence.longName +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (IsLogNotice()) logNotice(message);
             stop.profitPct.condition = false;
-            signal = SIGNAL_TP;
+            signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
       }
@@ -1574,7 +1572,7 @@ bool IsStopSignal(int &signal) {
             message = "IsStopSignal(7)  "+ sequence.longName +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (IsLogNotice()) logNotice(message);
             stop.lossAbs.condition = false;
-            signal = SIGNAL_SL;
+            signal = SIGNAL_STOPLOSS;
             return(true);
          }
       }
@@ -1588,7 +1586,7 @@ bool IsStopSignal(int &signal) {
             message = "IsStopSignal(8)  "+ sequence.longName +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
             if (IsLogNotice()) logNotice(message);
             stop.lossPct.condition = false;
-            signal = SIGNAL_SL;
+            signal = SIGNAL_STOPLOSS;
             return(true);
          }
       }
@@ -1597,7 +1595,7 @@ bool IsStopSignal(int &signal) {
       if (IsSessionBreak()) {
          message = "IsStopSignal(9)  "+ sequence.longName +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
          if (IsLogInfo()) logInfo(message);
-         signal = SIGNAL_SESSIONBREAK;
+         signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
    }

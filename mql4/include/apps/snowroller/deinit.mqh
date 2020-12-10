@@ -22,39 +22,38 @@ int onDeinitChartChange() {
 
 
 /**
- * Online:    - Called when another chart template is applied.
- *            - Called when the chart profile is changed.
- *            - Called when the chart is closed.
- *            - Called in terminal versions up to build 509 when the terminal shuts down.
- * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
- *            - Called when the chart is closed (with VisualMode=On).
+ * Online: - Called when another chart template is applied.
+ *         - Called when the chart profile is changed.
+ *         - Called when the chart is closed.
+ *         - Called in terminal versions up to build 509 when the terminal shuts down.
+ * Tester: - Called when the chart is closed (with VisualMode=On).
+ *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Scalar variables
+ *           may contain invalid values (strings are ok).
  *
  * @return int - error status
  */
 int onDeinitChartClose() {
    if (IsTesting()) {
-      // start() was interrupted by the "Stop" button and primitive vars (bool, int, double) may contain invalid values
-      if (!IsLastError())
-         SetLastError(ERR_CANCELLED_BY_USER);
-      return(last_error);
+      if (!IsLastError()) SetLastError(ERR_CANCELLED_BY_USER);
    }
-
-   // online
-   StoreChartStatus();                                            // for profile changes and terminal restart
-   return(last_error);
+   else {
+      // online
+      StoreChartStatus();                                            // for profile changes and terminal restart
+   }
+   return(catch("onDeinitChartClose(1)"));
 }
 
 
 /**
- * Online:    Never encountered, and therefore tracked in Expander::onDeinitUndefined().
- * In tester: Called if a test finished regularily, i.e. the test period ended.
+ * Online: - Never encountered. Tracked in MT4Expander::onDeinitUndefined().
+ * Tester: - Called if a test finished regularily, i.e. the test period ended.
+ *         - Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
  *
  * @return int - error status
  */
 int onDeinitUndefined() {
    if (IsTesting()) {
-      if (IsLastError())
-         return(onDeinitChartClose());                            // same as a test interruption
+      if (IsLastError()) return(last_error);
 
       bool success = true;
       if (sequence.status == STATUS_PROGRESSING) {
@@ -65,9 +64,9 @@ int onDeinitUndefined() {
          if (success) StopSequence(NULL);
          ShowStatus();
       }
-      return(last_error);
+      return(catch("onDeinitUndefined(1)"));
    }
-   return(catch("onDeinitUndefined(1)", ERR_RUNTIME_ERROR));      // do what the Expander would do
+   return(catch("onDeinitUndefined(2)", ERR_UNDEFINED_STATE));       // do what the Expander would do
 }
 
 
@@ -78,7 +77,7 @@ int onDeinitUndefined() {
  */
 int onDeinitRecompile() {
    StoreChartStatus();
-   return(-1);                                                    // -1: skip all other deinit tasks
+   return(-1);                                                       // -1: skip all other deinit tasks
 }
 
 

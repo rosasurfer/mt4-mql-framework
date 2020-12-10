@@ -27,8 +27,8 @@
 //      The timeout for the trade request has been reached. Before retrying (after at least 1 minute) make sure the trade
 //      operation has not yet succeeded (a new position has not been opened, or an existing order has not been modified or
 //      deleted, or an existing position has not been closed).
-#define ERR_INVALID_PRICE                                           129    // Invalid bid or ask price, perhaps unnormalized price or price moves too fast (away).
-#define ERR_INVALID_STOP                                            130    // Stops are too close or prices are mis-calculated or not normalized (MODE_STOPLEVEL).
+#define ERR_INVALID_PRICE                                           129    // not normalized order price, or price moves too fast (away)
+#define ERR_INVALID_STOP                                            130    // limits/stops are mis-calculated, not normalized or too close to market (MODE_STOPLEVEL)
 #define ERR_INVALID_TRADE_VOLUME                                    131    // Invalid trade volume, error in the volume granularity.
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133
@@ -213,6 +213,7 @@
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 #define ERR_UNDEFINED_STATE                                       65557    // undefined state or behavior
 #define ERR_STOP_DISTANCE_VIOLATED                                65558    // stop or limit price violate the broker's stop distance
+#define ERR_MARGIN_STOPOUT                                        65559    // margin stopout
 
 // user defined errors >=100000 are mapped Win32 errors: win32-error + 100000 = mql-error
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

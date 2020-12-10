@@ -1120,7 +1120,7 @@ string BarRangeSignal.Status(int index) {
    double signalLevelH      = signal.data  [index][I_BRS_SIGNAL_LEVEL_H   ];
    double signalLevelL      = signal.data  [index][I_BRS_SIGNAL_LEVEL_L   ];
 
-   string description = "Signal at break of "+ BarRangeDescription(signal.timeframe, signal.bar) +"      High"+ ifString(signal.barRange==100, "", "-"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "broken") +"    Low"+ ifString(signal.barRange==100, "", "+"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "broken") +"      onTouch: "+ ifString(signal.onTouch, "On", "Off");
+   string description = "Signal at break of "+ BarRangeDescription(signal.timeframe, signal.bar) +"      High"+ ifString(signal.barRange==100, "", "-"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelH!=0, NumberToStr(signalLevelH, PriceFormat), "broken") +"    Low"+ ifString(signal.barRange==100, "", "+"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelL!=0, NumberToStr(signalLevelL, PriceFormat), "broken") +"      onTouch: "+ ifString(signal.onTouch, "On", "Off");
    return(description);
 }
 
