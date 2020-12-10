@@ -56,11 +56,13 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    }
    isRecursion = true;
 
+   // the prefixes "Metatrader" and "Tester" are used by DebugView as message filter
    string sPrefix   = "MetaTrader"; if (This.IsTesting()) sPrefix = StringConcatenate("Tester ", GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"));
-   string sLoglevel = StrPadRight(ifString(loglevel==LOG_INFO, "", LoglevelDescription(loglevel)), 6);
-   string sError    = ""; if (error != 0) sError = StringConcatenate("  [", ErrorToStr(error), "]");
+   string sLoglevel = ""; if (loglevel != LOG_INFO) sLoglevel = LoglevelDescription(loglevel);
+          sLoglevel = StrPadRight(sLoglevel, 6);
+   string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(Period()), "::", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(Period()), "  ", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -440,7 +442,7 @@ int log2Mail(string message, int error, int level) {
    int configLevel = __ExecutionContext[EC.loglevelMail]; if (!configLevel) {
       string sValue = GetConfigString("Log", "Log2Mail", "off");                                      // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(4)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(1)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelMail(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
@@ -448,7 +450,7 @@ int log2Mail(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Mail(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));  // should never happen
+         Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));  // should never happen
          return(error);
       }
       isRecursion = true;
@@ -456,17 +458,17 @@ int log2Mail(string message, int error, int level) {
 
       static string sender = ""; if (!StringLen(sender)) {
          sValue = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
-         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(2)  invalid mail sender address configuration [Mail]->Sender = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(3)  invalid mail sender address configuration [Mail]->Sender = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          sender = sValue;
       }
       static string receiver = ""; if (!StringLen(receiver)) {
          sValue = GetConfigString("Mail", "Receiver");
-         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(3)  invalid mail receiver address configuration [Mail]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(4)  invalid mail receiver address configuration [Mail]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          receiver = sValue;
       }
       message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
-      string subject = message;
-      string body = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      string subject = StrReplace(message, NL, " ");
+      string body    = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendEmail(sender, receiver, subject, body)) {
          ec_SetLoglevelMail(__ExecutionContext, configLevel);                                         // restore the configuration or leave it disabled
@@ -510,10 +512,10 @@ int log2SMS(string message, int error, int level) {
          if (!StrIsPhoneNumber(sValue)) return(_int(error, catch("log2SMS(3)  invalid phone number configuration: [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          receiver = sValue;
       }
-      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
-      string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
+                  + "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (SendSMS(receiver, text + NL + accountTime)) {
+      if (SendSMS(receiver, text)) {
          ec_SetLoglevelSMS(__ExecutionContext, configLevel);                                          // restore the configuration or leave it disabled
       }
       isRecursion = false;
@@ -550,7 +552,10 @@ int log2Terminal(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelTerminal(__ExecutionContext, LOG_OFF);                                               // prevent recursive calls
 
-      Print("  ", LoglevelDescription(level), ":   ", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+      string sLoglevel = ""; if (level != LOG_INFO) sLoglevel = LoglevelDescription(level) +"  ";
+      string sError    = ""; if (error != NO_ERROR) sError    = " ["+ ErrorToStr(error) +"]";
+
+      Print(sLoglevel, StrReplace(message, NL, " "), sError);
 
       ec_SetLoglevelTerminal(__ExecutionContext, configLevel);                                           // restore the configuration
       isRecursion = false;

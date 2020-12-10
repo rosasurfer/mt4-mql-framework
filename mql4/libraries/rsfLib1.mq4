@@ -86,7 +86,7 @@ bool ArrayAddInt(int &array[], int value) {
  * @return bool - success status
  */
 bool EditFile(string filename) {
-   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename = "+ DoubleQuoteStr(filename), ERR_INVALID_PARAMETER));
+   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename: "+ DoubleQuoteStr(filename), ERR_INVALID_PARAMETER));
 
    string file[1]; file[0] = filename;
    return(EditFiles(file));
@@ -1827,7 +1827,7 @@ int SearchBoolArray(bool haystack[], bool needle) {
  * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchIntArray(int haystack[], int needle) {
-   if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchIntArray()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchIntArray(1)  too many dimensions of parameter haystack: "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(haystack);
 
    for (int i=0; i < size; i++) {
@@ -5258,9 +5258,9 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
-      if (NE(slippage, 0)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
-         if (slippage > 0)   sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
-         else                sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
+      if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
+         if (slippage > 0)           sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
+         else                        sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
@@ -5839,7 +5839,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
-      if (NE(slippage, 0)) {
+      if (NE(slippage, 0, digits)) {
          sPrice = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_BUY, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
          if (slippage > 0) sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
          else              sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";

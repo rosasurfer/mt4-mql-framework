@@ -52,6 +52,10 @@ int onInit() {
       // order tracker
       if (!OrderTracker.Configure()) return(last_error);
    }
+
+   if (IsTesting()) {
+      positions.absoluteProfits = true;
+   }
    return(catch("onInit(6)"));
 }
 

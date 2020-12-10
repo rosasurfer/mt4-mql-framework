@@ -90,9 +90,9 @@ double totalPosition;
 double longPosition;
 double shortPosition;
 int    positions.iData[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
-double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
+double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool   positions.analyzed;
-bool   positions.absoluteProfits;                                 // default: FALSE
+bool   positions.absoluteProfits;                                 // default: online=FALSE, tester=TRUE
 
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
@@ -1632,7 +1632,7 @@ bool AnalyzePositions(bool logTickets=false) {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
 
-   // Positionen analysieren und in positions.~data[] speichern
+   // Positionen analysieren und in positions.*Data[] speichern
    if (ArrayRange(positions.iData, 0) > 0) {
       ArrayResize(positions.iData, 0);
       ArrayResize(positions.dData, 0);
@@ -2819,7 +2819,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
       else {
          // virtuelle Long-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden übersprungen (es gibt nichts abzuziehen oder hinzuzufügen)
-            double openPrice = ifDouble(value2, value2, Ask);
+            double openPrice = ifDouble(value2!=0, value2, Ask);
             ArrayPushInt   (customTickets,     TERM_OPEN_LONG                                );
             ArrayPushInt   (customTypes,       OP_BUY                                        );
             ArrayPushDouble(customLots,        lotsize                                       );
@@ -2866,7 +2866,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
       else {
          // virtuelle Short-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden übersprungen (es gibt nichts abzuziehen oder hinzuzufügen)
-            openPrice = ifDouble(value2, value2, Bid);
+            openPrice = ifDouble(value2!=0, value2, Bid);
             ArrayPushInt   (customTickets,     TERM_OPEN_SHORT                               );
             ArrayPushInt   (customTypes,       OP_SELL                                       );
             ArrayPushDouble(customLots,        lotsize                                       );
@@ -3133,7 +3133,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
 /**
  * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen
- * positions.~data[].
+ * positions.*Data[].
  *
  * @param  _In_ bool   isVirtual
  *
@@ -3163,7 +3163,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    int size, ticketsSize=ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit noch AdjustedProfit, wird sie übersprungen.
-   // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
+   // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
    if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit)
       return(true);
 
@@ -3264,7 +3264,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
          positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;        // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
          return(!catch("StorePosition(3)"));
       }
@@ -3326,7 +3326,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
       pipValue = PipValue(totalPosition, true);                         // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
@@ -3389,7 +3389,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
       pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
@@ -3417,7 +3417,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
    positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
    positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;              // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
    return(!catch("StorePosition(8)"));
 }
@@ -3983,19 +3983,19 @@ bool onOrderFail(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
 
-      string type        = OperationTypeDescription(OrderType() & 1);      // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
+      string type        = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
+      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\"";
 
-      if (IsLogInfo()) logInfo("onOrderFail(2)  "+ message);
+      logWarn("onOrderFail(2)  "+ message);
 
-      // Signale für jede Order einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Orders gemeinsam abspielen
@@ -4028,13 +4028,13 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price;
 
       if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
-      // Signale für jede Position einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4072,13 +4072,13 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias(tradeAccount.company, tradeAccount.number) +")";
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
       if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
-      // Signale für jede Position einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4114,10 +4114,8 @@ bool EditAccountConfig() {
  */
 string InputsToStr() {
    return(StringConcatenate("displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
-
                             "Track.Orders=",         DoubleQuoteStr(Track.Orders),         ";", NL,
                             "Offline.Ticker=",       BoolToStr(Offline.Ticker),            ";", NL,
-
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
                             "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")

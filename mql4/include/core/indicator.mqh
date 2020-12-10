@@ -579,15 +579,15 @@ bool EventListener_ChartCommand(string &commands[]) {
 #import
 
 
-// -- init() event handler templates (opening curly braces are intentionally missing) ---------------------------------------
+// -- init() event handler templates ----------------------------------------------------------------------------------------
 
 
 /**
  * Initialization pre-processing hook.
  *
- * @return int - error status; in case of errors reason-specific event handlers are not executed
+ * @return int - error status
  *
-int onInit()
+int onInit()                                                   // opening curly braces are intentionally missing (UEStudio)
    return(NO_ERROR);
 }
 
@@ -603,9 +603,9 @@ int onInitUser()
 
 
 /**
- * Called after the indicator was loaded by a chart template. Also at terminal start. Also in Tester with both
- * VisualMode=On|Off if the indicator is part of the tester template "Tester.tpl". On VisualMode=Off for each indicator in
- * the tester template the functions init() and deinit() are called. On VisualMode=Off the function start() is not called.
+ * Called after the indicator was loaded by a chart template. Also at terminal start. Also in tester with both
+ * VisualMode=On|Off if the indicator is loaded by the template "Tester.tpl". On VisualMode=Off for each indicator in the
+ * tester template the functions init() and deinit() are called. On VisualMode=Off the function start() is not called.
  * There was no input dialog.
  *
  * @return int - error status
@@ -677,8 +677,7 @@ int onInitRecompile()
 
 
 /**
- * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
- * returned with -1 (which signals a hard stop as opposite to a regular error).
+ * Initialization post-processing hook.
  *
  * @return int - error status
  *
@@ -687,7 +686,7 @@ int afterInit()
 }
 
 
-// -- deinit() event handler templates (opening curly braces are intentionally missing) -------------------------------------
+// -- deinit() event handler templates --------------------------------------------------------------------------------------
 
 
 /**
@@ -695,7 +694,7 @@ int afterInit()
  *
  * @return int - error status
  *
-int onDeinit()
+int onDeinit()                                                 // opening curly braces are intentionally missing (UEStudio)
    return(NO_ERROR);
 }
 
@@ -723,7 +722,7 @@ int onDeinitChartChange()
 
 
 /**
- * Never encountered. Tracked in Expander::onDeinitAccountChange().
+ * Never encountered. Tracked in MT4Expander::onDeinitAccountChange().
  *
  * @return int - error status
  *
@@ -744,8 +743,8 @@ int onDeinitClose()
 
 
 /**
- * Standalone:   Called in newer terminals (since when exactly) when the chart profile is changed.
- * In iCustom(): Called in newer terminals (since when exactly) in tester after the end of a test.
+ * Standalone:   Called in newer terminals (since when exactly?) when the chart profile is changed.
+ * In iCustom(): Called in newer terminals (since when exactly?) in tester after the end of a test.
  *
  * @return int - error status
  *
@@ -770,7 +769,7 @@ int onDeinitRemove()
 
 
 /**
- * Never encountered. Tracked in Expander::onDeinitChartClose().
+ * Never encountered. Tracked in MT4Expander::onDeinitChartClose().
  *
  * @return int - error status
  *

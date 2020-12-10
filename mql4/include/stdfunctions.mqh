@@ -230,6 +230,7 @@ string ErrorDescription(int error) {
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
       case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
       case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65558
+      case ERR_MARGIN_STOPOUT             : return("margin stopout"                                            );    //  65559
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -3727,6 +3728,27 @@ string LocalTimeFormat(datetime timestamp, string format) {
 
 
 /**
+ * Generate a random integer value between the specified minimum and maximum values.
+ *
+ * @param  int min - minimum value
+ * @param  int max - maximum value
+ *
+ * @return int
+ */
+int GetRandomValue(int min, int max) {
+   static bool seeded = false; if (!seeded) {
+      MathSrand(GetTickCount());
+      seeded = true;
+   }
+   int    value = MathRand();                   // pseudo-random value from 0 to 32767
+   double percent = value/32767.0;
+   double result = min + (max-min) * percent;
+
+   return(MathRound(result));
+}
+
+
+/**
  * Return a readable version of a module type flag.
  *
  * @param  int fType - combination of one or more module type flags
@@ -5543,12 +5565,12 @@ bool LogTicket(int ticket) {
 
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
-   string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
-   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
+   string   priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
-   logInfo("LogTicket()  "+ message);
+   logDebug("LogTicket(2)  "+ message);
 
-   return(OrderPop("LogTicket(2)"));
+   return(OrderPop("LogTicket(3)"));
 }
 
 
@@ -5837,6 +5859,40 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
    if (!error)
       return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Load and execute the "ChartInfos" indicator.
+ *
+ * @return bool - success status
+ */
+bool icChartInfos() {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   iCustom(NULL, NULL, "ChartInfos",
+           "off",                                                          // string Track.Orders
+           false,                                                          // bool   Offline.Ticker
+           "",                                                             // string ____________________
+           "off",                                                          // string Signal.Sound
+           "off",                                                          // string Signal.Mail.Receiver
+           "off",                                                          // string Signal.SMS.Receiver
+           "",                                                             // string ____________________
+           lpSuperContext,                                                 // int    __lpSuperContext
+           0, 0);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icChartInfos(1)", error));
+      logWarn("icChartInfos(2)  "+ PeriodDescription(Period()) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(true);
    return(!SetLastError(error));
 }
 
@@ -6496,12 +6552,14 @@ void __DummyCalls() {
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
    GetMqlFilesPath();
+   GetRandomValue(NULL, NULL);
    GetServerTime();
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HandleCommands();
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icChartInfos();
    icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
