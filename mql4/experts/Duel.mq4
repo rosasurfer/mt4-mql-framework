@@ -708,10 +708,8 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
 
       for (i=0; i < orders; i++) {
          if (types[i] != OP_UNDEFINED) {
-            if (levels[i] != 1) {                                 // sum slippage
-               sumSlippage += lots[i] * ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]);
-            }
-            allLots += lots[i];                                   // sum all lots
+            sumSlippage += lots[i] * ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]);
+            allLots     += lots[i];                               // sum slippage and all lots
          }
       }
       slippage = sumSlippage/allLots;                             // compute overall slippage
@@ -1316,12 +1314,12 @@ int Grid.AddPosition(int direction, int level) {
    if (!ticket) return(EMPTY);
 
    // prepare dataset
-   //int    ticket       = ...                                    // use as is
-   //int    level        = ...                                    // ...
+   //int    ticket       = ...                                                   // use as is
+   //int    level        = ...                                                   // ...
    double   lots         = oe.Lots(oe);
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
-   double   pendingPrice = CalculateGridLevel(direction, level);  // for tracking of slippage
+   double   pendingPrice = ifDouble(direction==D_LONG, oe.Ask(oe), oe.Bid(oe));  // for tracking of slippage
    int      openType     = oe.Type(oe);
    datetime openTime     = oe.OpenTime(oe);
    double   openPrice    = oe.OpenPrice(oe);
