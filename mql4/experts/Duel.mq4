@@ -85,9 +85,11 @@ double   sequence.startEquity;
 double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
 double   sequence.openLots;                              // total open lots: long.totalLots - short.totalLots
-double   sequence.openPL;                                // accumulated P/L of all open positions
-double   sequence.closedPL;                              // accumulated P/L of all closed positions
-double   sequence.totalPL;                               // current total P/L of the sequence: totalPL = floatingPL + closedPL
+double   sequence.hedgedPL;                              // P/L of the hedged open positions
+double   sequence.floatingPL;                            // P/L of the floating open positions
+double   sequence.openPL;                                // P/L of all open positions: hedgedPL + floatingPL
+double   sequence.closedPL;                              // P/L of all closed positions
+double   sequence.totalPL;                               // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                           // max. observed total sequence drawdown: -n...0
 
@@ -624,7 +626,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
       SS.OpenLots();
    }
-   if (!ComputeProfit(positionChanged)) return(false);
+   if (!ComputeProfit(positionChanged))        return(false);
+   if (!ComputeProfitTargets(positionChanged)) return(false);
 
    return(!catch("UpdateStatus(2)"));
 }
@@ -1062,11 +1065,13 @@ double CalculateLots(int direction, int level) {
 /**
  * Compute and update the current total PL of the sequence.
  *
- * @param  bool positionChanged - whether the open position changed since the last call (used to invalidate caches)
+ * @param  bool positionChanged - whether the open position changed since the last call (to signal cache invalidation)
  *
  * @return bool - success status
  */
 bool ComputeProfit(bool positionChanged) {
+   positionChanged = positionChanged!=0;
+
    if (!long.enabled || !short.enabled) {
       sequence.openPL = long.openPL + short.openPL;               // one of both is 0 (zero)
    }
@@ -1266,6 +1271,24 @@ bool ComputeProfit(bool positionChanged) {
    else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
    return(!catch("ComputeProfit(4)"));
+}
+
+
+/**
+ * Compute and update the profit targets of the sequence.
+ *
+ * @param  bool positionChanged - whether the open position changed since the last call (to signal cache invalidation)
+ *
+ * @return bool - success status
+ */
+bool ComputeProfitTargets(bool positionChanged) {
+   positionChanged = positionChanged!=0;
+
+
+   // breakeven
+   // takeprofit
+   // stoploss
+   return(!catch("ComputeProfitTargets(1)"));
 }
 
 

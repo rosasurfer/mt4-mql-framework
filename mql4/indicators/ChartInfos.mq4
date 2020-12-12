@@ -3196,8 +3196,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             if (!remainingLong) continue;
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice     = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-               swap         += swaps      [i];
+               openPrice    += lots[i] * openPrices[i];
+               swap         += swaps[i];
                commission   += commissions[i];
                remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
                tickets[i]    = NULL;
@@ -3205,7 +3205,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor        = remainingLong/lots[i];
-               openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
+               openPrice    += remainingLong * openPrices[i];
                swap         += swaps[i];                swaps      [i]  = 0;
                commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                                                         profits    [i] -= factor * profits    [i];
@@ -3217,8 +3217,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             if (!remainingShort) continue;
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               closePrice     = NormalizeDouble(closePrice + lots[i] * openPrices[i], 8);
-               swap          += swaps      [i];
+               closePrice    += lots[i] * openPrices[i];
+               swap          += swaps[i];
                //commission  += commissions[i];                                        // Commission wird nur für Long-Leg übernommen
                remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
                tickets[i]     = NULL;
@@ -3226,7 +3226,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor         = remainingShort/lots[i];
-               closePrice     = NormalizeDouble(closePrice + remainingShort * openPrices[i], 8);
+               closePrice    += remainingShort * openPrices[i];
                swap          += swaps[i]; swaps      [i]  = 0;
                                           commissions[i] -= factor * commissions[i];   // Commission wird nur für Long-Leg übernommen
                                           profits    [i] -= factor * profits    [i];
@@ -3287,20 +3287,20 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          if (types[i] == OP_BUY) {
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-               swap           += swaps      [i];
+               openPrice      += lots[i] * openPrices[i];
+               swap           += swaps[i];
                commission     += commissions[i];
-               floatingProfit += profits    [i];
+               floatingProfit += profits[i];
                tickets[i]      = NULL;
                remainingLong   = NormalizeDouble(remainingLong - lots[i], 3);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor          = remainingLong/lots[i];
-               openPrice       = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
-               swap           +=          swaps      [i]; swaps      [i]  = 0;
+               openPrice      += remainingLong * openPrices[i];
+               swap           +=          swaps[i];       swaps      [i]  = 0;
                commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-               floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+               floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
                                                           lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
                remainingLong = 0;
             }
@@ -3350,20 +3350,20 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          if (types[i] == OP_SELL) {
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-               swap           += swaps      [i];
+               openPrice      += lots[i] * openPrices[i];
+               swap           += swaps[i];
                commission     += commissions[i];
-               floatingProfit += profits    [i];
+               floatingProfit += profits[i];
                tickets[i]      = NULL;
                remainingShort  = NormalizeDouble(remainingShort - lots[i], 3);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor          = remainingShort/lots[i];
-               openPrice       = NormalizeDouble(openPrice + remainingShort * openPrices[i], 8);
-               swap           +=          swaps      [i]; swaps      [i]  = 0;
+               openPrice      += lots[i] * openPrices[i];
+               swap           +=          swaps[i];       swaps      [i]  = 0;
                commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-               floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+               floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
                                                           lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
                remainingShort = 0;
             }
