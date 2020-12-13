@@ -92,6 +92,7 @@ double   sequence.closedPL;                              // P/L of all closed po
 double   sequence.totalPL;                               // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                           // max. observed total sequence drawdown: -n...0
+double   sequence.avgPrice;
 double   sequence.bePrice;
 double   sequence.tpPrice;
 double   sequence.slPrice;
@@ -178,6 +179,7 @@ string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
+string   sSequenceAvgPrice    = "";
 string   sSequenceBePrice     = "";
 string   sSequenceTpPrice     = "";
 string   sSequenceSlPrice     = "";
@@ -632,8 +634,7 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
       SS.OpenLots();
    }
-   if (!ComputeProfit(positionChanged))        return(false);
-   if (!ComputeProfitTargets(positionChanged)) return(false);
+   if (!ComputeProfit(positionChanged)) return(false);
 
    return(!catch("UpdateStatus(2)"));
 }
@@ -1133,7 +1134,7 @@ bool ComputeProfit(bool positionChanged) {
       }
 
       // compute openPL = hedgedPL + floatingPL
-      double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingProfit, pipValue, pipDistance;
+      double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingProfit, pipValue, pipDistance, avgPrice;
 
       // compute PL of a hedged part
       if (long.openLots && short.openLots) {
@@ -1192,7 +1193,7 @@ bool ComputeProfit(bool positionChanged) {
          pipValue          = PipValue(hedgedLots); if (!pipValue) return(false);
          pipDistance       = (sumClosePrice-sumOpenPrice)/hedgedLots/Pip + (sumCommission+sumSwap)/pipValue;
          sequence.hedgedPL = pipDistance * pipValue;
-         sequence.bePrice  = NULL;
+         sequence.avgPrice = NULL;
       }
 
       // compute PL of a floating long position
@@ -1220,9 +1221,9 @@ bool ComputeProfit(bool positionChanged) {
                   // apply all swap, partial commission, partial profit; afterwards reduce the ticket's commission, profit and lotsize
                   factor          = remainingLong/lots[i];
                   sumOpenPrice   += remainingLong * openPrices[i];
-                  sumSwap        +=          swaps[i];       swaps      [i]  = 0;
+                  sumSwap        +=          swaps      [i]; swaps      [i]  = 0;
                   sumCommission  += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-                  floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
+                  floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
                                                              lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
                   remainingLong = 0;
                }
@@ -1232,7 +1233,11 @@ bool ComputeProfit(bool positionChanged) {
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
          pipValue            = PipValue(sequence.openLots); if (!pipValue) return(false);
-         sequence.bePrice    = RoundCeil(sumOpenPrice/sequence.openLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip, Digits);
+         avgPrice            = sumOpenPrice/sequence.openLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
+
+         if (positionChanged) {
+            if (!ComputeProfitTargets(avgPrice, sumOpenPrice, sumCommission, sumSwap)) return(false);
+         }
       }
 
       // compute PL of a floating short position
@@ -1272,7 +1277,7 @@ bool ComputeProfit(bool positionChanged) {
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
          pipValue            = PipValue(-sequence.openLots); if (!pipValue) return(false);
-         sequence.bePrice    = RoundFloor((sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/sequence.openLots, Digits);
+         sequence.avgPrice   = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/sequence.openLots;
       }
    }
 
@@ -1291,23 +1296,41 @@ bool ComputeProfit(bool positionChanged) {
 /**
  * Compute and update the profit targets of the sequence.
  *
- * @param  bool positionChanged - whether the open position changed since the last call (signals cache invalidation)
- *
  * @return bool - success status
  */
-bool ComputeProfitTargets(bool positionChanged) {
-   positionChanged = positionChanged!=0;
-
+bool ComputeProfitTargets(double avgPrice, double sumOpenPrice, double commission, double swap) {
    if (!sequence.openLots) {
       sequence.bePrice = 0;
       sequence.tpPrice = 0;
       sequence.slPrice = 0;
+      return(true);
    }
 
-   // breakeven
-   //double pipValue     = PipValue(sequence.openLots); if (!pipValue) return(false);
-   //double avgOpenPrice = sumOpenPrice/sequence.openLots;
-   //double bePrice      = avgOpenPrice - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pips;
+   int nextLevel;
+   double openLots=sequence.openLots, nextLots, nextLevelPrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+
+   // long
+   if (openLots > 0) {
+      nextLevel = long.maxLevel + 1;                                 // get the next grid level
+      nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);
+
+      while (nextLevelPrice < avgPrice) {
+         nextLots      = CalculateLots(D_LONG, nextLevel);           // calculate BE at the next grid level
+         sumOpenPrice += nextLots * nextLevelPrice;
+         openLots     += nextLots;
+         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue      = openLots * pipValuePerLot;
+         avgPrice      = sumOpenPrice/openLots - (sequence.closedPL + sequence.hedgedPL + commission + swap)/pipValue*Pip;
+
+         nextLevel++;                                                // get the next grid level
+         nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);
+      }
+      sequence.bePrice = avgPrice;
+   }
+
+   // short
+   if (openLots < 0) {
+   }
 
 
    // takeprofit
@@ -2074,9 +2097,10 @@ int ShowStatus(int error = NO_ERROR) {
                                   "Short:            ",             sOpenShortLots,                                     NL,
                                   "Total:            ",             sOpenTotalLots,                                     NL,
                                                                                                                         NL,
-                                  "TP:                 ",           sSequenceTpPrice,                                   NL,
+                                  "Avg:               ",            sSequenceAvgPrice,                                  NL,
                                   "BE:                 ",           sSequenceBePrice,                                   NL,
-                                  "SL:                 ",           sSequenceSlPrice,                                   NL,
+                                  "TP:                 ",           sSequenceTpPrice,                                   NL,
+                                //"SL:                 ",           sSequenceSlPrice,                                   NL,
                                                                                                                         NL,
                                   "Profit/Loss:   ",                sSequenceTotalPL, sSequencePlStats,                 NL
    );
@@ -2218,14 +2242,21 @@ void SS.OpenLots() {
  */
 void SS.ProfitTargets() {
    if (IsChart()) {
-      if (!sequence.tpPrice) sSequenceTpPrice = "";
-      else                   sSequenceTpPrice = NumberToStr(sequence.tpPrice, PriceFormat);
+      if      (!sequence.avgPrice)    sSequenceAvgPrice = "";
+      else if (sequence.openLots > 0) sSequenceAvgPrice = NumberToStr(RoundCeil(sequence.avgPrice, Digits), PriceFormat);
+      else                            sSequenceAvgPrice = NumberToStr(RoundFloor(sequence.avgPrice, Digits), PriceFormat);
 
-      if (!sequence.bePrice) sSequenceBePrice = "";
-      else                   sSequenceBePrice = "avg: "+ NumberToStr(sequence.bePrice, PriceFormat);
+      if      (!sequence.bePrice)     sSequenceBePrice = "";
+      else if (sequence.openLots > 0) sSequenceBePrice = NumberToStr(RoundCeil(sequence.bePrice, Digits), PriceFormat);
+      else                            sSequenceBePrice = NumberToStr(RoundFloor(sequence.bePrice, Digits), PriceFormat);
 
-      if (!sequence.slPrice) sSequenceSlPrice = "";
-      else                   sSequenceSlPrice = NumberToStr(sequence.slPrice, PriceFormat);
+      if      (!sequence.tpPrice)     sSequenceTpPrice = "";
+      else if (sequence.openLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
+      else                            sSequenceTpPrice = NumberToStr(RoundFloor(sequence.tpPrice, Digits), PriceFormat);
+
+      if      (!sequence.slPrice)     sSequenceSlPrice = "";
+      else if (sequence.openLots > 0) sSequenceSlPrice = NumberToStr(RoundFloor(sequence.slPrice, Digits), PriceFormat);
+      else                            sSequenceSlPrice = NumberToStr(RoundCeil(sequence.slPrice, Digits), PriceFormat);
    }
 }
 
