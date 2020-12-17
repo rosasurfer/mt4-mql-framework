@@ -32,10 +32,8 @@ int onDeinitUndefined() {
       if (IsLastError()) return(last_error);
 
       if (sequence.status == STATUS_PROGRESSING) {
-         logInfo("onDeinitUndefined(1)  "+ sequence.name +" test stops in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", cleaning up...");
-         bool bNull;
-         UpdateStatus(bNull, bNull);
-         ShowStatus();
+         logInfo("onDeinitUndefined(1)  "+ sequence.name +" test stopped in status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
+         //bool bNull; UpdateStatus(bNull, bNull); ShowStatus();     // detect and signal ERR_NOT_ENOUGH_MONEY|ERR_MARGIN_STOPOUT
       }
       return(catch("onDeinitUndefined(2)"));
    }
