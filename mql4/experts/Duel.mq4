@@ -1128,7 +1128,7 @@ bool ComputeProfit(bool positionChanged) {
       }
 
       // compute openPL = hedgedPL + floatingPL
-      double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingProfit, pipValue, pipDistance, avgPrice;
+      double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingProfit, pipValue, pipDistance;
 
       // compute PL of a hedged part
       if (long.openLots && short.openLots) {
@@ -1187,7 +1187,6 @@ bool ComputeProfit(bool positionChanged) {
          pipValue          = PipValue(hedgedLots); if (!pipValue) return(false);
          pipDistance       = (sumClosePrice-sumOpenPrice)/hedgedLots/Pip + (sumCommission+sumSwap)/pipValue;
          sequence.hedgedPL = pipDistance * pipValue;
-         avgPrice          = NULL;
       }
 
       // compute PL of a floating long position
@@ -1226,13 +1225,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-
-         if (positionChanged) {
-            pipValue = PipValue(sequence.openLots); if (!pipValue) return(false);
-            avgPrice = sumOpenPrice/sequence.openLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
-
-            if (!ComputeProfitTargets(avgPrice, sumOpenPrice, sumCommission, sumSwap)) return(false);
-         }
+         if (positionChanged) if (!ComputeProfitTargets(sumOpenPrice, sumCommission, sumSwap)) return(false);
       }
 
       // compute PL of a floating short position
@@ -1271,13 +1264,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-
-         if (positionChanged) {
-            pipValue = PipValue(-sequence.openLots); if (!pipValue) return(false);
-            avgPrice = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/sequence.openLots;
-
-            if (!ComputeProfitTargets(avgPrice, sumOpenPrice, sumCommission, sumSwap)) return(false);
-         }
+         if (positionChanged) if (!ComputeProfitTargets(sumOpenPrice, sumCommission, sumSwap)) return(false);
       }
    }
 
@@ -1298,9 +1285,10 @@ bool ComputeProfit(bool positionChanged) {
  *
  * @return bool - success status
  */
-bool ComputeProfitTargets(double avgPrice, double sumOpenPrice, double sumCommission, double sumSwap) {
+bool ComputeProfitTargets(double sumOpenPrice, double sumCommission, double sumSwap) {
    int nextLevel;
-   double currentLots=sequence.openLots, nextLots, nextLevelPrice, bePrice=avgPrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+   double currentLots=sequence.openLots, nextLots, nextLevelPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+   if (!pipValue || IsEmpty(commissionPerLot)) return(false);
 
    // hedged
    if (!currentLots) {
@@ -1310,8 +1298,10 @@ bool ComputeProfitTargets(double avgPrice, double sumOpenPrice, double sumCommis
 
    // long
    else if (currentLots > 0) {
-      nextLevel = long.maxLevel + 1;                                 // calculate grid at the next level
-      nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);
+      pipValue       = currentLots * pipValuePerLot;
+      bePrice        = sumOpenPrice/currentLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
+      nextLevel      = long.maxLevel + 1;
+      nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);        // calculate grid at the next level
 
       while (nextLevelPrice < bePrice) {
          nextLots       = CalculateLots(D_LONG, nextLevel);          // calculate BE at the next level
@@ -1328,8 +1318,10 @@ bool ComputeProfitTargets(double avgPrice, double sumOpenPrice, double sumCommis
 
    // short
    else if (currentLots < 0) {
-      nextLevel = short.maxLevel + 1;                                // calculate grid at the next level
-      nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);
+      pipValue       = -currentLots * pipValuePerLot;
+      bePrice        = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/currentLots;
+      nextLevel      = short.maxLevel + 1;
+      nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);       // calculate grid at the next level
 
       while (nextLevelPrice > bePrice) {
          nextLots       = CalculateLots(D_SHORT, nextLevel);         // calculate BE at the next level
