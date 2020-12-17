@@ -169,12 +169,14 @@ int deinit() {
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
-   error     = onDeinit();                                           // preprocessing hook
-   if (!error) afterDeinit();                                        // postprocessing hook
+   error = catch("deinit(1)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+
+   if (!error) error = onDeinit();                    // preprocessing hook
+   if (!error) error = afterDeinit();                 // postprocessing hook
    if (!error && !last_error && !This.IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(2)");
-   return(error|last_error|LeaveContext(__ExecutionContext));        // the very last statement
+   return(error|last_error|LeaveContext(__ExecutionContext));
 }
 
 

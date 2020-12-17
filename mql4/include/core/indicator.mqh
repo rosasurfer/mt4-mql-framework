@@ -381,42 +381,38 @@ int deinit() {
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
+   error = catch("deinit(1)");                                          // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+
    if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
       return(error|last_error|LeaveContext(__ExecutionContext));
 
-   // User-Routinen *können*, müssen aber nicht implementiert werden.
+   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
    //
-   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
-   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
-   // (falls implementiert) -1 zurückgeben.
-
-   // User-spezifische deinit()-Routinen aufrufen                                //
-   error = onDeinit();                                                           // preprocessing hook
-                                                                                 //
-   if (!error) {                                                                 //
-      switch (UninitializeReason()) {                                            //
-         case UR_PARAMETERS : error = onDeinitParameters();    break;            //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;            //
-         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;            //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;            //
-         case UR_UNDEFINED  : error = onDeinitUndefined();     break;            //
-         case UR_REMOVE     : error = onDeinitRemove();        break;            //
-         case UR_RECOMPILE  : error = onDeinitRecompile();     break;            //
-         // build > 509                                                          //
-         case UR_TEMPLATE   : error = onDeinitTemplate();      break;            //
-         case UR_INITFAILED : error = onDeinitFailed();        break;            //
-         case UR_CLOSE      : error = onDeinitClose();         break;            //
-                                                                                 //
-         default:                                                                //
-            CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            return(last_error|LeaveContext(__ExecutionContext));                 //
-      }                                                                          //
-   }                                                                             //
-   if (!error) error = afterDeinit();                                            // postprocessing hook
+   if (!error) error = onDeinit();                                      // preprocessing hook
+   if (!error) {                                                        //
+      switch (UninitializeReason()) {                                   //
+         case UR_PARAMETERS : error = onDeinitParameters();    break;   //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;   //
+         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;   //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;   //
+         case UR_UNDEFINED  : error = onDeinitUndefined();     break;   //
+         case UR_REMOVE     : error = onDeinitRemove();        break;   //
+         case UR_RECOMPILE  : error = onDeinitRecompile();     break;   //
+         // build > 509                                                 //
+         case UR_TEMPLATE   : error = onDeinitTemplate();      break;   //
+         case UR_INITFAILED : error = onDeinitFailed();        break;   //
+         case UR_CLOSE      : error = onDeinitClose();         break;   //
+                                                                        //
+         default:                                                       //
+            CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            return(last_error|LeaveContext(__ExecutionContext));        //
+      }                                                                 //
+   }                                                                    //
+   if (!error) error = afterDeinit();                                   // postprocessing hook
    if (!error && !last_error && !This.IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(2)");
-   return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
+   CheckErrors("deinit(3)");
+   return(last_error|LeaveContext(__ExecutionContext));
 }
 
 
