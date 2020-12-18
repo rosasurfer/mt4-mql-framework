@@ -1,8 +1,8 @@
 /**
  * Duel Profit Targets
  *
- * Visualizes breakeven, profit and stoploss targets of the Duel system. The indicator gets its values directly from the
- * Duel expert running in the same chart (online and tester).
+ * Visualizes breakeven, profit and stoploss targets of an active Duel expert. The indicator gets values from the expert
+ * running in the same chart (online and tester).
  *
  * @see  mql4/experts/Duel.mq4
  */
@@ -12,6 +12,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern color  Color.Breakeven = Blue;
+extern string Draw.Type       = "Line* | Dot";
+extern int    Draw.Width      = 1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,11 +28,13 @@ int __DeinitFlags[];
 #property indicator_chart_window
 #property indicator_buffers   2
 
-#property indicator_color1    Blue
-#property indicator_color2    Blue
+#property indicator_color1    CLR_NONE
+#property indicator_color2    CLR_NONE
 
 double beLong [];
 double beShort[];
+
+int drawType;
 
 
 /**
@@ -38,13 +43,37 @@ double beShort[];
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.Breakeven == 0xFF000000) Color.Breakeven = CLR_NONE;
+
+   // Draw.Type
+   string sValues[], sValue=StrToLower(Draw.Type);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
+   else                return(catch("onInit(1)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+
+   // Draw.Width
+   if (Draw.Width < 0) return(catch("onInit(2)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width > 5) return(catch("onInit(3)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+
+   // buffer management
    SetIndexBuffer(MODE_BE_LONG,  beLong);
    SetIndexBuffer(MODE_BE_SHORT, beShort);
 
+   // names, labels and display options
+   IndicatorShortName(ProgramName());                    // chart tooltips and context menu
+   SetIndexLabel(MODE_BE_LONG,   "Duel BE long");        // chart tooltips and "Data" window
+   SetIndexLabel(MODE_BE_SHORT,  "Duel BE short");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(1)"));
+   return(catch("onInit(4)"));
 }
 
 
@@ -76,8 +105,8 @@ int onTick() {
 
    // recalculate changed bars
    for (int i=startBar; i >= 0; i--) {
-      beLong [i] = 0;
-      beShort[i] = 0;
+      beLong [i] = Ask + 30*Pip;
+      beShort[i] = Bid - 30*Pip;
    }
    return(last_error);
 }
@@ -88,8 +117,10 @@ int onTick() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   SetIndexStyle(MODE_BE_LONG,  DRAW_LINE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_BE_SHORT, DRAW_LINE, EMPTY, EMPTY);
+   int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
+
+   SetIndexStyle(MODE_BE_LONG,  draw_type, EMPTY, Draw.Width, Color.Breakeven);
+   SetIndexStyle(MODE_BE_SHORT, draw_type, EMPTY, Draw.Width, Color.Breakeven);
 }
 
 
@@ -99,5 +130,8 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return("");
+   return(StringConcatenate("Color.Breakeven=", ColorToStr(Color.Breakeven), ";", NL,
+                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),   ";", NL,
+                            "Draw.Width=",      Draw.Width,                  ";")
+   );
 }
