@@ -1288,7 +1288,7 @@ bool ComputeProfit(bool positionChanged) {
 bool ComputeProfitTargets(double sumOpenPrice, double sumCommission, double sumSwap) {
    int nextLevel;
    double currentLots=sequence.openLots, nextLots, nextLevelPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
-   if (!pipValue || IsEmpty(commissionPerLot)) return(false);
+   if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(false);
 
    // hedged
    if (!currentLots) {
