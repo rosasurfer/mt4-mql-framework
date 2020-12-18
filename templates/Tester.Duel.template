@@ -8747,6 +8747,9 @@ name=systems/Duel Profit Targets
 flags=339
 window_num=0
 <inputs>
+Color.Breakeven=3329330
+Draw.Type=Line
+Draw.Width=2
 </inputs>
 </expert>
 </indicator>

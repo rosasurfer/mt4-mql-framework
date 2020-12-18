@@ -12,7 +12,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color  Color.Breakeven = Blue;
+extern color  Color.Breakeven = LimeGreen;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.Width      = 1;
 
@@ -99,16 +99,11 @@ int onTick() {
       ShiftIndicatorBuffer(beShort, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-   // calculate start bar
-   int startBar = ChangedBars-1;
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
-
-   // recalculate changed bars
-   for (int i=startBar; i >= 0; i--) {
-      beLong [i] = Ask + 30*Pip;
-      beShort[i] = Bid - 30*Pip;
+   // draw breakeven line
+   if (IsChart()) {
+      beLong[0] = GetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven");
    }
-   return(last_error);
+   return(catch("onTick(3)"));
 }
 
 

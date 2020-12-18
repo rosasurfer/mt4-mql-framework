@@ -1314,6 +1314,8 @@ bool ComputeProfitTargets(double sumOpenPrice, double sumCommission, double sumS
          nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);     // calculate grid at the next level
       }
       sequence.bePrice = bePrice;
+
+      if (IsVisualMode()) SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven", bePrice);
    }
 
    // short
@@ -1335,6 +1337,8 @@ bool ComputeProfitTargets(double sumOpenPrice, double sumCommission, double sumS
          break;
       }
       sequence.bePrice = bePrice;
+
+      if (IsVisualMode()) SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven", bePrice);
    }
 
 
