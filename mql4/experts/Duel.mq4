@@ -92,7 +92,8 @@ double   sequence.closedPL;                              // P/L of all closed po
 double   sequence.totalPL;                               // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                           // max. observed total sequence drawdown: -n...0
-double   sequence.bePrice;
+double   sequence.bePrice.long;
+double   sequence.bePrice.short;
 double   sequence.tpPrice;
 double   sequence.slPrice;
 
@@ -1292,53 +1293,66 @@ bool ComputeProfitTargets(double sumOpenPrice, double sumCommission, double sumS
 
    // hedged
    if (!currentLots) {
-      sequence.bePrice = 0;
+      sequence.bePrice.long  = 0;
+      sequence.bePrice.short = 0;
+
+      if (IsVisualMode()) {
+         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  0);
+         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", 0);
+      }
       return(true);
    }
 
-   // long
+   // long: calculate upper BE
    else if (currentLots > 0) {
-      pipValue       = currentLots * pipValuePerLot;
+      pipValue       = currentLots * pipValuePerLot;                 // BE at the current level
       bePrice        = sumOpenPrice/currentLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
       nextLevel      = long.maxLevel + 1;
-      nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);        // calculate grid at the next level
+      nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);        // grid at the next level
 
       while (nextLevelPrice < bePrice) {
-         nextLots       = CalculateLots(D_LONG, nextLevel);          // calculate BE at the next level
+         nextLots       = CalculateLots(D_LONG, nextLevel);
          currentLots   += nextLots;
          sumOpenPrice  += nextLots * nextLevelPrice;
          sumCommission -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue       = currentLots * pipValuePerLot;
+         pipValue       = currentLots * pipValuePerLot;              // BE at the next level
          bePrice        = sumOpenPrice/currentLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
          nextLevel++;
-         nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);     // calculate grid at the next level
+         nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);     // grid at the next level
       }
-      sequence.bePrice = bePrice;
+      sequence.bePrice.long  = bePrice;
+      sequence.bePrice.short = 0;
 
-      if (IsVisualMode()) SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven", bePrice);
+      if (IsVisualMode()) {
+         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  bePrice);
+         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", 0);
+      }
    }
 
-   // short
+   // short: calculate lower BE
    else if (currentLots < 0) {
-      pipValue       = -currentLots * pipValuePerLot;
+      pipValue       = -currentLots * pipValuePerLot;                // BE at the current level
       bePrice        = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/currentLots;
       nextLevel      = short.maxLevel + 1;
-      nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);       // calculate grid at the next level
+      nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);       // grid at the next level
 
       while (nextLevelPrice > bePrice) {
-         nextLots       = CalculateLots(D_SHORT, nextLevel);         // calculate BE at the next level
+         nextLots       = CalculateLots(D_SHORT, nextLevel);
          currentLots   -= nextLots;
          sumOpenPrice  += nextLots * nextLevelPrice;
          sumCommission -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue       = -currentLots * pipValuePerLot;
+         pipValue       = -currentLots * pipValuePerLot;             // BE at the next level
          bePrice        = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/currentLots;
          nextLevel++;
-         nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);    // calculate grid at the next level
-         break;
+         nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);    // grid at the next level
       }
-      sequence.bePrice = bePrice;
+      sequence.bePrice.long  = 0;
+      sequence.bePrice.short = bePrice;
 
-      if (IsVisualMode()) SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven", bePrice);
+      if (IsVisualMode()) {
+         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  0);
+         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", bePrice);
+      }
    }
 
 
@@ -2250,9 +2264,10 @@ void SS.OpenLots() {
  */
 void SS.ProfitTargets() {
    if (IsChart()) {
-      if      (!sequence.bePrice)     sSequenceBePrice = "";
-      else if (sequence.openLots > 0) sSequenceBePrice = NumberToStr(RoundCeil(sequence.bePrice, Digits), PriceFormat);
-      else                            sSequenceBePrice = NumberToStr(RoundFloor(sequence.bePrice, Digits), PriceFormat);
+      sSequenceBePrice = "";
+      if (long.enabled)                  sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(sequence.bePrice.long, Digits), PriceFormat);
+      if (long.enabled && short.enabled) sSequenceBePrice = sSequenceBePrice +" / ";
+      if (short.enabled)                 sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(sequence.bePrice.short, Digits), PriceFormat);
 
       if      (!sequence.tpPrice)     sSequenceTpPrice = "";
       else if (sequence.openLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
