@@ -63,8 +63,8 @@ int onInit() {
    if (Draw.Width > 5) return(catch("onInit(3)  Invalid input parameter Draw.Width = "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
-   SetIndexBuffer(MODE_BE_LONG,  beLong);
-   SetIndexBuffer(MODE_BE_SHORT, beShort);
+   SetIndexBuffer(MODE_BE_LONG,  beLong);  SetIndexEmptyValue(MODE_BE_LONG,  0);
+   SetIndexBuffer(MODE_BE_SHORT, beShort); SetIndexEmptyValue(MODE_BE_SHORT, 0);
 
    // names, labels and display options
    IndicatorShortName(ProgramName());                    // chart tooltips and context menu
@@ -88,20 +88,21 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(beLong,  EMPTY_VALUE);
-      ArrayInitialize(beShort, EMPTY_VALUE);
+      ArrayInitialize(beLong,  0);
+      ArrayInitialize(beShort, 0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(beLong,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(beShort, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(beLong,  Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(beShort, Bars, ShiftedBars, 0);
    }
 
    // draw breakeven line
    if (IsChart()) {
-      beLong[0] = GetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven");
+      beLong [0] = GetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long");
+      beShort[0] = GetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short");
    }
    return(catch("onTick(3)"));
 }
