@@ -1226,7 +1226,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-         if (positionChanged) if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
+         if (positionChanged) if (!ComputeProfitTargets1(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
       }
 
       // compute PL of a floating short position
@@ -1265,7 +1265,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-         if (positionChanged) if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
+         if (positionChanged) if (!ComputeProfitTargets1(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
       }
    }
 
@@ -1286,7 +1286,7 @@ bool ComputeProfit(bool positionChanged) {
  *
  * @return bool - success status
  */
-bool ComputeProfitTargets(double openLots, double sumOpenPrice, double commission, double swap, double closedPL, double hedgedPL) {
+bool ComputeProfitTargets1(double openLots, double sumOpenPrice, double commission, double swap, double closedPL, double hedgedPL) {
    double bePrice;
 
    if (long.enabled) {
@@ -1319,7 +1319,7 @@ bool ComputeProfitTargets(double openLots, double sumOpenPrice, double commissio
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  sequence.bePrice.long);
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", sequence.bePrice.short);
    }
-   return(!catch("ComputeProfitTargets(1)"));
+   return(!catch("ComputeProfitTargets1(1)"));
 }
 
 
