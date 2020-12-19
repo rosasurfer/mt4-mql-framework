@@ -1226,7 +1226,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-         if (positionChanged) if (!ComputeProfitTargets(sumOpenPrice, sumCommission, sumSwap)) return(false);
+         if (positionChanged) if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
       }
 
       // compute PL of a floating short position
@@ -1265,7 +1265,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-         if (positionChanged) if (!ComputeProfitTargets(sumOpenPrice, sumCommission, sumSwap)) return(false);
+         if (positionChanged) if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
       }
    }
 
@@ -1286,79 +1286,95 @@ bool ComputeProfit(bool positionChanged) {
  *
  * @return bool - success status
  */
-bool ComputeProfitTargets(double sumOpenPrice, double sumCommission, double sumSwap) {
-   int nextLevel;
-   double currentLots=sequence.openLots, nextLots, nextLevelPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
-   if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(false);
+bool ComputeProfitTargets(double openLots, double sumOpenPrice, double commission, double swap, double closedPL, double hedgedPL) {
+   double bePrice;
 
-   // hedged
-   if (!currentLots) {
-      sequence.bePrice.long  = 0;
-      sequence.bePrice.short = 0;
-
-      if (IsVisualMode()) {
-         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  0);
-         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", 0);
+   if (long.enabled) {
+      if (openLots > 0) {                       // long
+         bePrice = ComputeProfitTargets2(openLots, sumOpenPrice, commission, swap, closedPL, hedgedPL);
       }
-      return(true);
+      else if (openLots < 0) {
+         bePrice = 0;                           // short: interpolate PL to the next long or hedged position and call self
+      }
+      else {
+         bePrice = 0;                           // hedged: interpolate PL to the next long position and call self
+      }
+      sequence.bePrice.long = bePrice;
    }
 
-   // long: calculate upper BE
-   else if (currentLots > 0) {
-      pipValue       = currentLots * pipValuePerLot;                 // BE at the current level
-      bePrice        = sumOpenPrice/currentLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
+   if (short.enabled) {
+      if (openLots < 0) {                       // short
+         bePrice = ComputeProfitTargets2(openLots, sumOpenPrice, commission, swap, closedPL, hedgedPL);
+      }
+      else if (openLots > 0) {
+         bePrice = 0;                           // long: interpolate PL to the next short or hedged position and call self
+      }
+      else {
+         bePrice = 0;                           // hedged: interpolate PL to the next short position and call self
+      }
+      sequence.bePrice.short = bePrice;
+   }
+
+   if (IsVisualMode()) {                        // store results also in the chart window (for breakeven indicator)
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  sequence.bePrice.long);
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", sequence.bePrice.short);
+   }
+   return(!catch("ComputeProfitTargets(1)"));
+}
+
+
+/**
+ * Compute the profit targets of the given position.
+ *
+ * @return double - breakeven price or NULL in case of errors
+ */
+double ComputeProfitTargets2(double openLots, double sumOpenPrice, double commission, double swap, double closedPL, double hedgedPL) {
+   int nextLevel;
+   double nextLots, nextLevelPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+   if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(NULL);
+
+   // calculate upper BE
+   if (openLots > 0) {
+      pipValue       = openLots * pipValuePerLot;                    // BE at the current level
+      bePrice        = sumOpenPrice/openLots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
       nextLevel      = long.maxLevel + 1;
       nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);        // grid at the next level
 
       while (nextLevelPrice < bePrice) {
-         nextLots       = CalculateLots(D_LONG, nextLevel);
-         currentLots   += nextLots;
-         sumOpenPrice  += nextLots * nextLevelPrice;
-         sumCommission -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue       = currentLots * pipValuePerLot;              // BE at the next level
-         bePrice        = sumOpenPrice/currentLots - (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip;
+         nextLots      = CalculateLots(D_LONG, nextLevel);
+         openLots     += nextLots;
+         sumOpenPrice += nextLots * nextLevelPrice;
+         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue      = openLots * pipValuePerLot;                  // BE at the next level
+         bePrice       = sumOpenPrice/openLots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
          nextLevel++;
          nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);     // grid at the next level
       }
-      sequence.bePrice.long  = bePrice;
-      sequence.bePrice.short = 0;
-
-      if (IsVisualMode()) {
-         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  bePrice);
-         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", 0);
-      }
+      return(bePrice);
    }
 
-   // short: calculate lower BE
-   else if (currentLots < 0) {
-      pipValue       = -currentLots * pipValuePerLot;                // BE at the current level
-      bePrice        = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/currentLots;
+   // calculate lower BE
+   if (openLots < 0) {
+      pipValue       = -openLots * pipValuePerLot;                   // BE at the current level
+      bePrice        = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/openLots;
       nextLevel      = short.maxLevel + 1;
       nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);       // grid at the next level
 
       while (nextLevelPrice > bePrice) {
-         nextLots       = CalculateLots(D_SHORT, nextLevel);
-         currentLots   -= nextLots;
-         sumOpenPrice  += nextLots * nextLevelPrice;
-         sumCommission -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue       = -currentLots * pipValuePerLot;             // BE at the next level
-         bePrice        = (sequence.closedPL + sequence.hedgedPL + sumCommission + sumSwap)/pipValue*Pip - sumOpenPrice/currentLots;
+         nextLots      = CalculateLots(D_SHORT, nextLevel);
+         openLots     -= nextLots;
+         sumOpenPrice += nextLots * nextLevelPrice;
+         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue      = -openLots * pipValuePerLot;                 // BE at the next level
+         bePrice       = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/openLots;
          nextLevel++;
          nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);    // grid at the next level
       }
-      sequence.bePrice.long  = 0;
-      sequence.bePrice.short = bePrice;
-
-      if (IsVisualMode()) {
-         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  0);
-         SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", bePrice);
-      }
+      return(bePrice);
    }
 
-
    // takeprofit
-   // stoploss
-   return(!catch("ComputeProfitTargets(1)"));
+   return(!catch("ComputeProfitTargets2(1)", ERR_WRONG_JUMP));
 }
 
 
