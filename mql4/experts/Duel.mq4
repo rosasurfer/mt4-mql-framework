@@ -1337,13 +1337,18 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
  * @return bool - success status
  */
 bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+   double avgPrice=-sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
+
    while (lots < 0) {
       level++;
-      lots = NormalizeDouble(lots + CalculateLots(D_LONG, level), 2);
+      nextPrice = CalculateGridLevel(D_LONG, level);
+      nextLots  = CalculateLots(D_LONG, level);
+      lots      = NormalizeDouble(lots + nextLots, 2);
+      hedgedPL += (avgPrice-nextPrice)/Pip * (nextLots-MathMax(0, lots)) * pipValuePerLot;
    }
 
    hedgedPL    += commission + swap;
-   sumOpenPrice = lots * CalculateGridLevel(D_LONG, level);
+   sumOpenPrice = lots * nextPrice;
    commission   = -RoundCeil(GetCommission(lots), 2);
    swap         = 0;
 
@@ -1355,13 +1360,18 @@ bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commis
  * @return bool - success status
  */
 bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+   double avgPrice=sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
+
    while (lots > 0) {
       level++;
-      lots = NormalizeDouble(lots - CalculateLots(D_SHORT, level), 2);
+      nextPrice = CalculateGridLevel(D_SHORT, level);
+      nextLots  = CalculateLots(D_SHORT, level);
+      lots      = NormalizeDouble(lots - nextLots, 2);
+      hedgedPL += (nextPrice-avgPrice)/Pip * (nextLots+MathMin(0, lots)) * pipValuePerLot;
    }
 
    hedgedPL    += commission + swap;
-   sumOpenPrice = -lots * CalculateGridLevel(D_SHORT, level);
+   sumOpenPrice = -lots * nextPrice;
    commission   = RoundCeil(GetCommission(lots), 2);
    swap         = 0;
 
