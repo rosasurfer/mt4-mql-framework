@@ -84,7 +84,7 @@ bool     sequence.martingaleEnabled;                     // whether the sequence
 double   sequence.startEquity;
 double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
-double   sequence.openLots;                              // total open lots: long.totalLots - short.totalLots
+double   sequence.openLots;                              // total open lots: long.openLots - short.openLots
 double   sequence.hedgedPL;                              // P/L of the hedged open positions
 double   sequence.floatingPL;                            // P/L of the floating open positions
 double   sequence.openPL;                                // P/L of all open positions: hedgedPL + floatingPL
@@ -1186,16 +1186,23 @@ bool ComputeProfit(bool positionChanged) {
 
          // calculate profit from the difference openPrice-closePrice
          pipValue          = PipValue(hedgedLots); if (!pipValue) return(false);
-         pipDistance       = (sumClosePrice-sumOpenPrice)/hedgedLots/Pip + (sumCommission+sumSwap)/pipValue;
+         pipDistance       = (sumClosePrice - sumOpenPrice)/hedgedLots/Pip + (sumCommission + sumSwap)/pipValue;
          sequence.hedgedPL = pipDistance * pipValue;
+
+         if (!sequence.openLots && positionChanged) {
+            sumOpenPrice  = 0;
+            sumCommission = 0;
+            sumSwap       = 0;
+            if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
+         }
       }
 
       // compute PL of a floating long position
       if (sequence.openLots > 0) {
          remainingLong  = sequence.openLots;
          sumOpenPrice   = 0;
-         sumSwap        = 0;
          sumCommission  = 0;
+         sumSwap        = 0;
          floatingProfit = 0;
 
          for (i=0; i < orders; i++) {
@@ -1226,15 +1233,15 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-         if (positionChanged) if (!ComputeProfitTargets1(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
+         if (positionChanged) if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
       }
 
       // compute PL of a floating short position
       if (sequence.openLots < 0) {
          remainingShort = -sequence.openLots;
          sumOpenPrice   = 0;
-         sumSwap        = 0;
          sumCommission  = 0;
+         sumSwap        = 0;
          floatingProfit = 0;
 
          for (i=0; i < orders; i++) {
@@ -1265,7 +1272,7 @@ bool ComputeProfit(bool positionChanged) {
          if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
 
          sequence.floatingPL = floatingProfit + sumCommission + sumSwap;
-         if (positionChanged) if (!ComputeProfitTargets1(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.closedPL, sequence.hedgedPL)) return(false);
+         if (positionChanged) if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
       }
    }
 
@@ -1286,95 +1293,173 @@ bool ComputeProfit(bool positionChanged) {
  *
  * @return bool - success status
  */
-bool ComputeProfitTargets1(double openLots, double sumOpenPrice, double commission, double swap, double closedPL, double hedgedPL) {
-   double bePrice;
+bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
+   double _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL, bePrice;
+   int _level;
 
    if (long.enabled) {
-      if (openLots > 0) {                       // long
-         bePrice = ComputeProfitTargets2(openLots, sumOpenPrice, commission, swap, closedPL, hedgedPL);
-      }
-      else if (openLots < 0) {
-         bePrice = 0;                           // short: interpolate PL to the next long or hedged position and call self
-      }
-      else {
-         bePrice = 0;                           // hedged: interpolate PL to the next long position and call self
-      }
-      sequence.bePrice.long = bePrice;
+      _level        = long.maxLevel;
+      _lots         = lots;
+      _sumOpenPrice = sumOpenPrice;
+      _commission   = commission;
+      _swap         = swap;
+      _hedgedPL     = hedgedPL;
+      _closedPL     = closedPL;
+
+      if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);                              // short: interpolate position to the next long or hedged position
+      if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                                                // hedged: interpolate position to the next long position
+      if (_lots <= 0) return(!catch("ComputeProfitTargets(1)  illegal interpolated long position: lots="+ NumberToStr(_lots, ".1+"), ERR_RUNTIME_ERROR));
+
+      sequence.bePrice.long = ComputeBreakeven(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);       // long
    }
 
    if (short.enabled) {
-      if (openLots < 0) {                       // short
-         bePrice = ComputeProfitTargets2(openLots, sumOpenPrice, commission, swap, closedPL, hedgedPL);
+      _level        = short.maxLevel;
+      _lots         = lots;
+      _sumOpenPrice = sumOpenPrice;
+      _commission   = commission;
+      _swap         = swap;
+      _hedgedPL     = hedgedPL;
+      _closedPL     = closedPL;
+      bePrice       = 0;
+
+      if (_lots > 0) {                          // long: interpolate position to the next short or hedged position
+         Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);
       }
-      else if (openLots > 0) {
-         bePrice = 0;                           // long: interpolate PL to the next short or hedged position and call self
+      if (!_lots) {                             // hedged: interpolate position to the next short position
+         Hedged2Short(_level, _lots, _sumOpenPrice, _commission);
       }
-      else {
-         bePrice = 0;                           // hedged: interpolate PL to the next short position and call self
+      if (_lots < 0) {                          // short
+         bePrice = ComputeBreakeven(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
       }
       sequence.bePrice.short = bePrice;
    }
 
-   if (IsVisualMode()) {                        // store results also in the chart window (for breakeven indicator)
+   if (IsVisualMode()) {                        // for breakeven indicator: also store results in the chart window
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  sequence.bePrice.long);
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", sequence.bePrice.short);
    }
-   return(!catch("ComputeProfitTargets1(1)"));
+   return(!catch("ComputeProfitTargets(2)"));
 }
 
 
 /**
- * Compute the profit targets of the given position.
+ * @return bool - success status
+ */
+bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+   while (lots < 0) {
+      level++;
+      lots = NormalizeDouble(lots + CalculateLots(D_LONG, level), 2);
+   }
+
+   hedgedPL    += commission + swap;
+   sumOpenPrice = lots * CalculateGridLevel(D_LONG, level);
+   commission   = -RoundCeil(GetCommission(lots), 2);
+   swap         = 0;
+
+   return(true);
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+   while (lots > 0) {
+      level++;
+      lots = NormalizeDouble(lots - CalculateLots(D_SHORT, level), 2);
+   }
+
+   hedgedPL    += commission + swap;
+   sumOpenPrice = -lots * CalculateGridLevel(D_SHORT, level);
+   commission   = RoundCeil(GetCommission(lots), 2);
+   swap         = 0;
+
+   return(true);
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Hedged2Long(int &level, double &lots, double &sumOpenPrice, double &commission) {
+   if (lots || sumOpenPrice || commission) return(!catch("Hedged2Long(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumOpenPrice="+ NumberToStr(sumOpenPrice, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
+
+   level++;
+   lots         = CalculateLots(D_LONG, level);
+   sumOpenPrice = lots * CalculateGridLevel(D_LONG, level);
+   commission   = -RoundCeil(GetCommission(lots), 2);
+
+   return(true);
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Hedged2Short(int &level, double &lots, double &sumOpenPrice, double &commission) {
+   if (lots || sumOpenPrice || commission) return(!catch("Hedged2Short(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumOpenPrice="+ NumberToStr(sumOpenPrice, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
+
+   level++;
+   lots         = -CalculateLots(D_SHORT, level);
+   sumOpenPrice = -lots * CalculateGridLevel(D_SHORT, level);
+   commission   = RoundCeil(GetCommission(lots), 2);
+
+   return(true);
+}
+
+
+/**
+ * Compute the breakeven price of the given position considering future grid positions.
  *
  * @return double - breakeven price or NULL in case of errors
  */
-double ComputeProfitTargets2(double openLots, double sumOpenPrice, double commission, double swap, double closedPL, double hedgedPL) {
+double ComputeBreakeven(int level, double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
    int nextLevel;
-   double nextLots, nextLevelPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+   double nextLots, nextPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
    if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(NULL);
 
-   // calculate upper BE
-   if (openLots > 0) {
-      pipValue       = openLots * pipValuePerLot;                    // BE at the current level
-      bePrice        = sumOpenPrice/openLots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
-      nextLevel      = long.maxLevel + 1;
-      nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);        // grid at the next level
+   // calculate BE in long direction
+   if (lots > 0) {
+      pipValue  = lots * pipValuePerLot;                             // BE at the current level
+      bePrice   = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
+      nextLevel = level + 1;
+      nextPrice = CalculateGridLevel(D_LONG, nextLevel);             // grid at the next level
 
-      while (nextLevelPrice < bePrice) {
+      while (nextPrice < bePrice) {
          nextLots      = CalculateLots(D_LONG, nextLevel);
-         openLots     += nextLots;
-         sumOpenPrice += nextLots * nextLevelPrice;
+         lots         += nextLots;
+         sumOpenPrice += nextLots * nextPrice;
          commission   -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue      = openLots * pipValuePerLot;                  // BE at the next level
-         bePrice       = sumOpenPrice/openLots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
+         pipValue      = lots * pipValuePerLot;                      // BE at the next level
+         bePrice       = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
          nextLevel++;
-         nextLevelPrice = CalculateGridLevel(D_LONG, nextLevel);     // grid at the next level
+         nextPrice     = CalculateGridLevel(D_LONG, nextLevel);      // grid at the next level
       }
       return(bePrice);
    }
 
-   // calculate lower BE
-   if (openLots < 0) {
-      pipValue       = -openLots * pipValuePerLot;                   // BE at the current level
-      bePrice        = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/openLots;
-      nextLevel      = short.maxLevel + 1;
-      nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);       // grid at the next level
+   // calculate BE in short direction
+   if (lots < 0) {
+      pipValue  = -lots * pipValuePerLot;                            // BE at the current level
+      bePrice   = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
+      nextLevel = level + 1;
+      nextPrice = CalculateGridLevel(D_SHORT, nextLevel);            // grid at the next level
 
-      while (nextLevelPrice > bePrice) {
+      while (nextPrice > bePrice) {
          nextLots      = CalculateLots(D_SHORT, nextLevel);
-         openLots     -= nextLots;
-         sumOpenPrice += nextLots * nextLevelPrice;
+         lots         -= nextLots;
+         sumOpenPrice += nextLots * nextPrice;
          commission   -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue      = -openLots * pipValuePerLot;                 // BE at the next level
-         bePrice       = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/openLots;
+         pipValue      = -lots * pipValuePerLot;                     // BE at the next level
+         bePrice       = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
          nextLevel++;
-         nextLevelPrice = CalculateGridLevel(D_SHORT, nextLevel);    // grid at the next level
+         nextPrice     = CalculateGridLevel(D_SHORT, nextLevel);     // grid at the next level
       }
       return(bePrice);
    }
 
-   // takeprofit
-   return(!catch("ComputeProfitTargets2(1)", ERR_WRONG_JUMP));
+   return(!catch("ComputeBreakeven(1)  invalid parameter lots: 0", ERR_INVALID_PARAMETER));
 }
 
 
