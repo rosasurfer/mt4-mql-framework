@@ -1294,7 +1294,7 @@ bool ComputeProfit(bool positionChanged) {
  * @return bool - success status
  */
 bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
-   double _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL, bePrice;
+   double _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL;
    int _level;
 
    if (long.enabled) {
@@ -1306,11 +1306,9 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
       _hedgedPL     = hedgedPL;
       _closedPL     = closedPL;
 
-      if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);                              // short: interpolate position to the next long or hedged position
-      if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                                                // hedged: interpolate position to the next long position
-      if (_lots <= 0) return(!catch("ComputeProfitTargets(1)  illegal interpolated long position: lots="+ NumberToStr(_lots, ".1+"), ERR_RUNTIME_ERROR));
-
-      sequence.bePrice.long = ComputeBreakeven(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);       // long
+      if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // short: interpolate position to the next long or hedged position
+      if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next long position
+      sequence.bePrice.long = ComputeBreakeven(D_LONG, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
    }
 
    if (short.enabled) {
@@ -1321,25 +1319,17 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
       _swap         = swap;
       _hedgedPL     = hedgedPL;
       _closedPL     = closedPL;
-      bePrice       = 0;
 
-      if (_lots > 0) {                          // long: interpolate position to the next short or hedged position
-         Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);
-      }
-      if (!_lots) {                             // hedged: interpolate position to the next short position
-         Hedged2Short(_level, _lots, _sumOpenPrice, _commission);
-      }
-      if (_lots < 0) {                          // short
-         bePrice = ComputeBreakeven(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
-      }
-      sequence.bePrice.short = bePrice;
+      if (_lots >  0)  Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // long: interpolate position to the next short or hedged position
+      if (_lots == 0) Hedged2Short(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next short position
+      sequence.bePrice.short = ComputeBreakeven(D_SHORT, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
    }
 
    if (IsVisualMode()) {                        // for breakeven indicator: also store results in the chart window
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  sequence.bePrice.long);
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", sequence.bePrice.short);
    }
-   return(!catch("ComputeProfitTargets(2)"));
+   return(!catch("ComputeProfitTargets(1)"));
 }
 
 
@@ -1414,13 +1404,15 @@ bool Hedged2Short(int &level, double &lots, double &sumOpenPrice, double &commis
  *
  * @return double - breakeven price or NULL in case of errors
  */
-double ComputeBreakeven(int level, double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
+double ComputeBreakeven(int direction, int level, double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
    int nextLevel;
    double nextLots, nextPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
    if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(NULL);
 
-   // calculate BE in long direction
-   if (lots > 0) {
+   // long
+   if (direction == D_LONG) {
+      if (lots <= 0) return(!catch("ComputeBreakeven(1)  not a long position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+
       pipValue  = lots * pipValuePerLot;                             // BE at the current level
       bePrice   = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
       nextLevel = level + 1;
@@ -1439,8 +1431,10 @@ double ComputeBreakeven(int level, double lots, double sumOpenPrice, double comm
       return(bePrice);
    }
 
-   // calculate BE in short direction
-   if (lots < 0) {
+   // short
+   if (direction == D_SHORT) {
+      if (lots >= 0) return(!catch("ComputeBreakeven(2)  not a short position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+
       pipValue  = -lots * pipValuePerLot;                            // BE at the current level
       bePrice   = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
       nextLevel = level + 1;
@@ -1459,7 +1453,7 @@ double ComputeBreakeven(int level, double lots, double sumOpenPrice, double comm
       return(bePrice);
    }
 
-   return(!catch("ComputeBreakeven(1)  invalid parameter lots: 0", ERR_INVALID_PARAMETER));
+   return(!catch("ComputeBreakeven(3)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
