@@ -2418,7 +2418,7 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!IsChart()) return(NO_ERROR);
 
-   int x[]={2, 116}, y=61, fontSize=112, rectangles=ArraySize(x);
+   int x[]={2, 60}, y=61, fontSize=112, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;                                 // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
