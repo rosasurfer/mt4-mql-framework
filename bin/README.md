@@ -1,11 +1,12 @@
 
 ### How to compile MQL programs without using MetaEditor?
-For backward compatibility the framework includes the compiler of MetaTrader 4 build 224. The reliability of .ex4 files generated 
-with that compiler outweights the limitations compared to current compiler versions. The compiler may be replaced by any compiler 
-version of MetaEditor 4 builds &lt;= 509 without changes to the code base.
+For backward compatibility the framework includes the compiler of MetaTrader 4 build 224. The reliability of .ex4 files
+generated with that compiler outweights the limitations compared to current versions.
 
-The compiler can be called manually from the command line or it can be integrated in 3rd party development environments by registering 
-custom CLI tools.
+The compiler can be called directly from the command line or it can be integrated in 3rd party development environments by
+registering custom CLI tools.
+
+For the command line options of the compiler built into MetaEditor builds 600+ see [https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler](https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler).
 
 ```bash
 $ mqlc -?
@@ -21,8 +22,6 @@ Arguments:
 Options:
    -q       Quite mode.
 ```
-
-For the command line options of the compiler built into MetaEditor builds 600+ see [https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler](https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler).
 - - -
 
 ### How to fix the compiler error "cannot open &lt;include-file&gt;"?
