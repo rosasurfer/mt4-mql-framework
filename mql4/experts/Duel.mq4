@@ -12,12 +12,12 @@
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
- * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular Martingale system.
+ * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
- * @todo  add TP and SL conditions in pip
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
  * @todo  in tester generate consecutive sequence ids
+ * @todo  and many more...
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -30,7 +30,7 @@ extern int      GridSize               = 20;
 extern double   UnitSize               = 0.1;                     // lots at the first grid level
 
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
-extern double   Martingale.Multiplier  = 1;                       // unitsize multiplier per grid level on the losing side
+extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
 
 extern string   TakeProfit             = "{amount}[%]";           // TP as absolute or percentage value
 extern string   StopLoss               = "{amount}[%]";           // SL as absolute or percentage value
