@@ -1,8 +1,8 @@
 /**
- * Duel Profit Targets
+ * Duel PL Levels
  *
- * Visualizes breakeven, profit and stoploss targets of an active Duel expert. The indicator gets values from the expert
- * running in the same chart (online and tester).
+ * Visualizes breakeven, profit and stoploss levels of a Duel sequence. The indicator gets its values from the expert running
+ * in the same chart (online and in tester).
  *
  * @see  mql4/experts/Duel.mq4
  */

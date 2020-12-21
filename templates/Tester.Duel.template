@@ -8743,7 +8743,7 @@ value_0=120.00
 <indicator>
 name=Custom Indicator
 <expert>
-name=systems/Duel Profit Targets
+name=systems/Duel PL Levels
 flags=339
 window_num=0
 <inputs>
