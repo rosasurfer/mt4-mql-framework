@@ -1,8 +1,11 @@
 
 ### How to compile MQL programs without using MetaEditor?
-For maximum backward compatibility the framework comes with the compiler distributed with MetaTrader 4 build 225. The reliability of EX4 files generated with an old compiler outweights its minor restrictions compared to current compiler versions. The provided compiler may be replaced by any other compiler version of MetaEditor builds &lt;= 509 without changes to the code base.
+For maximum backward compatibility the framework includes the compiler of MT4 build 224. The reliability of .ex4 files generated 
+with that compiler outweights its minor restrictions compared to current compiler versions. The included compiler may be replaced 
+by any other compiler version of MetaEditor builds &lt;= 509 without changes to the code base.
 
-The compiler can be integrated in any modern development environment by registering custom CLI tools. It may also be called manually using the provided script `bin/mqlc`:
+The compiler may be integrated in another development environment by registering custom CLI tools. It may also be called 
+manually either directly or using the provided script `mqlc`:
 
 ```bash
 $ mqlc -?
@@ -18,7 +21,11 @@ Arguments:
 Options:
    -q       Quite mode.
 ```
+
+For command line options of the compiler contained in MetaEditor build 600+ see [https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler](https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler).
 - - -
 
 ### How to fix the compiler error "cannot open &lt;include-file&gt;"?
-To let the compiler find the framework's include files a symbolic link in `bin/experts` pointing to `mql4/experts/include` must be created. At the moment the script cannot reliably create that symlink in all different Windows versions, therefore the user has to create that symlink manually. A comfortable way to manage Windows symlinks and junctions is the free [Link Shell Extension](http://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html) by Hermann Schinagl.
+To make the compiler find the framework's include files a junction or symlink `experts/include` pointing to 
+`mql4/experts/include` must be created in this directory. A comfortable way to manage symlinks and junctions under Windows 
+is the free [Link Shell Extension](http://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html) by Hermann Schinagl.
