@@ -360,12 +360,14 @@ int deinit() {
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
+   error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+
    if (IsTesting()) {
       if (tester.hEquitySet != 0) {
          int tmp=tester.hEquitySet; tester.hEquitySet=NULL;
-         if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
+         if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF && EA.CreateReport) {
+      if (EA.CreateReport) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
          Test_StopReporting(__ExecutionContext, time, Bars);
       }
@@ -375,12 +377,12 @@ int deinit() {
    if (tickTimerId != NULL) {
       int id = tickTimerId;
       tickTimerId = NULL;
-      if (!RemoveTickTimer(id)) return(catch("deinit(2)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+      if (!RemoveTickTimer(id)) return(catch("deinit(3)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
 
    // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
    //
-   error = onDeinit();                                                     // preprocessing hook
+   if (!error) error = onDeinit();                                         // preprocessing hook
    if (!error) {                                                           //
       switch (UninitializeReason()) {                                      //
          case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
@@ -396,14 +398,14 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();         break;      //
                                                                            //
          default:                                                          //
-            CheckErrors("deinit(3)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(4)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             return(last_error|LeaveContext(__ExecutionContext));           //
       }                                                                    //
    }                                                                       //
    if (!error) error = afterDeinit();                                      // postprocessing hook
    if (!error && !last_error && !IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(4)");
+   CheckErrors("deinit(5)");
    return(last_error|LeaveContext(__ExecutionContext));
 }
 
@@ -462,12 +464,12 @@ bool IsLibrary() {
  * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
  * activated.
  *
- * @param  string location            - location of the check
- * @param  int    setError [optional] - error to enforce (default: none)
+ * @param  string location         - location of the check
+ * @param  int    error [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int setError = NULL) {
+bool CheckErrors(string location, int error = NULL) {
    // check and signal DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error && 1) {
@@ -501,16 +503,16 @@ bool CheckErrors(string location, int setError = NULL) {
    }
 
    // check uncatched errors
-   if (!setError) setError = GetLastError();
-   if (setError != NO_ERROR)
-      catch(location, setError);                                     // catch() calls SetLastError(error) which calls CheckErrors(error)
+   if (!error) error = GetLastError();
+   if (error != NO_ERROR)
+      catch(location, error);                                        // catch() calls SetLastError() which calls CheckErrors()
                                                                      // which updates __STATUS_OFF accordingly
    // update the variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
    if (__STATUS_OFF)
-      ShowStatus(last_error);                                        // always show status if an error occurred
+      ShowStatus(last_error);                                        // show status once again if an error occurred
    return(__STATUS_OFF);
 
    // suppress compiler warnings

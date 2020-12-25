@@ -12,12 +12,12 @@
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
- * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular Martingale system.
+ * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
- * @todo  add TP and SL conditions in pip
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
  * @todo  in tester generate consecutive sequence ids
+ * @todo  and many more...
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -30,10 +30,10 @@ extern int      GridSize               = 20;
 extern double   UnitSize               = 0.1;                     // lots at the first grid level
 
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
-extern double   Martingale.Multiplier  = 1;                       // unitsize multiplier per grid level on the losing side
+extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{numeric}[%]";          // TP as absolute or percentage value
-extern string   StopLoss               = "{numeric}[%]";          // SL as absolute or percentage value
+extern string   TakeProfit             = "{amount}[%]";           // TP as absolute or percentage value
+extern string   StopLoss               = "{amount}[%]";           // SL as absolute or percentage value
 extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed as absolute or percentage value
 
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // server time, the date part is ignored
@@ -84,12 +84,18 @@ bool     sequence.martingaleEnabled;                     // whether the sequence
 double   sequence.startEquity;
 double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
-double   sequence.openLots;                              // total open lots: long.totalLots - short.totalLots
-double   sequence.openPL;                                // accumulated P/L of all open positions
-double   sequence.closedPL;                              // accumulated P/L of all closed positions
-double   sequence.totalPL;                               // current total P/L of the sequence: totalPL = floatingPL + closedPL
+double   sequence.openLots;                              // total open lots: long.openLots - short.openLots
+double   sequence.hedgedPL;                              // P/L of the hedged open positions
+double   sequence.floatingPL;                            // P/L of the floating open positions
+double   sequence.openPL;                                // P/L of all open positions: hedgedPL + floatingPL
+double   sequence.closedPL;                              // P/L of all closed positions
+double   sequence.totalPL;                               // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                           // max. observed total sequence drawdown: -n...0
+double   sequence.bePrice.long;
+double   sequence.bePrice.short;
+double   sequence.tpPrice;
+double   sequence.slPrice;
 
 // order management
 bool     long.enabled;
@@ -160,7 +166,7 @@ string   slPct.description = "";
 datetime sessionbreak.starttime;                         // configurable via inputs and framework config
 datetime sessionbreak.endtime;
 
-// caching vars to speed-up ShowStatus()
+// cache vars to speed-up ShowStatus()
 string   sUnitSize            = "";
 string   sGridBase            = "";
 string   sPyramid             = "";
@@ -173,6 +179,9 @@ string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
+string   sSequenceBePrice     = "";
+string   sSequenceTpPrice     = "";
+string   sSequenceSlPrice     = "";
 
 // debug settings                                        // configurable via framework config, @see Duel::afterInit()
 bool     tester.onStopPause = false;                     // whether to pause the tester after StopSequence()
@@ -187,10 +196,6 @@ bool     tester.onStopPause = false;                     // whether to pause the
  * @return int - error status
  */
 int onTick() {
-   if (IsTesting() && IsVisualMode()) {
-      if (!icChartInfos()) return(last_error);
-   }
-
    if (sequence.status == STATUS_WAITING) {              // start a new sequence
       if (IsStartSignal()) StartSequence();
    }
@@ -708,10 +713,8 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
 
       for (i=0; i < orders; i++) {
          if (types[i] != OP_UNDEFINED) {
-            if (levels[i] != 1) {                                 // sum slippage
-               sumSlippage += lots[i] * ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]);
-            }
-            allLots += lots[i];                                   // sum all lots
+            sumSlippage += lots[i] * ifDouble(direction==D_LONG, pendingPrices[i]-openPrices[i], openPrices[i]-pendingPrices[i]);
+            allLots     += lots[i];                               // sum slippage and all lots
          }
       }
       slippage = sumSlippage/allLots;                             // compute overall slippage
@@ -1062,212 +1065,399 @@ double CalculateLots(int direction, int level) {
 
 
 /**
- * Compute and update the current total PL of the sequence.
+ * Compute and update the PL values of the sequence.
  *
- * @param  bool positionChanged - whether the open position changed since the last call (used to invalidate caches)
+ * @param  bool positionChanged - whether the open position changed since the last call (signals cache invalidation)
  *
  * @return bool - success status
  */
 bool ComputeProfit(bool positionChanged) {
-   if (!long.enabled || !short.enabled) {
-      sequence.openPL = long.openPL + short.openPL;               // one of both is 0 (zero)
+   positionChanged = positionChanged!=0;
+
+   sequence.closedPL   = long.closedPL + short.closedPL;
+   sequence.hedgedPL   = 0;
+   sequence.floatingPL = 0;
+
+   int longOrders=ArraySize(long.ticket), shortOrders=ArraySize(short.ticket), orders=longOrders + shortOrders;
+
+   int    tickets    []; ArrayResize(tickets,     orders);
+   int    types      []; ArrayResize(types,       orders);
+   double lots       []; ArrayResize(lots,        orders);
+   double openPrices []; ArrayResize(openPrices,  orders);
+   double commissions[]; ArrayResize(commissions, orders);
+   double swaps      []; ArrayResize(swaps,       orders);
+   double profits    []; ArrayResize(profits,     orders);
+
+   // copy open positions to temp. arrays (are modified in the process)
+   for (int n, i=0; i < longOrders; i++) {
+      if (long.type[i]!=OP_UNDEFINED && !long.closeTime[i]) {
+         tickets    [n] = long.ticket    [i];
+         types      [n] = long.type      [i];
+         lots       [n] = long.lots      [i];
+         openPrices [n] = long.openPrice [i];
+         commissions[n] = long.commission[i];
+         swaps      [n] = long.swap      [i];
+         profits    [n] = long.profit    [i];
+         n++;
+      }
    }
-   else {
-      int longOrders=ArraySize(long.ticket), shortOrders=ArraySize(short.ticket), orders=longOrders + shortOrders;
-
-      int    tickets    []; ArrayResize(tickets,     orders);
-      int    types      []; ArrayResize(types,       orders);
-      double lots       []; ArrayResize(lots,        orders);
-      double openPrices []; ArrayResize(openPrices,  orders);
-      double commissions[]; ArrayResize(commissions, orders);
-      double swaps      []; ArrayResize(swaps,       orders);
-      double profits    []; ArrayResize(profits,     orders);
-
-      // copy open positions to temp. arrays (are modified in the process)
-      for (int n, i=0; i < longOrders; i++) {
-         if (long.type[i]!=OP_UNDEFINED && !long.closeTime[i]) {
-            tickets    [n] = long.ticket    [i];
-            types      [n] = long.type      [i];
-            lots       [n] = long.lots      [i];
-            openPrices [n] = long.openPrice [i];
-            commissions[n] = long.commission[i];
-            swaps      [n] = long.swap      [i];
-            profits    [n] = long.profit    [i];
-            n++;
-         }
+   for (i=0; i < shortOrders; i++) {
+      if (short.type[i]!=OP_UNDEFINED && !short.closeTime[i]) {
+         tickets    [n] = short.ticket    [i];
+         types      [n] = short.type      [i];
+         lots       [n] = short.lots      [i];
+         openPrices [n] = short.openPrice [i];
+         commissions[n] = short.commission[i];
+         swaps      [n] = short.swap      [i];
+         profits    [n] = short.profit    [i];
+         n++;
       }
-      for (i=0; i < shortOrders; i++) {
-         if (short.type[i]!=OP_UNDEFINED && !short.closeTime[i]) {
-            tickets    [n] = short.ticket    [i];
-            types      [n] = short.type      [i];
-            lots       [n] = short.lots      [i];
-            openPrices [n] = short.openPrice [i];
-            commissions[n] = short.commission[i];
-            swaps      [n] = short.swap      [i];
-            profits    [n] = short.profit    [i];
-            n++;
-         }
-      }
-      if (n < orders) {
-         ArrayResize(tickets,     n);
-         ArrayResize(types,       n);
-         ArrayResize(lots,        n);
-         ArrayResize(openPrices,  n);
-         ArrayResize(commissions, n);
-         ArrayResize(swaps,       n);
-         ArrayResize(profits,     n);
-         orders = n;
-      }
+   }
+   if (n < orders) {
+      ArrayResize(tickets,     n);
+      ArrayResize(types,       n);
+      ArrayResize(lots,        n);
+      ArrayResize(openPrices,  n);
+      ArrayResize(commissions, n);
+      ArrayResize(swaps,       n);
+      ArrayResize(profits,     n);
+      orders = n;
+   }
 
-      // compute openPL = hedgedPL + floatingPL
-      double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit;
-      sequence.openPL = 0;
+   // compute openPL = hedgedPL + floatingPL
+   double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingPL, pipValue, pipDistance;
 
-      // compute PL of a hedged part
-      if (long.openLots && short.openLots) {
-         hedgedLots     = MathMin(long.openLots, short.openLots);
-         remainingLong  = hedgedLots;
-         remainingShort = hedgedLots;
+   // compute PL of a hedged part
+   if (long.openLots && short.openLots) {
+      hedgedLots     = MathMin(long.openLots, short.openLots);
+      remainingLong  = hedgedLots;
+      remainingShort = hedgedLots;
 
-         for (i=0; i < orders; i++) {
-            if (!tickets[i]) continue;
+      for (i=0; i < orders; i++) {
+         if (!tickets[i]) continue;
 
-            if (types[i] == OP_BUY) {
-               if (!remainingLong) continue;
-               if (remainingLong >= lots[i]) {
-                  // apply all data except profit; after nullify the ticket
-                  openPrice     = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-                  swap         += swaps      [i];
-                  commission   += commissions[i];
-                  remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
-                  tickets[i]    = NULL;
-               }
-               else {
-                  // apply all swap and partial commission; after reduce the ticket's commission, profit and lotsize
-                  factor        = remainingLong/lots[i];
-                  openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
-                  swap         += swaps[i];                swaps      [i]  = 0;
-                  commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-                                                           profits    [i] -= factor * profits    [i];
-                                                           lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
-                  remainingLong = 0;
-               }
+         if (types[i] == OP_BUY) {
+            if (!remainingLong) continue;
+            if (remainingLong >= lots[i]) {
+               // apply all data except profit; afterwards nullify the ticket
+               sumOpenPrice  += lots[i] * openPrices[i];
+               sumSwap       += swaps[i];
+               sumCommission += commissions[i];
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
+               tickets[i]    = NULL;
             }
-            else /*types[i] == OP_SELL*/ {
-               if (!remainingShort) continue;
-               if (remainingShort >= lots[i]) {
-                  // apply all swap; after nullify the ticket
-                  closePrice     = NormalizeDouble(closePrice + lots[i] * openPrices[i], 8);
-                  swap          += swaps      [i];
-                  //commission  += commissions[i];                                        // commission is applied only at the long leg
-                  remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
-                  tickets[i]     = NULL;
-               }
-               else {
-                  // apply all swap; after reduce the ticket's commission, profit and lotsize
-                  factor         = remainingShort/lots[i];
-                  closePrice     = NormalizeDouble(closePrice + remainingShort * openPrices[i], 8);
-                  swap          += swaps[i]; swaps      [i]  = 0;
-                                             commissions[i] -= factor * commissions[i];   // commission is applied only at the long leg
-                                             profits    [i] -= factor * profits    [i];
-                                             lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
-                  remainingShort = 0;
-               }
+            else {
+               // apply all swap and partial commission; afterwards reduce the ticket's commission, profit and lotsize
+               factor         = remainingLong/lots[i];
+               sumOpenPrice  += remainingLong * openPrices[i];
+               sumSwap       += swaps[i];                swaps      [i]  = 0;
+               sumCommission += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+                                                         profits    [i] -= factor * profits    [i];
+                                                         lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+               remainingLong = 0;
             }
          }
-         if (remainingLong!=0 || remainingShort!=0) return(!catch("ComputeProfit(1)  illegal remaining "+ ifString(!remainingShort, "long", "short") +" position "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
-
-         // calculate profit from the difference openPrice-closePrice
-         double pipValue    = PipValue(hedgedLots, true);
-         double pipDistance = (closePrice-openPrice)/hedgedLots/Pips + (commission+swap)/pipValue;
-         sequence.openPL   += pipDistance * pipValue;
-      }
-
-      // compute PL of a floating long position
-      if (sequence.openLots > 0) {
-         remainingLong  = sequence.openLots;
-         openPrice      = 0;
-         swap           = 0;
-         commission     = 0;
-         floatingProfit = 0;
-
-         for (i=0; i < orders; i++) {
-            if (!tickets[i]   ) continue;
-            if (!remainingLong) break;
-
-            if (types[i] == OP_BUY) {
-               if (remainingLong >= lots[i]) {
-                  // apply all data
-                  openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-                  swap           += swaps      [i];
-                  commission     += commissions[i];
-                  floatingProfit += profits    [i];
-                  remainingLong   = NormalizeDouble(remainingLong - lots[i], 3);
-               }
-               else {
-                  // apply all swap, partial commission, partial profit; after reduce the ticket's commission, profit and lotsize
-                  factor          = remainingLong/lots[i];
-                  openPrice       = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
-                  swap           +=          swaps      [i]; swaps      [i]  = 0;
-                  commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-                  floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                             lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
-                  remainingLong = 0;
-               }
+         else /*types[i] == OP_SELL*/ {
+            if (!remainingShort) continue;
+            if (remainingShort >= lots[i]) {
+               // apply all swap; afterwards nullify the ticket
+               sumClosePrice += lots[i] * openPrices[i];
+               sumSwap       += swaps[i];                                              // commission is applied only at the long leg
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
+               tickets[i]     = NULL;
+            }
+            else {
+               // apply all swap; afterwards reduce the ticket's commission, profit and lotsize
+               factor         = remainingShort/lots[i];
+               sumClosePrice += remainingShort * openPrices[i];
+               sumSwap       += swaps[i]; swaps      [i]  = 0;
+                                          commissions[i] -= factor * commissions[i];   // commission is applied only at the long leg
+                                          profits    [i] -= factor * profits    [i];
+                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               remainingShort = 0;
             }
          }
-         if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
-
-         sequence.openPL += floatingProfit + commission + swap;
       }
+      if (remainingLong!=0 || remainingShort!=0) return(!catch("ComputeProfit(1)  illegal remaining "+ ifString(!remainingShort, "long", "short") +" position "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
 
-      // compute PL of a floating short position
-      if (sequence.openLots < 0) {
-         remainingShort = -sequence.openLots;
-         openPrice      = 0;
-         swap           = 0;
-         commission     = 0;
-         floatingProfit = 0;
+      // calculate profit from the difference openPrice-closePrice
+      pipValue          = PipValue(hedgedLots); if (!pipValue) return(false);
+      pipDistance       = (sumClosePrice - sumOpenPrice)/hedgedLots/Pip + (sumCommission + sumSwap)/pipValue;
+      sequence.hedgedPL = pipDistance * pipValue;
+      sumOpenPrice      = 0;
+      sumCommission     = 0;
+      sumSwap           = 0;
+   }
 
-         for (i=0; i < orders; i++) {
-            if (!tickets[i]    ) continue;
-            if (!remainingShort) break;
+   // compute PL of a floating long position
+   if (sequence.openLots > 0) {
+      remainingLong = sequence.openLots;
+      sumOpenPrice  = 0;
+      sumCommission = 0;
+      sumSwap       = 0;
+      floatingPL    = 0;
 
-            if (types[i] == OP_SELL) {
-               if (remainingShort >= lots[i]) {
-                  // apply all data
-                  openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-                  swap           += swaps      [i];
-                  commission     += commissions[i];
-                  floatingProfit += profits    [i];
-                  remainingShort  = NormalizeDouble(remainingShort - lots[i], 3);
-               }
-               else {
-                  // apply all swap, partial commission, partial profit; after reduce the ticket's commission, profit and lotsize
-                  factor          = remainingShort/lots[i];
-                  openPrice       = NormalizeDouble(openPrice + remainingShort * openPrices[i], 8);
-                  swap           +=          swaps      [i]; swaps      [i]  = 0;
-                  commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-                  floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                             lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
-                  remainingShort = 0;
-               }
+      for (i=0; i < orders; i++) {
+         if (!tickets[i]   ) continue;
+         if (!remainingLong) break;
+
+         if (types[i] == OP_BUY) {
+            if (remainingLong >= lots[i]) {
+               // apply all data
+               sumOpenPrice  += lots[i] * openPrices[i];
+               sumSwap       += swaps[i];
+               sumCommission += commissions[i];
+               floatingPL    += profits[i];
+               remainingLong  = NormalizeDouble(remainingLong - lots[i], 3);
+            }
+            else {
+               // apply all swap, partial commission, partial profit; afterwards reduce the ticket's commission, profit and lotsize
+               factor         = remainingLong/lots[i];
+               sumOpenPrice  += remainingLong * openPrices[i];
+               sumSwap       +=          swaps      [i]; swaps      [i]  = 0;
+               sumCommission += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               floatingPL    += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                         lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+               remainingLong = 0;
             }
          }
-         if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
-
-         sequence.openPL += floatingProfit + commission + swap;
       }
+      if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
+
+      sequence.floatingPL = floatingPL + sumCommission + sumSwap;
+   }
+
+   // compute PL of a floating short position
+   if (sequence.openLots < 0) {
+      remainingShort = -sequence.openLots;
+      sumOpenPrice   = 0;
+      sumCommission  = 0;
+      sumSwap        = 0;
+      floatingPL     = 0;
+
+      for (i=0; i < orders; i++) {
+         if (!tickets[i]    ) continue;
+         if (!remainingShort) break;
+
+         if (types[i] == OP_SELL) {
+            if (remainingShort >= lots[i]) {
+               // apply all data
+               sumOpenPrice  += lots[i] * openPrices[i];
+               sumSwap       += swaps[i];
+               sumCommission += commissions[i];
+               floatingPL    += profits[i];
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
+            }
+            else {
+               // apply all swap, partial commission, partial profit; afterwards reduce the ticket's commission, profit and lotsize
+               factor         = remainingShort/lots[i];
+               sumOpenPrice  += remainingShort * openPrices[i];
+               sumSwap       +=          swaps[i];       swaps      [i]  = 0;
+               sumCommission += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               floatingPL    += factor * profits[i];     profits    [i] -= factor * profits    [i];
+                                                         lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               remainingShort = 0;
+            }
+         }
+      }
+      if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
+
+      sequence.floatingPL = floatingPL + sumCommission + sumSwap;
+   }
+
+   // calculate stop and profit targets
+   if (positionChanged) {
+      if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
    }
 
    // summarize and process results
-   sequence.openPL   = NormalizeDouble(sequence.openPL, 2);
-   sequence.closedPL = NormalizeDouble(long.closedPL + short.closedPL, 2);
+   sequence.openPL   = NormalizeDouble(sequence.hedgedPL + sequence.floatingPL, 2);
+   sequence.closedPL = NormalizeDouble(sequence.closedPL, 2);
    sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
    else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
+   SS.ProfitTargets();
 
    return(!catch("ComputeProfit(4)"));
+}
+
+
+/**
+ * Compute and update the profit targets of the sequence.
+ *
+ * @return bool - success status
+ */
+bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
+   double _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL;
+   int _level;
+
+   if (long.enabled) {
+      _level        = long.maxLevel;
+      _lots         = lots;
+      _sumOpenPrice = sumOpenPrice;
+      _commission   = commission;
+      _swap         = swap;
+      _hedgedPL     = hedgedPL;
+      _closedPL     = closedPL;
+
+      if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // short: interpolate position to the next long or hedged position
+      if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next long position
+      sequence.bePrice.long = ComputeBreakeven(D_LONG, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
+   }
+
+   if (short.enabled) {
+      _level        = short.maxLevel;
+      _lots         = lots;
+      _sumOpenPrice = sumOpenPrice;
+      _commission   = commission;
+      _swap         = swap;
+      _hedgedPL     = hedgedPL;
+      _closedPL     = closedPL;
+
+      if (_lots >  0)  Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // long: interpolate position to the next short or hedged position
+      if (_lots == 0) Hedged2Short(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next short position
+      sequence.bePrice.short = ComputeBreakeven(D_SHORT, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
+   }
+
+   if (IsVisualMode()) {                                                                           // for breakeven indicator: store results also in the chart window
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  sequence.bePrice.long);
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", sequence.bePrice.short);
+   }
+   return(!catch("ComputeProfitTargets(1)"));
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+   double avgPrice=-sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
+
+   while (lots < 0) {
+      level++;
+      nextPrice = CalculateGridLevel(D_LONG, level);
+      nextLots  = CalculateLots(D_LONG, level);
+      lots      = NormalizeDouble(lots + nextLots, 2);
+      hedgedPL += (avgPrice-nextPrice)/Pip * (nextLots-MathMax(0, lots)) * pipValuePerLot;
+   }
+
+   hedgedPL    += commission + swap;
+   sumOpenPrice = lots * nextPrice;
+   commission   = -RoundCeil(GetCommission(lots), 2);
+   swap         = 0;
+
+   return(true);
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+   double avgPrice=sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
+
+   while (lots > 0) {
+      level++;
+      nextPrice = CalculateGridLevel(D_SHORT, level);
+      nextLots  = CalculateLots(D_SHORT, level);
+      lots      = NormalizeDouble(lots - nextLots, 2);
+      hedgedPL += (nextPrice-avgPrice)/Pip * (nextLots+MathMin(0, lots)) * pipValuePerLot;
+   }
+
+   hedgedPL    += commission + swap;
+   sumOpenPrice = -lots * nextPrice;
+   commission   = RoundCeil(GetCommission(lots), 2);
+   swap         = 0;
+
+   return(true);
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Hedged2Long(int &level, double &lots, double &sumOpenPrice, double &commission) {
+   if (lots || sumOpenPrice || commission) return(!catch("Hedged2Long(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumOpenPrice="+ NumberToStr(sumOpenPrice, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
+
+   level++;
+   lots         = CalculateLots(D_LONG, level);
+   sumOpenPrice = lots * CalculateGridLevel(D_LONG, level);
+   commission   = -RoundCeil(GetCommission(lots), 2);
+
+   return(true);
+}
+
+
+/**
+ * @return bool - success status
+ */
+bool Hedged2Short(int &level, double &lots, double &sumOpenPrice, double &commission) {
+   if (lots || sumOpenPrice || commission) return(!catch("Hedged2Short(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumOpenPrice="+ NumberToStr(sumOpenPrice, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
+
+   level++;
+   lots         = -CalculateLots(D_SHORT, level);
+   sumOpenPrice = -lots * CalculateGridLevel(D_SHORT, level);
+   commission   = RoundCeil(GetCommission(lots), 2);
+
+   return(true);
+}
+
+
+/**
+ * Compute the breakeven price of the given position considering future grid positions.
+ *
+ * @return double - breakeven price or NULL in case of errors
+ */
+double ComputeBreakeven(int direction, int level, double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
+   int nextLevel;
+   double nextLots, nextPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+   if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(NULL);
+
+   // long
+   if (direction == D_LONG) {
+      if (lots <= 0) return(!catch("ComputeBreakeven(1)  not a long position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+
+      pipValue  = lots * pipValuePerLot;                             // BE at the current level
+      bePrice   = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
+      nextLevel = level + 1;
+      nextPrice = CalculateGridLevel(D_LONG, nextLevel);             // grid at the next level
+
+      while (nextPrice < bePrice) {
+         nextLots      = CalculateLots(D_LONG, nextLevel);
+         lots         += nextLots;
+         sumOpenPrice += nextLots * nextPrice;
+         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue      = lots * pipValuePerLot;                      // BE at the next level
+         bePrice       = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
+         nextLevel++;
+         nextPrice     = CalculateGridLevel(D_LONG, nextLevel);      // grid at the next level
+      }
+      return(bePrice);
+   }
+
+   // short
+   if (direction == D_SHORT) {
+      if (lots >= 0) return(!catch("ComputeBreakeven(2)  not a short position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+
+      pipValue  = -lots * pipValuePerLot;                            // BE at the current level
+      bePrice   = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
+      nextLevel = level + 1;
+      nextPrice = CalculateGridLevel(D_SHORT, nextLevel);            // grid at the next level
+
+      while (nextPrice > bePrice) {
+         nextLots      = CalculateLots(D_SHORT, nextLevel);
+         lots         -= nextLots;
+         sumOpenPrice += nextLots * nextPrice;
+         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue      = -lots * pipValuePerLot;                     // BE at the next level
+         bePrice       = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
+         nextLevel++;
+         nextPrice     = CalculateGridLevel(D_SHORT, nextLevel);     // grid at the next level
+      }
+      return(bePrice);
+   }
+
+   return(!catch("ComputeBreakeven(3)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
@@ -1316,12 +1506,12 @@ int Grid.AddPosition(int direction, int level) {
    if (!ticket) return(EMPTY);
 
    // prepare dataset
-   //int    ticket       = ...                                    // use as is
-   //int    level        = ...                                    // ...
+   //int    ticket       = ...                                                   // use as is
+   //int    level        = ...                                                   // ...
    double   lots         = oe.Lots(oe);
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
-   double   pendingPrice = CalculateGridLevel(direction, level);  // for tracking of slippage
+   double   pendingPrice = ifDouble(direction==D_LONG, oe.Ask(oe), oe.Bid(oe));  // for tracking of slippage
    int      openType     = oe.Type(oe);
    datetime openTime     = oe.OpenTime(oe);
    double   openPrice    = oe.OpenPrice(oe);
@@ -1637,7 +1827,7 @@ bool ValidateInputs(bool interactive) {
    // TakeProfit
    bool unsetTpPct = false, unsetTpAbs = false;
    sValue = StrTrim(TakeProfit);
-   if (StringLen(sValue) && sValue!="{numeric}[%]") {
+   if (StringLen(sValue) && sValue!="{amount}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
       if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
@@ -1672,7 +1862,7 @@ bool ValidateInputs(bool interactive) {
    // StopLoss
    bool unsetSlPct = false, unsetSlAbs = false;
    sValue = StrTrim(StopLoss);
-   if (StringLen(sValue) && sValue!="{numeric}[%]") {
+   if (StringLen(sValue) && sValue!="{amount}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
       if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
@@ -2029,6 +2219,10 @@ int ShowStatus(int error = NO_ERROR) {
                                   "Short:            ",             sOpenShortLots,                                     NL,
                                   "Total:            ",             sOpenTotalLots,                                     NL,
                                                                                                                         NL,
+                                  "BE:                 ",           sSequenceBePrice,                                   NL,
+                                  "TP:                 ",           sSequenceTpPrice,                                   NL,
+                                  "SL:                 ",           sSequenceSlPrice,                                   NL,
+                                                                                                                        NL,
                                   "Profit/Loss:   ",                sSequenceTotalPL, sSequencePlStats,                 NL
    );
 
@@ -2052,10 +2246,11 @@ void SS.All() {
       SS.UnitSize();
       SS.StopConditions();
       SS.OpenLots();
+      SS.ProfitTargets();
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.pyramidEnabled,    ", Pyramid: "+    NumberToStr(Pyramid.Multiplier, ".1+"),    "");
+      sPyramid    = ifString(sequence.pyramidEnabled,    ", Pyramid: "+    NumberToStr(Pyramid.Multiplier, ".1+"), "");
       sMartingale = ifString(sequence.martingaleEnabled, ", Martingale: "+ NumberToStr(Martingale.Multiplier, ".1+"), "");
    }
 }
@@ -2158,7 +2353,28 @@ void SS.OpenLots() {
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
       else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
-      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot";   // +" lot @ "+ NumberToStr(sequence.avgPrice, PriceFormat);
+      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot";
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of "sequence.bePrice", "sequence.tpPrice" and "sequence.slPrice".
+ */
+void SS.ProfitTargets() {
+   if (IsChart()) {
+      sSequenceBePrice = "";
+      if (long.enabled)                  sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(sequence.bePrice.long, Digits), PriceFormat);
+      if (long.enabled && short.enabled) sSequenceBePrice = sSequenceBePrice +" / ";
+      if (short.enabled)                 sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(sequence.bePrice.short, Digits), PriceFormat);
+
+      if      (!sequence.tpPrice)     sSequenceTpPrice = "";
+      else if (sequence.openLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
+      else                            sSequenceTpPrice = NumberToStr(RoundFloor(sequence.tpPrice, Digits), PriceFormat);
+
+      if      (!sequence.slPrice)     sSequenceSlPrice = "";
+      else if (sequence.openLots > 0) sSequenceSlPrice = NumberToStr(RoundFloor(sequence.slPrice, Digits), PriceFormat);
+      else                            sSequenceSlPrice = NumberToStr(RoundCeil(sequence.slPrice, Digits), PriceFormat);
    }
 }
 
@@ -2196,8 +2412,8 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!IsChart()) return(NO_ERROR);
 
-   int x[]={2, 101, 165}, y=62, fontSize=83, rectangles=ArraySize(x);   // 75
-   color  bgColor = LemonChiffon;                                       // Cyan LemonChiffon bgColor=C'248,248,248'
+   int x[]={2, 60}, y=61, fontSize=112, rectangles=ArraySize(x);
+   color  bgColor = LemonChiffon;                                 // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
    for (int i=0; i < rectangles; i++) {
@@ -2206,9 +2422,9 @@ int CreateStatusBox() {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
          RegisterObject(label);
       }
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);
-      ObjectSet    (label, OBJPROP_YDISTANCE, y   );
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet(label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
    return(catch("CreateStatusBox(1)"));
