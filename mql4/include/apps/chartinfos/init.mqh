@@ -53,6 +53,9 @@ int onInit() {
       if (!OrderTracker.Configure()) return(last_error);
    }
 
+   if (IsTesting()) {
+      positions.absoluteProfits = true;
+   }
    return(catch("onInit(6)"));
 }
 
@@ -142,7 +145,7 @@ int afterInit() {
       tickTimerId = timerId;
 
       // Status des Offline-Tickers im Chart anzeigen
-      string label = __NAME() +".TickerStatus";
+      string label = ProgramName() +".TickerStatus";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

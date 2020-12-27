@@ -8,8 +8,8 @@
  * @see  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -18,7 +18,7 @@ extern color  Color.DownTrend = Red;
 
 extern string MTF.Timeframe   = "current* | M15 | M30 | H1 | ...";   // empty: current
 extern string StartDate       = "yyyy.mm.dd";                        // start date of calculated values
-extern int    Max.Bars        = 10000;                               // max. number of bars to display (-1: all available)
+extern int    Max.Bars        = 10000;                               // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -89,8 +89,8 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
-   SetIndexBuffer(MODE_BUFFER1, buffer1);             // buffer 1: visible
-   SetIndexBuffer(MODE_BUFFER2, buffer2);             // buffer 2: visible
+   SetIndexBuffer(MODE_BUFFER1, buffer1);
+   SetIndexBuffer(MODE_BUFFER2, buffer2);
 
    // chart legend
    if (!IsSuperContext()) {
@@ -99,8 +99,8 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = __NAME();
-   IndicatorShortName(indicatorName);                 // chart context menu
+   indicatorName = ProgramName();
+   IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_BUFFER1, indicatorName +" 1");  // chart tooltips and "Data" window
    SetIndexLabel(MODE_BUFFER2, indicatorName +" 2");
    IndicatorDigits(Digits);
@@ -126,8 +126,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(buffer1)) return(log("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(buffer1)) return(logInfo("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -381,7 +381,7 @@ double iMTF(int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iMTF(1)", error));
-      warn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts

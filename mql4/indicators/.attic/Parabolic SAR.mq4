@@ -4,8 +4,8 @@
 //|                                       http://www.metaquotes.net/ |
 //+------------------------------------------------------------------+
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 

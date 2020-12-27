@@ -5,8 +5,8 @@
  * indicator supports the timeframes H2, H3, H6 and H8.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_TIMEZONE};
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -120,7 +120,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = __NAME() +": "+ Timeframes + signalInfo;
+   string text = ProgramName() +": "+ Timeframes + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(4)"));
@@ -790,7 +790,7 @@ bool onInsideBar(int timeframe) {
    string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
-   if (__LOG()) log("onInsideBar(1)  "+ message);
+   if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
    message = Symbol() +": "+ message;
 
    int error = 0;
@@ -877,7 +877,7 @@ bool GetRates() {
  * @return string - the label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = __NAME() +" status ["+ __ExecutionContext[EC.pid] +"]";
+   string label = ProgramName() +" status ["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);

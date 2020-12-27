@@ -27,7 +27,7 @@ barup_color=30720
 bardown_color=210
 bullcandle_color=30720
 bearcandle_color=210
-chartline_color=4294967295
+chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
 askline_color=9639167
@@ -8738,6 +8738,20 @@ weight=1
 background=1
 value_0=120.00
 </object>
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=systems/Duel PL Levels
+flags=339
+window_num=0
+<inputs>
+Color.Breakeven=3329330
+Draw.Type=Line
+Draw.Width=2
+</inputs>
+</expert>
 </indicator>
 
 </window>

@@ -19,17 +19,17 @@
    string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
-   string   InputParamsDiff(string initial, string current);
    bool     IsUIThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    bool     LoadMqlProgramW(int hChart, int programType, string programName);
    int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);
    //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
+   //int    LeaveContext(int ec[]);
    bool     TerminalIsPortableMode();
    int      WM_MT4();
 
@@ -68,8 +68,8 @@
    // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
-   string   GmtTimeFormat(datetime timestamp, string format);
-   string   LocalTimeFormat(datetime timestamp, string format);
+   string   GmtTimeFormatA(datetime timestamp, string format);
+   string   LocalTimeFormatA(datetime timestamp, string format);
 
    // file functions
    int      CreateDirectoryA(string path, int flags);
@@ -81,16 +81,13 @@
    bool     IsJunctionA(string name);
    bool     IsSymlinkA(string name);
 
-   // logging
-   bool     LogMessageA(int ec[], string message, int error);
-
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );       // Warning: GetStringAddress() must be used with string array elements only.
-   int      GetStringsAddress(string values[]);       //          Simple strings are passed to DLLs as copies. The resulting address
-   string   GetStringA(int address);                  //          is a dangling pointer and accessing it may cause a terminal crash.
+   int      GetStringAddress (string value   );          // Warning: GetStringAddress() must be used with string array elements only.
+   int      GetStringsAddress(string values[]);          //          Simple strings are passed to DLLs as copies. The resulting address
+   string   GetStringA(int address);                     //          is a dangling pointer and accessing it may cause a terminal crash.
    //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
@@ -116,26 +113,26 @@
    string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
    string   InitFlagsToStr(int flags);
-   string   InitializeReasonToStr(int reason);        // alias of InitReasonToStr()
+   string   InitializeReasonToStr(int reason);           // alias of InitReasonToStr()
    string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
+   string   LoglevelToStr(int level);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
    string   NumberFormat(double value, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
-   string   OrderTypeDescription(int type);           // alias
-   string   OrderTypeToStr(int type);                 // alias
-   string   PeriodDescription(int period);
+   string   OrderTypeDescription(int type);              // alias
+   string   OrderTypeToStr(int type);                    // alias
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
    string   ShowWindowCmdToStr(int cmdShow);
-   string   TimeframeDescription(int timeframe);      // alias of PeriodDescription()
-   string   TimeframeToStr(int timeframe);            // alias of PeriodToStr()
+   string   TimeframeDescription(int timeframe);         // alias of PeriodDescription()
+   string   TimeframeToStr(int timeframe);               // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
-   string   UninitializeReasonToStr(int reason);      // alias of UninitReasonToStr()
+   string   UninitializeReasonToStr(int reason);         // alias of UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
    // window property management

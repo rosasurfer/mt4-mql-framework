@@ -17,8 +17,8 @@
  * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -37,8 +37,6 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -92,9 +90,9 @@ double totalPosition;
 double longPosition;
 double shortPosition;
 int    positions.iData[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
-double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
+double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool   positions.analyzed;
-bool   positions.absoluteProfits;                                 // default: FALSE
+bool   positions.absoluteProfits;                                 // default: online=FALSE, tester=TRUE
 
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
@@ -148,7 +146,6 @@ int      lfxOrders.pendingPositions;                              // Anzahl der 
 
 // Textlabel für die einzelnen Anzeigen
 string label.instrument     = "${__NAME__}.Instrument";
-string label.ohlc           = "${__NAME__}.OHLC";
 string label.price          = "${__NAME__}.Price";
 string label.spread         = "${__NAME__}.Spread";
 string label.externalAssets = "${__NAME__}.ExternalAssets";
@@ -162,7 +159,6 @@ string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 // Font-Settings der CustomPositions-Anzeige
 string positions.fontName          = "MS Sans Serif";
 int    positions.fontSize          = 8;
-
 color  positions.fontColor.intern  = Blue;
 color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
@@ -224,20 +220,19 @@ int onTick() {
 
    HandleCommands();                                                                               // ChartCommands verarbeiten
 
-   if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
-   if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
+   if (!UpdatePrice())                     if (CheckLastError("onTick(1)")) return(last_error);    // aktualisiert die Kursanzeige oben rechts
 
    if (mode.extern) {
-      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
+      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(2)")) return(last_error);    // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdatePositions())              if (CheckLastError("onTick(3)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdateSpread())                 if (CheckLastError("onTick(6)"))  return(last_error);
-      if (!UpdatePositionSize())           if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(4)")) return(last_error);    // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdateSpread())                 if (CheckLastError("onTick(5)")) return(last_error);
+      if (!UpdatePositionSize())           if (CheckLastError("onTick(6)")) return(last_error);    // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              if (CheckLastError("onTick(7)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(8)")) return(last_error);    // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           if (CheckLastError("onTick(9)")) return(last_error);    // aktualisiert die Anzeige der Anzahl der offenen Orders
 
       // ggf. Orders überwachen
       if (mode.intern && track.orders) {
@@ -288,7 +283,7 @@ bool CheckLastError(string location) {
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onCommand(1)  empty parameter commands = {}"));
+   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
 
    for (int i=0; i < size; i++) {
       if (commands[i] == "cmd=EditAccountConfig") {
@@ -329,7 +324,7 @@ bool onCommand(string commands[]) {
          ArrayResize(positions.config.comments, 0);
          continue;
       }
-      warn("onCommand(2)  unknown command \""+ commands[i] +"\"");
+      logWarn("onCommand(2)  unknown command: \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
 }
@@ -554,7 +549,7 @@ int ShowOpenOrders() {
  */
 bool GetOpenOrderDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".OpenOrderDisplay.status";
+   string label = ProgramName() +".OpenOrderDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -572,7 +567,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".OpenOrderDisplay.status";
+   string label = ProgramName() +".OpenOrderDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -642,7 +637,7 @@ bool ToggleTradeHistory() {
  */
 bool GetTradeHistoryDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".TradeHistoryDisplay.status";
+   string label = ProgramName() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -660,7 +655,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".TradeHistoryDisplay.status";
+   string label = ProgramName() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -683,7 +678,7 @@ int ShowTradeHistory() {
    string   sOpenPrice, sClosePrice, comment, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
    // Anzeigekonfiguration auslesen
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.alias);
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
    bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
@@ -947,7 +942,7 @@ bool ToggleAuM() {
  */
 bool GetAuMDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".AuMDisplay.status";
+   string label = ProgramName() +".AuMDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -965,7 +960,7 @@ bool SetAuMDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME() +".AuMDisplay.status";
+   string label = ProgramName() +".AuMDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -983,9 +978,8 @@ bool SetAuMDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   string programName = __NAME();
+   string programName = ProgramName();
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
-   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
    label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
    label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", programName);
@@ -1012,18 +1006,6 @@ bool CreateLabels() {
       else if (StrEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
-
-   // OHLC-Label
-   if (ObjectFind(label.ohlc) == 0)
-      ObjectDelete(label.ohlc);
-   if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 110);
-      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
-      ObjectSetText(label.ohlc, " ", 1);
-      RegisterObject(label.ohlc);
-   }
-   else GetLastError();
 
    // Price-Label
    if (ObjectFind(label.price) == 0)
@@ -1222,7 +1204,7 @@ bool UpdatePositions() {
 
 
    // (2) PendingTickets-Marker unten rechts ein-/ausblenden
-   string label = __NAME() +".PendingTickets";
+   string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (isPendings) {
@@ -1242,28 +1224,28 @@ bool UpdatePositions() {
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
       if (positions.absoluteProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    275,   362,      423};
+         // col.xShifts[] = {20,   66,    149, 174,      240,    279,   366,      427};
          ArrayResize(col.xShifts, 8);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
          col.xShifts[3] = 174;
          col.xShifts[4] = 240;
-         col.xShifts[5] = 275;
-         col.xShifts[6] = 362;
-         col.xShifts[7] = 423;
+         col.xShifts[5] = 279;
+         col.xShifts[6] = 366;
+         col.xShifts[7] = 427;
       }
       else {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    275,      336};
+         // col.xShifts[] = {20,   66,    149, 174,      240,    279,      340};
          ArrayResize(col.xShifts, 7);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
          col.xShifts[3] = 174;
          col.xShifts[4] = 240;
-         col.xShifts[5] = 275;
-         col.xShifts[6] = 336;
+         col.xShifts[5] = 279;
+         col.xShifts[6] = 340;
       }
       cols                = ArraySize(col.xShifts);
       percentCol          = cols - 2;
@@ -1525,62 +1507,6 @@ bool UpdateStopoutLevel() {
 
 
 /**
- * Aktualisiert die OHLC-Anzeige.
- *
- * @return bool - Erfolgsstatus
- */
-bool UpdateOHLC() {
-   // TODO: noch nicht zufriedenstellend implementiert
-   return(true);
-
-
-   // (1) Zeit des letzten Ticks holen
-   datetime lastTickTime = MarketInfo(Symbol(), MODE_TIME);
-   if (!lastTickTime) {                                                          // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      if (!SetLastError(GetLastError()))
-         SetLastError(ERR_SYMBOL_NOT_AVAILABLE);
-      return(false);
-   }
-
-
-   // (2) Beginn und Ende der aktuellen Session ermitteln
-   datetime sessionStart = GetSessionStartTime.srv(lastTickTime);                // throws ERR_MARKET_CLOSED
-   if (sessionStart == NaT) {
-      if (__ExecutionContext[EC.mqlError] != ERR_MARKET_CLOSED)                  // am Wochenende die letzte Session verwenden
-         return(false);
-      sessionStart = GetPrevSessionStartTime.srv(lastTickTime);
-   }
-   datetime sessionEnd = sessionStart + 1*DAY;
-
-
-   // (3) Baroffsets von Sessionbeginn und -ende ermitteln
-   int openBar = iBarShiftNext(NULL, NULL, sessionStart);
-      if (openBar == EMPTY_VALUE) return(false);                                 // Fehler
-      if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart
-   int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
-      if (closeBar == EMPTY_VALUE) return(false);
-      if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart
-   if (openBar < closeBar)
-      return(!catch("UpdateOHLC(1)  illegal open/close bar offsets for session from="+ GmtTimeFormat(sessionStart, "%a %d.%m.%Y %H:%M") +" (bar="+ openBar +")  to="+ GmtTimeFormat(sessionEnd, "%a %d.%m.%Y %H:%M") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
-
-
-   // (4) Baroffsets von Session-High und -Low ermitteln
-   int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
-   int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
-
-
-   // (5) Anzeige aktualisieren
-   string strOHLC = "O="+ NumberToStr(Open[openBar], PriceFormat) +"   H="+ NumberToStr(High[highBar], PriceFormat) +"   L="+ NumberToStr(Low[lowBar], PriceFormat);
-   ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
-
-   int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
-      return(true);
-   return(!catch("UpdateOHLC(2)", error));
-}
-
-
-/**
  * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onCommand()-Handler.
  *
  * @return bool - Erfolgsstatus
@@ -1706,7 +1632,7 @@ bool AnalyzePositions(bool logTickets=false) {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
 
-   // Positionen analysieren und in positions.~data[] speichern
+   // Positionen analysieren und in positions.*Data[] speichern
    if (ArrayRange(positions.iData, 0) > 0) {
       ArrayResize(positions.iData, 0);
       ArrayResize(positions.dData, 0);
@@ -1795,8 +1721,8 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
    isVirtual = isVirtual!=0;
 
    if (ArraySize(tickets) > 0) {
-      if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-      else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      if (commentIndex > -1) logInfo("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      else                   logInfo("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
    }
    return(true);
 }
@@ -1855,9 +1781,7 @@ bool CalculatePositionSize() {
          else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
          else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
          else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
-         else if (mm.positionSize <=    3.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //      1.2-3: Vielfaches von   0.1
-         else if (mm.positionSize <=    7.5 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.2  ) *   0.2  , 1);     //      3-7.5: Vielfaches von   0.2
-         else if (mm.positionSize <=   12.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.5  ) *   0.5  , 1);     //     7.5-12: Vielfaches von   0.5
+         else if (mm.positionSize <=   10.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //     1.2-10: Vielfaches von   0.1
          else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
          else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
          else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
@@ -1963,7 +1887,7 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(1)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -2895,7 +2819,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
       else {
          // virtuelle Long-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden übersprungen (es gibt nichts abzuziehen oder hinzuzufügen)
-            double openPrice = ifDouble(value2, value2, Ask);
+            double openPrice = ifDouble(value2!=0, value2, Ask);
             ArrayPushInt   (customTickets,     TERM_OPEN_LONG                                );
             ArrayPushInt   (customTypes,       OP_BUY                                        );
             ArrayPushDouble(customLots,        lotsize                                       );
@@ -2942,7 +2866,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
       else {
          // virtuelle Short-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden übersprungen (es gibt nichts abzuziehen oder hinzuzufügen)
-            openPrice = ifDouble(value2, value2, Bid);
+            openPrice = ifDouble(value2!=0, value2, Bid);
             ArrayPushInt   (customTickets,     TERM_OPEN_SHORT                               );
             ArrayPushInt   (customTypes,       OP_SELL                                       );
             ArrayPushDouble(customLots,        lotsize                                       );
@@ -2991,7 +2915,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
    else if (type == TERM_OPEN_ALL) {
       // offene Positionen aller Symbole eines Zeitraumes
-      warn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
+      logWarn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
    }
 
    else if (type==TERM_HISTORY_SYMBOL || type==TERM_HISTORY_ALL) {
@@ -3209,7 +3133,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
 /**
  * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen
- * positions.~data[].
+ * positions.*Data[].
  *
  * @param  _In_ bool   isVirtual
  *
@@ -3239,7 +3163,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    int size, ticketsSize=ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit noch AdjustedProfit, wird sie übersprungen.
-   // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
+   // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
    if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit)
       return(true);
 
@@ -3272,8 +3196,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             if (!remainingLong) continue;
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice     = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-               swap         += swaps      [i];
+               openPrice    += lots[i] * openPrices[i];
+               swap         += swaps[i];
                commission   += commissions[i];
                remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
                tickets[i]    = NULL;
@@ -3281,7 +3205,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor        = remainingLong/lots[i];
-               openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
+               openPrice    += remainingLong * openPrices[i];
                swap         += swaps[i];                swaps      [i]  = 0;
                commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                                                         profits    [i] -= factor * profits    [i];
@@ -3293,8 +3217,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             if (!remainingShort) continue;
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               closePrice     = NormalizeDouble(closePrice + lots[i] * openPrices[i], 8);
-               swap          += swaps      [i];
+               closePrice    += lots[i] * openPrices[i];
+               swap          += swaps[i];
                //commission  += commissions[i];                                        // Commission wird nur für Long-Leg übernommen
                remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
                tickets[i]     = NULL;
@@ -3302,7 +3226,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor         = remainingShort/lots[i];
-               closePrice     = NormalizeDouble(closePrice + remainingShort * openPrices[i], 8);
+               closePrice    += remainingShort * openPrices[i];
                swap          += swaps[i]; swaps      [i]  = 0;
                                           commissions[i] -= factor * commissions[i];   // Commission wird nur für Long-Leg übernommen
                                           profits    [i] -= factor * profits    [i];
@@ -3340,7 +3264,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
          positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;        // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
          return(!catch("StorePosition(3)"));
       }
@@ -3363,20 +3287,20 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          if (types[i] == OP_BUY) {
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-               swap           += swaps      [i];
+               openPrice      += lots[i] * openPrices[i];
+               swap           += swaps[i];
                commission     += commissions[i];
-               floatingProfit += profits    [i];
+               floatingProfit += profits[i];
                tickets[i]      = NULL;
                remainingLong   = NormalizeDouble(remainingLong - lots[i], 3);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor          = remainingLong/lots[i];
-               openPrice       = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
-               swap           +=          swaps      [i]; swaps      [i]  = 0;
+               openPrice      += remainingLong * openPrices[i];
+               swap           +=          swaps[i];       swaps      [i]  = 0;
                commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-               floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+               floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
                                                           lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
                remainingLong = 0;
             }
@@ -3402,7 +3326,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
       pipValue = PipValue(totalPosition, true);                         // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
@@ -3426,20 +3350,20 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          if (types[i] == OP_SELL) {
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice       = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
-               swap           += swaps      [i];
+               openPrice      += lots[i] * openPrices[i];
+               swap           += swaps[i];
                commission     += commissions[i];
-               floatingProfit += profits    [i];
+               floatingProfit += profits[i];
                tickets[i]      = NULL;
                remainingShort  = NormalizeDouble(remainingShort - lots[i], 3);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor          = remainingShort/lots[i];
-               openPrice       = NormalizeDouble(openPrice + remainingShort * openPrices[i], 8);
-               swap           +=          swaps      [i]; swaps      [i]  = 0;
+               openPrice      += lots[i] * openPrices[i];
+               swap           +=          swaps[i];       swaps      [i]  = 0;
                commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
-               floatingProfit += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+               floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
                                                           lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
                remainingShort = 0;
             }
@@ -3465,7 +3389,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
       pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
@@ -3493,7 +3417,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
    positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
    positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;              // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
 
    return(!catch("StorePosition(8)"));
 }
@@ -3505,7 +3429,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleLfxTerminalMessages() {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartLfxReceiver())
@@ -3567,10 +3491,10 @@ bool ProcessLfxTerminalMessage(string message) {
 
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\"")));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(!logWarn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\""));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)")));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(!logWarn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)"));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(!logWarn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)"));
    // LFX-Parameter
    double profit;
    bool   success;
@@ -3594,27 +3518,27 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (__LOG()) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {             warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      if (success) { if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      else         {                  logWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (__LOG()) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
+      if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (__LOG()) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
+      if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // ???
-   return(_true(warn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\"")));
+   return(!logWarn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\""));
 }
 
 
@@ -3650,7 +3574,6 @@ bool RestoreLfxOrders(bool fromCache) {
       }
       return(true);
    }
-
 
    // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden im Cache noch vorhandene Daten vorm Überschreiben gespeichert.
    if (ArrayRange(lfxOrders.iCache, 0) > 0) {
@@ -3745,7 +3668,7 @@ bool SaveLfxOrderCache() {
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleTradeCommands() {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
@@ -3777,7 +3700,7 @@ bool QC.HandleTradeCommands() {
    for (int i=0; i < msgsSize; i++) {
       if (!StringLen(msgs[i])) continue;
       msgs[i] = StrReplace(msgs[i], HTML_TAB, TAB);
-      log("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
+      logInfo("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
 
       string cmdType = StrTrim(StrLeftTo(msgs[i], "{"));
 
@@ -3861,7 +3784,7 @@ bool StoreRuntimeStatus() {
 
    // Konfiguration im Fenster speichern
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName() +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int  value = ifInt(positions.absoluteProfits, 1, -1);
    SetWindowIntegerA(hWnd, key, value);
 
@@ -3886,7 +3809,7 @@ bool RestoreRuntimeStatus() {
 
    // Konfiguration im Fenster suchen
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName() +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value  = GetWindowIntegerA(hWnd, key);
    bool success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
@@ -4060,19 +3983,19 @@ bool onOrderFail(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
 
-      string type        = OperationTypeDescription(OrderType() & 1);      // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
+      string type        = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\"";
 
-      if (__LOG()) log("onOrderFail(2)  "+ message);
+      logWarn("onOrderFail(2)  "+ message);
 
-      // Signale für jede Order einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Orders gemeinsam abspielen
@@ -4105,13 +4028,13 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price;
 
-      if (__LOG()) log("onPositionOpen(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
-      // Signale für jede Position einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4149,13 +4072,13 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
-      if (__LOG()) log("onPositionClose(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
-      // Signale für jede Position einzeln verschicken
-      if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+      // TODO: handle signals via log mechanism
+      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4171,11 +4094,14 @@ bool onPositionClose(int tickets[][]) {
  * @return bool - success status
  */
 bool EditAccountConfig() {
-   string files[];
+   string file, files[];
 
-   if (mode.extern)
-      ArrayPushString(files, GetAccountConfigPath());
-   ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
+   if (mode.extern) {
+      file = GetAccountConfigPath(); if (!StringLen(file)) return(false);
+      ArrayPushString(files, file);
+   }
+   file = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
+   ArrayPushString(files, file);
 
    return(EditFiles(files));
 }
@@ -4188,10 +4114,8 @@ bool EditAccountConfig() {
  */
 string InputsToStr() {
    return(StringConcatenate("displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
-
                             "Track.Orders=",         DoubleQuoteStr(Track.Orders),         ";", NL,
                             "Offline.Ticker=",       BoolToStr(Offline.Ticker),            ";", NL,
-
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
                             "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
@@ -4211,8 +4135,6 @@ string InputsToStr() {
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   datetime GetPrevSessionStartTime.srv(datetime serverTime);
-   datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
    int      RegisterObject(string label);
