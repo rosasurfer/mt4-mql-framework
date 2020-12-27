@@ -11,8 +11,8 @@
  *  - replace manual calculation of StdDev(ALMA) with correct syntax for iStdDevOnArray()
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -26,7 +26,7 @@ extern double Bands.StdDevs     = 2;
 extern color  Bands.Color       = RoyalBlue;
 extern int    Bands.LineWidth   = 1;
 
-extern int    Max.Bars          = 10000;              // max. number of bars to display (-1: all available)
+extern int    Max.Bars          = 10000;              // max. values to calculate (-1: all available)
 
 extern string __________________________;
 
@@ -115,17 +115,9 @@ int onInit() {
    }
    sValue = StrToLower(StrTrim(sValue));
    if (sValue == "") sValue = "close";                                  // default price type
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ma.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else                  return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   ma.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
+                            return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -172,9 +164,9 @@ int onInit() {
 
    // data display configuration, names and labels
    string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
-   ind.shortName = __NAME() +"("+ MA.Periods +")";
-   ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
-   IndicatorShortName(ind.shortName);                          // chart context menu
+   ind.shortName = ProgramName() +"("+ MA.Periods +")";
+   ind.longName  = ProgramName() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
+   IndicatorShortName(ind.shortName);                          // chart tooltips and context menu
    if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
    SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
@@ -226,8 +218,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(bufferMa)) return(log("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(bufferMa)) return(logInfo("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -250,7 +242,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startBar = Min(changedBars-1, Bars-MA.Periods);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // recalculate changed bars
@@ -313,7 +305,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.MA.Periods",      MA.Periods     );
    Chart.StoreString(name +".input.MA.Method",       MA.Method      );
    Chart.StoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
@@ -333,7 +325,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
    Chart.RestoreString(name +".input.MA.Method",       MA.Method      );
    Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);

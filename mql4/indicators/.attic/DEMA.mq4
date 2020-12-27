@@ -11,8 +11,8 @@
  *  • MovingAverage.MODE_MA: MA values
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -23,7 +23,7 @@ extern color  MA.Color        = DodgerBlue;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.Width      = 2;
 
-extern int    Max.Bars        = 5000;                    // max. number of bars to display (-1: all available)
+extern int    Max.Bars        = 10000;                   // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,16 +72,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                      // default price type
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ma.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-      else             return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   ma.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(ma.appliedPrice) || ma.appliedPrice > PRICE_WEIGHTED) {
+                       return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
@@ -120,7 +113,7 @@ int onInit() {
    string shortName="DEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "DEMA("+ MA.Periods + strAppliedPrice +")";
-   IndicatorShortName(shortName);                              // chart context menu
+   IndicatorShortName(shortName);                              // chart tooltips and context menu
    SetIndexLabel(MODE_DEMA,  shortName);                       // chart tooltips and "Data" window
    SetIndexLabel(MODE_EMA_1, NULL);
    IndicatorDigits(SubPipDigits);
@@ -165,8 +158,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(dema)) return(log("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(dema)) return(logInfo("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -187,7 +180,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)
       changedBars = Max.Bars;                                        // Because EMA(EMA) is used in the calculation, DEMA needs 2*<period>-1 samples
    int bar, startBar = Min(changedBars-1, Bars - (2*MA.Periods-1));  // to start producing values in contrast to <period> samples needed by a regular EMA.
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -225,7 +218,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.MA.Periods",      MA.Periods     );
    Chart.StoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
    Chart.StoreColor (name +".input.MA.Color",        MA.Color       );
@@ -242,7 +235,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
    Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
    Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );

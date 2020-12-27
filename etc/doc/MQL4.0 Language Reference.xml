@@ -3304,17 +3304,23 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
       caption=IsVisualMode()
       type=bool
       <content>
-      Returns <span class="const">true</span> if the expert is tested with checked &quot;Visual Mode&quot; button, otherwise returns <span class="const">false</span>.<br/>
+      Whether the program runs in the tester and visual mode is enabled.
+      
       <br/>
-      <span style="color:red">Bug:</span>
       <br/>
-      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zur&uuml;ckgesetzt wird.
-      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zur&uuml;ck (getested mit Build 225-670).<br/>
+      <span style="color:red">Bugs:</span>
       <br/>
-      Workaround: Den VisualMode-Status aus dem Hauptmodul &uuml;ber den Execution-Context in die Library &uuml;bermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
+      <li>In MQL libraries in tester the VisualMode status is not reset between consecutive tests. In all following tests the function returns the status 
+      of the first test, until the library is reloaded (tested with builds 225-670).</li>
+
+      <br/>
+      <br/>
+      Workaround: Use the framework function <span class="function">IsVisualModeFix()</span>.
       </content>
       <example>
-  if (IsVisualModeFix()) Comment("Visual mode certainly turned on");
+<span class="keyword code">if</span> (<span class="function code">IsVisualMode()</span>) {
+    <span class="function code">Comment</span>(<span class="string code">"Visual mode is enabled"</span>);
+} 
       </example>
     </function>
 
@@ -6919,49 +6925,47 @@ a loss of significance in the result occurs and the function returns <span class
       caption=ObjectCreate()
       type=bool
       <content>
-      Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending
-      on the object type. Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a>
-      to set <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
-      If the function succeeds it returns <span class="const">true</span>, otherwise it returns <span class="const">false</span>. To get detailed error information call
-      <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+      Creates an object of the specified type in a chart window, with the provided name and coordinates properties. The number of required coordinates pairs depends 
+      on the object type and varies between 1 and 3.<br/>
+      <br/>
+      Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use 
+      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_XDISTANCE</span>, ...) and 
+      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_YDISTANCE</span>, ...) instead.<br/>
+      <br/>      
+      Returns the success status of the operation. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
       <br/>
 
       Notes:<br/>
-      <li>The main chart window always exists and has the index 0. Chart subwindows are indexed starting from 1.</li>
-      <li>Coordinates can be specified only in pairs of a time and a price value. Even if an object needs only a time value (for example <span class="const">OBJ_VLINE</span>)
-          a price (any value) has to be passed, too.</li>
+      <li>The main chart window always exists and has the index <span class="number">0</span>. Chart subwindows are indexed starting from <span class="number">1</span>.</li>
+      
+      <li>Coordinates must be specified in pairs of a time and a price value, even if some object types need only a single value of a pair 
+          (e.g. <span class="const">OBJ_VLINE</span> objects).</li>
       </content>
 
 <example>
-// new text object
-<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(<span class="string">&quot;text_object&quot;</span>, <span class="const">OBJ_TEXT</span>, <span class="number">0</span>, D<span class="string">'2004.02.20 12:30'</span>, <span class="number">1.0045</span>)) {
-   <span class="function">Print</span>(<span class="string">&quot;error: can't create text_object, error=&quot;</span>, <span class="function">GetLastError</span>());
-   <span class="keyword">return</span>(<span class="number">0</span>);
-}<br/>
+<span class="comment code">// new text object</span>
+<span class="function code">ObjectCreate</span>(<span class="string code">"text-id"</span>, <span class="const code">OBJ_TEXT</span>, <span class="number code">0</span>, D<span class="string code">'2004.02.20 12:30'</span>, <span class="number code">1.0045</span>);
+<br/>
 
-// new label object
-<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJ_LABEL</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)) {
-   <span class="function">Print</span>(<span class="string">&quot;error: can't create label_object, error=&quot;</span>, <span class="function">GetLastError</span>());
-   <span class="keyword">return</span>(<span class="number">0</span>);
-}<br/>
-
-<span class="function">ObjectSet</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJPROP_XDISTANCE</span>, <span class="number">200</span>);
-<span class="function">ObjectSet</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJPROP_YDISTANCE</span>, <span class="number">100</span>);
+<span class="comment code">// new label object</span>
+<span class="function code">ObjectCreate</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJ_LABEL</span>, <span class="number code">0</span>, <span class="number code">0</span>, <span class="number code">0</span>);
+<span class="function code">ObjectSet</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJPROP_XDISTANCE</span>, <span class="number code">200</span>);
+<span class="function code">ObjectSet</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJPROP_YDISTANCE</span>, <span class="number code">100</span>);
 </example>
       <parameter>
         type=string
         name=name
-        description=unique object name with a maximum length of 63 characters (may contain line breaks)
+        description=object name with a max. length of 63 characters (may contain line breaks)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=object type, can be any of the <a href="help://constants_objects">object type enumeration</a> values
+        description=object type, can be any of the <a href="help://constants_objects">object type</a> values
       </parameter>
       <parameter>
         type=int
         name=window
-        description=index of the chart window to add the object to, the range is from 0 (main chart window) to one less than <a href="help://windows_WindowsTotal">WindowsTotal()</a>
+        description=index of the chart window to create the object in
       </parameter>
       <parameter>
         type=datetime
@@ -10070,39 +10074,23 @@ Optional origin identifier. Used when the parameter <i>selectMode</i> is <span c
       caption=OrderSend()
       type=int
       <content>
-Used to open a position or place a pending order. Returns the ticket number assigned by the trade server or -1 on error.<br/>
-<br/>
-
-Notes:<br/>
-(1) When opening a market order only the latest prices (<a href="help://predefined_variables_Bid">Bid</a> for selling and <a href="help://predefined_variables_Ask">Ask</a> for buying)
-can be used as opening price. If a different symbol than the current one is traded the function <a href="help://common_MarketInfo">MarketInfo()</a> can be used to obtain those
-prices.<br/>
-(2) If the requested open price doesn't exist in the price thread or if it's a non-normalized price <a href="help://constants_errors"><span class="const">ERR_INVALID_PRICE</span></a>
-will be generated.<br/>
-(3) If the requested open price is expired <a href="help://constants_errors"><span class="const">ERR_REQUOTE</span></a> will be generated.<br/>
-(4) If the requested price is out of date but still present in the price thread the position will be opened at the current price if it lies within the range defined by the <i>slippage</i>
-parameter.<br/>
-(5) Without a connection to the trade server <a href="help://constants_errors"><span class="const">ERR_NO_CONNECTION</span></a> will be generated. If the connection drops during
-function execution <a href="help://constants_errors"><span class="const">ERR_NO_CONNECTION</span></a> will be generated and the order might or might not be executed.<br/>
+Opens a trade position or places a pending order. Returns the ticket number of the created order or -1 in case of errors.<br/>
 <br/>
       </content>
       <example>
-<span class="keyword">if</span> (<span class="function">iRSI</span>(<span class="const">NULL</span>, <span class="number">0</span>, <span class="number">14</span>, <span class="const">PRICE_CLOSE</span>, <span class="number">0</span>) &lt; <span class="number">25</span>) {
-   int ticket = <span class="function">OrderSend</span>(<span class="function">Symbol</span>(), <span class="const">OP_BUY</span>, <span class="number">1</span>, <span class="const">Ask</span>, <span class="number">3</span>, <span class="const">Ask</span>-<span class="number">25</span>*<span class="const">Point</span>, <span class="const">Ask</span>+<span class="number">25</span>*<span class="const">Point</span>, &quot;My order #2&quot;, <span class="number">16384</span>, <span class="number">0</span>, <span class="const">Green</span>);
-   <span class="keyword">if</span> (ticket &lt; <span class="number">0</span>) {
-      <span class="function">Print</span>("OrderSend failed with error #", <span class="function">GetLastError</span>());
-      <span class="keyword">return</span>(0);
-   }
+<span class="type code">int</span> ticket = <span class="function code">OrderSend</span>(<span class="function code">Symbol</span>(), <span class="const code">OP_BUY</span>, <span class="number code">1</span>, <span class="const code">Ask</span>, <span class="number code">3</span>, <span class="const code">Ask</span>-<span class="number code">50</span>*<span class="const code">Point</span>, <span class="const code">Ask</span>+<span class="number code">50</span>*<span class="const code">Point</span>, <span class="string code">"My order #1"</span>, <span class="number code">16384</span>, <span class="number code">0</span>, <span class="const code">Green</span>);
+<span class="keyword code">if</span> (ticket &lt; <span class="number code">0</span>) {
+   <span class="function code">Print</span>(<span class="string code">"OrderSend failed with error: "</span>, <span class="function code">GetLastError</span>());
 }
       </example>
       <parameter>
         type=string
         name=symbol
-        description=symbol of the instrument to trade
+        description=symbol of the traded instrument
       </parameter>
       <parameter>
         type=int
-        name=cmd
+        name=type
         <description>
          one of the <a href="help://constants_trading">trade operation types</a>
         </description>
@@ -10110,51 +10098,51 @@ function execution <a href="help://constants_errors"><span class="const">ERR_NO_
       <parameter>
         type=double
         name=volume
-        description=lot size
+        description=traded lot size
       </parameter>
       <parameter>
         type=double
         name=price
-        description=preferred open price (see notes)
+        description=preferred open price
       </parameter>
       <parameter>
         type=int
         name=slippage
-        description=maximum acceptable price slippage for market orders
+        description=maximum acceptable open price slippage for market orders in point
       </parameter>
       <parameter>
         type=double
         name=stoploss
-        description=stop loss price
+        description=stoploss price
       </parameter>
       <parameter>
         type=double
         name=takeprofit
-        description=take profit price
+        description=takeprofit price
       </parameter>
       <parameter>
         type=string
         name=comment
-        def_value=<span class="const">NULL</span>
-        description=[optional] order comment with max. 27 chars, may be overwritten by the trade server (default: none)
+        def_value=<span class="string">""</span>
+        description=[optional] order comment of max. 27 chars (default: none)
       </parameter>
       <parameter>
         type=int
         name=magicNumber
-        def_value=0
+        def_value=<span class="number">0</span>
         description=[optional] user defined order identifier (default: none)
       </parameter>
       <parameter>
         type=datetime
         name=expiration
-        def_value=0
+        def_value=<span class="number">0</span>
         description=[optional] expiration time of pending orders (default: none)
       </parameter>
       <parameter>
         type=color
         name=chartMarker
         def_value=<span class="const">CLR_NONE</span>
-        description=[optional] color of the chart marker (default: no marker is drawn)
+        description=[optional] color of the chart marker (default: no marker)
       </parameter>
     </function>
 

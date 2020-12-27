@@ -7,8 +7,8 @@
  * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -89,7 +89,7 @@ int onInit() {
 
    // names, labels and display options
    IndicatorShortName("Broketrader("+ Timeframe +") open/closed/total PL  "); // chart subwindow and context menu
-   SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // "Data" window
+   SetIndexLabel(MODE_OPEN,   "Broketrader open PL"  );                       // chart tooltips and "Data" window
    SetIndexLabel(MODE_CLOSED, "Broketrader closed PL");
    SetIndexLabel(MODE_TOTAL,  "Broketrader total PL" );
    IndicatorDigits(1);
@@ -105,8 +105,8 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(bufferTotalPL)) return(log("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(bufferTotalPL)) return(logInfo("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -250,7 +250,7 @@ double iMTF(int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iMTF(1)", error));
-      warn("iMTF(2)  "+ TimeframeDescription(systemTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("iMTF(2)  "+ TimeframeDescription(systemTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts
@@ -316,7 +316,7 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iBroketrader(1)", error));
-      warn("iBroketrader(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("iBroketrader(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts

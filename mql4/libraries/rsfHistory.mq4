@@ -13,8 +13,8 @@
 #property library
 
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
@@ -318,7 +318,7 @@ int HistorySet.Get(string symbol, string server="") {
          fileSize = FileSize(hFile);                                    // Datei geöffnet
          if (fileSize < HISTORY_HEADER.size) {
             FileClose(hFile);
-            warn("HistorySet.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
+            logWarn("HistorySet.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
             continue;
          }
                                                                         // HISTORY_HEADER auslesen
@@ -1120,7 +1120,7 @@ bool HistoryFile._WriteLastStoredBar(int hFile, int flags=NULL) {
       hf.hFile.lastValid = hFile;
    }
    int offset = hf.lastStoredBar.offset[hFile];
-   if (offset < 0)                      return(_true(warn("HistoryFile._WriteLastStoredBar(5)  undefined lastStoredBar: hf.lastStoredBar.offset = "+ offset +" [hstFile="+ DoubleQuoteStr(hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])) +"]")));
+   if (offset < 0)                      return(_true(logWarn("HistoryFile._WriteLastStoredBar(5)  undefined lastStoredBar: hf.lastStoredBar.offset = "+ offset +" [hstFile="+ DoubleQuoteStr(hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])) +"]")));
    if (offset >= hf.stored.bars[hFile]) return(!catch("HistoryFile._WriteLastStoredBar(6)  invalid hf.lastStoredBar.offset = "+ offset +" ("+ hf.stored.bars[hFile] +" stored bars) [hstFile="+ DoubleQuoteStr(hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])) +"]", ERR_INVALID_PARAMETER));
 
 
@@ -1191,7 +1191,7 @@ bool HistoryFile._WriteBufferedBar(int hFile, int flags=NULL) {
       hf.hFile.lastValid = hFile;
    }
    int offset = hf.bufferedBar.offset[hFile];
-   if (offset < 0)                      return(_true(warn("HistoryFile._WriteBufferedBar(5)  undefined bufferedBar: hf.bufferedBar.offset = "+ offset +" [hstFile="+ DoubleQuoteStr(hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])) +"]")));
+   if (offset < 0)                      return(_true(logWarn("HistoryFile._WriteBufferedBar(5)  undefined bufferedBar: hf.bufferedBar.offset = "+ offset +" [hstFile="+ DoubleQuoteStr(hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])) +"]")));
    if (offset != hf.full.bars[hFile]-1) return(!catch("HistoryFile._WriteBufferedBar(6)  invalid hf.bufferedBar.offset = "+ offset +" ("+ hf.full.bars[hFile] +" full bars) [hstFile="+ DoubleQuoteStr(hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])) +"]", ERR_RUNTIME_ERROR));
 
 
@@ -1575,7 +1575,7 @@ bool __CheckFileHandles() {
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         warn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found [hstFile="+ DoubleQuoteStr(hf.symbol[i] +","+ PeriodDescription(hf.period[i])) +"]");
+         logWarn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found [hstFile="+ DoubleQuoteStr(hf.symbol[i] +","+ PeriodDescription(hf.period[i])) +"]");
          if (!HistoryFile.Close(hf.hFile[i]))
             error = last_error;
       }

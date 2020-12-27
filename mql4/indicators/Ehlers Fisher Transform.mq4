@@ -22,8 +22,8 @@
  *    - check required run-up period
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -131,8 +131,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(fisherMain)) return(log("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(fisherMain)) return(logInfo("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!UnchangedBars) {
@@ -159,7 +159,7 @@ int onTick() {
    // (1) calculate start bar
    int maxBar = Bars-Fisher.Periods;
    int startBar = Min(ChangedBars-1, maxBar);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid prices
@@ -231,7 +231,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.Fisher.Periods",        Fisher.Periods       );
    Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
@@ -246,7 +246,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt  (name +".input.Fisher.Periods",        Fisher.Periods       );
    Chart.RestoreColor(name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
    Chart.RestoreColor(name +".input.Histogram.Color.Lower", Histogram.Color.Lower);

@@ -24,7 +24,7 @@
  *    szchar comment[28];     //  28      => oe[22]      // Orderkommentar, <NUL>-terminiert
  *    int    duration;        //   4      => oe[29]      // Dauer der Auführung in Millisekunden
  *    int    requotes;        //   4      => oe[30]      // Anzahl aufgetretener Requotes
- *    int    slippage;        //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ *    int    slippage;        //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu Ungunsten, negativ: zu Gunsten)
  *    int    remainingTicket; //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
  *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } oe;                      // 136 byte = int[34]
@@ -202,18 +202,14 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer struct ORDER_EXECUTION zurück.
+ * Gibt die lesbare Repräsentation ein oder mehrerer ORDER_EXECUTION-Structs zurück.
  *
- * @param  int  oe[]        - struct ORDER_EXECUTION
- * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  int oe[] - struct ORDER_EXECUTION
  *
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
  */
-string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false) {
-   outputDebug = outputDebug!=0;
-
+string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    int dimensions = ArrayDimension(oe);
-
    if (dimensions > 2)                                          return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(1)  too many dimensions of parameter oe = "+ dimensions, ERR_INVALID_PARAMETER)));
    if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
@@ -251,8 +247,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
                                      ", comment=\""      ,                    oe.Comment        (oe), "\"",
                                      ", remainingTicket=",                    oe.RemainingTicket(oe),
                                      ", remainingLots="  ,        NumberToStr(oe.RemainingLots  (oe), ".+"), "}");
-      if (outputDebug)
-         debug("ORDER_EXECUTION.toStr()  "+ line);
       ArrayPushString(lines, line);
    }
    else {
@@ -288,8 +282,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
                                                   ", comment=\""      ,                    oes.Comment        (oe, i), "\"",
                                                   ", remainingTicket=",                    oes.RemainingTicket(oe, i),
                                                   ", remainingLots="  ,        NumberToStr(oes.RemainingLots  (oe, i), ".+"), "}");
-         if (outputDebug)
-            debug("ORDER_EXECUTION.toStr()  "+ line);
          ArrayPushString(lines, line);
       }
    }

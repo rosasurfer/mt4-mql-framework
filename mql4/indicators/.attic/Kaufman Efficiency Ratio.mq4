@@ -4,8 +4,8 @@
  * Ratio between the amount price moved in one way (direction) to the amount price moved in any way (volatility).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -77,8 +77,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(bufferKER)) return(log("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(bufferKER)) return(logInfo("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!UnchangedBars) {
@@ -94,7 +94,7 @@ int onTick() {
 
    // (1) calculate start bar
    int startBar = Min(ChangedBars-1, Bars-Periods-1);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    double direction, noise;
@@ -155,7 +155,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt(__NAME() +".input.Periods", Periods);
+   Chart.StoreInt(ProgramName() +".input.Periods", Periods);
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -166,7 +166,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt(__NAME() +".input.Periods", Periods);
+   Chart.RestoreInt(ProgramName() +".input.Periods", Periods);
    return(!catch("RestoreInputParameters(1)"));
 }
 

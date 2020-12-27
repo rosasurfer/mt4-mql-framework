@@ -17,8 +17,8 @@
  * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -32,7 +32,7 @@ extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Bars              = 5000;                 // max. number of bars to display (-1: all available)
+extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -93,17 +93,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
-   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ema.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
-      else                        return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   ema.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
+                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -176,8 +168,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(trixMain)) return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(trixMain)) return(logInfo("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -208,7 +200,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)             // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
       changedBars = Max.Bars;                                        // 3*<period>-2 samples to start producing values in contrast to
    int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -259,7 +251,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
    Chart.StoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
@@ -278,7 +270,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
    Chart.RestoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );

@@ -12,8 +12,8 @@
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of level 50)
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -27,7 +27,7 @@ extern color  Histogram.Color.Upper = Blue;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Bars              = 5000;                 // max. number of bars to display (-1: all available)
+extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,16 +76,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
-   rsi.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(rsi.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) rsi.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) rsi.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) rsi.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) rsi.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) rsi.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) rsi.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) rsi.appliedPrice = PRICE_WEIGHTED;
-      else                        return(catch("onInit(2)  Invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   rsi.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(rsi.appliedPrice) || rsi.appliedPrice > PRICE_WEIGHTED) {
+                                  return(catch("onInit(2)  Invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    RSI.AppliedPrice = PriceTypeDescription(rsi.appliedPrice);
 
@@ -152,8 +145,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(bufferRSI)) return(log("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(bufferRSI)) return(logInfo("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -178,7 +171,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
       changedBars = Max.Bars;
    int startBar = Min(changedBars-1, Bars-rsi.periods);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    double fast.ma, slow.ma;
@@ -230,7 +223,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
    Chart.StoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
    Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
@@ -249,7 +242,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
    Chart.RestoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
    Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );

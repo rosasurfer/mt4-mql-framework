@@ -12,7 +12,7 @@
  */
 bool onCommand(string commands[]) {
    if (!ArraySize(commands))
-      return(_true(warn("onCommand(1)  "+ sequence.longName +" empty parameter commands = {}")));
+      return(!logWarn("onCommand(1)  "+ sequence.longName +" empty parameter commands: {}"));
 
    string cmd = commands[0];
 
@@ -24,7 +24,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_STOPPED:
             if (!start.conditions)                       // whether any start condition is active
-               return(_true(warn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)")));
+               return(!logWarn("onCommand(2)  "+ sequence.longName +" cannot execute \"wait\" command for sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" (no active start conditions found)"));
             sequence.status = STATUS_WAITING;
       }
       return(true);
@@ -65,7 +65,7 @@ bool onCommand(string commands[]) {
    if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
 
    // log unknown commands and let the EA continue
-   return(_true(warn("onCommand(3)  "+ sequence.longName +" unknown command "+ DoubleQuoteStr(cmd))));
+   return(!logWarn("onCommand(3)  "+ sequence.longName +" unknown command: "+ DoubleQuoteStr(cmd)));
 }
 
 
@@ -83,13 +83,13 @@ datetime last.Sessionbreak.EndTime;
 
 
 /**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() by using this
- * function and can be restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
    // backed-up inputs are also accessed from ValidateInputs()
-   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // String inputs are references to internal C literals
-   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference.
+   last.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // string inputs are references to internal C literals
+   last.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference
    last.GridSize               = GridSize;
    last.UnitSize               = UnitSize;
    last.StartLevel             = StartLevel;
@@ -357,7 +357,7 @@ double CalculateUnitSize(double equity) {
    if (IsError(error)) return(!catch("CalculateUnitSize(3)", error));
 
    if (!tickSize || !tickValue || !minLot || !maxLot || !lotStep) {
-      string sDetail = ifString(tickSize, "", "tickSize=0, ") + ifString(tickValue, "", "tickValue=0, ") + ifString(minLot, "", "minLot=0, ") + ifString(maxLot, "", "maxLot=0, ") + ifString(lotStep, "", "lotStep=0, ");
+      string sDetail = ifString(tickSize!=0, "", "tickSize=0, ") + ifString(tickValue!=0, "", "tickValue=0, ") + ifString(minLot!=0, "", "minLot=0, ") + ifString(maxLot!=0, "", "maxLot=0, ") + ifString(lotStep!=0, "", "lotStep=0, ");
       return(!catch("CalculateUnitSize(4)  "+ sequence.longName +" market data not (yet) available: "+ StrLeft(sDetail, -2), ERS_TERMINAL_NOT_YET_READY));
    }
 
@@ -423,7 +423,7 @@ double CalculateUnitSize(double equity) {
  * @return bool - success status
  */
 bool Chart.MarkOrderFilled(int i) {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
    /*
    #define ODM_NONE     0     // - no display -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -454,7 +454,7 @@ bool Chart.MarkOrderFilled(int i) {
  * @return bool - success status
  */
 bool Chart.MarkOrderSent(int i) {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
    /*
    #define ODM_NONE     0     // - no display -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -491,7 +491,7 @@ bool Chart.MarkOrderSent(int i) {
  * @return bool - success status
  */
 bool Chart.MarkPositionClosed(int i) {
-   if (!__CHART()) return(true);
+   if (!IsChart()) return(true);
    /*
    #define ODM_NONE     0     // - no display -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -527,7 +527,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(__NAME() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
       RefreshRates();
    }
    confirmed = true;
@@ -569,35 +569,35 @@ int CountPendingOrders() {
 
 
 /**
- * Generate a new sequence id.
+ * Generate a new sequence id. As strategy ids differ multiple strategies may use the same sequence id at the same time.
  *
  * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
-   int id;                                               // TODO: in tester generate consecutive ids
+   int id;
    while (id < SID_MIN || id > SID_MAX) {
-      id = MathRand();
-   }
-   return(id);                                           // TODO: test id for uniqueness
+      id = MathRand();                                   // TODO: in tester generate consecutive ids
+   }                                                     // TODO: test id for uniqueness
+   return(id);
 }
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of char "g" in font "Webdings". Called only from
+ * Create the status display box. It consists of overlapping rectangles made of char "g" font "Webdings". Called only from
  * afterInit().
  *
  * @return int - error status
  */
 int CreateStatusBox() {
-   if (!__CHART()) return(NO_ERROR);
+   if (!IsChart()) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
    color  bgColor = C'248,248,248';                      // that's chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
-      label = __NAME() +".statusbox."+ (i+1);
+      label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
          RegisterObject(label);
@@ -612,39 +612,35 @@ int CreateStatusBox() {
 
 
 /**
- * Return the full name of the custom logfile.
+ * Return the full name of the instance logfile.
  *
- * @return string - filename or an empty string in tester (no separate logfile)
+ * @return string - filename or an empty string in case of errors
  */
-string GetCustomLogFileName() {
-   return("");                            // for the time being: disable the custom log
-
-   string name = GetStatusFileName();
+string GetLogFilename() {
+   string name = GetStatusFilename();
    if (!StringLen(name)) return("");
-   if (IsTestSequence()) return("");
-
    return(StrLeft(name, -3) +"log");
 }
 
 
 /**
- * Return the full name of the status file.
+ * Return the full name of the instance status file.
  *
  * @return string - filename or an empty string in case of errors
  */
-string GetStatusFileName() {
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFileName(1)  "+ sequence.longName +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE)));
+string GetStatusFilename() {
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.longName +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   string sSID = "";
-   if (SNOWROLLER) sSID = "SR.";
-   if (SISYPHUS)   sSID = "SPH.";
+   string subdirectory = "\\presets\\";
+   if (!IsTestSequence()) subdirectory = subdirectory + GetAccountCompany() +"\\";
 
-   string directory, baseName=StrToLower(Symbol()) +"."+ sSID + sequence.id +".set";
+   string strategy = "";
+   if (SNOWROLLER) strategy = "SR";
+   if (SISYPHUS)   strategy = "SPH";
 
-   if (IsTestSequence()) directory = "\\presets\\";
-   else                  directory = "\\presets\\"+ GetAccountCompany() +"\\";
+   string baseName=StrToLower(Symbol()) +"."+ strategy +"."+ sequence.id +".set";
 
-   return(GetMqlFilesPath() + directory + baseName);
+   return(GetMqlFilesPath() + subdirectory + baseName);
 }
 
 
@@ -696,8 +692,8 @@ bool HandleNetworkErrors() {
 
 
 /**
- * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
- * sequence may be loaded in an online chart after the test (for visualization).
+ * Whether the current sequence was created in the tester. Considers the fact that a test sequence may be loaded into an
+ * online chart after the test (for visualization).
  *
  * @return bool
  */
@@ -710,7 +706,7 @@ bool IsTestSequence() {
  * Redraw order markers of the active sequence. Markers of finished sequence cycles will no be redrawn.
  */
 void RedrawOrders() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    bool wasPending, isPending, closedPosition;
    int  size = ArraySize(orders.ticket);
@@ -735,7 +731,7 @@ void RedrawOrders() {
  * Redraw the start/stop markers of the active sequence. Markers of finished sequence cycles will no be redrawn.
  */
 void RedrawStartStop() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    string   label, sCycle = StrPadLeft(sequence.cycle, 3, "0");
    datetime time;
@@ -792,7 +788,7 @@ void RedrawStartStop() {
  * @return bool - whether a sequence id was found and restored
  */
 bool RestoreChartStatus() {
-   string name=__NAME(), key=name +".runtime.Sequence.ID", sValue="";
+   string name=ProgramName(), key=name +".runtime.Sequence.ID", sValue="";
 
    if (ObjectFind(key) == 0) {
       Chart.RestoreString(key, sValue);
@@ -828,7 +824,7 @@ bool RestoreChartStatus() {
  * @return int - error status
  */
 int DeleteChartStatus() {
-   string label, prefix=__NAME() +".runtime.";
+   string label, prefix=ProgramName() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -840,10 +836,10 @@ int DeleteChartStatus() {
 
 
 /**
- * Update all string representations for ShowStatus().
+ * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    SS.SequenceName();
    SS.GridBase();
@@ -862,10 +858,10 @@ void SS.All() {
 
 
 /**
- * ShowStatus(): Update the string representation of the "AutoRestart" option.
+ * ShowStatus: Update the string representation of the "AutoRestart" option.
  */
 void SS.AutoRestart() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    if (AutoRestart=="Off") sAutoRestart = "AutoRestart:  "+ AutoRestart + NL;
    else                    sAutoRestart = "AutoRestart:  "+ AutoRestart +" ("+ (sequence.cycle-1) +")" + NL;
@@ -873,10 +869,10 @@ void SS.AutoRestart() {
 
 
 /**
- * ShowStatus(): Update the string representation of the gridbase.
+ * ShowStatus: Update the string representation of the gridbase.
  */
 void SS.GridBase() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    double gridbase = GetGridbase();
    if (!gridbase) return;
@@ -886,10 +882,10 @@ void SS.GridBase() {
 
 
 /**
- * ShowStatus(): Update the string representation of the sequence direction.
+ * ShowStatus: Update the string representation of the sequence direction.
  */
 void SS.GridDirection() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    if (sequence.direction != 0) {
       sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
@@ -898,10 +894,10 @@ void SS.GridDirection() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.maxDrawdown".
+ * ShowStatus: Update the string representation of "sequence.maxDrawdown".
  */
 void SS.MaxDrawdown() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
    else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
@@ -910,10 +906,10 @@ void SS.MaxDrawdown() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.maxProfit".
+ * ShowStatus: Update the string representation of "sequence.maxProfit".
  */
 void SS.MaxProfit() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
    else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
@@ -922,10 +918,10 @@ void SS.MaxProfit() {
 
 
 /**
- * ShowStatus(): Update the string representation of the missed gridlevels.
+ * ShowStatus: Update the string representation of the missed gridlevels.
  */
 void SS.MissedLevels() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    int size = ArraySize(sequence.missedLevels);
    if (!size) sSequenceMissedLevels = "";
@@ -934,10 +930,10 @@ void SS.MissedLevels() {
 
 
 /**
- * ShowStatus(): Update the string representaton of the P/L statistics.
+ * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    if (sequence.maxLevel != 0) {             // not before a positions was opened
       sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
@@ -946,10 +942,10 @@ void SS.PLStats() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.profitPerLevel".
+ * ShowStatus: Update the string representation of "sequence.profitPerLevel".
  */
 void SS.ProfitPerLevel() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    if (!sequence.level) {
       sSequenceProfitPerLevel = "";          // not before a positions was opened
@@ -966,7 +962,7 @@ void SS.ProfitPerLevel() {
 
 
 /**
- * ShowStatus(): Update the string representations of standard and long sequence name.
+ * ShowStatus: Update the string representations of standard and long sequence name.
  */
 void SS.SequenceName() {
    sequence.name = "";
@@ -980,10 +976,10 @@ void SS.SequenceName() {
 
 
 /**
- * ShowStatus(): Update the string representation of the configured start/stop conditions.
+ * ShowStatus: Update the string representation of the configured start/stop conditions.
  */
 void SS.StartStopConditions() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    // start conditions, order: [sessionbreak >>] trend, time, price
    string sValue = "";
@@ -1044,10 +1040,10 @@ void SS.StartStopConditions() {
 
 
 /**
- * ShowStatus(); Update the string representation of the start/stop statistics.
+ * ShowStatus: Update the string representation of the start/stop statistics.
  */
 void SS.StartStopStats() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    sStartStopStats = "";
 
@@ -1072,10 +1068,10 @@ void SS.StartStopStats() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.stops" and "sequence.stopsPL".
+ * ShowStatus: Update the string representation of "sequence.stops" and "sequence.stopsPL".
  */
 void SS.Stops() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
    sSequenceStops = sequence.stops +" stop"+ Pluralize(sequence.stops);
 
    // not set before the first stopped-out position
@@ -1087,10 +1083,10 @@ void SS.Stops() {
 
 
 /**
- * ShowStatus(): Update the string representation of "sequence.totalPL".
+ * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    // not set before the first open position
    if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";
@@ -1100,10 +1096,10 @@ void SS.TotalPL() {
 
 
 /**
- * ShowStatus(): Update the string representation of the unitsize.
+ * ShowStatus: Update the string representation of the unitsize.
  */
 void SS.UnitSize() {
-   if (!__CHART()) return;
+   if (!IsChart()) return;
 
    double equity = sequence.startEquity;
 
@@ -1165,7 +1161,7 @@ string StatusToStr(int status) {
  * @return int - error status
  */
 int StoreChartStatus() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
    Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
    Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
@@ -1244,7 +1240,7 @@ bool ToggleStartStopDisplayMode() {
 
 /**
  * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
- * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at restart).
+ * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
  *
  * @param  bool interactive - whether parameters have been entered through the input dialog
  *
@@ -1504,8 +1500,7 @@ bool ValidateInputs(bool interactive) {
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
             if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(50)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
-            if (!StringLen(sValue))                               return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
@@ -1524,12 +1519,11 @@ bool ValidateInputs(bool interactive) {
 
          else if (key=="@sl" || key=="@loss") {
             if (stop.lossAbs.condition || stop.lossPct.condition)
-                                                                  return(_false(ValidateInputs.OnError("ValidateInputs(53)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
+                                                                  return(_false(ValidateInputs.OnError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(54)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                                  return(_false(ValidateInputs.OnError("ValidateInputs(53)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
-            if (!StringLen(sValue))                               return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(ValidateInputs.OnError("ValidateInputs(54)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
@@ -1540,12 +1534,12 @@ bool ValidateInputs(bool interactive) {
             else {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                   = "loss("+ NumberToStr(dValue, ".+") +"%)";
+               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
                stop.lossPct.description = exprs[i];
                stop.lossPct.condition   = true;
             }
          }
-         else                                                     return(_false(ValidateInputs.OnError("ValidateInputs(57)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                                     return(_false(ValidateInputs.OnError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
       }
    }
 
@@ -1560,16 +1554,16 @@ bool ValidateInputs(bool interactive) {
    else if (StrStartsWith("off",      sValue)) sValue = "off";
    else if (StrStartsWith("continue", sValue)) sValue = "continue";
    else if (StrStartsWith("reset",    sValue)) sValue = "reset";
-   else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(58)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
+   else                                                           return(_false(ValidateInputs.OnError("ValidateInputs(56)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
    AutoRestart = StrCapitalize(sValue);
 
    // StartLevel
    if (isParameterChange) {
       if (StartLevel != last.StartLevel)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(59)", "Cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)                 return(_false(ValidateInputs.OnError("ValidateInputs(57)", "Cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    if (sequence.direction == D_LONG) {
-      if (StartLevel < 0)                                         return(_false(ValidateInputs.OnError("ValidateInputs(60)", "Invalid StartLevel: "+ StartLevel, interactive)));
+      if (StartLevel < 0)                                         return(_false(ValidateInputs.OnError("ValidateInputs(58)", "Invalid StartLevel: "+ StartLevel, interactive)));
    }
    StartLevel = Abs(StartLevel);
 
@@ -1584,7 +1578,7 @@ bool ValidateInputs(bool interactive) {
    // reset __STATUS_INVALID_INPUT
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-   return(!catch("ValidateInputs(61)"));
+   return(!catch("ValidateInputs(59)"));
 }
 
 
@@ -1631,18 +1625,16 @@ bool ValidateInputs.ID() {
 int ValidateInputs.OnError(string location, string message, bool interactive) {
    interactive = interactive!=0;
    if (IsTesting() || !interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
+      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
 
    int error = ERR_INVALID_INPUT_PARAMETER;
    __STATUS_INVALID_INPUT = true;
 
-   if (__LOG()) log(location +"   "+ message, error);
+   if (IsLogNotice()) logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY)
-      __STATUS_RELAUNCH_INPUT = true;
-
+   int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   if (button == IDRETRY) __STATUS_RELAUNCH_INPUT = true;
    return(error);
 }
 

@@ -33,8 +33,8 @@
  * @see  https://www.mql5.com/en/code/8997                                                                   [FGDI with fixed FDI issues, LastViking]
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -43,7 +43,7 @@ extern color  Color.Ranging  = Blue;
 extern color  Color.Trending = Red;
 extern string DrawType       = "Line* | Dot";
 extern int    DrawWidth      = 1;
-extern int    Max.Bars       = 10000;                    // max. number of bars to display (-1: all available)
+extern int    Max.Bars       = 10000;                    // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -131,8 +131,8 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -152,7 +152,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-fdiPeriods-1);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    UpdateChangedBars(startBar);

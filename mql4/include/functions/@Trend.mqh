@@ -15,15 +15,17 @@
  * @param  _In_  int     lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately
  *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
  *                                                   points to draw a line. (default: draw data points only)
- * @param  _In_  int     digits         [optional] - If set, values are normalized to the specified number of digits.
+ * @param  _In_  int     digits         [optional] - If set, trendline values are normalized to the specified number of digits.
  *                                                   (default: no normalization)
+ *
+ * @return bool - success status
  */
-void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
+bool @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
    enableColoring = enableColoring!=0;
    enableUptrend2 = enableColoring && enableUptrend2!=0;
 
    if (bar >= Bars-1) {
-      if (bar >= Bars) return(catch("@Trend.UpdateDirection(1)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+      if (bar >= Bars) return(!catch("@Trend.UpdateDirection(1)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
       trend[bar] = 0;
 
       if (enableColoring) {
@@ -32,7 +34,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
          if (enableUptrend2)
             uptrend2[bar] = EMPTY_VALUE;
       }
-      return;
+      return(true);
    }
 
    double curValue  = values[bar  ];
@@ -65,7 +67,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
    }
 
    // trend coloring
-   if (!enableColoring) return;
+   if (!enableColoring) return(true);
 
    if (trend[bar] > 0) {                                                // now uptrend
       uptrend  [bar] = values[bar];
@@ -111,7 +113,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
          downtrend[bar] = values[bar];
       }
    }
-   return;
+   return(true);
 
    /*                  [4] [3] [2] [1] [0]
    onBarOpen()  trend: -5  -6  -7  -8  -9
@@ -130,11 +132,11 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
  * Update a trendline's chart legend.
  *
  * @param  string   label          - chart label of the legend object
- * @param  string   name           - the trendline's name (indicator name)
+ * @param  string   name           - indicator name
  * @param  string   status         - additional status info (if any)
- * @param  color    uptrendColor   - the trendline's uptrend color
- * @param  color    downtrendColor - the trendline's downtrend color
- * @param  double   value          - trendline value to display
+ * @param  color    uptrendColor   - the uptrend color
+ * @param  color    downtrendColor - the downtrend color
+ * @param  double   value          - indicator value to display
  * @param  int      digits         - digits of the value to display
  * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
  * @param  datetime barOpenTime    - bar opentime of the value to display
@@ -154,14 +156,16 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       else if (digits == SubPipDigits) sValue = NumberToStr(value, SubPipPriceFormat);
       else                             sValue = DoubleToStr(value, digits);
 
-      if (trend != 0) sTrend = StringConcatenate("(", trend, ")");
+      if (trend != 0) sTrend = StringConcatenate("  (", trend, ")");
+
+      if (status != "") status = StringConcatenate("  ", status);
 
       if (uptrendColor != downtrendColor) {
-         if      (trend ==  1) sOnTrendChange = "turns up";             // intra-bar trend change
-         else if (trend == -1) sOnTrendChange = "turns down";           // ...
+         if      (trend ==  1) sOnTrendChange = "  turns up";           // intra-bar trend change
+         else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(name, "    ", sValue, "  ", sTrend, "    ", status, "    ", sOnTrendChange);
+      string text = StringConcatenate(name, "    ", sValue, sTrend, status, sOnTrendChange);
       color  cColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (cColor == Aqua  ) cColor = DeepSkyBlue;
       else if (cColor == Gold  ) cColor = Orange;

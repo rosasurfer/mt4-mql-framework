@@ -17,8 +17,8 @@
  * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ extern int    Histogram.Style.Width = 2;
 extern color  MainLine.Color        = DodgerBlue;
 extern int    MainLine.Width        = 1;
 
-extern int    Max.Bars              = 5000;                 // max. number of bars to display (-1: all available)
+extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
 
 extern string __________________________;
 
@@ -139,17 +139,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
-   fastMA.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(fastMA.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) fastMA.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) fastMA.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) fastMA.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) fastMA.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) fastMA.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) fastMA.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) fastMA.appliedPrice = PRICE_WEIGHTED;
-      else                              return(catch("onInit(4)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   fastMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (fastMA.appliedPrice==-1 || fastMA.appliedPrice > PRICE_WEIGHTED)
+                                        return(catch("onInit(4)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
 
    // SlowMA.Periods
@@ -185,17 +177,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
-   slowMA.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(slowMA.appliedPrice)) {
-      if      (StrStartsWith("open",     sValue)) slowMA.appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) slowMA.appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) slowMA.appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) slowMA.appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) slowMA.appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) slowMA.appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) slowMA.appliedPrice = PRICE_WEIGHTED;
-      else                              return(catch("onInit(10)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   slowMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (slowMA.appliedPrice==-1 || slowMA.appliedPrice > PRICE_WEIGHTED)
+                                        return(catch("onInit(10)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -276,8 +260,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(bufferMACD)) return(log("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -299,7 +283,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-slowMA.periods);
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    double fastMA, slowMA;
@@ -370,7 +354,7 @@ bool onCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" turned positive";
-      log("onCross(1)  "+ message);
+      logInfo("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
@@ -381,7 +365,7 @@ bool onCross(int section) {
 
    if (section == MODE_LOWER_SECTION) {
       message = indicatorName +" turned negative";
-      log("onCross(2)  "+ message);
+      logInfo("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
@@ -417,7 +401,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.StoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.StoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
@@ -444,7 +428,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
    Chart.RestoreString(name +".input.FastMA.Method",         FastMA.Method        );
    Chart.RestoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );

@@ -14,19 +14,19 @@
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
 
-#define NL                                   "\n"        // new line: 0x0A (MQL file functions auto-convert 0x0A to 0x0D0A)
+#define NL                                   "\n"        // new line: 0x0A (in text mode MQL/Win32 file functions auto-convert 0x0A to 0x0D0A)
 #define TAB                                  "\t"        // tab: 0x09
 
 
-// log level
-#define L_OFF                          0x80000000        // same as INT_MIN which in C++ is internally defined
-#define L_FATAL                             10000        //
-#define L_ERROR                             20000        // logic opposite to log4j: if (__LOG_LEVEL >= msg_level) log  (...);
-#define L_WARN                              30000        // or more simple:          if (__LOG_DEBUG)              debug(...);
-#define L_INFO                              40000        //
-#define L_NOTICE                            50000        //
-#define L_DEBUG                             60000        //
-#define L_ALL                          0x7FFFFFFF        // same as INT_MAX which in C++ is internally defined
+// log levels
+#define LOG_DEBUG                               1        // messages are logged if the message's loglevel (severity) matches
+#define LOG_INFO                                2        // or exceeds the program's configured loglevel
+#define LOG_NOTICE                              4
+#define LOG_WARN                                8
+#define LOG_ERROR                              16
+#define LOG_FATAL                              32
+#define LOG_ALL                         LOG_DEBUG        // alias for the lowest loglevel
+#define LOG_OFF                           INT_MAX        // not a valid loglevel
 
 
 // MQL module type flags
@@ -132,37 +132,39 @@
 #define F_PERIODS_ALL                  0x7FFFFFFF        // INT_MAX: covers all standard and custom timeframes
 
 
-// flags marking errors handled by custom error handlers (these errors don't trigger a terminating ERROR alert)
-#define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //      1
-#define F_ERS_EXECUTION_STOPPING       0x00000002        //      2   temporary state
-#define F_ERS_HISTORY_UPDATE           0x00000004        //      4   temporary state
-#define F_ERR_INVALID_PARAMETER        0x00000008        //      8
-#define F_ERR_INVALID_STOP             0x00000010        //     16
-#define F_ERR_INVALID_TICKET           0x00000020        //     32
-#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040        //     64
-#define F_ERR_MARKET_CLOSED            0x00000080        //    128
-#define F_ERR_NO_CONNECTION            0x00000100        //    256
-#define F_ERR_NO_RESULT                0x00000200        //    512
-#define F_ERR_OFF_QUOTES               0x00000400        //   1024
-#define F_ERR_ORDER_CHANGED            0x00000800        //   2048
-#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000        //   4096
-#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000        //   8192   temporary state
-#define F_ERR_TRADE_DISABLED           0x00004000        //  16384
-#define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //  32768
-#define F_ERR_TRADESERVER_GONE         0x00010000        //  65536
+// flags marking errors handled by custom error handlers (these errors don't trigger a fatal runtime error)
+#define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //       1
+#define F_ERS_EXECUTION_STOPPING       0x00000002        //       2  temporary state
+#define F_ERS_HISTORY_UPDATE           0x00000004        //       4  temporary state
+#define F_ERR_INVALID_PARAMETER        0x00000008        //       8
+#define F_ERR_INVALID_STOP             0x00000010        //      16
+#define F_ERR_INVALID_TICKET           0x00000020        //      32
+#define F_ERR_INVALID_TRADE_PARAMETERS 0x00000040        //      64
+#define F_ERR_MARKET_CLOSED            0x00000080        //     128
+#define F_ERR_NO_CONNECTION            0x00000100        //     256
+#define F_ERR_NO_RESULT                0x00000200        //     512
+#define F_ERR_OFF_QUOTES               0x00000400        //    1024
+#define F_ERR_ORDER_CHANGED            0x00000800        //    2048
+#define F_ERR_SERIES_NOT_AVAILABLE     0x00001000        //    4096
+#define F_ERS_TERMINAL_NOT_YET_READY   0x00002000        //    8192  temporary state
+#define F_ERR_TRADE_DISABLED           0x00004000        //   16384
+#define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //   32768
+#define F_ERR_STOP_DISTANCE_VIOLATED   0x00010000        //   65536
+#define F_ERR_TRADESERVER_GONE         0x00020000        //  131072
 
 
 // flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00020000        // 131072 (don't hedge multiple positions on close)
-#define F_OE_DONT_CHECK_STATUS         0x00040000        // 262144 (don't check order status before proceeding)
+#define F_OE_DONT_HEDGE                0x00040000        //  262144  don't hedge multiple positions on close
+#define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
 
 
-// flag enabling custom timeframe support
-#define F_CUSTOM_TIMEFRAME             0x00080000        // 524288
+// other flags
+#define F_CUSTOM_TIMEFRAME             0x00100000        // 1048576  support for custom timeframes
+#define F_PARTIAL_ID                   0x00200000        // 2097152  parser support for incomplete identifiers
 
 
 // order and operation types
-#define OP_UNDEFINED                           -1        // custom: default value of a non-initialized type var
+#define OP_UNDEFINED                           -1        // custom: default value of a non-initialized order type variable
 #define OP_BUY                                  0        // long position
 #define OP_LONG                            OP_BUY
 #define OP_SELL                                 1        // short position
@@ -180,10 +182,23 @@
 #define OA_STOP                                 2
 
 
-// trade directions, may be used as flags
+// trade directions, can be used as flags
 #define TRADE_DIRECTION_LONG                    1
 #define TRADE_DIRECTION_SHORT                   2
 #define TRADE_DIRECTION_BOTH                    3
+
+
+// price type identifiers, see iMA() etc.
+#define PRICE_CLOSE                             0        // C
+#define PRICE_OPEN                              1        // O
+#define PRICE_HIGH                              2        // H
+#define PRICE_LOW                               3        // L
+#define PRICE_MEDIAN                            4        // (H+L)/2
+#define PRICE_TYPICAL                           5        // (H+L+C)/3
+#define PRICE_WEIGHTED                          6        // (H+L+C+C)/4
+#define PRICE_AVERAGE                           7        // (O+H+L+C)/4
+#define PRICE_BID                               8        // Bid
+#define PRICE_ASK                               9        // Ask
 
 
 // commission types, see struct FXT_HEADER
@@ -198,8 +213,8 @@
 
 
 // commission calculation modes, see GetCommission()
-#define COMMISSION_MODE_MONEY                   0        // commission value in account currency for 1 lot
-#define COMMISSION_MODE_MARKUP                  1        // commission markup in quote currency
+#define MODE_MONEY                              0        // commission value in account currency for 1 lot
+#define MODE_MARKUP                             1        // commission markup in quote currency
 
 
 // file system related constants
@@ -304,7 +319,8 @@
 #define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // executable without history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // executable without chart history (scripts only)
+#define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
 
 
 // MT4 internal messages

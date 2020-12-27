@@ -11,8 +11,8 @@
  * @see  https://www.forexfactory.com/showthread.php?t=970975
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -27,7 +27,7 @@ extern color  Color.Short            = C'81,211,255';       // lightblue-ish
 extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
 extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
-extern int    Max.Bars               = 10000;               // max. number of bars to display (-1: all available)
+extern int    Max.Bars               = 10000;               // max. values to calculate (-1: all available)
 extern string __________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
@@ -173,7 +173,7 @@ int onInit() {
 
    // names, labels and display options
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
-   IndicatorShortName(indicatorName);                           // chart context menu
+   IndicatorShortName(indicatorName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_MA,            indicatorName);            // chart tooltips and "Data" window
    SetIndexLabel(MODE_MA_L,          NULL);
    SetIndexLabel(MODE_MA_S,          NULL);
@@ -206,8 +206,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(maLong)) return(log("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(maLong)) return(logInfo("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -241,7 +241,7 @@ int onTick() {
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
    if (Time[startBar]+Period()*MINUTES-1 < startTime)
       startBar = iBarShiftNext(NULL, NULL, startTime);
 
@@ -368,7 +368,7 @@ bool onReversal(int direction) {
 
    if (direction == D_LONG) {
       message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onReversal(1)  "+ message);
+      if (IsLogInfo()) logInfo("onReversal(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -379,7 +379,7 @@ bool onReversal(int direction) {
 
    if (direction == D_SHORT) {
       message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onReversal(2)  "+ message);
+      if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
@@ -434,6 +434,52 @@ void SetIndicatorOptions() {
  */
 double GetStochasticOfRSI(int iBar) {
    return(icStochasticOfRSI(NULL, stochPeriods, stochMa1Periods, stochMa2Periods, rsiPeriods, Stochastic.MODE_SIGNAL, iBar));
+}
+
+
+/**
+ * Load the "Stochastic of RSI" indicator and return a value.
+ *
+ * @param  int timeframe              - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int stochMainPeriods       - indicator parameter
+ * @param  int stochSlowedMainPeriods - indicator parameter
+ * @param  int stochSignalPeriods     - indicator parameter
+ * @param  int rsiPeriods             - indicator parameter
+ * @param  int iBuffer                - indicator buffer index of the value to return
+ * @param  int iBar                   - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, ".attic/Stochastic of RSI",
+                          stochMainPeriods,                                // int    Stoch.Main.Periods
+                          stochSlowedMainPeriods,                          // int    Stoch.SlowedMain.Periods
+                          stochSignalPeriods,                              // int    Stoch.Signal.Periods
+                          rsiPeriods,                                      // int    RSI.Periods
+                          Blue,                                            // color  Main.Color
+                          Red,                                             // color  Signal.Color
+                          "Line",                                          // string Signal.DrawType
+                          1,                                               // int    Signal.DrawWidth
+                          -1,                                              // int    Max.Bars
+                          "",                                              // string ______________________
+                          lpSuperContext,                                  // int    __lpSuperContext
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icStochasticOfRSI(1)", error));
+      logWarn("icStochasticOfRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
 }
 
 

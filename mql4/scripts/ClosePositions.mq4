@@ -2,8 +2,8 @@
  * Schlieﬂt die angegebenen Positionen. Ohne zus‰tzliche Parameter werden alle offenen Positionen geschlossen.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
-int __DEINIT_FLAGS__[];
+int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
+int __DeinitFlags[];
 
 #property show_inputs
 
@@ -140,7 +140,7 @@ int onStart() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySoundEx("Windows Notify.wav");
-      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ Pluralize(selected) +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ Pluralize(selected) +"?", ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
          int oes[][ORDER_EXECUTION.intSize];
@@ -150,7 +150,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __NAME(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(last_error);

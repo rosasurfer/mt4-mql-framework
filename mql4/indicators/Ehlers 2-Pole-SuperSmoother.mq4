@@ -17,8 +17,8 @@
  * TODO: analyze and fix the required run-up period
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -29,7 +29,7 @@ extern color  Color.UpTrend        = RoyalBlue;
 extern color  Color.DownTrend      = Gold;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
-extern int    Max.Bars             = 5000;               // max. number of bars to display (-1: all available)
+extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
 extern string __________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
@@ -116,17 +116,9 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                   // default price type
-   appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (appliedPrice == -1) {
-      if      (StrStartsWith("open",     sValue)) appliedPrice = PRICE_OPEN;
-      else if (StrStartsWith("high",     sValue)) appliedPrice = PRICE_HIGH;
-      else if (StrStartsWith("low",      sValue)) appliedPrice = PRICE_LOW;
-      else if (StrStartsWith("close",    sValue)) appliedPrice = PRICE_CLOSE;
-      else if (StrStartsWith("median",   sValue)) appliedPrice = PRICE_MEDIAN;
-      else if (StrStartsWith("typical",  sValue)) appliedPrice = PRICE_TYPICAL;
-      else if (StrStartsWith("weighted", sValue)) appliedPrice = PRICE_WEIGHTED;
-      else             return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (appliedPrice==-1 || appliedPrice > PRICE_WEIGHTED)
+                       return(catch("onInit(2)  Invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    AppliedPrice = PriceTypeDescription(appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -183,7 +175,7 @@ int onInit() {
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    string shortName = "2-Pole-Filter("+ Periods +")";
-   IndicatorShortName(shortName);                        // chart context menu
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
    SetIndexLabel(MODE_UPTREND1,  NULL);
@@ -235,8 +227,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // under undefined conditions on the first tick after terminal start buffers may not yet be initialized
-   if (!ArraySize(main)) return(log("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -260,7 +252,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-Periods);             // TODO: fix the run-up period
-   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
@@ -299,7 +291,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onTrendChange(1)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -310,7 +302,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (__LOG()) log("onTrendChange(2)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
@@ -344,7 +336,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.StoreInt   (name +".input.Periods",              Periods             );
    Chart.StoreString(name +".input.AppliedPrice",         AppliedPrice        );
    Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
@@ -366,7 +358,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string name = __NAME();
+   string name = ProgramName();
    Chart.RestoreInt   (name +".input.Periods",              Periods             );
    Chart.RestoreString(name +".input.AppliedPrice",         AppliedPrice        );
    Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );

@@ -42,8 +42,8 @@
  * - renamed input parameter UseIndicatorSwitch        => EntryIndicator
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
+int   __InitFlags[];
+int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -169,7 +169,7 @@ int onInit() {
    LotBase         = MarketInfo(Symbol(), MODE_LOTSIZE);          // Fetch the amount of money in base currency for 1 lot
    RecalculateRisk();                                             // Make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
    if (Magic < 0) Magic = GenerateMagicNumber();                  // If magic number is set to a value less than 0, then generate a new MagicNumber
-   commissionMarkup = GetCommission(1, COMMISSION_MODE_MARKUP);
+   commissionMarkup = GetCommission(1, MODE_MARKUP);
 
    UpdatePlStats();
    ShowStatus();
@@ -508,7 +508,7 @@ double CalculateLotsize() {
       // Check if ManualLotsize is greater than allowed LotSize
       if (ManualLotsize > maxlot) {
          lotsize = maxlot;
-         warn("CalculateLotsize(1)  Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
+         logWarn("CalculateLotsize(1)  Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
          ManualLotsize = maxlot;
       }
       else if (ManualLotsize < minlot) {
@@ -553,7 +553,7 @@ void RecalculateRisk() {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be higher than " + DoubleToStr ( maxrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss and Equity. It has now been adjusted accordingly to " + DoubleToStr ( maxrisk, 1 ) + "%";
          Risk = maxrisk;
-         warn("RecalculateRisk(1)  "+ textstring);
+         logWarn("RecalculateRisk(1)  "+ textstring);
       }
       // If Risk% is less than the minimum risklevel the broker accept, then adjust Risk accordingly and print out changes
       if (Risk < minrisk)
@@ -561,7 +561,7 @@ void RecalculateRisk() {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be lower than " + DoubleToStr ( minrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss, AddPriceGap and Equity. It has now been adjusted accordingly to " + DoubleToStr ( minrisk, 1 ) + "%";
          Risk = minrisk;
-         warn("RecalculateRisk(2)  "+ textstring);
+         logWarn("RecalculateRisk(2)  "+ textstring);
       }
    }
    // If we don't use MoneyManagement, then use fixed manual LotSize
@@ -572,20 +572,20 @@ void RecalculateRisk() {
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be less than " + DoubleToStr ( MinLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2);
          ManualLotsize = MinLots;
-         warn("RecalculateRisk(3)  "+ textstring);
+         logWarn("RecalculateRisk(3)  "+ textstring);
       }
       if ( ManualLotsize > MaxLots )
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than " + DoubleToStr ( MaxLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2 );
          ManualLotsize = MaxLots;
-         warn("RecalculateRisk(4)  "+ textstring);
+         logWarn("RecalculateRisk(4)  "+ textstring);
       }
       // Check to see that manual LotSize does not exceeds maximum allowed LotSize
       if ( ManualLotsize > maxlot )
       {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than maximum allowed LotSize. It has now been adjusted to " + DoubleToStr ( maxlot, 2 );
          ManualLotsize = maxlot;
-         warn("RecalculateRisk(5)  "+ textstring);
+         logWarn("RecalculateRisk(5)  "+ textstring);
       }
    }
    catch("RecalculateRisk(6)");
@@ -646,7 +646,7 @@ void UpdatePlStats() {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   if (!__CHART()) return(error);
+   if (!IsChart()) return(error);
 
    string sError = "";
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
