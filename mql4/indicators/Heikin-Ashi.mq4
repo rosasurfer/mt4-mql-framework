@@ -22,16 +22,17 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Input.MA.Periods  = 11;
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA"; // smoothing of input prices                             Genesis: SMMA(6) = EMA(11)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA";    // smoothing of input prices                             Genesis: SMMA(6) = EMA(11)
 
-extern int    Output.MA.Periods = 2;
-extern string Output.MA.Method  = "none | SMA | LWMA* | EMA | SMMA"; // smoothing of HA values                                Genesis: LWMA(2)
+extern int    Output.MA.Periods = 1;
+extern string Output.MA.Method  = "none* | SMA | LWMA | EMA | SMMA";    // smoothing of HA values                                Genesis: LWMA(2)
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
 
+extern int    CandleWidth       = 2;
 extern bool   ShowWicks         = false;
-extern int    Max.Bars          = 10000;                             // max. values to calculate (-1: all available)
+extern int    Max.Bars          = 10000;                                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -137,8 +138,12 @@ int onInit() {
    if (Color.BarUp   == 0xFF000000) Color.BarUp   = CLR_NONE;
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 
+   // CandleWidth
+   if (CandleWidth < 0)          return(catch("onInit(5)  Invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth > 5)          return(catch("onInit(6)  Invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+
    // Max.Bars
-   if (Max.Bars < -1)            return(catch("onInit(5)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)            return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
 
@@ -185,7 +190,7 @@ int onInit() {
    inputInitPeriods  = ifInt( inputMaMethod==MODE_EMA ||  inputMaMethod==MODE_SMMA, Max(10,  inputMaPeriods*3),  inputMaPeriods);
    outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
 
-   return(catch("onInit(6)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -347,12 +352,14 @@ void UpdateTrend(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
-   int drawType = ifInt(ShowWicks, DRAW_HISTOGRAM, DRAW_NONE);
 
-   SetIndexStyle(MODE_OUT_OPEN,    DRAW_HISTOGRAM, EMPTY, 3, Color.BarDown);  // in histograms the larger of both values
-   SetIndexStyle(MODE_OUT_CLOSE,   DRAW_HISTOGRAM, EMPTY, 3, Color.BarUp  );  // determines the color to use
-   SetIndexStyle(MODE_OUT_HIGHLOW, drawType,       EMPTY, 1, Color.BarDown);
-   SetIndexStyle(MODE_OUT_LOWHIGH, drawType,       EMPTY, 1, Color.BarUp  );
+   int drawTypeCandles = ifInt(CandleWidth, DRAW_HISTOGRAM, DRAW_NONE);
+   int drawTypeWicks   = ifInt(ShowWicks,   DRAW_HISTOGRAM, DRAW_NONE);
+
+   SetIndexStyle(MODE_OUT_OPEN,    drawTypeCandles, EMPTY, CandleWidth, Color.BarDown);   // in histograms the larger of both values
+   SetIndexStyle(MODE_OUT_CLOSE,   drawTypeCandles, EMPTY, CandleWidth, Color.BarUp  );   // determines the applied color
+   SetIndexStyle(MODE_OUT_HIGHLOW, drawTypeWicks,   EMPTY, 1,           Color.BarDown);
+   SetIndexStyle(MODE_OUT_LOWHIGH, drawTypeWicks,   EMPTY, 1,           Color.BarUp  );
 }
 
 
@@ -368,6 +375,7 @@ string InputsToStr() {
                             "Output.MA.Method=",  DoubleQuoteStr(Output.MA.Method), ";", NL,
                             "Color.BarUp=",       ColorToStr(Color.BarUp),          ";", NL,
                             "Color.BarDown=",     ColorToStr(Color.BarDown),        ";", NL,
+                            "CandleWidth=",       CandleWidth,                      ";", NL,
                             "ShowWicks=",         BoolToStr(ShowWicks),             ";", NL,
                             "Max.Bars=",          Max.Bars,                         ";")
    );
