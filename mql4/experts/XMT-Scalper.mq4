@@ -1,25 +1,23 @@
 /**
- * A "MillionDollarPips EA" revisited
+ * XMT-Scalper revisited
  *
  *
- * An EA based on the probably single most famous MetaTrader EA ever written. Nothing remains from the original except the
- * core idea of the strategy: scalping based on a reversal from a channel breakout.
+ * XMT-Scalper is based on the infamous "MillionDollarPips EA". Credits for the original adaption from MDP to XMT go to a guy
+ * named Capella. In his own words: "Nothing remains from the original except the core idea of the strategy: scalping based
+ * on a reversal from a channel breakout."
  *
- * Today various versions of the original EA circulate in the internet by various names (MDP-Plus, XMT, Assar). All versions
- * are so fundamentally flawed that they cannot be run on a live account. This version is fully embedded in the rosasurfer
- * MQL4 framework. It fixes the existing issues, replaces all parts with more robust or faster components and adds major
- * improvements.
+ * Today various versions of his EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them can be
+ * recommended for live trading. This EA is based on Capella's work and is a complete rewrite.
  *
  * Sources:
- *  The original versions are included (use only for reference):
+ *  @origin XMT-Scalper v2.522 (Capella)
+ *  @link   https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp             [MillionDollarPips v2 decompiled]
+ *  @link   https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp              [MDP-Plus v2.2 + PDF by Capella]
+ *  @link   https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp         [XMT-Scalper v2.522 + PDF by Capella]
  *
- *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp              [MillionDollarPips v2 decompiled]
- *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp               [MDP-Plus v2.2 + PDF by Capella]
- *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp          [XMT-Scalper v2.522 + PDF by Capella]
  *
- *
- * Fixes/changes (wip):
- * - embedded in MQL4 framework
+ * Fixes/changes:
+ * - embedded into the rosasurfer/mt4-mql framework
  * - moved all error tracking/handling to the framework
  * - moved all Print() output to the framework logger
  * - fixed validation of symbol digits
