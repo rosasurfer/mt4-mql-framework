@@ -23,13 +23,13 @@
  * - fixed validation of symbol digits
  * - fixed processing logic of open orders and removed redundant parts
  * - fixed stoploss calculations
- * - replaced invalid commission calculation by framework functionality and removed input parameter "Commission"
+ * - replaced invalid commission calculation and removed input parameter "Commission"
  * - removed input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
  * - removed obsolete NDD functionality
  * - removed obsolete order expiration time
  * - removed useless sending of speed test orders
- * - removed measuring execution times and trade suspension on delays (framework handling is better)
- * - removed screenshot functionality (framework logging is better)
+ * - removed obsolete measuring of execution times and trade suspension on delays
+ * - removed obsolete screenshot functionality
  * - removed obsolete input parameter "UseVolatilityPercentage"
  * - removed obsolete input parameter "Verbose"
  *
