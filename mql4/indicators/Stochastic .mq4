@@ -3,11 +3,12 @@
  *
  *
  * The Stochastic oscillator shows the relative position of current price compared to the price range of the lookback period,
- * normalized to a value from 0 to 100. The fast Stochastic is smoothed once, the slow Stochastic is smoothed twice.
+ * normalized to a value from 0 to 100. The fast Stochastic is smoothed once, i.e. %D = MA(raw %K). The slow Stochastic is
+ * smoothed twice, i.e. %D = MA(slowed %K).
  *
  * Indicator buffers for iCustom():
- *  • Stochastic.MODE_MAIN:   indicator main line (%K or slowed %K)
- *  • Stochastic.MODE_SIGNAL: indicator signal line (%D)
+ *  • Stochastic.MODE_MAIN:   indicator main line (raw %K or slowed %K, i.e. first smoothing)
+ *  • Stochastic.MODE_SIGNAL: indicator signal line (%D, i.e. final smoothing)
  *  • Stochastic.MODE_TREND:  direction and age of the last signal
  *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
@@ -19,8 +20,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MainLine.Periods      = 15;                // %K line                                                        // EURJPY: 15        14
-extern int    SlowedMain.MA.Periods = 1;                 // slowed %K line (MA)                                            //         1          3
-extern int    SignalLine.MA.Periods = 1;                 // %D line (MA of resulting %K)                                   //         1          3
+extern int    SlowedMain.MA.Periods = 1;                 // slowed %K line (MA 1)                                          //         1          3
+extern int    SignalLine.MA.Periods = 1;                 // %D line (MA 2 of resulting %K)                                 //         1          3
 extern color  MainLine.Color        = DodgerBlue;
 extern color  SignalLine.Color      = Red;
 extern int    MaxBars               = 10000;             // max. number of values to calculate (-1: all available)
