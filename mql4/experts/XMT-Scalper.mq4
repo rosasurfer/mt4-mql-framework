@@ -2,12 +2,12 @@
  * XMT-Scalper revisited
  *
  *
- * XMT-Scalper is based on the infamous "MillionDollarPips EA". Credits for the original adaption from MDP to XMT go to a guy
- * named Capella. In his own words: "Nothing remains from the original except the core idea of the strategy: scalping based
- * on a reversal from a channel breakout."
+ * XMT-Scalper is based on the infamous "MillionDollarPips EA". Credits for the original adaption from MDP to XMT go to a
+ * Swedish guy named Capella. In his own words: "Nothing remains from the original except the core idea of the strategy:
+ * scalping based on a reversal from a channel breakout."
  *
- * Today various versions of his EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them can be
- * recommended for live trading. This EA is based on Capella's work and is a complete rewrite.
+ * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them was
+ * suitable for trading real money. This EA is based on Capella's work and is a complete rewrite.
  *
  * Sources:
  *  @origin XMT-Scalper v2.522 (Capella)
