@@ -579,7 +579,7 @@ bool EventListener_ChartCommand(string &commands[]) {
 
 
 /**
- * Initialization pre-processing hook.
+ * Initialization preprocessing
  *
  * @return int - error status
  *
@@ -673,7 +673,7 @@ int onInitRecompile()
 
 
 /**
- * Initialization post-processing hook.
+ * Initialization postprocessing
  *
  * @return int - error status
  *
@@ -686,7 +686,7 @@ int afterInit()
 
 
 /**
- * Deinitialization pre-processing hook.
+ * Deinitialization preprocessing
  *
  * @return int - error status
  *
@@ -785,7 +785,7 @@ int onDeinitRecompile()
 
 
 /**
- * Deinitialization post-processing hook.
+ * Deinitialization postprocessing
  *
  * @return int - error status
  *

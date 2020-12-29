@@ -150,7 +150,7 @@ int init() {
    // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql/issues/1
    // +----------------------+-----------------------------------------------+-----------------+-------------+
    //
-   error = onInit();                                                          // pre-processing hook
+   error = onInit();                                                          // preprocessing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = ProgramInitReason();                                   //
@@ -171,7 +171,7 @@ int init() {
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
-      afterInit();                                                            // post-processing hook
+      afterInit();                                                            // postprocessing hook
    if (CheckErrors("init(17)")) return(last_error);
 
    ShowStatus(last_error);
@@ -710,7 +710,7 @@ bool Tester.RecordEquity() {
 
 
 /**
- * Initialization pre-processing hook.
+ * Initialization preprocessing
  *
  * @return int - error status
  *
@@ -781,7 +781,7 @@ int onInitRecompile()
 
 
 /**
- * Initialization post-processing hook.
+ * Initialization postprocessing
  *
  * @return int - error status
  *
@@ -794,7 +794,7 @@ int afterInit()
 
 
 /**
- * Deinitialization pre-processing hook.
+ * Deinitialization preprocessing
  *
  * @return int - error status
  *
@@ -893,7 +893,7 @@ int onDeinitClose()
 
 
 /**
- * Deinitialization post-processing hook.
+ * Deinitialization postprocessing
  *
  * @return int - error status
  *
