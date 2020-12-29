@@ -1,6 +1,6 @@
 
 /**
- * Initialization pre-processing hook.
+ * Initialization preprocessing
  *
  * @return int - error status
  */
@@ -136,7 +136,7 @@ int onInitRecompile() {
 
 
 /**
- * Initialization post-processing hook. Not called if the reason-specific event handler returned with an error.
+ * Initialization postprocessing. Not called if the reason-specific event handler returned with an error.
  *
  * @return int - error status
  */
