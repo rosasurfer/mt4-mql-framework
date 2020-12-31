@@ -606,7 +606,7 @@ bool Tester.LogMarketInfo() {
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
                                                                                message = message +" Bars="        + Bars                                      +";";
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + DoubleToStr(spread, 1)                    +";";
                                                                                message = message +" Digits="      + Digits                                    +";";
    double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
    double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")                +";";
@@ -689,8 +689,11 @@ bool Tester.RecordEquity() {
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   Test_StartReporting(int ec[], datetime from, int bars, int reportId, string reportSymbol);
-   bool   Test_StopReporting (int ec[], datetime to,   int bars);
+   bool   Test_StartReporting (int ec[], datetime from, int bars, int reportId, string reportSymbol);
+   bool   Test_StopReporting  (int ec[], datetime to,   int bars);
+   bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+
 
 #import "rsfHistory.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);

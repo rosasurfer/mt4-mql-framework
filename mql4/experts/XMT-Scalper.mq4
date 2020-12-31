@@ -18,16 +18,16 @@
  *
  * Fixes/changes:
  * - embedded into the rosasurfer/mt4-mql framework
- * - moved all error tracking/handling to the framework
- * - moved all Print() output to the framework logger
+ * - moved error tracking/handling to the framework
+ * - moved Print() output to the framework logger
  * - fixed validation of symbol digits
  * - fixed processing logic of open orders and removed redundant parts
  * - fixed stoploss calculations
- * - replaced invalid commission calculation and removed input parameter "Commission"
- * - removed input parameter "MinMarginLevel" to continue managing open positions during critical drawdowns
+ * - replaced commission calculations and removed input parameter "Commission"
+ * - removed input parameter "MinMarginLevel" to continue managing positions during critical drawdowns
  * - removed obsolete NDD functionality
  * - removed obsolete order expiration time
- * - removed useless sending of speed test orders
+ * - removed obsolete sending of speed test orders
  * - removed obsolete measuring of execution times and trade suspension on delays
  * - removed obsolete screenshot functionality
  * - removed obsolete input parameter "UseVolatilityPercentage"
@@ -268,7 +268,7 @@ int MainFunction() {
    double bidMinusCommission = Bid - commissionMarkup;
    double askPlusCommission  = Ask + commissionMarkup;
    double spread             = Ask - Bid;
-   int    openOrders         = 0;
+   int openOrders = 0;
 
    for (int i=0; i < OrdersTotal(); i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
@@ -284,8 +284,7 @@ int MainFunction() {
                   orderstoploss   = NormalizeDouble(Bid - StopLoss*Point - AddPriceGap, Digits);
                   ordertakeprofit = NormalizeDouble(askPlusCommission + TakeProfit*Point + AddPriceGap, Digits);
                   if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                     if (!OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, NULL, Lime))
-                        return(catch("MainFunction(1)->OrderModify()"));
+                     if (!OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, NULL, Lime)) return(catch("MainFunction(1)->OrderModify()"));
                   }
                }
                openOrders++;
@@ -301,8 +300,7 @@ int MainFunction() {
                   orderstoploss   = NormalizeDouble(Ask + StopLoss*Point + AddPriceGap, Digits);
                   ordertakeprofit = NormalizeDouble(bidMinusCommission - TakeProfit*Point - AddPriceGap, Digits);
                   if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                     if (!OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, NULL, Orange))
-                        return(catch("MainFunction(2)->OrderModify()"));
+                     if (!OrderModify(OrderTicket(), 0, orderstoploss, ordertakeprofit, NULL, Orange)) return(catch("MainFunction(2)->OrderModify()"));
                   }
                }
                openOrders++;
@@ -310,7 +308,7 @@ int MainFunction() {
                break;
 
             case OP_BUYSTOP:
-               // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
+               // Price must not be larger than indicator in order to modify the order, otherwise the order will be deleted
                if (!isbidgreaterthanindy) {
                   // Calculate how much Price, SL and TP should be modified
                   orderprice      = NormalizeDouble(Ask + StopLevel + AddPriceGap, Digits);
@@ -319,8 +317,7 @@ int MainFunction() {
                   // modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
                   if (orderprice < OrderOpenPrice() && OrderOpenPrice()-orderprice > TrailingStart) {
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Lime))
-                           return(catch("MainFunction(3)->OrderModify()"));
+                        if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Lime)) return(catch("MainFunction(3)->OrderModify()"));
                      }
                   }
                   openOrders++;
@@ -339,8 +336,7 @@ int MainFunction() {
                   // modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
                   if (orderprice > OrderOpenPrice() && orderprice-OrderOpenPrice() > TrailingStart) {
                      if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange))
-                           return(catch("MainFunction(5)->OrderModify()"));
+                        if (!OrderModify(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, 0, Orange)) return(catch("MainFunction(5)->OrderModify()"));
                      }
                   }
                   openOrders++;
@@ -392,8 +388,7 @@ int MainFunction() {
             orderprice      = Ask + StopLevel;
             orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
             ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
-            if (!OrderSend(Symbol(), OP_BUYSTOP, lotsize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime))
-               return(catch("MainFunction(7)->OrderSend()"));
+            if (!OrderSend(Symbol(), OP_BUYSTOP, lotsize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime)) return(catch("MainFunction(7)->OrderSend()"));
             openOrders++;
          }
 
@@ -401,8 +396,7 @@ int MainFunction() {
             orderprice      = Bid - StopLevel;
             orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
             ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
-            if (!OrderSend(Symbol(), OP_SELLSTOP, lotsize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange))
-               return(catch("MainFunction(8)->OrderSend()"));
+            if (!OrderSend(Symbol(), OP_SELLSTOP, lotsize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange)) return(catch("MainFunction(8)->OrderSend()"));
             openOrders++;
          }
       }
@@ -627,7 +621,7 @@ void UpdatePlStats() {
       }
    }
 
-   // calculate equity for the EA (not for the entire account)
+   // calculate equity for the EA
    openPl   = openProfit + openSwap + openCommission;
    closedPl = closedProfit + closedSwap + closedCommission;
    totalPl  = openPl + closedPl;
