@@ -2,12 +2,18 @@
  * XMT-Scalper revisited
  *
  *
- * This EA is based on the famous "MillionDollarPips EA". Credits for the original adaption from MDP to XMT go to a Swedish
- * guy named Capella. In his own words: "Nothing remains from the original except the core idea of the strategy: scalping
- * based on a reversal from a channel breakout."
+ * This EA is originally based on the famous "MillionDollarPips EA". Credits for the initial transformation from MDP to
+ * XMT-Scalper go to a Swedish guy named Capella. In his own words: "Nothing remains from the original except the core idea
+ * of the strategy: scalping based on a reversal from a channel breakout."
  *
- * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None is suitable
- * for trading real money. This version is based on Capella's work and a complete rewrite.
+ * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them
+ * was found suitable for trading real money. Main cause is a too small average realized profit in pip. A profitable test
+ * typically yields results similar to the following:
+ *
+ *  TEST: {..., barModel=EveryTick, spread=1.0 pip, trades=77, avgRunup=9.0 pip, avgDrawdown=-1.7 pip, avgRealized=2.2 pip}
+ *
+ * In live trading 2.2 pip are easily eaten-up by slippage and/or commissions and final results are rarely positive.
+ * This version is based on Capella's work and again a complete rewrite.
  *
  *
  * Sources:
@@ -27,7 +33,7 @@ extern bool    Debug                      = false; // Debug: Print huge log file
 extern bool    Verbose                    = false; // Verbose: Additional log information printed in the Expert tab
 extern bool    ReverseTrade               = false; // ReverseTrade: If TRUE, then trade in opposite direction
 extern int     Magic                      = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
-extern string  OrderCmt                   = "XMT-Scalper 2.522"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
+extern string  OrderCmt                   = "XMT";    // OrderCmt. Trade comments that appears in the Trade and Account History tab
 extern string  TradingSettings            = "==== Trade settings ====";
 extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
 extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
@@ -76,7 +82,7 @@ extern color   Color_Section4             = Blue;// Color for text lines
 #include <rsfLibs.mqh>
 
 
-string EA_version = "XMT-Scalper v. 2.522";
+string EA_version = "XMT-Scalper rsf";
 
 datetime StartTime;        // Initial time
 datetime LastTime;         // For measuring tics
