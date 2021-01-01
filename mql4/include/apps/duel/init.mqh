@@ -52,7 +52,7 @@ int onInitTimeframeChange() {
 
 
 /**
- * Initialization post-processing hook. Not called if the reason-specific init handler returned with an error.
+ * Initialization postprocessing. Not called if the reason-specific init handler returned with an error.
  *
  * @return int - error status
  */
