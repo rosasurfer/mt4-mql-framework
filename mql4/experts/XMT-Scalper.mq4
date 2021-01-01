@@ -18,9 +18,9 @@
  *
  * Sources:
  *  @origin XMT-Scalper v2.522
- *  @link   https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp             [MillionDollarPips v2 decompiled]
- *  @link   https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp              [MDP-Plus v2.2 + PDF by Capella]
- *  @link   https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp         [XMT-Scalper v2.522 + PDF by Capella]
+ *  @link   https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp#            [MillionDollarPips v2 decompiled]
+ *  @link   https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp#             [MDP-Plus v2.2 + PDF by Capella]
+ *  @link   https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#        [XMT-Scalper v2.522 + PDF by Capella]
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
