@@ -150,7 +150,7 @@ int init() {
    // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql/issues/1
    // +----------------------+-----------------------------------------------+-----------------+-------------+
    //
-   error = onInit();                                                          // pre-processing hook
+   error = onInit();                                                          // preprocessing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = ProgramInitReason();                                   //
@@ -171,7 +171,7 @@ int init() {
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
-      afterInit();                                                            // post-processing hook
+      afterInit();                                                            // postprocessing hook
    if (CheckErrors("init(17)")) return(last_error);
 
    ShowStatus(last_error);
@@ -606,7 +606,7 @@ bool Tester.LogMarketInfo() {
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
                                                                                message = message +" Bars="        + Bars                                      +";";
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + DoubleToStr(spread, 1)                    +";";
                                                                                message = message +" Digits="      + Digits                                    +";";
    double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
    double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")                +";";
@@ -689,8 +689,11 @@ bool Tester.RecordEquity() {
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   Test_StartReporting(int ec[], datetime from, int bars, int reportId, string reportSymbol);
-   bool   Test_StopReporting (int ec[], datetime to,   int bars);
+   bool   Test_StartReporting (int ec[], datetime from, int bars, int reportId, string reportSymbol);
+   bool   Test_StopReporting  (int ec[], datetime to,   int bars);
+   bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
+
 
 #import "rsfHistory.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
@@ -710,7 +713,7 @@ bool Tester.RecordEquity() {
 
 
 /**
- * Initialization pre-processing hook.
+ * Initialization preprocessing
  *
  * @return int - error status
  *
@@ -781,7 +784,7 @@ int onInitRecompile()
 
 
 /**
- * Initialization post-processing hook.
+ * Initialization postprocessing
  *
  * @return int - error status
  *
@@ -794,7 +797,7 @@ int afterInit()
 
 
 /**
- * Deinitialization pre-processing hook.
+ * Deinitialization preprocessing
  *
  * @return int - error status
  *
@@ -893,7 +896,7 @@ int onDeinitClose()
 
 
 /**
- * Deinitialization post-processing hook.
+ * Deinitialization postprocessing
  *
  * @return int - error status
  *

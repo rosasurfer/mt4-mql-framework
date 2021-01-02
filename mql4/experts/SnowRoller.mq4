@@ -1262,7 +1262,7 @@ string UpdateStatus.PositionCloseMsg(int i) {
    string comment     = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message     = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was closed at "+ sClosePrice;
 
-   SelectTicket(orders.ticket[i], "UpdateStatus.PositionCloseMsg(1)", /*pushTicket=*/true);
+   SelectTicket(orders.ticket[i], "UpdateStatus.PositionCloseMsg(1)", /*push=*/true);
    if (StrStartsWithI(OrderComment(), "so:"))
       message = message +" ("+ OrderComment() +")";
    OrderPop("UpdateStatus.PositionCloseMsg(2)");
