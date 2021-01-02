@@ -814,7 +814,7 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
    string message       = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was ";
    string sReason       = "cancelled";
 
-   SelectTicket(ticket, "UpdateStatus.OrderCancelledMsg(2)", /*pushTicket=*/true);
+   SelectTicket(ticket, "UpdateStatus.OrderCancelledMsg(2)", /*push=*/true);
    sReason = "unexpectedly cancelled";
    if (OrderComment() == "deleted [no money]") {
       sReason = "deleted (not enough money)";
@@ -869,7 +869,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
    string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was unexpectedly closed at "+ sClosePrice;
    string sStopout    = "";
 
-   SelectTicket(ticket, "UpdateStatus.PositionCloseMsg(2)", /*pushTicket=*/true);
+   SelectTicket(ticket, "UpdateStatus.PositionCloseMsg(2)", /*push=*/true);
    if (StrStartsWithI(OrderComment(), "so:")) {
       sStopout = ", "+ OrderComment();
       error = ERR_MARGIN_STOPOUT;

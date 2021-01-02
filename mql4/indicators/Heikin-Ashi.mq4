@@ -22,10 +22,10 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Input.MA.Periods  = 11;
-extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA";    // smoothing of input prices                             Genesis: SMMA(6) = EMA(11)
+extern string Input.MA.Method   = "none | SMA | LWMA | EMA* | SMMA";    // smoothing of input prices
 
 extern int    Output.MA.Periods = 1;
-extern string Output.MA.Method  = "none* | SMA | LWMA | EMA | SMMA";    // smoothing of HA values                                Genesis: LWMA(2)
+extern string Output.MA.Method  = "none* | SMA | LWMA | EMA | SMMA";    // smoothing of HA values
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;

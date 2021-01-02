@@ -5170,7 +5170,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
-               if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+               if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5770,8 +5770,8 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          }
          if (IsLogInfo()) logInfo("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
-         if (!IsTesting())                                    PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         if (!IsTesting())                                  PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         else if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }
@@ -7539,8 +7539,8 @@ bool onCommand(string data[]) { return(!catch("onCommand()  must be implemented 
    int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
    bool   SortMqlStringsA(string values[], int size);
 
-   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
 
    int    pi_hProcess(int pi[]);
    int    pi_hThread(int pi[]);
