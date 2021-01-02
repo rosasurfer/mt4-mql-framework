@@ -7,13 +7,7 @@
  * of the strategy: scalping based on a reversal from a channel breakout."
  *
  * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them
- * was found suitable for trading real money. Main cause is a too small average realized profit in pip. A profitable test
- * typically yields results similar to the following:
- *
- *  TEST: {..., barModel=EveryTick, spread=1.0 pip, trades=77, avgRunup=9.0 pip, avgDrawdown=-1.7 pip, avgRealized=2.2 pip}
- *
- * In live trading 2.2 pip are easily eaten-up by slippage and/or commissions and final results are rarely positive.
- * This version is based on Capella's work and again a complete rewrite.
+ * was suitable for trading real money due to the effect of slippage and commissions. This version is a complete rewrite.
  *
  *
  * Sources:
