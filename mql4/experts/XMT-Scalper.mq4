@@ -41,7 +41,7 @@ extern int    Magic                     = -1; // Magic: If set to a number less 
 extern string OrderCmt                  = "XMT 2.522-rsf"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
 extern string TradingSettings           = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
-extern double MaxSpread                 = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
+extern double MaxSpread                 = 30; // MaxSprea: Max allowed spread in points (1 / 10 pip)
 extern double StopLoss                  = 60; // StopLoss: SL from as many points. Default 60 (= 6 pips)
 extern double TakeProfit                = 100; // TakeProfit: TP from as many points. Default 100 (= 10 pip)
 extern double AddPriceGap               = 0; // AddPriceGap: Additional price gap in points added to SL and TP in order to avoid Error 130
@@ -58,13 +58,13 @@ extern double VolatilityPercentageLimit = 0; // VolatilityPercentageLimit: Perce
 extern string UseIndicatorSet           = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
 extern int    UseIndicatorSwitch        = 1; // UseIndicatorSwitch: Choose of indicator for price channel.
 extern int    Indicatorperiod           = 3; // Indicatorperiod: Period in bars for indicator
-extern double BBDeviation               = 2.0; // BBDeviation: Deviation for the iBands indicator only
+extern double BBDeviation               = 2; // BBDeviation: Deviation for the iBands indicator only
 extern double EnvelopesDeviation        = 0.07; // EnvelopesDeviation: Deviation for the iEnvelopes indicator only
 extern string Money_Management          = "==== Money Management ====";
 extern bool   MoneyManagement           = true; // MoneyManagement: If TRUE then calculate lotsize automaticallay based on Risk, if False then use ManualLotsize below
 extern double MinLots                   = 0.01; // MinLots: Minimum lot-size to trade with
-extern double MaxLots                   = 100.0; // MaxLots : Maximum allowed lot-size to trade with
-extern double Risk                      = 2.0; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
+extern double MaxLots                   = 100; // MaxLots : Maximum allowed lot-size to trade with
+extern double Risk                      = 2; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
 extern double ManualLotsize             = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to FALSE
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
