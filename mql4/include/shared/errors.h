@@ -1,11 +1,10 @@
 /**
- * MQL error codes (shared between MQL and C++)
+ * MQL error codes
  *
  * @see  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//define NO_ERROR                                          ERR_NO_ERROR    // framework name
-// To prevent the C++ warning "C4005: macro redefinition" NO_ERROR is defined in "include/mqldefines.mqh"
+//define NO_ERROR                                          ERR_NO_ERROR    // separately defined in <mqldefines.mqh>
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1
@@ -174,7 +173,6 @@
 #define ERR_FILE_INCOMPATIBLE                                      5018    // incompatible file (for string arrays-TXT, for others-BIN)
 #define ERR_FILE_IS_DIRECTORY                                      5019    // file is a directory
 #define ERR_FILE_NOT_FOUND                                         5020    // file not found (framework name)
-#define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MetaQuotes alias
 #define ERR_FILE_CANNOT_REWRITE                                    5021    // file cannot be rewritten
 #define ERR_FILE_WRONG_DIRECTORYNAME                               5022    // wrong directory name
 #define ERR_FILE_DIRECTORY_NOT_EXIST                               5023    // directory does not exist
