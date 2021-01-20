@@ -548,7 +548,10 @@ void Trade() {
       am = AccountMargin();
    marginlevel = AccountEquity() / am * 100; // margin level in %
 
-   if (marginlevel < 100) return(catch("Trade(1)"));
+   if (marginlevel < 100) {
+      Alert("Warning! Free Margin "+ DoubleToStr(marginlevel, 2) +" is lower than MinMarginLevel!");
+      return(catch("Trade(1)"));
+   }
 
    // Previous time was less than current time, initiate tick counter
    if ( LastTime < Time[0] )
@@ -698,8 +701,8 @@ void Trade() {
    }
 
    // Check for out of money
-   if ( AccountEquity() <= 0.0 ) {
-      Print ( "ERROR -- Account Equity is " + DoubleToStr ( MathRound ( AccountEquity() ), 0 ) );
+   if (AccountEquity() <= 0) {
+      Alert("ERROR -- Account Equity is "+ DoubleToStr(MathRound(AccountEquity()), 0));
       return(catch("Trade(2)"));
    }
 
@@ -987,37 +990,21 @@ void Trade() {
    } // end if execute new orders
 
    // Check initialization
-   if (GlobalError >= 0) {
-      Print("Robot is initializing...");
-   }
-   else {
+   if (GlobalError < 0) {
       // Error
-      if ( GlobalError == -2 )
-         Print ( "ERROR -- Instrument " + Symbol() + " prices should have " +  Digits + " fraction digits on broker account" );
-      // No errors, ready to print
+      if (GlobalError == -2) {
+         Alert("ERROR -- Instrument "+ Symbol() +" prices should have "+  Digits +" fraction digits on broker account");
+      }
       else {
-         textstring = TimeToStr ( TimeCurrent() ) + " Tick: " + StrPadLeft(TickCounter, 3, "0");
+         textstring = "Volatility: "+ DoubleToStr(volatility, Digits) +"   VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +"   VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits)           + NL
+                     +"PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4 * pricedirection + 4, 4) +"   Open orders: "+  counter1                                                                                  + NL
+                     + indy                                                                                                                                                                                           + NL
+                     +"AvgSpread: "+ DoubleToStr(avgspread, Digits) +"   RealAvgSpread: "+ DoubleToStr(realavgspread, Digits) +"   Commission: "+ DoubleToStr(Commission, 2) +"   LotSize: "+ DoubleToStr(LotSize, 2) + NL;
 
-         // Only show / print this if Debug OR Verbose are set to TRUE
-         if ( Debug || Verbose ) {
-            // Prepare text string for printing
-            textstring = textstring + "\n*** DEBUG MODE *** \nCurrency pair: " + Symbol() + ", Volatility: " + DoubleToStr(volatility, Digits)
-            + ", VolatilityLimit: " + DoubleToStr(VolatilityLimit, Digits) + ", VolatilityPercentage: " + DoubleToStr(volatilitypercentage, Digits);
-            textstring = textstring + "\nPriceDirection: " + StringSubstr ( "BUY NULLSELLBOTH", 4 * pricedirection + 4, 4 ) + ", Open orders: " +  counter1;
-            textstring = textstring + "\nBid: " + DoubleToStr(bid, Digits) + ", Ask: " + DoubleToStr(ask, Digits) + ", " + indy;
-            textstring = textstring + "\nAvgSpread: " + DoubleToStr(avgspread, Digits) + ", RealAvgSpread: " + DoubleToStr(realavgspread, Digits)
-            + ", Commission: " + DoubleToStr(Commission, Digits) + ", Lots: " + DoubleToStr(LotSize, 2);
-
-            if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits) ) {
-               textstring = textstring + "\n" + "The current spread (" + DoubleToStr(realavgspread, Digits)
-               +") is higher than what has been set as MaxSpread (" + DoubleToStr(MaxSpread * Point, Digits) + ") so no trading is allowed right now on this currency pair!";
-            }
-
-            // Only print this if we have a any orders  OR have a price breakout
-            if ( counter1 != 0 || pricedirection != 0 ) {
-               Print ( textstring );
-            }
+         if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
+            textstring = textstring + "The current avg spread ("+ DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread * Point, Digits) +") => trading disabled";
          }
+         Comment(NL, textstring);
       }
    }
 
@@ -1291,7 +1278,7 @@ double CalculateLotsize() {
       {
          lotsize = maxlot;
          textstring = "Note: Manual LotSize is too high. It has been recalculated to maximum allowed " + DoubleToStr ( maxlot, 2 );
-         Print ( textstring );
+         Alert(textstring);
          ManualLotsize = maxlot;
       }
       // ManualLotSize is NOT greater than allowed LotSize
@@ -1331,44 +1318,38 @@ void RecalculateWrongRisk() {
    // If we use money management
    if (MoneyManagement) {
       // If Risk% is greater than the maximum risklevel the broker accept, then adjust Risk accordingly and print out changes
-      if ( Risk > maxrisk )
-      {
+      if ( Risk > maxrisk ) {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be higher than " + DoubleToStr ( maxrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss and Equity. It has now been adjusted accordingly to " + DoubleToStr ( maxrisk, 1 ) + "%";
          Risk = maxrisk;
-         Print( textstring );
+         Alert(textstring);
       }
       // If Risk% is less than the minimum risklevel the broker accept, then adjust Risk accordingly and print out changes
-      if (Risk < minrisk)
-      {
+      if (Risk < minrisk) {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be lower than " + DoubleToStr ( minrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss, AddPriceGap and Equity. It has now been adjusted accordingly to " + DoubleToStr ( minrisk, 1 ) + "%";
          Risk = minrisk;
-         Print( textstring );
+         Alert(textstring);
       }
    }
    // If we don't use MoneyManagement, then use fixed manual LotSize
-   else // MoneyManagement == false
-   {
+   else {
       // Check and if necessary adjust manual LotSize to external limits
-      if ( ManualLotsize < MinLots )
-      {
+      if ( ManualLotsize < MinLots ) {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be less than " + DoubleToStr ( MinLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2);
          ManualLotsize = MinLots;
-         Print( textstring );
+         Alert(textstring);
       }
-      if ( ManualLotsize > MaxLots )
-      {
+      if ( ManualLotsize > MaxLots ) {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than " + DoubleToStr ( MaxLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2 );
          ManualLotsize = MaxLots;
-         Print( textstring );
+         Alert(textstring);
       }
       // Check to see that manual LotSize does not exceeds maximum allowed LotSize
-      if ( ManualLotsize > maxlot )
-      {
+      if ( ManualLotsize > maxlot ) {
          textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than maximum allowed LotSize. It has now been adjusted to " + DoubleToStr ( maxlot, 2 );
          ManualLotsize = maxlot;
-         Print( textstring );
+         Alert(textstring);
       }
    }
 }
@@ -1518,47 +1499,28 @@ void ErrorMessages() {
  * Print out and comment summarized messages from the broker
  */
 void PrintBrokerErrors() {
-   // Prepare some lopcal variables
-   string txt;
-   int totalerrors;
-
-   // Prepare a text strring
-   txt = "Number of times the brokers server reported that ";
+   string txt = "Number of times the brokers server reported that ";
 
    // Sum up total errors
-   totalerrors = Err_unchangedvalues + Err_busyserver + Err_lostconnection + Err_toomanyrequest + Err_invalidprice
+   int totalerrors = Err_unchangedvalues + Err_busyserver + Err_lostconnection + Err_toomanyrequest + Err_invalidprice
    + Err_invalidstops + Err_invalidtradevolume + Err_pricechange + Err_brokerbuzy + Err_requotes + Err_toomanyrequests
    + Err_trademodifydenied + Err_tradecontextbuzy;
 
    // Call print subroutine with text depending on found errors
-   if ( Err_unchangedvalues > 0 )
-      Print( txt + "SL and TP was modified to existing values: " + DoubleToStr ( Err_unchangedvalues, 0 ) );
-   if ( Err_busyserver > 0 )
-      Print( txt + "it is buzy: " + DoubleToStr ( Err_busyserver, 0 ) );
-   if ( Err_lostconnection > 0 )
-      Print( txt + "the connection is lost: " + DoubleToStr ( Err_lostconnection, 0 ) );
-   if ( Err_toomanyrequest > 0 )
-      Print( txt + "there was too many requests: " + DoubleToStr ( Err_toomanyrequest, 0 ) );
-   if ( Err_invalidprice > 0 )
-      Print( txt + "the price was invalid: " + DoubleToStr ( Err_invalidprice, 0 ) );
-   if ( Err_invalidstops > 0 )
-      Print( txt + "invalid SL and/or TP: " + DoubleToStr ( Err_invalidstops, 0 ) );
-   if ( Err_invalidtradevolume > 0 )
-      Print( txt + "invalid lot size: " + DoubleToStr ( Err_invalidtradevolume, 0 ) );
-   if ( Err_pricechange > 0 )
-      Print(txt + "the price has changed: " + DoubleToStr ( Err_pricechange, 0 ) );
-   if ( Err_brokerbuzy > 0 )
-      Print(txt + "the broker is buzy: " + DoubleToStr ( Err_brokerbuzy, 0 ) ) ;
-   if ( Err_requotes > 0 )
-      Print( txt + "requotes " + DoubleToStr ( Err_requotes, 0 ) );
-   if ( Err_toomanyrequests > 0 )
-      Print( txt + "too many requests " + DoubleToStr ( Err_toomanyrequests, 0 ) );
-   if ( Err_trademodifydenied > 0 )
-      Print( txt + "modifying orders is denied " + DoubleToStr ( Err_trademodifydenied, 0 ) );
-   if ( Err_tradecontextbuzy > 0)
-      Print( txt + "trade context is buzy: " + DoubleToStr ( Err_tradecontextbuzy, 0 ) );
-   if ( totalerrors == 0 )
-      Print( "There was no error reported from the broker server!" );
+   if (Err_unchangedvalues    > 0) Print(txt + "SL and TP was modified to existing values: " + DoubleToStr ( Err_unchangedvalues, 0 ) );
+   if (Err_busyserver         > 0) Print(txt + "it was busy: " + DoubleToStr ( Err_busyserver, 0 ) );
+   if (Err_lostconnection     > 0) Print(txt + "the connection was lost: " + DoubleToStr ( Err_lostconnection, 0 ) );
+   if (Err_toomanyrequest     > 0) Print(txt + "there were too many requests: " + DoubleToStr ( Err_toomanyrequest, 0 ) );
+   if (Err_invalidprice       > 0) Print(txt + "the price was invalid: " + DoubleToStr ( Err_invalidprice, 0 ) );
+   if (Err_invalidstops       > 0) Print(txt + "invalid SL and/or TP: " + DoubleToStr ( Err_invalidstops, 0 ) );
+   if (Err_invalidtradevolume > 0) Print(txt + "invalid lot size: " + DoubleToStr ( Err_invalidtradevolume, 0 ) );
+   if (Err_pricechange        > 0) Print(txt + "the price had changed: " + DoubleToStr ( Err_pricechange, 0 ) );
+   if (Err_brokerbuzy         > 0) Print(txt + "the broker was busy: " + DoubleToStr ( Err_brokerbuzy, 0 ) ) ;
+   if (Err_requotes           > 0) Print(txt + "requotes " + DoubleToStr ( Err_requotes, 0 ) );
+   if (Err_toomanyrequests    > 0) Print(txt + "too many requests " + DoubleToStr ( Err_toomanyrequests, 0 ) );
+   if (Err_trademodifydenied  > 0) Print(txt + "modifying orders was denied " + DoubleToStr ( Err_trademodifydenied, 0 ) );
+   if (Err_tradecontextbuzy   > 0) Print(txt + "trade context was busy: " + DoubleToStr ( Err_tradecontextbuzy, 0 ) );
+   if (totalerrors           == 0) Print("There was no error reported from the broker server!" );
 }
 
 
@@ -1640,7 +1602,7 @@ void ShowGraphInfo() {
    string line5 = "Free margin: " + DoubleToStr ( MarginFree, 2 );
 
    int xPos = 3;
-   int yPos = 30;
+   int yPos = 100;
 
    Display("line1", line1, xPos, yPos); yPos += 20;
    Display("line2", line2, xPos, yPos); yPos += 20;
