@@ -1,5 +1,5 @@
 /**
- * Redefine the originally distributed MetaQuotes functions so they exist in case somebody wants to use them.
+ * Framework aliases for the MQL4 functions distributed by MetaQuotes (in case 3rd party code uses them).
  */
 
 
