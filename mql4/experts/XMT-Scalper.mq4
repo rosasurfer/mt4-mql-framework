@@ -23,14 +23,9 @@
  *  - added rosasurfer framework
  *  - fixed chart object errors
  *  - repositioned chart objects and removed status display configuration
- *  - renamed functions and expressions
- *  - removed obsolete vars
- *  - removed obsolete functions Dbl2strBrokerdigits(), NormalizeBrokerdigits(), MakeTimestring(), MakeScreenshot(), TakeSnapshot(), DeleteDisplay(), PrintAndComment(), UninitReasonText()
- *  - replaced by framework functions: Adjust00instring(), OrderSend(), OrderModify(), OrderDelete()
- *  - removed obsoletes screenshot configuration
- *  - removed obsolete order expiration times
- *  - removed obsolete NDD functionality
+ *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
+ *  - removed configuration of min. margin level
  *  - added monitoring of PositionOpen and PositionClose events and the framework's test reporting
  */
 #include <stddefines.mqh>
@@ -39,40 +34,39 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string  Configuration              = "==== Configuration ====";
-extern bool    Debug                      = false; // Debug: Print huge log files with info, only for debugging purposes
-extern bool    Verbose                    = false; // Verbose: Additional log information printed in the Expert tab
-extern bool    ReverseTrade               = false; // ReverseTrade: If TRUE, then trade in opposite direction
-extern int     Magic                      = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
-extern string  OrderCmt                   = "XMT 2.522-rsf"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
-extern string  TradingSettings            = "==== Trade settings ====";
-extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
-extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
-extern double  StopLoss                   = 60; // StopLoss: SL from as many points. Default 60 (= 6 pips)
-extern double  TakeProfit                 = 100; // TakeProfit: TP from as many points. Default 100 (= 10 pip)
-extern double  AddPriceGap                = 0; // AddPriceGap: Additional price gap in points added to SL and TP in order to avoid Error 130
-extern double  TrailingStart              = 20; // TrailingStart: Start trailing profit from as so many points.
-extern double  Commission                 = 0; // Commission: Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
-extern int     Slippage                   = 3; // Slippage: Maximum allowed Slippage of price in points
-extern double  MinimumUseStopLevel        = 0; // MinimumUseStopLevel: Stoplevel to use will be max value of either this value or broker stoplevel
-extern string  VolatilitySettings         = "==== Volatility Settings ====";
-extern bool    UseDynamicVolatilityLimit  = true; // UseDynamicVolatilityLimit: Calculated based on INT (spread * VolatilityMultiplier)
-extern double  VolatilityMultiplier       = 125; // VolatilityMultiplier: A multiplier that only is used if UseDynamicVolatilityLimit is set to TRUE
-extern double  VolatilityLimit            = 180; // VolatilityLimit: A fix value that only is used if UseDynamicVolatilityLimit is set to FALSE
-extern bool    UseVolatilityPercentage    = true; // UseVolatilityPercentage: If true, then price must break out more than a specific percentage
-extern double  VolatilityPercentageLimit  = 0; // VolatilityPercentageLimit: Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
-extern string  UseIndicatorSet            = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
-extern int     UseIndicatorSwitch         = 1; // UseIndicatorSwitch: Choose of indicator for price channel.
-extern int     Indicatorperiod            = 3; // Indicatorperiod: Period in bars for indicator
-extern double  BBDeviation                = 2.0; // BBDeviation: Deviation for the iBands indicator only
-extern double  EnvelopesDeviation         = 0.07; // EnvelopesDeviation: Deviation for the iEnvelopes indicator only
-extern string  Money_Management           = "==== Money Management ====";
-extern bool    MoneyManagement            = true; // MoneyManagement: If TRUE then calculate lotsize automaticallay based on Risk, if False then use ManualLotsize below
-extern double  MinLots                    = 0.01; // MinLots: Minimum lot-size to trade with
-extern double  MaxLots                    = 100.0; // MaxLots : Maximum allowed lot-size to trade with
-extern double  Risk                       = 2.0; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
-extern double  ManualLotsize              = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to FALSE
-extern double  MinMarginLevel             = 100; // MinMarginLevel: Lowest allowed Margin level for new positions to be opened
+extern string Configuration             = "==== Configuration ====";
+extern bool   Debug                     = false; // Debug: Print huge log files with info, only for debugging purposes
+extern bool   Verbose                   = false; // Verbose: Additional log information printed in the Expert tab
+extern bool   ReverseTrade              = false; // ReverseTrade: If TRUE, then trade in opposite direction
+extern int    Magic                     = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
+extern string OrderCmt                  = "XMT 2.522-rsf"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
+extern string TradingSettings           = "==== Trade settings ====";
+extern int    TimeFrame                 = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
+extern double MaxSpread                 = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
+extern double StopLoss                  = 60; // StopLoss: SL from as many points. Default 60 (= 6 pips)
+extern double TakeProfit                = 100; // TakeProfit: TP from as many points. Default 100 (= 10 pip)
+extern double AddPriceGap               = 0; // AddPriceGap: Additional price gap in points added to SL and TP in order to avoid Error 130
+extern double TrailingStart             = 20; // TrailingStart: Start trailing profit from as so many points.
+extern double Commission                = 0; // Commission: Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
+extern int    Slippage                  = 3; // Slippage: Maximum allowed Slippage of price in points
+extern double MinimumUseStopLevel       = 0; // MinimumUseStopLevel: Stoplevel to use will be max value of either this value or broker stoplevel
+extern string VolatilitySettings        = "==== Volatility Settings ====";
+extern bool   UseDynamicVolatilityLimit = true; // UseDynamicVolatilityLimit: Calculated based on INT (spread * VolatilityMultiplier)
+extern double VolatilityMultiplier      = 125; // VolatilityMultiplier: A multiplier that only is used if UseDynamicVolatilityLimit is set to TRUE
+extern double VolatilityLimit           = 180; // VolatilityLimit: A fix value that only is used if UseDynamicVolatilityLimit is set to FALSE
+extern bool   UseVolatilityPercentage   = true; // UseVolatilityPercentage: If true, then price must break out more than a specific percentage
+extern double VolatilityPercentageLimit = 0; // VolatilityPercentageLimit: Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
+extern string UseIndicatorSet           = "=== Indicators: 1 = Moving Average, 2 = BollingerBand, 3 = Envelopes";
+extern int    UseIndicatorSwitch        = 1; // UseIndicatorSwitch: Choose of indicator for price channel.
+extern int    Indicatorperiod           = 3; // Indicatorperiod: Period in bars for indicator
+extern double BBDeviation               = 2.0; // BBDeviation: Deviation for the iBands indicator only
+extern double EnvelopesDeviation        = 0.07; // EnvelopesDeviation: Deviation for the iEnvelopes indicator only
+extern string Money_Management          = "==== Money Management ====";
+extern bool   MoneyManagement           = true; // MoneyManagement: If TRUE then calculate lotsize automaticallay based on Risk, if False then use ManualLotsize below
+extern double MinLots                   = 0.01; // MinLots: Minimum lot-size to trade with
+extern double MaxLots                   = 100.0; // MaxLots : Maximum allowed lot-size to trade with
+extern double Risk                      = 2.0; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
+extern double ManualLotsize             = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to FALSE
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -552,15 +546,9 @@ void Trade() {
    // Calculate Margin level
    if ( AccountMargin() != 0 )
       am = AccountMargin();
-   marginlevel = AccountEquity() / am * 100;
+   marginlevel = AccountEquity() / am * 100; // margin level in %
 
-   // Free Margin is less than the value of MinMarginLevel, so no trading is allowed
-   if ( marginlevel < MinMarginLevel )
-   {
-      Print ( "Warning! Free Margin " + DoubleToStr ( marginlevel, 2 ) + " is lower than MinMarginLevel!" );
-      Alert ( "Warning! Free Margin " + DoubleToStr ( marginlevel, 2 ) + " is lower than MinMarginLevel!" );
-      return(catch("sub_trade(1)"));
-   }
+   if (marginlevel < 100) return(catch("Trade(1)"));
 
    // Previous time was less than current time, initiate tick counter
    if ( LastTime < Time[0] )
@@ -712,7 +700,7 @@ void Trade() {
    // Check for out of money
    if ( AccountEquity() <= 0.0 ) {
       Print ( "ERROR -- Account Equity is " + DoubleToStr ( MathRound ( AccountEquity() ), 0 ) );
-      return(catch("Trade(1)"));
+      return(catch("Trade(2)"));
    }
 
    // Reset counters
@@ -775,7 +763,7 @@ void Trade() {
                      if (!orderstoploss) {
                         // Try to modify order with a safe hard SL that is 3 pip from current price
                         wasordermodified = OrderModifyEx(OrderTicket(), NULL, Bid-30, NULL, NULL, Red, NULL, oe);
-                        return(catch("Trade(2)  invalid SL: "+ NumberToStr(Bid-30, ".+"), ERR_RUNTIME_ERROR));
+                        return(catch("Trade(3)  invalid SL: "+ NumberToStr(Bid-30, ".+"), ERR_RUNTIME_ERROR));
                      }
                   }
                }
@@ -827,7 +815,7 @@ void Trade() {
                      if (!orderstoploss) {
                         // Try to modify order with a safe hard SL that is 3 pip from current price
                         wasordermodified = OrderModifyEx(OrderTicket(), NULL, Ask+30, NULL, NULL, Red, NULL, oe);
-                        return(catch("Trade(3)  invalid SL: "+ NumberToStr(Ask+30, ".+"), ERR_RUNTIME_ERROR));
+                        return(catch("Trade(4)  invalid SL: "+ NumberToStr(Ask+30, ".+"), ERR_RUNTIME_ERROR));
                      }
                   }
                }
@@ -1036,7 +1024,7 @@ void Trade() {
    // Check for stray market orders without SL
    Check4StrayTrades();
 
-   return(catch("Trade(4)"));
+   return(catch("Trade(5)"));
 }
 
 
@@ -1649,7 +1637,7 @@ void ShowGraphInfo() {
    string line2 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
    string line3 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
    string line4 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
-   string line5 = "Free margin: " + DoubleToStr ( MarginFree, 2 ) + ", Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
+   string line5 = "Free margin: " + DoubleToStr ( MarginFree, 2 );
 
    int xPos = 3;
    int yPos = 30;
