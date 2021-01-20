@@ -7,7 +7,8 @@
  * of the strategy: scalping based on a reversal from a channel breakout."
  *
  * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them
- * was suitable for trading real money due to the effect of slippage and commissions. This version is a complete rewrite.
+ * was suitable for trading real money, mainly due to a very high datafeed sensitivity (especially the amount of sent ticks)
+ * and the effect of slippage and commissions. This version is again a complete rewrite.
  *
  *
  * Sources:
@@ -15,6 +16,22 @@
  *  @link   https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp#            [MillionDollarPips v2 decompiled]
  *  @link   https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp#             [MDP-Plus v2.2 + PDF by Capella]
  *  @link   https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#        [XMT-Scalper v2.522 + PDF by Capella]
+ *
+ *
+ * pewa:
+ *  - removed MQL5 syntax and fixed compiler issues
+ *  - added rosasurfer framework
+ *  - fixed chart object errors
+ *  - repositioned chart objects and removed status display configuration
+ *  - renamed functions and expressions
+ *  - removed obsolete vars
+ *  - removed obsolete functions Dbl2strBrokerdigits(), NormalizeBrokerdigits(), MakeTimestring(), MakeScreenshot(), TakeSnapshot(), DeleteDisplay(), PrintAndComment(), UninitReasonText()
+ *  - replaced by framework functions: Adjust00instring(), OrderSend(), OrderModify(), OrderDelete()
+ *  - removed obsoletes screenshot configuration
+ *  - removed obsolete order expiration times
+ *  - removed obsolete NDD functionality
+ *  - removed obsolete sending of fake orders and measuring of execution times
+ *  - added monitoring of PositionOpen and PositionClose events and the framework's test reporting
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -27,7 +44,7 @@ extern bool    Debug                      = false; // Debug: Print huge log file
 extern bool    Verbose                    = false; // Verbose: Additional log information printed in the Expert tab
 extern bool    ReverseTrade               = false; // ReverseTrade: If TRUE, then trade in opposite direction
 extern int     Magic                      = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
-extern string  OrderCmt                   = "XMT";    // OrderCmt. Trade comments that appears in the Trade and Account History tab
+extern string  OrderCmt                   = "XMT 2.522-rsf"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
 extern string  TradingSettings            = "==== Trade settings ====";
 extern int     TimeFrame                  = PERIOD_M1; // TimeFrame: Trading timeframe must matrch the timeframe of the chart
 extern double  MaxSpread                  = 30.0; // MaxSprea: Max allowed spread in points (1 / 10 pip)
@@ -56,18 +73,6 @@ extern double  MaxLots                    = 100.0; // MaxLots : Maximum allowed 
 extern double  Risk                       = 2.0; // Risk: Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
 extern double  ManualLotsize              = 0.1; // ManualLotsize: Fix lot size to trade with if MoneyManagement above is set to FALSE
 extern double  MinMarginLevel             = 100; // MinMarginLevel: Lowest allowed Margin level for new positions to be opened
-extern string  Screen_Shooter             = "==== Screen Shooter ====";
-extern bool    TakeShots                  = false; // TakeShots: Save screen shots for each opened order
-extern int     DelayTicks                 = 1; // DelayTicks: Delay so many ticks after new bar
-extern int     ShotsPerBar                = 1; // ShotsPerBar: How many screen shots per bar
-extern string  DisplayGraphics            = "=== Display Graphics ==="; // Colors for sub_Display at upper left
-extern int     Heading_Size               = 11;  // Heading_Size: Font size for headline
-extern int     Text_Size                  = 11;  // Text_Size: Font size for texts
-extern color   Color_Heading              = Blue;   // Color for text lines
-extern color   Color_Section1             = Blue; // Color for text lines
-extern color   Color_Section2             = Blue;   // Color for text lines
-extern color   Color_Section3             = Blue; // Color for text lines
-extern color   Color_Section4             = Blue;// Color for text lines
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +81,7 @@ extern color   Color_Section4             = Blue;// Color for text lines
 #include <rsfLibs.mqh>
 
 
-string EA_version = "XMT-Scalper rsf";
+string EA_version = "XMT-Scalper 2.522-rsf";
 
 datetime StartTime;        // Initial time
 datetime LastTime;         // For measuring tics
@@ -1640,37 +1645,20 @@ void CheckClosedOrders() {
 void ShowGraphInfo() {
    if (!IsChart()) return;
 
-   // Prepare for Display()
-   string line1 = EA_version;
-   string line2 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
-   string line3 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
-   string line4 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
-   string line5 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
-   string line7 = "                               ";
-   string line9 = "Free margin: " + DoubleToStr ( MarginFree, 2 ) + ", Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
+   string line1 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
+   string line2 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
+   string line3 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
+   string line4 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
+   string line5 = "Free margin: " + DoubleToStr ( MarginFree, 2 ) + ", Min allowed Margin level: " + DoubleToStr ( MinMarginLevel, 2 ) + "%";
 
-   // Display graphic information on the chart
-   int textspacing = 10, linespace = textspacing;
+   int xPos = 3;
+   int yPos = 30;
 
-   Display("line1", line1, Heading_Size, 3, linespace, Color_Heading, 0);
-
-   linespace = textspacing*2 + Text_Size* 1 + 3*1;
-   Display("line2", line2, Text_Size, 3, linespace, Color_Section1, 0);
-
-   linespace = textspacing*2 + Text_Size* 2 + 3*2 + 20;
-   Display("line3", line3, Text_Size, 3, linespace, Color_Section2, 0);
-
-   linespace = textspacing*2 + Text_Size* 3 + 3*3 + 40;
-   Display("line4", line4, Text_Size, 3, linespace, Color_Section3, 0);
-
-   linespace = textspacing*2 + Text_Size* 4 + 3*4 + 40;
-   Display("line5", line5, Text_Size, 3, linespace, Color_Section3, 0);
-
-   linespace = textspacing*2 + Text_Size* 5 + 3*5 + 40;
-   Display("line7", line7, Text_Size, 3, linespace, Color_Section4, 0);
-
-   linespace = textspacing*2 + Text_Size* 6 + 3*6 + 40;
-   Display("line9", line9, Text_Size, 3, linespace, Color_Section4, 0);
+   Display("line1", line1, xPos, yPos); yPos += 20;
+   Display("line2", line2, xPos, yPos); yPos += 20;
+   Display("line3", line3, xPos, yPos); yPos += 20;
+   Display("line4", line4, xPos, yPos); yPos += 20;
+   Display("line5", line5, xPos, yPos); yPos += 20;
 
    return(catch("ShowGraphInfo(1)"));
 }
@@ -1679,12 +1667,12 @@ void ShowGraphInfo() {
 /**
  * Subroutine for displaying graphics on the chart
  */
-void Display(string obj_name, string object_text, int object_text_fontsize, int object_x_distance, int object_y_distance, color object_textcolor, int object_corner_value ) {
+void Display(string obj_name, string object_text, int object_x_distance, int object_y_distance) {
    if (ObjectFind(obj_name) != 0) {
       ObjectCreate(obj_name, OBJ_LABEL, 0, 0, 0);
    }
-   ObjectSet ( obj_name, OBJPROP_CORNER, object_corner_value );
+   ObjectSet ( obj_name, OBJPROP_CORNER, 0);
    ObjectSet ( obj_name, OBJPROP_XDISTANCE, object_x_distance );
    ObjectSet ( obj_name, OBJPROP_YDISTANCE, object_y_distance );
-   ObjectSetText ( obj_name, object_text, object_text_fontsize, "Tahoma", object_textcolor );
+   ObjectSetText ( obj_name, object_text, 10, "Tahoma", Blue);
 }
