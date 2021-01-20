@@ -27,6 +27,7 @@
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of min. margin level
  *  - added monitoring of PositionOpen and PositionClose events and the framework's test reporting
+ *  - moved Print() output to the framework logger
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -35,8 +36,6 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Configuration             = "==== Configuration ====";
-extern bool   Debug                     = false; // Debug: Print huge log files with info, only for debugging purposes
-extern bool   Verbose                   = false; // Verbose: Additional log information printed in the Expert tab
 extern bool   ReverseTrade              = false; // ReverseTrade: If TRUE, then trade in opposite direction
 extern int    Magic                     = -1; // Magic: If set to a number less than 0 it will calculate MagicNumber automatically
 extern string OrderCmt                  = "XMT 2.522-rsf"; // OrderCmt. Trade comments that appears in the Trade and Account History tab
@@ -755,13 +754,11 @@ void Trade() {
                      break;
                   }
                   // Order was not modified
-                  else
-                  {
+                  else {
                      // Add to errors
                      ErrorMessages();
-                     // Print if debug or verbose
-                     if ( Debug || Verbose )
-                        Print ( "Order could not be modified because of ", ErrorDescription ( GetLastError() ) );
+                     logWarn("Order could not be modified", GetLastError());
+
                      // Order has not been modified and it has no StopLoss
                      if (!orderstoploss) {
                         // Try to modify order with a safe hard SL that is 3 pip from current price
@@ -804,13 +801,10 @@ void Trade() {
                      break;
                   }
                   // Order was not modified
-                  else
-                  {
+                  else {
                      // Add to errors
                      ErrorMessages();
-                     // Print if debug or verbose
-                     if ( Debug || Verbose )
-                        Print ( "Order could not be modified because of ", ErrorDescription ( GetLastError() ) );
+                     logWarn("Order could not be modified", GetLastError());
                      // Lets wait 1 second before we try to modify the order again
                      Sleep ( 1000 );
 
@@ -1073,9 +1067,7 @@ void Check4StrayTrades() {
                   // Wait 1/10 second and then fetch new prices
                   Sleep ( 100 );
                   RefreshRates();
-                  // Print debug info
-                  if ( Debug || Verbose )
-                     Print ( "Error trying to modify stray order with a SL!" );
+                  logWarn("Error trying to modify stray order with a SL!");
                   // Add to errors
                   ErrorMessages();
                }
@@ -1226,8 +1218,8 @@ int CreateMagicNumber() {
    c = StringFind ( par, a, 0 );
    d = StringFind ( par, b, 0 );
    i = 999999999 - AccountNumber() - c - d;
-   if (Debug)
-      Print ( "MagicNumber: ", i );
+
+   if (IsLogDebug()) logDebug("MagicNumber: "+ i);
    return ( i );
 }
 
@@ -1617,12 +1609,13 @@ void ShowGraphInfo() {
 /**
  * Subroutine for displaying graphics on the chart
  */
-void Display(string obj_name, string object_text, int object_x_distance, int object_y_distance) {
-   if (ObjectFind(obj_name) != 0) {
-      ObjectCreate(obj_name, OBJ_LABEL, 0, 0, 0);
+void Display(string label, string text, int xPos, int yPos) {
+   if (ObjectFind(label) != 0) {
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    }
-   ObjectSet ( obj_name, OBJPROP_CORNER, 0);
-   ObjectSet ( obj_name, OBJPROP_XDISTANCE, object_x_distance );
-   ObjectSet ( obj_name, OBJPROP_YDISTANCE, object_y_distance );
-   ObjectSetText ( obj_name, object_text, 10, "Tahoma", Blue);
+   ObjectSet(label, OBJPROP_CORNER,    CORNER_TOP_LEFT);
+   ObjectSet(label, OBJPROP_XDISTANCE, xPos);
+   ObjectSet(label, OBJPROP_YDISTANCE, yPos);
+
+   ObjectSetText(label, text, 10, "Tahoma", Blue);
 }
