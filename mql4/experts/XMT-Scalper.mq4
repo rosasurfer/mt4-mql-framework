@@ -7,9 +7,11 @@
  * of the strategy: scalping based on a reversal from a channel breakout."
  *
  * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them
- * was suitable for trading real money, mainly due to a very high datafeed sensitivity (especially the amount of sent ticks)
- * and the effect of slippage and commissions. This version is again a complete rewrite.
+ * is suitable for trading real money. Main reasons are a very high datafeed sensitivity (especially the number of received
+ * ticks) and the unaccounted effects of slippage and commissions. Moreover the EAs produce completely different results in
+ * tester and online accounts. Profitable parameters found in tester couldn't be applied to online trading.
  *
+ * This version is again a complete rewrite.
  *
  * Sources:
  *  @origin XMT-Scalper v2.522
@@ -23,10 +25,10 @@
  *  - added rosasurfer framework
  *  - repositioned chart objects, fixed chart object errors and removed status display configuration
  *  - moved Print() output to the framework logger
- *  - removed obsolete function Check4StrayTrades()
+ *  - removed obsolete functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
- *  - removed configuration of min. margin level
+ *  - removed configuration of the min. margin level
  *  - added monitoring of PositionOpen and PositionClose events and the framework's test reporting
  */
 #include <stddefines.mqh>
