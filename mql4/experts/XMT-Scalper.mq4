@@ -3,13 +3,13 @@
  *
  *
  * This EA is originally based on the famous "MillionDollarPips EA". Credits for the initial transformation from MDP to
- * XMT-Scalper go to a Swedish guy named Capella. In his own words: "Nothing remains from the original except the core idea
- * of the strategy: scalping based on a reversal from a channel breakout."
+ * XMT-Scalper go to a Swedish guy named Capella. In his own words: "Nothing remains from the original except the core idea of
+ * the strategy: scalping based on a reversal from a channel breakout."
  *
- * Today various versions of Capella's EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them
- * is suitable for trading real money. Main reasons are a very high datafeed sensitivity (especially the number of received
- * ticks) and the unaccounted effects of slippage and commissions. Moreover the EAs produce completely different results in
- * tester and online accounts. Profitable parameters found in tester couldn't be applied to online trading.
+ * Today various versions of his EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them is suitable
+ * for trading real money. Main reasons are a very high datafeed sensitivity (especially the number of received ticks) and the
+ * unaccounted effects of slippage and commissions. Moreover the EA produces completely different results in tester and online
+ * accounts. Profitable parameters found in tester can't be applied to online trading.
  *
  * This version is again a complete rewrite.
  *
@@ -29,7 +29,8 @@
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of the min. margin level
- *  - added monitoring of PositionOpen and PositionClose events and the framework's test reporting
+ *  - added monitoring of PositionOpen and PositionClose events
+ *  - added the framework's test reporting
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -84,7 +85,6 @@ datetime LastTime;         // For measuring tics
 int GlobalError = 0;       // To keep track on number of added errors
 int TickCounter = 0;       // Counting tics
 int UpTo30Counter = 0;     // For calculating average spread
-int Leverage;              // Account Leverage in percentage
 int Err_unchangedvalues;   // Error count for unchanged values (modify to the same values)
 int Err_busyserver;        // Error count for busy server
 int Err_lostconnection;    // Error count for lost connection
@@ -98,13 +98,11 @@ int Err_requotes;          // Error count for requotes
 int Err_toomanyrequests;   // Error count for too many requests
 int Err_trademodifydenied; // Error count for modify orders is denied
 int Err_tradecontextbuzy;  // error count for trade context is buzy
-int SkippedTicks = 0;      // Used for simulation of latency during backtests, how many tics that should be skipped
 int Ticks_samples = 0;     // Used for simulation of latency during backtests, number of tick samples
 int Tot_closed_pos;        // Number of closed positions for this EA
 int Tot_Orders;            // Number of open orders disregarding of magic and pairs
 int Tot_open_pos;          // Number of open positions for this EA
 
-double LotBase;            // Amount of money in base currency for 1 lot
 double Tot_open_profit;    // A summary of the current open profit/loss for this EA
 double Tot_open_lots;      // A summary of the current open lots for this EA
 double Tot_open_swap;      // A summary of the current charged swaps of the open positions for this EA
@@ -120,11 +118,9 @@ double LotSize;            // Lotsize
 double highest;            // LotSize indicator value
 double lowest;             // Lowest indicator value
 double StopLevel;          // Broker StopLevel
-double StopOut;            // Broker stoput percentage
 double LotStep;            // Broker LotStep
 double MarginForOneLot;    // Margin required for 1 lot
 double Avg_tickspermin;    // Used for simulation of latency during backtests
-double MarginFree;         // Free margin in percentage
 
 
 /**
@@ -149,16 +145,10 @@ int onInit() {
    // Reset error variable
    GlobalError = -1;
 
-   // Get Leverage
-   Leverage = AccountLeverage();
-
    // Calculate StopLevel as max of either STOPLEVEL or FREEZELEVEL
    StopLevel = MathMax ( MarketInfo ( Symbol(), MODE_FREEZELEVEL ), MarketInfo ( Symbol(), MODE_STOPLEVEL ) );
    // Then calculate the StopLevel as max of either this StopLevel or MinimumUseStopLevel
    StopLevel = MathMax ( MinimumUseStopLevel, StopLevel );
-
-   // Get stoput level and re-calculate as fraction
-   StopOut = AccountStopoutLevel();
 
    // Calculate LotStep
    LotStep = MarketInfo ( Symbol(), MODE_LOTSTEP );
@@ -195,9 +185,6 @@ int onInit() {
 
    // Fetch the margin required for 1 lot
    MarginForOneLot = MarketInfo ( Symbol(), MODE_MARGINREQUIRED );
-
-   // Fetch the amount of money in base currency for 1 lot
-   LotBase = MarketInfo ( Symbol(), MODE_LOTSIZE );
 
    // Also make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
    RecalculateWrongRisk();
@@ -540,9 +527,6 @@ void Trade() {
    double am = 0.000000001;  // Set variable to a very small number
    double marginlevel;
    int oe[];
-
-   // Get the Free Margin
-   MarginFree = AccountFreeMargin();
 
    // Calculate Margin level
    if ( AccountMargin() != 0 )
@@ -1318,15 +1302,12 @@ void PrintDetails() {
    Print("Initial account equity: ", AccountEquity()," ", AccountCurrency() );
    Print("Broker digits: ", Digits);
    Print("Broker StopLevel / freezelevel (max): ", StopLevel );
-   Print("Broker StopOut level: ", StopOut, "%" );
    Print("Broker Point: ", DoubleToStr ( Point, Digits )," on ", AccountCurrency() );
-   Print("Broker account Leverage in percentage: ", Leverage );
    Print("Broker credit value on the account: ", AccountCredit() );
    Print("Broker account margin: ", AccountMargin() );
    Print("Broker calculation of free margin allowed to open positions considers " + margintext );
    Print("Broker calculates StopOut level as " + stopouttext );
    Print("Broker requires at least ", MarginForOneLot," ", AccountCurrency()," in margin for 1 lot." );
-   Print("Broker set 1 lot to trade ", LotBase," ", AccountCurrency() );
    Print("Broker minimum allowed LotSize: ", MinLots );
    Print("Broker maximum allowed LotSize: ", MaxLots );
    Print("Broker allow lots to be resized in ", LotStep, " steps." );
@@ -1516,7 +1497,6 @@ void ShowGraphInfo() {
    string line2 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
    string line3 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
    string line4 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
-   string line5 = "Free margin: " + DoubleToStr ( MarginFree, 2 );
 
    int xPos = 3;
    int yPos = 100;
@@ -1525,7 +1505,6 @@ void ShowGraphInfo() {
    Display("line2", line2, xPos, yPos); yPos += 20;
    Display("line3", line3, xPos, yPos); yPos += 20;
    Display("line4", line4, xPos, yPos); yPos += 20;
-   Display("line5", line5, xPos, yPos); yPos += 20;
 
    return(catch("ShowGraphInfo(1)"));
 }
