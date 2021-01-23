@@ -21,13 +21,13 @@
  * pewa:
  *  - removed MQL5 syntax and fixed compiler issues
  *  - added rosasurfer framework
- *  - fixed chart object errors
- *  - repositioned chart objects and removed status display configuration
+ *  - repositioned chart objects, fixed chart object errors and removed status display configuration
+ *  - moved Print() output to the framework logger
+ *  - removed obsolete function Check4StrayTrades()
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of min. margin level
  *  - added monitoring of PositionOpen and PositionClose events and the framework's test reporting
- *  - moved Print() output to the framework logger
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -1001,80 +1001,7 @@ void Trade() {
          Comment(NL, textstring);
       }
    }
-
-   // Check for stray market orders without SL
-   Check4StrayTrades();
-
    return(catch("Trade(5)"));
-}
-
-
-/**
- * Check for stray trades
- */
-void Check4StrayTrades() {
-   // Initiate some local variables
-   int loop;
-   int totals;
-   bool modified = true;
-   bool selected;
-   double ordersl;
-   double newsl;
-   int oe[];
-
-   // New SL to use for modifying stray market orders is max of either current SL or 10 points
-   newsl = MathMax ( StopLoss, 10 );
-   // Get number of open orders
-   totals = OrdersTotal();
-
-   // Loop through all open orders from first to last
-   for ( loop = 0; loop < totals; loop ++ )
-   {
-      // Select on order
-      if ( OrderSelect ( loop, SELECT_BY_POS, MODE_TRADES ) )
-      {
-         // Check if it matches the MagicNumber and chart symbol
-         if ( OrderMagicNumber() == Magic && OrderSymbol() == Symbol() )    // If the orders are for this EA
-         {
-            ordersl = OrderStopLoss();
-            // Continue as long as the SL for the order is 0.0
-            while ( ordersl == 0.0 )
-            {
-               // We have found a Buy-order
-               if ( OrderType() == OP_BUY )
-               {
-                  // Set new SL 10 points away from current price
-                  newsl = Bid - newsl * Point;
-                  modified = OrderModifyEx(OrderTicket(), OrderOpenPrice(), newsl, OrderTakeProfit(), NULL, Blue, NULL, oe);
-               }
-               // We have found a Sell-order
-               else if ( OrderType() == OP_SELL )
-               {
-                  // Set new SL 10 points away from current price
-                  newsl = Ask + newsl * Point;
-                  modified = OrderModifyEx(OrderTicket(), OrderOpenPrice(), newsl, OrderTakeProfit(), NULL, Blue, NULL, oe);
-               }
-               // If the order without previous SL was modified wit a new SL
-               if (modified) {
-                  // Select that modified order, set while condition variable to that true value and exit while-loop
-                  selected = OrderSelect ( modified, SELECT_BY_TICKET, MODE_TRADES );
-                  ordersl = OrderStopLoss();
-                  break;
-               }
-               // If the order could not be modified
-               else // if ( modified == false )
-               {
-                  // Wait 1/10 second and then fetch new prices
-                  Sleep ( 100 );
-                  RefreshRates();
-                  logWarn("Error trying to modify stray order with a SL!");
-                  // Add to errors
-                  ErrorMessages();
-               }
-            }
-         }
-      }
-   }
 }
 
 
@@ -1383,104 +1310,100 @@ void PrintDetails() {
    if (MoneyManagement) fixedlots = " (automatically calculated lots).";
    else                 fixedlots = " (fixed manual lots).";
 
-   Print ( "Broker name: ", AccountCompany() );
-   Print ( "Broker server: ", AccountServer() );
-   Print ( "Account type: ", StringSubstr ( "RealDemoTest", 4 * type, 4) );
-   Print ( "Initial account equity: ", AccountEquity()," ", AccountCurrency() );
-   Print ( "Broker digits: ", Digits);
-   Print ( "Broker StopLevel / freezelevel (max): ", StopLevel );
-   Print ( "Broker StopOut level: ", StopOut, "%" );
-   Print ( "Broker Point: ", DoubleToStr ( Point, Digits )," on ", AccountCurrency() );
-   Print ( "Broker account Leverage in percentage: ", Leverage );
-   Print ( "Broker credit value on the account: ", AccountCredit() );
-   Print ( "Broker account margin: ", AccountMargin() );
-   Print ( "Broker calculation of free margin allowed to open positions considers " + margintext );
-   Print ( "Broker calculates StopOut level as " + stopouttext );
-   Print ( "Broker requires at least ", MarginForOneLot," ", AccountCurrency()," in margin for 1 lot." );
-   Print ( "Broker set 1 lot to trade ", LotBase," ", AccountCurrency() );
-   Print ( "Broker minimum allowed LotSize: ", MinLots );
-   Print ( "Broker maximum allowed LotSize: ", MaxLots );
-   Print ( "Broker allow lots to be resized in ", LotStep, " steps." );
-   Print ( "Risk: ", Risk, "%" );
-   Print ( "Risk adjusted LotSize: ", DoubleToStr ( LotSize, 2 ) + fixedlots );
+   Print("Broker name: ", AccountCompany() );
+   Print("Broker server: ", AccountServer() );
+   Print("Account type: ", StringSubstr ( "RealDemoTest", 4 * type, 4) );
+   Print("Initial account equity: ", AccountEquity()," ", AccountCurrency() );
+   Print("Broker digits: ", Digits);
+   Print("Broker StopLevel / freezelevel (max): ", StopLevel );
+   Print("Broker StopOut level: ", StopOut, "%" );
+   Print("Broker Point: ", DoubleToStr ( Point, Digits )," on ", AccountCurrency() );
+   Print("Broker account Leverage in percentage: ", Leverage );
+   Print("Broker credit value on the account: ", AccountCredit() );
+   Print("Broker account margin: ", AccountMargin() );
+   Print("Broker calculation of free margin allowed to open positions considers " + margintext );
+   Print("Broker calculates StopOut level as " + stopouttext );
+   Print("Broker requires at least ", MarginForOneLot," ", AccountCurrency()," in margin for 1 lot." );
+   Print("Broker set 1 lot to trade ", LotBase," ", AccountCurrency() );
+   Print("Broker minimum allowed LotSize: ", MinLots );
+   Print("Broker maximum allowed LotSize: ", MaxLots );
+   Print("Broker allow lots to be resized in ", LotStep, " steps." );
+   Print("Risk: ", Risk, "%" );
+   Print("Risk adjusted LotSize: ", DoubleToStr ( LotSize, 2 ) + fixedlots );
 }
 
 
 /**
- * Summarize error messages that comes from the broker server
+ * Summarize error messages
  */
 void ErrorMessages() {
-   // Initiate a local variable
-   int error = GetLastError();
 
-   // Depending on the value if the variable error, one case should match and the counter for that errtor should be increased with 1
-   switch ( error )
-   {
+   switch (GetLastError()) {
       // Unchanged values
       case 1: // ERR_SERVER_BUSY:
       {
-         Err_unchangedvalues ++;
+         Err_unchangedvalues++;
          break;
       }
       // Trade server is busy
       case 4: // ERR_SERVER_BUSY:
       {
-         Err_busyserver ++;
+         Err_busyserver++;
          break;
       }
       case 6: // ERR_NO_CONNECTION:
       {
-         Err_lostconnection ++;
+         Err_lostconnection++;
          break;
       }
       case 8: // ERR_TOO_FREQUENT_REQUESTS:
       {
-         Err_toomanyrequest ++;
+         Err_toomanyrequest++;
          break;
       }
       case 129: // ERR_INVALID_PRICE:
       {
-         Err_invalidprice ++;
+         Err_invalidprice++;
          break;
       }
       case 130: // ERR_INVALID_STOPS:
       {
-         Err_invalidstops ++;
+         Err_invalidstops++;
          break;
       }
       case 131: // ERR_INVALID_TRADE_VOLUME:
       {
-         Err_invalidtradevolume ++;
+         Err_invalidtradevolume++;
          break;
       }
       case 135: // ERR_PRICE_CHANGED:
       {
-         Err_pricechange ++;
+         Err_pricechange++;
          break;
       }
       case 137: // ERR_BROKER_BUSY:
       {
-         Err_brokerbuzy ++;
+         Err_brokerbuzy++;
          break;
       }
       case 138: // ERR_REQUOTE:
       {
-         Err_requotes ++;
+         Err_requotes++;
          break;
       }
       case 141: // ERR_TOO_MANY_REQUESTS:
       {
-         Err_toomanyrequests ++;
+         Err_toomanyrequests++;
          break;
       }
       case 145: // ERR_TRADE_MODIFY_DENIED:
       {
-         Err_trademodifydenied ++;
+         Err_trademodifydenied++;
          break;
       }
       case 146: // ERR_TRADE_CONTEXT_BUSY:
       {
-         Err_tradecontextbuzy ++;
+         Err_tradecontextbuzy++;
          break;
       }
    }
