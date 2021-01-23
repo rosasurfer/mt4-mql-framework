@@ -85,19 +85,6 @@ datetime LastTime;         // For measuring tics
 int GlobalError = 0;       // To keep track on number of added errors
 int TickCounter = 0;       // Counting tics
 int UpTo30Counter = 0;     // For calculating average spread
-int Err_unchangedvalues;   // Error count for unchanged values (modify to the same values)
-int Err_busyserver;        // Error count for busy server
-int Err_lostconnection;    // Error count for lost connection
-int Err_toomanyrequest;    // Error count for too many requests
-int Err_invalidprice;      // Error count for invalid price
-int Err_invalidstops;      // Error count for invalid SL and/or TP
-int Err_invalidtradevolume;// Error count for invalid lot size
-int Err_pricechange;       // Error count for change of price
-int Err_brokerbuzy;        // Error count for broker is buzy
-int Err_requotes;          // Error count for requotes
-int Err_toomanyrequests;   // Error count for too many requests
-int Err_trademodifydenied; // Error count for modify orders is denied
-int Err_tradecontextbuzy;  // error count for trade context is buzy
 int Ticks_samples = 0;     // Used for simulation of latency during backtests, number of tick samples
 int Tot_closed_pos;        // Number of closed positions for this EA
 int Tot_Orders;            // Number of open orders disregarding of magic and pairs
@@ -118,8 +105,6 @@ double LotSize;            // Lotsize
 double highest;            // LotSize indicator value
 double lowest;             // Lowest indicator value
 double StopLevel;          // Broker StopLevel
-double LotStep;            // Broker LotStep
-double MarginForOneLot;    // Margin required for 1 lot
 double Avg_tickspermin;    // Used for simulation of latency during backtests
 
 
@@ -150,9 +135,6 @@ int onInit() {
    // Then calculate the StopLevel as max of either this StopLevel or MinimumUseStopLevel
    StopLevel = MathMax ( MinimumUseStopLevel, StopLevel );
 
-   // Calculate LotStep
-   LotStep = MarketInfo ( Symbol(), MODE_LOTSTEP );
-
    // Check to confirm that indicator switch is valid choices, if not force to 1 (Moving Average)
    if ( UseIndicatorSwitch < 1 || UseIndicatorSwitch > 4 )
       UseIndicatorSwitch = 1;
@@ -176,15 +158,9 @@ int onInit() {
    AddPriceGap = AddPriceGap * Point;
 
    // If we have set MaxLot and/or MinLots to more/less than what the broker allows, then adjust accordingly
-   if ( MinLots < MarketInfo ( Symbol(), MODE_MINLOT ) )
-      MinLots = MarketInfo ( Symbol(), MODE_MINLOT );
-   if ( MaxLots > MarketInfo ( Symbol(), MODE_MAXLOT ) )
-      MaxLots = MarketInfo ( Symbol(), MODE_MAXLOT );
-   if ( MaxLots < MinLots )
-      MaxLots = MinLots;
-
-   // Fetch the margin required for 1 lot
-   MarginForOneLot = MarketInfo ( Symbol(), MODE_MARGINREQUIRED );
+   if (MinLots < MarketInfo(Symbol(), MODE_MINLOT)) MinLots = MarketInfo(Symbol(), MODE_MINLOT);
+   if (MaxLots > MarketInfo(Symbol(), MODE_MAXLOT)) MaxLots = MarketInfo(Symbol(), MODE_MAXLOT);
+   if (MaxLots < MinLots) MaxLots = MinLots;
 
    // Also make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
    RecalculateWrongRisk();
@@ -196,14 +172,10 @@ int onInit() {
    if ( Magic < 0 )
      Magic = CreateMagicNumber();
 
-   // Print initial info
-   PrintDetails();
-
    // Check through all closed and open orders to get stats
    CheckClosedOrders();
    CheckOpenOrders();
 
-   // Show info in graphics
    ShowGraphInfo();
 
    return(catch("onInit(1)"));
@@ -216,18 +188,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   // Print summarize of broker errors
-   PrintBrokerErrors();
-
-   // Check through all closed orders
    CheckClosedOrders();
-
-   // If we're running as backtest, then print some result
-   if (IsTesting()) {
-      Print ( "Total closed lots = ", DoubleToStr ( Tot_closed_lots, 2 ) );
-      Print ( "Total closed swap = ", DoubleToStr ( Tot_closed_swap, 2 ) );
-      Print ( "Total closed commission = ", DoubleToStr ( Tot_closed_comm, 2 ) );
-   }
    return(catch("onDeinit(1)"));
 }
 
@@ -741,8 +702,6 @@ void Trade() {
                   }
                   // Order was not modified
                   else {
-                     // Add to errors
-                     ErrorMessages();
                      logWarn("Order could not be modified", GetLastError());
 
                      // Order has not been modified and it has no StopLoss
@@ -788,8 +747,6 @@ void Trade() {
                   }
                   // Order was not modified
                   else {
-                     // Add to errors
-                     ErrorMessages();
                      logWarn("Order could not be modified", GetLastError());
                      // Lets wait 1 second before we try to modify the order again
                      Sleep ( 1000 );
@@ -832,10 +789,6 @@ void Trade() {
                      if (wasordermodified) {
                         Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
                      }
-                     else {
-                        // Add to errors
-                        ErrorMessages();
-                     }
                   }
                   // Break out from endless loop
                   break;
@@ -872,10 +825,6 @@ void Trade() {
                      }
                      if (wasordermodified) {
                         Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
-                     }
-                     else {
-                        // Add to errors
-                        ErrorMessages();
                      }
                   }
                   // Break out from endless loop
@@ -936,10 +885,8 @@ void Trade() {
          }
          else {
             ordersenderror = true;
-            // Add to errors
-            ErrorMessages();
-         } // end if-else
-      } // end if pricedirection == -1 or 2
+         }
+      }
 
       // If we have a price breakout upwards (Bullish) then send a SELLSTOP order
       if ( pricedirection == 1 || pricedirection == 2 )
@@ -963,11 +910,9 @@ void Trade() {
          else {
             // OrderSend was NOT executed successfully
             ordersenderror = true;
-            // Add to errors
-            ErrorMessages();
-         } // end if-else
-      } // end pricedirection == 0 or 2
-   } // end if execute new orders
+         }
+      }
+   }
 
    // Check initialization
    if (GlobalError < 0) {
@@ -1141,57 +1086,36 @@ int CreateMagicNumber() {
  * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
  */
 double CalculateLotsize() {
-   // initiate some local variables
-   string textstring;
-   double availablemoney;
-   double lotsize;
-   double maxlot;
-   double minlot;
+   double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);
+   double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
+   double minlot = MinLots;
+   double maxlot = MathMin(MathFloor(AccountEquity() * 0.98/marginPerLot/lotStep) * lotStep, MaxLots);
+
    int lotdigit = 0;
+   if (lotStep == 1)    lotdigit = 0;
+   if (lotStep == 0.1)  lotdigit = 1;
+   if (lotStep == 0.01) lotdigit = 2;
 
-   // Adjust lot decimals to broker lotstep
-   if ( LotStep ==  1)
-      lotdigit = 0;
-   if ( LotStep == 0.1 )
-      lotdigit = 1;
-   if ( LotStep == 0.01 )
-      lotdigit = 2;
-
-   // Get available money as Equity
-   availablemoney = AccountEquity();
-
-   // Maximum allowed Lot by the broker according to Equity. And we don't use 100% but 98%
-   maxlot = MathMin ( MathFloor ( availablemoney * 0.98 / MarginForOneLot / LotStep ) * LotStep, MaxLots );
-   // Minimum allowed Lot by the broker
-   minlot = MinLots;
 
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
-   lotsize = MathMin(MathFloor ( Risk / 102 * availablemoney / ( StopLoss + AddPriceGap ) / LotStep ) * LotStep, MaxLots );
+   double lotsize = MathMin(MathFloor ( Risk / 102 * AccountEquity()/ ( StopLoss + AddPriceGap ) / lotStep ) * lotStep, MaxLots );
    lotsize = lotsize * Multiplicator();
-   lotsize = NormalizeDouble ( lotsize, lotdigit );
-
-   // Empty textstring
-   textstring = "";
+   lotsize = NormalizeDouble(lotsize, lotdigit);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
    if (!MoneyManagement) {
-      // Set LotSize to manual LotSize
       lotsize = ManualLotsize;
 
-      // Check if ManualLotsize is greater than allowed LotSize
-      if ( ManualLotsize > maxlot )
-      {
+      if (ManualLotsize > maxlot) {
+         Alert("Note: Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
          lotsize = maxlot;
-         textstring = "Note: Manual LotSize is too high. It has been recalculated to maximum allowed " + DoubleToStr ( maxlot, 2 );
-         Alert(textstring);
          ManualLotsize = maxlot;
       }
-      // ManualLotSize is NOT greater than allowed LotSize
-      else if ( ManualLotsize < minlot )
+      else if (ManualLotsize < minlot) {
          lotsize = minlot;
+      }
    }
-
-   return ( lotsize );
+   return(lotsize);
 }
 
 
@@ -1199,26 +1123,24 @@ double CalculateLotsize() {
  * Re-calculate a new Risk if the current one is too low or too high
  */
 void RecalculateWrongRisk() {
-   // Initiate some local variables
-   string textstring;
-   double availablemoney;
+   string textstring = "";
    double maxlot;
    double minlot;
    double maxrisk;
    double minrisk;
 
-   // Get available amount of money as Equity
-   availablemoney = AccountEquity();
-   // Maximum allowed Lot by the broker according to Equity
-   maxlot = MathFloor ( availablemoney / MarginForOneLot / LotStep ) * LotStep;
+   double availablemoney = AccountEquity();
+
+   double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
+   double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
+   maxlot = MathFloor ( availablemoney / marginPerLot / lotStep ) * lotStep;
+
    // Maximum allowed Risk by the broker according to maximul allowed Lot and Equity
    maxrisk = MathFloor ( maxlot * ( StopLevel + StopLoss ) / availablemoney * 100 / 0.1 ) * 0.1;
    // Minimum allowed Lot by the broker
    minlot = MinLots;
    // Minimum allowed Risk by the broker according to minlots_broker
    minrisk = MathRound ( minlot * StopLoss / availablemoney * 100 / 0.1 ) * 0.1;
-   // Empty textstring
-   textstring = "";
 
    // If we use money management
    if (MoneyManagement) {
@@ -1226,15 +1148,15 @@ void RecalculateWrongRisk() {
       if ( Risk > maxrisk ) {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be higher than " + DoubleToStr ( maxrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss and Equity. It has now been adjusted accordingly to " + DoubleToStr ( maxrisk, 1 ) + "%";
-         Risk = maxrisk;
          Alert(textstring);
+         Risk = maxrisk;
       }
       // If Risk% is less than the minimum risklevel the broker accept, then adjust Risk accordingly and print out changes
       if (Risk < minrisk) {
          textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be lower than " + DoubleToStr ( minrisk, 1 ) + " according to ";
          textstring = textstring + "the broker, StopLoss, AddPriceGap and Equity. It has now been adjusted accordingly to " + DoubleToStr ( minrisk, 1 ) + "%";
-         Risk = minrisk;
          Alert(textstring);
+         Risk = minrisk;
       }
    }
    // If we don't use MoneyManagement, then use fixed manual LotSize
@@ -1257,168 +1179,6 @@ void RecalculateWrongRisk() {
          Alert(textstring);
       }
    }
-}
-
-
-/**
- * Print out broker details and other info
- */
-void PrintDetails() {
-   // Initiate some local variables
-   string margintext;
-   string stopouttext;
-   string fixedlots;
-   int type;
-   int freemarginmode;
-   int stopoutmode;
-   double newsl;
-
-   // Prepare some text strings
-   newsl = MathMax ( StopLoss, 10 );
-   type = IsDemo() + IsTesting();
-   freemarginmode = AccountFreeMarginMode();
-   stopoutmode = AccountStopoutMode();
-
-   if ( freemarginmode == 0 )
-      margintext = "that floating profit/loss is not used for calculation.";
-   else if ( freemarginmode == 1 )
-      margintext = "both floating profit and loss on open positions.";
-   else if ( freemarginmode == 2 )
-      margintext = "only profitable values, where current loss on open positions are not included.";
-   else if ( freemarginmode == 3 )
-      margintext = "only loss values are used for calculation, where current profitable open positions are not included.";
-
-   if ( stopoutmode == 0 )
-      stopouttext = "percentage ratio between margin and equity.";
-   else if ( stopoutmode == 1 )
-      stopouttext = "comparison of the free margin level to the absolute value.";
-
-   if (MoneyManagement) fixedlots = " (automatically calculated lots).";
-   else                 fixedlots = " (fixed manual lots).";
-
-   Print("Broker name: ", AccountCompany() );
-   Print("Broker server: ", AccountServer() );
-   Print("Account type: ", StringSubstr ( "RealDemoTest", 4 * type, 4) );
-   Print("Initial account equity: ", AccountEquity()," ", AccountCurrency() );
-   Print("Broker digits: ", Digits);
-   Print("Broker StopLevel / freezelevel (max): ", StopLevel );
-   Print("Broker Point: ", DoubleToStr ( Point, Digits )," on ", AccountCurrency() );
-   Print("Broker credit value on the account: ", AccountCredit() );
-   Print("Broker account margin: ", AccountMargin() );
-   Print("Broker calculation of free margin allowed to open positions considers " + margintext );
-   Print("Broker calculates StopOut level as " + stopouttext );
-   Print("Broker requires at least ", MarginForOneLot," ", AccountCurrency()," in margin for 1 lot." );
-   Print("Broker minimum allowed LotSize: ", MinLots );
-   Print("Broker maximum allowed LotSize: ", MaxLots );
-   Print("Broker allow lots to be resized in ", LotStep, " steps." );
-   Print("Risk: ", Risk, "%" );
-   Print("Risk adjusted LotSize: ", DoubleToStr ( LotSize, 2 ) + fixedlots );
-}
-
-
-/**
- * Summarize error messages
- */
-void ErrorMessages() {
-
-   switch (GetLastError()) {
-      // Unchanged values
-      case 1: // ERR_SERVER_BUSY:
-      {
-         Err_unchangedvalues++;
-         break;
-      }
-      // Trade server is busy
-      case 4: // ERR_SERVER_BUSY:
-      {
-         Err_busyserver++;
-         break;
-      }
-      case 6: // ERR_NO_CONNECTION:
-      {
-         Err_lostconnection++;
-         break;
-      }
-      case 8: // ERR_TOO_FREQUENT_REQUESTS:
-      {
-         Err_toomanyrequest++;
-         break;
-      }
-      case 129: // ERR_INVALID_PRICE:
-      {
-         Err_invalidprice++;
-         break;
-      }
-      case 130: // ERR_INVALID_STOPS:
-      {
-         Err_invalidstops++;
-         break;
-      }
-      case 131: // ERR_INVALID_TRADE_VOLUME:
-      {
-         Err_invalidtradevolume++;
-         break;
-      }
-      case 135: // ERR_PRICE_CHANGED:
-      {
-         Err_pricechange++;
-         break;
-      }
-      case 137: // ERR_BROKER_BUSY:
-      {
-         Err_brokerbuzy++;
-         break;
-      }
-      case 138: // ERR_REQUOTE:
-      {
-         Err_requotes++;
-         break;
-      }
-      case 141: // ERR_TOO_MANY_REQUESTS:
-      {
-         Err_toomanyrequests++;
-         break;
-      }
-      case 145: // ERR_TRADE_MODIFY_DENIED:
-      {
-         Err_trademodifydenied++;
-         break;
-      }
-      case 146: // ERR_TRADE_CONTEXT_BUSY:
-      {
-         Err_tradecontextbuzy++;
-         break;
-      }
-   }
-}
-
-
-/**
- * Print out and comment summarized messages from the broker
- */
-void PrintBrokerErrors() {
-   string txt = "Number of times the brokers server reported that ";
-
-   // Sum up total errors
-   int totalerrors = Err_unchangedvalues + Err_busyserver + Err_lostconnection + Err_toomanyrequest + Err_invalidprice
-   + Err_invalidstops + Err_invalidtradevolume + Err_pricechange + Err_brokerbuzy + Err_requotes + Err_toomanyrequests
-   + Err_trademodifydenied + Err_tradecontextbuzy;
-
-   // Call print subroutine with text depending on found errors
-   if (Err_unchangedvalues    > 0) Print(txt + "SL and TP was modified to existing values: " + DoubleToStr ( Err_unchangedvalues, 0 ) );
-   if (Err_busyserver         > 0) Print(txt + "it was busy: " + DoubleToStr ( Err_busyserver, 0 ) );
-   if (Err_lostconnection     > 0) Print(txt + "the connection was lost: " + DoubleToStr ( Err_lostconnection, 0 ) );
-   if (Err_toomanyrequest     > 0) Print(txt + "there were too many requests: " + DoubleToStr ( Err_toomanyrequest, 0 ) );
-   if (Err_invalidprice       > 0) Print(txt + "the price was invalid: " + DoubleToStr ( Err_invalidprice, 0 ) );
-   if (Err_invalidstops       > 0) Print(txt + "invalid SL and/or TP: " + DoubleToStr ( Err_invalidstops, 0 ) );
-   if (Err_invalidtradevolume > 0) Print(txt + "invalid lot size: " + DoubleToStr ( Err_invalidtradevolume, 0 ) );
-   if (Err_pricechange        > 0) Print(txt + "the price had changed: " + DoubleToStr ( Err_pricechange, 0 ) );
-   if (Err_brokerbuzy         > 0) Print(txt + "the broker was busy: " + DoubleToStr ( Err_brokerbuzy, 0 ) ) ;
-   if (Err_requotes           > 0) Print(txt + "requotes " + DoubleToStr ( Err_requotes, 0 ) );
-   if (Err_toomanyrequests    > 0) Print(txt + "too many requests " + DoubleToStr ( Err_toomanyrequests, 0 ) );
-   if (Err_trademodifydenied  > 0) Print(txt + "modifying orders was denied " + DoubleToStr ( Err_trademodifydenied, 0 ) );
-   if (Err_tradecontextbuzy   > 0) Print(txt + "trade context was busy: " + DoubleToStr ( Err_tradecontextbuzy, 0 ) );
-   if (totalerrors           == 0) Print("There was no error reported from the broker server!" );
 }
 
 
