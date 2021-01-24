@@ -40,7 +40,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a_____________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes";
-extern int    UseIndicatorSwitch        = 1;          // entry signal indicator for price channel
+extern int    EntryIndicator            = 1;          // entry signal indicator for price channel calculation
 extern int    Indicatorperiod           = 3;          // period in bars for indicator
 extern double BBDeviation               = 2;          // deviation for the iBands indicator
 extern double EnvelopesDeviation        = 0.07;       // deviation for the iEnvelopes indicator
@@ -138,12 +138,8 @@ int onInit() {
    StopLevel = MathMax ( MinimumUseStopLevel, StopLevel );
 
    // Check to confirm that indicator switch is valid choices, if not force to 1 (Moving Average)
-   if ( UseIndicatorSwitch < 1 || UseIndicatorSwitch > 4 )
-      UseIndicatorSwitch = 1;
-
-   // If indicator switch is set to 4, using iATR, tben UseVolatilityPercentage cannot be used, so force it to FALSE
-   if ( UseIndicatorSwitch == 4 )
-      UseVolatilityPercentage = false;
+   if (EntryIndicator < 1 || EntryIndicator > 3)
+      EntryIndicator = 1;
 
    // Adjust SL and TP to broker StopLevel if they are less than this StopLevel
    StopLoss = MathMax ( StopLoss, StopLevel );
@@ -529,8 +525,7 @@ void Trade() {
    indy = "";
 
    // Calculate a channel on Moving Averages, and check if the price is outside of this channel.
-   if ( UseIndicatorSwitch == 1 || UseIndicatorSwitch == 4 )
-   {
+   if (EntryIndicator == 1) {
       imalow = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_LOW, 0 );
       imahigh = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0 );
       imadiff = imahigh - imalow;
@@ -539,8 +534,7 @@ void Trade() {
    }
 
    // Calculate a channel on BollingerBands, and check if the price is outside of this channel
-   if ( UseIndicatorSwitch == 2 )
-   {
+   if (EntryIndicator == 2) {
       ibandsupper = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_UPPER, 0 );
       ibandslower = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_LOWER, 0 );
       ibandsdiff = ibandsupper - ibandslower;
@@ -549,8 +543,7 @@ void Trade() {
    }
 
    // Calculate a channel on Envelopes, and check if the price is outside of this channel
-   if ( UseIndicatorSwitch == 3 )
-   {
+   if (EntryIndicator == 3) {
       envelopesupper = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_UPPER, 0 );
       envelopeslower = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_LOWER, 0 );
       envelopesdiff = envelopesupper - envelopeslower;
@@ -565,21 +558,21 @@ void Trade() {
    pricedirection = 0;
 
    // If we're using iMA as indicator, then set variables from it
-   if (UseIndicatorSwitch==1 && isbidgreaterthanima) {
+   if (EntryIndicator==1 && isbidgreaterthanima) {
       isbidgreaterthanindy = true;
       highest = imahigh;
       lowest = imalow;
    }
 
    // If we're using iBands as indicator, then set variables from it
-   else if (UseIndicatorSwitch==2 && isbidgreaterthanibands) {
+   else if (EntryIndicator==2 && isbidgreaterthanibands) {
       isbidgreaterthanindy = true;
       highest = ibandsupper;
       lowest = ibandslower;
    }
 
    // If we're using iEnvelopes as indicator, then set variables from it
-   else if (UseIndicatorSwitch==3 && isbidgreaterthanenvelopes) {
+   else if (EntryIndicator==3 && isbidgreaterthanenvelopes) {
       isbidgreaterthanindy = true;
       highest = envelopesupper;
       lowest = envelopeslower;
@@ -617,8 +610,7 @@ void Trade() {
       VolatilityLimit = realavgspread * VolatilityMultiplier;
 
    // If the variables below have values it means that we have enough of data from broker server.
-   if ( volatility && VolatilityLimit && lowest && highest && UseIndicatorSwitch != 4 )
-   {
+   if (volatility && VolatilityLimit && lowest && highest) {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
       if (volatility > VolatilityLimit) {
          // Calculate how much it differs
