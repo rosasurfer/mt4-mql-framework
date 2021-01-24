@@ -40,38 +40,37 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a_____________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes";
-extern int    UseIndicatorSwitch        = 1;          // Choose of indicator for price channel.
-extern int    Indicatorperiod           = 3;          // Period in bars for indicator
-extern double BBDeviation               = 2;          // Deviation for the iBands indicator only
-extern double EnvelopesDeviation        = 0.07;       // Deviation for the iEnvelopes indicator only
+extern int    UseIndicatorSwitch        = 1;          // entry signal indicator for price channel
+extern int    Indicatorperiod           = 3;          // period in bars for indicator
+extern double BBDeviation               = 2;          // deviation for the iBands indicator
+extern double EnvelopesDeviation        = 0.07;       // deviation for the iEnvelopes indicator
 
 extern string ___b_____________________ = "==== MinBarSize settings ====";
-extern bool   UseDynamicVolatilityLimit = true;       // Calculated based on (int)(spread * VolatilityMultiplier)
-extern double VolatilityMultiplier      = 125;        // A multiplier that only is used if UseDynamicVolatilityLimit is set to TRUE
-extern double VolatilityLimit           = 180;        // A fix value that only is used if UseDynamicVolatilityLimit is set to FALSE
-extern bool   UseVolatilityPercentage   = true;       // If true, then price must break out more than a specific percentage
-extern double VolatilityPercentageLimit = 0;          // Percentage of how much iHigh-iLow difference must differ from VolatilityLimit.
+extern bool   UseDynamicVolatilityLimit = true;       // calculated based on (int)(spread * VolatilityMultiplier)
+extern double VolatilityMultiplier      = 125;        // a multiplier that is used if UseDynamicVolatilityLimit is TRUE
+extern double VolatilityLimit           = 180;        // a fix value that is used if UseDynamicVolatilityLimit is FALSE
+extern bool   UseVolatilityPercentage   = true;       // if TRUE, then price must break out more than a specific percentage
+extern double VolatilityPercentageLimit = 0;          // percentage of how much iHigh-iLow difference must differ from VolatilityLimit
 
-extern string ___c_____________________ = "==== MoneyManagement ====";
-extern bool   MoneyManagement           = true;       // If TRUE then calculate lotsize automaticallay based on Risk, if False then use ManualLotsize below
-extern double MinLots                   = 0.01;       // Minimum lot-size to trade with
-extern double MaxLots                   = 100;        // Maximum allowed lot-size to trade with
-extern double Risk                      = 2;          // Risk setting in percentage, For 10.000 in Equity 10% Risk and 60 StopLoss lotsize = 16.66
-extern double ManualLotsize             = 0.1;        // Fix lot size to trade with if MoneyManagement above is set to FALSE
-
-extern string ___d_____________________ = "==== Trade settings ====";
-extern int    TimeFrame                 = PERIOD_M1;  // Trading timeframe must match the timeframe of the chart
+extern string ___c_____________________ = "==== Trade settings ====";
+extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
 extern double StopLoss                  = 60;         // SL from as many points. Default 60 (= 6 pips)
 extern double TakeProfit                = 100;        // TP from as many points. Default 100 (= 10 pip)
-extern double AddPriceGap               = 0;          // Additional price gap in points added to SL and TP in order to avoid Error 130
-extern double TrailingStart             = 20;         // Start trailing profit from as so many points.
-extern double MinimumUseStopLevel       = 0;          // Stoplevel to use will be max value of either this value or broker stoplevel
-extern int    Slippage                  = 3;          // Maximum allowed Slippage of price in points
-extern double Commission                = 0;          // Some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
-extern double MaxSpread                 = 30;         // Max allowed spread in points (1/10 pip)
-extern bool   ReverseTrades             = false;      // If TRUE, then trade in opposite direction
-extern string OrderCmt                  = "XMT-rsf";  // Trade comments that appears in the Trade and Account History tab
-extern int    Magic                     = -1;         // If set to a number less than 0 it will calculate MagicNumber automatically
+extern double AddPriceGap               = 0;          // additional price gap in points added to SL and TP in order to avoid Error 130
+extern double TrailingStart             = 20;         // start trailing profit from as so many points.
+extern double MinimumUseStopLevel       = 0;          // stoplevel to use will be max value of either this value or broker stoplevel
+extern int    Slippage                  = 3;          // maximum allowed Slippage of price in points
+extern double Commission                = 0;          // some broker accounts charge commission in USD per 1.0 lot. Commission in dollar per lot
+extern double MaxSpread                 = 30;         // max allowed spread in points (1/10 pip)
+extern int    Magic                     = -1;         // if negative the MagicNumber is generated
+extern bool   ReverseTrades             = false;      // if TRUE, then trade in opposite direction
+
+extern string ___d_____________________ = "==== MoneyManagement ====";
+extern bool   MoneyManagement           = true;       // if TRUE lotsize is calculated based on "Risk", if FALSE use "ManualLotsize"
+extern double Risk                      = 2;          // risk setting in percentage, for equity=10,000, risk=10% and stopLoss=60: lotsize = 16.66
+extern double MinLots                   = 0.01;       // minimum lotsize to use
+extern double MaxLots                   = 100;        // maximum lotsize to use
+extern double ManualLotsize             = 0.1;        // fix lotsize to use if "MoneyManagement" is FALSE
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -79,8 +78,6 @@ extern int    Magic                     = -1;         // If set to a number less
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-
-string EA_version = "XMT-Scalper 2.522-rsf";
 
 datetime StartTime;        // Initial time
 datetime LastTime;         // For measuring tics
@@ -109,6 +106,8 @@ double highest;            // LotSize indicator value
 double lowest;             // Lowest indicator value
 double StopLevel;          // Broker StopLevel
 double Avg_tickspermin;    // Used for simulation of latency during backtests
+
+string orderComment = "XMT-rsf";
 
 
 /**
@@ -873,7 +872,7 @@ void Trade() {
          orderstoploss =  NormalizeDouble(orderprice - spread - StopLoss * Point - AddPriceGap, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit * Point + AddPriceGap, Digits);
          // Send a BUYSTOP order with SL and TP
-         orderticket = OrderSendEx(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, NULL, Lime, NULL, oe);
+         orderticket = OrderSendEx(Symbol(), OP_BUYSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe);
 
          if (orderticket > 0) {
             Orders.AddTicket(orderticket, OP_BUYSTOP, orderprice, OP_UNDEFINED, NULL);
@@ -897,7 +896,7 @@ void Trade() {
          orderstoploss = NormalizeDouble(orderprice + spread + StopLoss * Point + AddPriceGap, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit * Point - AddPriceGap, Digits);
          // Send a SELLSTOP order with SL and TP
-         orderticket = OrderSendEx(Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, OrderCmt, Magic, NULL, Orange, NULL, oe);
+         orderticket = OrderSendEx(Symbol(), OP_SELLSTOP, LotSize, orderprice, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe);
 
          if (orderticket > 0) {
             Orders.AddTicket(orderticket, OP_SELLSTOP, orderprice, OP_UNDEFINED, NULL);
