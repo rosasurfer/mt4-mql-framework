@@ -31,6 +31,7 @@
  *  - removed configuration of the min. margin level
  *  - added monitoring of PositionOpen and PositionClose events
  *  - added the framework's test reporting
+ *
  *  - renamed and reordered input parameters, removed obsolete ones
  */
 #include <stddefines.mqh>
@@ -66,7 +67,7 @@ extern bool   ReverseTrades             = false;      // if TRUE, then trade in 
 
 extern string ___d_____________________ = "==== MoneyManagement ====";
 extern bool   MoneyManagement           = true;       // if TRUE lotsize is calculated based on "Risk", if FALSE use "ManualLotsize"
-extern double Risk                      = 2;          // risk setting in percentage, for equity=10,000, risk=10% and stopLoss=60: lotsize = 16.66
+extern double Risk                      = 2;          // risk setting in percentage, for equity=10'000, risk=10% and stoploss=60: lotsize = 16.66
 extern double MinLots                   = 0.01;       // minimum lotsize to use
 extern double MaxLots                   = 100;        // maximum lotsize to use
 extern double ManualLotsize             = 0.1;        // fix lotsize to use if "MoneyManagement" is FALSE
@@ -78,35 +79,28 @@ extern double ManualLotsize             = 0.1;        // fix lotsize to use if "
 #include <rsfLibs.mqh>
 
 
-datetime StartTime;        // Initial time
-datetime LastTime;         // For measuring tics
+int      GlobalError = 0;        // to keep track on number of added errors
+int      UpTo30Counter = 0;      // for calculating average spread
+int      Tot_closed_pos;         // number of closed positions for this EA
+int      Tot_Orders;             // number of open orders disregarding of magic and pairs
+int      Tot_open_pos;           // number of open positions for this EA
+double   Tot_open_profit;        // a summary of the current open profit/loss for this EA
+double   Tot_open_lots;          // a summary of the current open lots for this EA
+double   Tot_open_swap;          // a summary of the current charged swaps of the open positions for this EA
+double   Tot_open_commission;    // a summary of the currebt charged commission of the open positions for this EA
+double   G_equity;               // current equity for this EA
+double   Tot_closed_lots;        // a summary of the current closed lots for this EA
+double   Tot_closed_profit;      // a summary of the current closed profit/loss for this EA
+double   Tot_closed_swap;        // a summary of the current closed swaps for this EA
+double   Tot_closed_comm;        // a summary of the current closed commission for this EA
+double   G_balance = 0;          // balance for this EA
+double   Array_spread[30];       // store spreads for the last 30 ticks
+double   LotSize;                // lotsize
+double   highest;                // lotSize indicator value
+double   lowest;                 // lowest indicator value
+double   StopLevel;              // broker StopLevel
 
-int GlobalError = 0;       // To keep track on number of added errors
-int TickCounter = 0;       // Counting tics
-int UpTo30Counter = 0;     // For calculating average spread
-int Ticks_samples = 0;     // Used for simulation of latency during backtests, number of tick samples
-int Tot_closed_pos;        // Number of closed positions for this EA
-int Tot_Orders;            // Number of open orders disregarding of magic and pairs
-int Tot_open_pos;          // Number of open positions for this EA
-
-double Tot_open_profit;    // A summary of the current open profit/loss for this EA
-double Tot_open_lots;      // A summary of the current open lots for this EA
-double Tot_open_swap;      // A summary of the current charged swaps of the open positions for this EA
-double Tot_open_commission;// A summary of the currebt charged commission of the open positions for this EA
-double G_equity;           // Current equity for this EA
-double Tot_closed_lots;    // A summary of the current closed lots for this EA
-double Tot_closed_profit;  // A summary of the current closed profit/loss for this EA
-double Tot_closed_swap;    // A summary of the current closed swaps for this EA
-double Tot_closed_comm;    // A summary of the current closed commission for this EA
-double G_balance = 0;      // Balance for this EA
-double Array_spread[30];   // Store spreads for the last 30 tics
-double LotSize;            // Lotsize
-double highest;            // LotSize indicator value
-double lowest;             // Lowest indicator value
-double StopLevel;          // Broker StopLevel
-double Avg_tickspermin;    // Used for simulation of latency during backtests
-
-string orderComment = "XMT-rsf";
+string   orderComment = "XMT-rsf";
 
 
 /**
@@ -124,9 +118,6 @@ int onInit() {
          Alert ("The EA has been set to run on timeframe: ", TimeFrame, " but it has been attached to a chart with timeframe: ", Period() );
       }
    }
-
-   // Reset time for Execution control
-   StartTime = TimeLocal();
 
    // Reset error variable
    GlobalError = -1;
@@ -436,7 +427,6 @@ bool Orders.RemoveTicket(int ticket) {
 void Trade() {
    string textstring;
    string pair;
-   string indy;
 
    bool wasordermodified = false;
    bool ordersenderror = false;
@@ -496,24 +486,9 @@ void Trade() {
       return(catch("Trade(1)"));
    }
 
-   // Previous time was less than current time, initiate tick counter
-   if ( LastTime < Time[0] )
-   {
-      // For simulation of latency during backtests, consider only 10 samples at most.
-      if ( Ticks_samples < 10 )
-         Ticks_samples ++;
-      Avg_tickspermin = Avg_tickspermin + ( TickCounter - Avg_tickspermin ) / Ticks_samples;
-      // Set previopus time to current time and reset tick counter
-      LastTime = Time[0];
-      TickCounter = 0;
-   }
-   // Previous time was NOT less than current time, so increase tick counter with 1
-   else
-      TickCounter ++;
-
    // Get Ask and Bid for the currency
-   ask = MarketInfo ( Symbol(), MODE_ASK );
-   bid = MarketInfo ( Symbol(), MODE_BID );
+   bid = Bid;
+   ask = Ask;
 
    // Calculate the channel of Volatility based on the difference of iHigh and iLow during current bar
    ihigh = iHigh ( Symbol(), TimeFrame, 0 );
@@ -521,7 +496,7 @@ void Trade() {
    volatility = ihigh - ilow;
 
    // Reset printout string
-   indy = "";
+   string indy = "";
 
    // Calculate a channel on Moving Averages, and check if the price is outside of this channel.
    if (EntryIndicator == 1) {
@@ -583,20 +558,16 @@ void Trade() {
    // Calculate lot size
    LotSize = CalculateLotsize();
 
-   // Calculate average true spread, which is the average of the spread for the last 30 tics
-   ArrayCopy ( Array_spread, Array_spread, 0, 1, 29 );
+   // calculate average spread of the last 30 ticks
+   ArrayCopy(Array_spread, Array_spread, 0, 1, 29);
    Array_spread[29] = spread;
-   if ( UpTo30Counter < 30 )
-      UpTo30Counter ++;
+   if (UpTo30Counter < 30) UpTo30Counter++;
    sumofspreads = 0;
    loopcount2 = 29;
-   for ( loopcount1 = 0; loopcount1 < UpTo30Counter; loopcount1 ++ )
-   {
+   for (loopcount1=0; loopcount1 < UpTo30Counter; loopcount1++) {
       sumofspreads += Array_spread[loopcount2];
       loopcount2 --;
    }
-
-   // Calculate an average of spreads based on the spread from the last 30 tics
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
