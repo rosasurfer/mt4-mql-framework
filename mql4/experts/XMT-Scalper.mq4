@@ -79,19 +79,23 @@ extern double ManualLotsize             = 0.1;        // fix lotsize to use if "
 #include <rsfLibs.mqh>
 
 
+int      openPositions;          // number of open positions
+double   openLots;               // total open lotsize
+double   openSwap;               // total open swap
+double   openCommission;         // total open commissions
+double   openPl;                 // total open gross profit
+double   openPlNet;              // total open net profit
+
+int      closedPositions;        // number of closed positions
+double   closedLots;             // total closed lotsize
+double   closedSwap;             // total closed swap
+double   closedCommission;       // total closed commission
+double   closedPl;               // total closed gross profit
+double   closedPlNet;            // total closed net profit
+
+double   totalPl;                // openPlNet + closedPlNet
+
 int      UpTo30Counter = 0;      // for calculating average spread
-int      Tot_closed_pos;         // number of closed positions for this EA
-int      Tot_open_pos;           // number of open positions for this EA
-double   Tot_open_profit;        // a summary of the current open profit/loss for this EA
-double   Tot_open_lots;          // a summary of the current open lots for this EA
-double   Tot_open_swap;          // a summary of the current charged swaps of the open positions for this EA
-double   Tot_open_commission;    // a summary of the currebt charged commission of the open positions for this EA
-double   G_equity;               // current equity for this EA
-double   Tot_closed_lots;        // a summary of the current closed lots for this EA
-double   Tot_closed_profit;      // a summary of the current closed profit/loss for this EA
-double   Tot_closed_swap;        // a summary of the current closed swaps for this EA
-double   Tot_closed_comm;        // a summary of the current closed commission for this EA
-double   G_balance = 0;          // balance for this EA
 double   Array_spread[30];       // store spreads for the last 30 ticks
 double   LotSize;                // lotsize
 double   highest;                // lotSize indicator value
@@ -853,13 +857,13 @@ void Trade() {
 
 
 /**
- * Calculate lot multiplicator for AccountCurrency. Assumes that account currency is any of the 8 majors.
+ * Calculate lot multiplicator for AccountCurrency. Assumes that account currency is one of the 8 majors.
  * The calculated lotsize should be multiplied with this multiplicator.
  *
  * @return double - multiplier value or NULL in case of errors
  */
 double GetLotsizeMultiplier() {
-   double rate;
+   double rate = 0;
    string suffix = StrRight(Symbol(), -6);
 
    if      (AccountCurrency() == "USD") rate = 1;
@@ -870,9 +874,8 @@ double GetLotsizeMultiplier() {
    else if (AccountCurrency() == "CHF") rate = MarketInfo("USDCHF"+ suffix, MODE_BID);
    else if (AccountCurrency() == "JPY") rate = MarketInfo("USDJPY"+ suffix, MODE_BID);
    else if (AccountCurrency() == "CAD") rate = MarketInfo("USDCAD"+ suffix, MODE_BID);
-   else return(!catch("GetLotsizeMultiplier(1)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
 
-   if (!rate) return(!catch("GetLotsizeMultiplier(2)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
+   if (!rate) return(!catch("GetLotsizeMultiplier(1)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
    return(1/rate);
 }
 
@@ -1000,30 +1003,26 @@ void RecalculateRisk() {
  * Check through all open orders
  */
 void CheckOpenOrders() {
-   double tmp_order_lots, tmp_order_price;
+   openPositions  = 0;
+   openLots       = 0;
+   openSwap       = 0;
+   openCommission = 0;
+   openPl         = 0;
 
-   Tot_open_pos        = 0;
-   Tot_open_profit     = 0;
-   Tot_open_lots       = 0;
-   Tot_open_swap       = 0;
-   Tot_open_commission = 0;
-   G_equity            = 0;
-   int Tot_Orders      = OrdersTotal();
-
-   for (int pos=0; pos < Tot_Orders; pos++) {
+   int orders = OrdersTotal();
+   for (int pos=0; pos < orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_TRADES)) {
          if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-            Tot_open_pos++;
-            tmp_order_lots       = OrderLots();
-            Tot_open_lots       += tmp_order_lots;
-            tmp_order_price      = OrderOpenPrice();
-            Tot_open_profit     += OrderProfit();
-            Tot_open_swap       += OrderSwap();
-            Tot_open_commission += OrderCommission();
+            openPositions++;
+            openLots       += OrderLots();
+            openSwap       += OrderSwap();
+            openCommission += OrderCommission();
+            openPl         += OrderProfit();
          }
       }
    }
-   G_equity = G_balance + Tot_open_profit + Tot_open_swap + Tot_open_commission;
+   openPlNet = openSwap + openCommission + openPl;
+   totalPl   = openPlNet + closedPlNet;
 }
 
 
@@ -1031,28 +1030,26 @@ void CheckOpenOrders() {
  * Check through all closed orders
  */
 void CheckClosedOrders() {
-   Tot_closed_pos    = 0;
-   Tot_closed_lots   = 0;
-   Tot_closed_profit = 0;
-   Tot_closed_swap   = 0;
-   Tot_closed_comm   = 0;
-   G_balance         = 0;
+   closedPositions  = 0;
+   closedLots       = 0;
+   closedSwap       = 0;
+   closedCommission = 0;
+   closedPl         = 0;
 
-   int openTotal = OrdersHistoryTotal();
-
-   // Loop through all closed orders
-   for (int pos=0; pos < openTotal; pos++) {
+   int orders = OrdersHistoryTotal();
+   for (int pos=0; pos < orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_HISTORY)) {
          if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-            Tot_closed_lots   += OrderLots();
-            Tot_closed_profit += OrderProfit();
-            Tot_closed_swap   += OrderSwap();
-            Tot_closed_comm   += OrderCommission();
-            Tot_closed_pos++;
+            closedPositions++;
+            closedLots       += OrderLots();
+            closedSwap       += OrderSwap();
+            closedCommission += OrderCommission();
+            closedPl         += OrderProfit();
          }
       }
    }
-   G_balance = Tot_closed_profit + Tot_closed_swap + Tot_closed_comm;
+   closedPlNet = closedSwap + closedCommission + closedPl;
+   totalPl     = openPlNet + closedPlNet;
 }
 
 
@@ -1062,10 +1059,9 @@ void CheckClosedOrders() {
 void ShowGraphInfo() {
    if (!IsChart()) return;
 
-   string line1 = "Open: " + DoubleToStr ( Tot_open_pos, 0 ) + " positions, " + DoubleToStr ( Tot_open_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_open_profit, 2 );
-   string line2 = "Closed: " + DoubleToStr ( Tot_closed_pos, 0 ) + " positions, " + DoubleToStr ( Tot_closed_lots, 2 ) + " lots with value: " + DoubleToStr ( Tot_closed_profit, 2 );
-   string line3 = "EA Balance: " + DoubleToStr ( G_balance, 2 ) + ", Swap: " + DoubleToStr ( Tot_open_swap, 2 ) + ", Commission: " + DoubleToStr ( Tot_open_commission, 2 );
-   string line4 = "EA Equity: " + DoubleToStr ( G_equity, 2 ) + ", Swap: " + DoubleToStr ( Tot_closed_swap, 2 ) + ", Commission: "  + DoubleToStr ( Tot_closed_comm, 2 );
+   string line1 = "Open: "+ openPositions +" positions, "+ NumberToStr(openLots, ".+") +" lots, PL(net): "+ DoubleToStr(openPlNet, 2);
+   string line2 = "Closed: "+ closedPositions +" positions, "+ NumberToStr(closedLots, ".+") +" lots, Swap: "+ DoubleToStr(closedSwap, 2) +", Commission: "+ DoubleToStr(closedCommission, 2) +", PL(net): "+ DoubleToStr(closedPlNet, 2);
+   string line3 = "Total PL: "+ DoubleToStr(totalPl, 2);
 
    int xPos = 3;
    int yPos = 100;
@@ -1073,7 +1069,6 @@ void ShowGraphInfo() {
    Display("line1", line1, xPos, yPos); yPos += 20;
    Display("line2", line2, xPos, yPos); yPos += 20;
    Display("line3", line3, xPos, yPos); yPos += 20;
-   Display("line4", line4, xPos, yPos); yPos += 20;
 
    return(catch("ShowGraphInfo(1)"));
 }
