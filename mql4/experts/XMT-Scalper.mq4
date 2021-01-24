@@ -20,19 +20,19 @@
  *  @link   https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#        [XMT-Scalper v2.522 + PDF by Capella]
  *
  *
- * pewa:
+ * Changes:
  *  - removed MQL5 syntax and fixed compiler issues
  *  - added rosasurfer framework
  *  - repositioned chart objects, fixed chart object errors and removed status display configuration
  *  - moved Print() output to the framework logger
- *  - removed obsolete functions and variables
+ *  - removed needless functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of the min. margin level
  *  - added monitoring of PositionOpen and PositionClose events
  *  - added the framework's test reporting
  *
- *  - renamed and reordered input parameters, removed obsolete ones
+ *  - renamed and reordered input parameters, removed needless ones
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -82,7 +82,6 @@ extern double ManualLotsize             = 0.1;        // fix lotsize to use if "
 int      GlobalError = 0;        // to keep track on number of added errors
 int      UpTo30Counter = 0;      // for calculating average spread
 int      Tot_closed_pos;         // number of closed positions for this EA
-int      Tot_Orders;             // number of open orders disregarding of magic and pairs
 int      Tot_open_pos;           // number of open positions for this EA
 double   Tot_open_profit;        // a summary of the current open profit/loss for this EA
 double   Tot_open_lots;          // a summary of the current open lots for this EA
@@ -1142,19 +1141,15 @@ void RecalculateWrongRisk() {
  * Check through all open orders
  */
 void CheckOpenOrders() {
-   // Initiate some local variables
-   double tmp_order_lots;
-   double tmp_order_price;
+   double tmp_order_lots, tmp_order_price;
 
-   // Reset counters
    Tot_open_pos        = 0;
    Tot_open_profit     = 0;
    Tot_open_lots       = 0;
    Tot_open_swap       = 0;
    Tot_open_commission = 0;
    G_equity            = 0;
-
-   Tot_Orders = OrdersTotal();
+   int Tot_Orders      = OrdersTotal();
 
    for (int pos=0; pos < Tot_Orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_TRADES)) {
@@ -1177,7 +1172,6 @@ void CheckOpenOrders() {
  * Check through all closed orders
  */
 void CheckClosedOrders() {
-   // Reset counters
    Tot_closed_pos    = 0;
    Tot_closed_lots   = 0;
    Tot_closed_profit = 0;
@@ -1191,7 +1185,7 @@ void CheckClosedOrders() {
    for (int pos=0; pos < openTotal; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_HISTORY)) {
          if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-            Tot_closed_lots   += OrderLots();                        // pewa: wrong
+            Tot_closed_lots   += OrderLots();
             Tot_closed_profit += OrderProfit();
             Tot_closed_swap   += OrderSwap();
             Tot_closed_comm   += OrderCommission();
