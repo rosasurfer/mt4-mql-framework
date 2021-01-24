@@ -79,7 +79,6 @@ extern double ManualLotsize             = 0.1;        // fix lotsize to use if "
 #include <rsfLibs.mqh>
 
 
-int      GlobalError = 0;        // to keep track on number of added errors
 int      UpTo30Counter = 0;      // for calculating average spread
 int      Tot_closed_pos;         // number of closed positions for this EA
 int      Tot_open_pos;           // number of open positions for this EA
@@ -118,9 +117,6 @@ int onInit() {
       }
    }
 
-   // Reset error variable
-   GlobalError = -1;
-
    // Calculate StopLevel as max of either STOPLEVEL or FREEZELEVEL
    StopLevel = MathMax ( MarketInfo ( Symbol(), MODE_FREEZELEVEL ), MarketInfo ( Symbol(), MODE_STOPLEVEL ) );
    // Then calculate the StopLevel as max of either this StopLevel or MinimumUseStopLevel
@@ -150,7 +146,7 @@ int onInit() {
    if (MaxLots < MinLots) MaxLots = MinLots;
 
    // Also make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
-   RecalculateWrongRisk();
+   RecalculateRisk();
 
    // Calculate intitial LotSize
    LotSize = CalculateLotsize();
@@ -413,7 +409,6 @@ bool Orders.RemoveTicket(int ticket) {
  * Main trading subroutine
  */
 void Trade() {
-   string textstring;
    string pair;
 
    bool wasordermodified = false;
@@ -429,8 +424,6 @@ void Trade() {
    int pricedirection;
    int counter1;
    int counter2;
-   int askpart;
-   int bidpart;
 
    double ask;
    double bid;
@@ -781,23 +774,7 @@ void Trade() {
                OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe);
                Orders.RemoveTicket(OrderTicket());
             }
-         } // end of switch
-      }  // end if OrderMagicNumber
-   } // end for loopcount2 - end of loop through open orders
-
-   // Calculate and keep track on global error number
-   if ( GlobalError >= 0 || GlobalError == -2 )
-   {
-      bidpart = NormalizeDouble ( bid / Point, 0 );
-      askpart = NormalizeDouble ( ask / Point, 0 );
-      if ( bidpart % 10 != 0 || askpart % 10 != 0 )
-         GlobalError = -1;
-      else
-      {
-         if ( GlobalError >= 0 && GlobalError < 10 )
-            GlobalError ++;
-         else
-            GlobalError = -2;
+         }
       }
    }
 
@@ -805,11 +782,11 @@ void Trade() {
    ordersenderror = false;
 
    // Set default price adjustment
-   askplusdistance = ask + StopLevel;
+   askplusdistance  = ask + StopLevel;
    bidminusdistance = bid - StopLevel;
 
    // If we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread AND we have no errors THEN proceed
-   if (!counter1 && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits) && GlobalError == -1) {
+   if (!counter1 && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits) && !last_error) {
       // If we have a price breakout downwards (Bearish) then send a BUYSTOP order
       if ( pricedirection == -1 || pricedirection == 2 ) // Send a BUYSTOP
       {
@@ -858,24 +835,19 @@ void Trade() {
       }
    }
 
-   // Check initialization
-   if (GlobalError < 0) {
-      // Error
-      if (GlobalError == -2) {
-         Alert("ERROR -- Instrument "+ Symbol() +" prices should have "+  Digits +" fraction digits on broker account");
-      }
-      else {
-         textstring = "Volatility: "+ DoubleToStr(volatility, Digits) +"   VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +"   VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits)           + NL
-                     +"PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4 * pricedirection + 4, 4) +"   Open orders: "+  counter1                                                                                  + NL
-                     + indy                                                                                                                                                                                           + NL
-                     +"AvgSpread: "+ DoubleToStr(avgspread, Digits) +"   RealAvgSpread: "+ DoubleToStr(realavgspread, Digits) +"   Commission: "+ DoubleToStr(Commission, 2) +"   LotSize: "+ DoubleToStr(LotSize, 2) + NL;
+   // show debug messages on screen
+   if (IsChart()) {
+      string text = "Volatility: "+ DoubleToStr(volatility, Digits) +"   VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +"   VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits)           + NL
+                   +"PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4 * pricedirection + 4, 4) +"   Open orders: "+  counter1                                                                                  + NL
+                   + indy                                                                                                                                                                                           + NL
+                   +"AvgSpread: "+ DoubleToStr(avgspread, Digits) +"   RealAvgSpread: "+ DoubleToStr(realavgspread, Digits) +"   Commission: "+ DoubleToStr(Commission, 2) +"   LotSize: "+ DoubleToStr(LotSize, 2) + NL;
 
-         if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
-            textstring = textstring + "The current avg spread ("+ DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread * Point, Digits) +") => trading disabled";
-         }
-         Comment(NL, textstring);
+      if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
+         text = text +"The current avg spread ("+ DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread * Point, Digits) +") => trading disabled";
       }
+      Comment(NL, text);
    }
+
    return(catch("Trade(5)"));
 }
 
@@ -883,6 +855,8 @@ void Trade() {
 /**
  * Calculate lot multiplicator for AccountCurrency. Assumes that account currency is any of the 8 majors.
  * The calculated lotsize should be multiplied with this multiplicator.
+ *
+ * @return double - multiplier value or NULL in case of errors
  */
 double GetLotsizeMultiplier() {
    double rate;
@@ -905,6 +879,8 @@ double GetLotsizeMultiplier() {
 
 /**
  * Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
+ *
+ * @return int
  */
 int CreateMagicNumber() {
    string values = "EURUSDJPYCHFCADAUDNZDGBP";
@@ -958,9 +934,9 @@ double CalculateLotsize() {
 
 
 /**
- * Re-calculate a new Risk if the current one is too low or too high
+ * Recalculate a new "Risk" value if the current one is too low or too high.
  */
-void RecalculateWrongRisk() {
+void RecalculateRisk() {
    string textstring = "";
    double maxlot;
    double minlot;
@@ -1107,12 +1083,13 @@ void ShowGraphInfo() {
  * Subroutine for displaying graphics on the chart
  */
 void Display(string label, string text, int xPos, int yPos) {
+   label = WindowExpertName() +"."+ label;
+
    if (ObjectFind(label) != 0) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    }
    ObjectSet(label, OBJPROP_CORNER,    CORNER_TOP_LEFT);
    ObjectSet(label, OBJPROP_XDISTANCE, xPos);
    ObjectSet(label, OBJPROP_YDISTANCE, yPos);
-
    ObjectSetText(label, text, 10, "Tahoma", Blue);
 }
