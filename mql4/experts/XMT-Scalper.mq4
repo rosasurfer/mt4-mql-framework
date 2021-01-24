@@ -1,22 +1,21 @@
 /**
- * XMT-Scalper revisited
+ * XMT-Scalper relaunched
  *
  *
- * This EA is originally based on the famous "MillionDollarPips EA". A Swedish guy known as 'Capella' first transformed it to
- * "MDP-Plus" and then to "XMT-Scalper". In his own words: "Nothing remains from the original except the core idea of the
- * strategy: scalping based on a reversal from a channel breakout." Today various versions of the EA circulate in the internet
- * by various names (MDP-Plus, XMT, Assar). None can be meaningfully tested nor is suitable for trading. Main reasons are a
- * high datafeed sensitivity (especially the number of received ticks), the unaccounted effects of slippage and commission and
- * a failed software design in general. In fact the EA produces so different results in tests and online accounts that
- * profitable test parameters must never be applied to online trading.
+ * This EA is originally based on the famous "MillionDollarPips EA". A member of the "www.worldwide-invest.org" forum known
+ * as Capella transformed it to "XMT-Scalper". In his own words: "Nothing remains from the original except the core idea of
+ * the strategy: scalping based on a reversal from a channel breakout." Today various versions circulate in the internet
+ * going by different names (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a high datafeed
+ * sensitivity (especially the number of received ticks), the unaccounted effects of slippage/commission and an insufficient
+ * software design. Testing is possible for a few months at best and results are meaningless in general. Testing behavior
+ * differs from online behavior to such a degree that profitable test parameters cannot be applied.
  *
  * This version is again a complete rewrite.
  *
  * Sources:
- *  @origin XMT-Scalper v2.522
- *  @link   https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp#            [MillionDollarPips v2 decompiled]
- *  @link   https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp#             [MDP-Plus v2.2 + PDF by Capella]
- *  @link   https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#        [XMT-Scalper v2.522 + PDF by Capella]
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp#             [MillionDollarPips v2 decompiled]
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp#                    [MDP-Plus v2.2 by Capella]
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#               [XMT-Scalper v2.522 by Capella]
  *
  *
  * Changes:
