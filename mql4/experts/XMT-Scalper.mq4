@@ -2,14 +2,13 @@
  * XMT-Scalper revisited
  *
  *
- * This EA is originally based on the famous "MillionDollarPips EA". Credits for the initial transformation from MDP to
- * XMT-Scalper go to a Swedish guy named Capella. In his own words: "Nothing remains from the original except the core idea of
- * the strategy: scalping based on a reversal from a channel breakout."
- *
- * Today various versions of his EA circulate in the internet by various names (MDP-Plus, XMT, Assar). None of them is suitable
- * for trading real money. Main reasons are a very high datafeed sensitivity (especially the number of received ticks) and the
- * unaccounted effects of slippage and commissions. Moreover the EA produces completely different results in tester and online
- * accounts. Profitable parameters found in tester can't be applied to online trading.
+ * This EA is originally based on the famous "MillionDollarPips EA". A Swedish guy known as 'Capella' first transformed it to
+ * "MDP-Plus" and then to "XMT-Scalper". In his own words: "Nothing remains from the original except the core idea of the
+ * strategy: scalping based on a reversal from a channel breakout." Today various versions of the EA circulate in the internet
+ * by various names (MDP-Plus, XMT, Assar). None can be meaningfully tested nor is suitable for trading. Main reasons are a
+ * high datafeed sensitivity (especially the number of received ticks), the unaccounted effects of slippage and commission and
+ * a failed software design in general. In fact the EA produces so different results in tests and online accounts that
+ * profitable test parameters must never be applied to online trading.
  *
  * This version is again a complete rewrite.
  *
@@ -29,6 +28,7 @@
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of the min. margin level
+ *  - rewrote displayed trade statistics
  *  - added monitoring of PositionOpen and PositionClose events
  *  - added the framework's test reporting
  *
@@ -93,7 +93,7 @@ double   closedCommission;       // total closed commission
 double   closedPl;               // total closed gross profit
 double   closedPlNet;            // total closed net profit
 
-double   totalPl;                // openPlNet + closedPlNet
+double   totalPl;                // totalPl = openPlNet + closedPlNet
 
 int      UpTo30Counter = 0;      // for calculating average spread
 double   Array_spread[30];       // store spreads for the last 30 ticks
@@ -1059,8 +1059,8 @@ void CheckClosedOrders() {
 void ShowGraphInfo() {
    if (!IsChart()) return;
 
-   string line1 = "Open: "+ openPositions +" positions, "+ NumberToStr(openLots, ".+") +" lots, PL(net): "+ DoubleToStr(openPlNet, 2);
-   string line2 = "Closed: "+ closedPositions +" positions, "+ NumberToStr(closedLots, ".+") +" lots, Swap: "+ DoubleToStr(closedSwap, 2) +", Commission: "+ DoubleToStr(closedCommission, 2) +", PL(net): "+ DoubleToStr(closedPlNet, 2);
+   string line1 = "Open:   "+ openPositions   +" positions, "+ NumberToStr(openLots, ".+")   +" lots, PL(net): "+ DoubleToStr(openPlNet, 2);
+   string line2 = "Closed: "+ closedPositions +" positions, "+ NumberToStr(closedLots, ".+") +" lots, PL(net): "+ DoubleToStr(closedPlNet, 2) +", Swap: "+ DoubleToStr(closedSwap, 2) +", Commission: "+ DoubleToStr(closedCommission, 2);
    string line3 = "Total PL: "+ DoubleToStr(totalPl, 2);
 
    int xPos = 3;
