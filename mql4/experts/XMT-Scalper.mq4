@@ -892,124 +892,25 @@ void Trade() {
 
 
 /**
- * Calculate lot multiplicator for Account Currency. Assumes that account currency is any of the 8 majors.
- * If the account currency is of any other currency, then calculate the multiplicator as follows:
- * If base-currency is USD then use the BID-price for the currency pair USDXXX; or if the
- * counter currency is USD the use 1 / BID-price for the currency pair XXXUSD,
- * where XXX is the abbreviation for the account currency. The calculated lot-size should
- * then be multiplied with this multiplicator.
+ * Calculate lot multiplicator for AccountCurrency. Assumes that account currency is any of the 8 majors.
+ * The calculated lotsize should be multiplied with this multiplicator.
  */
-double Multiplicator() {
-   // Initiate some local variables
-   double marketbid = 0;
-   double multiplicator = 1.0;
-   int length;
-   string appendix = "";
+double GetLotsizeMultiplier() {
+   double rate;
+   string suffix = StrRight(Symbol(), -6);
 
-   // If the account currency is USD
-   if ( AccountCurrency() == "USD" )
-      return ( multiplicator );
-   length = StringLen ( Symbol() );
-   if ( length != 6 )
-      appendix = StringSubstr ( Symbol(), 6, length - 6 );
+   if      (AccountCurrency() == "USD") rate = 1;
+   else if (AccountCurrency() == "EUR") rate = MarketInfo("EURUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "GBP") rate = MarketInfo("GBPUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "AUD") rate = MarketInfo("AUDUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "NZD") rate = MarketInfo("NZDUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "CHF") rate = MarketInfo("USDCHF"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "JPY") rate = MarketInfo("USDJPY"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "CAD") rate = MarketInfo("USDCAD"+ suffix, MODE_BID);
+   else return(!catch("GetLotsizeMultiplier(1)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
 
-   // If the account currency is EUR
-   if ( AccountCurrency() == "EUR" )
-   {
-      marketbid = MarketInfo ( "EURUSD" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 1.0 instead!" );
-         multiplicator = 1.0;
-      }
-   }
-
-   // If the account currency is GBP
-   if ( AccountCurrency() == "GBP" )
-   {
-      marketbid = MarketInfo ( "GBPUSD" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 1.5 instead!" );
-         multiplicator = 1.5;
-      }
-   }
-
-   // If the account currenmmcy is AUD
-   if ( AccountCurrency() == "AUD" )
-   {
-      marketbid = MarketInfo ( "AUDUSD" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 0.7 instead!" );
-         multiplicator = 0.7;
-      }
-   }
-
-   // If the account currency is NZD
-   if ( AccountCurrency() == "NZD" )
-   {
-      marketbid = MarketInfo ( "NZDUSD" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 0.65 instead!" );
-         multiplicator = 0.65;
-      }
-   }
-
-   // If the account currency is CHF
-   if ( AccountCurrency() == "CHF" )
-   {
-      marketbid = MarketInfo ( "USDCHF" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 1.0 instead!" );
-         multiplicator = 1.0;
-      }
-   }
-
-   // If the account currenmmcy is JPY
-   if ( AccountCurrency() == "JPY" )
-   {
-      marketbid = MarketInfo ( "USDJPY" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 120 instead!" );
-         multiplicator = 120;
-      }
-   }
-
-   // If the account currenmcy is CAD
-   if ( AccountCurrency() == "CAD" )
-   {
-      marketbid = MarketInfo ( "USDCAD" + appendix, MODE_BID );
-      if ( marketbid != 0 )
-         multiplicator = 1.0 / marketbid;
-      else
-      {
-         Print ( "WARNING! Unable to fetch the market Bid price for " + AccountCurrency() + ", will use the static value 1.3 instead!" );
-         multiplicator = 1.3;
-      }
-   }
-
-   // If account currency is neither of EUR, GBP, AUD, NZD, CHF, JPY or CAD we assumes that it is USD
-   if ( multiplicator == 0 )
-      multiplicator = 1.0;
-
-   // Return the calculated multiplicator value for the account currency
-   return ( multiplicator );
+   if (!rate) return(!catch("GetLotsizeMultiplier(2)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
+   return(1/rate);
 }
 
 
@@ -1017,23 +918,17 @@ double Multiplicator() {
  * Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
  */
 int CreateMagicNumber() {
-   // Initiate some local variables
-   string a;
-   string b;
-   int c;
-   int d;
-   int i;
-   string par = "EURUSDJPYCHFCADAUDNZDGBP";
-   string sym = Symbol();
+   string values = "EURUSDJPYCHFCADAUDNZDGBP";
+   string base   = StrLeft(Symbol(), 3);
+   string quote  = StringSubstr(Symbol(), 3, 3);
 
-   a = StringSubstr ( sym, 0, 3 );
-   b = StringSubstr ( sym, 3, 3 );
-   c = StringFind ( par, a, 0 );
-   d = StringFind ( par, b, 0 );
-   i = 999999999 - AccountNumber() - c - d;
+   int basePos  = StringFind(values, base, 0);
+   int quotePos = StringFind(values, quote, 0);
 
-   if (IsLogDebug()) logDebug("MagicNumber: "+ i);
-   return ( i );
+   int result = INT_MAX - AccountNumber() - basePos - quotePos;
+
+   if (IsLogDebug()) logDebug("MagicNumber: "+ result);
+   return(result);
 }
 
 
@@ -1051,11 +946,10 @@ double CalculateLotsize() {
    if (lotStep == 0.1)  lotdigit = 1;
    if (lotStep == 0.01) lotdigit = 2;
 
-
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
-   double lotsize = MathMin(MathFloor ( Risk / 102 * AccountEquity()/ ( StopLoss + AddPriceGap ) / lotStep ) * lotStep, MaxLots );
-   lotsize = lotsize * Multiplicator();
-   lotsize = NormalizeDouble(lotsize, lotdigit);
+   double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / (StopLoss + AddPriceGap) / lotStep) * lotStep, MaxLots);
+   lotsize *= GetLotsizeMultiplier();
+   lotsize  = NormalizeDouble(lotsize, lotdigit);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
    if (!MoneyManagement) {
