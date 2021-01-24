@@ -31,7 +31,7 @@
  *  - removed configuration of the min. margin level
  *  - added monitoring of PositionOpen and PositionClose events
  *  - added the framework's test reporting
- *  - reordered input parameters
+ *  - renamed and reordered input parameters, removed obsolete ones
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -49,7 +49,6 @@ extern string ___b_____________________ = "==== MinBarSize settings ====";
 extern bool   UseDynamicVolatilityLimit = true;       // calculated based on (int)(spread * VolatilityMultiplier)
 extern double VolatilityMultiplier      = 125;        // a multiplier that is used if UseDynamicVolatilityLimit is TRUE
 extern double VolatilityLimit           = 180;        // a fix value that is used if UseDynamicVolatilityLimit is FALSE
-extern bool   UseVolatilityPercentage   = true;       // if TRUE, then price must break out more than a specific percentage
 extern double VolatilityPercentageLimit = 0;          // percentage of how much iHigh-iLow difference must differ from VolatilityLimit
 
 extern string ___c_____________________ = "==== Trade settings ====";
@@ -616,8 +615,8 @@ void Trade() {
          // Calculate how much it differs
          volatilitypercentage = volatility / VolatilityLimit;
 
-         // In case of UseVolatilityPercentage == TRUE then also check if it differ enough of percentage
-         if (!UseVolatilityPercentage || (UseVolatilityPercentage && volatilitypercentage > VolatilityPercentageLimit)) {
+         // check if it differ enough from the specified limit
+         if (volatilitypercentage > VolatilityPercentageLimit) {
             if (bid < lowest) {
                pricedirection = ifInt(ReverseTrades, 1, -1);   // -1=Long, 1=Short
             }
