@@ -453,13 +453,14 @@ void Trade() {
    int oe[];
 
    // Calculate Margin level
-   if ( AccountMargin() != 0 )
+   if (AccountMargin() != 0)
       am = AccountMargin();
+   if (!am) return(catch("Trade(1)  am = 0", ERR_ZERO_DIVIDE));
    marginlevel = AccountEquity() / am * 100; // margin level in %
 
    if (marginlevel < 100) {
       Alert("Warning! Free Margin "+ DoubleToStr(marginlevel, 2) +" is lower than MinMarginLevel!");
-      return(catch("Trade(1)"));
+      return(catch("Trade(2)"));
    }
 
    // Get Ask and Bid for the currency
@@ -544,6 +545,7 @@ void Trade() {
       sumofspreads += Array_spread[loopcount2];
       loopcount2 --;
    }
+   if (!UpTo30Counter) return(catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
@@ -560,6 +562,7 @@ void Trade() {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
       if (volatility > VolatilityLimit) {
          // Calculate how much it differs
+         if (!VolatilityLimit) return(catch("Trade(4)  VolatilityLimit = 0", ERR_ZERO_DIVIDE));
          volatilitypercentage = volatility / VolatilityLimit;
 
          // check if it differ enough from the specified limit
@@ -581,7 +584,7 @@ void Trade() {
    // Check for out of money
    if (AccountEquity() <= 0) {
       Alert("ERROR: AccountEquity = "+ DoubleToStr(AccountEquity(), 2));
-      return(catch("Trade(2)"));
+      return(catch("Trade(5)"));
    }
 
    // Reset counters
@@ -640,7 +643,7 @@ void Trade() {
                      if (!orderstoploss) {
                         // Try to modify order with a safe hard SL that is 3 pip from current price
                         wasordermodified = OrderModifyEx(OrderTicket(), NULL, Bid-30, NULL, NULL, Red, NULL, oe);
-                        return(catch("Trade(3)  invalid SL: "+ NumberToStr(Bid-30, ".+"), ERR_RUNTIME_ERROR));
+                        return(catch("Trade(6)  invalid SL: "+ NumberToStr(Bid-30, ".+"), ERR_RUNTIME_ERROR));
                      }
                   }
                }
@@ -687,7 +690,7 @@ void Trade() {
                      if (!orderstoploss) {
                         // Try to modify order with a safe hard SL that is 3 pip from current price
                         wasordermodified = OrderModifyEx(OrderTicket(), NULL, Ask+30, NULL, NULL, Red, NULL, oe);
-                        return(catch("Trade(4)  invalid SL: "+ NumberToStr(Ask+30, ".+"), ERR_RUNTIME_ERROR));
+                        return(catch("Trade(7)  invalid SL: "+ NumberToStr(Ask+30, ".+"), ERR_RUNTIME_ERROR));
                      }
                   }
                }
@@ -843,7 +846,7 @@ void Trade() {
       Comment(NL, text);
    }
 
-   return(catch("Trade(5)"));
+   return(catch("Trade(8)"));
 }
 
 
@@ -898,6 +901,8 @@ double CalculateLotsize() {
    double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);
    double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
    double minlot = MinLots;
+   if (!marginPerLot) return(!catch("CalculateLotsize(1)  marginPerLot = 0", ERR_ZERO_DIVIDE));
+   if (!lotStep)      return(!catch("CalculateLotsize(2)  lotStep = 0", ERR_ZERO_DIVIDE));
    double maxlot = MathMin(MathFloor(AccountEquity() * 0.98/marginPerLot/lotStep) * lotStep, MaxLots);
 
    int lotdigit = 0;
@@ -906,6 +911,8 @@ double CalculateLotsize() {
    if (lotStep == 0.01) lotdigit = 2;
 
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
+   if (EQ(StopLoss + AddPriceGap, 0)) return(!catch("CalculateLotsize(3)  StopLoss + AddPriceGap = 0", ERR_ZERO_DIVIDE));
+   if (!lotStep)                      return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
    double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / (StopLoss + AddPriceGap) / lotStep) * lotStep, MaxLots);
    lotsize *= GetLotsizeMultiplier();
    lotsize  = NormalizeDouble(lotsize, lotdigit);
@@ -941,9 +948,12 @@ void RecalculateRisk() {
 
    double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
-   maxlot = MathFloor ( availablemoney / marginPerLot / lotStep ) * lotStep;
+   if (!marginPerLot) return(!catch("RecalculateRisk(1)  marginPerLot = 0", ERR_ZERO_DIVIDE));
+   if (!lotStep)      return(!catch("RecalculateRisk(2)  lotStep = 0", ERR_ZERO_DIVIDE));
+   maxlot = MathFloor(availablemoney/marginPerLot/lotStep) * lotStep;
 
    // Maximum allowed Risk by the broker according to maximul allowed Lot and Equity
+   if (!availablemoney) return(!catch("RecalculateRisk(3)  availablemoney = 0", ERR_ZERO_DIVIDE));
    maxrisk = MathFloor ( maxlot * ( StopLevel + StopLoss ) / availablemoney * 100 / 0.1 ) * 0.1;
    // Minimum allowed Lot by the broker
    minlot = MinLots;
