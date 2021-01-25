@@ -455,7 +455,7 @@ void Trade() {
    // Calculate Margin level
    if (AccountMargin() != 0)
       am = AccountMargin();
-   if (!am) return(catch("Trade(1)  am = 0", ERR_ZERO_DIVIDE));
+   if (!am) return(!catch("Trade(1)  am = 0", ERR_ZERO_DIVIDE));
    marginlevel = AccountEquity() / am * 100; // margin level in %
 
    if (marginlevel < 100) {
@@ -545,7 +545,7 @@ void Trade() {
       sumofspreads += Array_spread[loopcount2];
       loopcount2 --;
    }
-   if (!UpTo30Counter) return(catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
+   if (!UpTo30Counter) return(!catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
@@ -562,7 +562,7 @@ void Trade() {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
       if (volatility > VolatilityLimit) {
          // Calculate how much it differs
-         if (!VolatilityLimit) return(catch("Trade(4)  VolatilityLimit = 0", ERR_ZERO_DIVIDE));
+         if (!VolatilityLimit) return(!catch("Trade(4)  VolatilityLimit = 0", ERR_ZERO_DIVIDE));
          volatilitypercentage = volatility / VolatilityLimit;
 
          // check if it differ enough from the specified limit
