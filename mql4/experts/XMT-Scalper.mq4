@@ -7,8 +7,8 @@
  * the strategy: scalping based on a reversal from a channel breakout." Today various versions circulate in the internet
  * going by different names (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a high datafeed
  * sensitivity (especially the number of received ticks), the unaccounted effects of slippage/commission and an insufficient
- * software design. Testing is possible for a few months at best and results are meaningless in general. Testing behavior
- * differs from online behavior to such a degree that profitable test parameters cannot be applied.
+ * software design. Testing behavior differs from online behavior to such a large degree that testing becomes meaningless in
+ * general.
  *
  * This version is again a complete rewrite.
  *
@@ -20,16 +20,14 @@
  *
  * Changes:
  *  - removed MQL5 syntax and fixed compiler issues
- *  - added rosasurfer framework
- *  - repositioned chart objects, fixed chart object errors and removed status display configuration
+ *  - added rosasurfer framework and the framework's test reporting
+ *  - added monitoring of PositionOpen and PositionClose events
+ *  - rewrote displayed trade statistics
  *  - moved Print() output to the framework logger
- *  - removed needless functions and variables
+ *  - removed obsolete functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of the min. margin level
- *  - rewrote displayed trade statistics
- *  - added monitoring of PositionOpen and PositionClose events
- *  - added the framework's test reporting
  *
  *  - renamed and reordered input parameters, removed needless ones
  */
@@ -110,14 +108,8 @@ string   orderComment = "XMT-rsf";
  * @return int - error status
  */
 int onInit() {
-   // If we don't run a backtest
-   if (!IsTesting()) {
-   // Check if timeframe of chart matches timeframe of external setting
-      if ( Period() != TimeFrame )
-      {
-         // The setting of timefram,e does not match the chart tiomeframe, so alert of this and exit
-         Alert ("The EA has been set to run on timeframe: ", TimeFrame, " but it has been attached to a chart with timeframe: ", Period() );
-      }
+   if (!IsTesting() && Period()!=TimeFrame) {
+      return(catch("onInit(1)  The EA has been set to run on timeframe: "+ TimeFrame +" but it has been attached to a chart with timeframe: "+ Period(), ERR_RUNTIME_ERROR));
    }
 
    // Calculate StopLevel as max of either STOPLEVEL or FREEZELEVEL
@@ -164,7 +156,7 @@ int onInit() {
 
    ShowGraphInfo();
 
-   return(catch("onInit(1)"));
+   return(catch("onInit(2)"));
 }
 
 
