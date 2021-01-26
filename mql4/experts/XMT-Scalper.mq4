@@ -27,8 +27,8 @@
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of the min. margin level
- *  - renamed and reordered input parameters, removed needless ones
- *  - fixed ERR_INVALID_STOP when opening positions/pending orders
+ *  - renamed and reordered input parameters, removed obsolete or needless ones
+ *  - fixed ERR_INVALID_STOP when opening pending orders or positions
  *  - fixed logical program flow issues
  */
 #include <stddefines.mqh>
@@ -53,7 +53,6 @@ extern string ___c_____________________ = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
 extern double StopLoss                  = 60;         // SL from as many points. Default 60 (= 6 pips)
 extern double TakeProfit                = 100;        // TP from as many points. Default 100 (= 10 pip)
-extern double AddPriceGap               = 0;          // additional price gap in points added to SL and TP in order to avoid ERR_INVALID_STOP
 extern double TrailingStart             = 20;         // start trailing profit from as so many points.
 extern int    StopDistance.Points       = 0;          // entry order stop distance in points
 extern int    Slippage.Points           = 3;          // acceptable market order slippage in points
@@ -135,7 +134,6 @@ int onInit() {
    Commission = NormalizeDouble(Commission * Point, Digits);
    TrailingStart = TrailingStart * Point;
    stopDistance  = stopDistance * Point;
-   AddPriceGap   = AddPriceGap * Point;
 
    // If we have set MaxLot and/or MinLots to more/less than what the broker allows, then adjust accordingly
    if (MinLots < MarketInfo(Symbol(), MODE_MINLOT)) MinLots = MarketInfo(Symbol(), MODE_MINLOT);
@@ -592,9 +590,9 @@ void Trade() {
                // Modify the order if its TP is less than the price+commission+StopLevel AND the TrailingStart condition is satisfied
                ordertakeprofit = OrderTakeProfit();
 
-               if (ordertakeprofit < NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && askpluscommission + TakeProfit*Point + AddPriceGap - ordertakeprofit > TrailingStart) {
-                  orderstoploss   = NormalizeDouble(Bid - StopLoss*Point - AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
+               if (ordertakeprofit < NormalizeDouble(askpluscommission + TakeProfit*Point, Digits) && askpluscommission + TakeProfit*Point - ordertakeprofit > TrailingStart) {
+                  orderstoploss   = NormalizeDouble(Bid - StopLoss*Point, Digits);
+                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point, Digits);
 
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
                      if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(6)"));
@@ -606,9 +604,9 @@ void Trade() {
                // Modify the order if its TP is greater than price-commission-StopLevel AND the TrailingStart condition is satisfied
                ordertakeprofit = OrderTakeProfit();
 
-               if (ordertakeprofit > NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits) && ordertakeprofit - bidminuscommission + TakeProfit*Point - AddPriceGap > TrailingStart) {
-                  orderstoploss   = NormalizeDouble(Ask + StopLoss*Point + AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
+               if (ordertakeprofit > NormalizeDouble(bidminuscommission - TakeProfit*Point, Digits) && ordertakeprofit - bidminuscommission + TakeProfit*Point > TrailingStart) {
+                  orderstoploss   = NormalizeDouble(Ask + StopLoss*Point, Digits);
+                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point, Digits);
 
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
                      if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(7)"));
@@ -620,9 +618,9 @@ void Trade() {
                // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
                if (!isbidgreaterthanindy) {
                   // Calculate how much Price, SL and TP should be modified
-                  orderprice      = NormalizeDouble(Ask + stopDistance + AddPriceGap, Digits);
-                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss * Point - AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit * Point + AddPriceGap, Digits);
+                  orderprice      = NormalizeDouble(Ask + stopDistance, Digits);
+                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss * Point, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit * Point, Digits);
                   // Start endless loop
                   while (true) {
                      // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
@@ -631,18 +629,18 @@ void Trade() {
 
                         // Send an OrderModify command with adjusted Price, SL and TP
                         if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                           wasordermodified = OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe);
+                           if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(8)"));
+                           wasordermodified = true;
                         }
                         if (wasordermodified) {
                            Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
                         }
                      }
-                     // Break out from endless loop
                      break;
                   }
                }
                else {
-                  OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe);
+                  if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(9)"));
                   Orders.RemoveTicket(OrderTicket());
                   isOpenOrder = false;
                }
@@ -652,29 +650,28 @@ void Trade() {
             // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
             if (isbidgreaterthanindy) {
                // Calculate how much Price, SL and TP should be modified
-               orderprice      = NormalizeDouble(Bid - stopDistance - AddPriceGap, Digits);
-               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss * Point + AddPriceGap, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit * Point - AddPriceGap, Digits);
+               orderprice      = NormalizeDouble(Bid - stopDistance, Digits);
+               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss * Point, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit * Point, Digits);
                // Endless loop
                while (true) {
                   // Ok to modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
                   if ( orderprice > OrderOpenPrice() && orderprice - OrderOpenPrice() > TrailingStart)
                   {
                      // Send an OrderModify command with adjusted Price, SL and TP
-                     if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                     {
-                        wasordermodified = OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe);
+                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
+                        if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(10)"));
+                        wasordermodified = true;
                      }
                      if (wasordermodified) {
                         Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
                      }
                   }
-                  // Break out from endless loop
                   break;
                }
             }
             else {
-               OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe);
+               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(11)"));
                Orders.RemoveTicket(OrderTicket());
                isOpenOrder = false;
             }
@@ -687,29 +684,29 @@ void Trade() {
    if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
       if (pricedirection==-1 || pricedirection==2 ) {
          orderprice      = Ask + stopDistance;
-         orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
-         ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point + AddPriceGap, Digits);
+         orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
+         ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, LotSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(8)"));
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, LotSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(12)"));
             Orders.AddTicket(oe.Ticket(oe), OP_BUYSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, LotSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(9)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, LotSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(13)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
       if (pricedirection==1 || pricedirection==2) {
          orderprice      = Bid - stopDistance;
-         orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point + AddPriceGap, Digits);
-         ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point - AddPriceGap, Digits);
+         orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
+         ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, LotSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(10)"));
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, LotSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(14)"));
             Orders.AddTicket(oe.Ticket(oe), OP_SELLSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, LotSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(11)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, LotSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(15)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_SELL, NULL);
          }
       }
@@ -728,7 +725,7 @@ void Trade() {
       Comment(NL, text);
    }
 
-   return(catch("Trade(12)"));
+   return(catch("Trade(16)"));
 }
 
 
@@ -793,9 +790,9 @@ double CalculateLotsize() {
    if (lotStep == 0.01) lotdigit = 2;
 
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
-   if (EQ(StopLoss + AddPriceGap, 0)) return(!catch("CalculateLotsize(3)  StopLoss + AddPriceGap = 0", ERR_ZERO_DIVIDE));
-   if (!lotStep)                      return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
-   double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / (StopLoss + AddPriceGap) / lotStep) * lotStep, MaxLots);
+   if (EQ(StopLoss, 0)) return(!catch("CalculateLotsize(3)  StopLoss = 0", ERR_ZERO_DIVIDE));
+   if (!lotStep)        return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
+   double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / StopLoss / lotStep) * lotStep, MaxLots);
    lotsize *= GetLotsizeMultiplier();
    lotsize  = NormalizeDouble(lotsize, lotdigit);
 
