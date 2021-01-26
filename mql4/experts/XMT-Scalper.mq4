@@ -29,6 +29,7 @@
  *  - removed configuration of the min. margin level
  *  - renamed and reordered input parameters, removed needless ones
  *  - fixed ERR_INVALID_STOP when opening positions/pending orders
+ *  - fixed logical program flow issues
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -416,8 +417,6 @@ void Trade() {
    int loopcount2;
    int loopcount1;
    int pricedirection;
-   int counter1;
-   int counter2;
 
    double volatilitypercentage = 0;
    double orderprice;
@@ -450,7 +449,7 @@ void Trade() {
    // Calculate Margin level
    if (AccountMargin() != 0)
       am = AccountMargin();
-   if (!am) return(!catch("Trade(1)  am = 0", ERR_ZERO_DIVIDE));
+   if (!am) return(catch("Trade(1)  am = 0", ERR_ZERO_DIVIDE));
    marginlevel = AccountEquity() / am * 100; // margin level in %
 
    if (marginlevel < 100) {
@@ -536,7 +535,7 @@ void Trade() {
       sumofspreads += Array_spread[loopcount2];
       loopcount2 --;
    }
-   if (!UpTo30Counter) return(!catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
+   if (!UpTo30Counter) return(catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
    avgspread = sumofspreads / UpTo30Counter;
 
    // Calculate price and spread considering commission
@@ -553,7 +552,7 @@ void Trade() {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
       if (volatility > VolatilityLimit) {
          // Calculate how much it differs
-         if (!VolatilityLimit) return(!catch("Trade(4)  VolatilityLimit = 0", ERR_ZERO_DIVIDE));
+         if (!VolatilityLimit) return(catch("Trade(4)  VolatilityLimit = 0", ERR_ZERO_DIVIDE));
          volatilitypercentage = volatility / VolatilityLimit;
 
          // check if it differ enough from the specified limit
@@ -578,159 +577,77 @@ void Trade() {
       return(catch("Trade(5)"));
    }
 
-   // Reset counters
-   counter1 = 0;
-   counter2 = 0;
+   bool isOpenOrder = false;
 
-   // Loop through all open orders (if any) to either modify them or delete them
-   for ( loopcount2 = 0; loopcount2 < OrdersTotal(); loopcount2 ++ )
-   {
-      // Select an order from the open orders
-      OrderSelect ( loopcount2, SELECT_BY_POS, MODE_TRADES );
-      // We've found an that matches the magic number and is open
-      if ( OrderMagicNumber() == Magic && OrderCloseTime() == 0 )
-      {
-         // If the order doesn't match the currency pair from the chart then check next open order
-         if ( OrderSymbol() != Symbol() )
-         {
-            // Increase counter
-            counter2 ++;
-            continue;
-         }
-         // Select order by type of order
-         switch ( OrderType() )
-         {
-         // We've found a matching BUY-order
-         case OP_BUY:
-            // Start endless loop
-            while (true) {
-               // Update prices from the broker
-               RefreshRates();
-               // Set SL and TP
-               orderstoploss = OrderStopLoss();
+   // Loop through all open orders to either modify or to delete them
+   for (int i=0; i < OrdersTotal(); i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+
+      if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
+         isOpenOrder = true;
+         RefreshRates();
+
+         switch (OrderType()) {
+            case OP_BUY:
+               // Modify the order if its TP is less than the price+commission+StopLevel AND the TrailingStart condition is satisfied
                ordertakeprofit = OrderTakeProfit();
-               // Ok to modify the order if its TP is less than the price+commission+StopLevel AND price+StopLevel-TP greater than trailingStart
-               if ( ordertakeprofit < NormalizeDouble(askpluscommission + TakeProfit * Point + AddPriceGap, Digits) && askpluscommission + TakeProfit * Point + AddPriceGap - ordertakeprofit > TrailingStart )
-               {
-                  // Set SL and TP
-                  orderstoploss = NormalizeDouble(Bid - StopLoss * Point - AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit * Point + AddPriceGap, Digits);
-                  // Send an OrderModify command with adjusted SL and TP
-                  if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                  {
-                     // Try to modify order
-                     wasordermodified = OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe);
+
+               if (ordertakeprofit < NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits) && askpluscommission + TakeProfit*Point + AddPriceGap - ordertakeprofit > TrailingStart) {
+                  orderstoploss   = NormalizeDouble(Bid - StopLoss*Point - AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point + AddPriceGap, Digits);
+
+                  if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                     if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(6)"));
                   }
-                  // Order was modified with new SL and TP
-                  if (wasordermodified) {
-                     // Break out from while-loop since the order now has been modified
+               }
+               break;
+
+            case OP_SELL:
+               // Modify the order if its TP is greater than price-commission-StopLevel AND the TrailingStart condition is satisfied
+               ordertakeprofit = OrderTakeProfit();
+
+               if (ordertakeprofit > NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits) && ordertakeprofit - bidminuscommission + TakeProfit*Point - AddPriceGap > TrailingStart) {
+                  orderstoploss   = NormalizeDouble(Ask + StopLoss*Point + AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point - AddPriceGap, Digits);
+
+                  if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                     if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(7)"));
+                  }
+               }
+               break;
+
+            case OP_BUYSTOP:
+               // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
+               if (!isbidgreaterthanindy) {
+                  // Calculate how much Price, SL and TP should be modified
+                  orderprice      = NormalizeDouble(Ask + stopDistance + AddPriceGap, Digits);
+                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss * Point - AddPriceGap, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit * Point + AddPriceGap, Digits);
+                  // Start endless loop
+                  while (true) {
+                     // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
+                     if ( orderprice < OrderOpenPrice() && OrderOpenPrice() - orderprice > TrailingStart )
+                     {
+
+                        // Send an OrderModify command with adjusted Price, SL and TP
+                        if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
+                           wasordermodified = OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe);
+                        }
+                        if (wasordermodified) {
+                           Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
+                        }
+                     }
+                     // Break out from endless loop
                      break;
                   }
-                  // Order was not modified
-                  else {
-                     logWarn("Order could not be modified", GetLastError());
-
-                     // Order has not been modified and it has no StopLoss
-                     if (!orderstoploss) {
-                        // Try to modify order with a safe hard SL that is 3 pip from current price
-                        wasordermodified = OrderModifyEx(OrderTicket(), NULL, Bid-30, NULL, NULL, Red, NULL, oe);
-                        return(catch("Trade(6)  invalid SL: "+ NumberToStr(Bid-30, ".+"), ERR_RUNTIME_ERROR));
-                     }
-                  }
                }
-               // Break out from while-loop since the order now has been modified
+               else {
+                  OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe);
+                  Orders.RemoveTicket(OrderTicket());
+                  isOpenOrder = false;
+               }
                break;
-            }
-            // count 1 more up
-            counter1 ++;
-            // Break out from switch
-            break;
 
-         // We've found a matching SELL-order
-         case OP_SELL:
-            // Start endless loop
-            while (true) {
-               // Update broker prices
-               RefreshRates();
-               // Set SL and TP
-               orderstoploss = OrderStopLoss();
-               ordertakeprofit = OrderTakeProfit();
-               // Ok to modify the order if its TP is greater than price-commission-StopLevel AND TP-price-commission+StopLevel is greater than trailingstart
-               if ( ordertakeprofit > NormalizeDouble(bidminuscommission - TakeProfit * Point - AddPriceGap, Digits) && ordertakeprofit - bidminuscommission + TakeProfit * Point - AddPriceGap > TrailingStart )
-               {
-                  // set SL and TP
-                  orderstoploss   = NormalizeDouble(Ask + StopLoss * Point + AddPriceGap, Digits);
-                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit * Point - AddPriceGap, Digits);
-                  // Send an OrderModify command with adjusted SL and TP
-                  if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
-                  {
-                     wasordermodified = OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe);
-                  }
-                  // Order was modiified with new SL and TP
-                  if (wasordermodified) {
-                     // Break out from while-loop since the order now has been modified
-                     break;
-                  }
-                  // Order was not modified
-                  else {
-                     logWarn("Order could not be modified", GetLastError());
-                     // Lets wait 1 second before we try to modify the order again
-                     Sleep ( 1000 );
-
-                     // Order has not been modified and it has no StopLoss
-                     if (!orderstoploss) {
-                        // Try to modify order with a safe hard SL that is 3 pip from current price
-                        wasordermodified = OrderModifyEx(OrderTicket(), NULL, Ask+30, NULL, NULL, Red, NULL, oe);
-                        return(catch("Trade(7)  invalid SL: "+ NumberToStr(Ask+30, ".+"), ERR_RUNTIME_ERROR));
-                     }
-                  }
-               }
-               // Break out from while-loop since the order now has been modified
-               break;
-            }
-            // count 1 more up
-            counter1 ++;
-            // Break out from switch
-            break;
-
-         // We've found a matching BUYSTOP-order
-         case OP_BUYSTOP:
-            // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
-            if (!isbidgreaterthanindy) {
-               // Calculate how much Price, SL and TP should be modified
-               orderprice      = NormalizeDouble(Ask + stopDistance + AddPriceGap, Digits);
-               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss * Point - AddPriceGap, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit * Point + AddPriceGap, Digits);
-               // Start endless loop
-               while (true) {
-                  // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
-                  if ( orderprice < OrderOpenPrice() && OrderOpenPrice() - orderprice > TrailingStart )
-                  {
-
-                     // Send an OrderModify command with adjusted Price, SL and TP
-                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        RefreshRates();
-                        wasordermodified = OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe);
-                     }
-                     if (wasordermodified) {
-                        Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
-                     }
-                  }
-                  // Break out from endless loop
-                  break;
-               }
-               // Increase counter
-               counter1 ++;
-            }
-            // Price was larger than the indicator
-            else {
-               OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe);
-               Orders.RemoveTicket(OrderTicket());
-            }
-            // Break out from switch
-            break;
-
-         // We've found a matching SELLSTOP-order
          case OP_SELLSTOP:
             // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
             if (isbidgreaterthanindy) {
@@ -746,7 +663,6 @@ void Trade() {
                      // Send an OrderModify command with adjusted Price, SL and TP
                      if ( orderstoploss != OrderStopLoss() && ordertakeprofit != OrderTakeProfit() )
                      {
-                        RefreshRates();
                         wasordermodified = OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe);
                      }
                      if (wasordermodified) {
@@ -756,19 +672,19 @@ void Trade() {
                   // Break out from endless loop
                   break;
                }
-               counter1++;
             }
-            // Price was NOT larger than the indicator, so delete the order
             else {
                OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe);
                Orders.RemoveTicket(OrderTicket());
+               isOpenOrder = false;
             }
+            break;
          }
       }
    }
 
-   // If we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread AND we have no errors THEN
-   if (!counter1 && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits) && !last_error) {
+   // Open a new order if we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread
+   if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
       if (pricedirection==-1 || pricedirection==2 ) {
          orderprice      = Ask + stopDistance;
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point - AddPriceGap, Digits);
@@ -802,7 +718,7 @@ void Trade() {
    // show debug messages on screen
    if (IsChart()) {
       string text = "Volatility: "+ DoubleToStr(volatility, Digits) +"   VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +"   VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits)           + NL
-                   +"PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4 * pricedirection + 4, 4) +"   Open orders: "+  counter1                                                                                  + NL
+                   +"PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4 * pricedirection + 4, 4) +"   Open orders: "+ isOpenOrder                                                                                + NL
                    + indy                                                                                                                                                                                           + NL
                    +"AvgSpread: "+ DoubleToStr(avgspread, Digits) +"   RealAvgSpread: "+ DoubleToStr(realavgspread, Digits) +"   Commission: "+ DoubleToStr(Commission, 2) +"   LotSize: "+ DoubleToStr(LotSize, 2) + NL;
 
