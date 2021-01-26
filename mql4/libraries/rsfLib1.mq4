@@ -5245,7 +5245,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * @return string
  */
 string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote (2.8 pip slippage)
+   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask) after 0.345 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -5253,19 +5253,21 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
 
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
-   string sComment    = oe.Comment(oe);
-      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
+   string symbol      = oe.Symbol(oe);
+   string sComment    = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string sBid        = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
+   string sAsk        = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
          if (slippage > 0)           sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
          else                        sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
       }
-   string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice;
+   string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
-
+                                 message = message +" (market: "+ sBid +"/"+ sAsk +")";
    if (!This.IsTesting()) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
@@ -5330,8 +5332,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string sType    = OperationTypeDescription(oe.Type(oe));
    string sLots    = NumberToStr(oe.Lots(oe), ".+");
    string symbol   = oe.Symbol(oe);
-   string sComment = oe.Comment(oe);
-      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
+   string sComment = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice   = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
    string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
