@@ -166,17 +166,13 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (iBars(Symbol(), TimeFrame) <= Indicatorperiod) {
-      Print("Please wait until enough of bar data has been gathered!");
-   }
-   else {
-      UpdateOrderStatus();          // pewa: detect and track open/closed positions
+   UpdateOrderStatus();             // pewa: monitor and track open/closed positions
 
-      Trade();                      // Call the actual main subroutine
-      CheckClosedOrders();          // Check all closed and open orders to get stats
-      CheckOpenOrders();
-      ShowGraphInfo();
-   }
+   Trade();
+   CheckClosedOrders();
+   CheckOpenOrders();
+   ShowGraphInfo();
+
    return(catch("onTick(1)"));
 }
 
