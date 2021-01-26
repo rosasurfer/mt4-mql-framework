@@ -389,7 +389,7 @@ bool StopSequence() {
       int      type        = ifInt(GT(sequence.openLots, 0), OP_SELL, OP_BUY);
       double   lots        = MathAbs(sequence.openLots);
       double   price       = NULL;
-      double   slippage    = 1;  // in pip
+      int      slippage    = 10;    // point
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
       string   comment     = "";
@@ -465,7 +465,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
 
    // close open positions and update local order state
    if (ArraySize(positions) > 0) {
-      double slippage = 1; // in pip
+      int slippage = 10;    // point
       int oeFlags, oes[][ORDER_EXECUTION.intSize], pos;
       if (!OrdersClose(positions, slippage, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
@@ -2073,7 +2073,7 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
    double   lots        = CalculateLots(direction, level);
    double   price       = NULL;
-   double   slippage    = 0.1;
+   int      slippage    = 1;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
@@ -2107,7 +2107,7 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    int      type        = ifInt(direction==D_LONG, OP_BUYLIMIT, OP_SELLLIMIT);
    double   lots        = CalculateLots(direction, level);
    double   price       = CalculateGridLevel(direction, level);
-   double   slippage    = NULL;
+   int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
@@ -2144,7 +2144,7 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    int      type        = ifInt(direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
    double   lots        = CalculateLots(direction, level);
    double   price       = CalculateGridLevel(direction, level);
-   double   slippage    = NULL;
+   int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
