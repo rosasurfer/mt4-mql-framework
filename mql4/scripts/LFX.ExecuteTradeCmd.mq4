@@ -396,7 +396,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    for (i=0; i < symbolsSize; i++) {
       double   price       = NULL;
-      double   slippage    = 0.1;
+      int      slippage    = 1;
       double   sl          = NULL;
       double   tp          = NULL;
       datetime expiration  = NULL;
@@ -593,10 +593,10 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
 
 
    // (2) Einzelpositionen schließen
-   double slippage    = 0.1;
-   color  markerColor = CLR_NONE;
-   int    oeFlags     = NULL;
-   int    oes[][ORDER_EXECUTION.intSize];
+   int   slippage    = 1;
+   color markerColor = CLR_NONE;
+   int   oeFlags     = NULL;
+   int   oes[][ORDER_EXECUTION.intSize];
    if (!OrdersClose(tickets, slippage, markerColor, oeFlags, oes)) return(false);
 
 
