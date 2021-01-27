@@ -1,5 +1,5 @@
 /**
- * Displays additional market and account infos in the chart.
+ * Displays additional market and account infos on the chart.
  *
  *  - Symbol (in builds <= 509), price and spread.
  *  - The calculated position size according to the configured risk profile.
@@ -13,8 +13,6 @@
  *                 limit monitoring and notifications
  *  - The current account stopout level.
  *  - A warning when the account's open order limit is approached.
- *
- * All custom aspects are configurable via the framework configuration.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
