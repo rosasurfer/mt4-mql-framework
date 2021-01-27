@@ -150,10 +150,8 @@ int onInit() {
    if ( Magic < 0 )
      Magic = CreateMagicNumber();
 
-   // Check through all closed and open orders to get stats
    CheckClosedOrders();
    CheckOpenOrders();
-
    ShowGraphInfo();
 
    return(catch("onInit(2)"));
