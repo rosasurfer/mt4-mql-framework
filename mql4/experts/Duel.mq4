@@ -2209,21 +2209,21 @@ int ShowStatus(int error = NO_ERROR) {
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                                  NL,
-                                                                                                                        NL,
-                                  "Grid:              ",            GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
-                                  "UnitSize:        ",              sUnitSize,                                          NL,
-                                  "Stop:             ",             sStopConditions,                                    NL,
-                                                                                                                        NL,
-                                  "Long:             ",             sOpenLongLots,                                      NL,
-                                  "Short:            ",             sOpenShortLots,                                     NL,
-                                  "Total:            ",             sOpenTotalLots,                                     NL,
-                                                                                                                        NL,
-                                  "BE:                 ",           sSequenceBePrice,                                   NL,
-                                  "TP:                 ",           sSequenceTpPrice,                                   NL,
-                                  "SL:                 ",           sSequenceSlPrice,                                   NL,
-                                                                                                                        NL,
-                                  "Profit/Loss:   ",                sSequenceTotalPL, sSequencePlStats,                 NL
+   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
+                                                                                                              NL,
+                                  "Grid:              ",  GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
+                                  "UnitSize:        ",    sUnitSize,                                          NL,
+                                  "Stop:             ",   sStopConditions,                                    NL,
+                                                                                                              NL,
+                                  "Long:             ",   sOpenLongLots,                                      NL,
+                                  "Short:            ",   sOpenShortLots,                                     NL,
+                                  "Total:            ",   sOpenTotalLots,                                     NL,
+                                                                                                              NL,
+                                  "BE:                 ", sSequenceBePrice,                                   NL,
+                                  "TP:                 ", sSequenceTpPrice,                                   NL,
+                                  "SL:                 ", sSequenceSlPrice,                                   NL,
+                                                                                                              NL,
+                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,                 NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
