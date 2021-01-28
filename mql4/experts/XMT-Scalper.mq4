@@ -5,9 +5,9 @@
  * This EA is originally based on the famous "MillionDollarPips EA". A member of the "www.worldwide-invest.org" forum known
  * as Capella transformed it to "XMT-Scalper". In his own words: "Nothing remains from the original except the core idea of
  * the strategy: scalping based on a reversal from a channel breakout." Today various versions circulate in the internet
- * going by different names (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a high price feed
- * sensitivity (especially the number of received ticks) and the unaccounted effects of slippage/commission. Moreover test
- * behavior differs from online behavior to such a large degree that testing is meaningless in general.
+ * going by different names (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a very high price
+ * feed sensitivity (especially the number of received ticks) and the unaccounted effects of slippage/commission. Moreover
+ * test behavior differs from online behavior to such a large degree that testing is meaningless in general.
  *
  * This version is a complete rewrite.
  *
@@ -21,15 +21,14 @@
  *  - removed MQL5 syntax and fixed compiler issues
  *  - added rosasurfer framework and the framework's test reporting
  *  - added monitoring of PositionOpen and PositionClose events
- *  - rewrote displayed trade statistics
  *  - moved Print() output to the framework logger
+ *  - rewrote status display
  *  - removed obsolete functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed configuration of the min. margin level
  *  - renamed and reordered input parameters, removed obsolete or needless ones
  *  - fixed ERR_INVALID_STOP when opening pending orders or positions
- *  - fixed logical program flow issues
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -76,6 +75,15 @@ extern double ManualLotsize             = 0.1;        // fix lotsize to use if "
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+
+// order tracking
+int      tickets      [];
+int      pendingTypes [];
+double   pendingPrices[];
+int      types        [];
+datetime closeTimes   [];
+
+// trade statistics
 int    openPositions;            // number of open positions
 double openLots;                 // total open lotsize
 double openSwap;                 // total open swap
@@ -92,8 +100,13 @@ double closedPlNet;              // total closed net profit
 
 double totalPlNet;               // openPlNet + closedPlNet
 
+// other
 double stopDistance;             // entry order stop distance
 string orderComment = "XMT-rsf";
+
+// cache vars to speed-up ShowStatus()
+string sStatusInfo = "";
+
 
 // --- old ------------------------------------------------------------
 int    UpTo30Counter = 0;        // for calculating average spread
@@ -101,7 +114,6 @@ double Array_spread[30];         // store spreads for the last 30 ticks
 double LotSize;                  // lotsize
 double highest;                  // lotSize indicator value
 double lowest;                   // lowest indicator value
-
 
 
 /**
@@ -152,8 +164,8 @@ int onInit() {
 
    CheckClosedOrders();
    CheckOpenOrders();
-   ShowGraphInfo();
 
+   sStatusInfo = StringConcatenate(NL, NL, NL, NL, NL);
    return(catch("onInit(2)"));
 }
 
@@ -169,18 +181,9 @@ int onTick() {
    Trade();
    CheckClosedOrders();
    CheckOpenOrders();
-   ShowGraphInfo();
 
    return(catch("onTick(1)"));
 }
-
-
-// pewa: order management
-int      tickets      [];
-int      pendingTypes [];
-double   pendingPrices[];
-int      types        [];
-datetime closeTimes   [];
 
 
 /**
@@ -398,8 +401,6 @@ bool Orders.RemoveTicket(int ticket) {
  * Main trading subroutine
  */
 void Trade() {
-   string pair;
-
    bool wasordermodified = false;
    bool isbidgreaterthanima = false;
    bool isbidgreaterthanibands = false;
@@ -706,17 +707,16 @@ void Trade() {
       }
    }
 
-   // show debug messages on screen
+   // compose chart status messages
    if (IsChart()) {
-      string text = "Volatility: "+ DoubleToStr(volatility, Digits) +"   VolatilityLimit: "+ DoubleToStr(VolatilityLimit, Digits) +"   VolatilityPercentage: "+ DoubleToStr(volatilitypercentage, Digits)           + NL
-                   +"PriceDirection: "+ StringSubstr("BUY NULLSELLBOTH", 4 * pricedirection + 4, 4) +"   Open orders: "+ isOpenOrder                                                                                + NL
-                   + indy                                                                                                                                                                                           + NL
-                   +"AvgSpread: "+ DoubleToStr(avgspread, Digits) +"   RealAvgSpread: "+ DoubleToStr(realavgspread, Digits) +"   Commission: "+ DoubleToStr(Commission, 2) +"   LotSize: "+ DoubleToStr(LotSize, 2) + NL;
+      sStatusInfo = StringConcatenate("Volatility: ", DoubleToStr(volatility, Digits), "    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
+                                      "PriceDirection: ", StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4),                                                                                                           NL,
+                                      indy,                                                                                                                                                                                    NL,
+                                      "AvgSpread: ", DoubleToStr(avgspread, Digits), "    RealAvgSpread: ", DoubleToStr(realavgspread, Digits), "    LotSize: ", DoubleToStr(LotSize, 2),                                      NL);
 
       if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
-         text = text +"The current avg spread ("+ DoubleToStr(realavgspread, Digits) +") is higher than the configured MaxSpread ("+ DoubleToStr(MaxSpread * Point, Digits) +") => trading disabled";
+         sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(realavgspread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
       }
-      Comment(NL, text);
    }
 
    return(catch("Trade(16)"));
@@ -928,37 +928,33 @@ void CheckClosedOrders() {
 
 
 /**
- * Printout graphics on the chart
+ * Display the current runtime status.
+ *
+ * @param  int error [optional] - error to display (default: none)
+ *
+ * @return int - the same error or the current error status if no error was passed
  */
-void ShowGraphInfo() {
-   if (!IsChart()) return;
+int ShowStatus(int error = NO_ERROR) {
+   if (!IsChart()) return(error);
+   string sError = "";
+   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
+   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   string line1 = "Open:   "+ openPositions   +" positions, "+ NumberToStr(openLots, ".+")   +" lots, PLn: "+ DoubleToStr(openPlNet, 2);
-   string line2 = "Closed: "+ closedPositions +" positions, "+ NumberToStr(closedLots, ".+") +" lots, PLg: "+ DoubleToStr(closedPl, 2) +", Com: "+ DoubleToStr(closedCommission, 2) +", Swap: "+ DoubleToStr(closedSwap, 2);
-   string line3 = "Total PL: "+ DoubleToStr(totalPlNet, 2);
+   string msg = StringConcatenate(ProgramName(), "              ", sError,                                                                                      NL,
+                                                                                                                                                                NL,
+                                  sStatusInfo,                                                                                           // contains linebreaks NL,
+                                                                                                                                                                NL,
+                                  "Open:      ", openPositions,   " positions    ", NumberToStr(openLots, ".+"),   " lots    PLn: ", DoubleToStr(openPlNet, 2), NL,
+                                  "Closed:    ", closedPositions, " positions    ", NumberToStr(closedLots, ".+"), " lots    PLg: ", DoubleToStr(closedPl, 2), "    Commission: ", DoubleToStr(closedCommission, 2), "    Swap: ", DoubleToStr(closedSwap, 2), NL,
+                                                                                                                                                                NL,
+                                  "Total PL:  ", DoubleToStr(totalPlNet, 2),                                                                                    NL
+   );
 
-   int xPos = 3;
-   int yPos = 100;
+   // 3 lines margin-top for potential indicator legends
+   Comment(NL, NL, NL, msg);
+   if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   Display("line1", line1, xPos, yPos); yPos += 20;
-   Display("line2", line2, xPos, yPos); yPos += 20;
-   Display("line3", line3, xPos, yPos); yPos += 20;
-
-   return(catch("ShowGraphInfo(1)"));
-}
-
-
-/**
- * Subroutine for displaying graphics on the chart
- */
-void Display(string label, string text, int xPos, int yPos) {
-   label = WindowExpertName() +"."+ label;
-
-   if (ObjectFind(label) != 0) {
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   }
-   ObjectSet(label, OBJPROP_CORNER,    CORNER_TOP_LEFT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xPos);
-   ObjectSet(label, OBJPROP_YDISTANCE, yPos);
-   ObjectSetText(label, text, 10, "Tahoma", Blue);
+   if (!catch("ShowStatus(1)"))
+      return(error);
+   return(last_error);
 }
