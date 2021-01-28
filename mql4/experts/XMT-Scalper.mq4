@@ -90,7 +90,7 @@ double closedCommission;         // total closed commission
 double closedPl;                 // total closed gross profit
 double closedPlNet;              // total closed net profit
 
-double totalPl;                  // totalPl = openPlNet + closedPlNet
+double totalPlNet;               // openPlNet + closedPlNet
 
 double stopDistance;             // entry order stop distance
 string orderComment = "XMT-rsf";
@@ -895,8 +895,8 @@ void CheckOpenOrders() {
          }
       }
    }
-   openPlNet = openSwap + openCommission + openPl;
-   totalPl   = openPlNet + closedPlNet;
+   openPlNet  = openSwap + openCommission + openPl;
+   totalPlNet = openPlNet + closedPlNet;
 }
 
 
@@ -923,7 +923,7 @@ void CheckClosedOrders() {
       }
    }
    closedPlNet = closedSwap + closedCommission + closedPl;
-   totalPl     = openPlNet + closedPlNet;
+   totalPlNet  = openPlNet + closedPlNet;
 }
 
 
@@ -933,9 +933,9 @@ void CheckClosedOrders() {
 void ShowGraphInfo() {
    if (!IsChart()) return;
 
-   string line1 = "Open:   "+ openPositions   +" positions, "+ NumberToStr(openLots, ".+")   +" lots, PL(net): "+ DoubleToStr(openPlNet, 2);
-   string line2 = "Closed: "+ closedPositions +" positions, "+ NumberToStr(closedLots, ".+") +" lots, PL(net): "+ DoubleToStr(closedPlNet, 2) +", Swap: "+ DoubleToStr(closedSwap, 2) +", Commission: "+ DoubleToStr(closedCommission, 2);
-   string line3 = "Total PL: "+ DoubleToStr(totalPl, 2);
+   string line1 = "Open:   "+ openPositions   +" positions, "+ NumberToStr(openLots, ".+")   +" lots, PLn: "+ DoubleToStr(openPlNet, 2);
+   string line2 = "Closed: "+ closedPositions +" positions, "+ NumberToStr(closedLots, ".+") +" lots, PLg: "+ DoubleToStr(closedPl, 2) +", Com: "+ DoubleToStr(closedCommission, 2) +", Swap: "+ DoubleToStr(closedSwap, 2);
+   string line3 = "Total PL: "+ DoubleToStr(totalPlNet, 2);
 
    int xPos = 3;
    int yPos = 100;
