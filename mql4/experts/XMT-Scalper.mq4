@@ -20,14 +20,14 @@
  * Changes:
  *  - removed MQL5 syntax and fixed compiler issues
  *  - added rosasurfer framework and the framework's test reporting
- *  - added monitoring of PositionOpen and PositionClose events
  *  - moved Print() output to the framework logger
+ *  - added monitoring of PositionOpen and PositionClose events
+ *  - restructured input parameters, removed obsolete or needless ones
+ *  - fixed input parameter validation
  *  - rewrote status display
  *  - removed obsolete functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
- *  - removed configuration of the min. margin level
- *  - renamed and reordered input parameters, removed obsolete or needless ones
  *  - fixed ERR_INVALID_STOP when opening pending orders or positions
  *  - simplified code in general
  */
@@ -102,17 +102,17 @@ double closedPlNet;              // total closed net profit
 double totalPlNet;               // openPlNet + closedPlNet
 
 // other
+double unitSize;
 double stopDistance;             // entry order stop distance
 string orderComment = "XMT-rsf";
 
 // cache vars to speed-up ShowStatus()
-string sStatusInfo = "";
-
+string sUnitSize   = "";
+string sStatusInfo = "\n\n\n\n\n";
 
 // --- old ------------------------------------------------------------
 int    UpTo30Counter = 0;        // for calculating average spread
 double Array_spread[30];         // store spreads for the last 30 ticks
-double LotSize;                  // lotsize
 double highest;                  // lotSize indicator value
 double lowest;                   // lowest indicator value
 
@@ -153,20 +153,44 @@ int onInit() {
    if (MaxLots > MarketInfo(Symbol(), MODE_MAXLOT)) MaxLots = MarketInfo(Symbol(), MODE_MAXLOT);
    if (MaxLots < MinLots) MaxLots = MinLots;
 
-   // Also make sure that if the risk-percentage is too low or too high, that it's adjusted accordingly
-   RecalculateRisk();
+   if (!ValidateRisk()) return(last_error);
 
-   // Calculate intitial LotSize
-   LotSize = CalculateLotsize();
-
-   // If magic number is set to a value less than 0, then calculate MagicNumber automatically
-   if ( Magic < 0 )
-     Magic = CreateMagicNumber();
-
+   if (Magic < 0) Magic = CreateMagicNumber();
    UpdateTradeStats();
 
-   sStatusInfo = StringConcatenate(NL, NL, NL, NL, NL);
    return(catch("onInit(2)"));
+}
+
+
+/**
+ * Validate risk and lotsize input parameters.
+ *
+ * @return bool - success status
+ */
+bool ValidateRisk() {
+   double equity       = AccountEquity() - AccountCredit();         if (!equity)       return(!catch("ValidateRisk(1)  equity = 0", ERR_ZERO_DIVIDE));
+   double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (!marginPerLot) return(!catch("ValidateRisk(2)  MODE_MARGINREQUIRED = 0", ERR_ZERO_DIVIDE));
+   double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);        if (!lotStep)      return(!catch("ValidateRisk(3)  MODE_LOTSTEP = 0", ERR_ZERO_DIVIDE));
+
+   // Maximum allowed risk accepted by the broker according to maximum allowed lot and equity
+   double maxAllowedLots = RoundFloor(equity/marginPerLot/lotStep) * lotStep;
+   double maxAllowedRisk = RoundFloor(maxAllowedLots * (stopDistance+StopLoss) / equity * 100, 1);
+
+   // Minimum allowed risk accepted by the broker according to minlots_broker
+   double minAllowedRisk = RoundEx(MinLots * StopLoss / equity * 100, 1);
+
+   if (MoneyManagement) {
+      // dynamically calculated unitsize (compounding ON)
+      if (Risk > maxAllowedRisk) return(!catch("ValidateRisk(4)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (larger than max. allowed risk of "+ NumberToStr(maxAllowedRisk, ".1+") +" for the configured SL)", ERR_INVALID_INPUT_PARAMETER));
+      if (Risk < minAllowedRisk) return(!catch("ValidateRisk(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (smaller than min. allowed risk of "+ NumberToStr(minAllowedRisk, ".1+") +" for the configured SL)", ERR_INVALID_INPUT_PARAMETER));
+   }
+   else {
+      // fixed unitsize (compounding OFF)
+      if (ManualLotsize < MinLots)        return(!catch("ValidateRisk(6)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MinLots)", ERR_INVALID_INPUT_PARAMETER));
+      if (ManualLotsize > MaxLots)        return(!catch("ValidateRisk(7)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MaxLots)", ERR_INVALID_INPUT_PARAMETER));
+      if (ManualLotsize > maxAllowedLots) return(!catch("ValidateRisk(8)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than maximum allowed lotsize)", ERR_INVALID_INPUT_PARAMETER));
+   }
+   return(!catch("ValidateRisk(9)"));
 }
 
 
@@ -510,11 +534,7 @@ void Trade() {
       lowest = envelopeslower;
    }
 
-   // Calculate spread
    spread = Ask - Bid;
-
-   // Calculate lot size
-   LotSize = CalculateLotsize();
 
    // calculate average spread of the last 30 ticks
    ArrayCopy(Array_spread, Array_spread, 0, 1, 29);
@@ -673,19 +693,22 @@ void Trade() {
       }
    }
 
+
    // Open a new order if we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread
    if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
+      unitSize = CalculateLots();
+
       if (pricedirection==-1 || pricedirection==2 ) {
          orderprice      = Ask + stopDistance;
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, LotSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(12)"));
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, unitSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(12)"));
             Orders.AddTicket(oe.Ticket(oe), OP_BUYSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, LotSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(13)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, unitSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(13)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
@@ -695,11 +718,11 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, LotSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(14)"));
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, unitSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(14)"));
             Orders.AddTicket(oe.Ticket(oe), OP_SELLSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, LotSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(15)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, unitSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(15)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_SELL, NULL);
          }
       }
@@ -710,7 +733,7 @@ void Trade() {
       sStatusInfo = StringConcatenate("Volatility: ", DoubleToStr(volatility, Digits), "    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
                                       "PriceDirection: ", StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4),                                                                                                           NL,
                                       indy,                                                                                                                                                                                    NL,
-                                      "AvgSpread: ", DoubleToStr(avgspread, Digits), "    RealAvgSpread: ", DoubleToStr(realavgspread, Digits), "    LotSize: ", DoubleToStr(LotSize, 2),                                      NL);
+                                      "AvgSpread: ", DoubleToStr(avgspread, Digits), "    RealAvgSpread: ", DoubleToStr(realavgspread, Digits), "    Unitsize: ", sUnitSize,                                                   NL);
 
       if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
          sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(realavgspread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
@@ -718,30 +741,6 @@ void Trade() {
    }
 
    return(catch("Trade(16)"));
-}
-
-
-/**
- * Calculate lot multiplicator for AccountCurrency. Assumes that account currency is one of the 8 majors.
- * The calculated lotsize should be multiplied with this multiplicator.
- *
- * @return double - multiplier value or NULL in case of errors
- */
-double GetLotsizeMultiplier() {
-   double rate = 0;
-   string suffix = StrRight(Symbol(), -6);
-
-   if      (AccountCurrency() == "USD") rate = 1;
-   else if (AccountCurrency() == "EUR") rate = MarketInfo("EURUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "GBP") rate = MarketInfo("GBPUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "AUD") rate = MarketInfo("AUDUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "NZD") rate = MarketInfo("NZDUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "CHF") rate = MarketInfo("USDCHF"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "JPY") rate = MarketInfo("USDJPY"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "CAD") rate = MarketInfo("USDCAD"+ suffix, MODE_BID);
-
-   if (!rate) return(!catch("GetLotsizeMultiplier(1)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
-   return(1/rate);
 }
 
 
@@ -766,9 +765,11 @@ int CreateMagicNumber() {
 
 
 /**
- * Calculate LotSize based on Equity, Risk (in %) and StopLoss in points
+ * Calculate the unitsize to use.
+ *
+ * @return double - unitsize or NULL in case of errors
  */
-double CalculateLotsize() {
+double CalculateLots() {
    double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);
    double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
    double minlot = MinLots;
@@ -785,7 +786,7 @@ double CalculateLotsize() {
    if (EQ(StopLoss, 0)) return(!catch("CalculateLotsize(3)  StopLoss = 0", ERR_ZERO_DIVIDE));
    if (!lotStep)        return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
    double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / StopLoss / lotStep) * lotStep, MaxLots);
-   lotsize *= GetLotsizeMultiplier();
+   lotsize *= GetLotMultiplier();
    lotsize  = NormalizeDouble(lotsize, lotdigit);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
@@ -801,73 +802,32 @@ double CalculateLotsize() {
          lotsize = minlot;
       }
    }
+
+   SS.UnitSize();
    return(lotsize);
 }
 
 
 /**
- * Recalculate a new "Risk" value if the current one is too low or too high.
+ * Calculate the unitsize multiplier for the current account currency.
+ *
+ * @return double - lot multiplier or NULL in case of errors
  */
-void RecalculateRisk() {
-   string textstring = "";
-   double maxlot;
-   double minlot;
-   double maxrisk;
-   double minrisk;
+double GetLotMultiplier() {
+   double rate = 0;
+   string suffix = StrRight(Symbol(), -6);
 
-   double availablemoney = AccountEquity();
+   if      (AccountCurrency() == "USD") rate = 1;
+   else if (AccountCurrency() == "EUR") rate = MarketInfo("EURUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "GBP") rate = MarketInfo("GBPUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "AUD") rate = MarketInfo("AUDUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "NZD") rate = MarketInfo("NZDUSD"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "CHF") rate = MarketInfo("USDCHF"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "JPY") rate = MarketInfo("USDJPY"+ suffix, MODE_BID);
+   else if (AccountCurrency() == "CAD") rate = MarketInfo("USDCAD"+ suffix, MODE_BID);
 
-   double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
-   if (!marginPerLot) return(!catch("RecalculateRisk(1)  marginPerLot = 0", ERR_ZERO_DIVIDE));
-   if (!lotStep)      return(!catch("RecalculateRisk(2)  lotStep = 0", ERR_ZERO_DIVIDE));
-   maxlot = MathFloor(availablemoney/marginPerLot/lotStep) * lotStep;
-
-   // Maximum allowed Risk by the broker according to maximul allowed Lot and Equity
-   if (!availablemoney) return(!catch("RecalculateRisk(3)  availablemoney = 0", ERR_ZERO_DIVIDE));
-   maxrisk = MathFloor(maxlot * (stopDistance + StopLoss) / availablemoney * 100 / 0.1) * 0.1;
-   // Minimum allowed Lot by the broker
-   minlot = MinLots;
-   // Minimum allowed Risk by the broker according to minlots_broker
-   minrisk = MathRound(minlot * StopLoss / availablemoney * 100 / 0.1) * 0.1;
-
-   // If we use money management
-   if (MoneyManagement) {
-      // If Risk% is greater than the maximum risklevel the broker accept, then adjust Risk accordingly and print out changes
-      if ( Risk > maxrisk ) {
-         textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be higher than " + DoubleToStr ( maxrisk, 1 ) + " according to ";
-         textstring = textstring + "the broker, StopLoss and Equity. It has now been adjusted accordingly to " + DoubleToStr ( maxrisk, 1 ) + "%";
-         Alert(textstring);
-         Risk = maxrisk;
-      }
-      // If Risk% is less than the minimum risklevel the broker accept, then adjust Risk accordingly and print out changes
-      if (Risk < minrisk) {
-         textstring = textstring + "Note: Risk has manually been set to " + DoubleToStr ( Risk, 1 ) + " but cannot be lower than " + DoubleToStr ( minrisk, 1 ) + " according to ";
-         textstring = textstring + "the broker, StopLoss, AddPriceGap and Equity. It has now been adjusted accordingly to " + DoubleToStr ( minrisk, 1 ) + "%";
-         Alert(textstring);
-         Risk = minrisk;
-      }
-   }
-   // If we don't use MoneyManagement, then use fixed manual LotSize
-   else {
-      // Check and if necessary adjust manual LotSize to external limits
-      if ( ManualLotsize < MinLots ) {
-         textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be less than " + DoubleToStr ( MinLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2);
-         ManualLotsize = MinLots;
-         Alert(textstring);
-      }
-      if ( ManualLotsize > MaxLots ) {
-         textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than " + DoubleToStr ( MaxLots, 2 ) + ". It has now been adjusted to " + DoubleToStr ( MinLots, 2 );
-         ManualLotsize = MaxLots;
-         Alert(textstring);
-      }
-      // Check to see that manual LotSize does not exceeds maximum allowed LotSize
-      if ( ManualLotsize > maxlot ) {
-         textstring = "Manual LotSize " + DoubleToStr ( ManualLotsize, 2 ) + " cannot be greater than maximum allowed LotSize. It has now been adjusted to " + DoubleToStr ( maxlot, 2 );
-         ManualLotsize = maxlot;
-         Alert(textstring);
-      }
-   }
+   if (!rate) return(!catch("GetLotsizeMultiplier(1)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
+   return(1/rate);
 }
 
 
@@ -943,6 +903,7 @@ void UpdateTradeStats() {
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!IsChart()) return(error);
+
    string sError = "";
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
@@ -964,4 +925,14 @@ int ShowStatus(int error = NO_ERROR) {
    if (!catch("ShowStatus(1)"))
       return(error);
    return(last_error);
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the unitsize.
+ */
+void SS.UnitSize() {
+   if (IsChart()) {
+      sUnitSize = NumberToStr(unitSize, ".+") +" lot";
+   }
 }
