@@ -29,6 +29,7 @@
  *  - removed configuration of the min. margin level
  *  - renamed and reordered input parameters, removed obsolete or needless ones
  *  - fixed ERR_INVALID_STOP when opening pending orders or positions
+ *  - simplified code in general
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -162,8 +163,7 @@ int onInit() {
    if ( Magic < 0 )
      Magic = CreateMagicNumber();
 
-   CheckClosedOrders();
-   CheckOpenOrders();
+   UpdateTradeStats();
 
    sStatusInfo = StringConcatenate(NL, NL, NL, NL, NL);
    return(catch("onInit(2)"));
@@ -176,11 +176,9 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   UpdateOrderStatus();             // pewa: monitor and track open/closed positions
-
+   UpdateOrderStatus();
    Trade();
-   CheckClosedOrders();
-   CheckOpenOrders();
+   UpdateTradeStats();
 
    return(catch("onTick(1)"));
 }
@@ -874,9 +872,11 @@ void RecalculateRisk() {
 
 
 /**
- * Check through all open orders
+ * Update trade statistics.
  */
-void CheckOpenOrders() {
+void UpdateTradeStats() {
+   bool isTesting = IsTesting();
+
    openPositions  = 0;
    openLots       = 0;
    openSwap       = 0;
@@ -886,7 +886,14 @@ void CheckOpenOrders() {
    int orders = OrdersTotal();
    for (int pos=0; pos < orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_TRADES)) {
-         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
+         if (isTesting) {
+            openPositions++;
+            openLots       += OrderLots();
+            openSwap       += OrderSwap();
+            openCommission += OrderCommission();
+            openPl         += OrderProfit();
+         }
+         else if (OrderMagicNumber()==Magic) /*&&*/ if (OrderSymbol()==Symbol()) {
             openPositions++;
             openLots       += OrderLots();
             openSwap       += OrderSwap();
@@ -895,25 +902,25 @@ void CheckOpenOrders() {
          }
       }
    }
-   openPlNet  = openSwap + openCommission + openPl;
-   totalPlNet = openPlNet + closedPlNet;
-}
+   openPlNet = openSwap + openCommission + openPl;
 
-
-/**
- * Check through all closed orders
- */
-void CheckClosedOrders() {
    closedPositions  = 0;
    closedLots       = 0;
    closedSwap       = 0;
    closedCommission = 0;
    closedPl         = 0;
 
-   int orders = OrdersHistoryTotal();
-   for (int pos=0; pos < orders; pos++) {
+   orders = OrdersHistoryTotal();
+   for (pos=0; pos < orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_HISTORY)) {
-         if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
+         if (isTesting) {
+            closedPositions++;
+            closedLots       += OrderLots();
+            closedSwap       += OrderSwap();
+            closedCommission += OrderCommission();
+            closedPl         += OrderProfit();
+         }
+         else if (OrderMagicNumber()==Magic) /*&&*/ if (OrderSymbol()==Symbol()) {
             closedPositions++;
             closedLots       += OrderLots();
             closedSwap       += OrderSwap();
