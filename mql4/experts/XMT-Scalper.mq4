@@ -54,7 +54,7 @@ extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must 
 extern double StopLoss                  = 60;         // SL from as many points. Default 60 (= 6 pips)
 extern double TakeProfit                = 100;        // TP from as many points. Default 100 (= 10 pip)
 extern double TrailingStart             = 20;         // start trailing profit from as so many points.
-extern int    StopDistance.Points       = 0;          // entry order stop distance in points
+extern int    StopDistance.Points       = 0;          // pending entry order distance in points (0 = market order)
 extern int    Slippage.Points           = 3;          // acceptable market order slippage in points
 extern double Commission                = 0;          // commission per lot
 extern double MaxSpread                 = 30;         // max allowed spread in points
@@ -62,8 +62,8 @@ extern int    Magic                     = -1;         // if negative the MagicNu
 extern bool   ReverseTrades             = false;      // if TRUE, then trade in opposite direction
 
 extern string ___d_____________________ = "==== MoneyManagement ====";
-extern bool   MoneyManagement           = true;       // if TRUE lotsize is calculated based on "Risk", if FALSE use "ManualLotsize"
-extern double Risk                      = 2;          // risk setting in percentage, for equity=10'000, risk=10% and stoploss=60: lotsize = 16.66
+extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
+extern double Risk                      = 2;          // percent of equity to risk for each trade, e.g. equity=10'000, risk=10%, sl=60: lots=16.67
 extern double MinLots                   = 0.01;       // minimum lotsize to use
 extern double MaxLots                   = 100;        // maximum lotsize to use
 extern double ManualLotsize             = 0.1;        // fix lotsize to use if "MoneyManagement" is FALSE
@@ -786,8 +786,7 @@ double CalculateLots() {
    if (EQ(StopLoss, 0)) return(!catch("CalculateLotsize(3)  StopLoss = 0", ERR_ZERO_DIVIDE));
    if (!lotStep)        return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
    double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / StopLoss / lotStep) * lotStep, MaxLots);
-   lotsize *= GetLotMultiplier();
-   lotsize  = NormalizeDouble(lotsize, lotdigit);
+   lotsize = NormalizeDouble(lotsize, lotdigit);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
    if (!MoneyManagement) {
@@ -805,29 +804,6 @@ double CalculateLots() {
 
    SS.UnitSize();
    return(lotsize);
-}
-
-
-/**
- * Calculate the unitsize multiplier for the current account currency.
- *
- * @return double - lot multiplier or NULL in case of errors
- */
-double GetLotMultiplier() {
-   double rate = 0;
-   string suffix = StrRight(Symbol(), -6);
-
-   if      (AccountCurrency() == "USD") rate = 1;
-   else if (AccountCurrency() == "EUR") rate = MarketInfo("EURUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "GBP") rate = MarketInfo("GBPUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "AUD") rate = MarketInfo("AUDUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "NZD") rate = MarketInfo("NZDUSD"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "CHF") rate = MarketInfo("USDCHF"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "JPY") rate = MarketInfo("USDJPY"+ suffix, MODE_BID);
-   else if (AccountCurrency() == "CAD") rate = MarketInfo("USDCAD"+ suffix, MODE_BID);
-
-   if (!rate) return(!catch("GetLotsizeMultiplier(1)  Unable to fetch market price for account currency "+ DoubleQuoteStr(AccountCurrency()), ERR_INVALID_MARKET_DATA));
-   return(1/rate);
 }
 
 
