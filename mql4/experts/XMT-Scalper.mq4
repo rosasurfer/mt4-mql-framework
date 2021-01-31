@@ -100,7 +100,6 @@ double closedPlNet;              // total closed net profit
 double totalPlNet;               // openPlNet + closedPlNet
 
 // other
-double unitSize;
 double stopDistance;             // entry order stop distance in quote currency
 string orderComment = "XMT-rsf";
 
@@ -132,21 +131,14 @@ int onInit() {
    if (MoneyManagement) {
       // Risk
       if (LE(Risk, 0))                                                return(!catch("onInit(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-      double equity = AccountEquity() - AccountCredit();
-      if (LE(equity, 0))                                              return(!catch("onInit(6)  equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
-
-      double riskPerTrade = Risk/100 * equity;                        // risked equity amount per trade
-      double slPips       = StopLoss*Point/Pip;                       // SL in pip
-      double riskPerPip   = riskPerTrade/slPips;                      // risked equity amount per pip
-      double lotsPerTrade = riskPerPip/PipValue();                    // resulting position size
-
-      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))        return(!catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (results in position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))        return(!catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (results in position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      double lotsPerTrade = CalculateLots(false); if (IsLastError())  return(last_error);
+      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))        return(!catch("onInit(6)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))        return(!catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))       return(!catch("onInit(9)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))       return(!catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))       return(!catch("onInit(8)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))       return(!catch("onInit(9)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
 
@@ -154,7 +146,7 @@ int onInit() {
 
    // --- old ---------------------------------------------------------------------------------------------------------------
    if (!IsTesting() && Period()!=TimeFrame) {
-      return(catch("onInit(11)  The EA has been set to run on timeframe: "+ TimeFrame +" but it has been attached to a chart with timeframe: "+ Period(), ERR_RUNTIME_ERROR));
+      return(catch("onInit(10)  The EA has been set to run on timeframe: "+ TimeFrame +" but it has been attached to a chart with timeframe: "+ Period(), ERR_RUNTIME_ERROR));
    }
 
    // Check to confirm that indicator switch is valid choices, if not force to 1 (Moving Average)
@@ -173,7 +165,7 @@ int onInit() {
    if (Magic < 0) Magic = CreateMagicNumber();
 
    UpdateTradeStats();
-   return(catch("onInit(12)"));
+   return(catch("onInit(11)"));
 }
 
 
@@ -679,7 +671,7 @@ void Trade() {
 
    // Open a new order if we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread
    if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
-      unitSize = CalculateLots();
+      double lots = CalculateLots(); if (!lots) return(last_error);
 
       if (pricedirection==-1 || pricedirection==2 ) {
          orderprice      = Ask + stopDistance;
@@ -687,11 +679,11 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, unitSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(12)"));
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(12)"));
             Orders.AddTicket(oe.Ticket(oe), OP_BUYSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, unitSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(13)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(13)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
@@ -701,11 +693,11 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, unitSize, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(14)"));
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(14)"));
             Orders.AddTicket(oe.Ticket(oe), OP_SELLSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, unitSize, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(15)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(15)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_SELL, NULL);
          }
       }
@@ -748,43 +740,47 @@ int CreateMagicNumber() {
 
 
 /**
- * Calculate the unitsize to use.
+ * Calculate the position size to use.
  *
- * @return double - unitsize or NULL in case of errors
+ * @param  bool checkLimits [optional] - whether to check the symbol's lotsize contraints (default: yes)
+ *
+ * @return double - position size or NULL in case of errors
  */
-double CalculateLots() {
-   double inputMaxLots = 100;
+double CalculateLots(bool checkLimits = true) {
+   checkLimits = checkLimits!=0;
+   static double lots, lastLots;
 
-   double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);
-   double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   if (!marginPerLot) return(!catch("CalculateLotsize(1)  marginPerLot = 0", ERR_ZERO_DIVIDE));
-   if (!lotStep)      return(!catch("CalculateLotsize(2)  lotStep = 0", ERR_ZERO_DIVIDE));
-   double maxlot = MathMin(MathFloor(AccountEquity() * 0.98/marginPerLot/lotStep) * lotStep, inputMaxLots);
+   if (MoneyManagement) {
+      double equity = AccountEquity() - AccountCredit();
+      if (LE(equity, 0)) return(!catch("CalculateLots(1)  equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
 
-   int lotdigit = 0;
-   if (lotStep == 1)    lotdigit = 0;
-   if (lotStep == 0.1)  lotdigit = 1;
-   if (lotStep == 0.01) lotdigit = 2;
+      double riskPerTrade = Risk/100 * equity;                          // risked equity amount per trade
+      double slPips       = StopLoss*Point/Pip;                         // SL in pip
+      double riskPerPip   = riskPerTrade/slPips;                        // risked equity amount per pip
 
-   // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
-   if (!StopLoss) return(!catch("CalculateLotsize(3)  StopLoss = 0", ERR_ZERO_DIVIDE));
-   if (!lotStep)  return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
-   double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / StopLoss / lotStep) * lotStep, inputMaxLots);
-   lotsize = NormalizeDouble(lotsize, lotdigit);
+      lots = NormalizeLots(riskPerPip/PipValue(), NULL, MODE_FLOOR);    // resulting normalized position size
+      if (IsEmptyValue(lots)) return(NULL);
 
-   // Use manual fix LotSize, but if necessary adjust to within limits
-   if (!MoneyManagement) {
-      lotsize = ManualLotsize;
+      if (checkLimits) {
+         if (LT(lots, MarketInfo(Symbol(), MODE_MINLOT)))
+            return(!catch("CalculateLots(2)  equity: "+ DoubleToStr(equity, 2) +" (resulting position size smaller than MODE_MINLOT)", ERR_NOT_ENOUGH_MONEY));
 
-      if (ManualLotsize > maxlot) {
-         Alert("Note: Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
-         lotsize = maxlot;
-         ManualLotsize = maxlot;
+         double maxLots = MarketInfo(Symbol(), MODE_MAXLOT);
+         if (GT(lots, maxLots)) {
+            if (LT(lastLots, maxLots)) logNotice("CalculateLots(3)  limiting position size to MODE_MAXLOT: "+ NumberToStr(maxLots, ".+") +" lot");
+            lots = maxLots;
+         }
       }
    }
+   else {
+      lots = ManualLotsize;
+   }
 
-   SS.UnitSize();
-   return(lotsize);
+   if (NE(lots, lastLots)) {
+      SS.UnitSize(lots);
+      lastLots = lots;
+   }
+   return(lots);
 }
 
 
@@ -887,9 +883,11 @@ int ShowStatus(int error = NO_ERROR) {
 
 /**
  * ShowStatus: Update the string representation of the unitsize.
+ *
+ * @param  double size
  */
-void SS.UnitSize() {
+void SS.UnitSize(double size) {
    if (IsChart()) {
-      sUnitSize = NumberToStr(unitSize, ".+") +" lot";
+      sUnitSize = NumberToStr(size, ".+") +" lot";
    }
 }
