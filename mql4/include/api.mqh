@@ -218,7 +218,7 @@ bool     MQL.IsFile(string filename);;
 int      Mul(int a, int b);;
 color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
-double   NormalizeLots(double lots, string symbol = "");;
+double   NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT);;
 string   NumberToStr(double value, string mask);;
 bool     ObjectDeleteEx(string label, string location = "");;
 string   OperationTypeDescription(int type);;

@@ -5794,20 +5794,28 @@ bool IsSuperContext() {
  *
  * @param  double lots              - lot size
  * @param  string symbol [optional] - symbol (default: the current symbol)
+ * @param  int    mode   [optional] - rounding mode: MODE_FLOOR   - normalize down to the next smallest absolute value
+ *                                                   MODE_DEFAULT - normalize according to standard rounding rules
+ *                                                   MODE_CEIL    - normalize up to the next largest absolute value
  *
  * @return double - rounded lot value or EMPTY_VALUE in case of errors
  */
-double NormalizeLots(double lots, string symbol = "") {
-   if (!StringLen(symbol))
-      symbol = Symbol();
+double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
+   if (!StringLen(symbol)) symbol = Symbol();
+   else if (symbol == "0") symbol = Symbol();            // (string) NULL
 
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
-
    if (!lotstep) {
       int error = GetLastError();
       return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifInt(error, error, ERR_INVALID_MARKET_DATA))));
    }
-   return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
+
+   switch (mode) {
+      case MODE_FLOOR:   return(NormalizeDouble(MathFloor(lots/lotstep) * lotstep, 2));
+      case MODE_DEFAULT: return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
+      case MODE_CEIL:    return(NormalizeDouble(MathCeil (lots/lotstep) * lotstep, 2));
+   }
+   return(_EMPTY_VALUE(catch("NormalizeLots(2)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
