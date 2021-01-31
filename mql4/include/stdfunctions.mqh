@@ -5790,12 +5790,12 @@ bool IsSuperContext() {
 
 
 /**
- * Round a lot size according to the specified symbol's lot step value (MODE_LOTSTEP).
+ * Round a lot value according to the specified symbol's lot step value (MODE_LOTSTEP).
  *
  * @param  double lots              - lot size
  * @param  string symbol [optional] - symbol (default: the current symbol)
  *
- * @return double - rounded lot size or NULL in case of errors
+ * @return double - rounded lot value or NULL in case of errors
  */
 double NormalizeLots(double lots, string symbol = "") {
    if (!StringLen(symbol))

@@ -325,8 +325,8 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // sorting modes, see ArraySort()
-#define MODE_ASC                          1     // aufsteigend
-#define MODE_DESC                         2     // absteigend
+#define MODE_ASC                          1     // ascending
+#define MODE_DESC                         2     // descending
 #define MODE_ASCEND                MODE_ASC     // MetaQuotes aliases
 #define MODE_DESCEND              MODE_DESC
 
@@ -342,21 +342,21 @@ double  N_INF;                                              // -1.#INF: negative
 //                                        8     // ?
 #define MODE_BID                          9     // last bid price                           (entspricht Bid bzw. Close[0])
 #define MODE_ASK                         10     // last ask price                           (entspricht Ask)
-#define MODE_POINT                       11     // point size in the quote currency         (entspricht Point)                           Preisauflösung: 0.0000'1
+#define MODE_POINT                       11     // point size in the quote currency         (entspricht Point)               price resolution, e.g.: 0.0000'1
 #define MODE_DIGITS                      12     // number of digits after the decimal point (entspricht Digits)
 #define MODE_SPREAD                      13     // spread value in points
-#define MODE_STOPLEVEL                   14     // minimum required stops distance in points (used only by bucket shops)
-#define MODE_LOTSIZE                     15     // units of 1 lot                                                                                         100.000
+#define MODE_STOPLEVEL                   14     // min. required stop/limit distance to be able to open an order (in points; used only by bucket shops)
+#define MODE_LOTSIZE                     15     // units of 1 lot                                                                                     100'000
 #define MODE_TICKVALUE                   16     // tick value in the account currency
-#define MODE_TICKSIZE                    17     // tick size in the quote currency                                                 Vielfaches von Point: 0.0000'5
+#define MODE_TICKSIZE                    17     // tick size in the quote currency                                        multiple of 1 point, e.g.: 0.0000'5
 #define MODE_SWAPLONG                    18     // swap of long positions
 #define MODE_SWAPSHORT                   19     // swap of short positions
-#define MODE_STARTING                    20     // contract starting date (usually for futures)
-#define MODE_EXPIRATION                  21     // contract expiration date (usually for futures)
-#define MODE_TRADEALLOWED                22     // if trading is allowed for the symbol
-#define MODE_MINLOT                      23     // minimum lot size
-#define MODE_LOTSTEP                     24     // minimum lot increment size
-#define MODE_MAXLOT                      25     // maximum lot size
+#define MODE_STARTING                    20     // contract starting date (Futures)
+#define MODE_EXPIRATION                  21     // contract expiration date (Futures)
+#define MODE_TRADEALLOWED                22     // whether trading of the symbol is allowed
+#define MODE_MINLOT                      23     // min. tradable lot size
+#define MODE_LOTSTEP                     24     // min. lot increment size
+#define MODE_MAXLOT                      25     // max. tradable lot size
 #define MODE_SWAPTYPE                    26     // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
 #define MODE_PROFITCALCMODE              27     // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
 #define MODE_MARGINCALCMODE              28     // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
@@ -364,7 +364,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_MARGINMAINTENANCE           30     // units with margin requirement to maintain an open positions of 1 lot (0 = je nach Account-Stopoutlevel)               @see (2)
 #define MODE_MARGINHEDGED                31     // units with margin requirement for a hedged position of 1 lot                                                  50.000
 #define MODE_MARGINREQUIRED              32     // free margin requirement to open a position of 1 lot
-#define MODE_FREEZELEVEL                 33     // order freeze level in points (used only by bucket shops)
+#define MODE_FREEZELEVEL                 33     // min. required price distance to be able to modify an order (in points; used only by bucket shops)
                                                 //
                                                 // (1) MARGIN_INIT (in Units) müßte, wenn es gesetzt ist, die eigentliche Marginrate sein. MARGIN_REQUIRED (in Account-Currency)
                                                 //     könnte höher und MARGIN_MAINTENANCE niedriger sein (MARGIN_INIT wird z.B. von IC Markets gesetzt).
@@ -390,7 +390,7 @@ double  N_INF;                                              // -1.#INF: negative
 | SYMBOL_CALC_MODE_CFDINDEX    | CFD index mode                                               | Margin: (Lots*ContractSize*MarketPrice)*TickPrice/TickSize  |
 |                              | calculation of margin and profit for CFD by indexes          | Profit: (Close-Open)*ContractSize*Lots                      |
 +------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
-| SYMBOL_CALC_MODE_CFDLEVERAGE | CFD Leverage mode                                            | Margin: (Lots*ContractSize*MarketPrice*Percentage)/Leverage |
+| SYMBOL_CALC_MODE_CFDLEVERAGE | CFD leverage mode                                            | Margin: (Lots*ContractSize*MarketPrice*Percentage)/Leverage |
 |                              | calculation of margin and profit for CFD at leverage trading | Profit: (Close-Open)*ContractSize*Lots                      |
 +------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
 */
