@@ -20,30 +20,30 @@
  * Changes:
  *  - removed MQL5 syntax and fixed compiler issues
  *  - added rosasurfer framework and the framework's test reporting
- *  - moved Print() output to the framework logger
+ *  - moved print output to the framework logger
  *  - added monitoring of PositionOpen and PositionClose events
- *  - restructured input parameters, removed obsolete or needless ones
- *  - fixed input parameter validation
- *  - rewrote status display
  *  - removed obsolete functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
- *  - fixed ERR_INVALID_STOP when opening pending orders or positions
- *  - simplified code in general
+ *  - simplified input parameters
+ *  - fixed input parameter validation
+ *  - fixed position size calculation
+ *  - fixed trading errors
+ *  - rewrote status display
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a_____________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes";
+extern string ___a_____________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator            = 1;          // entry signal indicator for price channel calculation
 extern int    Indicatorperiod           = 3;          // period in bars for indicator
 extern double BBDeviation               = 2;          // deviation for the iBands indicator
 extern double EnvelopesDeviation        = 0.07;       // deviation for the iEnvelopes indicator
 
-extern string ___b_____________________ = "==== MinBarSize settings ====";
+extern string ___b_____________________ = "==== Entry bar conditions ====";
 extern bool   UseDynamicVolatilityLimit = true;       // calculated based on (int)(spread * VolatilityMultiplier)
 extern double VolatilityMultiplier      = 125;        // a multiplier that is used if UseDynamicVolatilityLimit is TRUE
 extern double VolatilityLimit           = 180;        // a fix value that is used if UseDynamicVolatilityLimit is FALSE
@@ -51,22 +51,20 @@ extern double VolatilityPercentageLimit = 0;          // percentage of how much 
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
-extern double StopLoss                  = 60;         // SL from as many points. Default 60 (= 6 pips)
-extern double TakeProfit                = 100;        // TP from as many points. Default 100 (= 10 pip)
+extern int    StopLoss                  = 60;         // SL in point
+extern int    TakeProfit                = 100;        // TP in point
 extern double TrailingStart             = 20;         // start trailing profit from as so many points.
-extern int    StopDistance.Points       = 0;          // pending entry order distance in points (0 = market order)
-extern int    Slippage.Points           = 3;          // acceptable market order slippage in points
+extern int    StopDistance.Points       = 0;          // pending entry order distance in point (0 = market order)
+extern int    Slippage.Points           = 3;          // acceptable market order slippage in point
 extern double Commission                = 0;          // commission per lot
-extern double MaxSpread                 = 30;         // max allowed spread in points
+extern double MaxSpread                 = 30;         // max allowed spread in point
 extern int    Magic                     = -1;         // if negative the MagicNumber is generated
 extern bool   ReverseTrades             = false;      // if TRUE, then trade in opposite direction
 
 extern string ___d_____________________ = "==== MoneyManagement ====";
 extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
-extern double Risk                      = 2;          // percent of equity to risk for each trade, e.g. equity=10'000, risk=10%, sl=60: lots=16.67
-extern double MinLots                   = 0.01;       // minimum lotsize to use
-extern double MaxLots                   = 100;        // maximum lotsize to use
-extern double ManualLotsize             = 0.1;        // fix lotsize to use if "MoneyManagement" is FALSE
+extern double Risk                      = 2;          // percent of equity to risk for each trade
+extern double ManualLotsize             = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -103,7 +101,7 @@ double totalPlNet;               // openPlNet + closedPlNet
 
 // other
 double unitSize;
-double stopDistance;             // entry order stop distance
+double stopDistance;             // entry order stop distance in quote currency
 string orderComment = "XMT-rsf";
 
 // cache vars to speed-up ShowStatus()
@@ -123,21 +121,45 @@ double lowest;                   // lowest indicator value
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
+   // StopLoss
+   if (!StopLoss)                                                     return(!catch("onInit(1)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))            return(!catch("onInit(2)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   // TakeProfit
+   if (LT(TakeProfit, MarketInfo(Symbol(), MODE_STOPLEVEL)))          return(!catch("onInit(3)  invalid input parameter TakeProfit: "+ TakeProfit +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   // StopDistance
+   if (LT(StopDistance.Points, MarketInfo(Symbol(), MODE_STOPLEVEL))) return(!catch("onInit(4)  invalid input parameter StopDistance.Points: "+ StopDistance.Points +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (MoneyManagement) {
+      // Risk
+      if (LE(Risk, 0))                                                return(!catch("onInit(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      double equity = AccountEquity() - AccountCredit();
+      if (LE(equity, 0))                                              return(!catch("onInit(6)  equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
+
+      double riskPerTrade = Risk/100 * equity;                        // risked equity amount per trade
+      double slPips       = StopLoss*Point/Pip;                       // SL in pip
+      double riskPerPip   = riskPerTrade/slPips;                      // risked equity amount per pip
+      double lotsPerTrade = riskPerPip/PipValue();                    // resulting position size
+
+      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))        return(!catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (results in position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))        return(!catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (results in position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+   }
+   else {
+      // ManualLotsize
+      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))       return(!catch("onInit(9)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))       return(!catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+   }
+
+
+
+
+   // --- old ---------------------------------------------------------------------------------------------------------------
    if (!IsTesting() && Period()!=TimeFrame) {
-      return(catch("onInit(1)  The EA has been set to run on timeframe: "+ TimeFrame +" but it has been attached to a chart with timeframe: "+ Period(), ERR_RUNTIME_ERROR));
+      return(catch("onInit(11)  The EA has been set to run on timeframe: "+ TimeFrame +" but it has been attached to a chart with timeframe: "+ Period(), ERR_RUNTIME_ERROR));
    }
 
    // Check to confirm that indicator switch is valid choices, if not force to 1 (Moving Average)
    if (EntryIndicator < 1 || EntryIndicator > 3)
       EntryIndicator = 1;
-
-   stopDistance = MathMax(stopDistance, StopDistance.Points);
-   stopDistance = MathMax(stopDistance, MarketInfo(Symbol(), MODE_STOPLEVEL));
-   stopDistance = MathMax(stopDistance, MarketInfo(Symbol(), MODE_FREEZELEVEL));
-
-   // ensure SL and TP aren't smaller than the broker's stop distance
-   StopLoss   = MathMax(StopLoss, stopDistance);
-   TakeProfit = MathMax(TakeProfit, stopDistance);
 
    // Re-calculate variables
    VolatilityPercentageLimit = VolatilityPercentageLimit / 100 + 1;
@@ -146,51 +168,12 @@ int onInit() {
    VolatilityLimit = VolatilityLimit * Point;
    Commission = NormalizeDouble(Commission * Point, Digits);
    TrailingStart = TrailingStart * Point;
-   stopDistance  = stopDistance * Point;
-
-   // If we have set MaxLot and/or MinLots to more/less than what the broker allows, then adjust accordingly
-   if (MinLots < MarketInfo(Symbol(), MODE_MINLOT)) MinLots = MarketInfo(Symbol(), MODE_MINLOT);
-   if (MaxLots > MarketInfo(Symbol(), MODE_MAXLOT)) MaxLots = MarketInfo(Symbol(), MODE_MAXLOT);
-   if (MaxLots < MinLots) MaxLots = MinLots;
-
-   if (!ValidateRisk()) return(last_error);
+   stopDistance  = StopDistance.Points * Point;
 
    if (Magic < 0) Magic = CreateMagicNumber();
+
    UpdateTradeStats();
-
-   return(catch("onInit(2)"));
-}
-
-
-/**
- * Validate risk and lotsize input parameters.
- *
- * @return bool - success status
- */
-bool ValidateRisk() {
-   double equity       = AccountEquity() - AccountCredit();         if (!equity)       return(!catch("ValidateRisk(1)  equity = 0", ERR_ZERO_DIVIDE));
-   double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (!marginPerLot) return(!catch("ValidateRisk(2)  MODE_MARGINREQUIRED = 0", ERR_ZERO_DIVIDE));
-   double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);        if (!lotStep)      return(!catch("ValidateRisk(3)  MODE_LOTSTEP = 0", ERR_ZERO_DIVIDE));
-
-   // Maximum allowed risk accepted by the broker according to maximum allowed lot and equity
-   double maxAllowedLots = RoundFloor(equity/marginPerLot/lotStep) * lotStep;
-   double maxAllowedRisk = RoundFloor(maxAllowedLots * (stopDistance+StopLoss) / equity * 100, 1);
-
-   // Minimum allowed risk accepted by the broker according to minlots_broker
-   double minAllowedRisk = RoundEx(MinLots * StopLoss / equity * 100, 1);
-
-   if (MoneyManagement) {
-      // dynamically calculated unitsize (compounding ON)
-      if (Risk > maxAllowedRisk) return(!catch("ValidateRisk(4)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (larger than max. allowed risk of "+ NumberToStr(maxAllowedRisk, ".1+") +" for the configured SL)", ERR_INVALID_INPUT_PARAMETER));
-      if (Risk < minAllowedRisk) return(!catch("ValidateRisk(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (smaller than min. allowed risk of "+ NumberToStr(minAllowedRisk, ".1+") +" for the configured SL)", ERR_INVALID_INPUT_PARAMETER));
-   }
-   else {
-      // fixed unitsize (compounding OFF)
-      if (ManualLotsize < MinLots)        return(!catch("ValidateRisk(6)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MinLots)", ERR_INVALID_INPUT_PARAMETER));
-      if (ManualLotsize > MaxLots)        return(!catch("ValidateRisk(7)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MaxLots)", ERR_INVALID_INPUT_PARAMETER));
-      if (ManualLotsize > maxAllowedLots) return(!catch("ValidateRisk(8)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than maximum allowed lotsize)", ERR_INVALID_INPUT_PARAMETER));
-   }
-   return(!catch("ValidateRisk(9)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -770,12 +753,13 @@ int CreateMagicNumber() {
  * @return double - unitsize or NULL in case of errors
  */
 double CalculateLots() {
+   double inputMaxLots = 100;
+
    double lotStep      = MarketInfo(Symbol(), MODE_LOTSTEP);
    double marginPerLot = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   double minlot = MinLots;
    if (!marginPerLot) return(!catch("CalculateLotsize(1)  marginPerLot = 0", ERR_ZERO_DIVIDE));
    if (!lotStep)      return(!catch("CalculateLotsize(2)  lotStep = 0", ERR_ZERO_DIVIDE));
-   double maxlot = MathMin(MathFloor(AccountEquity() * 0.98/marginPerLot/lotStep) * lotStep, MaxLots);
+   double maxlot = MathMin(MathFloor(AccountEquity() * 0.98/marginPerLot/lotStep) * lotStep, inputMaxLots);
 
    int lotdigit = 0;
    if (lotStep == 1)    lotdigit = 0;
@@ -783,9 +767,9 @@ double CalculateLots() {
    if (lotStep == 0.01) lotdigit = 2;
 
    // Lot according to Risk. Don't use 100% but 98% (= 102) to avoid
-   if (EQ(StopLoss, 0)) return(!catch("CalculateLotsize(3)  StopLoss = 0", ERR_ZERO_DIVIDE));
-   if (!lotStep)        return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
-   double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / StopLoss / lotStep) * lotStep, MaxLots);
+   if (!StopLoss) return(!catch("CalculateLotsize(3)  StopLoss = 0", ERR_ZERO_DIVIDE));
+   if (!lotStep)  return(!catch("CalculateLotsize(4)  lotStep = 0", ERR_ZERO_DIVIDE));
+   double lotsize = MathMin(MathFloor(Risk/102 * AccountEquity() / StopLoss / lotStep) * lotStep, inputMaxLots);
    lotsize = NormalizeDouble(lotsize, lotdigit);
 
    // Use manual fix LotSize, but if necessary adjust to within limits
@@ -796,9 +780,6 @@ double CalculateLots() {
          Alert("Note: Manual LotSize is too high. It has been recalculated to maximum allowed "+ DoubleToStr(maxlot, 2));
          lotsize = maxlot;
          ManualLotsize = maxlot;
-      }
-      else if (ManualLotsize < minlot) {
-         lotsize = minlot;
       }
    }
 
