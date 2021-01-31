@@ -5795,7 +5795,7 @@ bool IsSuperContext() {
  * @param  double lots              - lot size
  * @param  string symbol [optional] - symbol (default: the current symbol)
  *
- * @return double - rounded lot value or NULL in case of errors
+ * @return double - rounded lot value or EMPTY_VALUE in case of errors
  */
 double NormalizeLots(double lots, string symbol = "") {
    if (!StringLen(symbol))
@@ -5805,7 +5805,7 @@ double NormalizeLots(double lots, string symbol = "") {
 
    if (!lotstep) {
       int error = GetLastError();
-      return(!catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifInt(error, error, ERR_INVALID_MARKET_DATA)));
+      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifInt(error, error, ERR_INVALID_MARKET_DATA))));
    }
    return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
 }
