@@ -1058,7 +1058,7 @@ double CalculateLots(int direction, int level) {
       else if (level == 1)              lots = sequence.unitsize;
    }
    else if (sequence.martingaleEnabled) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
-   lots = NormalizeLots(lots);
+   lots = NormalizeLots(lots); if (IsEmptyValue(lots)) return(NULL);
 
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
 }
