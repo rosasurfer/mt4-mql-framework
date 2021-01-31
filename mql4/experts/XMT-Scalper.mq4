@@ -671,7 +671,7 @@ void Trade() {
 
    // Open a new order if we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread
    if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
-      double lots = CalculateLots(); if (!lots) return(last_error);
+      double lots = CalculateLots(true); if (!lots) return(last_error);
 
       if (pricedirection==-1 || pricedirection==2 ) {
          orderprice      = Ask + stopDistance;
@@ -742,11 +742,11 @@ int CreateMagicNumber() {
 /**
  * Calculate the position size to use.
  *
- * @param  bool checkLimits [optional] - whether to check the symbol's lotsize contraints (default: yes)
+ * @param  bool checkLimits [optional] - whether to check the symbol's lotsize contraints (default: no)
  *
  * @return double - position size or NULL in case of errors
  */
-double CalculateLots(bool checkLimits = true) {
+double CalculateLots(bool checkLimits = false) {
    checkLimits = checkLimits!=0;
    static double lots, lastLots;
 
