@@ -30,6 +30,8 @@
  *  - fixed position size calculation
  *  - fixed trading errors
  *  - rewrote status display
+ *
+ *  - renamed input parameter ReverseTrades to ReverseSignals
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -42,6 +44,7 @@ extern int    EntryIndicator            = 1;          // entry signal indicator 
 extern int    Indicatorperiod           = 3;          // period in bars for indicator
 extern double BBDeviation               = 2;          // deviation for the iBands indicator
 extern double EnvelopesDeviation        = 0.07;       // deviation for the iEnvelopes indicator
+extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
 
 extern string ___b_____________________ = "==== Entry bar conditions ====";
 extern bool   UseDynamicVolatilityLimit = true;       // calculated based on (int)(spread * VolatilityMultiplier)
@@ -59,7 +62,6 @@ extern int    Slippage.Points           = 3;          // acceptable market order
 extern double Commission                = 0;          // commission per lot
 extern double MaxSpread                 = 30;         // max allowed spread in point
 extern int    Magic                     = -1;         // if negative the MagicNumber is generated
-extern bool   ReverseTrades             = false;      // if TRUE, then trade in opposite direction
 
 extern string ___d_____________________ = "==== MoneyManagement ====";
 extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
@@ -406,7 +408,6 @@ void Trade() {
 
    int loopcount2;
    int loopcount1;
-   int pricedirection;
 
    double volatilitypercentage = 0;
    double orderprice;
@@ -485,9 +486,6 @@ void Trade() {
    // Reset breakout variable as FALSE
    isbidgreaterthanindy = false;
 
-   // Reset pricedirection for no indication of trading direction
-   pricedirection = 0;
-
    // If we're using iMA as indicator, then set variables from it
    if (EntryIndicator==1 && isbidgreaterthanima) {
       isbidgreaterthanindy = true;
@@ -533,6 +531,9 @@ void Trade() {
    if (UseDynamicVolatilityLimit)
       VolatilityLimit = realavgspread * VolatilityMultiplier;
 
+   // Reset pricedirection for no indication of trading direction
+   int pricedirection = 0;
+
    // If the variables below have values it means that we have enough of data from broker server.
    if (volatility && VolatilityLimit && lowest && highest) {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
@@ -544,10 +545,10 @@ void Trade() {
          // check if it differ enough from the specified limit
          if (volatilitypercentage > VolatilityPercentageLimit) {
             if (Bid < lowest) {
-               pricedirection = ifInt(ReverseTrades, 1, -1);   // -1=Long, 1=Short
+               pricedirection = ifInt(ReverseSignals, 1, -1);   // -1=Long, 1=Short
             }
             else if (Bid > highest) {
-               pricedirection = ifInt(ReverseTrades, -1, 1);   // -1=Long, 1=Short
+               pricedirection = ifInt(ReverseSignals, -1, 1);   // -1=Long, 1=Short
             }
          }
       }
@@ -673,7 +674,7 @@ void Trade() {
    if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
       double lots = CalculateLots(true); if (!lots) return(last_error);
 
-      if (pricedirection==-1 || pricedirection==2 ) {
+      if (pricedirection == -1) {
          orderprice      = Ask + stopDistance;
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
@@ -687,7 +688,7 @@ void Trade() {
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
-      if (pricedirection==1 || pricedirection==2) {
+      if (pricedirection == 1) {
          orderprice      = Bid - stopDistance;
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
