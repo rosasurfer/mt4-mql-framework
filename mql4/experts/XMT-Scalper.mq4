@@ -105,7 +105,7 @@ string orderComment = "XMT-rsf";
 
 // cache vars to speed-up ShowStatus()
 string sUnitSize   = "";
-string sStatusInfo = "\n\n\n\n\n";
+string sStatusInfo = "\n\n\n\n";
 
 // --- old ------------------------------------------------------------
 int    UpTo30Counter = 0;        // for calculating average spread
