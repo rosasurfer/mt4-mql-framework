@@ -32,7 +32,9 @@
  *  - fixed trading errors
  *  - rewrote status display
  *
- *  - renamed input parameter ReverseTrades to ReverseSignals
+ *  - added input parameter to switch on/off the most significant Capella bug (for comparison)
+ *  - renamed input parameter VolatilityLimit => MinBarSize
+ *  - renamed input parameter ReverseTrades   => ReverseSignals
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -50,8 +52,8 @@ extern bool   CapellaBug                = true;       // whether the major Capel
 extern string ___b_____________________ = "==== Entry bar conditions ====";
 extern bool   UseDynamicVolatilityLimit = true;       // calculate MinBarSize = VolatilityMultiplier * avgSpread
 extern double VolatilityMultiplier      = 12.5;       // avgSpread multiplier
-extern double VolatilityLimit           = 180;        // fix min. bar size in point
-extern double VolatilityPercentageLimit = 0;          // min. percent the actual bar size must exceed MinBarSize
+extern double MinBarSize                = 18;         // fix min. bar size in pip
+extern double VolatilityPercentLimit    = 0;          // min. percent the actual bar size must exceed MinBarSize
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
@@ -161,11 +163,11 @@ int onInit() {
       EntryIndicator = 1;
 
    // Re-calculate variables
-   VolatilityPercentageLimit = VolatilityPercentageLimit / 100 + 1;
+   VolatilityPercentLimit = VolatilityPercentLimit / 100 + 1;
    ArrayInitialize(spreads, 0);
-   VolatilityLimit = VolatilityLimit * Point;
-   TrailingStart = TrailingStart * Point;
-   stopDistance  = StopDistance.Points * Point;
+   MinBarSize    *= Pip;
+   TrailingStart *= Point;
+   stopDistance   = StopDistance.Points * Point;
 
    if (!Magic) Magic = CreateMagicNumber();
 
@@ -454,20 +456,20 @@ void Trade() {
    }
    double avgSpread = sumSpreads/tickCounter;
    if (UseDynamicVolatilityLimit)
-      VolatilityLimit = avgSpread * VolatilityMultiplier;
+      MinBarSize = avgSpread * VolatilityMultiplier;
 
    // determine trade signals
    int oe[], tradeSignal = NULL;
-   double orderprice, orderstoploss, ordertakeprofit, volatilitypercentage;
+   double orderprice, orderstoploss, ordertakeprofit, volatilityPercent;
 
    double barSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
 
    // If the variables below have values it means we have enough market data.
-   if (VolatilityLimit && channelHigh) {
+   if (MinBarSize && channelHigh) {
       // We have a price breakout, as the bar size is greater than MinBarSize
-      volatilitypercentage = barSize / VolatilityLimit;
+      volatilityPercent = barSize / MinBarSize;
 
-      if (volatilitypercentage > VolatilityPercentageLimit) {
+      if (volatilityPercent > VolatilityPercentLimit) {
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
          else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
          if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
@@ -597,7 +599,7 @@ void Trade() {
 
    // compose chart status messages
    if (isChart) {
-      sStatusInfo = StringConcatenate("CurrentBar: ", DoubleToStr(barSize/Pip, 1), " pip    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
+      sStatusInfo = StringConcatenate("Bar size: ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(MinBarSize/Pip, 2), " pip   VolatilityPercent: ", DoubleToStr(volatilityPercent, Digits), NL,
                                       sIndicatorStatus,                                                                                                                                                                               NL,
                                       "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                                                                                                     NL);
 
