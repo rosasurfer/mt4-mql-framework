@@ -25,6 +25,7 @@
  *  - removed obsolete functions and variables
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
+ *  - removed broken commission calculations
  *  - simplified input parameters
  *  - fixed input parameter validation
  *  - fixed position size calculation
@@ -59,7 +60,6 @@ extern int    TakeProfit                = 100;        // TP in point
 extern double TrailingStart             = 20;         // start trailing profit from as so many points.
 extern int    StopDistance.Points       = 0;          // pending entry order distance in point (0 = market order)
 extern int    Slippage.Points           = 3;          // acceptable market order slippage in point
-extern double Commission                = 0;          // commission per lot
 extern double MaxSpread                 = 30;         // max allowed spread in point
 extern int    Magic                     = -1;         // if negative the MagicNumber is generated
 
@@ -164,7 +164,6 @@ int onInit() {
    VolatilityMultiplier = VolatilityMultiplier / 10;
    ArrayInitialize ( Array_spread, 0 );
    VolatilityLimit = VolatilityLimit * Point;
-   Commission = NormalizeDouble(Commission * Point, Digits);
    TrailingStart = TrailingStart * Point;
    stopDistance  = StopDistance.Points * Point;
 
@@ -200,7 +199,7 @@ int onTick() {
 
 
 /**
- * pewa: Detect and track open/closed positions.
+ * Detect and track open/closed positions.
  *
  * @return bool - success status
  */
@@ -244,7 +243,7 @@ bool UpdateOrderStatus() {
 
 
 /**
- * pewa: Handle PositionOpen events.
+ * Handle PositionOpen events.
  *
  * @param  int i - ticket index of the opened position
  *
@@ -284,7 +283,7 @@ bool onPositionOpen(int i) {
 
 
 /**
- * pewa: Handle PositionClose events.
+ * Handle PositionClose events.
  *
  * @param  int i - ticket index of the closed position
  *
@@ -314,7 +313,7 @@ bool onPositionClose(int i) {
 
 
 /**
- * pewa: Handle OrderDelete events.
+ * Handle OrderDelete events.
  *
  * @param  int i - ticket index of the deleted order
  *
@@ -341,7 +340,7 @@ bool onOrderDelete(int i) {
 
 
 /**
- * pewa: Add a new order record.
+ * Add a new order record.
  *
  * @param  int      ticket
  * @param  int      pendingType
@@ -366,7 +365,7 @@ bool Orders.AddTicket(int ticket, int pendingType, double pendingPrice, int type
 
 
 /**
- * pewa: Update the order record of the specified ticket.
+ * Update the order record with the specified ticket.
  *
  * @param  int      ticket
  * @param  int      pendingType
@@ -390,7 +389,7 @@ bool Orders.UpdateTicket(int ticket, int pendingType, double pendingPrice, int t
 
 
 /**
- * pewa: Remove the order record with the specified ticket.
+ * Remove the order record with the specified ticket.
  *
  * @param  int ticket
  *
@@ -411,7 +410,7 @@ bool Orders.RemoveTicket(int ticket) {
 
 
 /**
- * Main trading subroutine
+ * Main trading routine
  */
 void Trade() {
    bool wasordermodified = false;
@@ -440,12 +439,8 @@ void Trade() {
    double envelopesdiff;
    double volatility;
    double spread;
-   double avgspread;
-   double realavgspread;
    double fakeprice;
    double sumofspreads;
-   double askpluscommission;
-   double bidminuscommission;
    double skipticks;
    double am = 0.000000001;  // Set variable to a very small number
    double marginlevel;
@@ -534,16 +529,11 @@ void Trade() {
       loopcount2 --;
    }
    if (!UpTo30Counter) return(catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
-   avgspread = sumofspreads / UpTo30Counter;
-
-   // Calculate price and spread considering commission
-   askpluscommission  = NormalizeDouble(Ask + Commission, Digits);
-   bidminuscommission = NormalizeDouble(Bid - Commission, Digits);
-   realavgspread      = avgspread + Commission;
+   double avgSpread = sumofspreads / UpTo30Counter;
 
    // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads multiplied with the VolatilityMulitplier constant
    if (UseDynamicVolatilityLimit)
-      VolatilityLimit = realavgspread * VolatilityMultiplier;
+      VolatilityLimit = avgSpread * VolatilityMultiplier;
 
    int tradeSignal = NULL;
 
@@ -589,9 +579,9 @@ void Trade() {
                // Modify the order if its TP is less than the price+commission+StopLevel AND the TrailingStart condition is satisfied
                ordertakeprofit = OrderTakeProfit();
 
-               if (ordertakeprofit < NormalizeDouble(askpluscommission + TakeProfit*Point, Digits) && askpluscommission + TakeProfit*Point - ordertakeprofit > TrailingStart) {
+               if (ordertakeprofit < NormalizeDouble(Ask + TakeProfit*Point, Digits) && Ask + TakeProfit*Point - ordertakeprofit > TrailingStart) {
                   orderstoploss   = NormalizeDouble(Bid - StopLoss*Point, Digits);
-                  ordertakeprofit = NormalizeDouble(askpluscommission + TakeProfit*Point, Digits);
+                  ordertakeprofit = NormalizeDouble(Ask + TakeProfit*Point, Digits);
 
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
                      if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(6)"));
@@ -603,9 +593,9 @@ void Trade() {
                // Modify the order if its TP is greater than price-commission-StopLevel AND the TrailingStart condition is satisfied
                ordertakeprofit = OrderTakeProfit();
 
-               if (ordertakeprofit > NormalizeDouble(bidminuscommission - TakeProfit*Point, Digits) && ordertakeprofit - bidminuscommission + TakeProfit*Point > TrailingStart) {
+               if (ordertakeprofit > NormalizeDouble(Bid - TakeProfit*Point, Digits) && ordertakeprofit - Bid + TakeProfit*Point > TrailingStart) {
                   orderstoploss   = NormalizeDouble(Ask + StopLoss*Point, Digits);
-                  ordertakeprofit = NormalizeDouble(bidminuscommission - TakeProfit*Point, Digits);
+                  ordertakeprofit = NormalizeDouble(Bid - TakeProfit*Point, Digits);
 
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
                      if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(7)"));
@@ -618,8 +608,8 @@ void Trade() {
                if (!isbidgreaterthanindy) {
                   // Calculate how much Price, SL and TP should be modified
                   orderprice      = NormalizeDouble(Ask + stopDistance, Digits);
-                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss * Point, Digits);
-                  ordertakeprofit = NormalizeDouble(orderprice + Commission + TakeProfit * Point, Digits);
+                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
+                  ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
                   // Start endless loop
                   while (true) {
                      // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
@@ -650,8 +640,8 @@ void Trade() {
             if (isbidgreaterthanindy) {
                // Calculate how much Price, SL and TP should be modified
                orderprice      = NormalizeDouble(Bid - stopDistance, Digits);
-               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss * Point, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice - Commission - TakeProfit * Point, Digits);
+               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
                // Endless loop
                while (true) {
                   // Ok to modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
@@ -681,7 +671,7 @@ void Trade() {
 
 
    // Open a new order if we have a signal and no open orders and average spread is less or equal to max allowed spread
-   if (tradeSignal && !isOpenOrder && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
+   if (tradeSignal && !isOpenOrder && NormalizeDouble(avgSpread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
       double lots = CalculateLots(true); if (!lots) return(last_error);
 
       if (tradeSignal == SIGNAL_LONG) {
@@ -718,10 +708,10 @@ void Trade() {
    if (IsChart()) {
       sStatusInfo = StringConcatenate("Volatility: ", DoubleToStr(volatility, Digits), "    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
                                       indy,                                                                                                                                                                                    NL,
-                                      "AvgSpread: ", DoubleToStr(avgspread, Digits), "    RealAvgSpread: ", DoubleToStr(realavgspread, Digits), "    Unitsize: ", sUnitSize,                                                   NL);
+                                      "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                                                                                              NL);
 
-      if (NormalizeDouble(realavgspread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
-         sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(realavgspread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
+      if (NormalizeDouble(avgSpread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
+         sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(avgSpread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
       }
    }
 
