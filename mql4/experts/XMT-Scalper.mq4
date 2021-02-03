@@ -31,10 +31,12 @@
  *  - fixed position size calculation
  *  - fixed trading errors
  *  - rewrote status display
- *
  *  - added input parameter to switch on/off the most significant Capella bug (for comparison)
- *  - renamed input parameter VolatilityLimit => MinBarSize
- *  - renamed input parameter ReverseTrades   => ReverseSignals
+ *
+ *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
+ *  - renamed input parameter VolatilityLimit           => MinBarSize
+ *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
+ *  - renamed input parameter ReverseTrades             => ReverseSignals
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -49,10 +51,10 @@ extern double BollingerBands.Deviation  = 2;          // standard deviations
 extern double Envelopes.Deviation       = 0.07;       // in percent
 extern bool   CapellaBug                = true;       // whether the major Capella bug in signal detection is enabled
 
-extern string ___b_____________________ = "==== Entry bar conditions ====";
-extern bool   UseDynamicVolatilityLimit = true;       // calculate MinBarSize = VolatilityMultiplier * avgSpread
-extern double VolatilityMultiplier      = 12.5;       // avgSpread multiplier
-extern double MinBarSize                = 18;         // fix min. bar size in pip
+extern string ___b_____________________ = "==== Entry bar size conditions ====";
+extern bool   UseSpreadMultiplier       = true;       // use spread multiplier or fix MinBarSize
+extern double SpreadMultiplier          = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
+extern double MinBarSize                = 18;         // MinBarSize = fix
 extern double VolatilityPercentLimit    = 0;          // min. percent the actual bar size must exceed MinBarSize
 
 extern string ___c_____________________ = "==== Trade settings ====";
@@ -455,8 +457,8 @@ void Trade() {
       n--;
    }
    double avgSpread = sumSpreads/tickCounter;
-   if (UseDynamicVolatilityLimit)
-      MinBarSize = avgSpread * VolatilityMultiplier;
+   if (UseSpreadMultiplier)
+      MinBarSize = avgSpread * SpreadMultiplier;
 
    // determine trade signals
    int oe[], tradeSignal = NULL;
