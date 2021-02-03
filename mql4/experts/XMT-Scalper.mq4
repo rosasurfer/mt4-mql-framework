@@ -114,10 +114,10 @@ string sStatusInfo = "\n\n\n";
 
 
 // --- old ------------------------------------------------------------
-int    UpTo30Counter = 0;        // for calculating average spread
-double Array_spread[30];         // store spreads for the last 30 ticks
-double highest;                  // lotSize indicator value
-double lowest;                   // lowest indicator value
+int    tickCounter = 0;          // for calculating average spread
+double spreads[30];              // store spreads for the last 30 ticks
+double channelHigh;
+double channelLow;
 
 
 /**
@@ -162,7 +162,7 @@ int onInit() {
    // Re-calculate variables
    VolatilityPercentageLimit = VolatilityPercentageLimit / 100 + 1;
    VolatilityMultiplier = VolatilityMultiplier / 10;
-   ArrayInitialize ( Array_spread, 0 );
+   ArrayInitialize(spreads, 0);
    VolatilityLimit = VolatilityLimit * Point;
    TrailingStart = TrailingStart * Point;
    stopDistance  = StopDistance.Points * Point;
@@ -413,227 +413,127 @@ bool Orders.RemoveTicket(int ticket) {
  * Main trading routine
  */
 void Trade() {
-   bool wasordermodified = false;
-   bool isbidgreaterthanima = false;
-   bool isbidgreaterthanibands = false;
-   bool isbidgreaterthanenvelopes = false;
-   bool isbidgreaterthanindy = false;
+   bool   isChart = IsChart();
+   string sIndicatorStatus = "";
 
-   int loopcount2;
-   int loopcount1;
-
-   double volatilitypercentage = 0;
-   double orderprice;
-   double orderstoploss;
-   double ordertakeprofit;
-   double ihigh;
-   double ilow;
-   double imalow = 0;
-   double imahigh = 0;
-   double imadiff;
-   double ibandsupper = 0;
-   double ibandslower = 0;
-   double ibandsdiff;
-   double envelopesupper = 0;
-   double envelopeslower = 0;
-   double envelopesdiff;
-   double volatility;
-   double spread;
-   double fakeprice;
-   double sumofspreads;
-   double skipticks;
-   double am = 0.000000001;  // Set variable to a very small number
-   double marginlevel;
-   int oe[];
-
-   // Calculate Margin level
-   if (AccountMargin() != 0)
-      am = AccountMargin();
-   if (!am) return(catch("Trade(1)  am = 0", ERR_ZERO_DIVIDE));
-   marginlevel = AccountEquity() / am * 100; // margin level in %
-
-   if (marginlevel < 100) {
-      Alert("Warning! Free Margin "+ DoubleToStr(marginlevel, 2) +" is lower than MinMarginLevel!");
-      return(catch("Trade(2)"));
-   }
-
-   // Calculate the channel of Volatility based on the difference of iHigh and iLow during current bar
-   ihigh = iHigh ( Symbol(), TimeFrame, 0 );
-   ilow = iLow ( Symbol(), TimeFrame, 0 );
-   volatility = ihigh - ilow;
-
-   // Reset printout string
-   string indy = "";
-
-   // Calculate a channel on Moving Averages, and check if the price is outside of this channel.
    if (EntryIndicator == 1) {
-      imalow = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_LOW, 0 );
-      imahigh = iMA ( Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0 );
-      imadiff = imahigh - imalow;
-      isbidgreaterthanima = Bid >= imalow + imadiff / 2.0;
-      indy = "iMA_low: " + DoubleToStr(imalow, Digits) + ", iMA_high: " + DoubleToStr(imahigh, Digits) + ", iMA_diff: " + DoubleToStr(imadiff, Digits);
+      double iH = iMA(Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0);
+      double iL = iMA(Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_LOW,  0);
+      double iM = (iH+iL)/2;
+      if (isChart) sIndicatorStatus = "MovingAverage chHigh: "+ DoubleToStr(iH, Digits) +", chLow: " + DoubleToStr(iL, Digits) +", chMid: "+ DoubleToStr(iM, Digits);
+   }
+   else if (EntryIndicator == 2) {
+      iH = iBands(Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_UPPER, 0);
+      iL = iBands(Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_LOWER, 0);
+      iM = (iH+iL)/2;
+      if (isChart) sIndicatorStatus = "BollingerBands chHigh: "+ DoubleToStr(iH, Digits) +", chLow: "+ DoubleToStr(iL, Digits) +", chMid: "+ DoubleToStr(iM, Digits);
+   }
+   else if (EntryIndicator == 3) {
+      iH = iEnvelopes(Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_UPPER, 0);
+      iL = iEnvelopes(Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_LOWER, 0);
+      iM = (iH+iL)/2;
+      if (isChart) sIndicatorStatus = "Envelopes chHigh: "+ DoubleToStr(iH, Digits) +", chLow: "+ DoubleToStr(iL, Digits) +", chMid: "+ DoubleToStr(iM, Digits);
    }
 
-   // Calculate a channel on BollingerBands, and check if the price is outside of this channel
-   if (EntryIndicator == 2) {
-      ibandsupper = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_UPPER, 0 );
-      ibandslower = iBands ( Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_LOWER, 0 );
-      ibandsdiff = ibandsupper - ibandslower;
-      isbidgreaterthanibands = Bid >= ibandslower + ibandsdiff / 2.0;
-      indy = "iBands_upper: " + DoubleToStr(ibandsupper, Digits) + ", iBands_lower: " + DoubleToStr(ibandslower, Digits) + ", iBands_diff: " + DoubleToStr(ibandsdiff, Digits);
-   }
-
-   // Calculate a channel on Envelopes, and check if the price is outside of this channel
-   if (EntryIndicator == 3) {
-      envelopesupper = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_UPPER, 0 );
-      envelopeslower = iEnvelopes ( Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_LOWER, 0 );
-      envelopesdiff = envelopesupper - envelopeslower;
-      isbidgreaterthanenvelopes = Bid >= envelopeslower + envelopesdiff / 2.0;
-      indy = "iEnvelopes_upper: " + DoubleToStr(envelopesupper, Digits) + ", iEnvelopes_lower: " + DoubleToStr(envelopeslower, Digits) + ", iEnvelopes_diff: " + DoubleToStr(envelopesdiff, Digits) ;
-   }
-
-   // Reset breakout variable as FALSE
-   isbidgreaterthanindy = false;
-
-   // If we're using iMA as indicator, then set variables from it
-   if (EntryIndicator==1 && isbidgreaterthanima) {
+   // Check if the price is outside of this channel
+   bool isbidgreaterthanindy = false;
+   if (Bid >= iM) {
       isbidgreaterthanindy = true;
-      highest = imahigh;
-      lowest = imalow;
+      channelHigh = iH;
+      channelLow  = iL;
    }
 
-   // If we're using iBands as indicator, then set variables from it
-   else if (EntryIndicator==2 && isbidgreaterthanibands) {
-      isbidgreaterthanindy = true;
-      highest = ibandsupper;
-      lowest = ibandslower;
+   // calculate the average spread of the last 30 ticks
+   double sumSpreads, spread = Ask - Bid;
+   ArrayCopy(spreads, spreads, 0, 1, 29);
+   spreads[29] = spread;
+   if (tickCounter < 30) tickCounter++;
+   for (int i, n=29; i < tickCounter; i++) {
+      sumSpreads += spreads[n];
+      n--;
    }
-
-   // If we're using iEnvelopes as indicator, then set variables from it
-   else if (EntryIndicator==3 && isbidgreaterthanenvelopes) {
-      isbidgreaterthanindy = true;
-      highest = envelopesupper;
-      lowest = envelopeslower;
-   }
-
-   spread = Ask - Bid;
-
-   // calculate average spread of the last 30 ticks
-   ArrayCopy(Array_spread, Array_spread, 0, 1, 29);
-   Array_spread[29] = spread;
-   if (UpTo30Counter < 30) UpTo30Counter++;
-   sumofspreads = 0;
-   loopcount2 = 29;
-   for (loopcount1=0; loopcount1 < UpTo30Counter; loopcount1++) {
-      sumofspreads += Array_spread[loopcount2];
-      loopcount2 --;
-   }
-   if (!UpTo30Counter) return(catch("Trade(3)  UpTo30Counter = 0", ERR_ZERO_DIVIDE));
-   double avgSpread = sumofspreads / UpTo30Counter;
-
-   // Recalculate the VolatilityLimit if it's set to dynamic. It's based on the average of spreads multiplied with the VolatilityMulitplier constant
+   double avgSpread = sumSpreads/tickCounter;
+   double currentBarSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
    if (UseDynamicVolatilityLimit)
       VolatilityLimit = avgSpread * VolatilityMultiplier;
 
-   int tradeSignal = NULL;
+   // determine trade signals
+   int oe[], tradeSignal = NULL;
+   double orderprice, orderstoploss, ordertakeprofit, volatilitypercentage;
 
-   // If the variables below have values it means that we have enough of data from broker server.
-   if (volatility && VolatilityLimit && lowest && highest) {
+   // If the variables below have values it means we have enough market data.
+   if (currentBarSize && VolatilityLimit && channelHigh && channelLow) {
       // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
-      if (volatility > VolatilityLimit) {
-         // Calculate how much it differs
-         if (!VolatilityLimit) return(catch("Trade(4)  VolatilityLimit = 0", ERR_ZERO_DIVIDE));
-         volatilitypercentage = volatility / VolatilityLimit;
+      if (currentBarSize > VolatilityLimit) {
+         volatilitypercentage = currentBarSize / VolatilityLimit;
 
          // check if it differ enough from the specified limit
          if (volatilitypercentage > VolatilityPercentageLimit) {
-            if      (Bid < lowest)  tradeSignal = SIGNAL_LONG;       // 1 = 0001
-            else if (Bid > highest) tradeSignal = SIGNAL_SHORT;      // 2 = 0010
-            if (tradeSignal && ReverseSignals) tradeSignal ^= 3;     // flip both bits: 3 = 0011
+            if      (Bid < channelLow)  tradeSignal = SIGNAL_LONG;      // 1 = 0001
+            else if (Bid > channelHigh) tradeSignal = SIGNAL_SHORT;     // 2 = 0010
+            if (tradeSignal && ReverseSignals) tradeSignal ^= 3;        // flip both bits: 3 = 0011
          }
       }
-      else {
-         // The Volatility is less than the VolatilityLimit so we set the volatilitypercentage to zero
-         volatilitypercentage = 0;
-      }
-   }
-
-   // Check for out of money
-   if (AccountEquity() <= 0) {
-      Alert("ERROR: AccountEquity = "+ DoubleToStr(AccountEquity(), 2));
-      return(catch("Trade(5)"));
    }
 
    bool isOpenOrder = false;
 
    // Loop through all open orders to either modify or to delete them
-   for (int i=0; i < OrdersTotal(); i++) {
+   for (i=0; i < OrdersTotal(); i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderMagicNumber()!=Magic || OrderSymbol()!=Symbol())
+         continue;
 
-      if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-         isOpenOrder = true;
-         RefreshRates();
+      isOpenOrder = true;
+      RefreshRates();
 
-         switch (OrderType()) {
-            case OP_BUY:
-               // Modify the order if its TP is less than the price+commission+StopLevel AND the TrailingStart condition is satisfied
-               ordertakeprofit = OrderTakeProfit();
+      switch (OrderType()) {
+         case OP_BUY:
+            if (LT(OrderTakeProfit(), Ask+TakeProfit*Point) && Ask+TakeProfit*Point - OrderTakeProfit() > TrailingStart) {
+               orderstoploss   = NormalizeDouble(Bid - StopLoss*Point, Digits);
+               ordertakeprofit = NormalizeDouble(Ask + TakeProfit*Point, Digits);
 
-               if (ordertakeprofit < NormalizeDouble(Ask + TakeProfit*Point, Digits) && Ask + TakeProfit*Point - ordertakeprofit > TrailingStart) {
-                  orderstoploss   = NormalizeDouble(Bid - StopLoss*Point, Digits);
-                  ordertakeprofit = NormalizeDouble(Ask + TakeProfit*Point, Digits);
+               if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(1)"));
+               }
+            }
+            break;
 
+         case OP_SELL:
+            if (GT(OrderTakeProfit(), Bid-TakeProfit*Point) && OrderTakeProfit() - Bid + TakeProfit*Point > TrailingStart) {
+               orderstoploss   = NormalizeDouble(Ask + StopLoss*Point, Digits);
+               ordertakeprofit = NormalizeDouble(Bid - TakeProfit*Point, Digits);
+
+               if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(2)"));
+               }
+            }
+            break;
+
+         case OP_BUYSTOP:
+            // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
+            if (!isbidgreaterthanindy) {
+               // Calculate how much Price, SL and TP should be modified
+               orderprice      = NormalizeDouble(Ask + stopDistance, Digits);
+               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
+               ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
+
+               // Ok to modify the order if price is less than orderprice AND orderprice-price is greater than trailingstart
+               if (orderprice < OrderOpenPrice() && OrderOpenPrice()-orderprice > TrailingStart) {
+
+                  // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(6)"));
+                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(3)"));
+                     Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
                   }
                }
-               break;
-
-            case OP_SELL:
-               // Modify the order if its TP is greater than price-commission-StopLevel AND the TrailingStart condition is satisfied
-               ordertakeprofit = OrderTakeProfit();
-
-               if (ordertakeprofit > NormalizeDouble(Bid - TakeProfit*Point, Digits) && ordertakeprofit - Bid + TakeProfit*Point > TrailingStart) {
-                  orderstoploss   = NormalizeDouble(Ask + StopLoss*Point, Digits);
-                  ordertakeprofit = NormalizeDouble(Bid - TakeProfit*Point, Digits);
-
-                  if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(7)"));
-                  }
-               }
-               break;
-
-            case OP_BUYSTOP:
-               // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
-               if (!isbidgreaterthanindy) {
-                  // Calculate how much Price, SL and TP should be modified
-                  orderprice      = NormalizeDouble(Ask + stopDistance, Digits);
-                  orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
-                  ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
-                  // Start endless loop
-                  while (true) {
-                     // Ok to modify the order if price+StopLevel is less than orderprice AND orderprice-price-StopLevel is greater than trailingstart
-                     if ( orderprice < OrderOpenPrice() && OrderOpenPrice() - orderprice > TrailingStart )
-                     {
-
-                        // Send an OrderModify command with adjusted Price, SL and TP
-                        if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                           if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(8)"));
-                           wasordermodified = true;
-                        }
-                        if (wasordermodified) {
-                           Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
-                        }
-                     }
-                     break;
-                  }
-               }
-               else {
-                  if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(9)"));
-                  Orders.RemoveTicket(OrderTicket());
-                  isOpenOrder = false;
-               }
-               break;
+            }
+            else {
+               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(4)"));
+               Orders.RemoveTicket(OrderTicket());
+               isOpenOrder = false;
+            }
+            break;
 
          case OP_SELLSTOP:
             // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
@@ -642,30 +542,23 @@ void Trade() {
                orderprice      = NormalizeDouble(Bid - stopDistance, Digits);
                orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
-               // Endless loop
-               while (true) {
-                  // Ok to modify order if price-StopLevel is greater than orderprice AND price-StopLevel-orderprice is greater than trailingstart
-                  if ( orderprice > OrderOpenPrice() && orderprice - OrderOpenPrice() > TrailingStart)
-                  {
-                     // Send an OrderModify command with adjusted Price, SL and TP
-                     if (orderstoploss!=OrderStopLoss() && ordertakeprofit!=OrderTakeProfit()) {
-                        if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(10)"));
-                        wasordermodified = true;
-                     }
-                     if (wasordermodified) {
-                        Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
-                     }
+
+               // Ok to modify order if price is greater than orderprice AND price-orderprice is greater than trailingstart
+               if (orderprice > OrderOpenPrice() && orderprice-OrderOpenPrice() > TrailingStart) {
+
+                  // Send an OrderModify command with adjusted Price, SL and TP
+                  if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(5)"));
+                     Orders.UpdateTicket(OrderTicket(), OrderType(), orderprice, OP_UNDEFINED, OrderCloseTime());
                   }
-                  break;
                }
             }
             else {
-               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(11)"));
+               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(6)"));
                Orders.RemoveTicket(OrderTicket());
                isOpenOrder = false;
             }
             break;
-         }
       }
    }
 
@@ -680,11 +573,11 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(12)"));
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(7)"));
             Orders.AddTicket(oe.Ticket(oe), OP_BUYSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(13)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(8)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
@@ -694,28 +587,27 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(14)"));
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(9)"));
             Orders.AddTicket(oe.Ticket(oe), OP_SELLSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(15)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(10)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_SELL, NULL);
          }
       }
    }
 
    // compose chart status messages
-   if (IsChart()) {
-      sStatusInfo = StringConcatenate("Volatility: ", DoubleToStr(volatility, Digits), "    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
-                                      indy,                                                                                                                                                                                    NL,
-                                      "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                                                                                              NL);
+   if (isChart) {
+      sStatusInfo = StringConcatenate("CurrentBar: ", DoubleToStr(currentBarSize/Pip, 1), " pip    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
+                                      sIndicatorStatus,                                                                                                                                                                               NL,
+                                      "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                                                                                                     NL);
 
       if (NormalizeDouble(avgSpread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
          sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(avgSpread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
       }
    }
-
-   return(catch("Trade(16)"));
+   return(catch("Trade(11)"));
 }
 
 
