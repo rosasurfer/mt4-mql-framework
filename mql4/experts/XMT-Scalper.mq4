@@ -42,15 +42,16 @@ int __DeinitFlags[];
 
 extern string ___a_____________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator            = 1;          // entry signal indicator for price channel calculation
-extern int    Indicatorperiod           = 3;          // period in bars for indicator
-extern double BBDeviation               = 2;          // deviation for the iBands indicator
-extern double EnvelopesDeviation        = 0.07;       // deviation for the iEnvelopes indicator
+extern int    IndicatorPeriods          = 3;          // entry indicator bar periods
+extern double BollingerBands.Deviation  = 2;          // standard deviations
+extern double Envelopes.Deviation       = 0.07;       // in percent
+extern bool   CapellaBug                = true;       // whether the major Capella bug in signal detection is enabled
 
 extern string ___b_____________________ = "==== Entry bar conditions ====";
-extern bool   UseDynamicVolatilityLimit = true;       // calculated based on (int)(spread * VolatilityMultiplier)
-extern double VolatilityMultiplier      = 125;        // a multiplier that is used if UseDynamicVolatilityLimit is TRUE
-extern double VolatilityLimit           = 180;        // a fix value that is used if UseDynamicVolatilityLimit is FALSE
-extern double VolatilityPercentageLimit = 0;          // percentage of how much iHigh-iLow difference must differ from VolatilityLimit
+extern bool   UseDynamicVolatilityLimit = true;       // calculate MinBarSize = VolatilityMultiplier * avgSpread
+extern double VolatilityMultiplier      = 12.5;       // avgSpread multiplier
+extern double VolatilityLimit           = 180;        // fix min. bar size in point
+extern double VolatilityPercentageLimit = 0;          // min. percent the actual bar size must exceed MinBarSize
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
@@ -60,8 +61,8 @@ extern int    TakeProfit                = 100;        // TP in point
 extern double TrailingStart             = 20;         // start trailing profit from as so many points.
 extern int    StopDistance.Points       = 0;          // pending entry order distance in point (0 = market order)
 extern int    Slippage.Points           = 3;          // acceptable market order slippage in point
-extern double MaxSpread                 = 30;         // max allowed spread in point
-extern int    Magic                     = -1;         // if negative the MagicNumber is generated
+extern double MaxSpread                 = 30;         // max. accepted spread in point
+extern int    Magic                     = 0;          // if zero the MagicNumber is generated
 
 extern string ___d_____________________ = "==== MoneyManagement ====";
 extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
@@ -161,13 +162,12 @@ int onInit() {
 
    // Re-calculate variables
    VolatilityPercentageLimit = VolatilityPercentageLimit / 100 + 1;
-   VolatilityMultiplier = VolatilityMultiplier / 10;
    ArrayInitialize(spreads, 0);
    VolatilityLimit = VolatilityLimit * Point;
    TrailingStart = TrailingStart * Point;
    stopDistance  = StopDistance.Points * Point;
 
-   if (Magic < 0) Magic = CreateMagicNumber();
+   if (!Magic) Magic = CreateMagicNumber();
 
    UpdateTradeStats();
    return(catch("onInit(11)"));
@@ -413,37 +413,37 @@ bool Orders.RemoveTicket(int ticket) {
  * Main trading routine
  */
 void Trade() {
-   bool   isChart = IsChart();
+   bool isChart = IsChart();
    string sIndicatorStatus = "";
 
+   // collect entry signal indications
    if (EntryIndicator == 1) {
-      double iH = iMA(Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_HIGH, 0);
-      double iL = iMA(Symbol(), TimeFrame, Indicatorperiod, 0, MODE_LWMA, PRICE_LOW,  0);
+      double iH = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
+      double iL = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
       double iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "MovingAverage chHigh: "+ DoubleToStr(iH, Digits) +", chLow: " + DoubleToStr(iL, Digits) +", chMid: "+ DoubleToStr(iM, Digits);
+      if (isChart) sIndicatorStatus = "MovingAverage channel:  H="+ DoubleToStr(iH, Digits) +"  M="+ DoubleToStr(iM, Digits) +"  L=" + DoubleToStr(iL, Digits);
    }
    else if (EntryIndicator == 2) {
-      iH = iBands(Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_UPPER, 0);
-      iL = iBands(Symbol(), TimeFrame, Indicatorperiod, BBDeviation, 0, PRICE_OPEN, MODE_LOWER, 0);
+      iH = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
+      iL = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "BollingerBands chHigh: "+ DoubleToStr(iH, Digits) +", chLow: "+ DoubleToStr(iL, Digits) +", chMid: "+ DoubleToStr(iM, Digits);
+      if (isChart) sIndicatorStatus = "BollingerBands channel:  H="+ DoubleToStr(iH, Digits) +"  M="+ DoubleToStr(iM, Digits) +"  L="+ DoubleToStr(iL, Digits);
    }
    else if (EntryIndicator == 3) {
-      iH = iEnvelopes(Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_UPPER, 0);
-      iL = iEnvelopes(Symbol(), TimeFrame, Indicatorperiod, MODE_LWMA, 0, PRICE_OPEN, EnvelopesDeviation, MODE_LOWER, 0);
+      iH = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
+      iL = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "Envelopes chHigh: "+ DoubleToStr(iH, Digits) +", chLow: "+ DoubleToStr(iL, Digits) +", chMid: "+ DoubleToStr(iM, Digits);
+      if (isChart) sIndicatorStatus = "Envelopes channel:  H="+ DoubleToStr(iH, Digits) +"  M="+ DoubleToStr(iM, Digits) +"  L="+ DoubleToStr(iL, Digits);
    }
+   bool isBidAboveMidChannel=(Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;
 
-   // Check if the price is outside of this channel
-   bool isbidgreaterthanindy = false;
-   if (Bid >= iM) {
-      isbidgreaterthanindy = true;
+   // Significant error introduced in all Capella versions: channelHigh/Low aren't updated on each tick (affects results dramatically)
+   if (!CapellaBug || isBidAboveMidChannel) {
       channelHigh = iH;
       channelLow  = iL;
    }
 
-   // calculate the average spread of the last 30 ticks
+   // calculate average spread
    double sumSpreads, spread = Ask - Bid;
    ArrayCopy(spreads, spreads, 0, 1, 29);
    spreads[29] = spread;
@@ -453,7 +453,6 @@ void Trade() {
       n--;
    }
    double avgSpread = sumSpreads/tickCounter;
-   double currentBarSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
    if (UseDynamicVolatilityLimit)
       VolatilityLimit = avgSpread * VolatilityMultiplier;
 
@@ -461,18 +460,17 @@ void Trade() {
    int oe[], tradeSignal = NULL;
    double orderprice, orderstoploss, ordertakeprofit, volatilitypercentage;
 
-   // If the variables below have values it means we have enough market data.
-   if (currentBarSize && VolatilityLimit && channelHigh && channelLow) {
-      // We have a price breakout, as the Volatility is outside of the VolatilityLimit, so we can now open a trade
-      if (currentBarSize > VolatilityLimit) {
-         volatilitypercentage = currentBarSize / VolatilityLimit;
+   double barSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
 
-         // check if it differ enough from the specified limit
-         if (volatilitypercentage > VolatilityPercentageLimit) {
-            if      (Bid < channelLow)  tradeSignal = SIGNAL_LONG;      // 1 = 0001
-            else if (Bid > channelHigh) tradeSignal = SIGNAL_SHORT;     // 2 = 0010
-            if (tradeSignal && ReverseSignals) tradeSignal ^= 3;        // flip both bits: 3 = 0011
-         }
+   // If the variables below have values it means we have enough market data.
+   if (VolatilityLimit && channelHigh) {
+      // We have a price breakout, as the bar size is greater than MinBarSize
+      volatilitypercentage = barSize / VolatilityLimit;
+
+      if (volatilitypercentage > VolatilityPercentageLimit) {
+         if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
+         else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
+         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
       }
    }
 
@@ -512,7 +510,7 @@ void Trade() {
 
          case OP_BUYSTOP:
             // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
-            if (!isbidgreaterthanindy) {
+            if (isBidBelowMidChannel) {
                // Calculate how much Price, SL and TP should be modified
                orderprice      = NormalizeDouble(Ask + stopDistance, Digits);
                orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
@@ -537,7 +535,7 @@ void Trade() {
 
          case OP_SELLSTOP:
             // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
-            if (isbidgreaterthanindy) {
+            if (isBidAboveMidChannel) {
                // Calculate how much Price, SL and TP should be modified
                orderprice      = NormalizeDouble(Bid - stopDistance, Digits);
                orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
@@ -581,7 +579,7 @@ void Trade() {
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
-      if (tradeSignal == SIGNAL_SHORT) {
+      else if (tradeSignal == SIGNAL_SHORT) {
          orderprice      = Bid - stopDistance;
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
@@ -599,7 +597,7 @@ void Trade() {
 
    // compose chart status messages
    if (isChart) {
-      sStatusInfo = StringConcatenate("CurrentBar: ", DoubleToStr(currentBarSize/Pip, 1), " pip    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
+      sStatusInfo = StringConcatenate("CurrentBar: ", DoubleToStr(barSize/Pip, 1), " pip    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
                                       sIndicatorStatus,                                                                                                                                                                               NL,
                                       "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                                                                                                     NL);
 
