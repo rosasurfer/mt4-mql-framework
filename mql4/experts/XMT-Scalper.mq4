@@ -31,7 +31,7 @@
  *  - fixed position size calculation
  *  - fixed trading errors
  *  - rewrote status display
- *  - added input parameter to switch on/off the most significant Capella bug (for comparison)
+ *  - added input parameter to switch on/off the Capella bug (for comparison)
  *
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
@@ -54,8 +54,7 @@ extern bool   CapellaBug                = true;       // whether the major Capel
 extern string ___b_____________________ = "==== Entry bar size conditions ====";
 extern bool   UseSpreadMultiplier       = true;       // use spread multiplier or fix MinBarSize
 extern double SpreadMultiplier          = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
-extern double MinBarSize                = 18;         // MinBarSize = fix
-extern double VolatilityPercentLimit    = 0;          // min. percent the actual bar size must exceed MinBarSize
+extern double MinBarSize                = 18;         // MinBarSize = fix in pip
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
@@ -165,7 +164,6 @@ int onInit() {
       EntryIndicator = 1;
 
    // Re-calculate variables
-   VolatilityPercentLimit = VolatilityPercentLimit / 100 + 1;
    ArrayInitialize(spreads, 0);
    MinBarSize    *= Pip;
    TrailingStart *= Point;
@@ -425,23 +423,25 @@ void Trade() {
       double iH = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       double iL = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
       double iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "MovingAverage channel:  H="+ DoubleToStr(iH, Digits) +"  M="+ DoubleToStr(iM, Digits) +"  L=" + DoubleToStr(iL, Digits);
+      if (isChart) sIndicatorStatus = "MovingAverage channel:   H="+ NumberToStr(iH, PriceFormat) +"   M="+ NumberToStr(iM, PriceFormat) +"   L=" + NumberToStr(iL, PriceFormat);
    }
    else if (EntryIndicator == 2) {
       iH = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
       iL = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "BollingerBands channel:  H="+ DoubleToStr(iH, Digits) +"  M="+ DoubleToStr(iM, Digits) +"  L="+ DoubleToStr(iL, Digits);
+      if (isChart) sIndicatorStatus = "BollingerBands channel:   H="+ NumberToStr(iH, PriceFormat) +"   M="+ NumberToStr(iM, PriceFormat) +"   L=" + NumberToStr(iL, PriceFormat);
    }
    else if (EntryIndicator == 3) {
       iH = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
       iL = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "Envelopes channel:  H="+ DoubleToStr(iH, Digits) +"  M="+ DoubleToStr(iM, Digits) +"  L="+ DoubleToStr(iL, Digits);
+      if (isChart) sIndicatorStatus = "Envelopes channel:   H="+ NumberToStr(iH, PriceFormat) +"   M="+ NumberToStr(iM, PriceFormat) +"   L=" + NumberToStr(iL, PriceFormat);
    }
-   bool isBidAboveMidChannel=(Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;
 
-   // Significant error introduced in all Capella versions: channelHigh/Low aren't updated on each tick (affects results dramatically)
+   // always enabling isBidAboveMidChannel improves results significantly
+   bool isBidAboveMidChannel=(0 || Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;
+
+   // major error introduced in all Capella versions: channelHigh/Low aren't updated on each tick
    if (!CapellaBug || isBidAboveMidChannel) {
       channelHigh = iH;
       channelLow  = iL;
@@ -462,16 +462,11 @@ void Trade() {
 
    // determine trade signals
    int oe[], tradeSignal = NULL;
-   double orderprice, orderstoploss, ordertakeprofit, volatilityPercent;
-
-   double barSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
+   double barSize=iHigh(Symbol(), TimeFrame, 0)-iLow(Symbol(), TimeFrame, 0), orderprice, orderstoploss, ordertakeprofit;
 
    // If the variables below have values it means we have enough market data.
    if (MinBarSize && channelHigh) {
-      // We have a price breakout, as the bar size is greater than MinBarSize
-      volatilityPercent = barSize / MinBarSize;
-
-      if (volatilityPercent > VolatilityPercentLimit) {
+      if (barSize > MinBarSize) {                                          // TODO: should be greater-or-equal
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
          else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
          if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
@@ -601,9 +596,9 @@ void Trade() {
 
    // compose chart status messages
    if (isChart) {
-      sStatusInfo = StringConcatenate("Bar size: ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(MinBarSize/Pip, 2), " pip   VolatilityPercent: ", DoubleToStr(volatilityPercent, Digits), NL,
-                                      sIndicatorStatus,                                                                                                                                                                               NL,
-                                      "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                                                                                                     NL);
+      sStatusInfo = StringConcatenate("BarSize: ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
+                                      sIndicatorStatus,                                                                                                        NL,
+                                      "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                              NL);
 
       if (NormalizeDouble(avgSpread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
          sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(avgSpread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
