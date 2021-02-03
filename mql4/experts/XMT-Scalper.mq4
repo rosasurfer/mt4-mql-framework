@@ -4,10 +4,10 @@
  *
  * This EA is originally based on the famous "MillionDollarPips EA". A member of the "www.worldwide-invest.org" forum known
  * as Capella transformed it to "XMT-Scalper". In his own words: "Nothing remains from the original except the core idea of
- * the strategy: scalping based on a reversal from a channel breakout." Today various versions circulate in the internet
- * going by different names (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a very high price
- * feed sensitivity (especially the number of received ticks) and the unaccounted effects of slippage/commission. Moreover
- * test behavior differs from online behavior to such a large degree that testing is meaningless in general.
+ * the strategy: scalping based on a reversal from a channel breakout." Today various versions with different names circulate
+ * in the internet (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a high price feed sensitivity
+ * (especially the number of received ticks) and the unaccounted effects of slippage/commission. Moreover test behavior
+ * differs from online behavior to such a large degree that test results are unusable.
  *
  * This version is a complete rewrite.
  *
@@ -76,6 +76,9 @@ extern double ManualLotsize             = 0.1;        // fix position size to us
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+#define SIGNAL_LONG     1
+#define SIGNAL_SHORT    2
+
 
 // order tracking
 int      tickets      [];
@@ -107,7 +110,8 @@ string orderComment = "XMT-rsf";
 
 // cache vars to speed-up ShowStatus()
 string sUnitSize   = "";
-string sStatusInfo = "\n\n\n\n";
+string sStatusInfo = "\n\n\n";
+
 
 // --- old ------------------------------------------------------------
 int    UpTo30Counter = 0;        // for calculating average spread
@@ -168,6 +172,16 @@ int onInit() {
 
    UpdateTradeStats();
    return(catch("onInit(11)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -531,8 +545,7 @@ void Trade() {
    if (UseDynamicVolatilityLimit)
       VolatilityLimit = realavgspread * VolatilityMultiplier;
 
-   // Reset pricedirection for no indication of trading direction
-   int pricedirection = 0;
+   int tradeSignal = NULL;
 
    // If the variables below have values it means that we have enough of data from broker server.
    if (volatility && VolatilityLimit && lowest && highest) {
@@ -544,12 +557,9 @@ void Trade() {
 
          // check if it differ enough from the specified limit
          if (volatilitypercentage > VolatilityPercentageLimit) {
-            if (Bid < lowest) {
-               pricedirection = ifInt(ReverseSignals, 1, -1);   // -1=Long, 1=Short
-            }
-            else if (Bid > highest) {
-               pricedirection = ifInt(ReverseSignals, -1, 1);   // -1=Long, 1=Short
-            }
+            if      (Bid < lowest)  tradeSignal = SIGNAL_LONG;       // 1 = 0001
+            else if (Bid > highest) tradeSignal = SIGNAL_SHORT;      // 2 = 0010
+            if (tradeSignal && ReverseSignals) tradeSignal ^= 3;     // flip both bits: 3 = 0011
          }
       }
       else {
@@ -670,35 +680,35 @@ void Trade() {
    }
 
 
-   // Open a new order if we have no open orders AND a price breakout AND average spread is less or equal to max allowed spread
-   if (!isOpenOrder && pricedirection && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
+   // Open a new order if we have a signal and no open orders and average spread is less or equal to max allowed spread
+   if (tradeSignal && !isOpenOrder && NormalizeDouble(realavgspread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
       double lots = CalculateLots(true); if (!lots) return(last_error);
 
-      if (pricedirection == -1) {
+      if (tradeSignal == SIGNAL_LONG) {
          orderprice      = Ask + stopDistance;
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(12)"));
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(12)"));
             Orders.AddTicket(oe.Ticket(oe), OP_BUYSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Lime, NULL, oe)) return(catch("Trade(13)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(13)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
-      if (pricedirection == 1) {
+      if (tradeSignal == SIGNAL_SHORT) {
          orderprice      = Bid - stopDistance;
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (GT(stopDistance, 0) || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(14)"));
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(14)"));
             Orders.AddTicket(oe.Ticket(oe), OP_SELLSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Orange, NULL, oe)) return(catch("Trade(15)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(15)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_SELL, NULL);
          }
       }
@@ -707,7 +717,6 @@ void Trade() {
    // compose chart status messages
    if (IsChart()) {
       sStatusInfo = StringConcatenate("Volatility: ", DoubleToStr(volatility, Digits), "    VolatilityLimit: ", DoubleToStr(VolatilityLimit, Digits), "    VolatilityPercentage: ", DoubleToStr(volatilitypercentage, Digits), NL,
-                                      "PriceDirection: ", StringSubstr("BUY NULLSELLBOTH", 4*pricedirection + 4, 4),                                                                                                           NL,
                                       indy,                                                                                                                                                                                    NL,
                                       "AvgSpread: ", DoubleToStr(avgspread, Digits), "    RealAvgSpread: ", DoubleToStr(realavgspread, Digits), "    Unitsize: ", sUnitSize,                                                   NL);
 
@@ -800,9 +809,11 @@ void UpdateTradeStats() {
    int orders = OrdersTotal();
    for (int pos=0; pos < orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderType() > OP_SELL) continue;
+
          if (isTesting) {
             openPositions++;
-            openLots       += OrderLots();
+            openLots       += ifDouble(OrderType()==OP_BUY, OrderLots(), -OrderLots());
             openSwap       += OrderSwap();
             openCommission += OrderCommission();
             openPl         += OrderProfit();
@@ -827,6 +838,8 @@ void UpdateTradeStats() {
    orders = OrdersHistoryTotal();
    for (pos=0; pos < orders; pos++) {
       if (OrderSelect(pos, SELECT_BY_POS, MODE_HISTORY)) {
+         if (OrderType() > OP_SELL) continue;
+
          if (isTesting) {
             closedPositions++;
             closedLots       += OrderLots();
