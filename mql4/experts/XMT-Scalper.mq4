@@ -45,7 +45,6 @@ extern int    EntryIndicator            = 1;          // entry signal indicator 
 extern int    Indicatorperiod           = 3;          // period in bars for indicator
 extern double BBDeviation               = 2;          // deviation for the iBands indicator
 extern double EnvelopesDeviation        = 0.07;       // deviation for the iEnvelopes indicator
-extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
 
 extern string ___b_____________________ = "==== Entry bar conditions ====";
 extern bool   UseDynamicVolatilityLimit = true;       // calculated based on (int)(spread * VolatilityMultiplier)
@@ -54,6 +53,7 @@ extern double VolatilityLimit           = 180;        // a fix value that is use
 extern double VolatilityPercentageLimit = 0;          // percentage of how much iHigh-iLow difference must differ from VolatilityLimit
 
 extern string ___c_____________________ = "==== Trade settings ====";
+extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
 extern int    StopLoss                  = 60;         // SL in point
 extern int    TakeProfit                = 100;        // TP in point
