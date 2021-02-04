@@ -2,12 +2,12 @@
  * XMT-Scalper revisited
  *
  *
- * This EA is originally based on the famous "MillionDollarPips EA". A member of the "www.worldwide-invest.org" forum known
- * as Capella transformed it to "XMT-Scalper". In his own words: "Nothing remains from the original except the core idea of
- * the strategy: scalping based on a reversal from a channel breakout." Today various versions with different names circulate
- * in the internet (MDP-Plus, XMT, Assar). None is suitable for real trading. Main reasons are a high price feed sensitivity
- * (especially the number of received ticks) and the unaccounted effects of slippage/commission. Moreover test behavior
- * differs from online behavior to such a large degree that test results are unusable.
+ * This EA is originally based on the famous "MillionDollarPips EA". A member of the "www.worldwide-invest.org" forum
+ * transformed it to "XMT-Scalper" stating "Nothing remains from the original except the core idea of the strategy: scalping
+ * based on a reversal from a channel breakout." In fact the EA's strategy is simply counter-trend trading and there is no
+ * reversal monitoring at all. Today various versions with different names circulate in the internet (MDP-Plus, XMT, Assar).
+ * None is suitable for real trading. Main reasons are the high impact of the spread on signal detection and the unaccounted
+ * effects of slippage/commission in general.
  *
  * This version is a complete rewrite.
  *
@@ -31,7 +31,6 @@
  *  - fixed position size calculation
  *  - fixed trading errors
  *  - rewrote status display
- *  - added input parameter to switch on/off the Capella bug (for comparison)
  *
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
@@ -49,7 +48,7 @@ extern int    EntryIndicator            = 1;          // entry signal indicator 
 extern int    IndicatorPeriods          = 3;          // entry indicator bar periods
 extern double BollingerBands.Deviation  = 2;          // standard deviations
 extern double Envelopes.Deviation       = 0.07;       // in percent
-extern bool   CapellaBug                = true;       // whether the major Capella bug in signal detection is enabled
+extern bool   CapellaBug                = true;       // whether the most major Capella bug in signal detection is enabled
 
 extern string ___b_____________________ = "==== Entry bar size conditions ====";
 extern bool   UseSpreadMultiplier       = true;       // use spread multiplier or fix MinBarSize
