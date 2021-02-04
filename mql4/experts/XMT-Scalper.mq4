@@ -2,12 +2,10 @@
  * XMT-Scalper revisited
  *
  *
- * This EA is originally based on the famous "MillionDollarPips EA". A member of the "www.worldwide-invest.org" forum
- * transformed it to "XMT-Scalper" stating "Nothing remains from the original except the core idea of the strategy: scalping
- * based on a reversal from a channel breakout." In fact the EA's strategy is simply counter-trend trading and there is no
- * reversal monitoring at all. Today various versions with different names circulate in the internet (MDP-Plus, XMT, Assar).
- * None is suitable for real trading. Main reasons are the high impact of the spread on signal detection and the unaccounted
- * effects of slippage/commission in general.
+ * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
+ * reversal from a channel breakout. Over the years it has gone through multiple transformations. Today various versions with
+ * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). None of them seems to be suitable for real
+ * trading out-of-the-box, mainly due to the vast amount of code bugs.
  *
  * This version is a complete rewrite.
  *
@@ -35,6 +33,7 @@
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
+ *  - renamed input parameter MinimumUseStopLevel       => PriceReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
  */
 #include <stddefines.mqh>
@@ -56,15 +55,15 @@ extern double SpreadMultiplier          = 12.5;       // MinBarSize = SpreadMult
 extern double MinBarSize                = 18;         // MinBarSize = fix in pip
 
 extern string ___c_____________________ = "==== Trade settings ====";
-extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
+extern int    PriceReversal             = 0;          // required price reversal in point (0: counter-trend trading without reversal)
 extern int    StopLoss                  = 60;         // SL in point
 extern int    TakeProfit                = 100;        // TP in point
-extern double TrailingStart             = 20;         // start trailing profit from as so many points.
-extern int    StopDistance.Points       = 0;          // pending entry order distance in point (0 = market order)
-extern int    Slippage.Points           = 3;          // acceptable market order slippage in point
-extern double MaxSpread                 = 30;         // max. accepted spread in point
+extern double TrailingStart             = 20;         // start trailing profit from as so many points
+extern int    Slippage                  = 3;          // acceptable market order slippage in point
+extern int    MaxSpread                 = 30;         // max. acceptable spread in point
 extern int    Magic                     = 0;          // if zero the MagicNumber is generated
+extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
 
 extern string ___d_____________________ = "==== MoneyManagement ====";
 extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
@@ -91,34 +90,33 @@ int      types        [];
 datetime closeTimes   [];
 
 // trade statistics
-int    openPositions;            // number of open positions
-double openLots;                 // total open lotsize
-double openSwap;                 // total open swap
-double openCommission;           // total open commissions
-double openPl;                   // total open gross profit
-double openPlNet;                // total open net profit
+int      openPositions;             // number of open positions
+double   openLots;                  // total open lotsize
+double   openSwap;                  // total open swap
+double   openCommission;            // total open commissions
+double   openPl;                    // total open gross profit
+double   openPlNet;                 // total open net profit
 
-int    closedPositions;          // number of closed positions
-double closedLots;               // total closed lotsize
-double closedSwap;               // total closed swap
-double closedCommission;         // total closed commission
-double closedPl;                 // total closed gross profit
-double closedPlNet;              // total closed net profit
+int      closedPositions;           // number of closed positions
+double   closedLots;                // total closed lotsize
+double   closedSwap;                // total closed swap
+double   closedCommission;          // total closed commission
+double   closedPl;                  // total closed gross profit
+double   closedPlNet;               // total closed net profit
 
-double totalPlNet;               // openPlNet + closedPlNet
+double   totalPlNet;                // openPlNet + closedPlNet
 
 // other
-double stopDistance;             // entry order stop distance in quote currency
-string orderComment = "XMT-rsf";
+string   orderComment = "XMT-rsf";
 
 // cache vars to speed-up ShowStatus()
-string sUnitSize   = "";
-string sStatusInfo = "\n\n\n";
+string   sUnitSize   = "";
+string   sStatusInfo = "\n\n\n";
 
 
 // --- old ------------------------------------------------------------
-int    tickCounter = 0;          // for calculating average spread
-double spreads[30];              // store spreads for the last 30 ticks
+int    tickCounter = 0;             // for calculating average spread
+double spreads[30];                 // store spreads for the last 30 ticks
 double channelHigh;
 double channelLow;
 
@@ -130,24 +128,24 @@ double channelLow;
  */
 int onInit() {
    // validate inputs
+   // PriceReversal
+   if (LT(PriceReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))      return(!catch("onInit(1)  invalid input parameter PriceReversal: "+ PriceReversal +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // StopLoss
-   if (!StopLoss)                                                     return(!catch("onInit(1)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))            return(!catch("onInit(2)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StopLoss)                                                    return(!catch("onInit(2)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))           return(!catch("onInit(3)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // TakeProfit
-   if (LT(TakeProfit, MarketInfo(Symbol(), MODE_STOPLEVEL)))          return(!catch("onInit(3)  invalid input parameter TakeProfit: "+ TakeProfit +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
-   // StopDistance
-   if (LT(StopDistance.Points, MarketInfo(Symbol(), MODE_STOPLEVEL))) return(!catch("onInit(4)  invalid input parameter StopDistance.Points: "+ StopDistance.Points +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(TakeProfit, MarketInfo(Symbol(), MODE_STOPLEVEL)))         return(!catch("onInit(4)  invalid input parameter TakeProfit: "+ TakeProfit +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                                return(!catch("onInit(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-      double lotsPerTrade = CalculateLots(false); if (IsLastError())  return(last_error);
-      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))        return(!catch("onInit(6)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))        return(!catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                               return(!catch("onInit(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      double lotsPerTrade = CalculateLots(false); if (IsLastError()) return(last_error);
+      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))       return(!catch("onInit(6)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))       return(!catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))       return(!catch("onInit(8)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))       return(!catch("onInit(9)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))      return(!catch("onInit(8)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))      return(!catch("onInit(9)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
 
@@ -162,11 +160,9 @@ int onInit() {
    if (EntryIndicator < 1 || EntryIndicator > 3)
       EntryIndicator = 1;
 
-   // Re-calculate variables
    ArrayInitialize(spreads, 0);
    MinBarSize    *= Pip;
    TrailingStart *= Point;
-   stopDistance   = StopDistance.Points * Point;
 
    if (!Magic) Magic = CreateMagicNumber();
 
@@ -422,26 +418,23 @@ void Trade() {
       double iH = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       double iL = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
       double iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "MovingAverage channel:   H="+ NumberToStr(iH, PriceFormat) +"   M="+ NumberToStr(iM, PriceFormat) +"   L=" + NumberToStr(iL, PriceFormat);
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "   M=", NumberToStr(iM, PriceFormat), "   L=", NumberToStr(iL, PriceFormat), "   MovingAverage");
    }
    else if (EntryIndicator == 2) {
       iH = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
       iL = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "BollingerBands channel:   H="+ NumberToStr(iH, PriceFormat) +"   M="+ NumberToStr(iM, PriceFormat) +"   L=" + NumberToStr(iL, PriceFormat);
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "   M=", NumberToStr(iM, PriceFormat), "   L=", NumberToStr(iL, PriceFormat), "   BollingerBands");
    }
    else if (EntryIndicator == 3) {
       iH = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
       iL = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = "Envelopes channel:   H="+ NumberToStr(iH, PriceFormat) +"   M="+ NumberToStr(iM, PriceFormat) +"   L=" + NumberToStr(iL, PriceFormat);
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "   M=", NumberToStr(iM, PriceFormat), "   L=", NumberToStr(iL, PriceFormat), "    Envelopes");
    }
+   bool isBidAboveMidChannel=(0 || Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;      // pewa: always enabling isBidAboveMidChannel improves results significantly
 
-   // always enabling isBidAboveMidChannel improves results significantly
-   bool isBidAboveMidChannel=(0 || Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;
-
-   // major error introduced in all Capella versions: channelHigh/Low aren't updated on each tick
-   if (!CapellaBug || isBidAboveMidChannel) {
+   if (!CapellaBug || isBidAboveMidChannel) {                                                   // pewa: bug introduced by Capella, channelHigh/Low aren't updated on each tick
       channelHigh = iH;
       channelLow  = iL;
    }
@@ -510,7 +503,7 @@ void Trade() {
             // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
             if (isBidBelowMidChannel) {
                // Calculate how much Price, SL and TP should be modified
-               orderprice      = NormalizeDouble(Ask + stopDistance, Digits);
+               orderprice      = NormalizeDouble(Ask + PriceReversal*Point, Digits);
                orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
@@ -535,7 +528,7 @@ void Trade() {
             // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
             if (isBidAboveMidChannel) {
                // Calculate how much Price, SL and TP should be modified
-               orderprice      = NormalizeDouble(Bid - stopDistance, Digits);
+               orderprice      = NormalizeDouble(Bid - PriceReversal*Point, Digits);
                orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
@@ -560,34 +553,34 @@ void Trade() {
 
 
    // Open a new order if we have a signal and no open orders and average spread is less or equal to max allowed spread
-   if (tradeSignal && !isOpenOrder && NormalizeDouble(avgSpread, Digits) <= NormalizeDouble(MaxSpread * Point, Digits)) {
+   if (tradeSignal && !isOpenOrder && avgSpread <= MaxSpread*Point) {
       double lots = CalculateLots(true); if (!lots) return(last_error);
 
       if (tradeSignal == SIGNAL_LONG) {
-         orderprice      = Ask + stopDistance;
+         orderprice      = Ask + PriceReversal*Point;
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
-         if (GT(stopDistance, 0) || IsTesting()) {
+         if (PriceReversal || IsTesting()) {
             if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(7)"));
             Orders.AddTicket(oe.Ticket(oe), OP_BUYSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(8)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(8)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_BUY, NULL);
          }
       }
       else if (tradeSignal == SIGNAL_SHORT) {
-         orderprice      = Bid - stopDistance;
+         orderprice      = Bid - PriceReversal*Point;
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
-         if (GT(stopDistance, 0) || IsTesting()) {
+         if (PriceReversal || IsTesting()) {
             if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(9)"));
             Orders.AddTicket(oe.Ticket(oe), OP_SELLSTOP, oe.OpenPrice(oe), OP_UNDEFINED, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage.Points, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(10)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(10)"));
             Orders.AddTicket(oe.Ticket(oe), OP_UNDEFINED, NULL, OP_SELL, NULL);
          }
       }
@@ -595,13 +588,13 @@ void Trade() {
 
    // compose chart status messages
    if (isChart) {
-      sStatusInfo = StringConcatenate("BarSize: ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
-                                      sIndicatorStatus,                                                                                                        NL,
-                                      "AvgSpread: ", DoubleToStr(avgSpread, Digits), "    Unitsize: ", sUnitSize,                                              NL);
+      string sSpreadInfo = "";
+      if (avgSpread > MaxSpread*Point) sSpreadInfo = StringConcatenate("    => larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
 
-      if (NormalizeDouble(avgSpread, Digits) > NormalizeDouble(MaxSpread * Point, Digits)) {
-         sStatusInfo = StringConcatenate(sStatusInfo, "The current avg spread (", DoubleToStr(avgSpread, Digits), ") is higher than the configured MaxSpread (", DoubleToStr(MaxSpread*Point, Digits), ") => trading disabled", NL);
-      }
+      sStatusInfo = StringConcatenate("BarSize:  ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
+                                      sIndicatorStatus,                                                                                                        NL,
+                                      "Spread:  ", DoubleToStr(spread/Pip, 1), "    AvgSpread: ", DoubleToStr(avgSpread/Pip, 1), sSpreadInfo,                  NL,
+                                      "Unitsize: ", sUnitSize,                                                                                                 NL);
    }
    return(catch("Trade(11)"));
 }
