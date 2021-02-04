@@ -418,19 +418,19 @@ void Trade() {
       double iH = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       double iL = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
       double iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "   M=", NumberToStr(iM, PriceFormat), "   L=", NumberToStr(iL, PriceFormat), "   MovingAverage");
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(iM, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "  (MovingAverage)");
    }
    else if (EntryIndicator == 2) {
       iH = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
       iL = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "   M=", NumberToStr(iM, PriceFormat), "   L=", NumberToStr(iL, PriceFormat), "   BollingerBands");
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(iM, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "  (BollingerBands)");
    }
    else if (EntryIndicator == 3) {
       iH = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
       iL = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "   M=", NumberToStr(iM, PriceFormat), "   L=", NumberToStr(iL, PriceFormat), "    Envelopes");
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(iM, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "   (Envelopes)");
    }
    bool isBidAboveMidChannel=(0 || Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;      // pewa: always enabling isBidAboveMidChannel improves results significantly
 
@@ -591,10 +591,10 @@ void Trade() {
       string sSpreadInfo = "";
       if (avgSpread > MaxSpread*Point) sSpreadInfo = StringConcatenate("    => larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
 
-      sStatusInfo = StringConcatenate("BarSize:  ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
-                                      sIndicatorStatus,                                                                                                        NL,
-                                      "Spread:  ", DoubleToStr(spread/Pip, 1), "    AvgSpread: ", DoubleToStr(avgSpread/Pip, 1), sSpreadInfo,                  NL,
-                                      "Unitsize: ", sUnitSize,                                                                                                 NL);
+      sStatusInfo = StringConcatenate("BarSize:    ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
+                                      sIndicatorStatus,                                                                                                          NL,
+                                      "Spread:    ", DoubleToStr(spread/Pip, 1), "    Avg=", DoubleToStr(avgSpread/Pip, 1), sSpreadInfo,                         NL,
+                                      "Unitsize:   ", sUnitSize,                                                                                                 NL);
    }
    return(catch("Trade(11)"));
 }
