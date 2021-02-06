@@ -27,18 +27,18 @@
 //      operation has not yet succeeded (a new position has not been opened, or an existing order has not been modified or
 //      deleted, or an existing position has not been closed).
 #define ERR_INVALID_PRICE                                           129    // not normalized order price, or price moves too fast (away)
-#define ERR_INVALID_STOP                                            130    // limits/stops are mis-calculated, not normalized or too close to market (MODE_STOPLEVEL)
-#define ERR_INVALID_TRADE_VOLUME                                    131    // Invalid trade volume, error in the volume granularity.
+#define ERR_INVALID_STOP                                            130    // limits/stops are mis-calculated, not normalized or too close to entry price or market (MODE_STOPLEVEL)
+#define ERR_INVALID_TRADE_VOLUME                                    131    // invalid trade volume or error in volume granularity
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133
 #define ERR_NOT_ENOUGH_MONEY                                        134
-#define ERR_PRICE_CHANGED                                           135    // Price has changed and a retry can be made immediately.
-#define ERR_OFF_QUOTES                                              136    // The broker cannot provide prices (backend or liquidity issue).
-#define ERR_BROKER_BUSY                                             137    // Automated trading is disabled (manual trading is not affected).
-#define ERR_REQUOTE                                                 138    // The offered price has become stale and expired.
-#define ERR_ORDER_LOCKED                                            139    // The order has been locked and is under processing.
+#define ERR_PRICE_CHANGED                                           135    // price has changed and a retry can be made immediately
+#define ERR_OFF_QUOTES                                              136    // broker cannot provide prices (backend or liquidity issue)
+#define ERR_BROKER_BUSY                                             137    // automated trading is disabled (manual trading is not affected)
+#define ERR_REQUOTE                                                 138    // price has become stale and expired
+#define ERR_ORDER_LOCKED                                            139    // order has been locked and is under processing
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
-#define ERR_TOO_MANY_REQUESTS                                       141    // The number of trade requests has reached the broker limit.
+#define ERR_TOO_MANY_REQUESTS                                       141    // the number of trade requests has reached the broker limit
 #define ERR_ORDER_QUEUED                                            142
 //      The order has been enqueued. This is an interaction code between client terminal and trade server. It can appear if a
 //      reconnection occures during execution of a trade request. It should be processed similar to ERR_TRADE_TIMEOUT.
@@ -49,7 +49,7 @@
 #define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market (MODE_FREEZELEVEL)
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147    // trade expirations are not supported
-#define ERR_TRADE_TOO_MANY_ORDERS                                   148    // The number of open orders has reached the broker limit.
+#define ERR_TRADE_TOO_MANY_ORDERS                                   148    // the number of open orders has reached the broker limit
 #define ERR_TRADE_HEDGE_PROHIBITED                                  149    // hedging is not supported
 #define ERR_TRADE_PROHIBITED_BY_FIFO                                150
 
@@ -128,7 +128,7 @@
 #define ERR_TRADE_NOT_ALLOWED                                      4109    // automated trading disabled in the terminal
 #define ERR_LONGS_NOT_ALLOWED                                      4110
 #define ERR_SHORTS_NOT_ALLOWED                                     4111
-#define ERR_AUTOMATED_TRADING_DISABLED                             4112    // automated trading disabled by the broker
+#define ERR_AUTOMATED_TRADING_DISABLED                             4112    // automated trading of the symbol disabled by the broker
 #define ERR_OBJECT_ALREADY_EXISTS                                  4200
 #define ERR_UNKNOWN_OBJECT_PROPERTY                                4201
 #define ERR_OBJECT_DOES_NOT_EXIST                                  4202

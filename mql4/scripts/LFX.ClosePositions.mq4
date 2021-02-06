@@ -140,10 +140,10 @@ int onStart() {
 
 
       // (5) Orderausführung
-      double slippage    = 0.1;
-      color  markerColor = CLR_NONE;
-      int    oeFlags     = NULL;
-      int    oes[][ORDER_EXECUTION.intSize];
+      int   slippage    = 1;
+      color markerColor = CLR_NONE;
+      int   oeFlags     = NULL;
+      int   oes[][ORDER_EXECUTION.intSize];
       if (!OrdersClose(position, slippage, markerColor, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
 
 
