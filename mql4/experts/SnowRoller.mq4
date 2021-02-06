@@ -455,8 +455,8 @@ bool StopSequence(int signal) {
       if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.longName +" stopping sequence...");
 
       // close open orders
-      double stopPrice, slippage = 2;
-      int level, oeFlags, oes[][ORDER_EXECUTION.intSize];
+      double stopPrice;
+      int level, oeFlags, oes[][ORDER_EXECUTION.intSize], slippage = 10;    // point
       int pendingLimits[], openPositions[], sizeOfTickets = ArraySize(orders.ticket);
       ArrayResize(pendingLimits, 0);
       ArrayResize(openPositions, 0);
@@ -2473,7 +2473,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
 
    double   lots        = sequence.unitsize;
    double   price       = NULL;
-   double   slippage    = 0.1;
+   int      slippage    = 1;
    double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pips;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
@@ -2536,7 +2536,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
 
    double   lots        = sequence.unitsize;
    double   stopPrice   = GetGridbase() + level*GridSize*Pips;
-   double   slippage    = NULL;
+   int      slippage    = NULL;
    double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
@@ -2594,7 +2594,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
 
    double   lots        = sequence.unitsize;
    double   limitPrice  = GetGridbase() + level*GridSize*Pips;
-   double   slippage    = NULL;
+   int      slippage    = NULL;
    double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
