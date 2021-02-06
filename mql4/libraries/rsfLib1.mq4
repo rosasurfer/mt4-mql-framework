@@ -5139,7 +5139,29 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
       // submit the trade request
       time = GetTickCount();
+
+      //string names1[], names2[];
+      //if (IsTesting()) {
+      //   //GetObjectNames(names1);
+      //}
+
       if (!testCase) ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+
+      //if (IsTesting()) {
+      //   ObjectsDeleteAll();
+      //
+      //   //GetObjectNames(names2);
+      //   //int sizeOf1 = ArraySize(names1);
+      //   //int newObjects = ArraySize(names2) - sizeOf1;
+      //   //
+      //   //if (newObjects > 0) {
+      //   //   for (int i=0; i < sizeOf1; i++) {
+      //   //      ArrayDropString(names2, names1[i]);
+      //   //   }
+      //   //}
+      //   //debug("OrderSendEx(0.1)  newObjects="+ newObjects +"  newNames="+ StringsToStr(names2));
+      //}
+
       oe.setDuration(oe, GetTickCount()-time1);                            // total time in milliseconds
 
       if (ticket > 0) {
@@ -7550,3 +7572,24 @@ bool onCommand(string data[]) { return(!catch("onCommand()  must be implemented 
    bool   wfd_FileAttribute_Directory(int wfd[]);
    string wfd_FileName(int wfd[]);
 #import
+
+
+/**
+ * Return the names of all chart objects.
+ *
+ * @param  string names[] - array receiving the object names
+ *
+ * @return int - number of found objects or EMPTY (-1) in case of errors
+ */
+int GetObjectNames(string &names[]) {
+   int count = ObjectsTotal();
+   ArrayResize(names, count);
+
+   for (int i=0; i < count; i++) {
+      names[i] = ObjectName(i);
+   }
+
+   if (!catch("GetObjectNames(1)"))
+      return(count);
+   return(EMPTY);
+}
