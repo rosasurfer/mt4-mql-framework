@@ -16,8 +16,8 @@
  *
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
- * @todo  in tester generate consecutive sequence ids
- * @todo  and many more...
+ * @todo  generate consecutive sequence ids in tester
+ * @todo  many more...
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -389,7 +389,7 @@ bool StopSequence() {
       int      type        = ifInt(GT(sequence.openLots, 0), OP_SELL, OP_BUY);
       double   lots        = MathAbs(sequence.openLots);
       double   price       = NULL;
-      double   slippage    = 1;  // in pip
+      int      slippage    = 10;    // point
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
       string   comment     = "";
@@ -465,7 +465,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
 
    // close open positions and update local order state
    if (ArraySize(positions) > 0) {
-      double slippage = 1; // in pip
+      int slippage = 10;    // point
       int oeFlags, oes[][ORDER_EXECUTION.intSize], pos;
       if (!OrdersClose(positions, slippage, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
@@ -1058,7 +1058,7 @@ double CalculateLots(int direction, int level) {
       else if (level == 1)              lots = sequence.unitsize;
    }
    else if (sequence.martingaleEnabled) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
-   lots = NormalizeLots(lots);
+   lots = NormalizeLots(lots); if (IsEmptyValue(lots)) return(NULL);
 
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
 }
@@ -2073,7 +2073,7 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
    double   lots        = CalculateLots(direction, level);
    double   price       = NULL;
-   double   slippage    = 0.1;
+   int      slippage    = 1;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
@@ -2107,7 +2107,7 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    int      type        = ifInt(direction==D_LONG, OP_BUYLIMIT, OP_SELLLIMIT);
    double   lots        = CalculateLots(direction, level);
    double   price       = CalculateGridLevel(direction, level);
-   double   slippage    = NULL;
+   int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
@@ -2144,7 +2144,7 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    int      type        = ifInt(direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
    double   lots        = CalculateLots(direction, level);
    double   price       = CalculateGridLevel(direction, level);
-   double   slippage    = NULL;
+   int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
@@ -2209,21 +2209,21 @@ int ShowStatus(int error = NO_ERROR) {
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
-   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                                  NL,
-                                                                                                                        NL,
-                                  "Grid:              ",            GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
-                                  "UnitSize:        ",              sUnitSize,                                          NL,
-                                  "Stop:             ",             sStopConditions,                                    NL,
-                                                                                                                        NL,
-                                  "Long:             ",             sOpenLongLots,                                      NL,
-                                  "Short:            ",             sOpenShortLots,                                     NL,
-                                  "Total:            ",             sOpenTotalLots,                                     NL,
-                                                                                                                        NL,
-                                  "BE:                 ",           sSequenceBePrice,                                   NL,
-                                  "TP:                 ",           sSequenceTpPrice,                                   NL,
-                                  "SL:                 ",           sSequenceSlPrice,                                   NL,
-                                                                                                                        NL,
-                                  "Profit/Loss:   ",                sSequenceTotalPL, sSequencePlStats,                 NL
+   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
+                                                                                                              NL,
+                                  "Grid:              ",  GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
+                                  "UnitSize:        ",    sUnitSize,                                          NL,
+                                  "Stop:             ",   sStopConditions,                                    NL,
+                                                                                                              NL,
+                                  "Long:             ",   sOpenLongLots,                                      NL,
+                                  "Short:            ",   sOpenShortLots,                                     NL,
+                                  "Total:            ",   sOpenTotalLots,                                     NL,
+                                                                                                              NL,
+                                  "BE:                 ", sSequenceBePrice,                                   NL,
+                                  "TP:                 ", sSequenceTpPrice,                                   NL,
+                                  "SL:                 ", sSequenceSlPrice,                                   NL,
+                                                                                                              NL,
+                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,                 NL
    );
 
    // 4 lines margin-top for instrument and indicator legends

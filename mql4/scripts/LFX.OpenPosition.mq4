@@ -250,7 +250,7 @@ int onStart() {
 
    for (i=0; i < symbolsSize; i++) {
       double   price       = NULL;
-      double   slippage    = 0.1;
+      int      slippage    = 1;
       double   sl          = NULL;
       double   tp          = NULL;
       datetime expiration  = NULL;
