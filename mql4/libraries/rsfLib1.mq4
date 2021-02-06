@@ -7019,7 +7019,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
 
    bool result = ChartMarker.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarker.OrderSent_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderSent_A(2)"));
 }
 
 
@@ -7104,7 +7104,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
 
    bool result = ChartMarker.OrderModified_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), modifyTime, oldOpenPrice, OrderOpenPrice(), oldStopLoss, OrderStopLoss(), oldTakeprofit, OrderTakeProfit(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarker.OrderModified_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderModified_A(2)"));
 }
 
 
@@ -7227,7 +7227,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
 
    bool result = ChartMarker.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarker.OrderFilled_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderFilled_A(2)"));
 }
 
 
@@ -7306,7 +7306,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
 
    bool result = ChartMarker.PositionClosed_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
 
-   return(ifBool(OrderPop("ChartMarker.PositionClosed_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.PositionClosed_A(2)"));
 }
 
 
@@ -7391,7 +7391,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
 
    bool result = ChartMarker.OrderDeleted_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
 
-   return(ifBool(OrderPop("ChartMarker.OrderDeleted_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderDeleted_A(2)"));
 }
 
 
