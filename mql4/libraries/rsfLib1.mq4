@@ -5020,7 +5020,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * @param  _In_  int      type        - trade operation type
  * @param  _In_  double   lots        - trade volume in lots
  * @param  _In_  double   price       - limit price for pending orders (ignored for market orders)
- * @param  _In_  double   slippage    - acceptable slippage in pip (not in point)
+ * @param  _In_  int      slippage    - acceptable slippage in point
  * @param  _In_  double   stopLoss    - stoploss price
  * @param  _In_  double   takeProfit  - takeprofit price
  * @param  _In_  string   comment     - order comment (max. 27 chars)
@@ -5037,7 +5037,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  *        - ERR_INVALID_STOP:           the pending order price violates the current market
  *        - ERR_STOP_DISTANCE_VIOLATED: SL or TP violate the broker's stop distance
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                 return(!catch("OrderSendEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
@@ -5054,7 +5054,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    int    pipDigits      = digits & (~1);
    int    pipPoints      = MathRound(MathPow(10, digits & 1));
    double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
-   int    slippagePoints = MathRound(slippage * pipPoints);
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL  )/pipPoints;
    double freezeDistance = MarketInfo(symbol, MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -5073,7 +5072,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (isPendingType) /*&&*/ if (EQ(price, 0))                 return(!Order.HandleError("OrderSendEx(9)  illegal "+ OperationTypeDescription(type) +" price: "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    price = NormalizeDouble(price, digits);
    // slippage
-   if (LT(slippage, 0))                                        return(!Order.HandleError("OrderSendEx(10)  illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (slippage < 0)                                           return(!Order.HandleError("OrderSendEx(10)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oe));
    // stopLoss
    if (LT(stopLoss, 0))                                        return(!Order.HandleError("OrderSendEx(11)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    stopLoss = NormalizeDouble(stopLoss, digits);
@@ -5140,7 +5139,29 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       // submit the trade request
       time = GetTickCount();
-      if (!testCase) ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+
+      //string names1[], names2[];
+      //if (IsTesting()) {
+      //   //GetObjectNames(names1);
+      //}
+
+      if (!testCase) ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+
+      //if (IsTesting()) {
+      //   ObjectsDeleteAll();
+      //
+      //   //GetObjectNames(names2);
+      //   //int sizeOf1 = ArraySize(names1);
+      //   //int newObjects = ArraySize(names2) - sizeOf1;
+      //   //
+      //   //if (newObjects > 0) {
+      //   //   for (int i=0; i < sizeOf1; i++) {
+      //   //      ArrayDropString(names2, names1[i]);
+      //   //   }
+      //   //}
+      //   //debug("OrderSendEx(0.1)  newObjects="+ newObjects +"  newNames="+ StringsToStr(names2));
+      //}
+
       oe.setDuration(oe, GetTickCount()-time1);                            // total time in milliseconds
 
       if (ticket > 0) {
@@ -5161,10 +5182,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
          oe.setProfit    (oe, 0              );
          oe.setRequotes  (oe, requotes       );
-            if      (type == OP_BUY ) slippage = OrderOpenPrice() - ask;
-            else if (type == OP_SELL) slippage = bid - OrderOpenPrice();
-            else                      slippage = 0;
-         oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));   // total slippage after requotes in pip
+            if      (type == OP_BUY ) double dSlippage = OrderOpenPrice() - ask;
+            else if (type == OP_SELL)        dSlippage = bid - OrderOpenPrice();
+            else                             dSlippage = 0;
+         oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
 
          if (IsLogInfo()) logInfo("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
@@ -5245,7 +5266,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * @return string
  */
 string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote (2.8 pip slippage)
+   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask) after 0.345 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -5253,19 +5274,21 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
 
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
-   string sComment    = oe.Comment(oe);
-      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
+   string symbol      = oe.Symbol(oe);
+   string sComment    = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string sBid        = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
+   string sAsk        = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
          if (slippage > 0)           sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
          else                        sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
       }
-   string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice;
+   string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
-
+                                 message = message +" (market: "+ sBid +"/"+ sAsk +")";
    if (!This.IsTesting()) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
@@ -5330,8 +5353,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string sType    = OperationTypeDescription(oe.Type(oe));
    string sLots    = NumberToStr(oe.Lots(oe), ".+");
    string symbol   = oe.Symbol(oe);
-   string sComment = oe.Comment(oe);
-      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
+   string sComment = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice   = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
    string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
@@ -5596,7 +5618,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
  *
  * @param  _In_  int    ticket      - order ticket of the position to close
  * @param  _In_  double lots        - order size to close (default: full order size)
- * @param  _In_  double slippage    - acceptable slippage in pip
+ * @param  _In_  int    slippage    - acceptable slippage in point
  * @param  _In_  color  markerColor - color of the chart marker to set
  * @param  _In_  int    oeFlags     - flags controlling trade request execution
  * @param  _Out_ int    oe[]        - execution details (struct ORDER_EXECUTION)
@@ -5610,7 +5632,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
  *            - ERR_INVALID_TICKET:           the specified ticket is not an order ticket
  *            - ERR_INVALID_TRADE_PARAMETERS: the ticket is not an open position (anymore)
  */
-bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, int oeFlags, int oe[]) {
+bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                 return(!catch("OrderCloseEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
@@ -5638,7 +5660,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
    }
    lots = NormalizeDouble(lots, 2);
    // slippage
-   if (LT(slippage, 0))                                        return(_false(Order.HandleError("OrderCloseEx(15)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderCloseEx(16)")));
+   if (slippage < 0)                                           return(_false(Order.HandleError("OrderCloseEx(15)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderCloseEx(16)")));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(Order.HandleError("OrderCloseEx(17)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderCloseEx(18)")));
 
@@ -5681,11 +5703,9 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
     - Swap, commission and profit are divided over the partially closed and the remaining position.
    */
 
-   int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathRound(MathPow(10, digits & 1));
-   double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
-   int    slippagePoints = MathRound(slippage * pipPoints);
-   string priceFormat    = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   int    pipDigits   = digits & (~1);
+   double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
+   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    int    time1, firstTime1 = GetTickCount(), requotes, tempErrors, remainder;
    double price, firstPrice, bid, ask;
@@ -5711,7 +5731,7 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
       if (!time1) firstPrice = price;                                               // remember first close price (in case of ERR_REQUOTE)
 
       time1   = GetTickCount();
-      success = OrderClose(ticket, lots, price, slippagePoints, markerColor);
+      success = OrderClose(ticket, lots, price, slippage, markerColor);
 
       oe.setDuration(oe, GetTickCount()-firstTime1);
 
@@ -5727,9 +5747,9 @@ bool OrderCloseEx(int ticket, double lots, double slippage, color markerColor, i
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit());
          oe.setRequotes  (oe, requotes);
-            if (OrderType() == OP_BUY ) slippage = oe.Bid(oe) - OrderClosePrice();
-            else                        slippage = OrderClosePrice() - oe.Ask(oe);
-         oe.setSlippage(oe, NormalizeDouble(slippage/pips, 1));                     // in pip
+            if (OrderType() == OP_BUY ) double dSlippage = oe.Bid(oe) - OrderClosePrice();
+            else                               dSlippage = OrderClosePrice() - oe.Ask(oe);
+         oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, 1));                    // in pip
 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
@@ -6210,11 +6230,11 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
 /**
  * Close multiple positions of mixed symbols in the most efficient way.
  *
- * @param  _In_  int    tickets[]   - ticket ids of the positions to close
- * @param  _In_  double slippage    - acceptable slippage in pip (*not* in point)
- * @param  _In_  color  markerColor - color of the chart marker set
- * @param  _In_  int    oeFlags     - additional flags controling execution
- * @param  _Out_ int    oes[]       - array of execution details (struct ORDER_EXECUTION)
+ * @param  _In_  int   tickets[]   - ticket ids of the positions to close
+ * @param  _In_  int   slippage    - acceptable slippage in points
+ * @param  _In_  color markerColor - color of the chart marker set
+ * @param  _In_  int   oeFlags     - additional flags controling execution
+ * @param  _Out_ int   oes[]       - array of execution details (struct ORDER_EXECUTION)
  *
  * @return bool - success status
  *
@@ -6230,7 +6250,7 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  */
-bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
+bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                                    return(!catch("OrdersClose(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
@@ -6240,7 +6260,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
    // tickets[]
    if (!sizeOfTickets)                                              return(!Order.HandleError("OrdersClose(3)  invalid parameter tickets (size = 0)", ERR_INVALID_PARAMETER, oeFlags, oes));
    // slippage
-   if (LT(slippage, 0))                                             return(!Order.HandleError("OrdersClose(4)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (slippage < 0)                                                return(!Order.HandleError("OrdersClose(4)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oes));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')      return(!Order.HandleError("OrdersClose(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oes));
 
@@ -6377,12 +6397,12 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
 /**
  * Close multiple positions of the same symbol in the most efficient way.
  *
- * @param  _In_  int    tickets[]   - order tickets to close
- * @param  _In_  double slippage    - acceptable slippage in pip
- * @param  _In_  color  markerColor - color of the chart marker to set
- * @param  _In_  int    oeFlags     - flags controlling trade request execution:
- *                                    F_OE_DONT_HEDGE - don't hedge the total position with an opposite trade transaction
- * @param  _Out_ int    oes[][]     - array of execution details (struct ORDER_EXECUTION)
+ * @param  _In_  int   tickets[]   - order tickets to close
+ * @param  _In_  int   slippage    - acceptable slippage in points
+ * @param  _In_  color markerColor - color of the chart marker to set
+ * @param  _In_  int   oeFlags     - flags controlling trade request execution:
+ *                                   F_OE_DONT_HEDGE - don't hedge the total position with an opposite trade transaction
+ * @param  _Out_ int   oes[][]     - array of execution details (struct ORDER_EXECUTION)
  *
  * @return bool - success status
  *
@@ -6398,7 +6418,7 @@ bool OrdersClose(int tickets[], double slippage, color markerColor, int oeFlags,
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
  */
-bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]) {
+bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                                      return(!catch("OrdersCloseSameSymbol(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
@@ -6408,7 +6428,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
    // tickets[]
    if (!sizeOfTickets)                                                return(!Order.HandleError("OrdersCloseSameSymbol(3)  invalid parameter tickets (size = 0)", ERR_INVALID_PARAMETER, oeFlags, oes));
    // slippage
-   if (LT(slippage, 0))                                               return(!Order.HandleError("OrdersCloseSameSymbol(4)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (slippage < 0)                                                  return(!Order.HandleError("OrdersCloseSameSymbol(4)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oes));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')        return(!Order.HandleError("OrdersCloseSameSymbol(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oes));
 
@@ -6508,12 +6528,12 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
  * Preferably one of the positions is closed. If a (partial) close doesn't yield the intended result an additional hedging
  * position is opened. All passed order tickets must belong to the same symbol.
  *
- * @param  _In_  int    tickets[] - order tickets to offset
- * @param  _In_  double slippage  - acceptable slippage in pip for the offsetting transaction
- * @param  _In_  int    oeFlags   - flags controlling trade request execution:
- *                                  F_OE_DONT_CHECK_STATUS - don't check the ticket's order status to prevent
- *                                                           ERR_INVALID_TRADE_PARAMETERS if a ticket is already closed
- * @param  _Out_ int    oes[][]   - array of execution details (struct ORDER_EXECUTION)
+ * @param  _In_  int tickets[] - order tickets to offset
+ * @param  _In_  int slippage  - acceptable slippage in points for the offsetting transaction
+ * @param  _In_  int oeFlags   - flags controlling trade request execution:
+ *                               F_OE_DONT_CHECK_STATUS - don't check the ticket's order status to prevent
+ *                                                        ERR_INVALID_TRADE_PARAMETERS if a ticket is already closed
+ * @param  _Out_ int oes[][]   - array of execution details (struct ORDER_EXECUTION)
  *
  * @return int - the resulting ticket id of an offsetting transaction (a new position or a partial remainder) or
  *               -1 if one of the positions was fully closed or
@@ -6535,7 +6555,7 @@ bool OrdersCloseSameSymbol(int tickets[], double slippage, color markerColor, in
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
  */
-int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
+int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                            return(!catch("OrdersHedge(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
@@ -6543,9 +6563,9 @@ int OrdersHedge(int tickets[], double slippage, int oeFlags, int oes[][]) {
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1)); ArrayInitialize(oes, 0);
    // tickets[]
-   if (!sizeOfTickets)                                      return(!Order.HandleError("OrdersHedge(3)  invalid parameter tickets (size = 0)", ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (!sizeOfTickets)                                      return(!Order.HandleError("OrdersHedge(3)  invalid parameter tickets (size=0)", ERR_INVALID_PARAMETER, oeFlags, oes));
    // slippage
-   if (LT(slippage, 0))                                     return(!Order.HandleError("OrdersHedge(4)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (slippage < 0)                                        return(!Order.HandleError("OrdersHedge(4)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oes));
 
    // initialize oes[]
    if (!SelectTicket(tickets[0], "OrdersHedge(5)", O_PUSH)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
@@ -7021,7 +7041,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
 
    bool result = ChartMarker.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarker.OrderSent_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderSent_A(2)"));
 }
 
 
@@ -7106,7 +7126,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
 
    bool result = ChartMarker.OrderModified_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), modifyTime, oldOpenPrice, OrderOpenPrice(), oldStopLoss, OrderStopLoss(), oldTakeprofit, OrderTakeProfit(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarker.OrderModified_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderModified_A(2)"));
 }
 
 
@@ -7229,7 +7249,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
 
    bool result = ChartMarker.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarker.OrderFilled_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderFilled_A(2)"));
 }
 
 
@@ -7308,7 +7328,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
 
    bool result = ChartMarker.PositionClosed_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
 
-   return(ifBool(OrderPop("ChartMarker.PositionClosed_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.PositionClosed_A(2)"));
 }
 
 
@@ -7393,7 +7413,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
 
    bool result = ChartMarker.OrderDeleted_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
 
-   return(ifBool(OrderPop("ChartMarker.OrderDeleted_A(2)"), result, false));
+   return(result && OrderPop("ChartMarker.OrderDeleted_A(2)"));
 }
 
 
@@ -7552,3 +7572,24 @@ bool onCommand(string data[]) { return(!catch("onCommand()  must be implemented 
    bool   wfd_FileAttribute_Directory(int wfd[]);
    string wfd_FileName(int wfd[]);
 #import
+
+
+/**
+ * Return the names of all chart objects.
+ *
+ * @param  string names[] - array receiving the object names
+ *
+ * @return int - number of found objects or EMPTY (-1) in case of errors
+ */
+int GetObjectNames(string &names[]) {
+   int count = ObjectsTotal();
+   ArrayResize(names, count);
+
+   for (int i=0; i < count; i++) {
+      names[i] = ObjectName(i);
+   }
+
+   if (!catch("GetObjectNames(1)"))
+      return(count);
+   return(EMPTY);
+}

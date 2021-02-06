@@ -1,5 +1,5 @@
 /**
- * Constants shared by MQL4.0 and MT4Expander (C++).
+ * Constants shared by MQL4 and MT4Expander (C++).
  */
 
 
@@ -215,6 +215,12 @@
 // commission calculation modes, see GetCommission()
 #define MODE_MONEY                              0        // commission value in account currency for 1 lot
 #define MODE_MARKUP                             1        // commission markup in quote currency
+
+
+// normalizing modes, see NormalizeLots()
+#define MODE_FLOOR                              1        // normalize down to the next smallest absolute value
+#define MODE_DEFAULT                            2        // normalize according to standard rounding rules
+#define MODE_CEIL                               3        // normalize up to the next largest absolute value
 
 
 // file system related constants

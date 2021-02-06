@@ -144,7 +144,7 @@ int onStart() {
       if (button == IDOK) {
          int oeFlags = NULL;
          int oes[][ORDER_EXECUTION.intSize];
-         if (!OrdersClose(tickets, 0.1, Orange, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
+         if (!OrdersClose(tickets, 1, Orange, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
          ArrayResize(oes, 0);
       }
    }
