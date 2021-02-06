@@ -4,8 +4,8 @@
  *
  * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
  * reversal from a channel breakout. Over the years it has gone through multiple transformations. Today various versions with
- * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). None of them seems to be suitable for real
- * trading out-of-the-box, mainly due to the vast amount of code bugs.
+ * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). Out-of-the-box none of them seems to be suitable
+ * for real trading, mainly due to the lack of signal documentation and the vast amount of issues in the program logic.
  *
  * This version is a complete rewrite.
  *
@@ -52,11 +52,11 @@ extern bool   CapellaBug                = true;       // whether the most major 
 extern string ___b_____________________ = "==== Entry bar size conditions ====";
 extern bool   UseSpreadMultiplier       = true;       // use spread multiplier or fix MinBarSize
 extern double SpreadMultiplier          = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
-extern double MinBarSize                = 18;         // MinBarSize = fix in pip
+extern double MinBarSize                = 18;         // MinBarSize = fix size in pip
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
-extern int    PriceReversal             = 0;          // required price reversal in point (0: counter-trend trading without reversal)
+extern int    PriceReversal             = 0;          // required price reversal in point (0: counter-trend trading w/o reversal)
 extern int    StopLoss                  = 60;         // SL in point
 extern int    TakeProfit                = 100;        // TP in point
 extern double TrailingStart             = 20;         // start trailing profit from as so many points
@@ -108,6 +108,8 @@ double   totalPlNet;                // openPlNet + closedPlNet
 
 // other
 string   orderComment = "XMT-rsf";
+int      chartObjects;
+int      testerStartTime;
 
 // cache vars to speed-up ShowStatus()
 string   sUnitSize   = "";
@@ -149,8 +151,6 @@ int onInit() {
    }
 
 
-
-
    // --- old ---------------------------------------------------------------------------------------------------------------
    if (!IsTesting() && Period()!=TimeFrame) {
       return(catch("onInit(10)  The EA has been set to run on timeframe: "+ TimeFrame +" but it has been attached to a chart with timeframe: "+ Period(), ERR_RUNTIME_ERROR));
@@ -167,6 +167,11 @@ int onInit() {
    if (!Magic) Magic = CreateMagicNumber();
 
    UpdateTradeStats();
+
+   //if (IsTesting()) {
+   //   chartObjects = ObjectsTotal();
+   //   testerStartTime = GetTickCount();
+   //}
    return(catch("onInit(11)"));
 }
 
@@ -177,6 +182,9 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
+   //if (IsTesting()) {
+   //   debug("onDeinit(0.1)  created objects: "+ (ObjectsTotal()-chartObjects) +"  time="+ DoubleToStr((GetTickCount()-testerStartTime)/1000., 3) +" sec");
+   //}
    return(catch("onDeinit(1)"));
 }
 
@@ -333,76 +341,6 @@ bool onOrderDelete(int i) {
       logInfo("onOrderDelete(3)  "+ message);
    }
    return(Orders.RemoveTicket(tickets[i]));
-}
-
-
-/**
- * Add a new order record.
- *
- * @param  int      ticket
- * @param  int      pendingType
- * @param  double   pendingPrice
- * @param  int      type
- * @param  datetime closeTime
- *
- * @return bool - success status
- */
-bool Orders.AddTicket(int ticket, int pendingType, double pendingPrice, int type, datetime closeTime) {
-   int pos = SearchIntArray(tickets, ticket);
-   if (pos >= 0) return(!catch("Orders.AddTicket(1)  invalid parameter ticket: "+ ticket +" (already exists)", ERR_INVALID_PARAMETER));
-
-   ArrayPushInt   (tickets,       ticket      );
-   ArrayPushInt   (pendingTypes,  pendingType );
-   ArrayPushDouble(pendingPrices, pendingPrice);
-   ArrayPushInt   (types,         type        );
-   ArrayPushInt   (closeTimes,    closeTime   );
-
-   return(!catch("Orders.AddTicket()"));
-}
-
-
-/**
- * Update the order record with the specified ticket.
- *
- * @param  int      ticket
- * @param  int      pendingType
- * @param  double   pendingPrice
- * @param  int      type
- * @param  datetime closeTime
- *
- * @return bool - success status
- */
-bool Orders.UpdateTicket(int ticket, int pendingType, double pendingPrice, int type, datetime closeTime) {
-   int pos = SearchIntArray(tickets, ticket);
-   if (pos < 0) return(!catch("Orders.UpdateTicket(1)  invalid parameter ticket: "+ ticket +" (order not found)", ERR_INVALID_PARAMETER));
-
-   pendingTypes [pos] = pendingType;
-   pendingPrices[pos] = pendingPrice;
-   types        [pos] = type;
-   closeTimes   [pos] = closeTime;
-
-   return(!catch("Orders.UpdateTicket(2)"));
-}
-
-
-/**
- * Remove the order record with the specified ticket.
- *
- * @param  int ticket
- *
- * @return bool - success status
- */
-bool Orders.RemoveTicket(int ticket) {
-   int pos = SearchIntArray(tickets, ticket);
-   if (pos < 0) return(!catch("Orders.RemoveTicket(1)  invalid parameter ticket: "+ ticket +" (order not found)", ERR_INVALID_PARAMETER));
-
-   ArraySpliceInts   (tickets,       pos, 1);
-   ArraySpliceInts   (pendingTypes,  pos, 1);
-   ArraySpliceDoubles(pendingPrices, pos, 1);
-   ArraySpliceInts   (types,         pos, 1);
-   ArraySpliceInts   (closeTimes,    pos, 1);
-
-   return(!catch("Orders.RemoveTicket(2)"));
 }
 
 
@@ -729,6 +667,76 @@ void UpdateTradeStats() {
    }
    closedPlNet = closedSwap + closedCommission + closedPl;
    totalPlNet  = openPlNet + closedPlNet;
+}
+
+
+/**
+ * Add a new order record.
+ *
+ * @param  int      ticket
+ * @param  int      pendingType
+ * @param  double   pendingPrice
+ * @param  int      type
+ * @param  datetime closeTime
+ *
+ * @return bool - success status
+ */
+bool Orders.AddTicket(int ticket, int pendingType, double pendingPrice, int type, datetime closeTime) {
+   int pos = SearchIntArray(tickets, ticket);
+   if (pos >= 0) return(!catch("Orders.AddTicket(1)  invalid parameter ticket: "+ ticket +" (already exists)", ERR_INVALID_PARAMETER));
+
+   ArrayPushInt   (tickets,       ticket      );
+   ArrayPushInt   (pendingTypes,  pendingType );
+   ArrayPushDouble(pendingPrices, pendingPrice);
+   ArrayPushInt   (types,         type        );
+   ArrayPushInt   (closeTimes,    closeTime   );
+
+   return(!catch("Orders.AddTicket()"));
+}
+
+
+/**
+ * Update the order record with the specified ticket.
+ *
+ * @param  int      ticket
+ * @param  int      pendingType
+ * @param  double   pendingPrice
+ * @param  int      type
+ * @param  datetime closeTime
+ *
+ * @return bool - success status
+ */
+bool Orders.UpdateTicket(int ticket, int pendingType, double pendingPrice, int type, datetime closeTime) {
+   int pos = SearchIntArray(tickets, ticket);
+   if (pos < 0) return(!catch("Orders.UpdateTicket(1)  invalid parameter ticket: "+ ticket +" (order not found)", ERR_INVALID_PARAMETER));
+
+   pendingTypes [pos] = pendingType;
+   pendingPrices[pos] = pendingPrice;
+   types        [pos] = type;
+   closeTimes   [pos] = closeTime;
+
+   return(!catch("Orders.UpdateTicket(2)"));
+}
+
+
+/**
+ * Remove the order record with the specified ticket.
+ *
+ * @param  int ticket
+ *
+ * @return bool - success status
+ */
+bool Orders.RemoveTicket(int ticket) {
+   int pos = SearchIntArray(tickets, ticket);
+   if (pos < 0) return(!catch("Orders.RemoveTicket(1)  invalid parameter ticket: "+ ticket +" (order not found)", ERR_INVALID_PARAMETER));
+
+   ArraySpliceInts   (tickets,       pos, 1);
+   ArraySpliceInts   (pendingTypes,  pos, 1);
+   ArraySpliceDoubles(pendingPrices, pos, 1);
+   ArraySpliceInts   (types,         pos, 1);
+   ArraySpliceInts   (closeTimes,    pos, 1);
+
+   return(!catch("Orders.RemoveTicket(2)"));
 }
 
 
