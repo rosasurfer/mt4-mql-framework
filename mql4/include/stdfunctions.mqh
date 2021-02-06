@@ -3384,7 +3384,7 @@ int Tester.GetBarModel() {
 int Tester.Pause(string location = "") {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (!IsVisualModeFix()) return(NO_ERROR);                            // skip if VisualMode=Off
+   if (!IsChart())         return(NO_ERROR);                            // skip if VisualMode=Off
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
    if (Tester.IsPaused())  return(NO_ERROR);                            // skip if already paused
 
@@ -3430,7 +3430,7 @@ int Tester.Stop(string location = "") {
 bool Tester.IsPaused() {
    if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (!IsVisualModeFix()) return(false);
+   if (!IsChart())         return(false);
    if (Tester.IsStopped()) return(false);
 
    int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
@@ -6613,6 +6613,7 @@ void __DummyCalls() {
    IsStopOrderType(NULL);
    IsSuperContext();
    IsTicket(NULL);
+   IsVisualModeFix();
    LE(NULL, NULL);
    LocalTimeFormat(NULL, NULL);
    LoglevelDescription(NULL);

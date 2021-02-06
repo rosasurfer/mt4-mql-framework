@@ -16,8 +16,8 @@
  *
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
- * @todo  in tester generate consecutive sequence ids
- * @todo  and many more...
+ * @todo  generate consecutive sequence ids in tester
+ * @todo  many more...
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
