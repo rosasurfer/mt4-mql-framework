@@ -193,7 +193,7 @@ int onDeinit() {
  */
 int onTick() {
    UpdateOrderStatus();
-   Trade();
+   Strategy();
    return(catch("onTick(1)"));
 }
 
@@ -367,34 +367,37 @@ bool onOrderDelete(int i) {
 
 
 /**
- * Main trading routine
+ * Main strategy
+ *
+ * @return bool - success status
  */
-void Trade() {
+bool Strategy() {
    bool isChart = IsChart();
+   double iH, iL, channelMean;
    string sIndicatorStatus = "";
 
    // collect entry signal indications
    if (EntryIndicator == 1) {
-      double iH = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
-      double iL = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
-      double iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(iM, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "  (MovingAverage)");
+      iH          = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
+      iL          = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
+      channelMean = (iH+iL)/2;
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "  (MovingAverage)");
    }
    else if (EntryIndicator == 2) {
-      iH = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
-      iL = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
-      iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(iM, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "  (BollingerBands)");
+      iH          = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
+      iL          = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
+      channelMean = (iH+iL)/2;
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "  (BollingerBands)");
    }
    else if (EntryIndicator == 3) {
-      iH = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
-      iL = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
-      iM = (iH+iL)/2;
-      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(iM, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "   (Envelopes)");
+      iH          = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
+      iL          = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
+      channelMean = (iH+iL)/2;
+      if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "   (Envelopes)");
    }
-   bool isBidAboveMidChannel=(0 || Bid >= iM), isBidBelowMidChannel=!isBidAboveMidChannel;      // pewa: always enabling isBidAboveMidChannel improves results significantly
 
-   if (!CapellaBug || isBidAboveMidChannel) {                                                   // pewa: bug introduced by Capella, channelHigh/Low aren't updated on each tick
+   if (!CapellaBug) channelMean = 0;            // pewa: always enabling (Bid >= channelMean) improves results significantly
+   if (Bid >= channelMean) {                    // pewa: channelHigh/Low aren't updated on each tick (bug introduced by Capella)
       channelHigh = iH;
       channelLow  = iL;
    }
@@ -412,7 +415,7 @@ void Trade() {
    if (UseSpreadMultiplier)
       MinBarSize = avgSpread * SpreadMultiplier;
 
-   // determine trade signals
+   // check for new trade signals
    int oe[], tradeSignal = NULL;
    double barSize=iHigh(Symbol(), TimeFrame, 0)-iLow(Symbol(), TimeFrame, 0), orderprice, orderstoploss, ordertakeprofit;
 
@@ -443,7 +446,7 @@ void Trade() {
                ordertakeprofit = NormalizeDouble(Ask + TakeProfit*Point, Digits);
 
                if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(1)"));
+                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(false);
                }
             }
             break;
@@ -454,15 +457,20 @@ void Trade() {
                ordertakeprofit = NormalizeDouble(Bid - TakeProfit*Point, Digits);
 
                if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(2)"));
+                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(false);
                }
             }
             break;
 
          case OP_BUYSTOP:
-            // Price must NOT be larger than indicator in order to modify the order, otherwise the order will be deleted
-            if (isBidBelowMidChannel) {
-               // Calculate how much Price, SL and TP should be modified
+            if (Bid >= channelMean) {
+               // delete the pending order if price reached/crossed the channel mean
+               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
+               Orders.RemoveTicket(OrderTicket());
+               isOpenOrder = false;
+            }
+            else {
+               // trail the entry limit according to the configured price reversal
                orderprice      = NormalizeDouble(Ask + PriceReversal*Point, Digits);
                orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
@@ -472,22 +480,22 @@ void Trade() {
 
                   // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(catch("Trade(3)"));
+                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(false);
                      Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
                   }
                }
             }
-            else {
-               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(4)"));
-               Orders.RemoveTicket(OrderTicket());
-               isOpenOrder = false;
-            }
             break;
 
          case OP_SELLSTOP:
-            // Price must be larger than the indicator in order to modify the order, otherwise the order will be deleted
-            if (isBidAboveMidChannel) {
-               // Calculate how much Price, SL and TP should be modified
+            if (Bid <= channelMean) {
+               // delete the pending order if price reached/crossed the channel mean
+               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
+               Orders.RemoveTicket(OrderTicket());
+               isOpenOrder = false;
+            }
+            else {
+               // trail the entry limit according to the configured price reversal
                orderprice      = NormalizeDouble(Bid - PriceReversal*Point, Digits);
                orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
@@ -497,15 +505,10 @@ void Trade() {
 
                   // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(catch("Trade(5)"));
+                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(false);
                      Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
                   }
                }
-            }
-            else {
-               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(catch("Trade(6)"));
-               Orders.RemoveTicket(OrderTicket());
-               isOpenOrder = false;
             }
             break;
       }
@@ -513,7 +516,7 @@ void Trade() {
 
    // open new orders according to occurred signals
    if (!isOpenOrder && tradeSignal && avgSpread <= MaxSpread*Point) {
-      double lots = CalculateLots(true); if (!lots) return(last_error);
+      double lots = CalculateLots(true); if (!lots) return(false);
 
       if (tradeSignal == SIGNAL_LONG) {
          orderprice      = Ask + PriceReversal*Point;
@@ -521,11 +524,11 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (PriceReversal || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(7)"));
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(catch("Trade(8)"));
+            if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
       }
@@ -535,11 +538,11 @@ void Trade() {
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (PriceReversal || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(9)"));
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
          else {
-            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(catch("Trade(10)"));
+            if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
       }
@@ -555,7 +558,7 @@ void Trade() {
                                       "Spread:    ", DoubleToStr(spread/Pip, 1), "    Avg=", DoubleToStr(avgSpread/Pip, 1), sSpreadInfo,                         NL,
                                       "Unitsize:   ", sUnitSize,                                                                                                 NL);
    }
-   return(catch("Trade(11)"));
+   return(!catch("Strategy(1)"));
 }
 
 
