@@ -615,7 +615,7 @@ bool Tester.LogMarketInfo() {
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +" Account="     + NumberToStr(AccountBalance(), ",,.0R") +" "+ AccountCurrency()                                                            +";";
+   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +" Account="     + NumberToStr(AccountBalance(), ",'.0R") +" "+ AccountCurrency()                                                            +";";
    double   leverage       = MathDiv(lotValue, marginRequired);                message = message +" Leverage=1:"  + Round(leverage)                                                                                                           +";";
    int      stopoutLevel   = AccountStopoutLevel();                            message = message +" Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency()) +";";
    double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
@@ -623,7 +623,7 @@ bool Tester.LogMarketInfo() {
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
    double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R")                                                                                             +";";
-   double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0;", NumberToStr(commission, ".2R") +"/lot");
+   double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0;", DoubleToStr(commission, 2) +"/lot");
    if (NE(commission, 0)) {
       double commissionPip = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
    }
