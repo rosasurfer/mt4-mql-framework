@@ -1,9 +1,8 @@
 /**
  * MT4Expander import declarations
  *
- * Note: MQL4.0 supports up to 512 arrays per MQL module, in MQL4.5 and MQL5 this limitation was removed. To prevent hitting
- *       that limit here all functions with array parameters are commented out. Import them manually per module if you want
- *       to use them.
+ * Note: MQL4 supports up to 512 arrays per MQL module (in MQL5 this limit was removed). In this file all functions with array
+ *       parameters are commented out to prevent hitting that limit. Import needed functions manually to use them.
  */
 #import "rsfExpander.dll"
 
