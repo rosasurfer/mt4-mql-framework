@@ -4813,7 +4813,7 @@ string TradeCommandToStr(int cmd) {
  *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits,
  *              e.g. NumberToStr(123.456, ".2+") => "123.456"
  *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
- *    R       = round result in the last displayed digit,
+ *    R       = anywhere in mask: round result at the last displayed digit,
  *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
  *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
  *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
@@ -4826,26 +4826,25 @@ string TradeCommandToStr(int cmd) {
  */
 string NumberToStr(double value, string mask) {
    string sNumber = value;
-   if (StringGetChar(sNumber, 3) == '#')                             // "-1.#IND0000" => NaN
-      return(sNumber);                                               // "-1.#INF0000" => Infinite
+   if (StringGetChar(sNumber, 3) == '#')                    // "-1.#IND0000" => NaN
+      return(sNumber);                                      // "-1.#INF0000" => Infinite
 
 
    // --- Beginn Maske parsen -------------------------
    int maskLen = StringLen(mask);
 
    // zu allererst Separatorenformat erkennen
+   string sepThousand=",", sepDecimal=".";
    bool swapSeparators = (StringFind(mask, ";") > -1);
-      string sepThousand=",", sepDecimal=".";
-      if (swapSeparators) {
-         sepThousand = ".";
-         sepDecimal  = ",";
-      }
-      int sepPos = StringFind(mask, ",");
+   if (swapSeparators) {
+      sepThousand = "."; sepDecimal  = ",";
+   }
+   int sepPos = StringFind(mask, ",");
    bool separators = (sepPos > -1);
-      if (separators) /*&&*/ if (sepPos+1 < maskLen) {
-         sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
-         mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
-      }
+   if (separators) /*&&*/ if (sepPos+1 < maskLen) {
+      sepThousand = StringSubstr(mask, sepPos+1, 1);        // user-spezifischen 1000-Separator auslesen und aus Maske löschen
+      mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
+   }
 
    // white space entfernen
    mask    = StrReplace(mask, " ", "");
@@ -4879,7 +4878,7 @@ string NumberToStr(double value, string mask) {
             nRight = 10*nRight + char-'0';
             nDigit = true;
          }
-         else if (nDigit && char==39) {      // 39 => '
+         else if (nDigit && char==39) {                     // 39 => '
             nSubpip = nRight;
             continue;
          }
