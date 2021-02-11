@@ -63,15 +63,13 @@ bool     IsLogInfo();;
 bool     IsLogNotice();;
 bool     IsLogWarn();;
 bool     IsLogError();;
-bool     IsLogFatal();;
 
-int      log         (string message, int error, int level);;
-int      logDebug    (string message, int error = NO_ERROR);;
-int      logInfo     (string message, int error = NO_ERROR);;
-int      logNotice   (string message, int error = NO_ERROR);;
-int      logWarn     (string message, int error = NO_ERROR);;
-int      logError    (string message, int error = NO_ERROR);;
-int      logFatal    (string message, int error = NO_ERROR);;
+int      log      (string message, int error, int level);;
+int      logDebug (string message, int error = NO_ERROR);;
+int      logInfo  (string message, int error = NO_ERROR);;
+int      logNotice(string message, int error = NO_ERROR);;
+int      logWarn  (string message, int error = NO_ERROR);;
+int      logError (string message, int error = NO_ERROR);;
 
 int      log2Alert   (string message, int error, int level);;
 int      log2Debugger(string message, int error, int level);;
