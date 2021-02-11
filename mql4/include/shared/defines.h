@@ -19,14 +19,14 @@
 
 
 // log levels
-#define LOG_DEBUG                               1        // messages are logged if the message's loglevel (severity) matches
-#define LOG_INFO                                2        // or exceeds the program's configured loglevel
+#define LOG_DEBUG                               1        // a message is logged if its loglevel matches or exceeds the program's configured loglevel
+#define LOG_ALL                         LOG_DEBUG        // alias: the lowest loglevel effectively enables all loglevels
+#define LOG_INFO                                2
 #define LOG_NOTICE                              4
 #define LOG_WARN                                8
 #define LOG_ERROR                              16
-#define LOG_FATAL                              32
-#define LOG_ALL                         LOG_DEBUG        // alias for the lowest loglevel
-#define LOG_OFF                           INT_MAX        // not a valid loglevel
+#define LOG_FATAL                              32        // max. loglevel for built-in appenders (terminal, alert)
+#define LOG_OFF                           INT_MAX        // max. loglevel for custom appenders
 
 
 // MQL module type flags
