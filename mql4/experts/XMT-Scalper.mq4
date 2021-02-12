@@ -33,7 +33,7 @@
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
- *  - renamed input parameter MinimumUseStopLevel       => PriceReversal
+ *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
  */
 #include <stddefines.mqh>
@@ -56,7 +56,7 @@ extern double MinBarSize                = 18;         // MinBarSize = fix size i
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
-extern int    PriceReversal             = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
+extern int    BreakoutReversal          = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
 extern int    StopLoss                  = 60;         // SL in point
 extern int    TakeProfit                = 100;        // TP in point
 extern double TrailingStart             = 20;         // start trailing profit from as so many points
@@ -139,8 +139,8 @@ int onInit() {
    // validate inputs
    // Timeframe
    if (Period() != TimeFrame)                                        return(catch("onInit(1)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
-   // PriceReversal
-   if (LT(PriceReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))      return(catch("onInit(2)  invalid input parameter PriceReversal: "+ PriceReversal +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   // BreakoutReversal
+   if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))   return(catch("onInit(2)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // StopLoss
    if (!StopLoss)                                                    return(catch("onInit(3)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
    if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))           return(catch("onInit(4)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
@@ -464,8 +464,6 @@ bool Strategy() {
 
          case OP_BUYSTOP:
             if (Bid >= channelMean) {
-               if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.1)  deleting a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
-
                // delete the pending order if price reached/crossed the channel mean
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
@@ -473,7 +471,7 @@ bool Strategy() {
             }
             else {
                // trail the entry limit according to the configured price reversal
-               orderprice      = NormalizeDouble(Ask + PriceReversal*Point, Digits);
+               orderprice      = NormalizeDouble(Ask + BreakoutReversal*Point, Digits);
                orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
@@ -482,8 +480,6 @@ bool Strategy() {
 
                   // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.2)  modifying a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
-
                      if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(false);
                      Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
                   }
@@ -493,8 +489,6 @@ bool Strategy() {
 
          case OP_SELLSTOP:
             if (Bid <= channelMean) {
-               if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.3)  deleting a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
-
                // delete the pending order if price reached/crossed the channel mean
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
@@ -502,7 +496,7 @@ bool Strategy() {
             }
             else {
                // trail the entry limit according to the configured price reversal
-               orderprice      = NormalizeDouble(Bid - PriceReversal*Point, Digits);
+               orderprice      = NormalizeDouble(Bid - BreakoutReversal*Point, Digits);
                orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
@@ -511,8 +505,6 @@ bool Strategy() {
 
                   // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.4)  modifying a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
-
                      if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(false);
                      Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
                   }
@@ -527,11 +519,11 @@ bool Strategy() {
       double lots = CalculateLots(true); if (!lots) return(false);
 
       if (tradeSignal == SIGNAL_LONG) {
-         orderprice      = Ask + PriceReversal*Point;
+         orderprice      = Ask + BreakoutReversal*Point;
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
-         if (!PriceReversal) {
+         if (!BreakoutReversal) {
             if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
@@ -541,11 +533,11 @@ bool Strategy() {
          }
       }
       else if (tradeSignal == SIGNAL_SHORT) {
-         orderprice      = Bid - PriceReversal*Point;
+         orderprice      = Bid - BreakoutReversal*Point;
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
-         if (!PriceReversal) {
+         if (!BreakoutReversal) {
             if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
