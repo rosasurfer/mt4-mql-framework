@@ -47,7 +47,7 @@ extern int    EntryIndicator            = 1;          // entry signal indicator 
 extern int    IndicatorPeriods          = 3;          // entry indicator bar periods
 extern double BollingerBands.Deviation  = 2;          // standard deviations
 extern double Envelopes.Deviation       = 0.07;       // in percent
-extern bool   CapellaBug                = true;       // whether the most major Capella bug in signal detection is enabled
+extern bool   CapellaBug                = true;       // whether the most major Capella bug in signal detection is active
 
 extern string ___b_____________________ = "==== Entry bar size conditions ====";
 extern bool   UseSpreadMultiplier       = true;       // use spread multiplier or fix MinBarSize
@@ -56,7 +56,7 @@ extern double MinBarSize                = 18;         // MinBarSize = fix size i
 
 extern string ___c_____________________ = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
-extern int    PriceReversal             = 0;          // required price reversal in point (0: counter-trend trading w/o reversal)
+extern int    PriceReversal             = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
 extern int    StopLoss                  = 60;         // SL in point
 extern int    TakeProfit                = 100;        // TP in point
 extern double TrailingStart             = 20;         // start trailing profit from as so many points
@@ -396,11 +396,11 @@ bool Strategy() {
       if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "   (Envelopes)");
    }
 
-   if (!CapellaBug) channelMean = 0;            // pewa: always enabling (Bid >= channelMean) improves results significantly
-   if (Bid >= channelMean) {                    // pewa: channelHigh/Low aren't updated on each tick (bug introduced by Capella)
-      channelHigh = iH;
+   if (Bid >= channelMean) {                       // pewa: channelHigh/Low aren't updated on each tick (bug introduced by Capella)
+      channelHigh = iH;                            //       affects entry signals
       channelLow  = iL;
    }
+   if (!CapellaBug) channelMean = 0;               // pewa: using pending orders with PriceReversal=0 improves tester/EveryTick results, due to plenty of OrderDelete()
 
    // calculate average spread
    double sumSpreads, spread = Ask - Bid;
@@ -464,6 +464,8 @@ bool Strategy() {
 
          case OP_BUYSTOP:
             if (Bid >= channelMean) {
+               if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.1)  deleting a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
+
                // delete the pending order if price reached/crossed the channel mean
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
@@ -480,6 +482,8 @@ bool Strategy() {
 
                   // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                     if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.2)  modifying a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
+
                      if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(false);
                      Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
                   }
@@ -489,6 +493,8 @@ bool Strategy() {
 
          case OP_SELLSTOP:
             if (Bid <= channelMean) {
+               if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.3)  deleting a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
+
                // delete the pending order if price reached/crossed the channel mean
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
@@ -505,6 +511,8 @@ bool Strategy() {
 
                   // Send an OrderModify command with adjusted Price, SL and TP
                   if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
+                     if (IsTesting() && !PriceReversal) return(!catch("Strategy(0.4)  modifying a pending entry order w/o PriceReversal", ERR_ILLEGAL_STATE));
+
                      if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(false);
                      Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
                   }
@@ -523,13 +531,13 @@ bool Strategy() {
          orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
-         if (PriceReversal || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
-         }
-         else {
+         if (!PriceReversal) {
             if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
+         }
+         else {
+            if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
+            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
       }
       else if (tradeSignal == SIGNAL_SHORT) {
@@ -537,13 +545,13 @@ bool Strategy() {
          orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
-         if (PriceReversal || IsTesting()) {
-            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
-         }
-         else {
+         if (!PriceReversal) {
             if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
+         }
+         else {
+            if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
+            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
       }
    }
