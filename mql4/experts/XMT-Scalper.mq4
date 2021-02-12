@@ -525,12 +525,11 @@ bool Strategy() {
 
          if (!BreakoutReversal) {
             if (!OrderSendEx(Symbol(), OP_BUY, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
          else {
             if (!OrderSendEx(Symbol(), OP_BUYSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Blue, NULL, oe)) return(false);
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
+         Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe),  oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
       }
       else if (tradeSignal == SIGNAL_SHORT) {
          orderprice      = Bid - BreakoutReversal*Point;
@@ -539,12 +538,11 @@ bool Strategy() {
 
          if (!BreakoutReversal) {
             if (!OrderSendEx(Symbol(), OP_SELL, lots, NULL, Slippage, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), OP_UNDEFINED, NULL, oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
          else {
             if (!OrderSendEx(Symbol(), OP_SELLSTOP, lots, orderprice, NULL, orderstoploss, ordertakeprofit, orderComment, Magic, NULL, Red, NULL, oe)) return(false);
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenPrice(oe), OP_UNDEFINED, NULL, NULL, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
+         Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
       }
    }
 
@@ -670,7 +668,7 @@ bool ReadOrderLog() {
       if (OrderType() > OP_SELL)       continue;
       if (OrderSymbol() != Symbol())   continue;
 
-      Orders.AddTicket(OrderTicket(), OrderLots(), OP_UNDEFINED, NULL, OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice(), OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit());
+      Orders.AddTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice(), OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit());
    }
 
    // all open tickets
@@ -680,14 +678,7 @@ bool ReadOrderLog() {
       if (OrderMagicNumber() != Magic) continue;
       if (OrderSymbol() != Symbol())   continue;
 
-      bool     isPending    = IsPendingOrderType(OrderType());
-      int      pendingType  = ifInt(isPending, OrderType(), OP_UNDEFINED);
-      double   pendingPrice = ifDouble(isPending, OrderOpenPrice(), NULL);
-      int      openType     = ifInt(isPending, OP_UNDEFINED, OrderType());
-      datetime openTime     = ifInt(isPending, NULL, OrderOpenTime());
-      double   openPrice    = ifDouble(isPending, NULL, OrderOpenPrice());
-
-      Orders.AddTicket(OrderTicket(), OrderLots(), pendingType, pendingPrice, openType, openTime, openPrice, NULL, NULL, OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit());
+      Orders.AddTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), NULL, NULL, OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit());
    }
    return(!catch("ReadOrderLog(3)"));
 }
@@ -698,9 +689,7 @@ bool ReadOrderLog() {
  *
  * @param  int      ticket
  * @param  double   lots
- * @param  int      pendingType
- * @param  double   pendingPrice
- * @param  int      openType
+ * @param  int      type
  * @param  datetime openTime
  * @param  double   openPrice
  * @param  datetime closeTime
@@ -713,9 +702,25 @@ bool ReadOrderLog() {
  *
  * @return bool - success status
  */
-bool Orders.AddTicket(int ticket, double lots, int pendingType, double pendingPrice, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double stopLoss, double takeProfit, double swap, double commission, double profit) {
+bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double stopLoss, double takeProfit, double swap, double commission, double profit) {
    int pos = SearchIntArray(orders.ticket, ticket);
    if (pos >= 0) return(!catch("Orders.AddTicket(1)  invalid parameter ticket: #"+ ticket +" (exists)", ERR_INVALID_PARAMETER));
+
+   int pendingType, openType;
+   double pendingPrice;
+
+   if (IsPendingOrderType(type)) {
+      pendingType  = type;
+      pendingPrice = openPrice;
+      openType     = OP_UNDEFINED;
+      openTime     = NULL;
+      openPrice    = NULL;
+   }
+   else {
+      pendingType  = OP_UNDEFINED;
+      pendingPrice = NULL;
+      openType     = type;
+   }
 
    ArrayPushInt   (orders.ticket,       ticket      );
    ArrayPushDouble(orders.lots,         lots        );
