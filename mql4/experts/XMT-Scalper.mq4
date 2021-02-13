@@ -121,11 +121,11 @@ string   orderComment = "XMT-rsf";
 // cache vars to speed-up ShowStatus()
 string   sUnitSize   = "";
 string   sStatusInfo = "\n\n\n";
+string   sCurrSpread = "-";
+string   sAvgSpread  = "-";
 
 
 // --- old ------------------------------------------------------------
-int    tickCounter = 0;                // for calculating average spread
-double spreads[30];                    // store spreads for the last 30 ticks
 double channelHigh;
 double channelLow;
 
@@ -163,7 +163,6 @@ int onInit() {
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
-   ArrayInitialize(spreads, 0);
    MinBarSize    *= Pip;
    TrailingStart *= Point;
 
@@ -370,6 +369,9 @@ bool onOrderDelete(int i) {
  * @return bool - success status
  */
 bool Strategy() {
+   double currSpread, avgSpread;
+   if (!GetSpreads(currSpread, avgSpread)) return(false);
+
    bool isChart = IsChart();
    double iH, iL, channelMean;
    string sIndicatorStatus = "";
@@ -393,30 +395,21 @@ bool Strategy() {
       channelMean = (iH+iL)/2;
       if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "   (Envelopes)");
    }
-   if (!CapellaBug || Bid >= channelMean) {     // bug: channelHigh/Low aren't updated on each tick (by Capella)
-      channelHigh = iH;                         //      affects entry signals
+   if (!CapellaBug || Bid >= channelMean) {              // bug: channelHigh/Low aren't updated on each tick (by Capella)
+      channelHigh = iH;                                  //      affects entry signals
       channelLow  = iL;
    }
 
-   // calculate average spread
-   double sumSpreads, spread = Ask - Bid;
-   ArrayCopy(spreads, spreads, 0, 1, 29);
-   spreads[29] = spread;
-   if (tickCounter < 30) tickCounter++;
-   for (int i, n=29; i < tickCounter; i++) {
-      sumSpreads += spreads[n];
-      n--;
-   }
-   double avgSpread = sumSpreads/tickCounter;
-   if (UseSpreadMultiplier)
-      MinBarSize = avgSpread * SpreadMultiplier;
 
    // check for new trade signals
-   int oe[], tradeSignal = NULL;
-   double barSize=iHigh(Symbol(), TimeFrame, 0)-iLow(Symbol(), TimeFrame, 0), orderprice, orderstoploss, ordertakeprofit;
+   int tradeSignal = NULL;
+   double barSize = iHigh(Symbol(), TimeFrame, 0)-iLow(Symbol(), TimeFrame, 0), orderprice, orderstoploss, ordertakeprofit;
 
    // check for trade signal
-   if (MinBarSize && channelHigh) {
+   if (UseSpreadMultiplier) {
+      MinBarSize = avgSpread*Pip * SpreadMultiplier;
+   }
+   if (avgSpread && MinBarSize && channelHigh) {
       if (barSize > MinBarSize) {                                          // TODO: should be greater-or-equal
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
          else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
@@ -424,10 +417,11 @@ bool Strategy() {
       }
    }
 
+   int oe[];
    bool isOpenOrder = false;
 
    // manage open orders
-   for (i=0; i < OrdersTotal(); i++) {
+   for (int i=0; i < OrdersTotal(); i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderMagicNumber()!=Magic || OrderSymbol()!=Symbol())
          continue;
@@ -468,7 +462,7 @@ bool Strategy() {
             else {
                // trail the entry limit according to the configured price reversal
                orderprice      = NormalizeDouble(Ask + BreakoutReversal*Point, Digits);
-               orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
+               orderstoploss   = NormalizeDouble(orderprice - currSpread*Pip - StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
                // Ok to modify the order if price is less than orderprice AND orderprice-price is greater than trailingstart
@@ -493,7 +487,7 @@ bool Strategy() {
             else {
                // trail the entry limit according to the configured price reversal
                orderprice      = NormalizeDouble(Bid - BreakoutReversal*Point, Digits);
-               orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
+               orderstoploss   = NormalizeDouble(orderprice + currSpread*Pip + StopLoss*Point, Digits);
                ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
                // Ok to modify order if price is greater than orderprice AND price-orderprice is greater than trailingstart
@@ -511,12 +505,12 @@ bool Strategy() {
    }
 
    // open new orders according to occurred signals
-   if (!isOpenOrder && tradeSignal && avgSpread <= MaxSpread*Point) {
+   if (!isOpenOrder && tradeSignal && avgSpread && avgSpread*Pip <= MaxSpread*Point) {
       double lots = CalculateLots(true); if (!lots) return(false);
 
       if (tradeSignal == SIGNAL_LONG) {
          orderprice      = Ask + BreakoutReversal*Point;
-         orderstoploss   = NormalizeDouble(orderprice - spread - StopLoss*Point, Digits);
+         orderstoploss   = NormalizeDouble(orderprice - currSpread*Pip - StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
 
          if (!BreakoutReversal) {
@@ -529,7 +523,7 @@ bool Strategy() {
       }
       else if (tradeSignal == SIGNAL_SHORT) {
          orderprice      = Bid - BreakoutReversal*Point;
-         orderstoploss   = NormalizeDouble(orderprice + spread + StopLoss*Point, Digits);
+         orderstoploss   = NormalizeDouble(orderprice + currSpread*Pip + StopLoss*Point, Digits);
          ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
 
          if (!BreakoutReversal) {
@@ -545,14 +539,57 @@ bool Strategy() {
    // compose chart status messages
    if (isChart) {
       string sSpreadInfo = "";
-      if (avgSpread > MaxSpread*Point) sSpreadInfo = StringConcatenate("    => larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
+      if (avgSpread*Pip > MaxSpread*Point) sSpreadInfo = StringConcatenate("    => larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
 
       sStatusInfo = StringConcatenate("BarSize:    ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
                                       sIndicatorStatus,                                                                                                          NL,
-                                      "Spread:    ", DoubleToStr(spread/Pip, 1), "    Avg=", DoubleToStr(avgSpread/Pip, 1), sSpreadInfo,                         NL,
+                                      "Spread:    ",  sCurrSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                         NL,
                                       "Unitsize:   ", sUnitSize,                                                                                                 NL);
    }
    return(!catch("Strategy(1)"));
+}
+
+
+/**
+ * Track and return current and average spread values. Online at least 30 ticks are collected before calculating an average.
+ *
+ * @param  _Out_ double currSpread - current spread in pip
+ * @param  _Out_ double avgSpread  - average spread in pip or NULL if the average spread is not yet available
+ *
+ * @return bool - success status
+ */
+bool GetSpreads(double &currSpread, double &avgSpread) {
+   currSpread  = (Ask-Bid)/Pip;
+   sCurrSpread = DoubleToStr(currSpread, 1);
+
+   if (IsTesting()) {
+      avgSpread  = currSpread;
+      sAvgSpread = sCurrSpread;
+      return(true);
+   }
+
+   double spreads[30];
+   ArrayCopy(spreads, spreads, 0, 1);
+   spreads[29] = currSpread;
+
+   static int ticks = 0;
+   if (ticks < 29) {
+      ticks++;
+      avgSpread  = NULL;
+      sAvgSpread = "-";
+      return(true);
+   }
+
+   double sum = 0;
+   for (int i=0; i < ticks; i++) {
+      sum += spreads[i];
+   }
+   avgSpread  = sum/ticks;
+   if (avgSpread < 0.01)                     // make sure avgSpread is not zero (special return value)
+      avgSpread = 0.01;
+   sAvgSpread = DoubleToStr(avgSpread, 2);
+
+   return(true);
 }
 
 
