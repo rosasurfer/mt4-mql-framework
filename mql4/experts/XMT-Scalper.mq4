@@ -137,42 +137,40 @@ double channelLow;
  */
 int onInit() {
    // validate inputs
+   // EntryIndicator
+   if (EntryIndicator < 1 || EntryIndicator > 3)                     return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
    // Timeframe
-   if (Period() != TimeFrame)                                        return(catch("onInit(1)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
+   if (Period() != TimeFrame)                                        return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
    // BreakoutReversal
-   if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))   return(catch("onInit(2)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))   return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // StopLoss
-   if (!StopLoss)                                                    return(catch("onInit(3)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))           return(catch("onInit(4)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StopLoss)                                                    return(catch("onInit(4)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))           return(catch("onInit(5)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // TakeProfit
-   if (LT(TakeProfit, MarketInfo(Symbol(), MODE_STOPLEVEL)))         return(catch("onInit(5)  invalid input parameter TakeProfit: "+ TakeProfit +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(TakeProfit, MarketInfo(Symbol(), MODE_STOPLEVEL)))         return(catch("onInit(6)  invalid input parameter TakeProfit: "+ TakeProfit +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                               return(catch("onInit(6)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                               return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
       double lotsPerTrade = CalculateLots(false); if (IsLastError()) return(last_error);
-      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))       return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))       return(catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))       return(catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))       return(catch("onInit(9)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))      return(catch("onInit(9)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))      return(catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))      return(catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))      return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
-   // Check to confirm that indicator switch is valid choices, if not force to 1 (Moving Average)
-   if (EntryIndicator < 1 || EntryIndicator > 3)
-      EntryIndicator = 1;
-
    ArrayInitialize(spreads, 0);
    MinBarSize    *= Pip;
    TrailingStart *= Point;
 
-   if (!Magic) Magic = CreateMagicNumber();
+   if (!Magic) Magic = GenerateMagicNumber();
 
    if (!ReadOrderLog()) return(last_error);
-   return(catch("onInit(11)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -395,12 +393,10 @@ bool Strategy() {
       channelMean = (iH+iL)/2;
       if (isChart) sIndicatorStatus = StringConcatenate("Channel:   H=", NumberToStr(iH, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(iL, PriceFormat), "   (Envelopes)");
    }
-
-   if (Bid >= channelMean) {                       // pewa: channelHigh/Low aren't updated on each tick (bug introduced by Capella)
-      channelHigh = iH;                            //       affects entry signals
+   if (!CapellaBug || Bid >= channelMean) {     // bug: channelHigh/Low aren't updated on each tick (by Capella)
+      channelHigh = iH;                         //      affects entry signals
       channelLow  = iL;
    }
-   if (!CapellaBug) channelMean = 0;               // pewa: using pending orders with PriceReversal=0 improves tester/EveryTick results, due to plenty of OrderDelete()
 
    // calculate average spread
    double sumSpreads, spread = Ask - Bid;
@@ -419,7 +415,7 @@ bool Strategy() {
    int oe[], tradeSignal = NULL;
    double barSize=iHigh(Symbol(), TimeFrame, 0)-iLow(Symbol(), TimeFrame, 0), orderprice, orderstoploss, ordertakeprofit;
 
-   // If the variables below have values it means we have enough market data.
+   // check for trade signal
    if (MinBarSize && channelHigh) {
       if (barSize > MinBarSize) {                                          // TODO: should be greater-or-equal
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
@@ -561,11 +557,11 @@ bool Strategy() {
 
 
 /**
- * Magic Number - calculated from a sum of account number + ASCII-codes from currency pair
+ * Generate a new magic number using parts of the current symbol.                         TODO: still contains various bugs
  *
  * @return int
  */
-int CreateMagicNumber() {
+int GenerateMagicNumber() {
    string values = "EURUSDJPYCHFCADAUDNZDGBP";
    string base   = StrLeft(Symbol(), 3);
    string quote  = StringSubstr(Symbol(), 3, 3);
@@ -573,10 +569,7 @@ int CreateMagicNumber() {
    int basePos  = StringFind(values, base, 0);
    int quotePos = StringFind(values, quote, 0);
 
-   int result = INT_MAX - AccountNumber() - basePos - quotePos;
-
-   if (IsLogDebug()) logDebug("MagicNumber: "+ result);
-   return(result);
+   return(INT_MAX - AccountNumber() - basePos - quotePos);
 }
 
 
