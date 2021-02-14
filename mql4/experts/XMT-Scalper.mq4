@@ -27,8 +27,8 @@
  *  - simplified input parameters
  *  - fixed input parameter validation
  *  - fixed position size calculation
- *  - fixed signal detection (new input ActiveBugs.ChannelCalculation)
- *  - fixed trade handling (new inputs ActiveBugs.TpCalculationShort and ActiveBugs.TpTrailing)
+ *  - fixed signal detection (new input Bug.ChannelCalculation)
+ *  - fixed trade handling (new input Bug.StepTrailing)
  *  - rewrote status display
  *
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
@@ -73,7 +73,6 @@ extern double ManualLotsize                   = 0.1;        // fix position size
 extern string ___e___________________________ = "=== Bugs ================================";
 extern bool   Bug.ChannelCalculation          = true;       // broken calculation of signal channel high/low
 extern bool   Bug.StepTrailing                = true;       // trailing in steps of TrailingStart only
-extern bool   Bug.ShortTrailing               = true;       // invalid trailing condition of short positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -378,7 +377,7 @@ bool Strategy() {
 
    int oe[];
    bool isOpenOrder = false;
-   double price, stopprice, stoploss, takeprofit, newTakeProfit, newStopLoss;
+   double price, stopprice, stoploss, takeprofit, newTakeProfit, tpDiff, newStopLoss;
 
    // manage open orders
    for (int i=0; i < OrdersTotal(); i++) {
@@ -393,8 +392,9 @@ bool Strategy() {
          case OP_BUY:
             newTakeProfit = Ask + TakeProfit*Pip;
             newStopLoss   = Bid - StopLoss*Pip;
+            tpDiff        = newTakeProfit - OrderTakeProfit();
 
-            if (GT(newTakeProfit, OrderTakeProfit()) && newTakeProfit-OrderTakeProfit() > TrailingStart) {                    // TODO: this is not trailing but step-trailing
+            if (GT(tpDiff, TrailingStart)) {                                                                                  // bug: this is step-trailing, not trailing
                if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Lime, NULL, oe)) return(false);      // TODO: Orders.UpdateTicket()
             }
             break;
@@ -402,20 +402,21 @@ bool Strategy() {
          case OP_SELL:
             newTakeProfit = Bid - TakeProfit*Pip;
             newStopLoss   = Ask + StopLoss*Pip;
+            tpDiff        = OrderTakeProfit() - newTakeProfit;
 
-            if (LT(newTakeProfit, OrderTakeProfit()) && OrderTakeProfit() - Bid + TakeProfit*Pip > TrailingStart) {           // bug: triggered only every TakeProfit pip
+            if (GT(tpDiff, TrailingStart)) {                                                                                  // bug: this is step-trailing, not trailing
                if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Orange, NULL, oe)) return(false);    // TODO: Orders.UpdateTicket()
             }
             break;
 
          case OP_BUYSTOP:
-            if (Bid >= channelMean) {                       // delete the order if price reached mid channel...
+            if (GE(Bid, channelMean)) {                                    // delete the order if price reached mid channel
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
                isOpenOrder = false;
             }
             else {
-               stopprice = Ask + BreakoutReversal*Point;    // or trail the entry limit in breakout direction
+               stopprice = Ask + BreakoutReversal*Point;                   // trail pending order in breakout direction
 
                if (LT(stopprice, OrderOpenPrice())) {
                   stoploss   = stopprice - currentSpread*Pip - StopLoss*Pip;
@@ -427,13 +428,13 @@ bool Strategy() {
             break;
 
          case OP_SELLSTOP:
-            if (Bid <= channelMean) {                       // delete the order if price reached mid channel...
+            if (LE(Bid, channelMean)) {                                    // delete the order if price reached mid channel
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
                isOpenOrder = false;
             }
             else {
-               stopprice = Bid - BreakoutReversal*Point;    // or trail the entry limit in breakout direction
+               stopprice = Bid - BreakoutReversal*Point;                   // trail pending order in breakout direction
 
                if (GT(stopprice, OrderOpenPrice())) {
                   stoploss   = stopprice + currentSpread*Pip + StopLoss*Pip;
@@ -452,13 +453,11 @@ bool Strategy() {
       double barSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
       if (UseSpreadMultiplier) MinBarSize = avgSpread*Pip * SpreadMultiplier;
 
-      if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {         // TODO: should be barSize >= MinBarSize
-         if (!channelHigh) return(!catch("Strategy(1)  channelHigh=0.0  Bug.ChannelCalculation="+ Bug.ChannelCalculation, ERR_ILLEGAL_STATE));
-
+      if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {      // TODO: should be barSize >= MinBarSize
          int tradeSignal = NULL;
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
          else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
-         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;                 // flip long and short bits (^0011)
+         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
 
          if (tradeSignal != NULL) {
             double lots = CalculateLots(true); if (!lots) return(false);
@@ -575,13 +574,13 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
    }
 
-   if (Bug.ChannelCalculation) {          // conditionally reproduce major Capella bug (for comparison only)
-      if (Bid > channelMean) {
-         lastHigh = channelHigh;          // use current values
+   if (Bug.ChannelCalculation) {                // reproduce major Capella bug (for comparison only)
+      if (!lastHigh || Bid > channelMean) {
+         lastHigh = channelHigh;                // use current values
          lastLow  = channelLow;
       }
       else {
-         channelHigh = lastHigh;          // use expired values
+         channelHigh = lastHigh;                // use expired values
          channelLow  = lastLow;
       }
    }
