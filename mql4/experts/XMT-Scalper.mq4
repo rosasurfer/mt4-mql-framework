@@ -71,9 +71,9 @@ extern double Risk                            = 2;          // percent of equity
 extern double ManualLotsize                   = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
 
 extern string ___e___________________________ = "=== Bugs ================================";
-extern bool   ActiveBugs.ChannelCalculation   = true;       // broken tracking of signal channel high/low
-extern bool   ActiveBugs.StepTrailing         = true;       // trailing in steps of TrailingStart only
-extern bool   ActiveBugs.ShortTrailing        = true;       // invalid trailing condition of short positions
+extern bool   Bug.ChannelCalculation          = true;       // broken calculation of signal channel high/low
+extern bool   Bug.StepTrailing                = true;       // trailing in steps of TrailingStart only
+extern bool   Bug.ShortTrailing               = true;       // invalid trailing condition of short positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -453,7 +453,7 @@ bool Strategy() {
       if (UseSpreadMultiplier) MinBarSize = avgSpread*Pip * SpreadMultiplier;
 
       if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {         // TODO: should be barSize >= MinBarSize
-         if (!channelHigh) return(!catch("Strategy(1)  channelHigh=0.0  ActiveBugs.ChannelCalculation="+ ActiveBugs.ChannelCalculation, ERR_ILLEGAL_STATE));
+         if (!channelHigh) return(!catch("Strategy(1)  channelHigh=0.0  Bug.ChannelCalculation="+ Bug.ChannelCalculation, ERR_ILLEGAL_STATE));
 
          int tradeSignal = NULL;
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
@@ -575,7 +575,7 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
    }
 
-   if (ActiveBugs.ChannelCalculation) {   // replicate major found bugs (for comparison purposes only)
+   if (Bug.ChannelCalculation) {          // conditionally reproduce major Capella bug (for comparison only)
       if (Bid > channelMean) {
          lastHigh = channelHigh;          // use current values
          lastLow  = channelLow;
