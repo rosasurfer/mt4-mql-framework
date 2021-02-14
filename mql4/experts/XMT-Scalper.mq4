@@ -27,8 +27,8 @@
  *  - simplified input parameters
  *  - fixed input parameter validation
  *  - fixed position size calculation
- *  - fixed signal detection issues
- *  - fixed trade handling issues
+ *  - fixed signal detection (new input ActiveBugs.ChannelCalculation)
+ *  - fixed trade handling (new inputs ActiveBugs.TpCalculationShort and ActiveBugs.TpTrailing)
  *  - rewrote status display
  *
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
@@ -43,35 +43,37 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a_____________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
-extern int    EntryIndicator            = 1;          // entry signal indicator for price channel calculation
-extern int    IndicatorPeriods          = 3;          // entry indicator bar periods
-extern double BollingerBands.Deviation  = 2;          // standard deviations
-extern double Envelopes.Deviation       = 0.07;       // in percent
+extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
+extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
+extern int    IndicatorPeriods                = 3;          // entry indicator bar periods
+extern double BollingerBands.Deviation        = 2;          // standard deviations
+extern double Envelopes.Deviation             = 0.07;       // in percent
 
-extern string ___b_____________________ = "==== Entry bar size conditions ====";
-extern bool   UseSpreadMultiplier       = true;       // use spread multiplier or fix MinBarSize
-extern double SpreadMultiplier          = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
-extern double MinBarSize                = 18;         // MinBarSize = fix size in pip
+extern string ___b___________________________ = "=== Entry bar size conditions ================";
+extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fix MinBarSize
+extern double SpreadMultiplier                = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
+extern double MinBarSize                      = 18;         // MinBarSize = fix size in pip
 
-extern string ___c_____________________ = "==== Trade settings ====";
-extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe
-extern int    BreakoutReversal          = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
-extern int    TakeProfit                = 10;         // TP in pip
-extern int    StopLoss                  = 6;          // SL in pip
-extern double TrailingStart             = 20;         // start trailing profit from as so many points
-extern int    MaxSpread                 = 30;         // max. acceptable spread in point
-extern int    Slippage                  = 3;          // acceptable market order slippage in point
-extern int    Magic                     = 0;          // if zero the MagicNumber is generated
-extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
+extern string ___c___________________________ = "=== Trade settings ========================";
+extern int    TimeFrame                       = PERIOD_M1;  // trading timeframe
+extern int    BreakoutReversal                = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
+extern int    TakeProfit                      = 10;         // TP in pip
+extern int    StopLoss                        = 6;          // SL in pip
+extern double TrailingStart                   = 20;         // start trailing profit from as so many points
+extern int    MaxSpread                       = 30;         // max. acceptable spread in point
+extern int    Slippage                        = 3;          // acceptable market order slippage in point
+extern int    Magic                           = 0;          // if zero the MagicNumber is generated
+extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
-extern string ___d_____________________ = "==== MoneyManagement ====";
-extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
-extern double Risk                      = 2;          // percent of equity to risk for each trade
-extern double ManualLotsize             = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
+extern string ___d___________________________ = "=== MoneyManagement ====================";
+extern bool   MoneyManagement                 = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
+extern double Risk                            = 2;          // percent of equity to risk for each trade
+extern double ManualLotsize                   = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
 
-extern string ___e_____________________ = "==== Bugs ====";
-extern bool   CapellaBug                = true;       // broken tracking of signal channel high/low
+extern string ___e___________________________ = "=== Bugs ================================";
+extern bool   ActiveBugs.ChannelCalculation   = true;       // broken tracking of signal channel high/low
+extern bool   ActiveBugs.StepTrailing         = true;       // trailing in steps of TrailingStart only
+extern bool   ActiveBugs.ShortTrailing        = true;       // invalid trailing condition of short positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -450,11 +452,13 @@ bool Strategy() {
       double barSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
       if (UseSpreadMultiplier) MinBarSize = avgSpread*Pip * SpreadMultiplier;
 
-      if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {      // TODO: should be barSize >= MinBarSize
+      if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {         // TODO: should be barSize >= MinBarSize
+         if (!channelHigh) return(!catch("Strategy(1)  channelHigh=0.0  ActiveBugs.ChannelCalculation="+ ActiveBugs.ChannelCalculation, ERR_ILLEGAL_STATE));
+
          int tradeSignal = NULL;
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
          else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
-         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
+         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;                 // flip long and short bits (^0011)
 
          if (tradeSignal != NULL) {
             double lots = CalculateLots(true); if (!lots) return(false);
@@ -493,7 +497,7 @@ bool Strategy() {
                                       "Spread:    ",  sCurrSpread, "    Avg: ", sAvgSpread, sSpreadWarning,                                                      NL,
                                       "Unitsize:   ", sUnitSize,                                                                                                 NL);
    }
-   return(!catch("Strategy(1)"));
+   return(!catch("Strategy(2)"));
 }
 
 
@@ -550,6 +554,8 @@ bool CollectSpreads(double &currSpread, double &avgSpread) {
  * @return bool - success status
  */
 bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channelMean) {
+   static double lastHigh, lastLow;
+
    if (EntryIndicator == 1) {
       channelHigh = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       channelLow  = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
@@ -567,6 +573,17 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       channelLow  = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
+   }
+
+   if (ActiveBugs.ChannelCalculation) {   // replicate major found bugs (for comparison purposes only)
+      if (Bid > channelMean) {
+         lastHigh = channelHigh;          // use current values
+         lastLow  = channelLow;
+      }
+      else {
+         channelHigh = lastHigh;          // use expired values
+         channelLow  = lastLow;
+      }
    }
 
    int error = GetLastError();
