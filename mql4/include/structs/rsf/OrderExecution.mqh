@@ -58,6 +58,7 @@
 
 // Getter
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.error          ]);                                         ORDER_EXECUTION.toStr(oe); }
+bool     oe.IsError            (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.error          ] != 0);                                    ORDER_EXECUTION.toStr(oe); }
 string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + OE.symbol*4));                                             ORDER_EXECUTION.toStr(oe); }
 int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.digits         ]);                                         ORDER_EXECUTION.toStr(oe); }
 double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
@@ -84,6 +85,7 @@ int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {         
 double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.remainingLots  ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
 
 int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.error          ]);                                      ORDER_EXECUTION.toStr(oe); }
+bool     oes.IsError           (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.error          ] != 0);                                 ORDER_EXECUTION.toStr(oe); }
 string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.symbol)*4));               ORDER_EXECUTION.toStr(oe); }
 int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.digits         ]);                                      ORDER_EXECUTION.toStr(oe); }
 double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
@@ -294,6 +296,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    oe.Error             (oe);       oes.Error             (oe, NULL);
+   oe.IsError           (oe);       oes.IsError           (oe, NULL);
    oe.Symbol            (oe);       oes.Symbol            (oe, NULL);
    oe.Digits            (oe);       oes.Digits            (oe, NULL);
    oe.StopDistance      (oe);       oes.StopDistance      (oe, NULL);
