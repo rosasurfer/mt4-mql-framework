@@ -55,10 +55,10 @@ extern double SpreadMultiplier          = 12.5;       // MinBarSize = SpreadMult
 extern double MinBarSize                = 18;         // MinBarSize = fix size in pip
 
 extern string ___c_____________________ = "==== Trade settings ====";
-extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe must match the timeframe of the chart
+extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe
 extern int    BreakoutReversal          = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
-extern int    StopLoss                  = 60;         // SL in point
-extern int    TakeProfit                = 100;        // TP in point
+extern int    StopLoss                  = 6;          // SL in pip
+extern int    TakeProfit                = 10;         // TP in pip
 extern double TrailingStart             = 20;         // start trailing profit from as so many points
 extern int    Slippage                  = 3;          // acceptable market order slippage in point
 extern int    MaxSpread                 = 30;         // max. acceptable spread in point
@@ -134,27 +134,27 @@ string   sAvgSpread  = "-";
 int onInit() {
    // validate inputs
    // EntryIndicator
-   if (EntryIndicator < 1 || EntryIndicator > 3)                     return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
+   if (EntryIndicator < 1 || EntryIndicator > 3)                       return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
    // Timeframe
-   if (Period() != TimeFrame)                                        return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
+   if (Period() != TimeFrame)                                          return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
    // BreakoutReversal
-   if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))   return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))     return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // StopLoss
-   if (!StopLoss)                                                    return(catch("onInit(4)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   if (LT(StopLoss, MarketInfo(Symbol(), MODE_STOPLEVEL)))           return(catch("onInit(5)  invalid input parameter StopLoss: "+ StopLoss +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StopLoss)                                                      return(catch("onInit(4)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(StopLoss*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point))   return(catch("onInit(5)  invalid input parameter StopLoss: "+ StopLoss +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // TakeProfit
-   if (LT(TakeProfit, MarketInfo(Symbol(), MODE_STOPLEVEL)))         return(catch("onInit(6)  invalid input parameter TakeProfit: "+ TakeProfit +" (smaller than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(TakeProfit*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point)) return(catch("onInit(6)  invalid input parameter TakeProfit: "+ TakeProfit +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                               return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-      double lotsPerTrade = CalculateLots(false); if (IsLastError()) return(last_error);
-      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))       return(catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))       return(catch("onInit(9)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                                 return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      double lotsPerTrade = CalculateLots(false); if (IsLastError())   return(last_error);
+      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))         return(catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))         return(catch("onInit(9)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))      return(catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))      return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))        return(catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))        return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
 
@@ -373,7 +373,7 @@ bool Strategy() {
 
    int oe[];
    bool isOpenOrder = false;
-   double orderprice, orderstoploss, ordertakeprofit;
+   double price, stopprice, stoploss, takeprofit;
 
 
    // manage open orders
@@ -387,67 +387,61 @@ bool Strategy() {
 
       switch (OrderType()) {
          case OP_BUY:
-            if (LT(OrderTakeProfit(), Ask+TakeProfit*Point) && Ask+TakeProfit*Point - OrderTakeProfit() > TrailingStart) {
-               orderstoploss   = NormalizeDouble(Bid - StopLoss*Point, Digits);
-               ordertakeprofit = NormalizeDouble(Ask + TakeProfit*Point, Digits);
+            if (LT(OrderTakeProfit(), Ask+TakeProfit*Pip) && Ask+TakeProfit*Pip - OrderTakeProfit() > TrailingStart) {
+               stoploss   = Bid - StopLoss*Pip;
+               takeprofit = Ask + TakeProfit*Pip;
 
-               if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(false);
+               if (NE(stoploss, OrderStopLoss()) || NE(takeprofit, OrderTakeProfit())) {
+                  if (!OrderModifyEx(OrderTicket(), NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+                  // TODO: Orders.UpdateTicket()
                }
             }
             break;
 
          case OP_SELL:
-            if (GT(OrderTakeProfit(), Bid-TakeProfit*Point) && OrderTakeProfit() - Bid + TakeProfit*Point > TrailingStart) {
-               orderstoploss   = NormalizeDouble(Ask + StopLoss*Point, Digits);
-               ordertakeprofit = NormalizeDouble(Bid - TakeProfit*Point, Digits);
+            if (GT(OrderTakeProfit(), Bid-TakeProfit*Pip) && OrderTakeProfit() - Bid + TakeProfit*Pip > TrailingStart) {
+               stoploss   = Ask + StopLoss*Pip;
+               takeprofit = Bid - TakeProfit*Pip;
 
-               if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                  if (!OrderModifyEx(OrderTicket(), NULL, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(false);
+               if (NE(stoploss, OrderStopLoss()) || NE(takeprofit, OrderTakeProfit())) {
+                  if (!OrderModifyEx(OrderTicket(), NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+                  // TODO: Orders.UpdateTicket()
                }
             }
             break;
 
          case OP_BUYSTOP:
-            if (Bid >= channelMean) {
-               // delete the order if price already reached mid channel
+            if (Bid >= channelMean) {                       // delete the order if price reached mid channel...
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
                isOpenOrder = false;
             }
             else {
-               // trail the entry limit according to the breakout reversal
-               orderprice      = NormalizeDouble(Ask + BreakoutReversal*Point, Digits);
-               orderstoploss   = NormalizeDouble(orderprice - currentSpread*Pip - StopLoss*Point, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice + TakeProfit*Point, Digits);
+               stopprice = Ask + BreakoutReversal*Point;    // or trail the entry limit in breakout direction
 
-               if (orderprice < OrderOpenPrice() && OrderOpenPrice()-orderprice > TrailingStart) {
-                  if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Lime, NULL, oe)) return(false);
-                     Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
-                  }
+               if (LT(stopprice, OrderOpenPrice())) {
+                  stoploss   = stopprice - currentSpread*Pip - StopLoss*Pip;
+                  takeprofit = stopprice + TakeProfit*Pip;
+                  if (!OrderModifyEx(OrderTicket(), price, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+                  Orders.UpdateTicket(oe.Ticket(oe), oe.OpenPrice(oe), oe.StopLoss(oe), oe.TakeProfit(oe));
                }
             }
             break;
 
          case OP_SELLSTOP:
-            if (Bid <= channelMean) {
-               // delete the order if price already reached mid channel
+            if (Bid <= channelMean) {                       // delete the order if price reached mid channel...
                if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
                Orders.RemoveTicket(OrderTicket());
                isOpenOrder = false;
             }
             else {
-               // trail the entry limit according to the breakout reversal
-               orderprice      = NormalizeDouble(Bid - BreakoutReversal*Point, Digits);
-               orderstoploss   = NormalizeDouble(orderprice + currentSpread*Pip + StopLoss*Point, Digits);
-               ordertakeprofit = NormalizeDouble(orderprice - TakeProfit*Point, Digits);
+               stopprice = Bid - BreakoutReversal*Point;    // or trail the entry limit in breakout direction
 
-               if (orderprice > OrderOpenPrice() && orderprice-OrderOpenPrice() > TrailingStart) {
-                  if (NE(orderstoploss, OrderStopLoss()) || NE(ordertakeprofit, OrderTakeProfit())) {
-                     if (!OrderModifyEx(OrderTicket(), orderprice, orderstoploss, ordertakeprofit, NULL, Orange, NULL, oe)) return(false);
-                     Orders.UpdateTicket(OrderTicket(), orderprice, orderstoploss, ordertakeprofit);
-                  }
+               if (GT(stopprice, OrderOpenPrice())) {
+                  stoploss   = stopprice + currentSpread*Pip + StopLoss*Pip;
+                  takeprofit = stopprice - TakeProfit*Pip;
+                  if (!OrderModifyEx(OrderTicket(), stopprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+                  Orders.UpdateTicket(oe.Ticket(oe), oe.OpenPrice(oe), oe.StopLoss(oe), oe.TakeProfit(oe));
                }
             }
             break;
@@ -467,25 +461,26 @@ bool Strategy() {
          if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
 
          if (tradeSignal != NULL) {
-            double price, sl, tp, lots = CalculateLots(true); if (!lots) return(false);
+            double lots = CalculateLots(true); if (!lots) return(false);
 
             if (tradeSignal == SIGNAL_LONG) {
-               price = Ask + BreakoutReversal*Point;
-               sl    = price - currentSpread*Pip - StopLoss*Point;
-               tp    = price + TakeProfit*Point;
+               price      = Ask + BreakoutReversal*Point;
+               stoploss   = price - currentSpread*Pip - StopLoss*Pip;
+               takeprofit = price + TakeProfit*Pip;
 
-               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  Slippage, sl, tp, orderComment, Magic, NULL, Blue, NULL, oe);
-               else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,     sl, tp, orderComment, Magic, NULL, Blue, NULL, oe);
+               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  Slippage, stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
+               else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,     stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
             }
             else /*tradeSignal == SIGNAL_SHORT*/ {
-               price = Bid - BreakoutReversal*Point;
-               sl    = price + currentSpread*Pip + StopLoss*Point;
-               tp    = price - TakeProfit*Point;
+               price      = Bid - BreakoutReversal*Point;
+               stoploss   = price + currentSpread*Pip + StopLoss*Pip;
+               takeprofit = price - TakeProfit*Pip;
 
-               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  Slippage, sl, tp, orderComment, Magic, NULL, Red, NULL, oe);
-               else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,     sl, tp, orderComment, Magic, NULL, Red, NULL, oe);
+               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  Slippage, stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
+               else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,     stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
             }
             if (oe.IsError(oe)) return(false);
+
             Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
          }
       }
@@ -581,7 +576,7 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
    int error = GetLastError();
    if (!error)                      return(true);
    if (error == ERS_HISTORY_UPDATE) return(false);
-   return(catch("GetIndicatorValues(1)", error));
+   return(!catch("GetIndicatorValues(1)", error));
 }
 
 
@@ -618,8 +613,7 @@ double CalculateLots(bool checkLimits = false) {
       if (LE(equity, 0)) return(!catch("CalculateLots(1)  equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
 
       double riskPerTrade = Risk/100 * equity;                          // risked equity amount per trade
-      double slPips       = StopLoss*Point/Pip;                         // SL in pip
-      double riskPerPip   = riskPerTrade/slPips;                        // risked equity amount per pip
+      double riskPerPip   = riskPerTrade/StopLoss;                      // risked equity amount per pip
 
       lots = NormalizeLots(riskPerPip/PipValue(), NULL, MODE_FLOOR);    // resulting normalized position size
       if (IsEmptyValue(lots)) return(NULL);
