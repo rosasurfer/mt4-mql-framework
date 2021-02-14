@@ -63,15 +63,13 @@ bool     IsLogInfo();;
 bool     IsLogNotice();;
 bool     IsLogWarn();;
 bool     IsLogError();;
-bool     IsLogFatal();;
 
-int      log         (string message, int error, int level);;
-int      logDebug    (string message, int error = NO_ERROR);;
-int      logInfo     (string message, int error = NO_ERROR);;
-int      logNotice   (string message, int error = NO_ERROR);;
-int      logWarn     (string message, int error = NO_ERROR);;
-int      logError    (string message, int error = NO_ERROR);;
-int      logFatal    (string message, int error = NO_ERROR);;
+int      log      (string message, int error, int level);;
+int      logDebug (string message, int error = NO_ERROR);;
+int      logInfo  (string message, int error = NO_ERROR);;
+int      logNotice(string message, int error = NO_ERROR);;
+int      logWarn  (string message, int error = NO_ERROR);;
+int      logError (string message, int error = NO_ERROR);;
 
 int      log2Alert   (string message, int error, int level);;
 int      log2Debugger(string message, int error, int level);;
@@ -380,6 +378,7 @@ string   BAR.toStr     (/*BAR*/double bar[]);;
 
 // include/structs/rsf/OrderExecution.mqh
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);;
+bool     oe.IsError            (/*ORDER_EXECUTION*/int oe[]);;
 string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);;
 int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]);;
 double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]);;
@@ -435,6 +434,7 @@ int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[], int      ticket   
 double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[], double   lots      );;
 
 int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i);;
+bool     oes.IsError           (/*ORDER_EXECUTION*/int oe[][], int i);;
 string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i);;
 int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i);;
 double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i);;
