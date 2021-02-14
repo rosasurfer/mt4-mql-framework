@@ -57,11 +57,11 @@ extern double MinBarSize                = 18;         // MinBarSize = fix size i
 extern string ___c_____________________ = "==== Trade settings ====";
 extern int    TimeFrame                 = PERIOD_M1;  // trading timeframe
 extern int    BreakoutReversal          = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
-extern int    StopLoss                  = 6;          // SL in pip
 extern int    TakeProfit                = 10;         // TP in pip
+extern int    StopLoss                  = 6;          // SL in pip
 extern double TrailingStart             = 20;         // start trailing profit from as so many points
-extern int    Slippage                  = 3;          // acceptable market order slippage in point
 extern int    MaxSpread                 = 30;         // max. acceptable spread in point
+extern int    Slippage                  = 3;          // acceptable market order slippage in point
 extern int    Magic                     = 0;          // if zero the MagicNumber is generated
 extern bool   ReverseSignals            = false;      // Buy => Sell, Sell => Buy
 
@@ -69,6 +69,9 @@ extern string ___d_____________________ = "==== MoneyManagement ====";
 extern bool   MoneyManagement           = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
 extern double Risk                      = 2;          // percent of equity to risk for each trade
 extern double ManualLotsize             = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
+
+extern string ___e_____________________ = "==== Bugs ====";
+extern bool   CapellaBug                = true;       // broken tracking of signal channel high/low
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -139,11 +142,11 @@ int onInit() {
    if (Period() != TimeFrame)                                          return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
    // BreakoutReversal
    if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))     return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
-   // StopLoss
-   if (!StopLoss)                                                      return(catch("onInit(4)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   if (LT(StopLoss*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point))   return(catch("onInit(5)  invalid input parameter StopLoss: "+ StopLoss +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // TakeProfit
-   if (LT(TakeProfit*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point)) return(catch("onInit(6)  invalid input parameter TakeProfit: "+ TakeProfit +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(TakeProfit*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point)) return(catch("onInit(4)  invalid input parameter TakeProfit: "+ TakeProfit +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   // StopLoss
+   if (!StopLoss)                                                      return(catch("onInit(5)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(StopLoss*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point))   return(catch("onInit(6)  invalid input parameter StopLoss: "+ StopLoss +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    if (MoneyManagement) {
       // Risk
       if (LE(Risk, 0))                                                 return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
@@ -373,8 +376,7 @@ bool Strategy() {
 
    int oe[];
    bool isOpenOrder = false;
-   double price, stopprice, stoploss, takeprofit;
-
+   double price, stopprice, stoploss, takeprofit, newTakeProfit, newStopLoss;
 
    // manage open orders
    for (int i=0; i < OrdersTotal(); i++) {
@@ -387,26 +389,20 @@ bool Strategy() {
 
       switch (OrderType()) {
          case OP_BUY:
-            if (LT(OrderTakeProfit(), Ask+TakeProfit*Pip) && Ask+TakeProfit*Pip - OrderTakeProfit() > TrailingStart) {
-               stoploss   = Bid - StopLoss*Pip;
-               takeprofit = Ask + TakeProfit*Pip;
+            newTakeProfit = Ask + TakeProfit*Pip;
+            newStopLoss   = Bid - StopLoss*Pip;
 
-               if (NE(stoploss, OrderStopLoss()) || NE(takeprofit, OrderTakeProfit())) {
-                  if (!OrderModifyEx(OrderTicket(), NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
-                  // TODO: Orders.UpdateTicket()
-               }
+            if (GT(newTakeProfit, OrderTakeProfit()) && newTakeProfit-OrderTakeProfit() > TrailingStart) {                    // TODO: this is not trailing but step-trailing
+               if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Lime, NULL, oe)) return(false);      // TODO: Orders.UpdateTicket()
             }
             break;
 
          case OP_SELL:
-            if (GT(OrderTakeProfit(), Bid-TakeProfit*Pip) && OrderTakeProfit() - Bid + TakeProfit*Pip > TrailingStart) {
-               stoploss   = Ask + StopLoss*Pip;
-               takeprofit = Bid - TakeProfit*Pip;
+            newTakeProfit = Bid - TakeProfit*Pip;
+            newStopLoss   = Ask + StopLoss*Pip;
 
-               if (NE(stoploss, OrderStopLoss()) || NE(takeprofit, OrderTakeProfit())) {
-                  if (!OrderModifyEx(OrderTicket(), NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
-                  // TODO: Orders.UpdateTicket()
-               }
+            if (LT(newTakeProfit, OrderTakeProfit()) && OrderTakeProfit() - Bid + TakeProfit*Pip > TrailingStart) {           // bug: triggered only every TakeProfit pip
+               if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Orange, NULL, oe)) return(false);    // TODO: Orders.UpdateTicket()
             }
             break;
 
