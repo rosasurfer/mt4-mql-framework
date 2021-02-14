@@ -70,9 +70,9 @@ extern bool   MoneyManagement                 = true;       // if TRUE lots are 
 extern double Risk                            = 2;          // percent of equity to risk for each trade
 extern double ManualLotsize                   = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
 
-extern string ___e___________________________ = "=== Bugs ================================";
-extern bool   Bug.ChannelCalculation          = true;       // broken calculation of signal channel high/low
-extern bool   Bug.StepTrailing                = true;       // trailing in steps of TrailingStart only
+extern string ___e___________________________ = "=== Bug reproduction ======================";
+extern bool   Bug.ChannelCalculation          = false;      // broken calculation of breakout channel high/low (for comparison only)
+extern bool   Bug.StepTrailing                = false;      // trailing in steps of TrailingStart (for comparison only)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
