@@ -25,17 +25,17 @@
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed broken commission calculations
  *  - simplified input parameters
- *  - fixed input parameter validation
- *  - fixed position size calculation
- *  - fixed signal detection (new input Bug.ChannelCalculation)
- *  - fixed trade handling (new input Bug.StepTrailing)
- *  - rewrote status display
- *
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
+ *  - fixed input parameter validation
+ *  - fixed position size calculation
+ *  - fixed signal detection (new input parameter Bug.ChannelCalculation)
+ *  - fixed trade handling (new input parameter Bug.SteppedTrailing)
+ *  - added internal order management (huge speed improvement)
+ *  - rewrote status display
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -72,7 +72,7 @@ extern double ManualLotsize                   = 0.1;        // fix position size
 
 extern string ___e___________________________ = "=== Bug reproduction ======================";
 extern bool   Bug.ChannelCalculation          = false;      // broken calculation of breakout channel high/low (for comparison only)
-extern bool   Bug.StepTrailing                = false;      // trailing in steps of TrailingStart (for comparison only)
+extern bool   Bug.SteppedTrailing             = false;      // TP trailing only every TrailingStart points (for comparison only)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +120,7 @@ double   closedPlNet;                  // total closed net profit
 double   totalPlNet;                   // openPlNet + closedPlNet
 
 // other
-string   orderComment = "XMT-rsf";
+string   orderComment = "";
 
 // cache vars to speed-up ShowStatus()
 string   sUnitSize   = "";
@@ -161,11 +161,12 @@ int onInit() {
       if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))        return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
+   orderComment = "XMT CC="+ Bug.ChannelCalculation +",ST="+ Bug.SteppedTrailing;
+
 
    // --- old ---------------------------------------------------------------------------------------------------------------
    MinBarSize    *= Pip;
    TrailingStart *= Point;
-
    if (!Magic) Magic = GenerateMagicNumber();
 
    if (!ReadOrderLog()) return(last_error);
@@ -489,7 +490,7 @@ bool Strategy() {
    // compose chart status messages
    if (IsChart()) {
       string sSpreadWarning = "";
-      if (avgSpread*Pip > MaxSpread*Point) sSpreadWarning = StringConcatenate("  => larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
+      if (avgSpread*Pip > MaxSpread*Point) sSpreadWarning = StringConcatenate("  =>  larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
 
       sStatusInfo = StringConcatenate("BarSize:    ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
                                       sIndicator,                                                                                                                NL,
