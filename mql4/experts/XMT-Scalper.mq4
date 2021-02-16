@@ -25,16 +25,18 @@
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed broken commission calculations
  *  - simplified input parameters
+ *  - renamed input parameter Timeframe                 => IndicatorTimeframe
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
+ *  - renamed input parameter TrailingStart             => TrailingStep
  *  - fixed input parameter validation
  *  - fixed position size calculation
- *  - fixed signal detection (new input parameter Bug.ChannelCalculation)
- *  - fixed trade handling (new input parameter Bug.SteppedTrailing)
- *  - added internal order management (huge speed improvement)
+ *  - fixed signal detection (new input parameter ChannelCalculationBug)
+ *  - fixed trade handling (new input parameter TakeProfitCalculationBug)
+ *  - internal order management (huge speed improvement)
  *  - rewrote status display
  */
 #include <stddefines.mqh>
@@ -45,6 +47,7 @@ int __DeinitFlags[];
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
+extern int    IndicatorTimeFrame              = PERIOD_M1;  // trading timeframe
 extern int    IndicatorPeriods                = 3;          // entry indicator bar periods
 extern double BollingerBands.Deviation        = 2;          // standard deviations
 extern double Envelopes.Deviation             = 0.07;       // in percent
@@ -52,27 +55,27 @@ extern double Envelopes.Deviation             = 0.07;       // in percent
 extern string ___b___________________________ = "=== Entry bar size conditions ================";
 extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fix MinBarSize
 extern double SpreadMultiplier                = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
+extern int    MaxSpread                       = 30;         // max. acceptable spread in point
 extern double MinBarSize                      = 18;         // MinBarSize = fix size in pip
 
 extern string ___c___________________________ = "=== Trade settings ========================";
-extern int    TimeFrame                       = PERIOD_M1;  // trading timeframe
 extern int    BreakoutReversal                = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
 extern int    TakeProfit                      = 10;         // TP in pip
 extern int    StopLoss                        = 6;          // SL in pip
-extern double TrailingStart                   = 20;         // start trailing profit from as so many points
-extern int    MaxSpread                       = 30;         // max. acceptable spread in point
-extern int    Slippage                        = 3;          // acceptable market order slippage in point
+extern double TrailingStart                   = 0;          // start SL trailing after {pip} in profit
+extern double TrailingStep                    = 2;          // trail SL every {pip} in profit
+extern int    Slippage                        = 3;          // acceptable order slippage in point
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
 extern string ___d___________________________ = "=== MoneyManagement ====================";
 extern bool   MoneyManagement                 = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
-extern double Risk                            = 2;          // percent of equity to risk for each trade
-extern double ManualLotsize                   = 0.1;        // fix position size to use if "MoneyManagement" is FALSE
+extern double Risk                            = 2;          // percent of equity to risk with each trade
+extern double ManualLotsize                   = 0.01;       // fix position size used if "MoneyManagement" is FALSE
 
-extern string ___e___________________________ = "=== Bug reproduction ======================";
-extern bool   Bug.ChannelCalculation          = false;      // broken calculation of breakout channel high/low (for comparison only)
-extern bool   Bug.SteppedTrailing             = false;      // TP trailing only every TrailingStart points (for comparison only)
+extern string ___e___________________________ = "=== Bugs =============================";
+extern bool   ChannelCalculationBug           = false;      // enable erroneous calculation of the breakout channel
+extern bool   TakeProfitCalculationBug        = true;       // enable erroneous calculation of TakeProfit targets
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -91,11 +94,11 @@ int      orders.ticket      [];
 double   orders.lots        [];        // order volume > 0
 int      orders.pendingType [];        // pending order type if applicable or OP_UNDEFINED (-1)
 double   orders.pendingPrice[];        // pending entry limit if applicable or 0
-int      orders.openType    [];        // order open type if triggered or OP_UNDEFINED (-1)
-datetime orders.openTime    [];        // order open time if triggered or 0
-double   orders.openPrice   [];        // order open price if triggered or 0
-datetime orders.closeTime   [];        // order close time if closed or 0
-double   orders.closePrice  [];        // order close price if closed or 0
+int      orders.openType    [];        // order open type of an opened position or OP_UNDEFINED (-1)
+datetime orders.openTime    [];        // order open time of an opened position or 0
+double   orders.openPrice   [];        // order open price of an opened position or 0
+datetime orders.closeTime   [];        // order close time of a closed order or 0
+double   orders.closePrice  [];        // order close price of a closed position or 0
 double   orders.stopLoss    [];        // SL price or 0
 double   orders.takeProfit  [];        // TP price or 0
 double   orders.swap        [];        // order swap
@@ -139,8 +142,8 @@ int onInit() {
    // validate inputs
    // EntryIndicator
    if (EntryIndicator < 1 || EntryIndicator > 3)                       return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
-   // Timeframe
-   if (Period() != TimeFrame)                                          return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(TimeFrame) +")", ERR_RUNTIME_ERROR));
+   // IndicatorTimeframe
+   if (Period() != IndicatorTimeFrame)                                 return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(IndicatorTimeFrame) +")", ERR_RUNTIME_ERROR));
    // BreakoutReversal
    if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))     return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    // TakeProfit
@@ -161,12 +164,12 @@ int onInit() {
       if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))        return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
-   orderComment = "XMT CC="+ Bug.ChannelCalculation +",ST="+ Bug.SteppedTrailing;
+   // initialize vars
+   orderComment = "XMT"+ ifString(ChannelCalculationBug, "-ChannelCalcBug", "");
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
    MinBarSize    *= Pip;
-   TrailingStart *= Point;
    if (!Magic) Magic = GenerateMagicNumber();
 
    if (!ReadOrderLog()) return(last_error);
@@ -377,7 +380,7 @@ bool Strategy() {
    if (!GetIndicatorValues(channelHigh, channelLow, channelMean)) return(false);
 
    int oe[];
-   bool isOpenOrder = false;
+   bool trailSL, isOpenOrder = false;
    double price, stopprice, stoploss, takeprofit, newTakeProfit, tpDiff, newStopLoss;
 
    // manage open orders
@@ -387,6 +390,7 @@ bool Strategy() {
          continue;
 
       isOpenOrder = true;
+      trailSL     = false;
       RefreshRates();
 
       switch (OrderType()) {
@@ -395,7 +399,13 @@ bool Strategy() {
             newStopLoss   = Bid - StopLoss*Pip;
             tpDiff        = newTakeProfit - OrderTakeProfit();
 
-            if (GT(tpDiff, TrailingStart)) {                                                                                  // bug: this is step-trailing, not trailing
+            //if (Bid-OrderOpenPrice() >= TrailingStart*Pip) {
+               if (GE(tpDiff, TrailingStep*Pip)) {
+                  trailSL = true;
+               }
+            //}
+
+            if (trailSL) {
                if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Lime, NULL, oe)) return(false);      // TODO: Orders.UpdateTicket()
             }
             break;
@@ -405,7 +415,13 @@ bool Strategy() {
             newStopLoss   = Ask + StopLoss*Pip;
             tpDiff        = OrderTakeProfit() - newTakeProfit;
 
-            if (GT(tpDiff, TrailingStart)) {                                                                                  // bug: this is step-trailing, not trailing
+            //if (OrderOpenPrice()-Ask >= TrailingStart*Pip) {
+               if (GE(tpDiff, TrailingStep*Pip)) {
+                  trailSL = true;
+               }
+            //}
+
+            if (trailSL) {
                if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Orange, NULL, oe)) return(false);    // TODO: Orders.UpdateTicket()
             }
             break;
@@ -451,7 +467,7 @@ bool Strategy() {
 
    // check for a channel breakout and open an order accordingly
    if (!isOpenOrder && avgSpread) {
-      double barSize = iHigh(Symbol(), TimeFrame, 0) - iLow(Symbol(), TimeFrame, 0);
+      double barSize = iHigh(Symbol(), IndicatorTimeFrame, 0) - iLow(Symbol(), IndicatorTimeFrame, 0);
       if (UseSpreadMultiplier) MinBarSize = avgSpread*Pip * SpreadMultiplier;
 
       if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {      // TODO: should be barSize >= MinBarSize
@@ -465,16 +481,16 @@ bool Strategy() {
 
             if (tradeSignal == SIGNAL_LONG) {
                price      = Ask + BreakoutReversal*Point;
-               stoploss   = price - currentSpread*Pip - StopLoss*Pip;
                takeprofit = price + TakeProfit*Pip;
+               stoploss   = price - currentSpread*Pip - StopLoss*Pip;
 
                if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  Slippage, stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
                else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,     stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
             }
             else /*tradeSignal == SIGNAL_SHORT*/ {
                price      = Bid - BreakoutReversal*Point;
-               stoploss   = price + currentSpread*Pip + StopLoss*Pip;
                takeprofit = price - TakeProfit*Pip;
+               stoploss   = price + currentSpread*Pip + StopLoss*Pip;
 
                if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  Slippage, stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
                else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,     stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
@@ -557,25 +573,25 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
    static double lastHigh, lastLow;
 
    if (EntryIndicator == 1) {
-      channelHigh = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
-      channelLow  = iMA(Symbol(), TimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
+      channelHigh = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
+      channelLow  = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
       channelMean = (channelHigh + channelLow)/2;
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "  (MovingAverage)");
    }
    else if (EntryIndicator == 2) {
-      channelHigh = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
-      channelLow  = iBands(Symbol(), TimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
+      channelHigh = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
+      channelLow  = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "  (BollingerBands)");
    }
    else /*EntryIndicator == 3*/ {
-      channelHigh = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
-      channelLow  = iEnvelopes(Symbol(), TimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
+      channelHigh = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
+      channelLow  = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
    }
 
-   if (Bug.ChannelCalculation) {                // reproduce major Capella bug (for comparison only)
+   if (ChannelCalculationBug) {                 // reproduce Capella's channel calculation bug (for comparison only)
       if (!lastHigh || Bid > channelMean) {
          lastHigh = channelHigh;                // use current values
          lastLow  = channelLow;
