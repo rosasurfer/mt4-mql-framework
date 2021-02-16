@@ -591,13 +591,13 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
    }
 
-   if (ChannelCalculationBug) {                 // reproduce Capella's channel calculation bug (for comparison only)
+   if (ChannelCalculationBug) {                          // reproduce Capella's channel calculation bug (for comparison only)
       if (!lastHigh || Bid > channelMean) {
-         lastHigh = channelHigh;                // use current values
+         lastHigh = channelHigh;                         // return current values and store them
          lastLow  = channelLow;
       }
       else {
-         channelHigh = lastHigh;                // use expired values
+         channelHigh = lastHigh;                         // return expired values from storage
          channelLow  = lastLow;
       }
    }
