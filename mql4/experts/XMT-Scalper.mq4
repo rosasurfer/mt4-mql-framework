@@ -34,8 +34,8 @@
  *  - renamed input parameter TrailingStart             => TrailingStep
  *  - fixed input parameter validation
  *  - fixed position size calculation
- *  - fixed signal detection (new input parameter ChannelCalculationBug)
- *  - fixed trade handling (new input parameter TakeProfitCalculationBug)
+ *  - fixed signal detection (new input parameter ChannelBug for comparison)
+ *  - fixed trade handling (new input parameter TakeProfitBug for comparison)
  *  - internal order management (huge speed improvement)
  *  - rewrote status display
  */
@@ -47,7 +47,7 @@ int __DeinitFlags[];
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
-extern int    IndicatorTimeFrame              = PERIOD_M1;  // trading timeframe
+extern int    IndicatorTimeFrame              = PERIOD_M1;  // entry indicator timeframe
 extern int    IndicatorPeriods                = 3;          // entry indicator bar periods
 extern double BollingerBands.Deviation        = 2;          // standard deviations
 extern double Envelopes.Deviation             = 0.07;       // in percent
@@ -62,8 +62,8 @@ extern string ___c___________________________ = "=== Trade settings ============
 extern int    BreakoutReversal                = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
 extern int    TakeProfit                      = 10;         // TP in pip
 extern int    StopLoss                        = 6;          // SL in pip
-extern double TrailingStart                   = 0;          // start SL trailing after {pip} in profit
-extern double TrailingStep                    = 2;          // trail SL every {pip} in profit
+extern double TrailingStart                   = 0;          // start exit trailing after {pip} in profit
+extern double TrailingStep                    = 2;          // trail exit limits every {pip} in profit
 extern int    Slippage                        = 3;          // acceptable order slippage in point
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
@@ -74,8 +74,8 @@ extern double Risk                            = 2;          // percent of equity
 extern double ManualLotsize                   = 0.01;       // fix position size used if "MoneyManagement" is FALSE
 
 extern string ___e___________________________ = "=== Bugs =============================";
-extern bool   ChannelCalculationBug           = false;      // enable erroneous calculation of the breakout channel
-extern bool   TakeProfitCalculationBug        = true;       // enable erroneous calculation of TakeProfit targets
+extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel
+extern bool   TakeProfitBug                   = true;       // enable erroneous calculation of TakeProfit targets
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -165,7 +165,7 @@ int onInit() {
    }
 
    // initialize vars
-   orderComment = "XMT"+ ifString(ChannelCalculationBug, "-ChannelCalcBug", "");
+   orderComment = "XMT"+ ifString(ChannelBug, "-ChannelBug", "");
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
@@ -380,8 +380,8 @@ bool Strategy() {
    if (!GetIndicatorValues(channelHigh, channelLow, channelMean)) return(false);
 
    int oe[];
-   bool trailSL, isOpenOrder = false;
-   double price, stopprice, stoploss, takeprofit, newTakeProfit, tpDiff, newStopLoss;
+   bool isOpenOrder;
+   double price, stopprice, stoploss, takeprofit, newTakeProfit, newStopLoss;
 
    // manage open orders
    for (int i=0; i < OrdersTotal(); i++) {
@@ -390,38 +390,27 @@ bool Strategy() {
          continue;
 
       isOpenOrder = true;
-      trailSL     = false;
       RefreshRates();
 
       switch (OrderType()) {
          case OP_BUY:
-            newTakeProfit = Ask + TakeProfit*Pip;
-            newStopLoss   = Bid - StopLoss*Pip;
-            tpDiff        = newTakeProfit - OrderTakeProfit();
+            if      (TakeProfitBug)                               newTakeProfit = Ask + TakeProfit*Pip;                       // erroneous TP calculation
+            else if (GE(Bid-OrderOpenPrice(), TrailingStart*Pip)) newTakeProfit = Bid + TakeProfit*Pip;                       // correct TP calculation and also check TrailingStart
+            else                                                  newTakeProfit = INT_MIN;
 
-            //if (Bid-OrderOpenPrice() >= TrailingStart*Pip) {
-               if (GE(tpDiff, TrailingStep*Pip)) {
-                  trailSL = true;
-               }
-            //}
-
-            if (trailSL) {
+            if (GE(newTakeProfit-OrderTakeProfit(), TrailingStep*Pip)) {
+               newStopLoss = Bid - StopLoss*Pip;
                if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Lime, NULL, oe)) return(false);      // TODO: Orders.UpdateTicket()
             }
             break;
 
          case OP_SELL:
-            newTakeProfit = Bid - TakeProfit*Pip;
-            newStopLoss   = Ask + StopLoss*Pip;
-            tpDiff        = OrderTakeProfit() - newTakeProfit;
+            if      (TakeProfitBug)                               newTakeProfit = Bid - TakeProfit*Pip;                       // erroneous TP calculation
+            else if (GE(OrderOpenPrice()-Ask, TrailingStart*Pip)) newTakeProfit = Ask - TakeProfit*Pip;                       // correct TP calculation and also check TrailingStart
+            else                                                  newTakeProfit = INT_MAX;
 
-            //if (OrderOpenPrice()-Ask >= TrailingStart*Pip) {
-               if (GE(tpDiff, TrailingStep*Pip)) {
-                  trailSL = true;
-               }
-            //}
-
-            if (trailSL) {
+            if (GE(OrderTakeProfit()-newTakeProfit, TrailingStep*Pip)) {
+               newStopLoss = Ask + StopLoss*Pip;
                if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Orange, NULL, oe)) return(false);    // TODO: Orders.UpdateTicket()
             }
             break;
@@ -591,7 +580,7 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
    }
 
-   if (ChannelCalculationBug) {                          // reproduce Capella's channel calculation bug (for comparison only)
+   if (ChannelBug) {                                     // reproduce Capella's channel calculation bug (for comparison only)
       if (!lastHigh || Bid > channelMean) {
          lastHigh = channelHigh;                         // return current values and store them
          lastLow  = channelLow;
