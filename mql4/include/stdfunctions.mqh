@@ -1347,17 +1347,6 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
 
 
 /**
- * Whether the current program runs on a visible chart. Can be FALSE only during testing if "VisualMode=Off" or
- * "Optimization=On".
- *
- * @return bool
- */
-bool IsChart() {
-   return(__ExecutionContext[EC.hChart] != 0);
-}
-
-
-/**
  * Return the current MQL module's program name, i.e. the name of the program's main module.
  *
  * @return string
@@ -3087,7 +3076,7 @@ int Chart.Refresh() {
  */
 bool Chart.StoreBool(string key, bool value) {
    value = value!=0;
-   if (!IsChart())  return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)  return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3112,7 +3101,7 @@ bool Chart.StoreBool(string key, bool value) {
  * @return bool - success status
  */
 bool Chart.StoreInt(string key, int value) {
-   if (!IsChart())  return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)  return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3137,7 +3126,7 @@ bool Chart.StoreInt(string key, int value) {
  * @return bool - success status
  */
 bool Chart.StoreColor(string key, color value) {
-   if (!IsChart())  return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)  return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3162,7 +3151,7 @@ bool Chart.StoreColor(string key, color value) {
  * @return bool - success status
  */
 bool Chart.StoreDouble(string key, double value) {
-   if (!IsChart())  return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)  return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3187,7 +3176,7 @@ bool Chart.StoreDouble(string key, double value) {
  * @return bool - success status
  */
 bool Chart.StoreString(string key, string value) {
-   if (!IsChart())    return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)    return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)       return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3219,7 +3208,7 @@ bool Chart.StoreString(string key, string value) {
  * @return bool - success status
  */
 bool Chart.RestoreBool(string key, bool &var) {
-   if (!IsChart())             return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)             return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                return(!catch("Chart.RestoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3246,7 +3235,7 @@ bool Chart.RestoreBool(string key, bool &var) {
  * @return bool - success status
  */
 bool Chart.RestoreInt(string key, int &var) {
-   if (!IsChart())             return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)             return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                return(!catch("Chart.RestoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3271,7 +3260,7 @@ bool Chart.RestoreInt(string key, int &var) {
  * @return bool - success status
  */
 bool Chart.RestoreColor(string key, color &var) {
-   if (!IsChart())               return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)               return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                  return(!catch("Chart.RestoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3299,7 +3288,7 @@ bool Chart.RestoreColor(string key, color &var) {
  * @return bool - success status
  */
 bool Chart.RestoreDouble(string key, double &var) {
-   if (!IsChart())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3324,7 +3313,7 @@ bool Chart.RestoreDouble(string key, double &var) {
  * @return bool - success status
  */
 bool Chart.RestoreString(string key, string &var) {
-   if (!IsChart())  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__isChart)  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.RestoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3349,7 +3338,7 @@ bool Chart.RestoreString(string key, string &var) {
  * @return bool - success status
  */
 bool Chart.DeleteValue(string key) {
-   if (!IsChart())  return(true);
+   if (!__isChart)  return(true);
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.DeleteValue(1)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3384,7 +3373,7 @@ int Tester.GetBarModel() {
 int Tester.Pause(string location = "") {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (!IsChart())         return(NO_ERROR);                            // skip if VisualMode=Off
+   if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
    if (Tester.IsPaused())  return(NO_ERROR);                            // skip if already paused
 
@@ -3430,7 +3419,7 @@ int Tester.Stop(string location = "") {
 bool Tester.IsPaused() {
    if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (!IsChart())         return(false);
+   if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
 
    int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
@@ -6586,7 +6575,6 @@ void __DummyCalls() {
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
-   IsChart();
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();

@@ -12,6 +12,7 @@ int init() {
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
+   __isChart        = (__ExecutionContext[EC.hChart] != 0);
    __lpSuperContext = __ExecutionContext[EC.superContext];
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;

@@ -100,7 +100,7 @@ int onTick() {
    }
 
    // draw breakeven line
-   if (IsChart()) {
+   if (__isChart) {
       beLong [0] = GetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long");
       beShort[0] = GetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short");
    }

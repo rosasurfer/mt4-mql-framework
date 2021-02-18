@@ -174,7 +174,6 @@ double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
 string   ifString(bool condition, string thenValue, string elseValue);;
 string   InitReasonDescription(int reason);;
-bool     IsChart();;
 bool     IsCurrency(string value);;
 bool     IsEmpty(double value);;
 bool     IsEmptyString(string value);;
