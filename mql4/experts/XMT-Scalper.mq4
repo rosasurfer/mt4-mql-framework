@@ -165,7 +165,7 @@ int onInit() {
    // initialize global vars
    minBarSize    = ifDouble(UseSpreadMultiplier, 0, MinBarSize*Pip);
    orderSlippage = Round(Slippage*Pip/Point);
-   orderComment  = "XMT"+ ifString(ChannelBug, "-ChannelBug", "") + ifString(TakeProfitBug, "-TakeProfitBug", "");
+   orderComment  = "XMT"+ ifString(ChannelBug, "-ChannelBug", "") + ifString(TakeProfitBug, "-TPBug", "");
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
