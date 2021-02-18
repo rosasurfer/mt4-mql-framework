@@ -345,7 +345,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_POINT                       11     // point size in the quote currency         (entspricht Point)               price resolution, e.g.: 0.0000'1
 #define MODE_DIGITS                      12     // number of digits after the decimal point (entspricht Digits)
 #define MODE_SPREAD                      13     // spread value in points
-#define MODE_STOPLEVEL                   14     // min. required stop/limit distance to be able to open an order (in points; used only by bucket shops)
+#define MODE_STOPLEVEL                   14     // min. required stop/limit distance to be able to open an order in point (bucket shops only)
 #define MODE_LOTSIZE                     15     // units of 1 lot                                                                                     100'000
 #define MODE_TICKVALUE                   16     // tick value in the account currency
 #define MODE_TICKSIZE                    17     // tick size in the quote currency                                        multiple of 1 point, e.g.: 0.0000'5
@@ -364,7 +364,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_MARGINMAINTENANCE           30     // units with margin requirement to maintain an open positions of 1 lot (0 = je nach Account-Stopoutlevel)               @see (2)
 #define MODE_MARGINHEDGED                31     // units with margin requirement for a hedged position of 1 lot                                                  50.000
 #define MODE_MARGINREQUIRED              32     // free margin requirement to open a position of 1 lot
-#define MODE_FREEZELEVEL                 33     // min. required price distance to be able to modify an order (in points; used only by bucket shops)
+#define MODE_FREEZELEVEL                 33     // min. required price distance to be able to modify an order in point (bucket shops only)
                                                 //
                                                 // (1) MARGIN_INIT (in Units) müßte, wenn es gesetzt ist, die eigentliche Marginrate sein. MARGIN_REQUIRED (in Account-Currency)
                                                 //     könnte höher und MARGIN_MAINTENANCE niedriger sein (MARGIN_INIT wird z.B. von IC Markets gesetzt).

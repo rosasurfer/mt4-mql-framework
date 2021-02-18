@@ -53,18 +53,18 @@ extern double BollingerBands.Deviation        = 2;          // standard deviatio
 extern double Envelopes.Deviation             = 0.07;       // in percent
 
 extern string ___b___________________________ = "=== Entry bar size conditions ================";
-extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fix MinBarSize
-extern double SpreadMultiplier                = 12.5;       // MinBarSize = SpreadMultiplier * avgSpread
-extern int    MaxSpread                       = 30;         // max. acceptable spread in point
-extern double MinBarSize                      = 18;         // MinBarSize = fix size in pip
+extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fix min. bar size
+extern double SpreadMultiplier                = 12.5;       // min. bar size = SpreadMultiplier * avgSpread
+extern double MinBarSize                      = 18;         // min. bar size in {pip}
 
 extern string ___c___________________________ = "=== Trade settings ========================";
-extern int    BreakoutReversal                = 0;          // breakout reversal in point (0: counter-trend trading w/o reversal)
-extern int    TakeProfit                      = 10;         // TP in pip
-extern int    StopLoss                        = 6;          // SL in pip
+extern double MaxSpread                       = 3;          // max. acceptable spread in {pip}
+extern double BreakoutReversal                = 0;          // breakout reversal in {pip} (0: counter-trend trading w/o reversal)
+extern double TakeProfit                      = 10;         // TP in {pip}
+extern double StopLoss                        = 6;          // SL in {pip}
 extern double TrailingStart                   = 0;          // start exit trailing after {pip} in profit
 extern double TrailingStep                    = 2;          // trail exit limits every {pip} in profit
-extern int    Slippage                        = 3;          // acceptable order slippage in point
+extern double Slippage                        = 0.3;        // acceptable order slippage in {pip}
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
@@ -105,7 +105,7 @@ double   orders.swap        [];        // order swap
 double   orders.commission  [];        // order commission
 double   orders.profit      [];        // order profit (gross)
 
-// PL statistics
+// order statistics
 int      openPositions;                // number of open positions
 double   openLots;                     // total open lotsize
 double   openSwap;                     // total open swap
@@ -123,6 +123,8 @@ double   closedPlNet;                  // total closed net profit
 double   totalPlNet;                   // openPlNet + closedPlNet
 
 // other
+double   minBarSize;                   // effective min. bar size in absolute terms
+int      orderSlippage;                // order slippage in point
 string   orderComment = "";
 
 // cache vars to speed-up ShowStatus()
@@ -141,35 +143,32 @@ string   sAvgSpread  = "-";
 int onInit() {
    // validate inputs
    // EntryIndicator
-   if (EntryIndicator < 1 || EntryIndicator > 3)                       return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
+   if (EntryIndicator < 1 || EntryIndicator > 3)                     return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
    // IndicatorTimeframe
-   if (Period() != IndicatorTimeFrame)                                 return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(IndicatorTimeFrame) +")", ERR_RUNTIME_ERROR));
+   if (Period() != IndicatorTimeFrame)                               return(catch("onInit(2)  invalid chart timeframe "+ PeriodDescription(Period()) +" (the EA must run on the configured timeframe "+ PeriodDescription(IndicatorTimeFrame) +")", ERR_RUNTIME_ERROR));
    // BreakoutReversal
-   if (LT(BreakoutReversal, MarketInfo(Symbol(), MODE_STOPLEVEL)))     return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ BreakoutReversal +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
-   // TakeProfit
-   if (LT(TakeProfit*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point)) return(catch("onInit(4)  invalid input parameter TakeProfit: "+ TakeProfit +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
-   // StopLoss
-   if (!StopLoss)                                                      return(catch("onInit(5)  invalid input parameter StopLoss: "+ StopLoss +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   if (LT(StopLoss*Pip, MarketInfo(Symbol(), MODE_STOPLEVEL)*Point))   return(catch("onInit(6)  invalid input parameter StopLoss: "+ StopLoss +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
+   if (LT(BreakoutReversal*Pip, stopLevel*Point))                    return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                                 return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-      double lotsPerTrade = CalculateLots(false); if (IsLastError())   return(last_error);
-      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))         return(catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))         return(catch("onInit(9)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                               return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      double lotsPerTrade = CalculateLots(false); if (IsLastError()) return(last_error);
+      if (LT(lotsPerTrade, MarketInfo(Symbol(), MODE_MINLOT)))       return(catch("onInit(8)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(lotsPerTrade, MarketInfo(Symbol(), MODE_MAXLOT)))       return(catch("onInit(9)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))        return(catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))        return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, MarketInfo(Symbol(), MODE_MINLOT)))      return(catch("onInit(10)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT)", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, MarketInfo(Symbol(), MODE_MAXLOT)))      return(catch("onInit(11)  invalid input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT)", ERR_INVALID_INPUT_PARAMETER));
    }
 
-   // initialize vars
-   orderComment = "XMT"+ ifString(ChannelBug, "-ChannelBug", "");
+   // initialize global vars
+   minBarSize    = ifDouble(UseSpreadMultiplier, 0, MinBarSize*Pip);
+   orderSlippage = Round(Slippage*Pip/Point);
+   orderComment  = "XMT"+ ifString(ChannelBug, "-ChannelBug", "") + ifString(TakeProfitBug, "-TakeProfitBug", "");
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
-   MinBarSize    *= Pip;
    if (!Magic) Magic = GenerateMagicNumber();
 
    if (!ReadOrderLog()) return(last_error);
@@ -422,7 +421,7 @@ bool Strategy() {
                isOpenOrder = false;
             }
             else {
-               stopprice = Ask + BreakoutReversal*Point;                   // trail pending order in breakout direction
+               stopprice = Ask + BreakoutReversal*Pip;                     // trail pending order in breakout direction
 
                if (LT(stopprice, OrderOpenPrice())) {
                   stoploss   = stopprice - currentSpread*Pip - StopLoss*Pip;
@@ -440,7 +439,7 @@ bool Strategy() {
                isOpenOrder = false;
             }
             else {
-               stopprice = Bid - BreakoutReversal*Point;                   // trail pending order in breakout direction
+               stopprice = Bid - BreakoutReversal*Pip;                     // trail pending order in breakout direction
 
                if (GT(stopprice, OrderOpenPrice())) {
                   stoploss   = stopprice + currentSpread*Pip + StopLoss*Pip;
@@ -457,32 +456,32 @@ bool Strategy() {
    // check for a channel breakout and open an order accordingly
    if (!isOpenOrder && avgSpread) {
       double barSize = iHigh(Symbol(), IndicatorTimeFrame, 0) - iLow(Symbol(), IndicatorTimeFrame, 0);
-      if (UseSpreadMultiplier) MinBarSize = avgSpread*Pip * SpreadMultiplier;
+      if (UseSpreadMultiplier) minBarSize = avgSpread*Pip * SpreadMultiplier;
 
-      if (barSize > MinBarSize && avgSpread*Pip <= MaxSpread*Point) {      // TODO: should be barSize >= MinBarSize
+      if (GE(barSize, minBarSize) && avgSpread <= MaxSpread) {
          int tradeSignal = NULL;
          if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
          else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
-         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;              // flip long and short bits (^0011)
+         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;                 // flip long and short bits (^0011)
 
          if (tradeSignal != NULL) {
             double lots = CalculateLots(true); if (!lots) return(false);
 
             if (tradeSignal == SIGNAL_LONG) {
-               price      = Ask + BreakoutReversal*Point;
+               price      = Ask + BreakoutReversal*Pip;
                takeprofit = price + TakeProfit*Pip;
                stoploss   = price - currentSpread*Pip - StopLoss*Pip;
 
-               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  Slippage, stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
-               else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,     stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
+               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
+               else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
             }
             else /*tradeSignal == SIGNAL_SHORT*/ {
-               price      = Bid - BreakoutReversal*Point;
+               price      = Bid - BreakoutReversal*Pip;
                takeprofit = price - TakeProfit*Pip;
                stoploss   = price + currentSpread*Pip + StopLoss*Pip;
 
-               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  Slippage, stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
-               else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,     stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
+               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
+               else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
             }
             if (oe.IsError(oe)) return(false);
 
@@ -495,12 +494,12 @@ bool Strategy() {
    // compose chart status messages
    if (IsChart()) {
       string sSpreadWarning = "";
-      if (avgSpread*Pip > MaxSpread*Point) sSpreadWarning = StringConcatenate("  =>  larger then MaxSpread=", DoubleToStr(MaxSpread*Point/Pip, 1), " (waiting)");
+      if (avgSpread > MaxSpread) sSpreadWarning = StringConcatenate("  =>  larger then MaxSpread=", DoubleToStr(MaxSpread, 1), " (waiting)");
 
-      sStatusInfo = StringConcatenate("BarSize:    ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(RoundCeil(MinBarSize/Pip, 1), 1), " pip", NL,
-                                      sIndicator,                                                                                                                NL,
-                                      "Spread:    ",  sCurrSpread, "    Avg: ", sAvgSpread, sSpreadWarning,                                                      NL,
-                                      "Unitsize:   ", sUnitSize,                                                                                                 NL);
+      sStatusInfo = StringConcatenate("BarSize:    ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(minBarSize/Pip + 0.5001, 1), " pip", NL,
+                                      sIndicator,                                                                                                           NL,
+                                      "Spread:    ",  sCurrSpread, "    Avg: ", sAvgSpread, sSpreadWarning,                                                 NL,
+                                      "Unitsize:   ", sUnitSize,                                                                                            NL);
    }
    return(!catch("Strategy(2)"));
 }
