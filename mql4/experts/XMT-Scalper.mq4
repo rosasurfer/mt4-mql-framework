@@ -106,7 +106,8 @@ double   orders.commission  [];        // order commission
 double   orders.profit      [];        // order profit (gross)
 
 // order statistics
-int      openPositions;                // number of open positions
+int      openOrders;                   // number of open orders (max. 1)
+int      openPositions;                // number of open positions (max. 1)
 double   openLots;                     // total open lotsize
 double   openSwap;                     // total open swap
 double   openCommission;               // total open commissions
@@ -128,11 +129,13 @@ int      orderSlippage;                // order slippage in point
 string   orderComment = "";
 
 // cache vars to speed-up ShowStatus()
-string   sUnitSize   = "";
-string   sStatusInfo = "\n\n\n";
-string   sIndicator  = "";
-string   sCurrSpread = "-";
-string   sAvgSpread  = "-";
+string   sIndicator      = "";
+string   sCurrentBarSize = "-";
+string   sMinBarSize     = "";
+string   sCurrentSpread  = "-";
+string   sAvgSpread      = "-";
+string   sUnitSize       = "";
+string   sStatusInfo     = "\n\n\n";
 
 
 /**
@@ -163,9 +166,16 @@ int onInit() {
    }
 
    // initialize global vars
-   minBarSize    = ifDouble(UseSpreadMultiplier, 0, MinBarSize*Pip);
+   if (UseSpreadMultiplier) {
+      minBarSize  = 0;
+      sMinBarSize = "-";
+   }
+   else {
+      minBarSize  = MinBarSize*Pip;
+      sMinBarSize = DoubleToStr(MinBarSize, 1);
+   }
    orderSlippage = Round(Slippage*Pip/Point);
-   orderComment  = "XMT"+ ifString(ChannelBug, "-ChannelBug", "") + ifString(TakeProfitBug, "-TPBug", "");
+   orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TPBug", "");
 
 
    // --- old ---------------------------------------------------------------------------------------------------------------
@@ -387,14 +397,12 @@ bool Strategy() {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderMagicNumber()!=Magic || OrderSymbol()!=Symbol())
          continue;
-
       isOpenOrder = true;
-      RefreshRates();
 
       switch (OrderType()) {
          case OP_BUY:
             if      (TakeProfitBug)                               newTakeProfit = Ask + TakeProfit*Pip;                       // erroneous TP calculation
-            else if (GE(Bid-OrderOpenPrice(), TrailingStart*Pip)) newTakeProfit = Bid + TakeProfit*Pip;                       // correct TP calculation and also check TrailingStart
+            else if (GE(Bid-OrderOpenPrice(), TrailingStart*Pip)) newTakeProfit = Bid + TakeProfit*Pip;                       // correct TP calculation, also check TrailingStart
             else                                                  newTakeProfit = INT_MIN;
 
             if (GE(newTakeProfit-OrderTakeProfit(), TrailingStep*Pip)) {
@@ -405,7 +413,7 @@ bool Strategy() {
 
          case OP_SELL:
             if      (TakeProfitBug)                               newTakeProfit = Bid - TakeProfit*Pip;                       // erroneous TP calculation
-            else if (GE(OrderOpenPrice()-Ask, TrailingStart*Pip)) newTakeProfit = Ask - TakeProfit*Pip;                       // correct TP calculation and also check TrailingStart
+            else if (GE(OrderOpenPrice()-Ask, TrailingStart*Pip)) newTakeProfit = Ask - TakeProfit*Pip;                       // correct TP calculation, also check TrailingStart
             else                                                  newTakeProfit = INT_MAX;
 
             if (GE(OrderTakeProfit()-newTakeProfit, TrailingStep*Pip)) {
@@ -453,85 +461,135 @@ bool Strategy() {
    }
 
 
-   // check for a channel breakout and open an order accordingly
-   if (!isOpenOrder && avgSpread) {
-      double barSize = iHigh(Symbol(), IndicatorTimeFrame, 0) - iLow(Symbol(), IndicatorTimeFrame, 0);
-      if (UseSpreadMultiplier) minBarSize = avgSpread*Pip * SpreadMultiplier;
-
-      if (GE(barSize, minBarSize) && avgSpread <= MaxSpread) {
-         int tradeSignal = NULL;
-         if      (Bid < channelLow)         tradeSignal  = SIGNAL_LONG;
-         else if (Bid > channelHigh)        tradeSignal  = SIGNAL_SHORT;
-         if (tradeSignal && ReverseSignals) tradeSignal ^= 3;                 // flip long and short bits (^0011)
-
-         if (tradeSignal != NULL) {
-            double lots = CalculateLots(true); if (!lots) return(false);
-
-            if (tradeSignal == SIGNAL_LONG) {
-               price      = Ask + BreakoutReversal*Pip;
-               takeprofit = price + TakeProfit*Pip;
-               stoploss   = price - currentSpread*Pip - StopLoss*Pip;
-
-               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
-               else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
-            }
-            else /*tradeSignal == SIGNAL_SHORT*/ {
-               price      = Bid - BreakoutReversal*Pip;
-               takeprofit = price - TakeProfit*Pip;
-               stoploss   = price + currentSpread*Pip + StopLoss*Pip;
-
-               if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
-               else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
-            }
-            if (oe.IsError(oe)) return(false);
-
-            Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
-         }
-      }
+   // check for entry signals and open a new order
+   int signal;
+   if (!isOpenOrder) /*&&*/ if (IsEntrySignal(signal)) {
+      OpenNewOrder(signal);
    }
 
 
    // compose chart status messages
-   if (IsChart()) {
+   if (__isChart) {
       string sSpreadWarning = "";
       if (avgSpread > MaxSpread) sSpreadWarning = StringConcatenate("  =>  larger then MaxSpread=", DoubleToStr(MaxSpread, 1), " (waiting)");
 
-      sStatusInfo = StringConcatenate("BarSize:    ", DoubleToStr(barSize/Pip, 1), " pip    MinBarSize: ", DoubleToStr(minBarSize/Pip + 0.5001, 1), " pip", NL,
-                                      sIndicator,                                                                                                           NL,
-                                      "Spread:    ",  sCurrSpread, "    Avg: ", sAvgSpread, sSpreadWarning,                                                 NL,
-                                      "Unitsize:   ", sUnitSize,                                                                                            NL);
+      sStatusInfo = StringConcatenate("BarSize:    ", sCurrentBarSize, " pip    MinBarSize: ", sMinBarSize, " pip", NL,
+                                      sIndicator,                                                                   NL,
+                                      "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadWarning,      NL,
+                                      "Unitsize:   ", sUnitSize,                                                    NL);
    }
    return(!catch("Strategy(2)"));
 }
 
 
 /**
- * Collect and return current and average spread values. Online at least 30 ticks are collected before calculating an average.
+ * Whether the conditions of an entry signal are satisfied.
  *
- * @param  _Out_ double currSpread - current spread in pip
- * @param  _Out_ double avgSpread  - average spread in pip or NULL if the average spread is not yet available
+ * @param  _Out_ int signal - identifier of the detected signal or NULL
+ *
+ * @return bool
+ */
+bool IsEntrySignal(int &signal) {
+   signal = NULL;
+   if (last_error || openOrders) return(false);
+
+   double currentSpread, avgSpread, channelHigh, channelLow, dNull;
+
+   if (UseSpreadMultiplier) {
+      if (!CollectSpreads(currentSpread, avgSpread) || !avgSpread)  return(false);
+      if (GT(currentSpread, MaxSpread) || GT(avgSpread, MaxSpread)) return(false);
+
+      minBarSize = avgSpread*Pip * SpreadMultiplier;
+      if (__isChart) sMinBarSize = DoubleToStr(minBarSize/Pip + 0.50000001, 1);
+   }
+
+   double barSize = iHigh(NULL, IndicatorTimeFrame, 0) - iLow(NULL, IndicatorTimeFrame, 0);
+   if (__isChart) sCurrentBarSize = DoubleToStr(barSize/Pip, 1);
+
+   if (GE(barSize, minBarSize)) {
+      if (!GetIndicatorValues(channelHigh, channelLow, dNull)) return(false);
+
+      if      (Bid < channelLow)    signal  = SIGNAL_LONG;
+      else if (Bid > channelHigh)   signal  = SIGNAL_SHORT;
+      if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits (3 = 0011)
+   }
+   return(signal != NULL);
+}
+
+
+/**
+ * Open a new order for the specified entry signal.
+ *
+ * @param  int signal - order entry signal: SIGNAL_LONG|SIGNAL_SHORT
  *
  * @return bool - success status
  */
-bool CollectSpreads(double &currSpread, double &avgSpread) {
-   currSpread  = (Ask-Bid)/Pip;
-   sCurrSpread = DoubleToStr(currSpread, 1);
+bool OpenNewOrder(int signal) {
+   if (last_error != 0) return(false);
+
+   double lots   = CalculateLots(true); if (!lots) return(false);
+   double spread = Ask-Bid, price, takeprofit, stoploss;
+   int oe[];
+
+   if (signal == SIGNAL_LONG) {
+      price      = Ask + BreakoutReversal*Pip;
+      takeprofit = price + TakeProfit*Pip;
+      stoploss   = price - spread - StopLoss*Pip;
+
+      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
+      else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stoploss, takeprofit, orderComment, Magic, NULL, Blue, NULL, oe);
+   }
+   else if (signal == SIGNAL_SHORT) {
+      price      = Bid - BreakoutReversal*Pip;
+      takeprofit = price - TakeProfit*Pip;
+      stoploss   = price + spread + StopLoss*Pip;
+
+      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
+      else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stoploss, takeprofit, orderComment, Magic, NULL, Red, NULL, oe);
+   }
+   else return(!catch("OpenNewOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+
+   if (oe.IsError(oe)) return(false);
+
+   return(Orders.AddTicket(oe.Ticket(oe), oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL));
+}
+
+
+/**
+ * Collect and return current and average spread values. Online at least 30 ticks are collected before calculating an average.
+ *
+ * @param  _Out_ double currentSpread - current spread in pip
+ * @param  _Out_ double avgSpread     - average spread in pip or NULL if the average spread is not yet available
+ *
+ * @return bool - success status
+ */
+bool CollectSpreads(double &currentSpread, double &avgSpread) {
+   static double lastCurrentSpread, lastAvgSpread;
+   static int lastTick; if (Tick == lastTick) {
+      currentSpread = lastCurrentSpread;
+      avgSpread     = lastAvgSpread;
+      return(true);
+   }
+   lastTick = Tick;
+
+   currentSpread = (Ask-Bid)/Pip; if (__isChart) sCurrentSpread = DoubleToStr(currentSpread, 1);
+   lastCurrentSpread = currentSpread;
 
    if (IsTesting()) {
-      avgSpread  = currSpread;
-      sAvgSpread = sCurrSpread;
+      avgSpread = currentSpread; sAvgSpread = sCurrentSpread;
+      lastAvgSpread = avgSpread;
       return(true);
    }
 
    double spreads[30];
    ArrayCopy(spreads, spreads, 0, 1);
-   spreads[29] = currSpread;
+   spreads[29] = currentSpread;
 
    static int ticks = 0;
    if (ticks < 29) {
       ticks++;
-      avgSpread  = NULL;
-      sAvgSpread = "-";
+      avgSpread = NULL; sAvgSpread = "-";
+      lastAvgSpread = avgSpread;
       return(true);
    }
 
@@ -541,8 +599,8 @@ bool CollectSpreads(double &currSpread, double &avgSpread) {
    }
    avgSpread  = sum/ticks;
    if (avgSpread < 0.01)                           // make sure avgSpread doesn't get zero (special return value)
-      avgSpread = 0.01;
-   sAvgSpread = DoubleToStr(avgSpread, 2);
+      avgSpread = 0.01; if (__isChart) sAvgSpread = DoubleToStr(avgSpread, 2);
+   lastAvgSpread = avgSpread;
 
    return(true);
 }
@@ -564,19 +622,19 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       channelHigh = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       channelLow  = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW,  0);
       channelMean = (channelHigh + channelLow)/2;
-      if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "  (MovingAverage)");
+      if (__isChart) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "  (MovingAverage)");
    }
    else if (EntryIndicator == 2) {
       channelHigh = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
       channelLow  = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "  (BollingerBands)");
+      if (__isChart) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "  (BollingerBands)");
    }
    else /*EntryIndicator == 3*/ {
       channelHigh = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
       channelLow  = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (IsChart()) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
+      if (__isChart) sIndicator = StringConcatenate("Channel:   H=", NumberToStr(channelHigh, PriceFormat), "    M=", NumberToStr(channelMean, PriceFormat), "    L=", NumberToStr(channelLow, PriceFormat), "   (Envelopes)");
    }
 
    if (ChannelBug) {                                     // reproduce Capella's channel calculation bug (for comparison only)
@@ -755,25 +813,26 @@ bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, doub
       openType     = type;
    }
 
-   ArrayPushInt   (orders.ticket,       ticket      );
-   ArrayPushDouble(orders.lots,         lots        );
-   ArrayPushInt   (orders.pendingType,  pendingType );
-   ArrayPushDouble(orders.pendingPrice, pendingPrice);
-   ArrayPushInt   (orders.openType,     openType    );
-   ArrayPushInt   (orders.openTime,     openTime    );
-   ArrayPushDouble(orders.openPrice,    openPrice   );
-   ArrayPushInt   (orders.closeTime,    closeTime   );
-   ArrayPushDouble(orders.closePrice,   closePrice  );
-   ArrayPushDouble(orders.stopLoss,     stopLoss    );
-   ArrayPushDouble(orders.takeProfit,   takeProfit  );
-   ArrayPushDouble(orders.swap,         swap        );
-   ArrayPushDouble(orders.commission,   commission  );
-   ArrayPushDouble(orders.profit,       profit      );
+   int size=ArraySize(orders.ticket), newSize=size+1;
+   ArrayResize(orders.ticket,       newSize); orders.ticket      [size] = ticket;
+   ArrayResize(orders.lots,         newSize); orders.lots        [size] = lots;
+   ArrayResize(orders.pendingType,  newSize); orders.pendingType [size] = pendingType;
+   ArrayResize(orders.pendingPrice, newSize); orders.pendingPrice[size] = pendingPrice;
+   ArrayResize(orders.openType,     newSize); orders.openType    [size] = openType;
+   ArrayResize(orders.openTime,     newSize); orders.openTime    [size] = openTime;
+   ArrayResize(orders.openPrice,    newSize); orders.openPrice   [size] = openPrice;
+   ArrayResize(orders.closeTime,    newSize); orders.closeTime   [size] = closeTime;
+   ArrayResize(orders.closePrice,   newSize); orders.closePrice  [size] = closePrice;
+   ArrayResize(orders.stopLoss,     newSize); orders.stopLoss    [size] = stopLoss;
+   ArrayResize(orders.takeProfit,   newSize); orders.takeProfit  [size] = takeProfit;
+   ArrayResize(orders.swap,         newSize); orders.swap        [size] = swap;
+   ArrayResize(orders.commission,   newSize); orders.commission  [size] = commission;
+   ArrayResize(orders.profit,       newSize); orders.profit      [size] = profit;
 
-   bool isPosition       = (openType==OP_BUY || openType==OP_SELL);
+   bool isPosition       = (openType != OP_UNDEFINED);
    bool isOpenPosition   = (isPosition && !closeTime);
    bool isClosedPosition = (isPosition && closeTime);
-   bool isLong           = (IsLongOrderType(pendingType) || IsLongOrderType(openType));
+   bool isLong           = IsLongOrderType(type);
 
    if (isOpenPosition) {
       openPositions++;
@@ -859,7 +918,7 @@ bool Orders.RemoveTicket(int ticket) {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   if (!IsChart()) return(error);
+   if (!__isChart) return(error);
 
    string sError = "";
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
@@ -886,12 +945,12 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
- * ShowStatus: Update the string representation of the unitsize.
+ * ShowStatus: Update the string representation of the lotsize.
  *
  * @param  double size
  */
 void SS.UnitSize(double size) {
-   if (IsChart()) {
+   if (__isChart) {
       sUnitSize = NumberToStr(size, ".+") +" lot";
    }
 }

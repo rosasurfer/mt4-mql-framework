@@ -13,6 +13,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                    // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
+bool     __isChart;                                         // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
 
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu öffnen

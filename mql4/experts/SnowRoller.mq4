@@ -1311,7 +1311,7 @@ string UpdateStatus.StopLossMsg(int i) {
  * @return bool
  */
 bool EventListener_ChartCommand(string &commands[]) {
-   if (!IsChart()) return(false);
+   if (!__isChart) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
       label = ProgramName() +".command";
@@ -2791,7 +2791,7 @@ int CreateMagicNumber(int level) {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   if (!IsChart()) return(error);
+   if (!__isChart) return(error);
 
    string msg, sError;
 

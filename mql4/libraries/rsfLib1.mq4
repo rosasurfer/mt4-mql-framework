@@ -7012,7 +7012,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
  * @see  ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
       return(false);
@@ -7044,7 +7044,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  * @see  ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -7097,7 +7097,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @see  ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderModified_A(1)", O_PUSH))
       return(false);
@@ -7133,7 +7133,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  * @see  ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    bool openModified = NE(openPrice,  oldOpenPrice );
    bool slModified   = NE(stopLoss,   oldStopLoss  );
@@ -7220,7 +7220,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  * @see  ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderFilled_A(1)", O_PUSH))
       return(false);
@@ -7251,7 +7251,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  * @see  ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -7299,7 +7299,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.PositionClosed_A(1)", O_PUSH))
       return(false);
@@ -7328,7 +7328,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -7384,7 +7384,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  * @see  ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderDeleted_A(1)", O_PUSH))
       return(false);
@@ -7415,7 +7415,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  * @see  ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
