@@ -57,10 +57,10 @@ extern string ___b___________________________ = "=== Entry bar size conditions =
 extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fix min. bar size
 extern double SpreadMultiplier                = 12.5;       // min. bar size = SpreadMultiplier * avgSpread
 extern double MinBarSize                      = 18;         // min. bar size in {pip}
+extern double MaxSpread                       = 3;          // max. acceptable spread in {pip}
 
 extern string ___c___________________________ = "=== Trade settings ========================";
-extern double MaxSpread                       = 3;          // max. acceptable spread in {pip}
-extern double BreakoutReversal                = 0;          // breakout reversal in {pip} (0: counter-trend trading w/o reversal)
+extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
 extern double TakeProfit                      = 10;         // TP in {pip}
 extern double StopLoss                        = 6;          // SL in {pip}
 extern double TrailingStart                   = 0;          // start trailing after {pip} in profit
@@ -158,15 +158,15 @@ int onInit() {
    double minLots=MarketInfo(Symbol(), MODE_MINLOT), maxLots=MarketInfo(Symbol(), MODE_MAXLOT);
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                       return(catch("onInit(7)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                       return(catch("onInit(4)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
       double lots = CalculateLots(false); if (IsLastError()) return(last_error);
-      if (LT(lots, minLots))                                 return(catch("onInit(8)  not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
-      if (GT(lots, maxLots))                                 return(catch("onInit(9)  too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(lots, minLots))                                 return(catch("onInit(5)  not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
+      if (GT(lots, maxLots))                                 return(catch("onInit(6)  too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, minLots))                        return(catch("onInit(10)  too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, maxLots))                        return(catch("onInit(11)  too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, minLots))                        return(catch("onInit(7)  too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, maxLots))                        return(catch("onInit(8)  too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
    }
 
    // initialize global vars
@@ -174,7 +174,7 @@ int onInit() {
    else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
    sMaxSpread    = DoubleToStr(MaxSpread, 1);
    orderSlippage = Round(Slippage*Pip/Point);
-   orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TPBug", "");
+   orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TpBug", "");
 
 
 
@@ -185,7 +185,7 @@ int onInit() {
    if (!ReadOrderLog()) return(last_error);
 
    SS.All();
-   return(catch("onInit(12)"));
+   return(catch("onInit(9)"));
 }
 
 
