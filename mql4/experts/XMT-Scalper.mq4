@@ -107,16 +107,17 @@ double   orders.commission  [];        // order commission
 double   orders.profit      [];        // order profit (gross)
 
 // order statistics
-int      openOrders;                   // number of open orders (max. 1)
-int      openPositions;                // number of open positions (max. 1)
-double   openLots;                     // total open lotsize
+bool     isOpenOrder;                  // whether an open order exists (max. 1 open order)
+bool     isOpenPosition;               // whether an open position exists (max. 1 open position)
+
+double   openLots;                     // total open lotsize: -n...+n
 double   openSwap;                     // total open swap
 double   openCommission;               // total open commissions
 double   openPl;                       // total open gross profit
 double   openPlNet;                    // total open net profit
 
 int      closedPositions;              // number of closed positions
-double   closedLots;                   // total closed lotsize
+double   closedLots;                   // total closed lotsize: 0...+n
 double   closedSwap;                   // total closed swap
 double   closedCommission;             // total closed commission
 double   closedPl;                     // total closed gross profit
@@ -205,8 +206,21 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   double dNull;
+   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);    // if enabled data must be tracked every tick
+   if (__isChart)  CalculateSpreads();                         // for the spread status display
+
    UpdateOrderStatus();
-   Strategy();
+
+   if (isOpenOrder) {
+      if (isOpenPosition) ManageOpenPositions();               // manage open orders
+      else                ManagePendingOrders();
+   }
+
+   if (!last_error && !isOpenOrder) {
+      int signal;
+      if (IsEntrySignal(signal)) OpenNewOrder(signal);         // check for and handle entry signals
+   }
    return(catch("onTick(1)"));
 }
 
@@ -217,8 +231,9 @@ int onTick() {
  * @return bool - success status
  */
 bool UpdateOrderStatus() {
-   // open trade statistics are fully recalculated
-   openPositions  = 0;
+   // open order statistics are fully recalculated
+   isOpenOrder    = false;                                     // global vars
+   isOpenPosition = false;
    openLots       = 0;
    openSwap       = 0;
    openCommission = 0;
@@ -228,22 +243,23 @@ bool UpdateOrderStatus() {
    int orders = ArraySize(orders.ticket);
 
    // update ticket status
-   for (int i=orders-1; i >= 0; i--) {                            // iterate backwards and stop at the first closed ticket
-      if (orders.closeTime[i] > 0) break;                         // to increase performance
+   for (int i=orders-1; i >= 0; i--) {                         // iterate backwards and stop at the first closed ticket
+      if (orders.closeTime[i] > 0) break;                      // to increase performance
+      isOpenOrder = true;
       if (!SelectTicket(orders.ticket[i], "UpdateOrderStatus(1)")) return(false);
 
-      bool wasPending  = (orders.openType[i] == OP_UNDEFINED);
+      bool wasPending  = (orders.openType[i] == OP_UNDEFINED); // local vars
       bool isPending   = (OrderType() > OP_SELL);
       bool wasPosition = !wasPending;
       bool isOpen      = !OrderCloseTime();
       bool isClosed    = !isOpen;
 
       if (wasPending) {
-         if (!isPending) {                                        // the pending order was filled
+         if (!isPending) {                                     // the pending order was filled
             onPositionOpen(i);
-            wasPosition = true;                                   // mark as known open position
+            wasPosition = true;                                // mark as a known open position
          }
-         else if (isClosed) {                                     // the pending order was cancelled
+         else if (isClosed) {                                  // the pending order was cancelled (externally)
             onOrderDelete(i);
             orders--;
             continue;
@@ -256,15 +272,16 @@ bool UpdateOrderStatus() {
          orders.profit    [i] = OrderProfit();
 
          if (isOpen) {
-            openPositions++;
+            isOpenPosition = true;
             openLots       += ifDouble(orders.openType[i]==OP_BUY, orders.lots[i], -orders.lots[i]);
             openSwap       += orders.swap      [i];
             openCommission += orders.commission[i];
             openPl         += orders.profit    [i];
          }
-         else /*isClosed*/ {                                      // the open position was closed
+         else /*isClosed*/ {                                   // the open position was closed
             onPositionClose(i);
-            closedPositions++;                                    // update closed trade statistics
+            isOpenOrder = false;
+            closedPositions++;                                 // update closed trade statistics
             closedLots       += orders.lots      [i];
             closedSwap       += orders.swap      [i];
             closedCommission += orders.commission[i];
@@ -380,100 +397,6 @@ bool onOrderDelete(int i) {
 
 
 /**
- * Main strategy
- *
- * @return bool - success status
- */
-bool Strategy() {
-   currentSpread = (Ask-Bid)/Pip; if (__isChart) SS.CurrentSpread();
-   avgSpread = GetAvgSpread();    if (!avgSpread) return(false);
-
-   double dNull, channelMean;
-   if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
-
-   int oe[];
-   bool isOpenOrder;
-   double price, stopprice, stoploss, takeprofit, newTakeProfit, newStopLoss;
-
-   // manage open orders
-   for (int i=0; i < OrdersTotal(); i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderMagicNumber()!=Magic || OrderSymbol()!=Symbol())
-         continue;
-      isOpenOrder = true;
-
-      switch (OrderType()) {
-         case OP_BUY:
-            if      (TakeProfitBug)                               newTakeProfit = Ask + TakeProfit*Pip;                       // erroneous TP calculation
-            else if (GE(Bid-OrderOpenPrice(), TrailingStart*Pip)) newTakeProfit = Bid + TakeProfit*Pip;                       // correct TP calculation, also check TrailingStart
-            else                                                  newTakeProfit = INT_MIN;
-
-            if (GE(newTakeProfit-OrderTakeProfit(), TrailingStep*Pip)) {
-               newStopLoss = Bid - StopLoss*Pip;
-               if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Lime, NULL, oe)) return(false);      // TODO: Orders.UpdateTicket()
-            }
-            break;
-
-         case OP_SELL:
-            if      (TakeProfitBug)                               newTakeProfit = Bid - TakeProfit*Pip;                       // erroneous TP calculation
-            else if (GE(OrderOpenPrice()-Ask, TrailingStart*Pip)) newTakeProfit = Ask - TakeProfit*Pip;                       // correct TP calculation, also check TrailingStart
-            else                                                  newTakeProfit = INT_MAX;
-
-            if (GE(OrderTakeProfit()-newTakeProfit, TrailingStep*Pip)) {
-               newStopLoss = Ask + StopLoss*Pip;
-               if (!OrderModifyEx(OrderTicket(), NULL, newStopLoss, newTakeProfit, NULL, Orange, NULL, oe)) return(false);    // TODO: Orders.UpdateTicket()
-            }
-            break;
-
-         case OP_BUYSTOP:
-            if (GE(Bid, channelMean)) {                                    // delete the order if price reached mid channel
-               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
-               Orders.RemoveTicket(OrderTicket());
-               isOpenOrder = false;
-            }
-            else {
-               stopprice = Ask + BreakoutReversal*Pip;                     // trail pending order in breakout direction
-
-               if (LT(stopprice, OrderOpenPrice())) {
-                  stoploss   = stopprice - currentSpread*Pip - StopLoss*Pip;
-                  takeprofit = stopprice + TakeProfit*Pip;
-                  if (!OrderModifyEx(OrderTicket(), price, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
-                  Orders.UpdateTicket(oe.Ticket(oe), oe.OpenPrice(oe), oe.StopLoss(oe), oe.TakeProfit(oe));
-               }
-            }
-            break;
-
-         case OP_SELLSTOP:
-            if (LE(Bid, channelMean)) {                                    // delete the order if price reached mid channel
-               if (!OrderDeleteEx(OrderTicket(), CLR_NONE, NULL, oe)) return(false);
-               Orders.RemoveTicket(OrderTicket());
-               isOpenOrder = false;
-            }
-            else {
-               stopprice = Bid - BreakoutReversal*Pip;                     // trail pending order in breakout direction
-
-               if (GT(stopprice, OrderOpenPrice())) {
-                  stoploss   = stopprice + currentSpread*Pip + StopLoss*Pip;
-                  takeprofit = stopprice - TakeProfit*Pip;
-                  if (!OrderModifyEx(OrderTicket(), stopprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
-                  Orders.UpdateTicket(oe.Ticket(oe), oe.OpenPrice(oe), oe.StopLoss(oe), oe.TakeProfit(oe));
-               }
-            }
-            break;
-      }
-   }
-
-   // check for entry signals and open a new order
-   int signal;
-   if (!isOpenOrder) /*&&*/ if (IsEntrySignal(signal)) {
-      OpenNewOrder(signal);
-   }
-
-   return(!catch("Strategy(1)"));
-}
-
-
-/**
  * Whether the conditions of an entry signal are satisfied.
  *
  * @param  _Out_ int signal - identifier of the detected signal or NULL
@@ -482,13 +405,13 @@ bool Strategy() {
  */
 bool IsEntrySignal(int &signal) {
    signal = NULL;
-   if (last_error || openOrders) return(false);
+   if (last_error || isOpenOrder) return(false);
 
    double barSize = iHigh(NULL, IndicatorTimeFrame, 0) - iLow(NULL, IndicatorTimeFrame, 0);
    if (__isChart) sCurrentBarSize = DoubleToStr(barSize/Pip, 1) +" pip";
 
    if (UseSpreadMultiplier) {
-      if (!GetAvgSpread())                                    return(false);
+      if (!avgSpread) /*&&*/ if (!CalculateSpreads())         return(false);
       if (currentSpread > MaxSpread || avgSpread > MaxSpread) return(false);
 
       minBarSize = avgSpread*Pip * SpreadMultiplier; if (__isChart) SS.MinBarSize();
@@ -545,21 +468,124 @@ bool OpenNewOrder(int signal) {
 
 
 /**
- * Calculate and return the average spread. Online at least 30 ticks are collected before calculating an average.
+ * Manage pending orders. There can be at most one pending order.
  *
- * @return double - average spread in pip or NULL in case of errors or if the average is not yet available
+ * @return bool - success status
  */
-double GetAvgSpread() {
-   static double avgSpread, lastAvgSpread;
-   static int lastTick; if (Tick == lastTick) {
-      return(lastAvgSpread);
+bool ManagePendingOrders() {
+   if (!isOpenOrder || isOpenPosition) return(true);
+
+   int i = ArraySize(orders.ticket)-1, oe[];
+   if (orders.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrders(1)  illegal order type "+ OperationTypeToStr(orders.openType[i]) +" of expected pending order #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
+
+   double openprice, stoploss, takeprofit, spread=Ask-Bid, channelMean, dNull;
+   if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
+
+   switch (orders.pendingType[i]) {
+      case OP_BUYSTOP:
+         if (GE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
+            if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, NULL, oe)) return(false);
+            Orders.RemoveTicket(orders.ticket[i]);
+            return(true);
+         }
+         openprice = Ask + BreakoutReversal*Pip;                        // trail order entry in breakout direction
+
+         if (LT(openprice, orders.pendingPrice[i])) {
+            stoploss   = openprice - spread - StopLoss*Pip;
+            takeprofit = openprice + TakeProfit*Pip;
+            if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+         }
+         break;
+
+      case OP_SELLSTOP:
+         if (LE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
+            if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, NULL, oe)) return(false);
+            Orders.RemoveTicket(orders.ticket[i]);
+            return(true);
+         }
+         openprice = Bid - BreakoutReversal*Pip;                        // trail order entry in breakout direction
+
+         if (GT(openprice, orders.pendingPrice[i])) {
+            stoploss   = openprice + spread + StopLoss*Pip;
+            takeprofit = openprice - TakeProfit*Pip;
+            if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+         }
+         break;
+
+      default:
+         return(!catch("ManagePendingOrders(2)  illegal order type "+ OperationTypeToStr(orders.pendingType[i]) +" of expected pending order #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
    }
-   lastTick = Tick;
+
+   if (stoploss > 0) {
+      orders.pendingPrice[i] = NormalizeDouble(openprice, Digits);
+      orders.stopLoss    [i] = NormalizeDouble(stoploss, Digits);
+      orders.takeProfit  [i] = NormalizeDouble(takeprofit, Digits);
+   }
+   return(true);
+}
+
+
+/**
+ * Manage open positions. There can be at most one open position.
+ *
+ * @return bool - success status
+ */
+bool ManageOpenPositions() {
+   if (!isOpenPosition) return(true);
+
+   int i = ArraySize(orders.ticket)-1, oe[];
+   double stoploss, takeprofit;
+
+   switch (orders.openType[i]) {
+      case OP_BUY:
+         if      (TakeProfitBug)                                  takeprofit = Ask + TakeProfit*Pip;     // erroneous TP calculation
+         else if (GE(Bid-orders.openPrice[i], TrailingStart*Pip)) takeprofit = Bid + TakeProfit*Pip;     // correct TP calculation, also check TrailingStart
+         else                                                     takeprofit = INT_MIN;
+
+         if (GE(takeprofit-orders.takeProfit[i], TrailingStep*Pip)) {
+            stoploss = Bid - StopLoss*Pip;
+            if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+         }
+         break;
+
+      case OP_SELL:
+         if      (TakeProfitBug)                                  takeprofit = Bid - TakeProfit*Pip;     // erroneous TP calculation
+         else if (GE(orders.openPrice[i]-Ask, TrailingStart*Pip)) takeprofit = Ask - TakeProfit*Pip;     // correct TP calculation, also check TrailingStart
+         else                                                     takeprofit = INT_MAX;
+
+         if (GE(orders.takeProfit[i]-takeprofit, TrailingStep*Pip)) {
+            stoploss = Ask + StopLoss*Pip;
+            if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+         }
+         break;
+
+      default:
+         return(!catch("ManageOpenPositions(1)  illegal order type "+ OperationTypeToStr(orders.openType[i]) +" of expected open position #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
+   }
+
+   if (stoploss > 0) {
+      orders.stopLoss  [i] = NormalizeDouble(stoploss, Digits);
+      orders.takeProfit[i] = NormalizeDouble(takeprofit, Digits);
+   }
+   return(true);
+}
+
+
+/**
+ * Calculate current and average spread. Online at least 30 ticks are collected before calculating an average.
+ *
+ * @return bool - success status; FALSE if the average is not yet available
+ */
+bool CalculateSpreads() {
+   static int lastTick; if (Tick == lastTick) {
+      return(true);
+   }
+   lastTick      = Tick;
+   currentSpread = (Ask-Bid)/Pip;
 
    if (IsTesting()) {
-      avgSpread = currentSpread; sAvgSpread = sCurrentSpread;
-      lastAvgSpread = avgSpread;
-      return(avgSpread);
+      avgSpread = currentSpread; if (__isChart) SS.Spreads();
+      return(true);
    }
 
    double spreads[30];
@@ -569,21 +595,17 @@ double GetAvgSpread() {
    static int ticks = 0;
    if (ticks < 29) {
       ticks++;
-      avgSpread = NULL; sAvgSpread = "-";
-      lastAvgSpread = avgSpread;
-      return(avgSpread);
+      avgSpread = NULL; if (__isChart) SS.Spreads();
+      return(false);
    }
 
    double sum = 0;
    for (int i=0; i < ticks; i++) {
       sum += spreads[i];
    }
-   avgSpread = sum/ticks;
-   if (avgSpread < 0.00000001)                           // make sure the average never gets zero (a special return value)
-      avgSpread = 0.00000001; if (__isChart) SS.AvgSpread();
-   lastAvgSpread = avgSpread;
+   avgSpread = sum/ticks; if (__isChart) SS.Spreads();
 
-   return(avgSpread);
+   return(true);
 }
 
 
@@ -623,10 +645,10 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
    }
    else return(!catch("GetIndicatorValues(1)  illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
 
-   if (ChannelBug) {
-      if (lastHigh && Bid < channelMean) {      // reproduce Capella's channel calculation bug (for comparison only)
-         channelHigh = lastHigh;                // return expired band values
-         channelLow  = lastLow;
+   if (ChannelBug) {                            // reproduce Capella's channel calculation bug (for comparison only)
+      if (lastHigh && Bid < channelMean) {      // if enabled the function is called every tick
+         channelHigh = lastHigh;
+         channelLow  = lastLow;                 // return expired band values
       }
    }
    if (__isChart) {
@@ -725,7 +747,8 @@ bool ReadOrderLog() {
    ArrayResize(orders.commission,   0);
    ArrayResize(orders.profit,       0);
 
-   openPositions    = 0;
+   isOpenOrder      = false;
+   isOpenPosition   = false;
    openLots         = 0;
    openSwap         = 0;
    openCommission   = 0;
@@ -742,22 +765,24 @@ bool ReadOrderLog() {
    // all closed positions
    int orders = OrdersHistoryTotal();
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(_false(catch("ReadOrderLog(1)")));
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("ReadOrderLog(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
       if (OrderMagicNumber() != Magic) continue;
       if (OrderType() > OP_SELL)       continue;
       if (OrderSymbol() != Symbol())   continue;
 
-      Orders.AddTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice(), OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit());
+      if (!Orders.AddTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice(), OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit()))
+         return(false);
    }
 
-   // all open tickets
+   // all open orders
    orders = OrdersTotal();
    for (i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(_false(catch("ReadOrderLog(2)")));
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("ReadOrderLog(2)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
       if (OrderMagicNumber() != Magic) continue;
       if (OrderSymbol() != Symbol())   continue;
 
-      Orders.AddTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), NULL, NULL, OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit());
+      if (!Orders.AddTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), NULL, NULL, OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit()))
+         return(false);
    }
    return(!catch("ReadOrderLog(3)"));
 }
@@ -783,7 +808,7 @@ bool ReadOrderLog() {
  */
 bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double stopLoss, double takeProfit, double swap, double commission, double profit) {
    int pos = SearchIntArray(orders.ticket, ticket);
-   if (pos >= 0) return(!catch("Orders.AddTicket(1)  invalid parameter ticket: #"+ ticket +" (exists)", ERR_INVALID_PARAMETER));
+   if (pos >= 0) return(!catch("Orders.AddTicket(1)  invalid parameter ticket: #"+ ticket +" (ticket exists)", ERR_INVALID_PARAMETER));
 
    int pendingType, openType;
    double pendingPrice;
@@ -805,32 +830,37 @@ bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, doub
    ArrayResize(orders.ticket,       newSize); orders.ticket      [size] = ticket;
    ArrayResize(orders.lots,         newSize); orders.lots        [size] = lots;
    ArrayResize(orders.pendingType,  newSize); orders.pendingType [size] = pendingType;
-   ArrayResize(orders.pendingPrice, newSize); orders.pendingPrice[size] = pendingPrice;
+   ArrayResize(orders.pendingPrice, newSize); orders.pendingPrice[size] = NormalizeDouble(pendingPrice, Digits);
    ArrayResize(orders.openType,     newSize); orders.openType    [size] = openType;
    ArrayResize(orders.openTime,     newSize); orders.openTime    [size] = openTime;
-   ArrayResize(orders.openPrice,    newSize); orders.openPrice   [size] = openPrice;
+   ArrayResize(orders.openPrice,    newSize); orders.openPrice   [size] = NormalizeDouble(openPrice, Digits);
    ArrayResize(orders.closeTime,    newSize); orders.closeTime   [size] = closeTime;
-   ArrayResize(orders.closePrice,   newSize); orders.closePrice  [size] = closePrice;
-   ArrayResize(orders.stopLoss,     newSize); orders.stopLoss    [size] = stopLoss;
-   ArrayResize(orders.takeProfit,   newSize); orders.takeProfit  [size] = takeProfit;
+   ArrayResize(orders.closePrice,   newSize); orders.closePrice  [size] = NormalizeDouble(closePrice, Digits);
+   ArrayResize(orders.stopLoss,     newSize); orders.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
+   ArrayResize(orders.takeProfit,   newSize); orders.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
    ArrayResize(orders.swap,         newSize); orders.swap        [size] = swap;
    ArrayResize(orders.commission,   newSize); orders.commission  [size] = commission;
    ArrayResize(orders.profit,       newSize); orders.profit      [size] = profit;
 
-   bool isPosition       = (openType != OP_UNDEFINED);
-   bool isOpenPosition   = (isPosition && !closeTime);
-   bool isClosedPosition = (isPosition && closeTime);
-   bool isLong           = IsLongOrderType(type);
+   bool _isOpenOrder      = (!closeTime);                                  // local vars
+   bool _isPosition       = (openType != OP_UNDEFINED);
+   bool _isOpenPosition   = (_isPosition && !closeTime);
+   bool _isClosedPosition = (_isPosition && closeTime);
 
-   if (isOpenPosition) {
-      openPositions++;
-      openLots       += ifDouble(isLong, lots, -lots);
+   if (_isOpenOrder) {
+      if (isOpenOrder)    return(!catch("Orders.AddTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
+      isOpenOrder = true;                                                  // global vars
+   }
+   if (_isOpenPosition) {
+      if (isOpenPosition) return(!catch("Orders.AddTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
+      isOpenPosition = true;
+      openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
       openSwap       += swap;
       openCommission += commission;
       openPl         += profit;
       openPlNet       = openSwap + openCommission + openPl;
    }
-   if (isClosedPosition) {
+   if (_isClosedPosition) {
       closedPositions++;
       closedLots       += lots;
       closedSwap       += swap;
@@ -838,32 +868,10 @@ bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, doub
       closedPl         += profit;
       closedPlNet       = closedSwap + closedCommission + closedPl;
    }
-   if (isPosition) {
+   if (_isPosition) {
       totalPlNet = openPlNet + closedPlNet;
    }
-   return(!catch("Orders.AddTicket(2)"));
-}
-
-
-/**
- * Update the order record of the specified ticket.
- *
- * @param  int    ticket
- * @param  double pendingPrice
- * @param  double stopLoss
- * @param  double takeProfit
- *
- * @return bool - success status
- */
-bool Orders.UpdateTicket(int ticket, double pendingPrice, double stopLoss, double takeProfit) {
-   int pos = SearchIntArray(orders.ticket, ticket);
-   if (pos < 0) return(!catch("Orders.UpdateTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
-
-   orders.pendingPrice[pos] = pendingPrice;
-   orders.stopLoss    [pos] = stopLoss;
-   orders.takeProfit  [pos] = takeProfit;
-
-   return(!catch("Orders.UpdateTicket(2)"));
+   return(!catch("Orders.AddTicket(4)"));
 }
 
 
@@ -877,7 +885,10 @@ bool Orders.UpdateTicket(int ticket, double pendingPrice, double stopLoss, doubl
 bool Orders.RemoveTicket(int ticket) {
    int pos = SearchIntArray(orders.ticket, ticket);
    if (pos < 0)                              return(!catch("Orders.RemoveTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
-   if (orders.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveTicket(2)  cannot remove an already opened position: #"+ ticket, ERR_ILLEGAL_STATE));
+   if (orders.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveTicket(2)  cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
+   if (!isOpenOrder)                         return(!catch("Orders.RemoveTicket(3)  isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
+
+   isOpenOrder = false;
 
    ArraySpliceInts   (orders.ticket,       pos, 1);
    ArraySpliceDoubles(orders.lots,         pos, 1);
@@ -894,7 +905,7 @@ bool Orders.RemoveTicket(int ticket) {
    ArraySpliceDoubles(orders.commission,   pos, 1);
    ArraySpliceDoubles(orders.profit,       pos, 1);
 
-   return(!catch("Orders.RemoveTicket(3)"));
+   return(!catch("Orders.RemoveTicket(4)"));
 }
 
 
@@ -944,10 +955,33 @@ int ShowStatus(int error = NO_ERROR) {
  */
 void SS.All() {
    if (__isChart) {
-      SS.UnitSize();
-      SS.AvgSpread();            // before SS.CurrentSpread()
-      SS.CurrentSpread();
       SS.MinBarSize();
+      SS.Spreads();
+      SS.UnitSize();
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the min. bar size.
+ */
+void SS.MinBarSize() {
+   if (__isChart) {
+      sMinBarSize = DoubleToStr(RoundCeil(minBarSize/Pip, 1), 1) +" pip";
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representations of current and average spreads.
+ */
+void SS.Spreads() {
+   if (__isChart) {
+      sCurrentSpread = DoubleToStr(currentSpread, 1);
+
+      if (IsTesting())     sAvgSpread = sCurrentSpread;
+      else if (!avgSpread) sAvgSpread = "-";
+      else                 sAvgSpread = DoubleToStr(avgSpread, 2);
    }
 }
 
@@ -966,39 +1000,5 @@ void SS.UnitSize(double size = NULL) {
          else       sUnitSize = NumberToStr(size, ".+") +" lot";
          lastSize = size;
       }
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of the current spread.
- */
-void SS.CurrentSpread() {
-   if (__isChart) {
-      sCurrentSpread = DoubleToStr(currentSpread, 1);
-      if (IsTesting()) {
-         sAvgSpread = sCurrentSpread;
-      }
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of the average spread.
- */
-void SS.AvgSpread() {
-   if (__isChart) {
-      if (!avgSpread) sAvgSpread = "-";
-      else            sAvgSpread = DoubleToStr(avgSpread, 2);
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of the min. bar size.
- */
-void SS.MinBarSize() {
-   if (__isChart) {
-      sMinBarSize = DoubleToStr(RoundCeil(minBarSize/Pip, 1), 1) +" pip";
    }
 }

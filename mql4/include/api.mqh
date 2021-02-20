@@ -201,7 +201,6 @@ bool     IsVisualModeFix();;
 bool     LE(double double1, double double2, int digits = 8);;
 string   LocalTimeFormat(datetime timestamp, string format);;
 string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
-bool     LogTicket(int ticket);;
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method, bool strict = true);;
 string   MaMethodToStr(int method);;
@@ -224,6 +223,7 @@ string   NumberToStr(double value, string mask);;
 bool     ObjectDeleteEx(string label, string location = "");;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
+bool     OrderLogMessage(int ticket);;
 bool     OrderPop(string location);;
 bool     OrderPush(string location);;
 string   OrderTypeDescription(int type);;
