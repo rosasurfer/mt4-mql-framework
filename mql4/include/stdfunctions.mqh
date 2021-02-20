@@ -911,7 +911,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
 
 
 /**
- * Inlined conditional Boolean statement.
+ * Inlined conditional boolean statement.
  *
  * @param  bool condition
  * @param  bool thenValue
@@ -927,7 +927,7 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
 
 
 /**
- * Inlined conditional Integer statement.
+ * Inlined conditional integer statement.
  *
  * @param  bool condition
  * @param  int  thenValue
@@ -943,7 +943,7 @@ int ifInt(bool condition, int thenValue, int elseValue) {
 
 
 /**
- * Inlined conditional Double statement.
+ * Inlined conditional double statement.
  *
  * @param  bool   condition
  * @param  double thenValue
@@ -959,7 +959,7 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
 
 
 /**
- * Inlined conditional String statement.
+ * Inlined conditional string statement.
  *
  * @param  bool   condition
  * @param  string thenValue
@@ -971,6 +971,66 @@ string ifString(bool condition, string thenValue, string elseValue) {
    if (condition != 0)
       return(thenValue);
    return(elseValue);
+}
+
+
+/**
+ * Inlined boolean OR statement. Returns a first value or an alternative value if the first value evaluates to FALSE.
+ *
+ * @param  bool value
+ * @param  bool altValue
+ *
+ * @return bool
+ */
+bool ifBoolOr(bool value, bool altValue) {
+   if (value)
+      return(true);
+   return(altValue != 0);
+}
+
+
+/**
+ * Inlined integer OR statement. Returns a first value or an alternative if the first value evaluates to NULL.
+ *
+ * @param  int value
+ * @param  int altValue
+ *
+ * @return int
+ */
+int ifIntOr(int value, int altValue) {
+   if (value != NULL)
+      return(value);
+   return(altValue);
+}
+
+
+/**
+ * Inlined double OR statement. Returns a first value or an alternative value if the first value evaluates to NULL.
+ *
+ * @param  double value
+ * @param  double altValue
+ *
+ * @return double
+ */
+double ifDoubleOr(double value, double altValue) {
+   if (value != NULL)
+      return(value);
+   return(altValue);
+}
+
+
+/**
+ * Inlined string OR statement. Returns a first value or an alternative value if the first value evaluates to empty.
+ *
+ * @param  string value
+ * @param  string altValue
+ *
+ * @return string
+ */
+string ifStringOr(string value, string altValue) {
+   if (StringLen(value) > 0)
+      return(value);
+   return(altValue);
 }
 
 
@@ -6569,9 +6629,13 @@ void __DummyCalls() {
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
+   ifBoolOr(NULL, NULL);
    ifDouble(NULL, NULL, NULL);
+   ifDoubleOr(NULL, NULL);
    ifInt(NULL, NULL, NULL);
+   ifIntOr(NULL, NULL);
    ifString(NULL, NULL, NULL);
+   ifStringOr(NULL, NULL);
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
