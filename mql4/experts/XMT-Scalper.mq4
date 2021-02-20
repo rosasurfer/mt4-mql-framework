@@ -603,19 +603,19 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       channelHigh = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       channelLow  = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (__isChart) sIndicator = StringConcatenate("MovingAverage    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")");
+      if (__isChart) sIndicator = "MovingAverage";
    }
    else if (EntryIndicator == 2) {
       channelHigh = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
       channelLow  = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (__isChart) sIndicator = StringConcatenate("BollingerBands    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")");
+      if (__isChart) sIndicator = "BollingerBands";
    }
    else if (EntryIndicator == 3) {
       channelHigh = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
       channelLow  = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (__isChart) sIndicator = StringConcatenate("Envelopes    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")");
+      if (__isChart) sIndicator = "Envelopes";
    }
    else return(!catch("GetIndicatorValues(1)  illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
 
@@ -628,8 +628,8 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
          channelHigh = lastHigh;                         // return expired values from storage
          channelLow  = lastLow;
       }
-      if (__isChart) sIndicator = StringConcatenate(sIndicator, "   ChannelBug=1");
    }
+   if (__isChart) sIndicator = StringConcatenate(sIndicator, "    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")", ifString(ChannelBug, "   ChannelBug=1", ""));
 
    int error = GetLastError();
    if (!error)                      return(true);
@@ -909,17 +909,17 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread+0.00000001 > MaxSpread || avgSpread+0.00000001 > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), "              ", sError,                                                                                    NL,
-                                                                                                                                                              NL,
-                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                           NL,
-                                  "Channel:   ",  sIndicator,                                                                                                 NL,
-                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                       NL,
-                                  "Unitsize:   ", sUnitSize,                                                                                                  NL,
-                                                                                                                                                              NL,
-                                  "Open:      ", openPositions,   " positions    ", NumberToStr(openLots, ".+"),   " lot    PL: ", DoubleToStr(openPlNet, 2), NL,
-                                  "Closed:    ", closedPositions, " positions    ", NumberToStr(closedLots, ".+"), " lot    PL: ", DoubleToStr(closedPl, 2), "    Commission: ", DoubleToStr(closedCommission, 2), "    Swap: ", DoubleToStr(closedSwap, 2), NL,
-                                                                                                                                                              NL,
-                                  "Total PL:  ", DoubleToStr(totalPlNet, 2),                                                                                  NL
+   string msg = StringConcatenate(ProgramName(), "         ", sError,                                                                              NL,
+                                                                                                                                                   NL,
+                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                NL,
+                                  "Channel:   ",  sIndicator,                                                                                      NL,
+                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                            NL,
+                                  "Unitsize:   ", sUnitSize,                                                                                       NL,
+                                                                                                                                                   NL,
+                                  "Open:      ", NumberToStr(openLots, "+.+"),   " lot                           PL: ", DoubleToStr(openPlNet, 2), NL,
+                                  "Closed:    ", closedPositions, " trades    ", NumberToStr(closedLots, ".+"), " lot    PL: ", DoubleToStr(closedPl, 2), "    Commission: ", DoubleToStr(closedCommission, 2), "    Swap: ", DoubleToStr(closedSwap, 2), NL,
+                                                                                                                                                   NL,
+                                  "Total PL:  ", DoubleToStr(totalPlNet, 2),                                                                       NL
    );
 
    // 3 lines margin-top for potential indicator legends
@@ -992,6 +992,6 @@ void SS.AvgSpread() {
  */
 void SS.MinBarSize() {
    if (__isChart) {
-      sMinBarSize = DoubleToStr(minBarSize/Pip + 0.05000001, 1) +" pip";  // the manual addition spares a NormalizeDouble()
+      sMinBarSize = DoubleToStr(RoundCeil(minBarSize/Pip, 1), 1) +" pip";
    }
 }
