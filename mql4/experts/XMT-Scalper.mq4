@@ -388,8 +388,8 @@ bool Strategy() {
    currentSpread = (Ask-Bid)/Pip; if (__isChart) SS.CurrentSpread();
    avgSpread = GetAvgSpread();    if (!avgSpread) return(false);
 
-   double channelHigh, channelLow, channelMean;
-   if (!GetIndicatorValues(channelHigh, channelLow, channelMean)) return(false);
+   double dNull, channelMean;
+   if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
 
    int oe[];
    bool isOpenOrder;
@@ -488,8 +488,8 @@ bool IsEntrySignal(int &signal) {
    if (__isChart) sCurrentBarSize = DoubleToStr(barSize/Pip, 1) +" pip";
 
    if (UseSpreadMultiplier) {
-      if (!GetAvgSpread())                                                          return(false);
-      if (currentSpread+0.00000001 > MaxSpread || avgSpread+0.00000001 > MaxSpread) return(false);
+      if (!GetAvgSpread())                                    return(false);
+      if (currentSpread > MaxSpread || avgSpread > MaxSpread) return(false);
 
       minBarSize = avgSpread*Pip * SpreadMultiplier; if (__isChart) SS.MinBarSize();
    }
@@ -597,7 +597,14 @@ double GetAvgSpread() {
  * @return bool - success status
  */
 bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channelMean) {
-   static double lastHigh, lastLow;
+   static double lastHigh, lastLow, lastMean;
+   static int lastTick; if (Tick == lastTick) {
+      channelHigh = lastHigh;                   // return cached values
+      channelLow  = lastLow;
+      channelMean = lastMean;
+      return(true);
+   }
+   lastTick = Tick;
 
    if (EntryIndicator == 1) {
       channelHigh = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
@@ -619,17 +626,17 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
    }
    else return(!catch("GetIndicatorValues(1)  illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
 
-   if (ChannelBug) {                                     // reproduce Capella's channel calculation bug (for comparison only)
-      if (!lastHigh || Bid > channelMean) {
-         lastHigh = channelHigh;                         // return current values and store them
-         lastLow  = channelLow;
-      }
-      else {
-         channelHigh = lastHigh;                         // return expired values from storage
+   if (ChannelBug) {
+      if (lastHigh && Bid < channelMean) {      // reproduce Capella's channel calculation bug (for comparison only)
+         channelHigh = lastHigh;                // return expired band values
          channelLow  = lastLow;
       }
    }
    if (__isChart) sIndicator = StringConcatenate(sIndicator, "    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")", ifString(ChannelBug, "   ChannelBug=1", ""));
+
+   lastHigh = channelHigh;                      // cache returned values
+   lastLow  = channelLow;
+   lastMean = channelMean;
 
    int error = GetLastError();
    if (!error)                      return(true);
