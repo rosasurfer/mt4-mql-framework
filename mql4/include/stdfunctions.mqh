@@ -590,6 +590,43 @@ bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorP
 
 
 /**
+ * Generate a log message with all order data of a ticket. Replacement for the limited built-in function OrderPrint().
+ *
+ * @param  int  ticket
+ *
+ * @return string - log message or an empty string in case of errors
+ */
+string OrderLogMessage(int ticket) {
+   if (!SelectTicket(ticket, "OrderLogMessage(1)", O_PUSH))
+      return("");
+
+   int      type        = OrderType();
+   double   lots        = OrderLots();
+   string   symbol      = OrderSymbol();
+   double   openPrice   = OrderOpenPrice();
+   datetime openTime    = OrderOpenTime();
+   double   stopLoss    = OrderStopLoss();
+   double   takeProfit  = OrderTakeProfit();
+   double   closePrice  = OrderClosePrice();
+   datetime closeTime   = OrderCloseTime();
+   double   commission  = OrderCommission();
+   double   swap        = OrderSwap();
+   double   profit      = OrderProfit();
+   int      magic       = OrderMagicNumber();
+   string   comment     = OrderComment();
+
+   int      digits      = MarketInfo(symbol, MODE_DIGITS);
+   int      pipDigits   = digits & (~1);
+   string   priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
+
+   if (OrderPop("OrderLogMessage(2)"))
+      return(message);
+   return("");
+}
+
+
+/**
  * Schiebt den aktuellen Orderkontext auf den Kontextstack (fügt ihn ans Ende an).
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
@@ -5586,43 +5623,6 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Log the order data of a ticket. Replacement for the limited built-in function OrderPrint().
- *
- * @param  int ticket
- *
- * @return bool - success status
- */
-bool LogTicket(int ticket) {
-   if (!SelectTicket(ticket, "LogTicket(1)", O_PUSH))
-      return(false);
-
-   int      type        = OrderType();
-   double   lots        = OrderLots();
-   string   symbol      = OrderSymbol();
-   double   openPrice   = OrderOpenPrice();
-   datetime openTime    = OrderOpenTime();
-   double   stopLoss    = OrderStopLoss();
-   double   takeProfit  = OrderTakeProfit();
-   double   closePrice  = OrderClosePrice();
-   datetime closeTime   = OrderCloseTime();
-   double   commission  = OrderCommission();
-   double   swap        = OrderSwap();
-   double   profit      = OrderProfit();
-   int      magic       = OrderMagicNumber();
-   string   comment     = OrderComment();
-
-   int      digits      = MarketInfo(symbol, MODE_DIGITS);
-   int      pipDigits   = digits & (~1);
-   string   priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
-
-   logDebug("LogTicket(2)  "+ message);
-
-   return(OrderPop("LogTicket(3)"));
-}
-
-
-/**
  * Send a chart command. Modifies the specified chart object using the specified mutex.
  *
  * @param  string cmdObject           - label of the chart object to use for transmitting the command
@@ -6668,7 +6668,6 @@ void __DummyCalls() {
    LE(NULL, NULL);
    LocalTimeFormat(NULL, NULL);
    LoglevelDescription(NULL);
-   LogTicket(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
@@ -6688,6 +6687,7 @@ void __DummyCalls() {
    NormalizeLots(NULL);
    NumberToStr(NULL, NULL);
    ObjectDeleteEx(NULL);
+   OrderLogMessage(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    ParseDate(NULL);
