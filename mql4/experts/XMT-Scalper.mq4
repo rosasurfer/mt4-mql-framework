@@ -610,19 +610,16 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       channelHigh = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
       channelLow  = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (__isChart) sIndicator = "MovingAverage";
    }
    else if (EntryIndicator == 2) {
       channelHigh = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
       channelLow  = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (__isChart) sIndicator = "BollingerBands";
    }
    else if (EntryIndicator == 3) {
       channelHigh = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
       channelLow  = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
-      if (__isChart) sIndicator = "Envelopes";
    }
    else return(!catch("GetIndicatorValues(1)  illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
 
@@ -632,7 +629,10 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
          channelLow  = lastLow;
       }
    }
-   if (__isChart) sIndicator = StringConcatenate(sIndicator, "    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")", ifString(ChannelBug, "   ChannelBug=1", ""));
+   if (__isChart) {
+      static string names[4] = {"", "MovingAverage", "BollingerBands", "Envelopes"};
+      sIndicator = StringConcatenate(names[EntryIndicator], "    ", NumberToStr(channelMean, PriceFormat), "  ±", DoubleToStr((channelHigh-channelLow)/Pip/2, 1) ,"  (", NumberToStr(channelHigh, PriceFormat), "/", NumberToStr(channelLow, PriceFormat) ,")", ifString(ChannelBug, "   ChannelBug=1", ""));
+   }
 
    lastHigh = channelHigh;                      // cache returned values
    lastLow  = channelLow;
