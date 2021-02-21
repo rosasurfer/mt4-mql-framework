@@ -32,13 +32,15 @@
  *  - fixed TakeProfit calculation and added new input parameter TakeProfitBug (for comparison)
  *  - rewrote status display
  *  - simplified input parameters
+ *  - added input parameter EntryTrailStep
+ *  - added input parameter ExitTrailStart
  *  - renamed input parameter Timeframe                 => IndicatorTimeframe
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
- *  - renamed input parameter TrailingStart             => TrailingStep
+ *  - renamed input parameter TrailingStart             => ExitTrailStep
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -58,16 +60,17 @@ extern bool   UseSpreadMultiplier             = true;       // use spread multip
 extern double SpreadMultiplier                = 12.5;       // min. bar size = SpreadMultiplier * avgSpread
 extern double MinBarSize                      = 18;         // min. bar size in {pip}
 extern double MaxSpread                       = 3;          // max. acceptable spread in {pip}
+extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
 extern string ___c___________________________ = "=== Trade settings ========================";
 extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
 extern double TakeProfit                      = 10;         // TP in {pip}
 extern double StopLoss                        = 6;          // SL in {pip}
-extern double TrailingStart                   = 0;          // start trailing after {pip} in profit
-extern double TrailingStep                    = 2;          // trail limits every {pip} in profit
+extern double EntryTrailStep                  = 1;          // trail entry limits every {pip}
+extern double ExitTrailStart                  = 0;          // start trailing exit limits after {pip} in profit
+extern double ExitTrailStep                   = 2;          // trail exit limits every {pip} in profit
 extern double Slippage                        = 0.3;        // acceptable order slippage in {pip}
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
-extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
 extern string ___d___________________________ = "=== MoneyManagement ====================";
 extern bool   MoneyManagement                 = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
@@ -490,7 +493,7 @@ bool ManagePendingOrders() {
          }
          openprice = Ask + BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
-         if (LT(openprice, orders.pendingPrice[i])) {
+         if (GE(orders.pendingPrice[i]-openprice, EntryTrailStep*Pip)) {
             stoploss   = openprice - spread - StopLoss*Pip;
             takeprofit = openprice + TakeProfit*Pip;
             if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
@@ -505,7 +508,7 @@ bool ManagePendingOrders() {
          }
          openprice = Bid - BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
-         if (GT(openprice, orders.pendingPrice[i])) {
+         if (GE(openprice-orders.pendingPrice[i], EntryTrailStep*Pip)) {
             stoploss   = openprice + spread + StopLoss*Pip;
             takeprofit = openprice - TakeProfit*Pip;
             if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
@@ -538,22 +541,22 @@ bool ManageOpenPositions() {
 
    switch (orders.openType[i]) {
       case OP_BUY:
-         if      (TakeProfitBug)                                  takeprofit = Ask + TakeProfit*Pip;     // erroneous TP calculation
-         else if (GE(Bid-orders.openPrice[i], TrailingStart*Pip)) takeprofit = Bid + TakeProfit*Pip;     // correct TP calculation, also check TrailingStart
-         else                                                     takeprofit = INT_MIN;
+         if      (TakeProfitBug)                                   takeprofit = Ask + TakeProfit*Pip;    // erroneous TP calculation
+         else if (GE(Bid-orders.openPrice[i], ExitTrailStart*Pip)) takeprofit = Bid + TakeProfit*Pip;    // correct TP calculation, also check TrailingStart
+         else                                                      takeprofit = INT_MIN;
 
-         if (GE(takeprofit-orders.takeProfit[i], TrailingStep*Pip)) {
+         if (GE(takeprofit-orders.takeProfit[i], ExitTrailStep*Pip)) {
             stoploss = Bid - StopLoss*Pip;
             if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
          }
          break;
 
       case OP_SELL:
-         if      (TakeProfitBug)                                  takeprofit = Bid - TakeProfit*Pip;     // erroneous TP calculation
-         else if (GE(orders.openPrice[i]-Ask, TrailingStart*Pip)) takeprofit = Ask - TakeProfit*Pip;     // correct TP calculation, also check TrailingStart
-         else                                                     takeprofit = INT_MAX;
+         if      (TakeProfitBug)                                   takeprofit = Bid - TakeProfit*Pip;    // erroneous TP calculation
+         else if (GE(orders.openPrice[i]-Ask, ExitTrailStart*Pip)) takeprofit = Ask - TakeProfit*Pip;    // correct TP calculation, also check TrailingStart
+         else                                                      takeprofit = INT_MAX;
 
-         if (GE(orders.takeProfit[i]-takeprofit, TrailingStep*Pip)) {
+         if (GE(orders.takeProfit[i]-takeprofit, EntryTrailStep*Pip)) {
             stoploss = Ask + StopLoss*Pip;
             if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
          }
