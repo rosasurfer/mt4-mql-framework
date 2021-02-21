@@ -170,7 +170,6 @@ double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer
 double   icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
-bool     ifBoolOr(bool value, bool altValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 double   ifDoubleOr(double value, double altValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;

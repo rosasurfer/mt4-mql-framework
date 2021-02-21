@@ -1012,21 +1012,6 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
- * Inlined boolean OR statement. Returns a first value or an alternative value if the first value evaluates to FALSE.
- *
- * @param  bool value
- * @param  bool altValue
- *
- * @return bool
- */
-bool ifBoolOr(bool value, bool altValue) {
-   if (value)
-      return(true);
-   return(altValue != 0);
-}
-
-
-/**
  * Inlined integer OR statement. Returns a first value or an alternative if the first value evaluates to NULL.
  *
  * @param  int value
@@ -6629,7 +6614,6 @@ void __DummyCalls() {
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
-   ifBoolOr(NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifDoubleOr(NULL, NULL);
    ifInt(NULL, NULL, NULL);
