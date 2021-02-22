@@ -4,7 +4,7 @@
  *
  * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
  * reversal from a channel breakout. Over the years it has gone through multiple transformations. Today various versions with
- * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). None of them can be used for real trading, mainly
+ * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). None of them is suitable for real trading, mainly
  * due to lack of signal documentation and a significant amount of issues in the program logic.
  *
  * This version is a complete rewrite.
@@ -14,24 +14,23 @@
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp#                    [MDP-Plus v2.2 by Capella]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#               [XMT-Scalper v2.522 by Capella]
  *
- *
  * Changes:
  *  - removed MQL5 syntax and fixed compiler issues
- *  - added rosasurfer framework and the framework's test reporting
- *  - moved print output to the framework logger
- *  - added monitoring of PositionOpen and PositionClose events
- *  - removed obsolete functions and variables
+ *  - converted code to use the rosasurfer framework
+ *  - moved all print output to the framework logger
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed broken commission calculations
- *  - internal order management (huge speed improvement)
- *  - fixed input parameter validation
+ *  - removed obsolete functions and variables
+ *  - added internal order management (huge speed improvement)
+ *  - added monitoring of PositionOpen and PositionClose events
  *  - fixed position size calculation
+ *  - fixed signal detection and added new input parameter ChannelBug (for comparison only)
+ *  - fixed TakeProfit calculation and added new input parameter TakeProfitBug (for comparison only)
  *  - fixed trade management issues
- *  - fixed signal detection and added new input parameter ChannelBug (for comparison)
- *  - fixed TakeProfit calculation and added new input parameter TakeProfitBug (for comparison)
  *  - rewrote status display
- *  - simplified input parameters
+ *  - redesigned input parameters
+ *  - fixed input parameter validation
  *  - added input parameter TrailEntryStep
  *  - added input parameter TrailExitStart
  *  - renamed input parameter TrailingStart             => TrailExitStep
@@ -81,8 +80,8 @@ extern int    Magic                           = 0;          // if zero the Magic
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Bugs =============================";
-extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison)
-extern bool   TakeProfitBug                   = true;       // enable erroneous calculation of TakeProfit targets (for comparison)
+extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison only)
+extern bool   TakeProfitBug                   = true;       // enable erroneous calculation of TakeProfit targets (for comparison only)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
