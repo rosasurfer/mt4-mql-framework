@@ -32,15 +32,15 @@
  *  - fixed TakeProfit calculation and added new input parameter TakeProfitBug (for comparison)
  *  - rewrote status display
  *  - simplified input parameters
- *  - added input parameter EntryTrailStep
- *  - added input parameter ExitTrailStart
+ *  - added input parameter TrailEntryStep
+ *  - added input parameter TrailExitStart
+ *  - renamed input parameter TrailingStart             => TrailExitStep
  *  - renamed input parameter Timeframe                 => IndicatorTimeframe
  *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
  *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
- *  - renamed input parameter TrailingStart             => ExitTrailStep
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -56,28 +56,30 @@ extern double BollingerBands.Deviation        = 2;          // standard deviatio
 extern double Envelopes.Deviation             = 0.07;       // in percent
 
 extern string ___b___________________________ = "=== Entry bar size conditions ================";
-extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fix min. bar size
+extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fixed min. bar size
 extern double SpreadMultiplier                = 12.5;       // min. bar size = SpreadMultiplier * avgSpread
 extern double MinBarSize                      = 18;         // min. bar size in {pip}
+
+extern string ___c___________________________ = "=== Signal settings ========================";
+extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
 extern double MaxSpread                       = 3;          // max. acceptable spread in {pip}
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
-
-extern string ___c___________________________ = "=== Trade settings ========================";
-extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
-extern double TakeProfit                      = 10;         // TP in {pip}
-extern double StopLoss                        = 6;          // SL in {pip}
-extern double Slippage                        = 0.3;        // max. acceptable slippage in {pip}
-extern int    Magic                           = 0;          // if zero the MagicNumber is generated
-extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
-extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
-extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
 
 extern string ___d___________________________ = "=== MoneyManagement ====================";
 extern bool   MoneyManagement                 = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
 extern double Risk                            = 2;          // percent of equity to risk with each trade
 extern double ManualLotsize                   = 0.01;       // fix position size used if "MoneyManagement" is FALSE
 
-extern string ___e___________________________ = "=== Bugs =============================";
+extern string ___e___________________________ = "=== Trade settings ========================";
+extern double TakeProfit                      = 10;         // TP in {pip}
+extern double StopLoss                        = 6;          // SL in {pip}
+extern double Slippage                        = 0.3;        // max. acceptable slippage in {pip}
+extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
+extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
+extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
+extern int    Magic                           = 0;          // if zero the MagicNumber is generated
+
+extern string ___f___________________________ = "=== Bugs =============================";
 extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison)
 extern bool   TakeProfitBug                   = true;       // enable erroneous calculation of TakeProfit targets (for comparison)
 
