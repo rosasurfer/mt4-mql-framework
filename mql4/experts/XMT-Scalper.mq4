@@ -66,11 +66,11 @@ extern string ___c___________________________ = "=== Trade settings ============
 extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
 extern double TakeProfit                      = 10;         // TP in {pip}
 extern double StopLoss                        = 6;          // SL in {pip}
-extern double EntryTrailStep                  = 1;          // trail entry limits every {pip}
-extern double ExitTrailStart                  = 0;          // start trailing exit limits after {pip} in profit
-extern double ExitTrailStep                   = 2;          // trail exit limits every {pip} in profit
-extern double Slippage                        = 0.3;        // acceptable order slippage in {pip}
+extern double Slippage                        = 0.3;        // max. acceptable slippage in {pip}
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
+extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
+extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
+extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
 
 extern string ___d___________________________ = "=== MoneyManagement ====================";
 extern bool   MoneyManagement                 = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
@@ -173,9 +173,10 @@ int onInit() {
       if (GT(ManualLotsize, maxLots))                        return(catch("onInit(8)  too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
    }
 
-   // initialize global vars
+   // initialize/normalize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
    else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
+   MaxSpread     = NormalizeDouble(MaxSpread, 1);
    sMaxSpread    = DoubleToStr(MaxSpread, 1);
    orderSlippage = Round(Slippage*Pip/Point);
    orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TpBug", "");
@@ -416,10 +417,10 @@ bool IsEntrySignal(int &signal) {
    if (UseSpreadMultiplier) {
       if (!avgSpread) /*&&*/ if (!CalculateSpreads())         return(false);
       if (currentSpread > MaxSpread || avgSpread > MaxSpread) return(false);
-
       minBarSize = avgSpread*Pip * SpreadMultiplier; if (__isChart) SS.MinBarSize();
    }
 
+   //if (GE(barSize, minBarSize)) {                            // TODO: move double comparators to DLL (significant impact)
    if (barSize+0.00000001 >= minBarSize) {
       double channelHigh, channelLow, dNull;
       if (!GetIndicatorValues(channelHigh, channelLow, dNull)) return(false);
@@ -493,7 +494,7 @@ bool ManagePendingOrders() {
          }
          openprice = Ask + BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
-         if (GE(orders.pendingPrice[i]-openprice, EntryTrailStep*Pip)) {
+         if (GE(orders.pendingPrice[i]-openprice, TrailEntryStep*Pip)) {
             stoploss   = openprice - spread - StopLoss*Pip;
             takeprofit = openprice + TakeProfit*Pip;
             if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
@@ -508,7 +509,7 @@ bool ManagePendingOrders() {
          }
          openprice = Bid - BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
-         if (GE(openprice-orders.pendingPrice[i], EntryTrailStep*Pip)) {
+         if (GE(openprice-orders.pendingPrice[i], TrailEntryStep*Pip)) {
             stoploss   = openprice + spread + StopLoss*Pip;
             takeprofit = openprice - TakeProfit*Pip;
             if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
@@ -542,10 +543,10 @@ bool ManageOpenPositions() {
    switch (orders.openType[i]) {
       case OP_BUY:
          if      (TakeProfitBug)                                   takeprofit = Ask + TakeProfit*Pip;    // erroneous TP calculation
-         else if (GE(Bid-orders.openPrice[i], ExitTrailStart*Pip)) takeprofit = Bid + TakeProfit*Pip;    // correct TP calculation, also check TrailingStart
+         else if (GE(Bid-orders.openPrice[i], TrailExitStart*Pip)) takeprofit = Bid + TakeProfit*Pip;    // correct TP calculation, also check trail-start
          else                                                      takeprofit = INT_MIN;
 
-         if (GE(takeprofit-orders.takeProfit[i], ExitTrailStep*Pip)) {
+         if (GE(takeprofit-orders.takeProfit[i], TrailExitStep*Pip)) {
             stoploss = Bid - StopLoss*Pip;
             if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
          }
@@ -553,10 +554,10 @@ bool ManageOpenPositions() {
 
       case OP_SELL:
          if      (TakeProfitBug)                                   takeprofit = Bid - TakeProfit*Pip;    // erroneous TP calculation
-         else if (GE(orders.openPrice[i]-Ask, ExitTrailStart*Pip)) takeprofit = Ask - TakeProfit*Pip;    // correct TP calculation, also check TrailingStart
+         else if (GE(orders.openPrice[i]-Ask, TrailExitStart*Pip)) takeprofit = Ask - TakeProfit*Pip;    // correct TP calculation, also check trail-start
          else                                                      takeprofit = INT_MAX;
 
-         if (GE(orders.takeProfit[i]-takeprofit, EntryTrailStep*Pip)) {
+         if (GE(orders.takeProfit[i]-takeprofit, TrailExitStep*Pip)) {
             stoploss = Ask + StopLoss*Pip;
             if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
          }
@@ -584,7 +585,7 @@ bool CalculateSpreads() {
       return(true);
    }
    lastTick      = Tick;
-   currentSpread = (Ask-Bid)/Pip;
+   currentSpread = NormalizeDouble((Ask-Bid)/Pip, 1);
 
    if (IsTesting()) {
       avgSpread = currentSpread; if (__isChart) SS.Spreads();
