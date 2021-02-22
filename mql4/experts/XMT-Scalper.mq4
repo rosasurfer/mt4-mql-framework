@@ -41,6 +41,7 @@
  *  - renamed input parameter VolatilityLimit           => MinBarSize
  *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
  *  - renamed input parameter ReverseTrades             => ReverseSignals
+ *  - renamed input parameter Slippage                  => MaxSlippage
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -73,11 +74,11 @@ extern double ManualLotsize                   = 0.01;       // fix position size
 extern string ___e___________________________ = "=== Trade settings ========================";
 extern double TakeProfit                      = 10;         // TP in {pip}
 extern double StopLoss                        = 6;          // SL in {pip}
-extern double Slippage                        = 0.3;        // max. acceptable slippage in {pip}
 extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
 extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
 extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
+extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Bugs =============================";
 extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison)
@@ -180,7 +181,7 @@ int onInit() {
    else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
    MaxSpread     = NormalizeDouble(MaxSpread, 1);
    sMaxSpread    = DoubleToStr(MaxSpread, 1);
-   orderSlippage = Round(Slippage*Pip/Point);
+   orderSlippage = Round(MaxSlippage*Pip/Point);
    orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TpBug", "");
 
 
