@@ -172,6 +172,7 @@ bool initContext() {
    //
    // TODO: implement workaround in Expander
    //
+   __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -536,7 +537,7 @@ bool CheckErrors(string location, int setError = NULL) {
  * @return bool
  */
 bool EventListener_ChartCommand(string &commands[]) {
-   if (!IsChart()) return(false);
+   if (!__isChart) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
       label = ProgramName() +".command";

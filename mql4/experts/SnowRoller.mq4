@@ -23,8 +23,8 @@
  * During session breaks all pending orders and open positions are closed and the overnight risk is zero. Session break
  * configuration supports holidays.
  *
- * In "/mql4/scripts" there are some accompanying scripts named "SnowRoller.***" to manually control the EA. The EA can be
- * tested in "Strategy Tester" and the scripts work in the tester, too. The EA can't be optimized in the tester.
+ * In "/mql4/scripts" are five accompanying scripts named "SnowRoller.***" to manually control the EA. The EA can be tested
+ * in the tester and the scripts work in the tester, too. However the EA can't be optimized in the tester.
  *
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
  * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not 0 (zero).
@@ -1311,7 +1311,7 @@ string UpdateStatus.StopLossMsg(int i) {
  * @return bool
  */
 bool EventListener_ChartCommand(string &commands[]) {
-   if (!IsChart()) return(false);
+   if (!__isChart) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
       label = ProgramName() +".command";
@@ -2791,7 +2791,7 @@ int CreateMagicNumber(int level) {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   if (!IsChart()) return(error);
+   if (!__isChart) return(error);
 
    string msg, sError;
 
