@@ -1,5 +1,5 @@
 /**
- * XMT-Scalper revisited
+ * XMT-Scalper resurrected
  *
  *
  * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
@@ -193,16 +193,6 @@ int onInit() {
 
    SS.All();
    return(catch("onInit(9)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   return(catch("onDeinit(1)"));
 }
 
 
