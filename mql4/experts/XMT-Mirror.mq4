@@ -2,8 +2,10 @@
  * XMT-Mirror
  *
  *
- * A trade copier for the XMT-Scalper with optional reverse-trades functionality and trading stop when a defined profit/loss
- * target is reached.
+ * A trade copier for the XMT-Scalper with optional reverse-trades functionality and trading stop when a defined overall
+ * profit/loss target is reached.
+ *
+ *  @see  mql4/experts/XMT-Scalper.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -18,9 +20,6 @@ extern bool Dummy = true;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-
-#define SIGNAL_LONG     1
-#define SIGNAL_SHORT    2
 
 
 /**
