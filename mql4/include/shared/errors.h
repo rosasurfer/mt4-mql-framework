@@ -29,8 +29,8 @@
 #define ERR_INVALID_PRICE                                           129    // not normalized order price, or price moves too fast (away)
 #define ERR_INVALID_STOP                                            130    // limits/stops are mis-calculated, not normalized or too close to entry price or market (MODE_STOPLEVEL)
 #define ERR_INVALID_TRADE_VOLUME                                    131    // invalid trade volume or error in volume granularity
-#define ERR_MARKET_CLOSED                                           132
-#define ERR_TRADE_DISABLED                                          133
+#define ERR_MARKET_CLOSED                                           132    // market is closed (e.g. at weekends)
+#define ERR_TRADE_DISABLED                                          133    // market is not closed but trading is disabled (e.g. 1 min before Midnight)
 #define ERR_NOT_ENOUGH_MONEY                                        134
 #define ERR_PRICE_CHANGED                                           135    // price has changed and a retry can be made immediately
 #define ERR_OFF_QUOTES                                              136    // broker cannot provide prices (backend or liquidity issue)
@@ -188,7 +188,7 @@
 #define ERR_WEBREQUEST_REQUEST_FAILED                              5203    // HTTP request failed
 
 // user errors: 65536-99999 (0x10000-0x1869F)
-#define ERR_USER_ERROR_FIRST                                      65536    // MetaQuotes definition
+#define ERR_USER_ERROR_FIRST                                      65536    // a MetaQuotes definition
 #define ERR_CANCELLED_BY_USER                                     65537    // execution cancelled by user
 #define ERR_CONCURRENT_MODIFICATION                               65538    // concurrent modification
 #define ERS_EXECUTION_STOPPING                                    65539    // IsStopped() returned TRUE (state, not an error)
