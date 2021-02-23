@@ -2189,7 +2189,7 @@ string StatusDescription(int status) {
  * @return int - the same error or the current error status if no error was passed
  */
 int ShowStatus(int error = NO_ERROR) {
-   if (!IsChart()) return(error);
+   if (!__isChart) return(error);
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.directions) {
@@ -2240,7 +2240,7 @@ int ShowStatus(int error = NO_ERROR) {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (IsChart()) {
+   if (__isChart) {
       SS.SequenceName();
       SS.GridBase();
       SS.UnitSize();
@@ -2260,7 +2260,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the grid base.
  */
 void SS.GridBase() {
-   if (IsChart()) {
+   if (__isChart) {
       sGridBase = "";
       if (!sequence.gridbase) return;
       sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
@@ -2272,7 +2272,7 @@ void SS.GridBase() {
  * ShowStatus: Update the string representation of "sequence.maxDrawdown".
  */
 void SS.MaxDrawdown() {
-   if (IsChart()) {
+   if (__isChart) {
       if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
       else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
       SS.PLStats();
@@ -2284,7 +2284,7 @@ void SS.MaxDrawdown() {
  * ShowStatus: Update the string representation of "sequence.maxProfit".
  */
 void SS.MaxProfit() {
-   if (IsChart()) {
+   if (__isChart) {
       if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
       else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
       SS.PLStats();
@@ -2296,7 +2296,7 @@ void SS.MaxProfit() {
  * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
-   if (IsChart()) {
+   if (__isChart) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
          sSequencePlStats = StringConcatenate("  (", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
       }
@@ -2320,7 +2320,7 @@ void SS.SequenceName() {
  * ShowStatus: Update the string representation of the configured stop conditions.
  */
 void SS.StopConditions() {
-   if (IsChart()) {
+   if (__isChart) {
       string sValue = "";
       if (tpAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " || ") + ifString(tpAbs.condition, "@", "!") + tpAbs.description;
@@ -2344,7 +2344,7 @@ void SS.StopConditions() {
  * ShowStatus: Update the string representation of "long.openLots", "short.openLots" and "sequence.openLots".
  */
 void SS.OpenLots() {
-   if (IsChart()) {
+   if (__isChart) {
       if (!long.openLots) sOpenLongLots = "-";
       else                sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot, level "+ long.maxLevel + ifString(!long.slippage, "", ", slippage: "+ NumberToStr(long.slippage/Pip, "+.1R") +" pip");
 
@@ -2362,7 +2362,7 @@ void SS.OpenLots() {
  * ShowStatus: Update the string representation of "sequence.bePrice", "sequence.tpPrice" and "sequence.slPrice".
  */
 void SS.ProfitTargets() {
-   if (IsChart()) {
+   if (__isChart) {
       sSequenceBePrice = "";
       if (long.enabled)                  sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(sequence.bePrice.long, Digits), PriceFormat);
       if (long.enabled && short.enabled) sSequenceBePrice = sSequenceBePrice +" / ";
@@ -2383,7 +2383,7 @@ void SS.ProfitTargets() {
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
-   if (IsChart()) {
+   if (__isChart) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
          if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
          else                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
@@ -2397,7 +2397,7 @@ void SS.TotalPL() {
  * ShowStatus: Update the string representation of the unitsize.
  */
 void SS.UnitSize() {
-   if (IsChart()) {
+   if (__isChart) {
       sUnitSize = NumberToStr(sequence.unitsize, ".+") +" lot";
    }
 }
@@ -2410,7 +2410,7 @@ void SS.UnitSize() {
  * @return int - error status
  */
 int CreateStatusBox() {
-   if (!IsChart()) return(NO_ERROR);
+   if (!__isChart) return(NO_ERROR);
 
    int x[]={2, 60}, y=61, fontSize=112, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;                                 // Cyan LemonChiffon bgColor=C'248,248,248'

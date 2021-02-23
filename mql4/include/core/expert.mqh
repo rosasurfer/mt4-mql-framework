@@ -197,6 +197,7 @@ int init() {
  * @return bool - success status
  */
 bool initContext() {
+   __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -220,7 +221,7 @@ bool initContext() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
-         if (IsChart()) ShowStatus(__STATUS_OFF.reason);
+         if (__isChart) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // ctop the tester in case of errors
             Tester.Stop("start(1)");                                                // covers errors in init(), too

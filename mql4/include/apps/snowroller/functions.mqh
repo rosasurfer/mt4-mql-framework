@@ -423,7 +423,7 @@ double CalculateUnitSize(double equity) {
  * @return bool - success status
  */
 bool Chart.MarkOrderFilled(int i) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
    /*
    #define ODM_NONE     0     // - no display -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -454,7 +454,7 @@ bool Chart.MarkOrderFilled(int i) {
  * @return bool - success status
  */
 bool Chart.MarkOrderSent(int i) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
    /*
    #define ODM_NONE     0     // - no display -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -491,7 +491,7 @@ bool Chart.MarkOrderSent(int i) {
  * @return bool - success status
  */
 bool Chart.MarkPositionClosed(int i) {
-   if (!IsChart()) return(true);
+   if (!__isChart) return(true);
    /*
    #define ODM_NONE     0     // - no display -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -590,7 +590,7 @@ int CreateSequenceId() {
  * @return int - error status
  */
 int CreateStatusBox() {
-   if (!IsChart()) return(NO_ERROR);
+   if (!__isChart) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
    color  bgColor = C'248,248,248';                      // that's chart background color
@@ -706,7 +706,7 @@ bool IsTestSequence() {
  * Redraw order markers of the active sequence. Markers of finished sequence cycles will no be redrawn.
  */
 void RedrawOrders() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    bool wasPending, isPending, closedPosition;
    int  size = ArraySize(orders.ticket);
@@ -731,7 +731,7 @@ void RedrawOrders() {
  * Redraw the start/stop markers of the active sequence. Markers of finished sequence cycles will no be redrawn.
  */
 void RedrawStartStop() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    string   label, sCycle = StrPadLeft(sequence.cycle, 3, "0");
    datetime time;
@@ -839,7 +839,7 @@ int DeleteChartStatus() {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    SS.SequenceName();
    SS.GridBase();
@@ -861,7 +861,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the "AutoRestart" option.
  */
 void SS.AutoRestart() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    if (AutoRestart=="Off") sAutoRestart = "AutoRestart:  "+ AutoRestart + NL;
    else                    sAutoRestart = "AutoRestart:  "+ AutoRestart +" ("+ (sequence.cycle-1) +")" + NL;
@@ -872,7 +872,7 @@ void SS.AutoRestart() {
  * ShowStatus: Update the string representation of the gridbase.
  */
 void SS.GridBase() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    double gridbase = GetGridbase();
    if (!gridbase) return;
@@ -885,7 +885,7 @@ void SS.GridBase() {
  * ShowStatus: Update the string representation of the sequence direction.
  */
 void SS.GridDirection() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    if (sequence.direction != 0) {
       sSequenceDirection = TradeDirectionDescription(sequence.direction) +" ";
@@ -897,7 +897,7 @@ void SS.GridDirection() {
  * ShowStatus: Update the string representation of "sequence.maxDrawdown".
  */
 void SS.MaxDrawdown() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
    else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
@@ -909,7 +909,7 @@ void SS.MaxDrawdown() {
  * ShowStatus: Update the string representation of "sequence.maxProfit".
  */
 void SS.MaxProfit() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
    else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
@@ -921,7 +921,7 @@ void SS.MaxProfit() {
  * ShowStatus: Update the string representation of the missed gridlevels.
  */
 void SS.MissedLevels() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    int size = ArraySize(sequence.missedLevels);
    if (!size) sSequenceMissedLevels = "";
@@ -933,7 +933,7 @@ void SS.MissedLevels() {
  * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    if (sequence.maxLevel != 0) {             // not before a positions was opened
       sSequencePlStats = "  ("+ sSequenceMaxProfit +"/"+ sSequenceMaxDrawdown +")";
@@ -945,7 +945,7 @@ void SS.PLStats() {
  * ShowStatus: Update the string representation of "sequence.profitPerLevel".
  */
 void SS.ProfitPerLevel() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    if (!sequence.level) {
       sSequenceProfitPerLevel = "";          // not before a positions was opened
@@ -979,7 +979,7 @@ void SS.SequenceName() {
  * ShowStatus: Update the string representation of the configured start/stop conditions.
  */
 void SS.StartStopConditions() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    // start conditions, order: [sessionbreak >>] trend, time, price
    string sValue = "";
@@ -1043,7 +1043,7 @@ void SS.StartStopConditions() {
  * ShowStatus: Update the string representation of the start/stop statistics.
  */
 void SS.StartStopStats() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    sStartStopStats = "";
 
@@ -1071,7 +1071,7 @@ void SS.StartStopStats() {
  * ShowStatus: Update the string representation of "sequence.stops" and "sequence.stopsPL".
  */
 void SS.Stops() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
    sSequenceStops = sequence.stops +" stop"+ Pluralize(sequence.stops);
 
    // not set before the first stopped-out position
@@ -1086,7 +1086,7 @@ void SS.Stops() {
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    // not set before the first open position
    if (sequence.maxLevel == 0)   sSequenceTotalPL = "-";
@@ -1099,7 +1099,7 @@ void SS.TotalPL() {
  * ShowStatus: Update the string representation of the unitsize.
  */
 void SS.UnitSize() {
-   if (!IsChart()) return;
+   if (!__isChart) return;
 
    double equity = sequence.startEquity;
 
