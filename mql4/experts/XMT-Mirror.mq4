@@ -2,8 +2,7 @@
  * XMT-Mirror
  *
  *
- * A trade copier for the XMT-Scalper with optional reverse-trades functionality and trading stop when a defined overall
- * profit/loss target is reached.
+ * A trade copier for the XMT-Scalper with optional reverse trading functionality and stop on a defined overall PL target.
  *
  *  @see  mql4/experts/XMT-Scalper.mq4
  */

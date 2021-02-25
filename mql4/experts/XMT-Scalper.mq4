@@ -67,13 +67,13 @@ extern double MinBarSize                      = 18;         // min. bar size in 
 
 extern string ___c___________________________ = "=== Signal settings ========================";
 extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
-extern double MaxSpread                       = 3;          // max. acceptable spread in {pip}
+extern double MaxSpread                       = 2;          // max. acceptable spread in {pip}
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
 extern string ___d___________________________ = "=== MoneyManagement ====================";
-extern bool   MoneyManagement                 = true;       // if TRUE lots are calculated dynamically, if FALSE "ManualLotsize" is used
+extern bool   MoneyManagement                 = true;       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
 extern double Risk                            = 2;          // percent of equity to risk with each trade
-extern double ManualLotsize                   = 0.01;       // fix position size used if "MoneyManagement" is FALSE
+extern double ManualLotsize                   = 0.01;       // fix position to use if "MoneyManagement" is FALSE
 
 extern string ___e___________________________ = "=== Trade settings ========================";
 extern double TakeProfit                      = 10;         // TP in {pip}
@@ -84,7 +84,11 @@ extern double TrailExitStep                   = 2;          // trail exit limits
 extern int    Magic                           = 0;          // if zero the MagicNumber is generated
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
-extern string ___f___________________________ = "=== Bugs =============================";
+extern string ___f___________________________ = "=== Overall PL settings =====================";
+extern double StopOnProfit                    = 0;          // stop on overall profit in {money} (0: never stop after profits)
+extern double StopOnLoss                      = 0;          // stop on overall loss in {money} (0: never stop after losses)
+
+extern string ___g___________________________ = "=== Bugs ================================";
 extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison only)
 extern bool   TakeProfitBug                   = true;       // enable erroneous calculation of TakeProfit targets (for comparison only)
 
