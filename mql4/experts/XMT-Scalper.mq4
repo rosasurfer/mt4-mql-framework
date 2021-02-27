@@ -197,6 +197,16 @@ int onInit() {
 
 
 /**
+ * Deinitialization preprocessing
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   return(NO_ERROR);
+}
+
+
+/**
  * Main function
  *
  * @return int - error status
@@ -1031,4 +1041,45 @@ void SS.UnitSize(double size = NULL) {
          lastSize = size;
       }
    }
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return("EntryIndicator="          + EntryIndicator                               +";"+ NL
+         +"IndicatorTimeFrame="      + IndicatorTimeFrame                           +";"+ NL
+         +"IndicatorPeriods="        + IndicatorPeriods                             +";"+ NL
+         +"BollingerBands.Deviation="+ NumberToStr(BollingerBands.Deviation, ".1+") +";"+ NL
+         +"Envelopes.Deviation="     + NumberToStr(Envelopes.Deviation, ".1+")      +";"+ NL
+
+         +"UseSpreadMultiplier="     + BoolToStr(UseSpreadMultiplier)               +";"+ NL
+         +"SpreadMultiplier="        + NumberToStr(SpreadMultiplier, ".1+")         +";"+ NL
+         +"MinBarSize="              + DoubleToStr(MinBarSize, 1)                   +";"+ NL
+
+         +"BreakoutReversal="        + DoubleToStr(BreakoutReversal, 1)             +";"+ NL
+         +"MaxSpread="               + DoubleToStr(MaxSpread, 1)                    +";"+ NL
+         +"ReverseSignals="          + BoolToStr(ReverseSignals)                    +";"+ NL
+
+         +"MoneyManagement="         + BoolToStr(MoneyManagement)                   +";"+ NL
+         +"Risk="                    + NumberToStr(Risk, ".1+")                     +";"+ NL
+         +"ManualLotsize="           + NumberToStr(ManualLotsize, ".1+")            +";"+ NL
+
+         +"TakeProfit="              + DoubleToStr(TakeProfit, 1)                   +";"+ NL
+         +"StopLoss="                + DoubleToStr(StopLoss, 1)                     +";"+ NL
+         +"TrailEntryStep="          + DoubleToStr(TrailEntryStep, 1)               +";"+ NL
+         +"TrailExitStart="          + DoubleToStr(TrailExitStart, 1)               +";"+ NL
+         +"TrailExitStep="           + DoubleToStr(TrailExitStep, 1)                +";"+ NL
+         +"Magic="                   + Magic                                        +";"+ NL
+         +"MaxSlippage="             + DoubleToStr(MaxSlippage, 1)                  +";"+ NL
+
+         +"EA.StopOnProfit="         + DoubleToStr(EA.StopOnProfit, 2)              +";"+ NL
+         +"EA.StopOnLoss="           + DoubleToStr(EA.StopOnLoss, 2)                +";"+ NL
+
+         +"ChannelBug="              + BoolToStr(ChannelBug)                        +";"+ NL
+         +"TakeProfitBug="           + BoolToStr(TakeProfitBug)                     +";"
+   );
 }
