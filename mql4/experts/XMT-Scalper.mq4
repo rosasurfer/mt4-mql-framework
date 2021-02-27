@@ -12,7 +12,7 @@
  * Sources:
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp#             [MillionDollarPips v2 decompiled]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/36f494e/mql4/experts/mdp#                    [MDP-Plus v2.2 by Capella]
- *  @link  https://github.com/rosasurfer/mt4-mql/blob/23c51cc/mql4/experts/mdp#                  [MDP-Plus v2.2.3 by Capella]
+ *  @link  https://github.com/rosasurfer/mt4-mql/blob/23c51cc/mql4/experts/mdp#                   [MDP-Plus v2.23 by Capella]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a0c2411/mql4/experts/mdp#                [XMT-Scalper v2.41 by Capella]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/8f5f29e/mql4/experts/mdp#                [XMT-Scalper v2.42 by Capella]
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/513f52c/mql4/experts/mdp#                [XMT-Scalper v2.46 by Capella]
@@ -30,22 +30,11 @@
  *  - added internal order management (huge speed improvement)
  *  - added monitoring of PositionOpen and PositionClose events
  *  - fixed position size calculation
- *  - fixed signal detection and added new input parameter ChannelBug (for comparison only)
- *  - fixed TakeProfit calculation and added new input parameter TakeProfitBug (for comparison only)
+ *  - fixed signal detection and added input parameter ChannelBug (for comparison only)
+ *  - fixed TakeProfit calculation and added input parameter TakeProfitBug (for comparison only)
  *  - fixed trade management issues
+ *  - restructured and reorganized input parameters
  *  - rewrote status display
- *  - redesigned input parameters
- *  - fixed input parameter validation
- *  - added input parameter TrailEntryStep
- *  - added input parameter TrailExitStart
- *  - renamed input parameter TrailingStart             => TrailExitStep
- *  - renamed input parameter Timeframe                 => IndicatorTimeframe
- *  - renamed input parameter UseDynamicVolatilityLimit => UseSpreadMultiplier
- *  - renamed input parameter VolatilityMultiplier      => SpreadMultiplier
- *  - renamed input parameter VolatilityLimit           => MinBarSize
- *  - renamed input parameter MinimumUseStopLevel       => BreakoutReversal
- *  - renamed input parameter ReverseTrades             => ReverseSignals
- *  - renamed input parameter Slippage                  => MaxSlippage
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -85,8 +74,8 @@ extern int    Magic                           = 0;          // if zero the Magic
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Overall PL settings =====================";
-extern double StopOnProfit                    = 0;          // stop on overall profit in {money} (0: never stop after profits)
-extern double StopOnLoss                      = 0;          // stop on overall loss in {money} (0: never stop after losses)
+extern double EA.StopOnProfit                 = 0;          // stop on overall profit in {money} (0: no stop)
+extern double EA.StopOnLoss                   = 0;          // stop on overall loss in {money} (0: no stop)
 
 extern string ___g___________________________ = "=== Bugs ================================";
 extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison only)
@@ -183,6 +172,10 @@ int onInit() {
       if (LT(ManualLotsize, minLots))                        return(catch("onInit(7)  too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
       if (GT(ManualLotsize, maxLots))                        return(catch("onInit(8)  too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
    }
+   // EA.StopOnProfit / EA.StopOnLoss
+   if (EA.StopOnProfit && EA.StopOnLoss) {
+      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(catch("onInit(9)  input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", ERR_INVALID_INPUT_PARAMETER));
+   }
 
    // initialize/normalize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
@@ -193,15 +186,13 @@ int onInit() {
    orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TpBug", "");
 
 
-
-
    // --- old ---------------------------------------------------------------------------------------------------------------
    if (!Magic) Magic = GenerateMagicNumber();
 
    if (!ReadOrderLog()) return(last_error);
-
    SS.All();
-   return(catch("onInit(9)"));
+
+   return(catch("onInit(10)"));
 }
 
 
@@ -212,10 +203,14 @@ int onInit() {
  */
 int onTick() {
    double dNull;
-   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);    // if enabled data must be tracked every tick
-   if (__isChart)  CalculateSpreads();                         // for the spread status display
+   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);    // if the bug is enabled indicators must be tracked every tick
+   if (__isChart)  CalculateSpreads();                         // for the visible spread status display
 
    UpdateOrderStatus();
+
+   if (EA.StopOnProfit || EA.StopOnLoss) {
+      if (!CheckTotalTargets()) return(last_error);            // on EA stop that's ERR_CANCELLED_BY_USER
+   }
 
    if (isOpenOrder) {
       if (isOpenPosition) ManageOpenPositions();               // manage open orders
@@ -226,7 +221,7 @@ int onTick() {
       int signal;
       if (IsEntrySignal(signal)) OpenNewOrder(signal);         // check for and handle entry signals
    }
-   return(catch("onTick(1)"));
+   return(last_error);
 }
 
 
@@ -573,6 +568,36 @@ bool ManageOpenPositions() {
       orders.takeProfit[i] = NormalizeDouble(takeprofit, Digits);
    }
    return(true);
+}
+
+
+/**
+ * Check total profit targets and stop the EA if targets have been reached.
+ *
+ * @return bool - whether the EA shall continue trading, i.e. FALSE on EA stop or in case of errors
+ */
+bool CheckTotalTargets() {
+   bool stopEA = false;
+
+   if (EA.StopOnProfit != 0) stopEA = stopEA || GE(totalPlNet, EA.StopOnProfit);
+   if (EA.StopOnLoss   != 0) stopEA = stopEA || LE(totalPlNet, EA.StopOnProfit);
+
+   if (stopEA) {
+      if (!CloseOpenOrders())
+         return(false);
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
+   }
+   return(true);
+}
+
+
+/**
+ * Close all open orders.
+ *
+ * @return bool - success status
+ */
+bool CloseOpenOrders() {
+   return(!catch("CloseOpenOrders(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
