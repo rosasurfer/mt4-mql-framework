@@ -124,90 +124,6 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1264/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1264
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1264/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1262/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1262
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1262/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1260/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1260
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1260/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1248/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1248
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1248/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1242/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1242
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1242/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1220/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1220
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1220/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
     <td nowrap> oldest build supported by MetaQuotes </td>
 </tr>
 
@@ -271,6 +187,9 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 -----
 
 ### MetaTrader 4 News
+
+###### March 2021:
+- MetaQuotes stops supporting terminals older than build 1280.
 
 ###### November 2020:
 - MetaQuotes stops supporting terminals older than build 1220.
