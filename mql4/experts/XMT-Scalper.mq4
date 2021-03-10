@@ -21,7 +21,7 @@
  *
  * Changes:
  *  - removed MQL5 syntax and fixed compiler issues
- *  - converted code to use the rosasurfer framework
+ *  - updated program structure and integrated the rosasurfer MQL4 framework
  *  - moved all print output to the framework logger
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
@@ -93,40 +93,75 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 #define SIGNAL_SHORT    2
 
 
-// order log
-int      orders.ticket      [];
-double   orders.lots        [];        // order volume > 0
-int      orders.pendingType [];        // pending order type if applicable or OP_UNDEFINED (-1)
-double   orders.pendingPrice[];        // pending entry limit if applicable or 0
-int      orders.openType    [];        // order open type of an opened position or OP_UNDEFINED (-1)
-datetime orders.openTime    [];        // order open time of an opened position or 0
-double   orders.openPrice   [];        // order open price of an opened position or 0
-datetime orders.closeTime   [];        // order close time of a closed order or 0
-double   orders.closePrice  [];        // order close price of a closed position or 0
-double   orders.stopLoss    [];        // SL price or 0
-double   orders.takeProfit  [];        // TP price or 0
-double   orders.swap        [];        // order swap
-double   orders.commission  [];        // order commission
-double   orders.profit      [];        // order profit (gross)
+// real order log
+int      real.ticket      [];
+double   real.lots        [];          // order volume > 0
+int      real.pendingType [];          // pending order type if applicable or OP_UNDEFINED (-1)
+double   real.pendingPrice[];          // pending entry limit if applicable or 0
+int      real.openType    [];          // order open type of an opened position or OP_UNDEFINED (-1)
+datetime real.openTime    [];          // order open time of an opened position or 0
+double   real.openPrice   [];          // order open price of an opened position or 0
+datetime real.closeTime   [];          // order close time of a closed order or 0
+double   real.closePrice  [];          // order close price of a closed position or 0
+double   real.stopLoss    [];          // SL price or 0
+double   real.takeProfit  [];          // TP price or 0
+double   real.swap        [];          // order swap
+double   real.commission  [];          // order commission
+double   real.profit      [];          // order profit (gross)
 
-// order statistics
-bool     isOpenOrder;                  // whether an open order exists (max. 1 open order)
-bool     isOpenPosition;               // whether an open position exists (max. 1 open position)
+// real order statistics
+bool     real.isOpenOrder;             // whether an open order exists (max. 1 open order)
+bool     real.isOpenPosition;          // whether an open position exists (max. 1 open position)
 
-double   openLots;                     // total open lotsize: -n...+n
-double   openSwap;                     // total open swap
-double   openCommission;               // total open commissions
-double   openPl;                       // total open gross profit
-double   openPlNet;                    // total open net profit
+double   real.openLots;                // total open lotsize: -n...+n
+double   real.openSwap;                // total open swap
+double   real.openCommission;          // total open commissions
+double   real.openPl;                  // total open gross profit
+double   real.openPlNet;               // total open net profit
 
-int      closedPositions;              // number of closed positions
-double   closedLots;                   // total closed lotsize: 0...+n
-double   closedSwap;                   // total closed swap
-double   closedCommission;             // total closed commission
-double   closedPl;                     // total closed gross profit
-double   closedPlNet;                  // total closed net profit
+int      real.closedPositions;         // number of closed positions
+double   real.closedLots;              // total closed lotsize: 0...+n
+double   real.closedSwap;              // total closed swap
+double   real.closedCommission;        // total closed commission
+double   real.closedPl;                // total closed gross profit
+double   real.closedPlNet;             // total closed net profit
 
-double   totalPlNet;                   // openPlNet + closedPlNet
+double   real.totalPlNet;              // openPlNet + closedPlNet
+
+// virtual order log
+int      virt.ticket      [];
+double   virt.lots        [];
+int      virt.pendingType [];
+double   virt.pendingPrice[];
+int      virt.openType    [];
+datetime virt.openTime    [];
+double   virt.openPrice   [];
+datetime virt.closeTime   [];
+double   virt.closePrice  [];
+double   virt.stopLoss    [];
+double   virt.takeProfit  [];
+double   virt.swap        [];
+double   virt.commission  [];
+double   virt.profit      [];
+
+// virtual order statistics
+bool     virt.isOpenOrder;
+bool     virt.isOpenPosition;
+
+double   virt.openLots;
+double   virt.openSwap;
+double   virt.openCommission;
+double   virt.openPl;
+double   virt.openPlNet;
+
+int      virt.closedPositions;
+double   virt.closedLots;
+double   virt.closedSwap;
+double   virt.closedCommission;
+double   virt.closedPl;
+double   virt.closedPlNet;
+
+double   virt.totalPlNet;
 
 // other
 double   currentSpread;                // current spread in pip
@@ -219,7 +254,7 @@ int onTick() {
    bool isStandardTrading=true, isVirtualizedTrading=false, isTradeCopier=false;
 
 
-   // standard trading ------------------------------------------------------------------------------------------------------
+   // --- standard trading --------------------------------------------------------------------------------------------------
    if (isStandardTrading) {
       UpdateOrderStatus();                                     // update order status and real PL
 
@@ -227,27 +262,29 @@ int onTick() {
          if (!CheckTotalTargets()) return(last_error);         // i.e. ERR_CANCELLED_BY_USER
       }
 
-      if (isOpenOrder) {
-         if (isOpenPosition) ManageOpenPositions();            // trail exit limits
-         else                ManagePendingOrders();            // trail entry limits
+      if (real.isOpenOrder) {
+         if (real.isOpenPosition) ManageOpenPositions();       // trail exit limits
+         else                     ManagePendingOrders();       // trail entry limits
       }
 
-      if (!last_error && !isOpenOrder) {
+      if (!last_error && !real.isOpenOrder) {
          int signal;
          if (IsEntrySignal(signal)) OpenNewOrder(signal);      // monitor and handle new entry signals
       }
+      return(last_error);
    }
 
-   // signal and PL virtualization ------------------------------------------------------------------------------------------
-   else if (isVirtualizedTrading) {
+   // --- virtualized trading -----------------------------------------------------------------------------------------------
+   if (isVirtualizedTrading) {
+      return(last_error);
    }
 
-   // trade copier/mirror ---------------------------------------------------------------------------------------------------
-   else if (isTradeCopier) {
+   // --- trade copier/mirror -----------------------------------------------------------------------------------------------
+   if (isTradeCopier) {
+      return(last_error);
    }
 
-   else return(catch("onTick(1)", ERR_WRONG_JUMP));
-   return(last_error);
+   return(catch("onTick(1)", ERR_ILLEGAL_STATE));
 }
 
 
@@ -258,23 +295,23 @@ int onTick() {
  */
 bool UpdateOrderStatus() {
    // open order statistics are fully recalculated
-   isOpenOrder    = false;                                     // global vars
-   isOpenPosition = false;
-   openLots       = 0;
-   openSwap       = 0;
-   openCommission = 0;
-   openPl         = 0;
-   openPlNet      = 0;
+   real.isOpenOrder    = false;                                // global vars
+   real.isOpenPosition = false;
+   real.openLots       = 0;
+   real.openSwap       = 0;
+   real.openCommission = 0;
+   real.openPl         = 0;
+   real.openPlNet      = 0;
 
-   int orders = ArraySize(orders.ticket);
+   int orders = ArraySize(real.ticket);
 
    // update ticket status
    for (int i=orders-1; i >= 0; i--) {                         // iterate backwards and stop at the first closed ticket
-      if (orders.closeTime[i] > 0) break;                      // to increase performance
-      isOpenOrder = true;
-      if (!SelectTicket(orders.ticket[i], "UpdateOrderStatus(1)")) return(false);
+      if (real.closeTime[i] > 0) break;                      // to increase performance
+      real.isOpenOrder = true;
+      if (!SelectTicket(real.ticket[i], "UpdateOrderStatus(1)")) return(false);
 
-      bool wasPending  = (orders.openType[i] == OP_UNDEFINED); // local vars
+      bool wasPending  = (real.openType[i] == OP_UNDEFINED);   // local vars
       bool isPending   = (OrderType() > OP_SELL);
       bool wasPosition = !wasPending;
       bool isOpen      = !OrderCloseTime();
@@ -293,32 +330,32 @@ bool UpdateOrderStatus() {
       }
 
       if (wasPosition) {
-         orders.swap      [i] = OrderSwap();
-         orders.commission[i] = OrderCommission();
-         orders.profit    [i] = OrderProfit();
+         real.swap      [i] = OrderSwap();
+         real.commission[i] = OrderCommission();
+         real.profit    [i] = OrderProfit();
 
          if (isOpen) {
-            isOpenPosition = true;
-            openLots       += ifDouble(orders.openType[i]==OP_BUY, orders.lots[i], -orders.lots[i]);
-            openSwap       += orders.swap      [i];
-            openCommission += orders.commission[i];
-            openPl         += orders.profit    [i];
+            real.isOpenPosition  = true;
+            real.openLots       += ifDouble(real.openType[i]==OP_BUY, real.lots[i], -real.lots[i]);
+            real.openSwap       += real.swap      [i];
+            real.openCommission += real.commission[i];
+            real.openPl         += real.profit    [i];
          }
          else /*isClosed*/ {                                   // the open position was closed
             onPositionClose(i);
-            isOpenOrder = false;
-            closedPositions++;                                 // update closed trade statistics
-            closedLots       += orders.lots      [i];
-            closedSwap       += orders.swap      [i];
-            closedCommission += orders.commission[i];
-            closedPl         += orders.profit    [i];
+            real.isOpenOrder = false;
+            real.closedPositions++;                            // update closed trade statistics
+            real.closedLots       += real.lots      [i];
+            real.closedSwap       += real.swap      [i];
+            real.closedCommission += real.commission[i];
+            real.closedPl         += real.profit    [i];
          }
       }
    }
 
-   openPlNet   = openSwap + openCommission + openPl;
-   closedPlNet = closedSwap + closedCommission + closedPl;
-   totalPlNet  = openPlNet + closedPlNet;
+   real.openPlNet   = real.openSwap + real.openCommission + real.openPl;
+   real.closedPlNet = real.closedSwap + real.closedCommission + real.closedPl;
+   real.totalPlNet  = real.openPlNet + real.closedPlNet;
 
    return(!catch("UpdateOrderStatus(2)"));
 }
@@ -333,17 +370,17 @@ bool UpdateOrderStatus() {
  */
 bool onPositionOpen(int i) {
    // update order log
-   orders.openType  [i] = OrderType();
-   orders.openTime  [i] = OrderOpenTime();
-   orders.openPrice [i] = OrderOpenPrice();
-   orders.swap      [i] = OrderSwap();
-   orders.commission[i] = OrderCommission();
-   orders.profit    [i] = OrderProfit();
+   real.openType  [i] = OrderType();
+   real.openTime  [i] = OrderOpenTime();
+   real.openPrice [i] = OrderOpenPrice();
+   real.swap      [i] = OrderSwap();
+   real.commission[i] = OrderCommission();
+   real.profit    [i] = OrderProfit();
 
    if (IsLogInfo()) {
       // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was filled[ at 1.5457'2] (market: Bid/Ask[, 0.3 pip [positive ]slippage])
-      int    pendingType  = orders.pendingType [i];
-      double pendingPrice = orders.pendingPrice[i];
+      int    pendingType  = real.pendingType [i];
+      double pendingPrice = real.pendingPrice[i];
 
       string sType         = OperationTypeDescription(pendingType);
       string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
@@ -376,11 +413,11 @@ bool onPositionOpen(int i) {
  */
 bool onPositionClose(int i) {
    // update order log
-   orders.closeTime [i] = OrderCloseTime();
-   orders.closePrice[i] = OrderClosePrice();
-   orders.swap      [i] = OrderSwap();
-   orders.commission[i] = OrderCommission();
-   orders.profit    [i] = OrderProfit();
+   real.closeTime [i] = OrderCloseTime();
+   real.closePrice[i] = OrderClosePrice();
+   real.swap      [i] = OrderSwap();
+   real.commission[i] = OrderCommission();
+   real.profit    [i] = OrderProfit();
 
    if (IsLogInfo()) {
       // #1 Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
@@ -409,8 +446,8 @@ bool onPositionClose(int i) {
 bool onOrderDelete(int i) {
    if (IsLogInfo()) {
       // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was deleted
-      int    pendingType  = orders.pendingType [i];
-      double pendingPrice = orders.pendingPrice[i];
+      int    pendingType  = real.pendingType [i];
+      double pendingPrice = real.pendingPrice[i];
 
       string sType         = OperationTypeDescription(pendingType);
       string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
@@ -418,7 +455,7 @@ bool onOrderDelete(int i) {
       string message       = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sPendingPrice + sComment +" was deleted";
       logInfo("onOrderDelete(3)  "+ message);
    }
-   return(Orders.RemoveTicket(orders.ticket[i]));
+   return(Orders.RemoveTicket(real.ticket[i]));
 }
 
 
@@ -431,7 +468,7 @@ bool onOrderDelete(int i) {
  */
 bool IsEntrySignal(int &signal) {
    signal = NULL;
-   if (last_error || isOpenOrder) return(false);
+   if (last_error || real.isOpenOrder) return(false);
 
    double barSize = iHigh(NULL, IndicatorTimeFrame, 0) - iLow(NULL, IndicatorTimeFrame, 0);
    if (__isChart) sCurrentBarSize = DoubleToStr(barSize/Pip, 1) +" pip";
@@ -499,53 +536,53 @@ bool OpenNewOrder(int signal) {
  * @return bool - success status
  */
 bool ManagePendingOrders() {
-   if (!isOpenOrder || isOpenPosition) return(true);
+   if (!real.isOpenOrder || real.isOpenPosition) return(true);
 
-   int i = ArraySize(orders.ticket)-1, oe[];
-   if (orders.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrders(1)  illegal order type "+ OperationTypeToStr(orders.openType[i]) +" of expected pending order #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
+   int i = ArraySize(real.ticket)-1, oe[];
+   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrders(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
 
    double openprice, stoploss, takeprofit, spread=Ask-Bid, channelMean, dNull;
    if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
 
-   switch (orders.pendingType[i]) {
+   switch (real.pendingType[i]) {
       case OP_BUYSTOP:
          if (GE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
-            if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, NULL, oe)) return(false);
-            Orders.RemoveTicket(orders.ticket[i]);
+            if (!OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) return(false);
+            Orders.RemoveTicket(real.ticket[i]);
             return(true);
          }
          openprice = Ask + BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
-         if (GE(orders.pendingPrice[i]-openprice, TrailEntryStep*Pip)) {
+         if (GE(real.pendingPrice[i]-openprice, TrailEntryStep*Pip)) {
             stoploss   = openprice - spread - StopLoss*Pip;
             takeprofit = openprice + TakeProfit*Pip;
-            if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+            if (!OrderModifyEx(real.ticket[i], openprice, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
          }
          break;
 
       case OP_SELLSTOP:
          if (LE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
-            if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, NULL, oe)) return(false);
-            Orders.RemoveTicket(orders.ticket[i]);
+            if (!OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) return(false);
+            Orders.RemoveTicket(real.ticket[i]);
             return(true);
          }
          openprice = Bid - BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
-         if (GE(openprice-orders.pendingPrice[i], TrailEntryStep*Pip)) {
+         if (GE(openprice-real.pendingPrice[i], TrailEntryStep*Pip)) {
             stoploss   = openprice + spread + StopLoss*Pip;
             takeprofit = openprice - TakeProfit*Pip;
-            if (!OrderModifyEx(orders.ticket[i], openprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+            if (!OrderModifyEx(real.ticket[i], openprice, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
          }
          break;
 
       default:
-         return(!catch("ManagePendingOrders(2)  illegal order type "+ OperationTypeToStr(orders.pendingType[i]) +" of expected pending order #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManagePendingOrders(2)  illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stoploss > 0) {
-      orders.pendingPrice[i] = NormalizeDouble(openprice, Digits);
-      orders.stopLoss    [i] = NormalizeDouble(stoploss, Digits);
-      orders.takeProfit  [i] = NormalizeDouble(takeprofit, Digits);
+      real.pendingPrice[i] = NormalizeDouble(openprice, Digits);
+      real.stopLoss    [i] = NormalizeDouble(stoploss, Digits);
+      real.takeProfit  [i] = NormalizeDouble(takeprofit, Digits);
    }
    return(true);
 }
@@ -557,41 +594,41 @@ bool ManagePendingOrders() {
  * @return bool - success status
  */
 bool ManageOpenPositions() {
-   if (!isOpenPosition) return(true);
+   if (!real.isOpenPosition) return(true);
 
-   int i = ArraySize(orders.ticket)-1, oe[];
+   int i = ArraySize(real.ticket)-1, oe[];
    double stoploss, takeprofit;
 
-   switch (orders.openType[i]) {
+   switch (real.openType[i]) {
       case OP_BUY:
-         if      (TakeProfitBug)                                   takeprofit = Ask + TakeProfit*Pip;    // erroneous TP calculation
-         else if (GE(Bid-orders.openPrice[i], TrailExitStart*Pip)) takeprofit = Bid + TakeProfit*Pip;    // correct TP calculation, also check trail-start
-         else                                                      takeprofit = INT_MIN;
+         if      (TakeProfitBug)                                 takeprofit = Ask + TakeProfit*Pip;      // erroneous TP calculation
+         else if (GE(Bid-real.openPrice[i], TrailExitStart*Pip)) takeprofit = Bid + TakeProfit*Pip;      // correct TP calculation, also check trail-start
+         else                                                    takeprofit = INT_MIN;
 
-         if (GE(takeprofit-orders.takeProfit[i], TrailExitStep*Pip)) {
+         if (GE(takeprofit-real.takeProfit[i], TrailExitStep*Pip)) {
             stoploss = Bid - StopLoss*Pip;
-            if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+            if (!OrderModifyEx(real.ticket[i], NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
          }
          break;
 
       case OP_SELL:
-         if      (TakeProfitBug)                                   takeprofit = Bid - TakeProfit*Pip;    // erroneous TP calculation
-         else if (GE(orders.openPrice[i]-Ask, TrailExitStart*Pip)) takeprofit = Ask - TakeProfit*Pip;    // correct TP calculation, also check trail-start
-         else                                                      takeprofit = INT_MAX;
+         if      (TakeProfitBug)                                 takeprofit = Bid - TakeProfit*Pip;      // erroneous TP calculation
+         else if (GE(real.openPrice[i]-Ask, TrailExitStart*Pip)) takeprofit = Ask - TakeProfit*Pip;      // correct TP calculation, also check trail-start
+         else                                                    takeprofit = INT_MAX;
 
-         if (GE(orders.takeProfit[i]-takeprofit, TrailExitStep*Pip)) {
+         if (GE(real.takeProfit[i]-takeprofit, TrailExitStep*Pip)) {
             stoploss = Ask + StopLoss*Pip;
-            if (!OrderModifyEx(orders.ticket[i], NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+            if (!OrderModifyEx(real.ticket[i], NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
          }
          break;
 
       default:
-         return(!catch("ManageOpenPositions(1)  illegal order type "+ OperationTypeToStr(orders.openType[i]) +" of expected open position #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManageOpenPositions(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stoploss > 0) {
-      orders.stopLoss  [i] = NormalizeDouble(stoploss, Digits);
-      orders.takeProfit[i] = NormalizeDouble(takeprofit, Digits);
+      real.stopLoss  [i] = NormalizeDouble(stoploss, Digits);
+      real.takeProfit[i] = NormalizeDouble(takeprofit, Digits);
    }
    return(true);
 }
@@ -604,8 +641,8 @@ bool ManageOpenPositions() {
  */
 bool CheckTotalTargets() {
    bool stopEA = false;
-   if (EA.StopOnProfit != 0) stopEA = stopEA || GE(totalPlNet, EA.StopOnProfit);
-   if (EA.StopOnLoss   != 0) stopEA = stopEA || LE(totalPlNet, EA.StopOnProfit);
+   if (EA.StopOnProfit != 0) stopEA = stopEA || GE(real.totalPlNet, EA.StopOnProfit);
+   if (EA.StopOnLoss   != 0) stopEA = stopEA || LE(real.totalPlNet, EA.StopOnProfit);
 
    if (stopEA) {
       if (!CloseOpenOrders())
@@ -787,35 +824,35 @@ double CalculateLots(bool checkLimits = false) {
  * @return bool - success status
  */
 bool ReadOrderLog() {
-   ArrayResize(orders.ticket,       0);
-   ArrayResize(orders.lots,         0);
-   ArrayResize(orders.pendingType,  0);
-   ArrayResize(orders.pendingPrice, 0);
-   ArrayResize(orders.openType,     0);
-   ArrayResize(orders.openTime,     0);
-   ArrayResize(orders.openPrice,    0);
-   ArrayResize(orders.closeTime,    0);
-   ArrayResize(orders.closePrice,   0);
-   ArrayResize(orders.stopLoss,     0);
-   ArrayResize(orders.takeProfit,   0);
-   ArrayResize(orders.swap,         0);
-   ArrayResize(orders.commission,   0);
-   ArrayResize(orders.profit,       0);
+   ArrayResize(real.ticket,       0);
+   ArrayResize(real.lots,         0);
+   ArrayResize(real.pendingType,  0);
+   ArrayResize(real.pendingPrice, 0);
+   ArrayResize(real.openType,     0);
+   ArrayResize(real.openTime,     0);
+   ArrayResize(real.openPrice,    0);
+   ArrayResize(real.closeTime,    0);
+   ArrayResize(real.closePrice,   0);
+   ArrayResize(real.stopLoss,     0);
+   ArrayResize(real.takeProfit,   0);
+   ArrayResize(real.swap,         0);
+   ArrayResize(real.commission,   0);
+   ArrayResize(real.profit,       0);
 
-   isOpenOrder      = false;
-   isOpenPosition   = false;
-   openLots         = 0;
-   openSwap         = 0;
-   openCommission   = 0;
-   openPl           = 0;
-   openPlNet        = 0;
-   closedPositions  = 0;
-   closedLots       = 0;
-   closedSwap       = 0;
-   closedCommission = 0;
-   closedPl         = 0;
-   closedPlNet      = 0;
-   totalPlNet       = 0;
+   real.isOpenOrder      = false;
+   real.isOpenPosition   = false;
+   real.openLots         = 0;
+   real.openSwap         = 0;
+   real.openCommission   = 0;
+   real.openPl           = 0;
+   real.openPlNet        = 0;
+   real.closedPositions  = 0;
+   real.closedLots       = 0;
+   real.closedSwap       = 0;
+   real.closedCommission = 0;
+   real.closedPl         = 0;
+   real.closedPlNet      = 0;
+   real.totalPlNet       = 0;
 
    // all closed positions
    int orders = OrdersHistoryTotal();
@@ -862,7 +899,7 @@ bool ReadOrderLog() {
  * @return bool - success status
  */
 bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double stopLoss, double takeProfit, double swap, double commission, double profit) {
-   int pos = SearchIntArray(orders.ticket, ticket);
+   int pos = SearchIntArray(real.ticket, ticket);
    if (pos >= 0) return(!catch("Orders.AddTicket(1)  invalid parameter ticket: #"+ ticket +" (ticket exists)", ERR_INVALID_PARAMETER));
 
    int pendingType, openType;
@@ -881,21 +918,21 @@ bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, doub
       openType     = type;
    }
 
-   int size=ArraySize(orders.ticket), newSize=size+1;
-   ArrayResize(orders.ticket,       newSize); orders.ticket      [size] = ticket;
-   ArrayResize(orders.lots,         newSize); orders.lots        [size] = lots;
-   ArrayResize(orders.pendingType,  newSize); orders.pendingType [size] = pendingType;
-   ArrayResize(orders.pendingPrice, newSize); orders.pendingPrice[size] = NormalizeDouble(pendingPrice, Digits);
-   ArrayResize(orders.openType,     newSize); orders.openType    [size] = openType;
-   ArrayResize(orders.openTime,     newSize); orders.openTime    [size] = openTime;
-   ArrayResize(orders.openPrice,    newSize); orders.openPrice   [size] = NormalizeDouble(openPrice, Digits);
-   ArrayResize(orders.closeTime,    newSize); orders.closeTime   [size] = closeTime;
-   ArrayResize(orders.closePrice,   newSize); orders.closePrice  [size] = NormalizeDouble(closePrice, Digits);
-   ArrayResize(orders.stopLoss,     newSize); orders.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
-   ArrayResize(orders.takeProfit,   newSize); orders.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
-   ArrayResize(orders.swap,         newSize); orders.swap        [size] = swap;
-   ArrayResize(orders.commission,   newSize); orders.commission  [size] = commission;
-   ArrayResize(orders.profit,       newSize); orders.profit      [size] = profit;
+   int size=ArraySize(real.ticket), newSize=size+1;
+   ArrayResize(real.ticket,       newSize); real.ticket      [size] = ticket;
+   ArrayResize(real.lots,         newSize); real.lots        [size] = lots;
+   ArrayResize(real.pendingType,  newSize); real.pendingType [size] = pendingType;
+   ArrayResize(real.pendingPrice, newSize); real.pendingPrice[size] = NormalizeDouble(pendingPrice, Digits);
+   ArrayResize(real.openType,     newSize); real.openType    [size] = openType;
+   ArrayResize(real.openTime,     newSize); real.openTime    [size] = openTime;
+   ArrayResize(real.openPrice,    newSize); real.openPrice   [size] = NormalizeDouble(openPrice, Digits);
+   ArrayResize(real.closeTime,    newSize); real.closeTime   [size] = closeTime;
+   ArrayResize(real.closePrice,   newSize); real.closePrice  [size] = NormalizeDouble(closePrice, Digits);
+   ArrayResize(real.stopLoss,     newSize); real.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
+   ArrayResize(real.takeProfit,   newSize); real.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
+   ArrayResize(real.swap,         newSize); real.swap        [size] = swap;
+   ArrayResize(real.commission,   newSize); real.commission  [size] = commission;
+   ArrayResize(real.profit,       newSize); real.profit      [size] = profit;
 
    bool _isOpenOrder      = (!closeTime);                                  // local vars
    bool _isPosition       = (openType != OP_UNDEFINED);
@@ -903,28 +940,28 @@ bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, doub
    bool _isClosedPosition = (_isPosition && closeTime);
 
    if (_isOpenOrder) {
-      if (isOpenOrder)    return(!catch("Orders.AddTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
-      isOpenOrder = true;                                                  // global vars
+      if (real.isOpenOrder)    return(!catch("Orders.AddTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
+      real.isOpenOrder = true;                                             // global vars
    }
    if (_isOpenPosition) {
-      if (isOpenPosition) return(!catch("Orders.AddTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
-      isOpenPosition = true;
-      openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
-      openSwap       += swap;
-      openCommission += commission;
-      openPl         += profit;
-      openPlNet       = openSwap + openCommission + openPl;
+      if (real.isOpenPosition) return(!catch("Orders.AddTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
+      real.isOpenPosition = true;
+      real.openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
+      real.openSwap       += swap;
+      real.openCommission += commission;
+      real.openPl         += profit;
+      real.openPlNet       = real.openSwap + real.openCommission + real.openPl;
    }
    if (_isClosedPosition) {
-      closedPositions++;
-      closedLots       += lots;
-      closedSwap       += swap;
-      closedCommission += commission;
-      closedPl         += profit;
-      closedPlNet       = closedSwap + closedCommission + closedPl;
+      real.closedPositions++;
+      real.closedLots       += lots;
+      real.closedSwap       += swap;
+      real.closedCommission += commission;
+      real.closedPl         += profit;
+      real.closedPlNet       = real.closedSwap + real.closedCommission + real.closedPl;
    }
    if (_isPosition) {
-      totalPlNet = openPlNet + closedPlNet;
+      real.totalPlNet = real.openPlNet + real.closedPlNet;
    }
    return(!catch("Orders.AddTicket(4)"));
 }
@@ -938,27 +975,27 @@ bool Orders.AddTicket(int ticket, double lots, int type, datetime openTime, doub
  * @return bool - success status
  */
 bool Orders.RemoveTicket(int ticket) {
-   int pos = SearchIntArray(orders.ticket, ticket);
-   if (pos < 0)                              return(!catch("Orders.RemoveTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
-   if (orders.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveTicket(2)  cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
-   if (!isOpenOrder)                         return(!catch("Orders.RemoveTicket(3)  isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
+   int pos = SearchIntArray(real.ticket, ticket);
+   if (pos < 0)                            return(!catch("Orders.RemoveTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
+   if (real.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveTicket(2)  cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
+   if (!real.isOpenOrder)                  return(!catch("Orders.RemoveTicket(3)  real.isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
 
-   isOpenOrder = false;
+   real.isOpenOrder = false;
 
-   ArraySpliceInts   (orders.ticket,       pos, 1);
-   ArraySpliceDoubles(orders.lots,         pos, 1);
-   ArraySpliceInts   (orders.pendingType,  pos, 1);
-   ArraySpliceDoubles(orders.pendingPrice, pos, 1);
-   ArraySpliceInts   (orders.openType,     pos, 1);
-   ArraySpliceInts   (orders.openTime,     pos, 1);
-   ArraySpliceDoubles(orders.openPrice,    pos, 1);
-   ArraySpliceInts   (orders.closeTime,    pos, 1);
-   ArraySpliceDoubles(orders.closePrice,   pos, 1);
-   ArraySpliceDoubles(orders.stopLoss,     pos, 1);
-   ArraySpliceDoubles(orders.takeProfit,   pos, 1);
-   ArraySpliceDoubles(orders.swap,         pos, 1);
-   ArraySpliceDoubles(orders.commission,   pos, 1);
-   ArraySpliceDoubles(orders.profit,       pos, 1);
+   ArraySpliceInts   (real.ticket,       pos, 1);
+   ArraySpliceDoubles(real.lots,         pos, 1);
+   ArraySpliceInts   (real.pendingType,  pos, 1);
+   ArraySpliceDoubles(real.pendingPrice, pos, 1);
+   ArraySpliceInts   (real.openType,     pos, 1);
+   ArraySpliceInts   (real.openTime,     pos, 1);
+   ArraySpliceDoubles(real.openPrice,    pos, 1);
+   ArraySpliceInts   (real.closeTime,    pos, 1);
+   ArraySpliceDoubles(real.closePrice,   pos, 1);
+   ArraySpliceDoubles(real.stopLoss,     pos, 1);
+   ArraySpliceDoubles(real.takeProfit,   pos, 1);
+   ArraySpliceDoubles(real.swap,         pos, 1);
+   ArraySpliceDoubles(real.commission,   pos, 1);
+   ArraySpliceDoubles(real.profit,       pos, 1);
 
    return(!catch("Orders.RemoveTicket(4)"));
 }
@@ -982,17 +1019,17 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread+0.00000001 > MaxSpread || avgSpread+0.00000001 > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), "         ", sError,                                                                              NL,
-                                                                                                                                                   NL,
-                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                NL,
-                                  "Channel:   ",  sIndicator,                                                                                      NL,
-                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                            NL,
-                                  "Unitsize:   ", sUnitSize,                                                                                       NL,
-                                                                                                                                                   NL,
-                                  "Open:      ", NumberToStr(openLots, "+.+"),   " lot                           PL: ", DoubleToStr(openPlNet, 2), NL,
-                                  "Closed:    ", closedPositions, " trades    ", NumberToStr(closedLots, ".+"), " lot    PL: ", DoubleToStr(closedPl, 2), "    Commission: ", DoubleToStr(closedCommission, 2), "    Swap: ", DoubleToStr(closedSwap, 2), NL,
-                                                                                                                                                   NL,
-                                  "Total PL:  ", DoubleToStr(totalPlNet, 2),                                                                       NL
+   string msg = StringConcatenate(ProgramName(), "         ", sError,                                                                                        NL,
+                                                                                                                                                             NL,
+                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                          NL,
+                                  "Channel:   ",  sIndicator,                                                                                                NL,
+                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                      NL,
+                                  "Unitsize:   ", sUnitSize,                                                                                                 NL,
+                                                                                                                                                             NL,
+                                  "Open:      ", NumberToStr(real.openLots, "+.+"),   " lot                           PL: ", DoubleToStr(real.openPlNet, 2), NL,
+                                  "Closed:    ", real.closedPositions, " trades    ", NumberToStr(real.closedLots, ".+"), " lot    PL: ", DoubleToStr(real.closedPl, 2), "    Commission: ", DoubleToStr(real.closedCommission, 2), "    Swap: ", DoubleToStr(real.closedSwap, 2), NL,
+                                                                                                                                                             NL,
+                                  "Total PL:  ", DoubleToStr(real.totalPlNet, 2),                                                                            NL
    );
 
    // 3 lines margin-top for potential indicator legends
