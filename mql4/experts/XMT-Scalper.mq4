@@ -213,24 +213,40 @@ int onDeinit() {
  */
 int onTick() {
    double dNull;
-   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);    // if the bug is enabled indicators must be tracked every tick
+   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);    // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                         // for the visible spread status display
 
-   UpdateOrderStatus();
+   bool isStandardTrading=true, isVirtualizedTrading=false, isTradeCopier=false;
 
-   if (EA.StopOnProfit || EA.StopOnLoss) {
-      if (!CheckTotalTargets()) return(last_error);            // on EA stop that's ERR_CANCELLED_BY_USER
+
+   // standard trading ------------------------------------------------------------------------------------------------------
+   if (isStandardTrading) {
+      UpdateOrderStatus();                                     // update order status and real PL
+
+      if (EA.StopOnProfit || EA.StopOnLoss) {
+         if (!CheckTotalTargets()) return(last_error);         // i.e. ERR_CANCELLED_BY_USER
+      }
+
+      if (isOpenOrder) {
+         if (isOpenPosition) ManageOpenPositions();            // trail exit limits
+         else                ManagePendingOrders();            // trail entry limits
+      }
+
+      if (!last_error && !isOpenOrder) {
+         int signal;
+         if (IsEntrySignal(signal)) OpenNewOrder(signal);      // monitor and handle new entry signals
+      }
    }
 
-   if (isOpenOrder) {
-      if (isOpenPosition) ManageOpenPositions();               // manage open orders
-      else                ManagePendingOrders();
+   // signal and PL virtualization ------------------------------------------------------------------------------------------
+   else if (isVirtualizedTrading) {
    }
 
-   if (!last_error && !isOpenOrder) {
-      int signal;
-      if (IsEntrySignal(signal)) OpenNewOrder(signal);         // check for and handle entry signals
+   // trade copier/mirror ---------------------------------------------------------------------------------------------------
+   else if (isTradeCopier) {
    }
+
+   else return(catch("onTick(1)", ERR_WRONG_JUMP));
    return(last_error);
 }
 
@@ -588,7 +604,6 @@ bool ManageOpenPositions() {
  */
 bool CheckTotalTargets() {
    bool stopEA = false;
-
    if (EA.StopOnProfit != 0) stopEA = stopEA || GE(totalPlNet, EA.StopOnProfit);
    if (EA.StopOnLoss   != 0) stopEA = stopEA || LE(totalPlNet, EA.StopOnProfit);
 
