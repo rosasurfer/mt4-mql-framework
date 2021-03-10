@@ -74,8 +74,8 @@ extern int    Magic                           = 0;          // if zero the Magic
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Overall PL settings =====================";
-extern double EA.StopOnProfit                 = 0;          // stop on overall profit in {money} (0: no stop)
-extern double EA.StopOnLoss                   = 0;          // stop on overall loss in {money} (0: no stop)
+extern double EA.StopOnProfit                 = 0;          // stop on overall profit in {money} (0: no stop on profits)
+extern double EA.StopOnLoss                   = 0;          // stop on overall loss in {money} (0: no stop on losses)
 
 extern string ___g___________________________ = "=== Bugs ================================";
 extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison only)
