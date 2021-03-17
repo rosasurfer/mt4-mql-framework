@@ -765,15 +765,17 @@ bool CloseOpenOrders() {
  * @return bool - success status; FALSE if the average is not yet available
  */
 bool CalculateSpreads() {
-   static int lastTick; if (Tick == lastTick) {
-      return(true);
+   static bool lastResult = false;
+   static int  lastTick; if (Tick == lastTick) {
+      return(lastResult);
    }
    lastTick      = Tick;
    currentSpread = NormalizeDouble((Ask-Bid)/Pip, 1);
 
    if (IsTesting()) {
-      avgSpread = currentSpread; if (__isChart) SS.Spreads();
-      return(true);
+      avgSpread  = currentSpread; if (__isChart) SS.Spreads();
+      lastResult = true;
+      return(lastResult);
    }
 
    double spreads[30];
@@ -783,17 +785,19 @@ bool CalculateSpreads() {
    static int ticks = 0;
    if (ticks < 29) {
       ticks++;
-      avgSpread = NULL; if (__isChart) SS.Spreads();
-      return(false);
+      avgSpread  = NULL; if (__isChart) SS.Spreads();
+      lastResult = false;
+      return(lastResult);
    }
 
    double sum = 0;
    for (int i=0; i < ticks; i++) {
       sum += spreads[i];
    }
-   avgSpread = sum/ticks; if (__isChart) SS.Spreads();
+   avgSpread  = sum/ticks; if (__isChart) SS.Spreads();
+   lastResult = true;
 
-   return(true);
+   return(lastResult);
 }
 
 
