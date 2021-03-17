@@ -509,11 +509,12 @@ bool CheckErrors(string location, int error = NULL) {
       catch(location, error);                                        // catch() calls SetLastError() which calls CheckErrors()
                                                                      // which updates __STATUS_OFF accordingly
    // update the variable last_error
-   if (__STATUS_OFF) /*&&*/ if (!last_error)
-      last_error = __STATUS_OFF.reason;
-
-   if (__STATUS_OFF)
+   if (__STATUS_OFF) {
+      if (!last_error) {
+         last_error = __STATUS_OFF.reason;
+      }
       ShowStatus(last_error);                                        // show status once again if an error occurred
+   }
    return(__STATUS_OFF);
 
    // suppress compiler warnings
