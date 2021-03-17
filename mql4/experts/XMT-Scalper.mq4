@@ -42,9 +42,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string TradingMode                     = "Regular* | Virtual | Mirror";
+
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
-extern int    IndicatorTimeFrame              = PERIOD_M1;  // entry indicator timeframe
+extern int    IndicatorTimeframe              = PERIOD_M1;  // entry indicator timeframe
 extern int    IndicatorPeriods                = 3;          // entry indicator bar periods
 extern double BollingerBands.Deviation        = 2;          // standard deviations
 extern double Envelopes.Deviation             = 0.07;       // in percent
@@ -89,9 +91,16 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define SIGNAL_LONG     1
-#define SIGNAL_SHORT    2
+#define TRADING_MODE_REGULAR     1
+#define TRADING_MODE_VIRTUAL     2
+#define TRADING_MODE_MIRROR      3
 
+#define SIGNAL_LONG              1
+#define SIGNAL_SHORT             2
+
+
+// general
+int      tradingMode;
 
 // real order log
 int      real.ticket      [];
@@ -171,13 +180,14 @@ int      orderSlippage;                // order slippage in point
 string   orderComment = "";
 
 // cache vars to speed-up ShowStatus()
-string   sCurrentSpread  = "-";
-string   sAvgSpread      = "-";
-string   sMaxSpread      = "-";
-string   sCurrentBarSize = "-";
-string   sMinBarSize     = "-";
-string   sIndicator      = "-";
-string   sUnitSize       = "-";
+string   sTradingModeDescriptions[] = {"", "Regular", "Virtual", "Trade-Mirror"};
+string   sCurrentSpread             = "-";
+string   sAvgSpread                 = "-";
+string   sMaxSpread                 = "-";
+string   sCurrentBarSize            = "-";
+string   sMinBarSize                = "-";
+string   sIndicator                 = "-";
+string   sUnitSize                  = "-";
 
 
 /**
@@ -187,29 +197,40 @@ string   sUnitSize       = "-";
  */
 int onInit() {
    // validate inputs
+   // TradingMode
+   string values[], sValue = TradingMode;
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (StrStartsWith("regular", sValue)) { tradingMode = TRADING_MODE_REGULAR; TradingMode = "Regular"; }
+   else if (StrStartsWith("virtual", sValue)) { tradingMode = TRADING_MODE_VIRTUAL; TradingMode = "Virtual"; }
+   else if (StrStartsWith("mirror",  sValue)) { tradingMode = TRADING_MODE_MIRROR;  TradingMode = "Mirror";  }
+   else                                                      return(catch("onInit(1)  Invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), ERR_INVALID_INPUT_PARAMETER));
    // EntryIndicator
-   if (EntryIndicator < 1 || EntryIndicator > 3)             return(catch("onInit(1)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
+   if (EntryIndicator < 1 || EntryIndicator > 3)             return(catch("onInit(2)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
    // IndicatorTimeframe
-   if (IsTesting() && IndicatorTimeFrame!=Period())          return(catch("onInit(2)  illegal test on "+ PeriodDescription(Period()) +" for configured EA timeframe "+ PeriodDescription(IndicatorTimeFrame), ERR_RUNTIME_ERROR));
+   if (IsTesting() && IndicatorTimeframe!=Period())          return(catch("onInit(3)  illegal test on "+ PeriodDescription(Period()) +" for configured EA timeframe "+ PeriodDescription(IndicatorTimeframe), ERR_RUNTIME_ERROR));
    // BreakoutReversal
    double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
-   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(catch("onInit(3)  invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(catch("onInit(4)  invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
    double minLots=MarketInfo(Symbol(), MODE_MINLOT), maxLots=MarketInfo(Symbol(), MODE_MAXLOT);
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                       return(catch("onInit(4)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                       return(catch("onInit(5)  invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
       double lots = CalculateLots(false); if (IsLastError()) return(last_error);
-      if (LT(lots, minLots))                                 return(catch("onInit(5)  not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
-      if (GT(lots, maxLots))                                 return(catch("onInit(6)  too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(lots, minLots))                                 return(catch("onInit(6)  not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
+      if (GT(lots, maxLots))                                 return(catch("onInit(7)  too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, minLots))                        return(catch("onInit(7)  too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, maxLots))                        return(catch("onInit(8)  too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, minLots))                        return(catch("onInit(8)  too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (GT(ManualLotsize, maxLots))                        return(catch("onInit(9)  too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
    }
    // EA.StopOnProfit / EA.StopOnLoss
    if (EA.StopOnProfit && EA.StopOnLoss) {
-      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(catch("onInit(9)  input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", ERR_INVALID_INPUT_PARAMETER));
+      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(catch("onInit(10)  input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", ERR_INVALID_INPUT_PARAMETER));
    }
 
    // initialize/normalize global vars
@@ -220,14 +241,12 @@ int onInit() {
    orderSlippage = Round(MaxSlippage*Pip/Point);
    orderComment  = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TpBug", "");
 
-
-   // --- old ---------------------------------------------------------------------------------------------------------------
-   if (!Magic) Magic = GenerateMagicNumber();
+   if (!Magic) Magic = GenerateMagicNumber();      // old
 
    if (!ReadOrderLog()) return(last_error);
    SS.All();
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(11)"));
 }
 
 
@@ -248,54 +267,84 @@ int onDeinit() {
  */
 int onTick() {
    double dNull;
-   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);    // if the channel bug is enabled indicators must be tracked every tick
-   if (__isChart)  CalculateSpreads();                         // for the visible spread status display
+   if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
+   if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
-   bool isStandardTrading=true, isVirtualizedTrading=false, isTradeCopier=false;
-
-
-   // --- standard trading --------------------------------------------------------------------------------------------------
-   if (isStandardTrading) {
-      UpdateOrderStatus();                                     // update order status and real PL
-
-      if (EA.StopOnProfit || EA.StopOnLoss) {
-         if (!CheckTotalTargets()) return(last_error);         // i.e. ERR_CANCELLED_BY_USER
-      }
-
-      if (real.isOpenOrder) {
-         if (real.isOpenPosition) ManageOpenPositions();       // trail exit limits
-         else                     ManagePendingOrders();       // trail entry limits
-      }
-
-      if (!last_error && !real.isOpenOrder) {
-         int signal;
-         if (IsEntrySignal(signal)) OpenNewOrder(signal);      // monitor and handle new entry signals
-      }
-      return(last_error);
+   switch (tradingMode) {
+      case TRADING_MODE_REGULAR: return(onTick.RegularTrading());
+      case TRADING_MODE_VIRTUAL: return(onTick.VirtualTrading());
+      case TRADING_MODE_MIRROR:  return(onTick.MirrorTrading());
    }
-
-   // --- virtualized trading -----------------------------------------------------------------------------------------------
-   if (isVirtualizedTrading) {
-      return(last_error);
-   }
-
-   // --- trade copier/mirror -----------------------------------------------------------------------------------------------
-   if (isTradeCopier) {
-      return(last_error);
-   }
-
    return(catch("onTick(1)", ERR_ILLEGAL_STATE));
 }
 
 
 /**
- * Track open/closed positions and update statistics.
+ * Main function for regular trading.
+ *
+ * @return int - error status
+ */
+int onTick.RegularTrading() {
+   UpdateRealOrderStatus();                                       // update real order status and PL
+
+   if (EA.StopOnProfit || EA.StopOnLoss) {
+      if (!CheckTotalTargets()) return(last_error);               // i.e. ERR_CANCELLED_BY_USER
+   }
+
+   if (real.isOpenOrder) {
+      if (real.isOpenPosition) ManageOpenPosition();              // trail exit limits
+      else                     ManagePendingOrder();              // trail entry limits
+   }
+
+   if (!last_error && !real.isOpenOrder) {
+      int signal;
+      if (IsEntrySignal(signal)) OpenNewOrder(signal);            // monitor and handle new entry signals
+   }
+   return(last_error);
+}
+
+
+/**
+ * Main function for virtual trading.
+ *
+ * @return int - error status
+ */
+int onTick.VirtualTrading() {
+   UpdateVirtualOrderStatus();                                    // update virtual order status and PL
+
+   return(last_error);
+
+   if (virt.isOpenOrder) {
+      if (virt.isOpenPosition) ManageVirtualPosition();           // trail exit limits
+      else                     ManageVirtualOrder();              // trail entry limits
+   }
+
+   if (!last_error && !virt.isOpenOrder) {
+      int signal;
+      if (IsEntrySignal(signal)) OpenVirtualOrder(signal);        // monitor and handle new entry signals
+   }
+   return(last_error);
+}
+
+
+/**
+ * Main function for mirror trading.
+ *
+ * @return int - error status
+ */
+int onTick.MirrorTrading() {
+   return(catch("onTick.MirrorTrading(1)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Update real order status and PL statistics.
  *
  * @return bool - success status
  */
-bool UpdateOrderStatus() {
+bool UpdateRealOrderStatus() {
    // open order statistics are fully recalculated
-   real.isOpenOrder    = false;                                // global vars
+   real.isOpenOrder    = false;                                   // global vars
    real.isOpenPosition = false;
    real.openLots       = 0;
    real.openSwap       = 0;
@@ -306,23 +355,23 @@ bool UpdateOrderStatus() {
    int orders = ArraySize(real.ticket);
 
    // update ticket status
-   for (int i=orders-1; i >= 0; i--) {                         // iterate backwards and stop at the first closed ticket
-      if (real.closeTime[i] > 0) break;                      // to increase performance
+   for (int i=orders-1; i >= 0; i--) {                            // iterate backwards and stop at the first closed ticket
+      if (real.closeTime[i] > 0) break;                           // to increase performance
       real.isOpenOrder = true;
-      if (!SelectTicket(real.ticket[i], "UpdateOrderStatus(1)")) return(false);
+      if (!SelectTicket(real.ticket[i], "UpdateRealOrderStatus(1)")) return(false);
 
-      bool wasPending  = (real.openType[i] == OP_UNDEFINED);   // local vars
+      bool wasPending  = (real.openType[i] == OP_UNDEFINED);      // local vars
       bool isPending   = (OrderType() > OP_SELL);
       bool wasPosition = !wasPending;
       bool isOpen      = !OrderCloseTime();
       bool isClosed    = !isOpen;
 
       if (wasPending) {
-         if (!isPending) {                                     // the pending order was filled
+         if (!isPending) {                                        // the pending order was filled
             onPositionOpen(i);
-            wasPosition = true;                                // mark as a known open position
+            wasPosition = true;                                   // mark as a known open position
          }
-         else if (isClosed) {                                  // the pending order was cancelled (externally)
+         else if (isClosed) {                                     // the pending order was cancelled (externally)
             onOrderDelete(i);
             orders--;
             continue;
@@ -341,10 +390,10 @@ bool UpdateOrderStatus() {
             real.openCommission += real.commission[i];
             real.openPl         += real.profit    [i];
          }
-         else /*isClosed*/ {                                   // the open position was closed
+         else /*isClosed*/ {                                      // the open position was closed
             onPositionClose(i);
             real.isOpenOrder = false;
-            real.closedPositions++;                            // update closed trade statistics
+            real.closedPositions++;                               // update closed trade statistics
             real.closedLots       += real.lots      [i];
             real.closedSwap       += real.swap      [i];
             real.closedCommission += real.commission[i];
@@ -357,7 +406,17 @@ bool UpdateOrderStatus() {
    real.closedPlNet = real.closedSwap + real.closedCommission + real.closedPl;
    real.totalPlNet  = real.openPlNet + real.closedPlNet;
 
-   return(!catch("UpdateOrderStatus(2)"));
+   return(!catch("UpdateRealOrderStatus(2)"));
+}
+
+
+/**
+ * Update virtual order status PL statistics.
+ *
+ * @return bool - success status
+ */
+bool UpdateVirtualOrderStatus() {
+   return(!catch("UpdateRealOrderStatus(2)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -470,7 +529,7 @@ bool IsEntrySignal(int &signal) {
    signal = NULL;
    if (last_error || real.isOpenOrder) return(false);
 
-   double barSize = iHigh(NULL, IndicatorTimeFrame, 0) - iLow(NULL, IndicatorTimeFrame, 0);
+   double barSize = iHigh(NULL, IndicatorTimeframe, 0) - iLow(NULL, IndicatorTimeframe, 0);
    if (__isChart) sCurrentBarSize = DoubleToStr(barSize/Pip, 1) +" pip";
 
    if (UseSpreadMultiplier) {
@@ -487,13 +546,18 @@ bool IsEntrySignal(int &signal) {
       if      (Bid < channelLow)    signal  = SIGNAL_LONG;
       else if (Bid > channelHigh)   signal  = SIGNAL_SHORT;
       if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits (3 = 0011)
+
+      if (signal != NULL) {
+         //if (IsLogInfo()) logInfo("IsEntrySignal(1)  signal condition fulfilled (barSize="+ barSize +", minBarSize="+ minBarSize +", Bid="+ Bid +", channelLow="+ channelLow +", channelHigh="+ channelHigh +", currentSpread="+ currentSpread +", avgSpread="+ avgSpread +", MaxSpread="+ MaxSpread +")");
+         return(true);
+      }
    }
-   return(signal != NULL);
+   return(false);
 }
 
 
 /**
- * Open a new order for the specified entry signal.
+ * Open a real order for the specified entry signal.
  *
  * @param  int signal - order entry signal: SIGNAL_LONG|SIGNAL_SHORT
  *
@@ -531,15 +595,27 @@ bool OpenNewOrder(int signal) {
 
 
 /**
- * Manage pending orders. There can be at most one pending order.
+ * Open a virtual order for the specified entry signal.
+ *
+ * @param  int signal - order entry signal: SIGNAL_LONG|SIGNAL_SHORT
  *
  * @return bool - success status
  */
-bool ManagePendingOrders() {
+bool OpenVirtualOrder(int signal) {
+   return(!catch("OpenVirtualOrder(1)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Manage a real pending order (there can be only one).
+ *
+ * @return bool - success status
+ */
+bool ManagePendingOrder() {
    if (!real.isOpenOrder || real.isOpenPosition) return(true);
 
    int i = ArraySize(real.ticket)-1, oe[];
-   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrders(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrder(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
 
    double openprice, stoploss, takeprofit, spread=Ask-Bid, channelMean, dNull;
    if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
@@ -576,7 +652,7 @@ bool ManagePendingOrders() {
          break;
 
       default:
-         return(!catch("ManagePendingOrders(2)  illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManagePendingOrder(2)  illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stoploss > 0) {
@@ -589,11 +665,21 @@ bool ManagePendingOrders() {
 
 
 /**
- * Manage open positions. There can be at most one open position.
+ * Manage a virtual pending order (there can be only one).
  *
  * @return bool - success status
  */
-bool ManageOpenPositions() {
+bool ManageVirtualOrder() {
+   return(!catch("ManageVirtualOrder(1)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Manage a real open position (there can be only one).
+ *
+ * @return bool - success status
+ */
+bool ManageOpenPosition() {
    if (!real.isOpenPosition) return(true);
 
    int i = ArraySize(real.ticket)-1, oe[];
@@ -623,7 +709,7 @@ bool ManageOpenPositions() {
          break;
 
       default:
-         return(!catch("ManageOpenPositions(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManageOpenPosition(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stoploss > 0) {
@@ -631,6 +717,16 @@ bool ManageOpenPositions() {
       real.takeProfit[i] = NormalizeDouble(takeprofit, Digits);
    }
    return(true);
+}
+
+
+/**
+ * Manage a virtual open position (there can be only one).
+ *
+ * @return bool - success status
+ */
+bool ManageVirtualPosition() {
+   return(!catch("ManageVirtualPosition(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -721,18 +817,18 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
    lastTick = Tick;
 
    if (EntryIndicator == 1) {
-      channelHigh = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
-      channelLow  = iMA(Symbol(), IndicatorTimeFrame, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW, 0);
+      channelHigh = iMA(Symbol(), IndicatorTimeframe, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);
+      channelLow  = iMA(Symbol(), IndicatorTimeframe, IndicatorPeriods, 0, MODE_LWMA, PRICE_LOW, 0);
       channelMean = (channelHigh + channelLow)/2;
    }
    else if (EntryIndicator == 2) {
-      channelHigh = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
-      channelLow  = iBands(Symbol(), IndicatorTimeFrame, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
+      channelHigh = iBands(Symbol(), IndicatorTimeframe, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_UPPER, 0);
+      channelLow  = iBands(Symbol(), IndicatorTimeframe, IndicatorPeriods, BollingerBands.Deviation, 0, PRICE_OPEN, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
    }
    else if (EntryIndicator == 3) {
-      channelHigh = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
-      channelLow  = iEnvelopes(Symbol(), IndicatorTimeFrame, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
+      channelHigh = iEnvelopes(Symbol(), IndicatorTimeframe, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_UPPER, 0);
+      channelLow  = iEnvelopes(Symbol(), IndicatorTimeframe, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
    }
    else return(!catch("GetIndicatorValues(1)  illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
@@ -1019,7 +1115,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread+0.00000001 > MaxSpread || avgSpread+0.00000001 > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), "         ", sError,                                                                                        NL,
+   string msg = StringConcatenate(ProgramName(), " - ", sTradingModeDescriptions[tradingMode], "  ", sError,                                                 NL,
                                                                                                                                                              NL,
                                   "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                          NL,
                                   "Channel:   ",  sIndicator,                                                                                                NL,
@@ -1102,8 +1198,9 @@ void SS.UnitSize(double size = NULL) {
  * @return string
  */
 string InputsToStr() {
-   return("EntryIndicator="          + EntryIndicator                               +";"+ NL
-         +"IndicatorTimeFrame="      + IndicatorTimeFrame                           +";"+ NL
+   return("TradingMode="             + TradingMode                                  +";"+ NL
+         +"EntryIndicator="          + EntryIndicator                               +";"+ NL
+         +"IndicatorTimeframe="      + IndicatorTimeframe                           +";"+ NL
          +"IndicatorPeriods="        + IndicatorPeriods                             +";"+ NL
          +"BollingerBands.Deviation="+ NumberToStr(BollingerBands.Deviation, ".1+") +";"+ NL
          +"Envelopes.Deviation="     + NumberToStr(Envelopes.Deviation, ".1+")      +";"+ NL
