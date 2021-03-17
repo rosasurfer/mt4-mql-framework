@@ -8,9 +8,7 @@
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1
-//      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
-//      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
-//      OrderModify().
+//      No status returned, unknown result. OrderModify() attempted to replace values already set. May also happen if the trade server changes during OrderModify().
 #define ERR_TRADESERVER_GONE                                          2    // framework alias of ERR_COMMON_ERROR
 #define ERR_COMMON_ERROR                           ERR_TRADESERVER_GONE    // trade request failed (trade server error)
 #define ERR_INVALID_TRADE_PARAMETERS                                  3    // invalid parameters passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket
