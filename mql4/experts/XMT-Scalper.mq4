@@ -449,20 +449,19 @@ bool UpdateVirtualOrderStatus() {
       if (wasPosition) {
          bool isOpen = true;
          if (virt.openType[i] == OP_BUY) {
-            if (virt.takeProfit[i] && Bid >= virt.takeProfit[i]) isOpen = false;
-            if (virt.stopLoss  [i] && Bid <= virt.stopLoss  [i]) isOpen = false;
+            if (virt.takeProfit[i] && Bid >= virt.takeProfit[i]) { virt.closePrice[i] = virt.takeProfit[i]; isOpen = false; }
+            if (virt.stopLoss  [i] && Bid <= virt.stopLoss  [i]) { virt.closePrice[i] = virt.stopLoss  [i]; isOpen = false; }
          }
          else /*virt.openType[i] == OP_SELL*/ {
-            if (virt.takeProfit[i] && Ask <= virt.takeProfit[i]) isOpen = false;
-            if (virt.stopLoss  [i] && Ask >= virt.stopLoss  [i]) isOpen = false;
+            if (virt.takeProfit[i] && Ask <= virt.takeProfit[i]) { virt.closePrice[i] = virt.takeProfit[i]; isOpen = false; }
+            if (virt.stopLoss  [i] && Ask >= virt.stopLoss  [i]) { virt.closePrice[i] = virt.stopLoss  [i]; isOpen = false; }
          }
 
          if (isOpen) {
-            virt.isOpenPosition  = true;                          // swap is ignored for virtual trading
+            virt.isOpenPosition  = true;
             virt.profit[i]       = ifDouble(virt.openType[i]==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip * PipValue(virt.lots[i]);
             virt.openLots       += ifDouble(virt.openType[i]==OP_BUY, virt.lots[i], -virt.lots[i]);
-            virt.openCommission += virt.commission[i];
-            virt.openSwap       += virt.swap      [i];
+            virt.openCommission += virt.commission[i];            // swap is ignored for virtual trading
             virt.openPl         += virt.profit    [i];
          }
          else /*isClosed*/ {                                      // an exit limit was triggered
@@ -471,7 +470,6 @@ bool UpdateVirtualOrderStatus() {
             virt.closedPositions++;                               // update closed trade statistics
             virt.closedLots       += virt.lots      [i];
             virt.closedCommission += virt.commission[i];
-            virt.closedSwap       += virt.swap      [i];
             virt.closedPl         += virt.profit    [i];
          }
       }
@@ -556,7 +554,7 @@ bool onPositionClose(int i) {
    real.profit    [i] = OrderProfit();
 
    if (IsLogInfo()) {
-      // #1 Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+      // #1 Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was closed at 1.5457'2 (market: Bid/Ask)
       string sType       = OperationTypeDescription(OrderType());
       string sOpenPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
       string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
@@ -580,7 +578,22 @@ bool onPositionClose(int i) {
  * @return bool - success status
  */
 bool onVirtualPositionClose(int i) {
-   return(!catch("onVirtualPositionClose(1)", ERR_NOT_IMPLEMENTED));
+   // update order log
+   virt.closeTime[i] = Tick.Time;
+   virt.profit   [i] = ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
+
+   if (IsLogInfo()) {
+      // virtual #1 Sell 0.1 GBPUSD at 1.5457'2 was closed at [TP|SL ]1.5457'2 (market: Bid/Ask)
+      string sType       = OperationTypeDescription(virt.openType[i]);
+      string sOpenPrice  = NumberToStr(virt.openPrice[i], PriceFormat);
+      string sClosePrice = NumberToStr(virt.closePrice[i], PriceFormat);
+      string sCloseType  = "";
+         if      (virt.closePrice[i] == virt.takeProfit[i]) sCloseType = "TP ";
+         else if (virt.closePrice[i] == virt.stopLoss  [i]) sCloseType = "SL ";
+      string message     = "virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sCloseType + sClosePrice;
+      logInfo("onVirtualPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   }
+   return(!catch("onVirtualPositionClose(2)"));
 }
 
 
