@@ -246,7 +246,7 @@ int onTick.RegularTrading() {
 int onTick.VirtualTrading() {
    UpdateVirtualOrderStatus();                                    // update virtual order status and PL
 
-   if (false && virt.isOpenOrder) {
+   if (virt.isOpenOrder) {
       if (virt.isOpenPosition) ManageVirtualPosition();           // trail exit limits
       else                     ManageVirtualOrder();              // trail entry limits or delete order
    }
@@ -517,15 +517,14 @@ bool onVirtualPositionClose(int i) {
    virt.profit   [i] = ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
 
    if (IsLogInfo()) {
-      // virtual #1 Sell 0.1 GBPUSD at 1.5457'2 was closed at [TP|SL ]1.5457'2 (market: Bid/Ask)
+      // virtual #1 Sell 0.1 GBPUSD at 1.5457'2 was closed at 1.5457'2 [tp|sl] (market: Bid/Ask)
       string sType       = OperationTypeDescription(virt.openType[i]);
       string sOpenPrice  = NumberToStr(virt.openPrice[i], PriceFormat);
       string sClosePrice = NumberToStr(virt.closePrice[i], PriceFormat);
       string sCloseType  = "";
-         if      (virt.closePrice[i] == virt.takeProfit[i]) sCloseType = "TP ";
-         else if (virt.closePrice[i] == virt.stopLoss  [i]) sCloseType = "SL ";
-      string message     = "virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sCloseType + sClosePrice;
-      logInfo("onVirtualPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if      (virt.closePrice[i] == virt.takeProfit[i]) sCloseType = " [tp]";
+         else if (virt.closePrice[i] == virt.stopLoss  [i]) sCloseType = " [sl]";
+      logInfo("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
    return(!catch("onVirtualPositionClose(2)"));
 }
@@ -667,8 +666,8 @@ bool OpenVirtualOrder(int signal) {
    }
    else return(!catch("OpenVirtualOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
-   double lots       = CalculateLots();     if (!lots)               return(false);
-   double commission = GetCommission(lots); if (IsEmpty(commission)) return(false);
+   double lots       = CalculateLots();      if (!lots)               return(false);
+   double commission = GetCommission(-lots); if (IsEmpty(commission)) return(false);
 
    if (Orders.AddVirtualTicket(ticket, lots, orderType, Tick.Time, openPrice, NULL, NULL, stopLoss, takeProfit, NULL, commission, NULL)) {
       if (IsLogInfo()) {
