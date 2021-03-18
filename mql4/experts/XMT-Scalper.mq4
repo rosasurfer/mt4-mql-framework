@@ -366,10 +366,10 @@ bool UpdateVirtualOrderStatus() {
       bool wasPending = (virt.openType[i] == OP_UNDEFINED);
       bool isPending  = wasPending;
       if (wasPending) {
-         if      (virt.pendingType[i] == OP_BUYLIMIT)  { if (Ask <= virt.pendingPrice[i]) isPending = false; }
-         else if (virt.pendingType[i] == OP_BUYSTOP)   { if (Ask >= virt.pendingPrice[i]) isPending = false; }
-         else if (virt.pendingType[i] == OP_SELLLIMIT) { if (Bid >= virt.pendingPrice[i]) isPending = false; }
-         else if (virt.pendingType[i] == OP_SELLSTOP)  { if (Bid <= virt.pendingPrice[i]) isPending = false; }
+         if      (virt.pendingType[i] == OP_BUYLIMIT)  { if (LE(Ask, virt.pendingPrice[i])) isPending = false; }
+         else if (virt.pendingType[i] == OP_BUYSTOP)   { if (GE(Ask, virt.pendingPrice[i])) isPending = false; }
+         else if (virt.pendingType[i] == OP_SELLLIMIT) { if (GE(Bid, virt.pendingPrice[i])) isPending = false; }
+         else if (virt.pendingType[i] == OP_SELLSTOP)  { if (LE(Bid, virt.pendingPrice[i])) isPending = false; }
       }
       bool wasPosition = !wasPending;
 
@@ -383,19 +383,19 @@ bool UpdateVirtualOrderStatus() {
       if (wasPosition) {
          bool isOpen = true;
          if (virt.openType[i] == OP_BUY) {
-            if (virt.takeProfit[i] && Bid >= virt.takeProfit[i]) { virt.closePrice[i] = virt.takeProfit[i]; isOpen = false; }
-            if (virt.stopLoss  [i] && Bid <= virt.stopLoss  [i]) { virt.closePrice[i] = virt.stopLoss  [i]; isOpen = false; }
+            if (virt.takeProfit[i] && GE(Bid, virt.takeProfit[i])) { virt.closePrice[i] = virt.takeProfit[i]; isOpen = false; }
+            if (virt.stopLoss  [i] && LE(Bid, virt.stopLoss  [i])) { virt.closePrice[i] = virt.stopLoss  [i]; isOpen = false; }
          }
          else /*virt.openType[i] == OP_SELL*/ {
-            if (virt.takeProfit[i] && Ask <= virt.takeProfit[i]) { virt.closePrice[i] = virt.takeProfit[i]; isOpen = false; }
-            if (virt.stopLoss  [i] && Ask >= virt.stopLoss  [i]) { virt.closePrice[i] = virt.stopLoss  [i]; isOpen = false; }
+            if (virt.takeProfit[i] && LE(Ask, virt.takeProfit[i])) { virt.closePrice[i] = virt.takeProfit[i]; isOpen = false; }
+            if (virt.stopLoss  [i] && GE(Ask, virt.stopLoss  [i])) { virt.closePrice[i] = virt.stopLoss  [i]; isOpen = false; }
          }
 
          if (isOpen) {
             virt.isOpenPosition  = true;
             virt.profit[i]       = ifDouble(virt.openType[i]==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip * PipValue(virt.lots[i]);
             virt.openLots       += ifDouble(virt.openType[i]==OP_BUY, virt.lots[i], -virt.lots[i]);
-            virt.openCommission += virt.commission[i];            // swap is ignored for virtual trading
+            virt.openCommission += virt.commission[i];            // swap is ignored in virtual trading
             virt.openPl         += virt.profit    [i];
          }
          else /*isClosed*/ {                                      // an exit limit was triggered
@@ -522,8 +522,8 @@ bool onVirtualPositionClose(int i) {
       string sOpenPrice  = NumberToStr(virt.openPrice[i], PriceFormat);
       string sClosePrice = NumberToStr(virt.closePrice[i], PriceFormat);
       string sCloseType  = "";
-         if      (virt.closePrice[i] == virt.takeProfit[i]) sCloseType = " [tp]";
-         else if (virt.closePrice[i] == virt.stopLoss  [i]) sCloseType = " [sl]";
+         if      (EQ(virt.closePrice[i], virt.takeProfit[i])) sCloseType = " [tp]";
+         else if (EQ(virt.closePrice[i], virt.stopLoss  [i])) sCloseType = " [sl]";
       logInfo("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
    return(!catch("onVirtualPositionClose(2)"));
@@ -757,28 +757,28 @@ bool ManageOpenPosition() {
    if (!real.isOpenPosition) return(true);
 
    int i = ArraySize(real.ticket)-1, oe[];
-   double stoploss, takeprofit;
+   double takeProfit, stopLoss;
 
    switch (real.openType[i]) {
       case OP_BUY:
-         if      (TakeProfitBug)                                 takeprofit = Ask + TakeProfit*Pip;      // erroneous TP calculation
-         else if (GE(Bid-real.openPrice[i], TrailExitStart*Pip)) takeprofit = Bid + TakeProfit*Pip;      // correct TP calculation, also check trail-start
-         else                                                    takeprofit = INT_MIN;
+         if      (TakeProfitBug)                                 takeProfit = Ask + TakeProfit*Pip;      // erroneous TP calculation
+         else if (GE(Bid-real.openPrice[i], TrailExitStart*Pip)) takeProfit = Bid + TakeProfit*Pip;      // correct TP calculation, also check trail-start
+         else                                                    takeProfit = INT_MIN;
 
-         if (GE(takeprofit-real.takeProfit[i], TrailExitStep*Pip)) {
-            stoploss = Bid - StopLoss*Pip;
-            if (!OrderModifyEx(real.ticket[i], NULL, stoploss, takeprofit, NULL, Lime, NULL, oe)) return(false);
+         if (GE(takeProfit-real.takeProfit[i], TrailExitStep*Pip)) {
+            stopLoss = Bid - StopLoss*Pip;
+            if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Lime, NULL, oe)) return(false);
          }
          break;
 
       case OP_SELL:
-         if      (TakeProfitBug)                                 takeprofit = Bid - TakeProfit*Pip;      // erroneous TP calculation
-         else if (GE(real.openPrice[i]-Ask, TrailExitStart*Pip)) takeprofit = Ask - TakeProfit*Pip;      // correct TP calculation, also check trail-start
-         else                                                    takeprofit = INT_MAX;
+         if      (TakeProfitBug)                                 takeProfit = Bid - TakeProfit*Pip;      // erroneous TP calculation
+         else if (GE(real.openPrice[i]-Ask, TrailExitStart*Pip)) takeProfit = Ask - TakeProfit*Pip;      // correct TP calculation, also check trail-start
+         else                                                    takeProfit = INT_MAX;
 
-         if (GE(real.takeProfit[i]-takeprofit, TrailExitStep*Pip)) {
-            stoploss = Ask + StopLoss*Pip;
-            if (!OrderModifyEx(real.ticket[i], NULL, stoploss, takeprofit, NULL, Orange, NULL, oe)) return(false);
+         if (GE(real.takeProfit[i]-takeProfit, TrailExitStep*Pip)) {
+            stopLoss = Ask + StopLoss*Pip;
+            if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Orange, NULL, oe)) return(false);
          }
          break;
 
@@ -786,9 +786,9 @@ bool ManageOpenPosition() {
          return(!catch("ManageOpenPosition(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
-   if (stoploss > 0) {
-      real.stopLoss  [i] = NormalizeDouble(stoploss, Digits);
-      real.takeProfit[i] = NormalizeDouble(takeprofit, Digits);
+   if (stopLoss > 0) {
+      real.takeProfit[i] = NormalizeDouble(takeProfit, Digits);
+      real.stopLoss  [i] = NormalizeDouble(stopLoss, Digits);
    }
    return(true);
 }
@@ -800,7 +800,35 @@ bool ManageOpenPosition() {
  * @return bool - success status
  */
 bool ManageVirtualPosition() {
-   return(!catch("ManageVirtualPosition(1)", ERR_NOT_IMPLEMENTED));
+   if (!virt.isOpenPosition) return(true);
+
+   int i = ArraySize(virt.ticket)-1;
+   double takeProfit, stopLoss;
+
+   switch (virt.openType[i]) {
+      case OP_BUY:
+         if      (TakeProfitBug)                                   takeProfit = Ask + TakeProfit*Pip;    // erroneous TP calculation
+         else if (GE(Bid-virt.openPrice[i], TrailExitStart*Pip))   takeProfit = Bid + TakeProfit*Pip;    // correct TP calculation, also check trail-start
+         else                                                      takeProfit = INT_MIN;
+         if (GE(takeProfit-virt.takeProfit[i], TrailExitStep*Pip)) stopLoss   = Bid - StopLoss*Pip;
+         break;
+
+      case OP_SELL:
+         if      (TakeProfitBug)                                   takeProfit = Bid - TakeProfit*Pip;    // erroneous TP calculation
+         else if (GE(virt.openPrice[i]-Ask, TrailExitStart*Pip))   takeProfit = Ask - TakeProfit*Pip;    // correct TP calculation, also check trail-start
+         else                                                      takeProfit = INT_MAX;
+         if (GE(virt.takeProfit[i]-takeProfit, TrailExitStep*Pip)) stopLoss   = Ask + StopLoss*Pip;
+         break;
+
+      default:
+         return(!catch("ManageVirtualPosition(1)  illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected virtual position #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
+   }
+
+   if (stopLoss > 0) {
+      virt.takeProfit[i] = NormalizeDouble(takeProfit, Digits);
+      virt.stopLoss  [i] = NormalizeDouble(stopLoss, Digits);
+   }
+   return(true);
 }
 
 
