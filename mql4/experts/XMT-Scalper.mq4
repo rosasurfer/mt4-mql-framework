@@ -114,8 +114,8 @@ datetime real.closeTime   [];          // order close time of a closed order or 
 double   real.closePrice  [];          // order close price of a closed position or 0
 double   real.stopLoss    [];          // SL price or 0
 double   real.takeProfit  [];          // TP price or 0
-double   real.swap        [];          // order swap
 double   real.commission  [];          // order commission
+double   real.swap        [];          // order swap
 double   real.profit      [];          // order profit (gross)
 
 // real order statistics
@@ -149,8 +149,8 @@ datetime virt.closeTime   [];
 double   virt.closePrice  [];
 double   virt.stopLoss    [];
 double   virt.takeProfit  [];
-double   virt.swap        [];
 double   virt.commission  [];
+double   virt.swap        [];
 double   virt.profit      [];
 
 // virtual order statistics
@@ -179,7 +179,7 @@ double   minBarSize;                   // min. bar size in absolute terms
 int      orderSlippage;                // order slippage in point
 string   orderComment = "";
 
-// cache vars to speed-up ShowStatus()
+// cache vars to speed-up status messages
 string   sTradingModeDescriptions[] = {"", "", ": Virtual Trading", ": Mirror Trading"};
 string   sCurrentSpread             = "-";
 string   sAvgSpread                 = "-";
@@ -293,7 +293,7 @@ int onTick.RegularTrading() {
 
    if (real.isOpenOrder) {
       if (real.isOpenPosition) ManageOpenPosition();              // trail exit limits
-      else                     ManagePendingOrder();              // trail entry limits
+      else                     ManagePendingOrder();              // trail entry limits or delete order
    }
 
    if (!last_error && !real.isOpenOrder) {
@@ -312,9 +312,9 @@ int onTick.RegularTrading() {
 int onTick.VirtualTrading() {
    UpdateVirtualOrderStatus();                                    // update virtual order status and PL
 
-   if (virt.isOpenOrder) {
+   if (false && virt.isOpenOrder) {
       if (virt.isOpenPosition) ManageVirtualPosition();           // trail exit limits
-      else                     ManageVirtualOrder();              // trail entry limits
+      else                     ManageVirtualOrder();              // trail entry limits or delete order
    }
 
    if (!last_error && !virt.isOpenOrder) {
@@ -342,11 +342,11 @@ int onTick.MirrorTrading() {
  */
 bool UpdateRealOrderStatus() {
    // open order statistics are fully recalculated
-   real.isOpenOrder    = false;                                   // global vars
+   real.isOpenOrder    = false;
    real.isOpenPosition = false;
    real.openLots       = 0;
-   real.openSwap       = 0;
    real.openCommission = 0;
+   real.openSwap       = 0;
    real.openPl         = 0;
    real.openPlNet      = 0;
 
@@ -358,7 +358,7 @@ bool UpdateRealOrderStatus() {
       real.isOpenOrder = true;
       if (!SelectTicket(real.ticket[i], "UpdateRealOrderStatus(1)")) return(false);
 
-      bool wasPending  = (real.openType[i] == OP_UNDEFINED);      // local vars
+      bool wasPending  = (real.openType[i] == OP_UNDEFINED);
       bool isPending   = (OrderType() > OP_SELL);
       bool wasPosition = !wasPending;
       bool isOpen      = !OrderCloseTime();
@@ -366,35 +366,35 @@ bool UpdateRealOrderStatus() {
 
       if (wasPending) {
          if (!isPending) {                                        // the pending order was filled
-            onPositionOpen(i);
+            onPositionOpen(i);                                    // updates order record and logs
             wasPosition = true;                                   // mark as a known open position
          }
          else if (isClosed) {                                     // the pending order was cancelled (externally)
-            onOrderDelete(i);
+            onOrderDelete(i);                                     // logs and removes order record
             orders--;
             continue;
          }
       }
 
       if (wasPosition) {
-         real.swap      [i] = OrderSwap();
          real.commission[i] = OrderCommission();
+         real.swap      [i] = OrderSwap();
          real.profit    [i] = OrderProfit();
 
          if (isOpen) {
             real.isOpenPosition  = true;
             real.openLots       += ifDouble(real.openType[i]==OP_BUY, real.lots[i], -real.lots[i]);
-            real.openSwap       += real.swap      [i];
             real.openCommission += real.commission[i];
+            real.openSwap       += real.swap      [i];
             real.openPl         += real.profit    [i];
          }
-         else /*isClosed*/ {                                      // the open position was closed
-            onPositionClose(i);
+         else /*isClosed*/ {                                      // the position was closed
+            onPositionClose(i);                                   // updates order record and logs
             real.isOpenOrder = false;
             real.closedPositions++;                               // update closed trade statistics
             real.closedLots       += real.lots      [i];
-            real.closedSwap       += real.swap      [i];
             real.closedCommission += real.commission[i];
+            real.closedSwap       += real.swap      [i];
             real.closedPl         += real.profit    [i];
          }
       }
@@ -415,11 +415,11 @@ bool UpdateRealOrderStatus() {
  */
 bool UpdateVirtualOrderStatus() {
    // open order statistics are fully recalculated
-   virt.isOpenOrder    = false;                                   // global vars
+   virt.isOpenOrder    = false;
    virt.isOpenPosition = false;
    virt.openLots       = 0;
-   virt.openSwap       = 0;
    virt.openCommission = 0;
+   virt.openSwap       = 0;
    virt.openPl         = 0;
    virt.openPlNet      = 0;
 
@@ -429,8 +429,52 @@ bool UpdateVirtualOrderStatus() {
       if (virt.closeTime[i] > 0) break;                           // to increase performance
       virt.isOpenOrder = true;
 
-      // we have either a pending order or an open position
-      return(!catch("UpdateVirtualOrderStatus(1)", ERR_NOT_IMPLEMENTED));
+      bool wasPending = (virt.openType[i] == OP_UNDEFINED);
+      bool isPending  = wasPending;
+      if (wasPending) {
+         if      (virt.pendingType[i] == OP_BUYLIMIT)  { if (Ask <= virt.pendingPrice[i]) isPending = false; }
+         else if (virt.pendingType[i] == OP_BUYSTOP)   { if (Ask >= virt.pendingPrice[i]) isPending = false; }
+         else if (virt.pendingType[i] == OP_SELLLIMIT) { if (Bid >= virt.pendingPrice[i]) isPending = false; }
+         else if (virt.pendingType[i] == OP_SELLSTOP)  { if (Bid <= virt.pendingPrice[i]) isPending = false; }
+      }
+      bool wasPosition = !wasPending;
+
+      if (wasPending) {
+         if (!isPending) {                                        // the entry limit was triggered
+            onVirtualPositionOpen(i);
+            wasPosition = true;                                   // mark as a known open position (may be opened and closed on the same tick)
+         }
+      }
+
+      if (wasPosition) {
+         bool isOpen = true;
+         if (virt.openType[i] == OP_BUY) {
+            if (virt.takeProfit[i] && Bid >= virt.takeProfit[i]) isOpen = false;
+            if (virt.stopLoss  [i] && Bid <= virt.stopLoss  [i]) isOpen = false;
+         }
+         else /*virt.openType[i] == OP_SELL*/ {
+            if (virt.takeProfit[i] && Ask <= virt.takeProfit[i]) isOpen = false;
+            if (virt.stopLoss  [i] && Ask >= virt.stopLoss  [i]) isOpen = false;
+         }
+
+         if (isOpen) {
+            virt.isOpenPosition  = true;                          // swap is ignored for virtual trading
+            virt.profit[i]       = ifDouble(virt.openType[i]==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip * PipValue(virt.lots[i]);
+            virt.openLots       += ifDouble(virt.openType[i]==OP_BUY, virt.lots[i], -virt.lots[i]);
+            virt.openCommission += virt.commission[i];
+            virt.openSwap       += virt.swap      [i];
+            virt.openPl         += virt.profit    [i];
+         }
+         else /*isClosed*/ {                                      // an exit limit was triggered
+            virt.isOpenOrder = false;                             // mark order status
+            onVirtualPositionClose(i);                            // updates order record, exit PL and logs
+            virt.closedPositions++;                               // update closed trade statistics
+            virt.closedLots       += virt.lots      [i];
+            virt.closedCommission += virt.commission[i];
+            virt.closedSwap       += virt.swap      [i];
+            virt.closedPl         += virt.profit    [i];
+         }
+      }
    }
 
    virt.openPlNet   = virt.openSwap   + virt.openCommission   + virt.openPl;
@@ -438,59 +482,11 @@ bool UpdateVirtualOrderStatus() {
    virt.totalPlNet  = virt.openPlNet  + virt.closedPlNet;
 
    return(!catch("UpdateVirtualOrderStatus(2)"));
-
-
-   // --- UpdateRealOrderStatus() -------------------------------------------------------------------------------------------
-   // update ticket status
-   for (i=orders-1; i >= 0; i--) {                                // iterate backwards and stop at the first closed ticket
-      SelectTicket(real.ticket[i], "UpdateRealOrderStatus(1)");
-
-      bool wasPending  = (real.openType[i] == OP_UNDEFINED);      // local vars
-      bool isPending   = (OrderType() > OP_SELL);
-      bool wasPosition = !wasPending;
-      bool isOpen      = !OrderCloseTime();
-      bool isClosed    = !isOpen;
-
-      if (wasPending) {
-         if (!isPending) {                                        // the pending order was filled
-            onPositionOpen(i);
-            wasPosition = true;                                   // mark as a known open position
-         }
-         else if (isClosed) {                                     // the pending order was cancelled (externally)
-            onOrderDelete(i);
-            orders--;
-            continue;
-         }
-      }
-
-      if (wasPosition) {
-         real.swap      [i] = OrderSwap();
-         real.commission[i] = OrderCommission();
-         real.profit    [i] = OrderProfit();
-
-         if (isOpen) {
-            real.isOpenPosition  = true;
-            real.openLots       += ifDouble(real.openType[i]==OP_BUY, real.lots[i], -real.lots[i]);
-            real.openSwap       += real.swap      [i];
-            real.openCommission += real.commission[i];
-            real.openPl         += real.profit    [i];
-         }
-         else /*isClosed*/ {                                      // the open position was closed
-            onPositionClose(i);
-            real.isOpenOrder = false;
-            real.closedPositions++;                               // update closed trade statistics
-            real.closedLots       += real.lots      [i];
-            real.closedSwap       += real.swap      [i];
-            real.closedCommission += real.commission[i];
-            real.closedPl         += real.profit    [i];
-         }
-      }
-   }
 }
 
 
 /**
- * Handle a PositionOpen event. The opened ticket is already selected.
+ * Handle a real PositionOpen event. The referenced ticket is selected.
  *
  * @param  int i - ticket index of the opened position
  *
@@ -501,8 +497,8 @@ bool onPositionOpen(int i) {
    real.openType  [i] = OrderType();
    real.openTime  [i] = OrderOpenTime();
    real.openPrice [i] = OrderOpenPrice();
-   real.swap      [i] = OrderSwap();
    real.commission[i] = OrderCommission();
+   real.swap      [i] = OrderSwap();
    real.profit    [i] = OrderProfit();
 
    if (IsLogInfo()) {
@@ -533,7 +529,19 @@ bool onPositionOpen(int i) {
 
 
 /**
- * Handle a PositionClose event. The closed ticket is already selected.
+ * Handle a virtual PositionOpen event.
+ *
+ * @param  int i - ticket index of the opened position
+ *
+ * @return bool - success status
+ */
+bool onVirtualPositionOpen(int i) {
+   return(!catch("onVirtualPositionOpen(1)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Handle a PositionClose event. The referenced ticket is selected.
  *
  * @param  int i - ticket index of the closed position
  *
@@ -543,8 +551,8 @@ bool onPositionClose(int i) {
    // update order log
    real.closeTime [i] = OrderCloseTime();
    real.closePrice[i] = OrderClosePrice();
-   real.swap      [i] = OrderSwap();
    real.commission[i] = OrderCommission();
+   real.swap      [i] = OrderSwap();
    real.profit    [i] = OrderProfit();
 
    if (IsLogInfo()) {
@@ -565,7 +573,19 @@ bool onPositionClose(int i) {
 
 
 /**
- * Handle an OrderDelete event. The deleted ticket is already selected.
+ * Handle a virtual PositionClose event.
+ *
+ * @param  int i - ticket index of the closed position
+ *
+ * @return bool - success status
+ */
+bool onVirtualPositionClose(int i) {
+   return(!catch("onVirtualPositionClose(1)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Handle an OrderDelete event. The referenced ticket is selected.
  *
  * @param  int i - ticket index of the deleted order
  *
@@ -624,10 +644,10 @@ bool IsEntrySignal(int &signal) {
 
       if      (Bid < channelLow)    signal  = SIGNAL_LONG;
       else if (Bid > channelHigh)   signal  = SIGNAL_SHORT;
-      if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits, dec(3) = bin(0011)
+      if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits: dec(3) = bin(0011)
 
       if (signal != NULL) {
-         //if (IsLogInfo()) logInfo("IsEntrySignal(2)  signal condition fulfilled (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", Bid="+ NumberToStr(Bid, PriceFormat) +", channelHigh="+ NumberToStr(channelHigh, PriceFormat) +", channelLow="+ NumberToStr(channelLow, PriceFormat) +", currentSpread="+ sCurrentSpread +", avgSpread="+ sAvgSpread +", MaxSpread="+ sMaxSpread +")");
+         if (IsLogInfo()) logInfo("IsEntrySignal(2)  "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
          return(true);
       }
    }
@@ -1043,8 +1063,8 @@ bool ReadOrderLog() {
    ArrayResize(real.closePrice,   0);
    ArrayResize(real.stopLoss,     0);
    ArrayResize(real.takeProfit,   0);
-   ArrayResize(real.swap,         0);
    ArrayResize(real.commission,   0);
+   ArrayResize(real.swap,         0);
    ArrayResize(real.profit,       0);
 
    real.isOpenOrder      = false;
@@ -1138,8 +1158,8 @@ bool Orders.AddRealTicket(int ticket, double lots, int type, datetime openTime, 
    ArrayResize(real.closePrice,   newSize); real.closePrice  [size] = NormalizeDouble(closePrice, Digits);
    ArrayResize(real.stopLoss,     newSize); real.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
    ArrayResize(real.takeProfit,   newSize); real.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
-   ArrayResize(real.swap,         newSize); real.swap        [size] = swap;
    ArrayResize(real.commission,   newSize); real.commission  [size] = commission;
+   ArrayResize(real.swap,         newSize); real.swap        [size] = swap;
    ArrayResize(real.profit,       newSize); real.profit      [size] = profit;
 
    bool _isOpenOrder      = (!closeTime);                                  // local vars
@@ -1229,8 +1249,8 @@ bool Orders.AddVirtualTicket(int &ticket, double lots, int type, datetime openTi
    ArrayResize(virt.closePrice,   newSize); virt.closePrice  [size] = NormalizeDouble(closePrice, Digits);
    ArrayResize(virt.stopLoss,     newSize); virt.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
    ArrayResize(virt.takeProfit,   newSize); virt.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
-   ArrayResize(virt.swap,         newSize); virt.swap        [size] = swap;
    ArrayResize(virt.commission,   newSize); virt.commission  [size] = commission;
+   ArrayResize(virt.swap,         newSize); virt.swap        [size] = swap;
    ArrayResize(virt.profit,       newSize); virt.profit      [size] = profit;
 
    bool _isOpenOrder      = (!closeTime);                                  // local vars
@@ -1292,11 +1312,40 @@ bool Orders.RemoveTicket(int ticket) {
    ArraySpliceDoubles(real.closePrice,   pos, 1);
    ArraySpliceDoubles(real.stopLoss,     pos, 1);
    ArraySpliceDoubles(real.takeProfit,   pos, 1);
-   ArraySpliceDoubles(real.swap,         pos, 1);
    ArraySpliceDoubles(real.commission,   pos, 1);
+   ArraySpliceDoubles(real.swap,         pos, 1);
    ArraySpliceDoubles(real.profit,       pos, 1);
 
    return(!catch("Orders.RemoveTicket(4)"));
+}
+
+
+/**
+ * Return a string representation of a virtual order record.
+ *
+ * @param  int  ticket
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string DumpVirtualOrder(int ticket) {
+   int i = SearchIntArray(virt.ticket, ticket);
+   if (i < 0) return(_EMPTY_STR(catch("DumpVirtualOrder(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER)));
+
+   string sLots         = NumberToStr(virt.lots[i], ".1+");
+   string sPendingType  = ifString(virt.pendingType[i]==OP_UNDEFINED, "-", OrderTypeDescription(virt.pendingType[i]));
+   string sPendingPrice = ifString(!virt.pendingPrice[i], "0", NumberToStr(virt.pendingPrice[i], PriceFormat));
+   string sOpenType     = ifString(virt.openType[i]==OP_UNDEFINED, "-", OrderTypeDescription(virt.openType[i]));
+   string sOpenTime     = ifString(!virt.openTime[i], "0", TimeToStr(virt.openTime[i], TIME_FULL));
+   string sOpenPrice    = ifString(!virt.openPrice[i], "0", NumberToStr(virt.openPrice[i], PriceFormat));
+   string sCloseTime    = ifString(!virt.closeTime[i], "0", TimeToStr(virt.closeTime[i], TIME_FULL));
+   string sClosePrice   = ifString(!virt.closePrice[i], "0", NumberToStr(virt.closePrice[i], PriceFormat));
+   string sTakeProfit   = ifString(!virt.takeProfit[i], "0", NumberToStr(virt.takeProfit[i], PriceFormat));
+   string sStopLoss     = ifString(!virt.stopLoss[i], "0", NumberToStr(virt.stopLoss[i], PriceFormat));
+   string sCommission   = DoubleToStr(virt.commission[i], 2);
+   string sSwap         = DoubleToStr(virt.swap[i], 2);
+   string sProfit       = DoubleToStr(virt.profit[i], 2);
+
+   return("virtual #"+ ticket +": lots="+ sLots +", pendingType="+ sPendingType +", pendingPrice="+ sPendingPrice +", openType="+ sOpenType +", openTime="+ sOpenTime +", openPrice="+ sOpenPrice +", closeTime="+ sCloseTime +", closePrice="+ sClosePrice +", takeProfit="+ sTakeProfit +", stopLoss="+ sStopLoss +", commission="+ sCommission +", swap="+ sSwap +", profit="+ sProfit);
 }
 
 
@@ -1310,25 +1359,55 @@ bool Orders.RemoveTicket(int ticket) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
 
+   double openLots, openPlNet, closedLots, closedPl, closedCommission, closedSwap, totalPlNet;
+   int closedPositions;
+
+   switch (tradingMode) {
+      case TRADING_MODE_REGULAR:
+         openLots         = real.openLots;
+         openPlNet        = real.openPlNet;
+         closedPositions  = real.closedPositions;
+         closedLots       = real.closedLots;
+         closedPl         = real.closedPl;
+         closedCommission = real.closedCommission;
+         closedSwap       = real.closedSwap;
+         totalPlNet       = real.totalPlNet;
+         break;
+
+      case TRADING_MODE_VIRTUAL:
+         openLots         = virt.openLots;
+         openPlNet        = virt.openPlNet;
+         closedPositions  = virt.closedPositions;
+         closedLots       = virt.closedLots;
+         closedPl         = virt.closedPl;
+         closedCommission = virt.closedCommission;
+         closedSwap       = virt.closedSwap;
+         totalPlNet       = virt.totalPlNet;
+         break;
+
+      case TRADING_MODE_MIRROR:
+         break;
+   }
+
    string sError = "";
-   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
+   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate(" [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
+   else if (__STATUS_OFF          ) sError = StringConcatenate(" [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
    string sSpreadInfo = "";
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "  ", sError,                                                        NL,
-                                                                                                                                                             NL,
-                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                          NL,
-                                  "Channel:   ",  sIndicator,                                                                                                NL,
-                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                      NL,
-                                  "Unitsize:   ", sUnitSize,                                                                                                 NL,
-                                                                                                                                                             NL,
-                                  "Open:      ", NumberToStr(real.openLots, "+.+"),   " lot                           PL: ", DoubleToStr(real.openPlNet, 2), NL,
-                                  "Closed:    ", real.closedPositions, " trades    ", NumberToStr(real.closedLots, ".+"), " lot    PL: ", DoubleToStr(real.closedPl, 2), "    Commission: ", DoubleToStr(real.closedCommission, 2), "    Swap: ", DoubleToStr(real.closedSwap, 2), NL,
-                                                                                                                                                             NL,
-                                  "Total PL:  ", DoubleToStr(real.totalPlNet, 2),                                                                            NL
+   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "           ", sError,                                     NL,
+                                                                                                                                                   NL,
+                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                NL,
+                                  "Channel:   ",  sIndicator,                                                                                      NL,
+                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                            NL,
+                                  "Unitsize:   ", sUnitSize,                                                                                       NL,
+                                                                                                                                                   NL,
+                                  "Open:      ", NumberToStr(openLots, "+.+"),   " lot                           PL: ", DoubleToStr(openPlNet, 2), NL,
+                                  "Closed:    ", closedPositions, " trades    ", NumberToStr(closedLots, ".+"), " lot    PL: ", DoubleToStr(closedPl, 2), "    Commission: ", DoubleToStr(closedCommission, 2), "    Swap: ", DoubleToStr(closedSwap, 2), NL,
+                                                                                                                                                   NL,
+                                  "Total PL:  ", DoubleToStr(totalPlNet, 2),                                                                       NL
    );
 
    // 3 lines margin-top for potential indicator legends
@@ -1434,4 +1513,7 @@ string InputsToStr() {
          +"ChannelBug="              + BoolToStr(ChannelBug)                        +";"+ NL
          +"TakeProfitBug="           + BoolToStr(TakeProfitBug)                     +";"
    );
+
+   // prevent compiler warnings
+   DumpVirtualOrder(NULL);
 }
