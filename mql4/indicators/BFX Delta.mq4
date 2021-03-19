@@ -176,10 +176,10 @@ int onDeinitRecompile() {
 int onTick() {
    // wait for account number initialization (required for BFX license validation)
    if (!AccountNumber())
-      return(logInfo("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(logDebug("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMain)) return(logInfo("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMain)) return(logDebug("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -204,7 +204,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startBar = changedBars-1;
-   if (startBar < 0) return(logInfo("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logDebug("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -263,7 +263,7 @@ bool onLevelCross(int mode) {
 
    if (mode == MODE_UPPER) {
       message = indicatorName +" crossed level "+ Signal.Level;
-      logInfo("onLevelCross(1)  "+ message);
+      logDebug("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.long);
@@ -274,7 +274,7 @@ bool onLevelCross(int mode) {
 
    if (mode == MODE_LOWER) {
       message = indicatorName +" crossed level "+ (-Signal.Level);
-      logInfo("onLevelCross(2)  "+ message);
+      logDebug("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.short);

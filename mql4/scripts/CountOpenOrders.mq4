@@ -15,7 +15,7 @@ int __DeinitFlags[];
  */
 int onStart() {
    string msg = OrdersTotal() +" open orders";
-   logInfo("onStart(1)  "+ msg);
+   logDebug("onStart(1)  "+ msg);
    Comment(NL, NL, NL, msg);
    return(last_error);
 }

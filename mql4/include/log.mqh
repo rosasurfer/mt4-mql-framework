@@ -15,11 +15,11 @@
  * | IsLogError()   | whether LOG_ERROR is active                     |                  |
  * +----------------+-------------------------------------------------+------------------+
  * | log()          | dispatch a message to active log appenders      | configurable     |
- * | logDebug()     | alias of log(LOG_DEBUG)                         |                  |
- * | logInfo()      | alias of log(LOG_INFO)                          |                  |
- * | logNotice()    | alias of log(LOG_NOTICE)                        |                  |
- * | logWarn()      | alias of log(LOG_WARN)                          |                  |
- * | logError()     | alias of log(LOG_ERROR)                         |                  |
+ * | logDebug()     | alias of log(..., LOG_DEBUG)                    |                  |
+ * | logInfo()      | alias of log(..., LOG_INFO)                     |                  |
+ * | logNotice()    | alias of log(..., LOG_NOTICE)                   |                  |
+ * | logWarn()      | alias of log(..., LOG_WARN)                     |                  |
+ * | logError()     | alias of log(..., LOG_ERROR)                    |                  |
  * +----------------+-------------------------------------------------+------------------+
  * | log2Terminal() | TerminalLogAppender                             | configurable     |
  * | log2Alert()    | TerminalAlertAppender                           | configurable     |
@@ -54,9 +54,9 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    }
    isRecursion = true;
 
-   // the prefixes "Metatrader" and "Tester" are used by DebugView as message filter
+   // DebugView uses the prefixes "Metatrader" and "Tester" as a message filter
    string sPrefix   = "MetaTrader"; if (This.IsTesting()) sPrefix = StringConcatenate("Tester ", GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"));
-   string sLoglevel = ""; if (loglevel != LOG_INFO) sLoglevel = LoglevelDescription(loglevel);
+   string sLoglevel = ""; if (loglevel != LOG_DEBUG) sLoglevel = LoglevelDescription(loglevel);
           sLoglevel = StrPadRight(sLoglevel, 6);
    string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
@@ -193,7 +193,7 @@ int log(string message, int error, int level) {
       else {
          key = ProgramName();
          if (!IsConfigKey("Log", key)) key = "Online";
-         value = GetConfigString("Log", key, "info");                                              // online default: info
+         value = GetConfigString("Log", key, "debug");                                             // online default: debug
       }
       configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
@@ -367,7 +367,7 @@ int log2Debugger(string message, int error, int level) {
 
 
 /**
- * Send a log message to the separate logfile appender.
+ * Send a log message to the custom logfile appender.
  *
  * @param  string message - log message
  * @param  int    error   - error linked to the message (if any)
@@ -488,7 +488,7 @@ int log2SMS(string message, int error, int level) {
          receiver = sValue;
       }
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
-                  + "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+                  +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendSMS(receiver, text)) {
          ec_SetLoglevelSMS(__ExecutionContext, configLevel);                                             // restore the configuration or leave it disabled
@@ -528,8 +528,8 @@ int log2Terminal(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelTerminal(__ExecutionContext, LOG_OFF);                                               // prevent recursive calls
 
-      string sLoglevel = ""; if (level != LOG_INFO) sLoglevel = LoglevelDescription(level) +"  ";
-      string sError    = ""; if (error != NO_ERROR) sError    = " ["+ ErrorToStr(error) +"]";
+      string sLoglevel = ""; if (level != LOG_DEBUG) sLoglevel = LoglevelDescription(level) +"  ";
+      string sError    = ""; if (error != NO_ERROR)  sError    = " ["+ ErrorToStr(error) +"]";
 
       Print(sLoglevel, StrReplace(message, NL, " "), sError);
 
@@ -568,9 +568,9 @@ int log2Terminal(string message, int error, int level) {
 
 
 /**
- * Configure the use of a separate logfile (simple wrapper for the MT4Expander function).
+ * Configure the use of a custom logfile (simple wrapper for the MT4Expander function).
  *
- * @param  string filename - full filename to enable or an empty string to disable a separate logfile
+ * @param  string filename - full filename to enable or an empty string to disable the custom logfile
  *
  * @return bool - success status
  */
