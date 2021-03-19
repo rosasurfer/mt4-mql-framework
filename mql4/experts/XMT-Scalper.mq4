@@ -91,6 +91,8 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+#define STRATEGY_ID            106     // unique strategy id from 101-1023 (10 bit)
+
 #define TRADING_MODE_REGULAR     1
 #define TRADING_MODE_VIRTUAL     2
 #define TRADING_MODE_MIRROR      3
@@ -1291,6 +1293,33 @@ bool Orders.RemoveTicket(int ticket) {
    ArraySpliceDoubles(real.profit,       pos, 1);
 
    return(!catch("Orders.RemoveTicket(4)"));
+}
+
+
+/**
+ * Return the full name of the instance logfile.
+ *
+ * @return string - filename or an empty string in case of errors
+ */
+string GetLogFilename() {
+   string name = GetStatusFilename();
+   if (!StringLen(name)) return("");
+   return(StrLeft(name, -3) +"log");
+}
+
+
+/**
+ * Return the full name of the instance status file.
+ *
+ * @return string - filename or an empty string in case of errors
+ */
+string GetStatusFilename() {
+   if (!Magic) return(_EMPTY_STR(catch("GetStatusFilename(1)  illegal magic number: "+ Magic, ERR_ILLEGAL_STATE)));
+
+   string directory = "\\presets\\" + ifString(IsTesting(), "Tester", GetAccountCompany()) +"\\";
+   string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ Magic +".set";
+
+   return(GetMqlFilesPath() + directory + baseName);
 }
 
 

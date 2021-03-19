@@ -119,12 +119,12 @@ int init() {
       // resolve the account number (optimistic: if called in deinit() it will deadlock the UI thread)
       if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
       // log MarketInfo() data
-      if (IsLogDebug()) Tester.LogMarketInfo();
+      if (IsLogInfo()) Tester.LogMarketInfo();
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
 
    // log input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogDebug()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogInfo()) {
       string sInput = InputsToStr();
       if (StringLen(sInput) > 0) {
          sInput = StringConcatenate(sInput,
@@ -132,7 +132,7 @@ int init() {
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logDebug("init(14)  input: "+ sInput);
+         logInfo("init(14)  input: "+ sInput);
       }
    }
 
@@ -631,7 +631,7 @@ bool Tester.LogMarketInfo() {
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
-   logDebug("MarketInfo()"+ message);
+   logInfo("MarketInfo()"+ message);
 
    return(!catch("Tester.LogMarketInfo(1)"));
 }

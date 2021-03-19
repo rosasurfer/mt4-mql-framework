@@ -1,5 +1,5 @@
 /**
- * Initialization
+ * Initialization preprocessing
  *
  * @return int - error status
  */
@@ -55,4 +55,38 @@ int onInit() {
    SS.All();
 
    return(catch("onInit(11)"));
+}
+
+
+/**
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
+ * There was an input dialog.
+ *
+ * @return int - error status
+ */
+int onInitUser() {
+   SetLogfile(GetLogFilename());
+   return(last_error);
+}
+
+
+/**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   SetLogfile(GetLogFilename());
+   return(last_error);
+}
+
+
+/**
+ * Called after the current chart symbol has changed. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitSymbolChange() {
+   SetLogfile("");
+   return(SetLastError(ERR_CANCELLED_BY_USER));
 }
