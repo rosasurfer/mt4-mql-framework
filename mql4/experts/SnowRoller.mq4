@@ -345,7 +345,7 @@ bool StartSequence(int signal) {
    sequence.status = STATUS_STARTING;
 
    double gridbase = GetGridbase();
-   if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level +"..."+ ifString(gridbase!=0, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
+   if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence at level "+ sequence.level +"..."+ ifString(gridbase!=0, " (predefined gridbase "+ NumberToStr(gridbase, PriceFormat) +")", ""));
 
    // update start/stop conditions
    switch (signal) {
@@ -415,7 +415,7 @@ bool StartSequence(int signal) {
    if (!UpdatePendingOrders(SAVESTATUS_ENFORCE)) return(false);
    RedrawStartStop();
 
-   if (IsLogInfo()) logInfo("StartSequence(6)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("StartSequence(6)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -443,7 +443,7 @@ bool StopSequence(int signal) {
    // a waiting sequence has no open orders (before first start or after stop)
    if (sequence.status == STATUS_WAITING) {
       sequence.status = STATUS_STOPPED;
-      if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.longName +" stopped");
+      if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.longName +" stopped");
    }
 
    // a progressing sequence has open orders to close
@@ -452,7 +452,7 @@ bool StopSequence(int signal) {
          return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       sequence.status = STATUS_STOPPING;
-      if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.longName +" stopping sequence...");
+      if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.longName +" stopping sequence...");
 
       // close open orders
       double stopPrice;
@@ -514,7 +514,7 @@ bool StopSequence(int signal) {
             orders.swap      [pendingLimits[i]] = OrderSwap();
             orders.commission[pendingLimits[i]] = OrderCommission();
             orders.profit    [pendingLimits[i]] = OrderProfit();
-            if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(pendingLimits[i]));
+            if (IsLogDebug()) logDebug("StopSequence(5)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(pendingLimits[i]));
             if (IsStopOrderType(orders.pendingType[pendingLimits[i]])) {   // the next gridlevel was triggered
                sequence.level   += Sign(orders.level[pendingLimits[i]]); SS.SequenceName();
                sequence.maxLevel = Sign(orders.level[pendingLimits[i]]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
@@ -523,7 +523,7 @@ bool StopSequence(int signal) {
                ArrayDropInt(sequence.missedLevels, orders.level[pendingLimits[i]]);
                SS.MissedLevels();
             }
-            if (IsLogInfo()) logInfo("StopSequence(6)  "+ sequence.longName +" adding ticket #"+ OrderTicket() +" to open positions");
+            if (IsLogDebug()) logDebug("StopSequence(6)  "+ sequence.longName +" adding ticket #"+ OrderTicket() +" to open positions");
             ArrayPushInt(openPositions, OrderTicket());                    // add to open positions
             i--;                                                           // process the position's stoploss limit
          }
@@ -540,7 +540,7 @@ bool StopSequence(int signal) {
             orders.swap      [pendingLimits[i]] = OrderSwap();
             orders.commission[pendingLimits[i]] = OrderCommission();
             orders.profit    [pendingLimits[i]] = OrderProfit();
-            if (IsLogInfo()) logInfo("StopSequence(8)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(pendingLimits[i]));
+            if (IsLogDebug()) logDebug("StopSequence(8)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(pendingLimits[i]));
             sequence.stops++;
             sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[pendingLimits[i]] + orders.commission[pendingLimits[i]] + orders.profit[pendingLimits[i]], 2); SS.Stops();
             ArrayDropInt(openPositions, OrderTicket());                    // remove from open positions
@@ -610,7 +610,7 @@ bool StopSequence(int signal) {
       RedrawStartStop();
 
       sequence.status = STATUS_STOPPED;
-      if (IsLogInfo()) logInfo("StopSequence(10)  "+ sequence.name +" sequence stopped at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
+      if (IsLogDebug()) logDebug("StopSequence(10)  "+ sequence.name +" sequence stopped at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
       UpdateProfitTargets();
       ShowProfitTargets();
       SS.ProfitPerLevel();
@@ -854,7 +854,7 @@ bool ResetSequence(double gridbase, int level) {
    SS.All();
    SaveStatus();
 
-   if (IsLogInfo()) logInfo("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
+   if (IsLogDebug()) logDebug("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
    return(!catch("ResetSequence(5)"));
 }
 
@@ -878,7 +878,7 @@ bool ResumeSequence(int signal) {
    double   newGridbase, startPrice;
 
    sequence.status = STATUS_STARTING;
-   if (IsLogInfo()) logInfo("ResumeSequence(2)  "+ sequence.name +" resuming sequence at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", old gridbase "+ NumberToStr(lastGridbase, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("ResumeSequence(2)  "+ sequence.name +" resuming sequence at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", old gridbase "+ NumberToStr(lastGridbase, PriceFormat) +")");
 
    // update start/stop conditions
    switch (signal) {
@@ -960,7 +960,7 @@ bool ResumeSequence(int signal) {
    if (!UpdatePendingOrders(SAVESTATUS_ENFORCE)) return(false);
    RedrawStartStop();
 
-   if (IsLogInfo()) logInfo("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
@@ -1042,7 +1042,7 @@ bool RestorePositions(datetime &lpOpenTime, double &lpOpenPrice) {
    // handle a virtually triggered SL
    if (level != 0) {
       if (orders.ticket[i] == -1) {
-         if (IsLogInfo()) logInfo("RestorePositions(2)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
+         if (IsLogDebug()) logDebug("RestorePositions(2)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
          sequence.level = orders.level[i] - levelStep; SS.SequenceName();
          Orders.RemoveRecord(i);
       }
@@ -1095,7 +1095,7 @@ bool UpdateStatus(bool &gridChanged) {
             orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.UnitSize();
             orders.profit    [i] = OrderProfit();
             Chart.MarkOrderFilled(i);
-            if (IsLogInfo()) logInfo("UpdateStatus(3)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(i));
+            if (IsLogDebug()) logDebug("UpdateStatus(3)  "+ sequence.longName +" "+ UpdateStatus.OrderFillMsg(i));
 
             if (IsStopOrderType(orders.pendingType[i])) {                     // an executed stop order
                sequence.level     = orders.level[i]; SS.SequenceName();
@@ -1149,8 +1149,8 @@ bool UpdateStatus(bool &gridChanged) {
          Chart.MarkPositionClosed(i);
 
          if (orders.closedBySL[i]) {                                          // stopped out
-            if (IsLogInfo()) {         logInfo("UpdateStatus(6)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
-               if (entryStopTriggered) logInfo("UpdateStatus(7)  "+ sequence.longName +" multiple limits triggered: StopEntry and StopLoss");
+            if (IsLogDebug()) {        logDebug("UpdateStatus(6)  "+ sequence.longName +" "+ UpdateStatus.StopLossMsg(i));
+               if (entryStopTriggered) logDebug("UpdateStatus(7)  "+ sequence.longName +" multiple limits triggered: StopEntry and StopLoss");
             }
             if (orders.level[i] == sequence.level) {
                sequence.level -= Sign(orders.level[i]); SS.SequenceName();    // only decrease level when the triggered SL is of the current level (the last)
@@ -1166,7 +1166,7 @@ bool UpdateStatus(bool &gridChanged) {
             return(false);
          }
          else {                                                               // manually closed or closed at end of test
-            if (IsLogInfo()) logInfo("UpdateStatus(9)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
+            if (IsLogDebug()) logDebug("UpdateStatus(9)  "+ sequence.longName +" "+ UpdateStatus.PositionCloseMsg(i));
             sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
       }
@@ -1381,7 +1381,7 @@ bool IsStartSignal(int &signal) {
          if (IsBarOpenEvent(start.trend.timeframe)) {
             int trend = GetStartTrendValue(1);
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               if (IsLogInfo()) logInfo("IsStartSignal(1)  "+ sequence.longName +" queuing fulfilled "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\"");
+               if (IsLogDebug()) logDebug("IsStartSignal(1)  "+ sequence.longName +" queuing fulfilled "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\"");
                sessionbreak.startSignal = SIGNAL_TREND;        // checked after sessionbreak in the regular trend check
             }
          }
@@ -1392,7 +1392,7 @@ bool IsStartSignal(int &signal) {
    if (sessionbreak.waiting) {
       // -- after sessionbreak: wait for the stop price to be reached if not in level 0 -------------------------------------
       if (!sequence.level) {
-         if (IsLogInfo()) logInfo("IsStartSignal(2)  "+ sequence.longName +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
+         if (IsLogDebug()) logDebug("IsStartSignal(2)  "+ sequence.longName +" resume condition \"@sessionbreak in level 0\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
          signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
@@ -1400,7 +1400,7 @@ bool IsStartSignal(int &signal) {
       if (sequence.direction == D_LONG) triggered = (Ask <= price);
       else                              triggered = (Bid >= price);
       if (triggered) {
-         if (IsLogInfo()) logInfo("IsStartSignal(3)  "+ sequence.longName +" resume condition \"@sessionbreak price "+ NumberToStr(price, PriceFormat) +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
+         if (IsLogDebug()) logDebug("IsStartSignal(3)  "+ sequence.longName +" resume condition \"@sessionbreak price "+ NumberToStr(price, PriceFormat) +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "ask", "bid") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Ask, Bid), PriceFormat) +")");
          signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
@@ -1594,7 +1594,7 @@ bool IsStopSignal(int &signal) {
       // -- session break ---------------------------------------------------------------------------------------------------
       if (IsSessionBreak()) {
          message = "IsStopSignal(9)  "+ sequence.longName +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
-         if (IsLogInfo()) logInfo(message);
+         if (IsLogDebug()) logDebug(message);
          signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
@@ -1646,7 +1646,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.longName +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.longName +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
@@ -1706,7 +1706,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
             }
          }
          else {                                                            // order is closed, re-open it
-            if (IsLogInfo()) logInfo("UpdatePendingOrders(5)  "+ sequence.longName +" re-opening closed level "+ level +" order...");
+            if (IsLogDebug()) logDebug("UpdatePendingOrders(5)  "+ sequence.longName +" re-opening closed level "+ level +" order...");
             int type = Grid.AddPendingOrder(level, i+1); if (!type) return(false);
             sizeOfTickets++;
             if (saveStatusMode != SAVESTATUS_SKIP) saveStatus = true;
@@ -1718,7 +1718,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
                idxCurrentLevel++;
             }
             else {                                                         // on a stop order decrease the sequence level
-               if (IsLogInfo()) logInfo("UpdatePendingOrders(6)  "+ sequence.longName +" re-opened order is a stop order, decreasing sequence level...");
+               if (IsLogDebug()) logDebug("UpdatePendingOrders(6)  "+ sequence.longName +" re-opened order is a stop order, decreasing sequence level...");
                nextLevel       = level;
                sequence.level  = level - levelStep; SS.SequenceName();
                idxCurrentLevel = -1;
@@ -1749,7 +1749,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
             idxCurrentLevel = sizeOfTickets-1;
          }
          else {                                                            // on a stop order decrease the sequence level
-            if (IsLogInfo()) logInfo("UpdatePendingOrders(8)  "+ sequence.longName +" opened order is a stop order, decreasing sequence level...");
+            if (IsLogDebug()) logDebug("UpdatePendingOrders(8)  "+ sequence.longName +" opened order is a stop order, decreasing sequence level...");
             sequence.level = level - levelStep; SS.SequenceName();
             nextLevel      = level;
             level          = sequence.level;
@@ -1791,7 +1791,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
          idxNextStop = sizeOfTickets-1;
       }
       else {                                                               // on a limit order the sequence level increased
-         if (IsLogInfo()) logInfo("UpdatePendingOrders(11)  "+ sequence.longName +" submitted order is a limit order, increasing sequence level...");
+         if (IsLogDebug()) logDebug("UpdatePendingOrders(11)  "+ sequence.longName +" submitted order is a limit order, increasing sequence level...");
          idxCurrentLevel   = sizeOfTickets-1;
          sequence.level    = nextLevel; SS.SequenceName();
          sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * levelStep;
@@ -1831,7 +1831,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
 
    if (newLimitOrders > 0) {
       sMissedLevels = StrSubstr(sMissedLevels, 2); SS.MissedLevels();
-      if (IsLogInfo()) logInfo("UpdatePendingOrders(12)  "+ sequence.longName +" opened "+ newLimitOrders +" limit order"+ Pluralize(newLimitOrders) +" for missed level"+ Pluralize(newLimitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
+      if (IsLogDebug()) logDebug("UpdatePendingOrders(12)  "+ sequence.longName +" opened "+ newLimitOrders +" limit order"+ Pluralize(newLimitOrders) +" for missed level"+ Pluralize(newLimitOrders) +" "+ sMissedLevels +" (all missed levels: "+ JoinInts(sequence.missedLevels) +")");
    }
    UpdateProfitTargets();
    ShowProfitTargets();
@@ -1857,7 +1857,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
  */
 bool UpdatePendingOrders.DeleteError(int i, int error, int saveStatusMode) {
    if (error == -1) {                                                   // the order was already executed
-      if (IsLogInfo()) logInfo("UpdatePendingOrders.DeleteError(1)  "+ sequence.longName +" pending stop order for level "+ orders.level[i] +" was already executed (#"+ orders.ticket[i] +")");
+      if (IsLogDebug()) logDebug("UpdatePendingOrders.DeleteError(1)  "+ sequence.longName +" pending stop order for level "+ orders.level[i] +" was already executed (#"+ orders.ticket[i] +")");
       bool bNull;
       UpdateStatus(bNull);                                              // handle it recursively
       return(UpdatePendingOrders(saveStatusMode));
@@ -1997,7 +1997,7 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
       if (counter > 9)  return(!catch("Grid.AddPendingOrder(2)  "+ sequence.longName +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
                                                    // market violated: switch order type and ignore price, thus preventing
       if (ticket == -1) {                          // the same pending order type again and again caused by a stalled price feed
-         if (IsLogInfo()) logInfo("Grid.AddPendingOrder(3)  "+ sequence.longName +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", error);
+         if (IsLogDebug()) logDebug("Grid.AddPendingOrder(3)  "+ sequence.longName +" illegal price "+ OperationTypeDescription(pendingType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(pendingType), "limit", "stop") +" order instead", error);
          pendingType += ifInt(pendingType <= OP_SELLLIMIT, 2, -2);
          continue;
       }
@@ -2064,7 +2064,7 @@ bool Grid.AddPosition(int level) {
       if (ticket == -1) {
          // market violated                        // use #-1 as marker for a virtually triggered SL, the caller will decrease the gridlevel and "close" it with PL=0.00
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
-         if (IsLogInfo()) logInfo("Grid.AddPosition(4)  "+ sequence.longName +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +", adding marker ticket #-1 (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +")");
+         if (IsLogDebug()) logDebug("Grid.AddPosition(4)  "+ sequence.longName +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +", adding marker ticket #-1 (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +")");
       }
       else if (ticket == -2) {
          return(!catch("Grid.AddPosition(5)  "+ sequence.longName +" unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
@@ -2145,7 +2145,7 @@ int Grid.TrailPendingOrder(int i) {
          if (!error) return(Grid.AddPendingOrder(level));
 
          if (error == -1) {                                 // deletion failed, the stop order was already executed
-            if (IsLogInfo()) logInfo("Grid.TrailPendingOrder(6)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" was already executed");
+            if (IsLogDebug()) logDebug("Grid.TrailPendingOrder(6)  "+ sequence.longName +" pending #"+ orders.ticket[i] +" was already executed");
             pendingTime  = prevPendingTime;                 // restore the original values
             pendingPrice = prevPendingPrice;
 
@@ -4916,7 +4916,7 @@ int SetLastNetworkError(int oe[]) {
          pauses[5] = 10*MINUTES;
       }
       nextRetry = now + pauses[Min(retries, 5)];
-      if (IsLogInfo()) logInfo("SetLastNetworkError(2)  "+ sequence.longName +" networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
+      if (IsLogDebug()) logDebug("SetLastNetworkError(2)  "+ sequence.longName +" networkError "+ ErrorToStr(lastNetworkError) +", next trade request not before "+ TimeToStr(nextRetry, TIME_FULL));
    }
    return(error);
 }

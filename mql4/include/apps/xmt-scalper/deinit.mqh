@@ -20,13 +20,19 @@ int onDeinitUndefined() {
       if (IsLastError()) return(last_error);
 
       switch (tradingMode) {
-         case TRADING_MODE_REGULAR: logInfo("onDeinitUndefined(1)  test stop: "+ real.closedPositions +" trade"+ Pluralize(real.closedPositions) +", pl="+ DoubleToStr(real.closedPl, 2) +", plNet="+ DoubleToStr(real.closedPlNet, 2)); break;
-         case TRADING_MODE_VIRTUAL: logInfo("onDeinitUndefined(1)  test stop: "+ virt.closedPositions +" trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2)); break;
+         case TRADING_MODE_REGULAR:
+            logInfo("onDeinitUndefined(1)  test stop: "+ real.closedPositions +" trade"+ Pluralize(real.closedPositions) +", pl="+ DoubleToStr(real.closedPl, 2) +", plNet="+ DoubleToStr(real.closedPlNet, 2));
+            break;
+
+         case TRADING_MODE_VIRTUAL:
+            logInfo("onDeinitUndefined(2)  test stop: "+ virt.closedPositions +" trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2));
+            break;
+
          case TRADING_MODE_MIRROR:
             break;
       }
-      return(catch("onDeinitUndefined(2)"));
+      return(catch("onDeinitUndefined(3)"));
    }
-   return(catch("onDeinitUndefined(3)", ERR_UNDEFINED_STATE));       // do what the Expander would do
+   return(catch("onDeinitUndefined(4)", ERR_UNDEFINED_STATE));       // do what the Expander would do
 }
 

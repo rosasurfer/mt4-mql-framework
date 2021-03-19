@@ -433,7 +433,7 @@ bool onPositionOpen(int i) {
    real.swap      [i] = OrderSwap();
    real.profit    [i] = OrderProfit();
 
-   if (IsLogInfo()) {
+   if (IsLogDebug()) {
       // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was filled[ at 1.5457'2] (market: Bid/Ask[, 0.3 pip [positive ]slippage])
       int    pendingType  = real.pendingType [i];
       double pendingPrice = real.pendingPrice[i];
@@ -450,7 +450,7 @@ bool onPositionOpen(int i) {
             else              sSlippage = ", "+ DoubleToStr(-slippage, Digits & 1) +" pip slippage";
          message = message +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat);
       }
-      logInfo("onPositionOpen(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
+      logDebug("onPositionOpen(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
    }
 
    if (IsTesting() && __ExecutionContext[EC.extReporting]) {
@@ -487,14 +487,14 @@ bool onPositionClose(int i) {
    real.swap      [i] = OrderSwap();
    real.profit    [i] = OrderProfit();
 
-   if (IsLogInfo()) {
+   if (IsLogDebug()) {
       // #1 Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was closed at 1.5457'2 (market: Bid/Ask)
       string sType       = OperationTypeDescription(OrderType());
       string sOpenPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
       string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
       string sComment    = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message     = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sOpenPrice + sComment +" was closed at "+ sClosePrice;
-      logInfo("onPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logDebug("onPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
    if (IsTesting() && __ExecutionContext[EC.extReporting]) {
@@ -516,7 +516,7 @@ bool onVirtualPositionClose(int i) {
    virt.closeTime[i] = Tick.Time;
    virt.profit   [i] = ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
 
-   if (IsLogInfo()) {
+   if (IsLogDebug()) {
       // virtual #1 Sell 0.1 GBPUSD at 1.5457'2 was closed at 1.5457'2 [tp|sl] (market: Bid/Ask)
       string sType       = OperationTypeDescription(virt.openType[i]);
       string sOpenPrice  = NumberToStr(virt.openPrice[i], PriceFormat);
@@ -524,7 +524,7 @@ bool onVirtualPositionClose(int i) {
       string sCloseType  = "";
          if      (EQ(virt.closePrice[i], virt.takeProfit[i])) sCloseType = " [tp]";
          else if (EQ(virt.closePrice[i], virt.stopLoss  [i])) sCloseType = " [sl]";
-      logInfo("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logDebug("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
    return(!catch("onVirtualPositionClose(2)"));
 }
@@ -538,7 +538,7 @@ bool onVirtualPositionClose(int i) {
  * @return bool - success status
  */
 bool onOrderDelete(int i) {
-   if (IsLogInfo()) {
+   if (IsLogDebug()) {
       // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was deleted
       int    pendingType  = real.pendingType [i];
       double pendingPrice = real.pendingPrice[i];
@@ -547,7 +547,7 @@ bool onOrderDelete(int i) {
       string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
       string sComment      = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message       = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sPendingPrice + sComment +" was deleted";
-      logInfo("onOrderDelete(3)  "+ message);
+      logDebug("onOrderDelete(3)  "+ message);
    }
    return(Orders.RemoveTicket(real.ticket[i]));
 }
@@ -593,7 +593,7 @@ bool IsEntrySignal(int &signal) {
       if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits: dec(3) = bin(0011)
 
       if (signal != NULL) {
-         if (IsLogInfo()) logInfo("IsEntrySignal(2)  "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
+         if (IsLogDebug()) logDebug("IsEntrySignal(2)  "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
          return(true);
       }
    }
@@ -670,9 +670,9 @@ bool OpenVirtualOrder(int signal) {
    double commission = GetCommission(-lots); if (IsEmpty(commission)) return(false);
 
    if (Orders.AddVirtualTicket(ticket, lots, orderType, Tick.Time, openPrice, NULL, NULL, stopLoss, takeProfit, NULL, commission, NULL)) {
-      if (IsLogInfo()) {
+      if (IsLogDebug()) {
          // opened #1 Buy 0.5 GBPUSD at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
-         logInfo("OpenVirtualOrder(2)  "+ "opened #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         logDebug("OpenVirtualOrder(2)  "+ "opened #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       }
       return(true);
    }
