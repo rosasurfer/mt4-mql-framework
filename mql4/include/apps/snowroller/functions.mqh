@@ -577,8 +577,8 @@ int CreateSequenceId() {
    MathSrand(GetTickCount());
    int id;
    while (id < SID_MIN || id > SID_MAX) {
-      id = MathRand();                                   // TODO: in tester generate consecutive ids
-   }                                                     // TODO: test id for uniqueness
+      id = MathRand();                                         // TODO: in tester generate consecutive ids
+   }                                                           // TODO: test id for uniqueness
    return(id);
 }
 
@@ -593,7 +593,7 @@ int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
-   color  bgColor = C'248,248,248';                      // that's chart background color
+   color  bgColor = C'248,248,248';                            // that's chart background color
    string label;
 
    for (int i=0; i < rectangles; i++) {
