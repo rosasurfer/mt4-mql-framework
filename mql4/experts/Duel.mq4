@@ -49,8 +49,6 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 
 
 #define STRATEGY_ID         105                          // unique strategy id from 101-1023 (10 bit)
-#define SEQUENCE_ID_MIN    1000                          // min. sequence id value (min. 4 digits)
-#define SEQUENCE_ID_MAX   16383                          // max. sequence id value (max. 14 bit value)
 
 #define STATUS_UNDEFINED      0                          // sequence status values
 #define STATUS_WAITING        1
@@ -974,16 +972,16 @@ bool UpdatePendingOrders() {
 
 
 /**
- * Generate a new sequence id. Because strategy ids differ multiple strategies may use the same sequence ids.
+ * Generate a new sequence id. Must be unique for all instances of this expert (strategy).
  *
- * @return int - sequence id between SEQUENCE_ID_MIN and SEQUENCE_ID_MAX (1000-16383)
+ * @return int - sequence id between 1000 and 16383
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
    int id;
-   while (id < SEQUENCE_ID_MIN || id > SEQUENCE_ID_MAX) {
-      id = MathRand();
-   }
+   while (id < SID_MIN || id > SID_MAX) {
+      id = MathRand();                                         // TODO: in tester generate consecutive ids
+   }                                                           // TODO: test id for uniqueness
    return(id);
 }
 
@@ -997,9 +995,9 @@ int CreateMagicNumber() {
    if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    if (sequence.id & (~0x3FFF) != 0) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   int strategy = STRATEGY_ID;                              // 101-1023   (max. 10 bit)
-   int sequence = sequence.id;                              // 1000-16383 (max. 14 bit)
-   int level    = 0;                                        // 0          (not needed for this strategy)
+   int strategy = STRATEGY_ID;                                 // 101-1023   (max. 10 bit)
+   int sequence = sequence.id;                                 // 1000-16383 (max. 14 bit)
+   int level    = 0;                                           // 0          (not needed for this strategy)
 
    return((strategy<<22) + (sequence<<8) + (level<<0));
 }

@@ -751,10 +751,10 @@ int onDeinitChartClose()
 
 
 /**
- * Standalone:   - Called if an indicator is removed manually.
- *               - Called when another chart template is applied.
- *               - Called when the chart profile is changed.
- *               - Called when the chart is closed.
+ * Standalone: Called if an indicator is removed manually.
+ *             Called when another chart template is applied.
+ *             Called when the chart profile is changed.
+ *             Called when the chart is closed.
  *
  * In iCustom(): Called in all deinit() cases.
  *
@@ -766,7 +766,7 @@ int onDeinitRemove()
 
 
 /**
- * Never encountered. Tracked in MT4Expander::onDeinitChartClose().
+ * Never encountered. Monitored in MT4Expander::onDeinitChartClose().
  *
  * @return int - error status
  *
@@ -776,7 +776,7 @@ int onDeinitUndefined()
 
 
 /**
- * Called before an indicator is reloaded after recompilation.
+ * Called after recompilation before the indicator is reloaded.
  *
  * @return int - error status
  *
