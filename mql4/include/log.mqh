@@ -578,8 +578,8 @@ int log2Terminal(string message, int error, int level) {
  * @return bool - success status
  */
 bool SetLogfile(string filename) {
-   log(NULL, NULL, LOG_OFF);                             // make sure loglevel config is initialized as the Expander cannot
-   log2File(NULL, NULL, LOG_OFF);                        // yet read the configuration
+   log(NULL, NULL, LOG_OFF);                             // make sure the configuration of the LogfileAppender is initialized
+   log2File(NULL, NULL, LOG_OFF);                        // as the Expander cannot yet read it
    return(SetLogfileA(__ExecutionContext, filename));
 }
 

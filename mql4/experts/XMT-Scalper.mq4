@@ -1,5 +1,5 @@
 /**
- * XMT-Scalper resurrected
+ * XMT-Scalper revisited
  *
  *
  * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
@@ -23,18 +23,20 @@
  *  - removed MQL5 syntax and fixed compiler issues
  *  - updated program structure and integrated the rosasurfer MQL4 framework
  *  - moved all print output to the framework logger
+ *  - removed flawed commission calculations
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
- *  - removed broken commission calculations
  *  - removed obsolete functions and variables
- *  - added internal order management (huge speed improvement)
- *  - added monitoring of PositionOpen and PositionClose events
  *  - fixed position size calculation
- *  - fixed signal detection and added input parameter ChannelBug (for comparison only)
- *  - fixed TakeProfit calculation and added input parameter TakeProfitBug (for comparison only)
+ *  - fixed signal detection (added input parameter ChannelBug for comparison)
+ *  - fixed TakeProfit calculation (added input parameter TakeProfitBug for comparison)
  *  - fixed trade management issues
- *  - restructured and reorganized input parameters
- *  - rewrote status display
+ *  - restructured input parameters
+ *  - replaced status display
+ *  - replaced magic number calculation
+ *  - added internal order management (massive speed improvement)
+ *  - added monitoring of PositionOpen and PositionClose events
+ *  - added "virtual" and "mirror" trading modes
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -42,7 +44,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID                     = "";         // instance id in format /[0-9]{4,}/, affects magic number and status/logfile names
+extern string Sequence.ID                     = "";         // instance id in the range of 1000-16383
 extern string TradingMode                     = "Regular* | Virtual | Mirror";
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
@@ -58,8 +60,8 @@ extern double SpreadMultiplier                = 12.5;       // min. bar size = S
 extern double MinBarSize                      = 18;         // min. bar size in {pip}
 
 extern string ___c___________________________ = "=== Signal settings ========================";
-extern double BreakoutReversal                = 0;          // required reversal in {pip} (0: counter-trend trading w/o reversal)
-extern double MaxSpread                       = 2;          // max. acceptable spread in {pip}
+extern double BreakoutReversal                = 0;          // required price reversal in {pip} (0: counter-trend trading w/o reversal)
+extern double MaxSpread                       = 2;          // max. acceptable current and average spread in {pip}
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
 extern string ___d___________________________ = "=== MoneyManagement ====================";
@@ -73,7 +75,7 @@ extern double StopLoss                        = 6;          // SL in {pip}
 extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
 extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
 extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
-extern int    MagicNumber                     = 0;          // predefined MagicNumber, if zero a new one is generated
+extern int    MagicNumber                     = 0;          // predefined magic order id, if zero a new one is generated
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Overall PL settings =====================";
@@ -493,12 +495,12 @@ bool onPositionClose(int i) {
    real.profit    [i] = OrderProfit();
 
    if (IsLogDebug()) {
-      // #1 Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was closed at 1.5457'2 (market: Bid/Ask)
+      // #1 Sell 0.1 GBPUSD "comment" at 1.5457'2 was closed at 1.5457'2 (market: Bid/Ask)
       string sType       = OperationTypeDescription(OrderType());
       string sOpenPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
       string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
       string sComment    = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
-      string message     = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sOpenPrice + sComment +" was closed at "+ sClosePrice;
+      string message     = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() + sComment +" at "+ sOpenPrice +" was closed at "+ sClosePrice;
       logDebug("onPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
@@ -522,14 +524,14 @@ bool onVirtualPositionClose(int i) {
    virt.profit   [i] = ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
 
    if (IsLogDebug()) {
-      // virtual #1 Sell 0.1 GBPUSD at 1.5457'2 was closed at 1.5457'2 [tp|sl] (market: Bid/Ask)
+      // virtual #1 Sell 0.1 GBPUSD "comment" at 1.5457'2 was closed at 1.5457'2 [tp|sl] (market: Bid/Ask)
       string sType       = OperationTypeDescription(virt.openType[i]);
       string sOpenPrice  = NumberToStr(virt.openPrice[i], PriceFormat);
       string sClosePrice = NumberToStr(virt.closePrice[i], PriceFormat);
       string sCloseType  = "";
          if      (EQ(virt.closePrice[i], virt.takeProfit[i])) sCloseType = " [tp]";
          else if (EQ(virt.closePrice[i], virt.stopLoss  [i])) sCloseType = " [sl]";
-      logDebug("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logDebug("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
    return(!catch("onVirtualPositionClose(2)"));
 }
@@ -675,10 +677,8 @@ bool OpenVirtualOrder(int signal) {
    double commission = GetCommission(-lots); if (IsEmpty(commission)) return(false);
 
    if (Orders.AddVirtualTicket(ticket, lots, orderType, Tick.Time, openPrice, NULL, NULL, stopLoss, takeProfit, NULL, commission, NULL)) {
-      if (IsLogDebug()) {
-         // opened #1 Buy 0.5 GBPUSD at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
-         logDebug("OpenVirtualOrder(2)  "+ "opened #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      }
+      // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
+      if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ "opened virtual #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
