@@ -47,8 +47,8 @@ int onInitUser() {
       SS.SequenceName();
       SaveStatus();
 
-      if (IsLogInfo()) {
-         logInfo("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
+      if (IsLogDebug()) {
+         logDebug("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
       }
       else if (IsTesting() && !IsVisualMode()) {
          debug("onInitUser(2)  sequence "+ sequence.name +" created");
@@ -121,7 +121,7 @@ int onInitTimeframeChange() {
  */
 int onInitSymbolChange() {
    SetLogfile("");
-   return(SetLastError(ERR_CANCELLED_BY_USER));
+   return(SetLastError(ERR_ILLEGAL_STATE));
 }
 
 

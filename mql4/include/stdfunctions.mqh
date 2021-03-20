@@ -926,7 +926,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
          else {
-            logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+            logDebug("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
          }
       }
       baseCommission = value;
@@ -3462,7 +3462,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (IsLogInfo()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
  //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
@@ -3482,7 +3482,7 @@ int Tester.Stop(string location = "") {
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (IsLogInfo()) logInfo(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -4800,7 +4800,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (IsLogInfo()) logInfo("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5740,7 +5740,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (IsLogInfo()) logInfo("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   if (IsLogDebug()) logDebug("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(15)"));
 }
 
@@ -5807,7 +5807,7 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   if (IsLogInfo()) logInfo("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
+   if (IsLogDebug()) logDebug("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
    return(!catch("SendSMS(9)"));
 }
 

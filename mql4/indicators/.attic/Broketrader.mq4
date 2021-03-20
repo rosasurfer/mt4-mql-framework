@@ -207,7 +207,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(maLong)) return(logInfo("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(maLong)) return(logDebug("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -241,7 +241,7 @@ int onTick() {
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
    if (Time[startBar]+Period()*MINUTES-1 < startTime)
       startBar = iBarShiftNext(NULL, NULL, startTime);
 
@@ -368,7 +368,7 @@ bool onReversal(int direction) {
 
    if (direction == D_LONG) {
       message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onReversal(1)  "+ message);
+      if (IsLogDebug()) logDebug("onReversal(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -379,7 +379,7 @@ bool onReversal(int direction) {
 
    if (direction == D_SHORT) {
       message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
+      if (IsLogDebug()) logDebug("onReversal(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
