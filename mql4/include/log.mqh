@@ -197,7 +197,6 @@ int log(string message, int error, int level) {
       }
       configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
-      configLevel = Min(configLevel, LOG_FATAL);                                                   // logging cannot be fully switched off
       ec_SetLoglevel(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF)
@@ -211,6 +210,10 @@ int log(string message, int error, int level) {
       if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert(message, error, level);    // after fast appenders as it may lock the UI thread in tester
       if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail(message, error, level);     // slow appenders last (launches a new process)
       if (__ExecutionContext[EC.loglevelSMS     ] != LOG_OFF) log2SMS(message, error, level);      // ...
+   }
+   else if (level >= LOG_FATAL) {
+      if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level); // built-in log appenders always process LOG_FATAL
+      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert(message, error, level);
    }
    return(error);
 }
@@ -575,6 +578,8 @@ int log2Terminal(string message, int error, int level) {
  * @return bool - success status
  */
 bool SetLogfile(string filename) {
+   log(NULL, NULL, LOG_OFF);                             // make sure loglevel config is initialized as the Expander cannot
+   log2File(NULL, NULL, LOG_OFF);                        // yet read the configuration
    return(SetLogfileA(__ExecutionContext, filename));
 }
 
