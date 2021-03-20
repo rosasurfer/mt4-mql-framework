@@ -463,7 +463,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
          else                                { trigger = "TP price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                                                 logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       logMsg = symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg;
-      logInfo("LFX.SendTradeCommand(2)  "+ logMsg);
+      logDebug("LFX.SendTradeCommand(2)  "+ logMsg);
 
       // (1.2) Auslösen speichern und TradeCommand verschicken
       if (limitType == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
@@ -506,9 +506,9 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
          // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
          // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-         logInfo("LFX.SendTradeCommand(4)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-         if (limitType == OPEN_LIMIT_TRIGGERED) logInfo("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
-         else                                   logInfo("LFX.SendTradeCommand(6)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
+         logDebug("LFX.SendTradeCommand(4)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+         if (limitType == OPEN_LIMIT_TRIGGERED) logDebug("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
+         else                                   logDebug("LFX.SendTradeCommand(6)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
          ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
       }
       else {
@@ -887,8 +887,8 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
    if (result > 0) {                                                 //  0, falls ein anderer Fehler auftrat
       if (lo.Version(stored) > lo.Version(order)) {
-         logInfo("LFX.SaveOrder(5)  to-store="+ LFX_ORDER.toStr(order ));
-         logInfo("LFX.SaveOrder(6)  stored  ="+ LFX_ORDER.toStr(stored));
+         logDebug("LFX.SaveOrder(5)  to-store="+ LFX_ORDER.toStr(order ));
+         logDebug("LFX.SaveOrder(6)  stored  ="+ LFX_ORDER.toStr(stored));
          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(7)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(order) +", found version "+ lo.Version(stored), ERR_CONCURRENT_MODIFICATION, fCatch));
       }
    }

@@ -790,7 +790,7 @@ bool onInsideBar(int timeframe) {
    string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
-   if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
+   if (IsLogDebug()) logDebug("onInsideBar(1)  "+ message);
    message = Symbol() +": "+ message;
 
    int error = 0;

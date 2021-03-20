@@ -151,7 +151,7 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferRsi)) return(logInfo("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferRsi)) return(logDebug("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -187,7 +187,7 @@ int onTick() {
    // calculate start bars
    int requestedBars = Min(ChangedBars, maxValues);
    int resultingBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1; // max. resulting bars
-   if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (resultingBars < 1) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    int bars          = Min(requestedBars, resultingBars);                              // actual number of bars to be updated
    int ma2StartBar   = bars - 1;

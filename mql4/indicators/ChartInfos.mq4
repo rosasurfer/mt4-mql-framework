@@ -1719,8 +1719,8 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
    isVirtual = isVirtual!=0;
 
    if (ArraySize(tickets) > 0) {
-      if (commentIndex > -1) logInfo("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-      else                   logInfo("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      if (commentIndex > -1) logDebug("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      else                   logDebug("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
    }
    return(true);
 }
@@ -3516,22 +3516,22 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {                  logWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      if (success) { if (IsLogDebug()) logDebug("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      else         {                    logWarn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
+      if (IsLogDebug()) logDebug("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (IsLogInfo()) logInfo("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
+      if (IsLogDebug()) logDebug("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
@@ -3698,7 +3698,7 @@ bool QC.HandleTradeCommands() {
    for (int i=0; i < msgsSize; i++) {
       if (!StringLen(msgs[i])) continue;
       msgs[i] = StrReplace(msgs[i], HTML_TAB, TAB);
-      logInfo("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
+      logDebug("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
 
       string cmdType = StrTrim(StrLeftTo(msgs[i], "{"));
 
@@ -4028,7 +4028,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price;
 
-      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
+      if (IsLogDebug()) logDebug("onPositionOpen(2)  "+ message);
 
       // TODO: handle signals via log mechanism
       //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4072,7 +4072,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
-      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
+      if (IsLogDebug()) logDebug("onPositionClose(2)  "+ message);
 
       // TODO: handle signals via log mechanism
       //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
