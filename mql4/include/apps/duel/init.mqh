@@ -15,7 +15,7 @@ int onInitUser() {
       long.enabled     = (sequence.directions & D_LONG  && 1);
       short.enabled    = (sequence.directions & D_SHORT && 1);
       SS.SequenceName();
-      logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
+      logDebug("onInitUser(1)  sequence "+ sequence.name +" created");
       SetLogfile(GetLogFilename());
    }
    return(catch("onInitUser(2)"));

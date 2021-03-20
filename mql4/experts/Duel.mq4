@@ -49,8 +49,6 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 
 
 #define STRATEGY_ID         105                          // unique strategy id from 101-1023 (10 bit)
-#define SEQUENCE_ID_MIN    1000                          // min. sequence id value (min. 4 digits)
-#define SEQUENCE_ID_MAX   16383                          // max. sequence id value (max. 14 bit value)
 
 #define STATUS_UNDEFINED      0                          // sequence status values
 #define STATUS_WAITING        1
@@ -331,7 +329,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogInfo()) logInfo("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
@@ -346,7 +344,7 @@ bool IsSessionBreak() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
+   if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
@@ -367,7 +365,7 @@ bool StartSequence() {
 
    if (!UpdatePendingOrders()) return(false);                           // update pending orders
 
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(!catch("StartSequence(4)"));
 }
 
@@ -380,7 +378,7 @@ bool StartSequence() {
 bool StopSequence() {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping sequence...");
+   if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.name +" stopping sequence...");
 
    int hedgeTicket, oe[];
 
@@ -416,7 +414,7 @@ bool StopSequence() {
 
    sequence.status = STATUS_STOPPED;
    SS.StopConditions();
-   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped");
+   if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" sequence stopped");
 
    // pause/stop the tester according to the debug configuration
    if (IsTesting()) {
@@ -561,7 +559,7 @@ bool Grid.RemovePendingOrders() {
             long.swap      [i] = OrderSwap();
             long.commission[i] = OrderCommission();
             long.profit    [i] = OrderProfit();
-            if (IsLogInfo()) logInfo("Grid.RemovePendingOrders(3)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_LONG, i));
+            if (IsLogDebug()) logDebug("Grid.RemovePendingOrders(3)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_LONG, i));
 
             long.minLevel  = MathMin(long.level[i], long.minLevel);
             long.maxLevel  = MathMax(long.level[i], long.maxLevel);
@@ -595,7 +593,7 @@ bool Grid.RemovePendingOrders() {
             short.swap      [i] = OrderSwap();
             short.commission[i] = OrderCommission();
             short.profit    [i] = OrderProfit();
-            if (IsLogInfo()) logInfo("Grid.RemovePendingOrders(5)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_SHORT, i));
+            if (IsLogDebug()) logDebug("Grid.RemovePendingOrders(5)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_SHORT, i));
 
             short.minLevel  = MathMin(short.level[i], short.minLevel);
             short.maxLevel  = MathMax(short.level[i], short.maxLevel);
@@ -651,7 +649,7 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
    if (direction==D_SHORT && !short.enabled) return(true);
 
    int error, orders = ArraySize(tickets);
-   bool updateSlippage=false, isLogInfo=IsLogInfo();
+   bool updateSlippage=false, isLogDebug=IsLogDebug();
    openLots = 0;
    openPL   = 0;
 
@@ -672,7 +670,7 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
             openTimes [i] = OrderOpenTime();
             openPrices[i] = OrderOpenPrice();
 
-            if (isLogInfo) logInfo("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
+            if (isLogDebug) logDebug("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
             minLevel = MathMin(levels[i], minLevel);
             maxLevel = MathMax(levels[i], maxLevel);
             levelChanged    = true;
@@ -893,7 +891,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
  */
 int UpdateStatus.OnGridError(string message, int error) {
    if (!IsTesting()) logError(message, error);        // onTick() will stop the sequence and halt the EA
-   else if (!error)  logInfo(message, error);
+   else if (!error)  logDebug(message, error);
    else              catch(message, error);
    return(error);
 }
@@ -974,16 +972,16 @@ bool UpdatePendingOrders() {
 
 
 /**
- * Generate a new sequence id. Because strategy ids differ multiple strategies may use the same sequence ids.
+ * Generate a new sequence id. Must be unique for all instances of this expert (strategy).
  *
- * @return int - sequence id between SEQUENCE_ID_MIN and SEQUENCE_ID_MAX (1000-16383)
+ * @return int - sequence id between 1000 and 16383
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
    int id;
-   while (id < SEQUENCE_ID_MIN || id > SEQUENCE_ID_MAX) {
-      id = MathRand();
-   }
+   while (id < SID_MIN || id > SID_MAX) {
+      id = MathRand();                                         // TODO: in tester generate consecutive ids
+   }                                                           // TODO: test id for uniqueness
    return(id);
 }
 
@@ -997,9 +995,9 @@ int CreateMagicNumber() {
    if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    if (sequence.id & (~0x3FFF) != 0) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   int strategy = STRATEGY_ID;                              // 101-1023   (max. 10 bit)
-   int sequence = sequence.id;                              // 1000-16383 (max. 14 bit)
-   int level    = 0;                                        // 0          (not needed for this strategy)
+   int strategy = STRATEGY_ID;                                 // 101-1023   (max. 10 bit)
+   int sequence = sequence.id;                                 // 1000-16383 (max. 14 bit)
+   int level    = 0;                                           // 0          (not needed for this strategy)
 
    return((strategy<<22) + (sequence<<8) + (level<<0));
 }
@@ -1563,7 +1561,7 @@ bool Grid.AddPendingOrder(int direction, int level) {
       if (error != ERR_INVALID_STOP) return(false);
 
       counter++; if (counter > 9) return(!catch("Grid.AddPendingOrder(2)  "+ sequence.name +" stopping trade request loop after "+ counter +" unsuccessful tries, last error", error));
-      if (IsLogInfo()) logInfo("Grid.AddPendingOrder(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead...");
+      if (IsLogDebug()) logDebug("Grid.AddPendingOrder(3)  "+ sequence.name +" illegal price "+ OperationTypeDescription(oe.Type(oe)) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), opening "+ ifString(IsStopOrderType(oe.Type(oe)), "limit", "stop") +" order instead...");
       type = ifInt(type==OA_LIMIT, OA_STOP, OA_LIMIT);
    }
 

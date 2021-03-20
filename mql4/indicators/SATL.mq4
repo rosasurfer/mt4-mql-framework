@@ -176,7 +176,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
    if (!UnchangedBars) {
@@ -201,7 +201,7 @@ int onTick() {
    int length   = ArraySize(filterWeights);
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-length);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
@@ -238,7 +238,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
+      if (IsLogDebug()) logDebug("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -249,7 +249,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+      if (IsLogDebug()) logDebug("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);

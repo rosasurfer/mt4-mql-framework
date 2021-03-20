@@ -85,15 +85,15 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // synthetic symbol in offline chart
-            return(logInfo("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            return(logDebug("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(logInfo("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(logDebug("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
-      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(logDebug("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -119,20 +119,20 @@ int init() {
       // resolve the account number (optimistic: if called in deinit() it will deadlock the UI thread)
       if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
       // log MarketInfo() data
-      if (IsLogInfo()) Tester.LogMarketInfo();
+      if (IsLogInfo()) logInfo("init(14)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
 
    // log input parameters
    if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogInfo()) {
-      string sInput = InputsToStr();
-      if (StringLen(sInput) > 0) {
-         sInput = StringConcatenate(sInput,
+      string sInputs = InputsToStr();
+      if (StringLen(sInputs) > 0) {
+         sInputs = StringConcatenate(sInputs,
             ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logInfo("init(14)  input: "+ sInput);
+         logInfo("init(15)  inputs: "+ sInputs);
       }
    }
 
@@ -154,7 +154,7 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = ProgramInitReason();                                   //
-      if (!initReason) if (CheckErrors("init(15)")) return(last_error);       //
+      if (!initReason) if (CheckErrors("init(16)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInitUser();            break;    // init reasons
@@ -165,14 +165,14 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(16)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
-   if (CheckErrors("init(17)")) return(last_error);
+   if (CheckErrors("init(18)")) return(last_error);
 
    ShowStatus(last_error);
 
@@ -181,7 +181,7 @@ int init() {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
       tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("init(18)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!tickTimerId) return(catch("init(19)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick (except on UR_CHARTCHANGE)
@@ -248,7 +248,7 @@ int start() {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);     // __STATUS_OFF is FALSE here, but an error may be set
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
-         logInfo("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         logDebug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          int error = init();                                                        // call init() again
@@ -274,7 +274,7 @@ int start() {
    }
 
    // check a finished chart initialisation (may fail on terminal start)
-   if (!Bars) return(ShowStatus(SetLastError(logInfo("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
+   if (!Bars) return(ShowStatus(SetLastError(logDebug("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
    // in tester wait until the configured start time/price is reached
    if (IsTesting()) {
@@ -509,11 +509,12 @@ bool CheckErrors(string location, int error = NULL) {
       catch(location, error);                                        // catch() calls SetLastError() which calls CheckErrors()
                                                                      // which updates __STATUS_OFF accordingly
    // update the variable last_error
-   if (__STATUS_OFF) /*&&*/ if (!last_error)
-      last_error = __STATUS_OFF.reason;
-
-   if (__STATUS_OFF)
+   if (__STATUS_OFF) {
+      if (!last_error) {
+         last_error = __STATUS_OFF.reason;
+      }
       ShowStatus(last_error);                                        // show status once again if an error occurred
+   }
    return(__STATUS_OFF);
 
    // suppress compiler warnings
@@ -598,14 +599,14 @@ bool Tester.InitReporting() {
 
 
 /**
- * Log important MarketInfo() data.
+ * Return current MarketInfo() data.
  *
- * @return bool - success status
+ * @return string - MarketInfo() data or an empty string in case of errors
  */
-bool Tester.LogMarketInfo() {
+string Tester.GetMarketInfo() {
    string message = "";
 
-   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
+   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message + "Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
                                                                                message = message +" Bars="        + Bars                                      +";";
    double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + DoubleToStr(spread, 1)                    +";";
                                                                                message = message +" Digits="      + Digits                                    +";";
@@ -630,9 +631,10 @@ bool Tester.LogMarketInfo() {
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
-   logInfo("MarketInfo()"+ message);
 
-   return(!catch("Tester.LogMarketInfo(1)"));
+   if (!catch("Tester.GetMarketInfo(1)"))
+      return(message);
+   return("");
 }
 
 
