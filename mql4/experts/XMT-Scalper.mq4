@@ -42,6 +42,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string Sequence.ID                     = "";         // instance id in format /[0-9]{4,}/, affects magic number and status/logfile names
 extern string TradingMode                     = "Regular* | Virtual | Mirror";
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
@@ -72,7 +73,7 @@ extern double StopLoss                        = 6;          // SL in {pip}
 extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
 extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
 extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
-extern int    Magic                           = 0;          // if zero the MagicNumber is generated
+extern int    MagicNumber                     = 0;          // predefined MagicNumber, if zero a new one is generated
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Overall PL settings =====================";
@@ -91,7 +92,7 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID            106     // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID            106     // unique strategy id from 101-1023 (10 bits)
 
 #define TRADING_MODE_REGULAR     1
 #define TRADING_MODE_VIRTUAL     2
@@ -103,6 +104,7 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 
 // general
 int      tradingMode;
+int      sequence.id;
 
 // real order log
 int      real.ticket      [];
@@ -179,6 +181,7 @@ double   currentSpread;                // current spread in pip
 double   avgSpread;                    // average spread in pip
 double   minBarSize;                   // min. bar size in absolute terms
 int      orderSlippage;                // order slippage in point
+int      orderMagicNumber;
 string   orderComment = "";
 
 // cache vars to speed-up status messages
@@ -622,16 +625,16 @@ bool OpenNewOrder(int signal) {
       takeProfit = price + TakeProfit*Pip;
       stopLoss   = price - spread - StopLoss*Pip;
 
-      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, Magic, NULL, Blue, NULL, oe);
-      else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, Magic, NULL, Blue, NULL, oe);
+      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
+      else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
    }
    else if (signal == SIGNAL_SHORT) {
       price      = Bid - BreakoutReversal*Pip;
       takeProfit = price - TakeProfit*Pip;
       stopLoss   = price + spread + StopLoss*Pip;
 
-      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, Magic, NULL, Red, NULL, oe);
-      else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, Magic, NULL, Red, NULL, oe);
+      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+      else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
    }
    else return(!catch("OpenNewOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
@@ -964,23 +967,6 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
 
 
 /**
- * Generate a new magic number using parts of the current symbol.                         TODO: still contains various bugs
- *
- * @return int
- */
-int GenerateMagicNumber() {
-   string values = "EURUSDJPYCHFCADAUDNZDGBP";
-   string base   = StrLeft(Symbol(), 3);
-   string quote  = StringSubstr(Symbol(), 3, 3);
-
-   int basePos  = StringFind(values, base, 0);
-   int quotePos = StringFind(values, quote, 0);
-
-   return(INT_MAX - AccountNumber() - basePos - quotePos);
-}
-
-
-/**
  * Calculate the position size to use.
  *
  * @param  bool checkLimits [optional] - whether to check the symbol's lotsize contraints (default: no)
@@ -1062,9 +1048,9 @@ bool ReadOrderLog() {
    int orders = OrdersHistoryTotal();
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("ReadOrderLog(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
-      if (OrderMagicNumber() != Magic) continue;
-      if (OrderType() > OP_SELL)       continue;
-      if (OrderSymbol() != Symbol())   continue;
+      if (OrderMagicNumber() != orderMagicNumber) continue;
+      if (OrderType() > OP_SELL)                  continue;
+      if (OrderSymbol() != Symbol())              continue;
 
       if (!Orders.AddRealTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice(), OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit()))
          return(false);
@@ -1074,8 +1060,8 @@ bool ReadOrderLog() {
    orders = OrdersTotal();
    for (i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("ReadOrderLog(2)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
-      if (OrderMagicNumber() != Magic) continue;
-      if (OrderSymbol() != Symbol())   continue;
+      if (OrderMagicNumber() != orderMagicNumber) continue;
+      if (OrderSymbol() != Symbol())              continue;
 
       if (!Orders.AddRealTicket(OrderTicket(), OrderLots(), OrderType(), OrderOpenTime(), OrderOpenPrice(), NULL, NULL, OrderStopLoss(), OrderTakeProfit(), OrderSwap(), OrderCommission(), OrderProfit()))
          return(false);
@@ -1297,6 +1283,37 @@ bool Orders.RemoveTicket(int ticket) {
 
 
 /**
+ * Generate a new sequence id. Must be unique for all running instances of this expert (strategy).
+ *
+ * @return int - sequence id in the range of 1000-16383
+ */
+int CreateSequenceId() {
+   MathSrand(GetTickCount());                                  // TODO: also use window handle for the parameter
+   int id;
+   while (id < SID_MIN || id > SID_MAX) {
+      id = MathRand();                                         // TODO: generate consecutive ids in tester
+   }                                                           // TODO: test id for uniqueness
+   return(id);
+}
+
+
+/**
+ * Generate a unique magic order number for the sequence.
+ *
+ * @return int - magic number or NULL in case of errors
+ */
+int GenerateMagicNumber() {
+   if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("GenerateMagicNumber(1)  illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (sequence.id & (~0x3FFF) != 0) return(!catch("GenerateMagicNumber(2)  illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+
+   int strategy = STRATEGY_ID;                                 // 101-1023   (10 bits)
+   int sequence = sequence.id;                                 // 1000-16383 (14 bits)
+                                                               // the remaining 8 bits are not used in this strategy
+   return((strategy<<22) + (sequence<<8));
+}
+
+
+/**
  * Return the full name of the instance logfile.
  *
  * @return string - filename or an empty string in case of errors
@@ -1314,10 +1331,13 @@ string GetLogFilename() {
  * @return string - filename or an empty string in case of errors
  */
 string GetStatusFilename() {
-   if (!Magic) return(_EMPTY_STR(catch("GetStatusFilename(1)  illegal magic number: "+ Magic, ERR_ILLEGAL_STATE)));
-
-   string directory = "\\presets\\" + ifString(IsTesting(), "Tester", GetAccountCompany()) +"\\";
-   string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ Magic +".set";
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
+   static string sAccountCompany="", symbol=""; if (!StringLen(symbol)) {
+      sAccountCompany = GetAccountCompany();
+      symbol = Symbol();                                       // lock-in the original symbol in case of INITREASON_SYMBOLCHANGE
+   }
+   string directory = "\\presets\\" + ifString(IsTesting(), "Tester", sAccountCompany) +"\\";
+   string baseName  = StrToLower(symbol) +".XMT-Scalper."+ sequence.id +".set";
 
    return(GetMqlFilesPath() + directory + baseName);
 }
@@ -1400,7 +1420,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "           ", sError,                                     NL,
+   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,       NL,
                                                                                                                                                    NL,
                                   "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                NL,
                                   "Channel:   ",  sIndicator,                                                                                      NL,
@@ -1483,7 +1503,9 @@ void SS.UnitSize(double size = NULL) {
  * @return string
  */
 string InputsToStr() {
-   return("TradingMode="             + TradingMode                                  +";"+ NL
+   return("Sequence.ID="             + DoubleQuoteStr(Sequence.ID)                  +";"+ NL
+         +"TradingMode="             + TradingMode                                  +";"+ NL
+
          +"EntryIndicator="          + EntryIndicator                               +";"+ NL
          +"IndicatorTimeframe="      + IndicatorTimeframe                           +";"+ NL
          +"IndicatorPeriods="        + IndicatorPeriods                             +";"+ NL
@@ -1507,7 +1529,7 @@ string InputsToStr() {
          +"TrailEntryStep="          + DoubleToStr(TrailEntryStep, 1)               +";"+ NL
          +"TrailExitStart="          + DoubleToStr(TrailExitStart, 1)               +";"+ NL
          +"TrailExitStep="           + DoubleToStr(TrailExitStep, 1)                +";"+ NL
-         +"Magic="                   + Magic                                        +";"+ NL
+         +"MagicNumber="             + MagicNumber                                  +";"+ NL
          +"MaxSlippage="             + DoubleToStr(MaxSlippage, 1)                  +";"+ NL
 
          +"EA.StopOnProfit="         + DoubleToStr(EA.StopOnProfit, 2)              +";"+ NL

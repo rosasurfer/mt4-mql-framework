@@ -121,7 +121,7 @@ int onInitTimeframeChange() {
  */
 int onInitSymbolChange() {
    SetLogfile("");
-   return(SetLastError(ERR_CANCELLED_BY_USER));
+   return(SetLastError(ERR_ILLEGAL_STATE));
 }
 
 
