@@ -20,23 +20,22 @@
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/41237e0/mql4/experts/mdp#               [XMT-Scalper v2.522 by Capella]
  *
  * Changes:
- *  - removed MQL5 syntax and fixed compiler issues
- *  - updated program structure and integrated the rosasurfer MQL4 framework
+ *  - removed MQL5 syntax
+ *  - integrated the rosasurfer MQL4 framework
  *  - moved all print output to the framework logger
  *  - removed flawed commission calculations
  *  - removed obsolete order expiration, NDD and screenshot functionality
  *  - removed obsolete sending of fake orders and measuring of execution times
  *  - removed obsolete functions and variables
- *  - fixed position size calculation
+ *  - reorganized input parameters
  *  - fixed signal detection (added input parameter ChannelBug for comparison)
  *  - fixed TakeProfit calculation (added input parameter TakeProfitBug for comparison)
- *  - fixed trade management issues
- *  - restructured input parameters
- *  - replaced status display
+ *  - replaced position size calculation
  *  - replaced magic number calculation
- *  - added internal order management (massive speed improvement)
+ *  - replaced trade management
+ *  - replaced status display
  *  - added monitoring of PositionOpen and PositionClose events
- *  - added "virtual" and "mirror" trading modes
+ *  - added virtual trading mode with optional trade-copier or trade-mirror
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -1436,6 +1435,14 @@ int ShowStatus(int error = NO_ERROR) {
    // 3 lines margin-top for potential indicator legends
    Comment(NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
+
+   // store status in chart to enable remote control by scripts
+   string label = "XMT-Scalper.status";
+   if (ObjectFind(label) != 0) {
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   }
+   ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
 
    if (!catch("ShowStatus(1)"))
       return(error);

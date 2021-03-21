@@ -1820,13 +1820,13 @@ string StrLeft(string value, int n) {
  * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
  * Teilstring nicht.
  *
- * @param  string value     - Ausgangsstring
- * @param  string substring - der das Ergebnis begrenzende Teilstring
- * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                            Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
- *                            zurückgegeben.
- *                            Wenn 0, wird ein Leerstring zurückgegeben.
- *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ * @param  string value            - Ausgangsstring
+ * @param  string substring        - der das Ergebnis begrenzende Teilstring
+ * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
+ *                                   Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
+ *                                   zurückgegeben.
+ *                                   Wenn 0, wird ein Leerstring zurückgegeben.
+ *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
  */
 string StrLeftTo(string value, string substring, int count = 1) {

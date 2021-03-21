@@ -2821,12 +2821,11 @@ int ShowStatus(int error = NO_ERROR) {
                            sRestartStats
    );
 
-   // 4 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, NL, msg);
-   if (__CoreFunction == CF_INIT)
-      WindowRedraw();
+   // 3 lines margin-top for potential indicator legends
+   Comment(NL, NL, NL, msg);
+   if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   // für Fernbedienung: versteckten Status im Chart speichern
+   // store status in chart to enable remote control by scripts
    string label = "SnowRoller.status";
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
@@ -2834,7 +2833,7 @@ int ShowStatus(int error = NO_ERROR) {
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
    if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
-   else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status), 1);
+   else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
 
    if (!catch("ShowStatus(3)"))
       return(error);
