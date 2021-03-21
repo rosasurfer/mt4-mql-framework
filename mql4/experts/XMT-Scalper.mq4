@@ -1082,7 +1082,7 @@ bool StartTradeCopier() {
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_COPIER;
       // TODO: what else???
-      return(!catch("StartTradeCopier(1)", ERR_NOT_IMPLEMENTED));
+      return(!catch("StartTradeCopier(1)"));
    }
 
    return(!catch("StartTradeCopier(2)  cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
@@ -1105,7 +1105,7 @@ bool StartTradeMirror() {
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
       // TODO: what else???
-      return(!catch("StartTradeMirror(1)", ERR_NOT_IMPLEMENTED));
+      return(!catch("StartTradeMirror(1)"));
    }
 
    return(!catch("StartTradeMirror(2)  cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
@@ -1123,7 +1123,7 @@ bool StopVirtualTrading() {
    if (tradingMode==TRADINGMODE_VIRTUAL_COPIER || tradingMode==TRADINGMODE_VIRTUAL_MIRROR) {
       if (!CloseOpenOrders()) return(false);
       tradingMode = TRADINGMODE_VIRTUAL;
-      return(!catch("StopVirtualTrading(1)", ERR_NOT_IMPLEMENTED));
+      return(!catch("StopVirtualTrading(1)"));
    }
 
    return(!catch("StopVirtualTrading(2)  cannot stop virtual trading in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
