@@ -1081,7 +1081,7 @@ bool StartTradeCopier() {
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_COPIER;
-      // TODO: what else???
+      // TODO: what else?
       return(!catch("StartTradeCopier(1)"));
    }
 
@@ -1104,7 +1104,7 @@ bool StartTradeMirror() {
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
-      // TODO: what else???
+      // TODO: what else?
       return(!catch("StartTradeMirror(1)"));
    }
 
@@ -1540,38 +1540,7 @@ string TradingModeToStr(int mode) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
 
-   double openLots, openPlNet, closedLots, closedPl, closedCommission, closedSwap, totalPlNet;
-   int closedPositions;
-
-   switch (tradingMode) {
-      case TRADINGMODE_REGULAR:
-         openLots         = real.openLots;
-         openPlNet        = real.openPlNet;
-         closedPositions  = real.closedPositions;
-         closedLots       = real.closedLots;
-         closedPl         = real.closedPl;
-         closedCommission = real.closedCommission;
-         closedSwap       = real.closedSwap;
-         totalPlNet       = real.totalPlNet;
-         break;
-
-      case TRADINGMODE_VIRTUAL:
-         openLots         = virt.openLots;
-         openPlNet        = virt.openPlNet;
-         closedPositions  = virt.closedPositions;
-         closedLots       = virt.closedLots;
-         closedPl         = virt.closedPl;
-         closedCommission = virt.closedCommission;
-         closedSwap       = virt.closedSwap;
-         totalPlNet       = virt.totalPlNet;
-         break;
-
-      case TRADINGMODE_VIRTUAL_COPIER:
-      case TRADINGMODE_VIRTUAL_MIRROR:
-         break;
-   }
-
-   string sError = "";
+   string realStats="", virtStats="", copierStats="", mirrorStats="", sError="";
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate(" [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate(" [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
 
@@ -1579,18 +1548,55 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,       NL,
-                                                                                                                                                   NL,
-                                  "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                NL,
-                                  "Channel:   ",  sIndicator,                                                                                      NL,
-                                  "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                            NL,
-                                  "Unitsize:   ", sUnitSize,                                                                                       NL,
-                                                                                                                                                   NL,
-                                  "Open:      ", NumberToStr(openLots, "+.+"),   " lot                           PL: ", DoubleToStr(openPlNet, 2), NL,
-                                  "Closed:    ", closedPositions, " trades    ", NumberToStr(closedLots, ".+"), " lot    PL: ", DoubleToStr(closedPl, 2), "    Commission: ", DoubleToStr(closedCommission, 2), "    Swap: ", DoubleToStr(closedSwap, 2), NL,
-                                                                                                                                                   NL,
-                                  "Total PL:  ", DoubleToStr(totalPlNet, 2),                                                                       NL
-   );
+   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                    NL,
+                                                                                                                                                                NL,
+                                    "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                       NL,
+                                    "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                           NL,
+                                    "Channel:   ",  sIndicator,                                                                                                 NL,
+                                    "Unitsize:   ", sUnitSize,                                                                                                  NL);
+
+   if (tradingMode != TRADINGMODE_VIRTUAL) {
+      realStats = StringConcatenate("Open:       ", NumberToStr(real.openLots, "+.+"),   " lot                           PL: ", DoubleToStr(real.openPlNet, 2), NL,
+                                    "Closed:     ", real.closedPositions, " trades    ", NumberToStr(real.closedLots, ".+"), " lot    PL: ", DoubleToStr(real.closedPl, 2), "    Commission: ", DoubleToStr(real.closedCommission, 2), "    Swap: ", DoubleToStr(real.closedSwap, 2), NL,
+                                    "Total PL:   ", DoubleToStr(real.totalPlNet, 2),                                                                            NL);
+   }
+   if (tradingMode != TRADINGMODE_REGULAR) {
+      virtStats = StringConcatenate("Open:       ", NumberToStr(virt.openLots, "+.+"),   " lot                           PL: ", DoubleToStr(virt.openPlNet, 2), NL,
+                                    "Closed:     ", virt.closedPositions, " trades    ", NumberToStr(virt.closedLots, ".+"), " lot    PL: ", DoubleToStr(virt.closedPl, 2), "    Commission: ", DoubleToStr(virt.closedCommission, 2), "    Swap: ", DoubleToStr(virt.closedSwap, 2), NL,
+                                    "Total PL:   ", DoubleToStr(virt.totalPlNet, 2),                                                                            NL);
+   }
+
+   switch (tradingMode) {
+      case TRADINGMODE_REGULAR:
+         msg = StringConcatenate(msg,       NL,
+                                 realStats, NL);
+         break;
+
+      case TRADINGMODE_VIRTUAL:
+         msg = StringConcatenate(msg,       NL,
+                                 virtStats, NL);
+         break;
+
+      case TRADINGMODE_VIRTUAL_COPIER:
+         msg = StringConcatenate(msg,        NL,
+                                 "Virtual",  NL,
+                                 "--------", NL,
+                                 virtStats,  NL,
+                                 "Copier",   NL,
+                                 "--------", NL,
+                                 realStats,  NL);
+         break;
+
+      case TRADINGMODE_VIRTUAL_MIRROR:
+         msg = StringConcatenate(msg,        NL,
+                                 "Virtual",  NL,
+                                 "--------", NL,
+                                 virtStats,  NL,
+                                 "Mirror",   NL,
+                                 "-------",  NL,
+                                 realStats,  NL);
+         break;
+   }
 
    // 3 lines margin-top for potential indicator legends
    Comment(NL, NL, NL, msg);
