@@ -3437,24 +3437,24 @@ bool Chart.DeleteValue(string key) {
 /**
  * Get the bar model currently selected in the tester.
  *
- * @return int - bar model id or EMPTY (-1) if not called from within the tester
+ * @return int - bar model id or EMPTY (-1) if not called in the tester
  */
 int Tester.GetBarModel() {
    if (!This.IsTesting())
-      return(_EMPTY(catch("Tester.GetBarModel(1)  Tester only function", ERR_FUNC_NOT_ALLOWED)));
+      return(_EMPTY(catch("Tester.GetBarModel(1)  tester only function", ERR_FUNC_NOT_ALLOWED)));
    return(Tester_GetBarModel());
 }
 
 
 /**
- * Pause the tester. Must be called from within the tester.
+ * Pause the tester. Can be used only in the tester.
  *
  * @param  string location [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
 int Tester.Pause(string location = "") {
-   if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
@@ -3472,14 +3472,14 @@ int Tester.Pause(string location = "") {
 
 
 /**
- * Stop the tester. Must be called from within the tester.
+ * Stop the tester. Can be used only in the tester.
  *
  * @param  string location [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
 int Tester.Stop(string location = "") {
-   if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!IsTesting()) return(catch("Tester.Stop(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
@@ -3495,12 +3495,12 @@ int Tester.Stop(string location = "") {
 
 
 /**
- * Whether the tester currently pauses. Must be called from within the tester.
+ * Whether the tester currently pauses. Can be used only in the tester.
  *
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
@@ -3513,12 +3513,12 @@ bool Tester.IsPaused() {
 
 
 /**
- * Whether the tester was stopped. Must be called from within the tester.
+ * Whether the tester is stopped. Can be used only in the tester.
  *
  * @return bool
  */
 bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);

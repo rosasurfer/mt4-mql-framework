@@ -187,7 +187,7 @@ int      orderMagicNumber;
 string   orderComment = "";
 
 // cache vars to speed-up status messages
-string   sTradingModeDescriptions[] = {"", "", ": Virtual Trading", ": Virtual Trading + Copier", ": Virtual Trading + Mirror"};
+string   sTradingModeDescriptions[] = {"", "", ": Virtual Trading", ": Virtual Trading + Trade Copier", ": Virtual Trading + Trade Mirror"};
 string   sCurrentSpread             = "-";
 string   sAvgSpread                 = "-";
 string   sMaxSpread                 = "-";
@@ -251,9 +251,8 @@ int onTick.RegularTrading() {
  * @return int - error status
  */
 int onTick.VirtualTrading() {
-   if (__isChart) {
-      // process chart commands
-   }
+   if (__isChart) HandleCommands();                               // process chart commands
+
    UpdateVirtualOrderStatus();                                    // update virtual order status and PL
 
    if (virt.isOpenOrder) {
@@ -1068,6 +1067,70 @@ bool ReadOrderLog() {
 
 
 /**
+ * Start the virtual trade copier.
+ *
+ * @return bool - success status
+ */
+bool StartTradeCopier() {
+   if (IsLastError()) return(false);
+
+   if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
+      if (!CloseOpenOrders()) return(false);
+      tradingMode = TRADINGMODE_VIRTUAL;
+   }
+
+   if (tradingMode == TRADINGMODE_VIRTUAL) {
+      tradingMode = TRADINGMODE_VIRTUAL_COPIER;
+      // TODO: what else???
+      return(!catch("StartTradeCopier(1)", ERR_NOT_IMPLEMENTED));
+   }
+
+   return(!catch("StartTradeCopier(2)  cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+}
+
+
+/**
+ * Start the virtual trade mirror.
+ *
+ * @return bool - success status
+ */
+bool StartTradeMirror() {
+   if (IsLastError()) return(false);
+
+   if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) {
+      if (!CloseOpenOrders()) return(false);
+      tradingMode = TRADINGMODE_VIRTUAL;
+   }
+
+   if (tradingMode == TRADINGMODE_VIRTUAL) {
+      tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
+      // TODO: what else???
+      return(!catch("StartTradeMirror(1)", ERR_NOT_IMPLEMENTED));
+   }
+
+   return(!catch("StartTradeMirror(2)  cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+}
+
+
+/**
+ * Stop a running virtual trade copier/mirror.
+ *
+ * @return bool - success status
+ */
+bool StopVirtualTrading() {
+   if (IsLastError()) return(false);
+
+   if (tradingMode==TRADINGMODE_VIRTUAL_COPIER || tradingMode==TRADINGMODE_VIRTUAL_MIRROR) {
+      if (!CloseOpenOrders()) return(false);
+      tradingMode = TRADINGMODE_VIRTUAL;
+      return(!catch("StopVirtualTrading(1)", ERR_NOT_IMPLEMENTED));
+   }
+
+   return(!catch("StopVirtualTrading(2)  cannot stop virtual trading in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+}
+
+
+/**
  * Add a real order record to the order log and update statistics.
  *
  * @param  int      ticket
@@ -1280,6 +1343,86 @@ bool Orders.RemoveTicket(int ticket) {
 
 
 /**
+ * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
+ *
+ * @param  string commands[] - array to store received commands
+ *
+ * @return bool
+ */
+bool EventListener_ChartCommand(string &commands[]) {
+   if (!__isChart) return(false);
+
+   static string label, mutex; if (!StringLen(label)) {
+      label = ProgramName() +".command";
+      mutex = "mutex."+ label;
+   }
+
+   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
+   if (ObjectFind(label) == 0) {
+      // now aquire the lock for read-write access
+      if (AquireLock(mutex, true)) {
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
+   }
+   return(false);
+}
+
+
+/**
+ * Dispatch incoming commands.
+ *
+ * @param  string commands[] - received commands
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
+   string cmd = commands[0];
+   debug("onCommand(0.1)  "+ cmd);
+
+   // virtual
+   if (cmd == "virtual") {
+      switch (tradingMode) {
+         case TRADINGMODE_VIRTUAL_COPIER:
+         case TRADINGMODE_VIRTUAL_MIRROR:
+            return(StopVirtualTrading());
+
+         default: logWarn("onCommand(2)  cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
+      }
+      return(true);
+   }
+
+   // virtual-copier
+   if (cmd == "virtual-copier") {
+      switch (tradingMode) {
+         case TRADINGMODE_VIRTUAL:
+         case TRADINGMODE_VIRTUAL_MIRROR:
+            return(StartTradeCopier());
+
+         default: logWarn("onCommand(3)  cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
+      }
+      return(true);
+   }
+
+   // virtual-mirror
+   if (cmd == "virtual-mirror") {
+      switch (tradingMode) {
+         case TRADINGMODE_VIRTUAL:
+         case TRADINGMODE_VIRTUAL_COPIER:
+            return(StartTradeMirror());
+
+         default: logWarn("onCommand(4)  cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
+      }
+      return(true);
+   }
+
+   return(!logWarn("onCommand(5)  unsupported command: "+ DoubleQuoteStr(cmd)));
+}
+
+
+/**
  * Generate a new sequence id. Must be unique for all running instances of this expert (strategy).
  *
  * @return int - sequence id in the range of 1000-16383
@@ -1366,6 +1509,24 @@ string DumpVirtualOrder(int ticket) {
    string sProfit       = DoubleToStr(virt.profit[i], 2);
 
    return("virtual #"+ ticket +": lots="+ sLots +", pendingType="+ sPendingType +", pendingPrice="+ sPendingPrice +", openType="+ sOpenType +", openTime="+ sOpenTime +", openPrice="+ sOpenPrice +", closeTime="+ sCloseTime +", closePrice="+ sClosePrice +", takeProfit="+ sTakeProfit +", stopLoss="+ sStopLoss +", commission="+ sCommission +", swap="+ sSwap +", profit="+ sProfit);
+}
+
+
+/**
+ * Return a readable version of a trading mode.
+ *
+ * @param  int mode
+ *
+ * @return string
+ */
+string TradingModeToStr(int mode) {
+   switch (mode) {
+      case TRADINGMODE_REGULAR       : return("TRADINGMODE_REGULAR"       );
+      case TRADINGMODE_VIRTUAL       : return("TRADINGMODE_VIRTUAL"       );
+      case TRADINGMODE_VIRTUAL_COPIER: return("TRADINGMODE_VIRTUAL_COPIER");
+      case TRADINGMODE_VIRTUAL_MIRROR: return("TRADINGMODE_VIRTUAL_MIRROR");
+   }
+   return(_EMPTY_STR(catch("TradingModeToStr(1)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 

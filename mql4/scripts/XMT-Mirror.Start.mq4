@@ -31,11 +31,11 @@ int onStart() {
    }
 
    if (isStartable) {
-      if (true || !This.IsTesting()) {
-         PlaySoundEx("Windows Notify.wav");                             // confirm sending the command
-         int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the XMT-Mirror (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK) return(catch("onStart(1)"));
-      }
+      if (This.IsTesting()) Tester.Pause();
+
+      PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the XMT-Mirror (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
+      if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("XMT-Scalper.command", "virtual-mirror");
    }
    else {
