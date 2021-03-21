@@ -526,14 +526,15 @@ int ResetLastError() {
 
 
 /**
- * Check for and call handlers for incoming commands.
+ * Check for received commands and call the respective handlers.
  *
  * @return bool - success status
  */
 bool HandleCommands() {
    string commands[]; ArrayResize(commands, 0);
-   if (EventListener_ChartCommand(commands))
+   if (EventListener_ChartCommand(commands)) {
       return(onCommand(commands));
+   }
    return(true);
 }
 
