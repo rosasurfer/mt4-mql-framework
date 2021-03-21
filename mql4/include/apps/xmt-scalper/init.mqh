@@ -21,9 +21,10 @@ int onInitUser() {
       sValue = values[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (StrStartsWith("regular", sValue)) { tradingMode = TRADING_MODE_REGULAR; TradingMode = "Regular"; }
-   else if (StrStartsWith("virtual", sValue)) { tradingMode = TRADING_MODE_VIRTUAL; TradingMode = "Virtual"; }
-   else if (StrStartsWith("mirror",  sValue)) { tradingMode = TRADING_MODE_MIRROR;  TradingMode = "Mirror";  }
+   if      (sValue=="r"  || sValue=="regular"       ) { tradingMode = TRADINGMODE_REGULAR;        TradingMode = "Regular";        }
+   else if (sValue=="v"  || sValue=="virtual"       ) { tradingMode = TRADINGMODE_VIRTUAL;        TradingMode = "Virtual";        }
+   else if (sValue=="vc" || sValue=="virtual-copier") { tradingMode = TRADINGMODE_VIRTUAL_COPIER; TradingMode = "Virtual-Copier"; }
+   else if (sValue=="vm" || sValue=="virtual-mirror") { tradingMode = TRADINGMODE_VIRTUAL_MIRROR; TradingMode = "Virtual-Mirror"; }
    else                                                      return(catch("onInitUser(3)  Invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), ERR_INVALID_INPUT_PARAMETER));
    // EntryIndicator
    if (EntryIndicator < 1 || EntryIndicator > 3)             return(catch("onInitUser(4)  invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));

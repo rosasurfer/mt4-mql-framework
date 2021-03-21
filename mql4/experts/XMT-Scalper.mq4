@@ -44,7 +44,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Sequence.ID                     = "";         // instance id in the range of 1000-16383
-extern string TradingMode                     = "Regular* | Virtual | Mirror";
+extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";     // also "R | V | VC | VM"
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
@@ -93,14 +93,15 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID            106     // unique strategy id from 101-1023 (10 bits)
+#define STRATEGY_ID               106     // unique strategy id from 101-1023 (10 bits)
 
-#define TRADING_MODE_REGULAR     1
-#define TRADING_MODE_VIRTUAL     2
-#define TRADING_MODE_MIRROR      3
+#define TRADINGMODE_REGULAR         1
+#define TRADINGMODE_VIRTUAL         2
+#define TRADINGMODE_VIRTUAL_COPIER  3
+#define TRADINGMODE_VIRTUAL_MIRROR  4
 
-#define SIGNAL_LONG              1
-#define SIGNAL_SHORT             2
+#define SIGNAL_LONG                 1
+#define SIGNAL_SHORT                2
 
 
 // general
@@ -109,38 +110,38 @@ int      sequence.id;
 
 // real order log
 int      real.ticket      [];
-double   real.lots        [];          // order volume > 0
-int      real.pendingType [];          // pending order type if applicable or OP_UNDEFINED (-1)
-double   real.pendingPrice[];          // pending entry limit if applicable or 0
-int      real.openType    [];          // order open type of an opened position or OP_UNDEFINED (-1)
-datetime real.openTime    [];          // order open time of an opened position or 0
-double   real.openPrice   [];          // order open price of an opened position or 0
-datetime real.closeTime   [];          // order close time of a closed order or 0
-double   real.closePrice  [];          // order close price of a closed position or 0
-double   real.stopLoss    [];          // SL price or 0
-double   real.takeProfit  [];          // TP price or 0
-double   real.commission  [];          // order commission
-double   real.swap        [];          // order swap
-double   real.profit      [];          // order profit (gross)
+double   real.lots        [];             // order volume > 0
+int      real.pendingType [];             // pending order type if applicable or OP_UNDEFINED (-1)
+double   real.pendingPrice[];             // pending entry limit if applicable or 0
+int      real.openType    [];             // order open type of an opened position or OP_UNDEFINED (-1)
+datetime real.openTime    [];             // order open time of an opened position or 0
+double   real.openPrice   [];             // order open price of an opened position or 0
+datetime real.closeTime   [];             // order close time of a closed order or 0
+double   real.closePrice  [];             // order close price of a closed position or 0
+double   real.stopLoss    [];             // SL price or 0
+double   real.takeProfit  [];             // TP price or 0
+double   real.commission  [];             // order commission
+double   real.swap        [];             // order swap
+double   real.profit      [];             // order profit (gross)
 
 // real order statistics
-bool     real.isOpenOrder;             // whether an open order exists (max. 1 open order)
-bool     real.isOpenPosition;          // whether an open position exists (max. 1 open position)
+bool     real.isOpenOrder;                // whether an open order exists (max. 1 open order)
+bool     real.isOpenPosition;             // whether an open position exists (max. 1 open position)
 
-double   real.openLots;                // total open lotsize: -n...+n
-double   real.openSwap;                // total open swap
-double   real.openCommission;          // total open commissions
-double   real.openPl;                  // total open gross profit
-double   real.openPlNet;               // total open net profit
+double   real.openLots;                   // total open lotsize: -n...+n
+double   real.openSwap;                   // total open swap
+double   real.openCommission;             // total open commissions
+double   real.openPl;                     // total open gross profit
+double   real.openPlNet;                  // total open net profit
 
-int      real.closedPositions;         // number of closed positions
-double   real.closedLots;              // total closed lotsize: 0...+n
-double   real.closedCommission;        // total closed commission
-double   real.closedSwap;              // total closed swap
-double   real.closedPl;                // total closed gross profit
-double   real.closedPlNet;             // total closed net profit
+int      real.closedPositions;            // number of closed positions
+double   real.closedLots;                 // total closed lotsize: 0...+n
+double   real.closedCommission;           // total closed commission
+double   real.closedSwap;                 // total closed swap
+double   real.closedPl;                   // total closed gross profit
+double   real.closedPlNet;                // total closed net profit
 
-double   real.totalPlNet;              // openPlNet + closedPlNet
+double   real.totalPlNet;                 // openPlNet + closedPlNet
 
 // virtual order log
 int      virt.ticket      [];
@@ -178,15 +179,15 @@ double   virt.closedPlNet;
 double   virt.totalPlNet;
 
 // other
-double   currentSpread;                // current spread in pip
-double   avgSpread;                    // average spread in pip
-double   minBarSize;                   // min. bar size in absolute terms
-int      orderSlippage;                // order slippage in point
+double   currentSpread;                   // current spread in pip
+double   avgSpread;                       // average spread in pip
+double   minBarSize;                      // min. bar size in absolute terms
+int      orderSlippage;                   // order slippage in point
 int      orderMagicNumber;
 string   orderComment = "";
 
 // cache vars to speed-up status messages
-string   sTradingModeDescriptions[] = {"", "", ": Virtual Trading", ": Mirror Trading"};
+string   sTradingModeDescriptions[] = {"", "", ": Virtual Trading", ": Virtual Trading + Copier", ": Virtual Trading + Mirror"};
 string   sCurrentSpread             = "-";
 string   sAvgSpread                 = "-";
 string   sMaxSpread                 = "-";
@@ -210,12 +211,12 @@ int onTick() {
    if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
-   switch (tradingMode) {
-      case TRADING_MODE_REGULAR: return(onTick.RegularTrading());
-      case TRADING_MODE_VIRTUAL: return(onTick.VirtualTrading());
-      case TRADING_MODE_MIRROR:  return(onTick.MirrorTrading());
+   if (tradingMode == TRADINGMODE_REGULAR) {
+      return(onTick.RegularTrading());
    }
-   return(catch("onTick(1)", ERR_ILLEGAL_STATE));
+   else {
+      return(onTick.VirtualTrading());
+   }
 }
 
 
@@ -250,6 +251,9 @@ int onTick.RegularTrading() {
  * @return int - error status
  */
 int onTick.VirtualTrading() {
+   if (__isChart) {
+      // process chart commands
+   }
    UpdateVirtualOrderStatus();                                    // update virtual order status and PL
 
    if (virt.isOpenOrder) {
@@ -261,17 +265,11 @@ int onTick.VirtualTrading() {
       int signal;
       if (IsEntrySignal(signal)) OpenVirtualOrder(signal);        // monitor and handle new entry signals
    }
+
+   if (false) {
+      return(catch("onTick.VirtualTrading(1)  mirror trading not implemented", ERR_NOT_IMPLEMENTED));
+   }
    return(last_error);
-}
-
-
-/**
- * Main function for mirror trading.
- *
- * @return int - error status
- */
-int onTick.MirrorTrading() {
-   return(catch("onTick.MirrorTrading(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1385,7 +1383,7 @@ int ShowStatus(int error = NO_ERROR) {
    int closedPositions;
 
    switch (tradingMode) {
-      case TRADING_MODE_REGULAR:
+      case TRADINGMODE_REGULAR:
          openLots         = real.openLots;
          openPlNet        = real.openPlNet;
          closedPositions  = real.closedPositions;
@@ -1396,7 +1394,7 @@ int ShowStatus(int error = NO_ERROR) {
          totalPlNet       = real.totalPlNet;
          break;
 
-      case TRADING_MODE_VIRTUAL:
+      case TRADINGMODE_VIRTUAL:
          openLots         = virt.openLots;
          openPlNet        = virt.openPlNet;
          closedPositions  = virt.closedPositions;
@@ -1407,7 +1405,8 @@ int ShowStatus(int error = NO_ERROR) {
          totalPlNet       = virt.totalPlNet;
          break;
 
-      case TRADING_MODE_MIRROR:
+      case TRADINGMODE_VIRTUAL_COPIER:
+      case TRADINGMODE_VIRTUAL_MIRROR:
          break;
    }
 
