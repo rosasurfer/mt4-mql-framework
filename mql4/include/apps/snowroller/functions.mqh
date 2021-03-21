@@ -11,8 +11,7 @@
  * @return bool - success status of the executed command
  */
 bool onCommand(string commands[]) {
-   if (!ArraySize(commands))
-      return(!logWarn("onCommand(1)  "+ sequence.longName +" empty parameter commands: {}"));
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.longName +" empty parameter commands: {}"));
 
    string cmd = commands[0];
 

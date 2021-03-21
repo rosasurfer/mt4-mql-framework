@@ -150,7 +150,11 @@
    // Win32 helpers
    int      GetLastWin32Error();
 
-   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
+   // Handlers for mandatory implementations (if used). Must be implemented in the MQL main module.
+   bool     onBarOpen();
+   bool     onCommand(string data[]);
+
+   // Empty stubs for optional functions. Can be overwritten by custom MQL implementations.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();

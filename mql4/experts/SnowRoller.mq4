@@ -1304,9 +1304,9 @@ string UpdateStatus.StopLossMsg(int i) {
 
 
 /**
- * Whether a chart command was sent to the expert. If so, the command is retrieved and stored.
+ * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
  *
- * @param  string commands[] - array to store received commands in
+ * @param  string commands[] - array to store received commands
  *
  * @return bool
  */
@@ -1318,14 +1318,14 @@ bool EventListener_ChartCommand(string &commands[]) {
       mutex = "mutex."+ label;
    }
 
-   // check non-synchronized (read-only) for a command to prevent aquiring the lock on each tick
+   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
    if (ObjectFind(label) == 0) {
-      // aquire the lock for write-access if there's indeed a command
-      if (!AquireLock(mutex, true)) return(false);
-
-      ArrayPushString(commands, ObjectDescription(label));
-      ObjectDelete(label);
-      return(ReleaseLock(mutex));
+      // now aquire the lock for read-write access
+      if (AquireLock(mutex, true)) {
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
    }
    return(false);
 }

@@ -624,8 +624,6 @@ int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[])
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
 int      MergeStringArrays(string &array1[], string &array2[], string &merged[]);;
 color    ModifyColor(color rgb, double hue, double saturation, double lightness);;
-bool     onBarOpen();;
-bool     onCommand(string &data[]);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int &oe[]);;
 bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int &oe[]);;
 bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int &oe[]);;
@@ -834,6 +832,8 @@ string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;
 string   NumberFormat(double value, string format);;
+bool     onBarOpen();;
+bool     onCommand(string &data[]);;
 int      onDeinitAccountChange();;
 int      onDeinitChartChange();;
 int      onDeinitChartClose();;
