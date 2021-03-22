@@ -34,7 +34,7 @@ int onStart() {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the XMT-"+ ifString(mode=="virtual-copier", "Copier", "Mirror") +" (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the XMT Trade-"+ ifString(mode=="virtual-copier", "Copier", "Mirror") +" (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("XMT-Scalper.command", "virtual");
    }

@@ -106,5 +106,10 @@ int onInitSymbolChange() {
  */
 int afterInit() {
    SS.All();
-   return(last_error);
+
+   if (IsTesting()) {                                          // initialize tester configuration
+      string section = ProgramName() +".Tester";
+      tester.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
+   }
+   return(catch("afterInit(1)"));
 }
