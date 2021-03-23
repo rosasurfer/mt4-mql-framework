@@ -79,7 +79,7 @@ int CreateChartObjects() {
    int    bg.fontSize = 212;
 
    int x =  3;                            // X start coordinate
-   int y = 73;                            // Y start coordinate
+   int y = 80;                            // Y start coordinate
    int n = 10;                            // counter for unique labels (min. 2 digits)
 
    // background
