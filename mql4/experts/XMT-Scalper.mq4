@@ -236,13 +236,13 @@ int onTick.RegularTrading() {
    }
 
    if (real.isOpenOrder) {
-      if (real.isOpenPosition) ManageOpenPosition();              // trail exit limits
+      if (real.isOpenPosition) ManageRealPosition();              // trail exit limits
       else                     ManagePendingOrder();              // trail entry limits or delete order
    }
 
    if (!last_error && !real.isOpenOrder) {
       int signal;
-      if (IsEntrySignal(signal)) OpenNewOrder(signal);            // monitor and handle new entry signals
+      if (IsEntrySignal(signal)) OpenRealOrder(signal);           // monitor and handle new entry signals
    }
    return(last_error);
 }
@@ -256,52 +256,40 @@ int onTick.RegularTrading() {
 int onTick.VirtualTrading() {
    if (__isChart) HandleCommands();                               // process chart commands
 
-   UpdateVirtualOrderStatus();                                    // update virtual order status and PL
+   // update virtual and real order status (if any)
+   UpdateVirtualOrderStatus();
+   if (tradingMode > TRADINGMODE_VIRTUAL) {
+      if (!real.isSynchronized) {
+         if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) SynchronizeTradeCopier();
+         if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) SynchronizeTradeMirror();
+      }
+      UpdateRealOrderStatus();
+   }
 
+   // manage virtual orders
    if (virt.isOpenOrder) {
       if (virt.isOpenPosition) ManageVirtualPosition();           // trail exit limits
       else                     ManageVirtualOrder();              // trail entry limits or delete order
    }
 
+   // manage real orders (if any)
+   if (real.isOpenOrder) {
+      if (real.isOpenPosition) ManageRealPosition();              // trail exit limits
+      else                     ManagePendingOrder();              // trail entry limits or delete order
+   }
+
+   // handle new entry signals
    if (!last_error && !virt.isOpenOrder) {
       int signal;
-      if (IsEntrySignal(signal)) OpenVirtualOrder(signal);        // monitor and handle new entry signals
-   }
+      if (IsEntrySignal(signal)) {
+         OpenVirtualOrder(signal);
 
-   if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) return(onTick.TradeCopier());
-   if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) return(onTick.TradeMirror());
+         if (tradingMode > TRADINGMODE_VIRTUAL) {
+            OpenRealOrder(signal);
+         }
+      }
+   }
    return(last_error);
-}
-
-
-/**
- * Main function for the trade copier.
- *
- * @return int - error status
- */
-int onTick.TradeCopier() {
-   if (!real.isSynchronized) {
-      if (!SynchronizeTradeCopier()) return(last_error);
-   }
-
-   // manage new trades
-   // - listen to virtual PositionOpen/PositionClose events
-   // - listen to signals
-
-   return(last_error);
-}
-
-
-/**
- * Main function for the trade mirror.
- *
- * @return int - error status
- */
-int onTick.TradeMirror() {
-   if (!real.isSynchronized) {
-      if (!SynchronizeTradeMirror()) return(last_error);
-   }
-   return(catch("onTick.TradeMirror(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -338,8 +326,8 @@ bool SynchronizeTradeCopier() {
          // an open position doesn't exist, open it
          double lots = CalculateLots(true); if (!lots) return(false);
          color markerColor = ifInt(virt.openType[iV]==OP_LONG, Blue, Red);
-                                                                                // TP and SL are updated by the regular onTick() function
-         OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, NULL, NULL, orderComment, orderMagicNumber, NULL, markerColor, NULL, oe);
+
+         OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, virt.stopLoss[iV], virt.takeProfit[iV], orderComment, orderMagicNumber, NULL, markerColor, NULL, oe);
          if (oe.IsError(oe)) return(false);
 
          // update the link
@@ -372,7 +360,7 @@ bool SynchronizeTradeMirror() {
  * @return bool - success status
  */
 bool UpdateRealOrderStatus() {
-   // open order statistics are fully recalculated
+   // open PL statistics are fully recalculated
    real.isOpenOrder    = false;
    real.isOpenPosition = false;
    real.openLots       = 0;
@@ -386,24 +374,27 @@ bool UpdateRealOrderStatus() {
    // update ticket status
    for (int i=orders-1; i >= 0; i--) {                            // iterate backwards and stop at the first closed ticket
       if (real.closeTime[i] > 0) break;                           // to increase performance
-      real.isOpenOrder = true;
       if (!SelectTicket(real.ticket[i], "UpdateRealOrderStatus(1)")) return(false);
 
-      bool wasPending  = (real.openType[i] == OP_UNDEFINED);
-      bool isPending   = (OrderType() > OP_SELL);
-      bool wasPosition = !wasPending;
-      bool isOpen      = !OrderCloseTime();
-      bool isClosed    = !isOpen;
+      bool wasPending     = (real.openType[i] == OP_UNDEFINED);
+      bool isPending      = (OrderType() > OP_SELL);
+      bool wasPosition    = !wasPending;
+      bool isOpen         = !OrderCloseTime();
+      bool isClosed       = !isOpen;
+      real.isOpenOrder    = real.isOpenOrder || isOpen;
+      real.isOpenPosition = real.isOpenPosition || (!isPending && isOpen);
 
       if (wasPending) {
-         if (!isPending) {                                        // the pending order was filled
-            onPositionOpen(i);                                    // updates order record and logs
-            wasPosition = true;                                   // mark as a known open position
-         }
-         else if (isClosed) {                                     // the pending order was cancelled (externally)
-            onOrderDelete(i);                                     // logs and removes order record
+         if (isClosed) {                                          // the pending order was cancelled (externally)
+            onRealOrderDelete(i);                                 // logs and removes order record
             orders--;
             continue;
+         }
+         else {
+            if (!isPending) {                                     // the pending order was filled
+               onRealPositionOpen(i);                             // updates order record and logs
+               wasPosition = true;                                // mark as a known open position
+            }
          }
       }
 
@@ -413,15 +404,13 @@ bool UpdateRealOrderStatus() {
          real.profit    [i] = OrderProfit();
 
          if (isOpen) {
-            real.isOpenPosition  = true;
             real.openLots       += ifDouble(real.openType[i]==OP_BUY, real.lots[i], -real.lots[i]);
             real.openCommission += real.commission[i];
             real.openSwap       += real.swap      [i];
             real.openPl         += real.profit    [i];
          }
          else /*isClosed*/ {                                      // the position was closed
-            onPositionClose(i);                                   // updates order record and logs
-            real.isOpenOrder = false;
+            onRealPositionClose(i);                               // updates order record and logs
             real.closedPositions++;                               // update closed trade statistics
             real.closedLots       += real.lots      [i];
             real.closedCommission += real.commission[i];
@@ -521,7 +510,7 @@ bool UpdateVirtualOrderStatus() {
  *
  * @return bool - success status
  */
-bool onPositionOpen(int i) {
+bool onRealPositionOpen(int i) {
    // update order log
    real.openType  [i] = OrderType();
    real.openTime  [i] = OrderOpenTime();
@@ -547,17 +536,17 @@ bool onPositionOpen(int i) {
             else              sSlippage = ", "+ DoubleToStr(-slippage, Digits & 1) +" pip slippage";
          message = message +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat);
       }
-      logDebug("onPositionOpen(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
+      logDebug("onRealPositionOpen(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
    }
 
    if (IsTesting()) {
       if (__ExecutionContext[EC.extReporting] != 0) {
          Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
       }
-      // pause the tester according to the debug configuration
-      if (IsVisualMode() && tester.onPositionOpenPause) Tester.Pause("onPositionOpen(2)");
+      // pause the tester if configured
+      if (IsVisualMode() && tester.onPositionOpenPause) Tester.Pause("onRealPositionOpen(2)");
    }
-   return(!catch("onPositionOpen(3)"));
+   return(!catch("onRealPositionOpen(3)"));
 }
 
 
@@ -574,13 +563,13 @@ bool onVirtualPositionOpen(int i) {
 
 
 /**
- * Handle a PositionClose event. The referenced ticket is selected.
+ * Handle a real PositionClose event. The referenced ticket is selected.
  *
  * @param  int i - ticket index of the closed position
  *
  * @return bool - success status
  */
-bool onPositionClose(int i) {
+bool onRealPositionClose(int i) {
    // update order log
    real.closeTime [i] = OrderCloseTime();
    real.closePrice[i] = OrderClosePrice();
@@ -595,13 +584,13 @@ bool onPositionClose(int i) {
       string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
       string sComment    = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message     = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() + sComment +" at "+ sOpenPrice +" was closed at "+ sClosePrice;
-      logDebug("onPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logDebug("onRealPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
    if (IsTesting() && __ExecutionContext[EC.extReporting]) {
       Test_onPositionClose(__ExecutionContext, OrderTicket(), OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
    }
-   return(!catch("onPositionClose(2)"));
+   return(!catch("onRealPositionClose(2)"));
 }
 
 
@@ -632,13 +621,15 @@ bool onVirtualPositionClose(int i) {
 
 
 /**
- * Handle an OrderDelete event. The referenced ticket is selected.
+ * Handle a real OrderDelete event. The referenced ticket is selected.
  *
  * @param  int i - ticket index of the deleted order
  *
  * @return bool - success status
  */
-bool onOrderDelete(int i) {
+bool onRealOrderDelete(int i) {
+   if (tradingMode != TRADINGMODE_REGULAR) return(!catch("onRealOrderDelete(1)  deletion of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+
    if (IsLogDebug()) {
       // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was deleted
       int    pendingType  = real.pendingType [i];
@@ -648,9 +639,9 @@ bool onOrderDelete(int i) {
       string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
       string sComment      = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message       = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sPendingPrice + sComment +" was deleted";
-      logDebug("onOrderDelete(3)  "+ message);
+      logDebug("onRealOrderDelete(2)  "+ message);
    }
-   return(Orders.RemoveTicket(real.ticket[i]));
+   return(Orders.RemoveRealTicket(real.ticket[i]));
 }
 
 
@@ -709,37 +700,56 @@ bool IsEntrySignal(int &signal) {
  *
  * @return bool - success status
  */
-bool OpenNewOrder(int signal) {
-   if (last_error != 0) return(false);
+bool OpenRealOrder(int signal) {
+   if (last_error != 0)                             return(false);
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("OpenRealOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    double lots   = CalculateLots(true); if (!lots) return(false);
    double spread = Ask-Bid, price, takeProfit, stopLoss;
-   int oe[];
+   int iV, virtualTicket, oe[];
 
-   if (signal == SIGNAL_LONG) {
-      price      = Ask + BreakoutReversal*Pip;
-      takeProfit = price + TakeProfit*Pip;
-      stopLoss   = price - spread - StopLoss*Pip;
+   // regular trading
+   if (tradingMode == TRADINGMODE_REGULAR) {
+      if (signal == SIGNAL_LONG) {
+         price      = Ask + BreakoutReversal*Pip;
+         takeProfit = price + TakeProfit*Pip;
+         stopLoss   = price - spread - StopLoss*Pip;
 
-      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
-      else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
+         if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
+         else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
+      }
+      else /*signal == SIGNAL_SHORT*/ {
+         price      = Bid - BreakoutReversal*Pip;
+         takeProfit = price - TakeProfit*Pip;
+         stopLoss   = price + spread + StopLoss*Pip;
+
+         if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+         else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+      }
    }
-   else if (signal == SIGNAL_SHORT) {
-      price      = Bid - BreakoutReversal*Pip;
-      takeProfit = price - TakeProfit*Pip;
-      stopLoss   = price + spread + StopLoss*Pip;
 
-      if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
-      else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+   // virtual-copier
+   else if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) {
+      iV = ArraySize(virt.ticket)-1;
+      if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(2)  opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+
+      virtualTicket = virt.ticket    [iV];
+      takeProfit    = virt.takeProfit[iV];
+      stopLoss      = virt.stopLoss  [iV];
+      virt.linkedTicket[iV] = OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
    }
-   else return(!catch("OpenNewOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+
+   // virtual-mirror
+   else if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
+      return(!catch("OpenRealOrder(3)  opening of positions in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+   }
 
    if (oe.IsError(oe)) return(false);
 
-   if (IsTesting()) {                           // pause the tester according to the debug configuration
-      if (IsVisualMode() && tester.onPositionOpenPause) Tester.Pause("OpenNewOrder(2)");
+   if (IsTesting()) {                                   // pause the tester if configured
+      if (IsVisualMode() && tester.onPositionOpenPause) Tester.Pause("OpenRealOrder(4)");
    }
-   return(Orders.AddRealTicket(oe.Ticket(oe), NULL, oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL));
+   return(Orders.AddRealTicket(oe.Ticket(oe), virtualTicket, oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL));
 }
 
 
@@ -777,8 +787,8 @@ bool OpenVirtualOrder(int signal) {
    // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
    if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ "opened virtual #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 
-   if (IsTesting()) {                              // pause the tester according to the debug configuration
-      if (IsVisualMode() && tester.onPositionOpenPause) Tester.Pause("OpenNewOrder(2)");
+   if (IsTesting()) {                                   // pause the tester if configured
+      if (IsVisualMode() && tester.onPositionOpenPause) Tester.Pause("OpenVirtualOrder(3)");
    }
    return(true);
 }
@@ -790,10 +800,11 @@ bool OpenVirtualOrder(int signal) {
  * @return bool - success status
  */
 bool ManagePendingOrder() {
+   if (tradingMode != TRADINGMODE_REGULAR)       return(!catch("ManagePendingOrder(1)  managing of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
    if (!real.isOpenOrder || real.isOpenPosition) return(true);
 
    int i = ArraySize(real.ticket)-1, oe[];
-   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrder(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrder(2)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
 
    double openprice, stoploss, takeprofit, spread=Ask-Bid, channelMean, dNull;
    if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
@@ -802,7 +813,7 @@ bool ManagePendingOrder() {
       case OP_BUYSTOP:
          if (GE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
             if (!OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) return(false);
-            Orders.RemoveTicket(real.ticket[i]);
+            Orders.RemoveRealTicket(real.ticket[i]);
             return(true);
          }
          openprice = Ask + BreakoutReversal*Pip;                        // trail order entry in breakout direction
@@ -817,7 +828,7 @@ bool ManagePendingOrder() {
       case OP_SELLSTOP:
          if (LE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
             if (!OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) return(false);
-            Orders.RemoveTicket(real.ticket[i]);
+            Orders.RemoveRealTicket(real.ticket[i]);
             return(true);
          }
          openprice = Bid - BreakoutReversal*Pip;                        // trail order entry in breakout direction
@@ -830,7 +841,7 @@ bool ManagePendingOrder() {
          break;
 
       default:
-         return(!catch("ManagePendingOrder(2)  illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManagePendingOrder(3)  illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stoploss > 0) {
@@ -857,37 +868,56 @@ bool ManageVirtualOrder() {
  *
  * @return bool - success status
  */
-bool ManageOpenPosition() {
+bool ManageRealPosition() {
    if (!real.isOpenPosition) return(true);
 
-   int i = ArraySize(real.ticket)-1, oe[];
+   int i = ArraySize(real.ticket)-1, iR=i, iV, oe[];
    double takeProfit, stopLoss;
 
-   switch (real.openType[i]) {
-      case OP_BUY:
-         if      (TakeProfitBug)                                 takeProfit = Ask + TakeProfit*Pip;      // erroneous TP calculation
-         else if (GE(Bid-real.openPrice[i], TrailExitStart*Pip)) takeProfit = Bid + TakeProfit*Pip;      // correct TP calculation, also check trail-start
-         else                                                    takeProfit = INT_MIN;
+   // regular trading
+   if (tradingMode == TRADINGMODE_REGULAR) {
+      switch (real.openType[i]) {
+         case OP_BUY:
+            if      (TakeProfitBug)                                 takeProfit = Ask + TakeProfit*Pip;   // erroneous TP calculation
+            else if (GE(Bid-real.openPrice[i], TrailExitStart*Pip)) takeProfit = Bid + TakeProfit*Pip;   // correct TP calculation, also check trail-start
+            else                                                    takeProfit = INT_MIN;
 
-         if (GE(takeProfit-real.takeProfit[i], TrailExitStep*Pip)) {
-            stopLoss = Bid - StopLoss*Pip;
-            if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Lime, NULL, oe)) return(false);
-         }
-         break;
+            if (GE(takeProfit-real.takeProfit[i], TrailExitStep*Pip)) {
+               stopLoss = Bid - StopLoss*Pip;
+               if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Lime, NULL, oe)) return(false);
+            }
+            break;
 
-      case OP_SELL:
-         if      (TakeProfitBug)                                 takeProfit = Bid - TakeProfit*Pip;      // erroneous TP calculation
-         else if (GE(real.openPrice[i]-Ask, TrailExitStart*Pip)) takeProfit = Ask - TakeProfit*Pip;      // correct TP calculation, also check trail-start
-         else                                                    takeProfit = INT_MAX;
+         case OP_SELL:
+            if      (TakeProfitBug)                                 takeProfit = Bid - TakeProfit*Pip;   // erroneous TP calculation
+            else if (GE(real.openPrice[i]-Ask, TrailExitStart*Pip)) takeProfit = Ask - TakeProfit*Pip;   // correct TP calculation, also check trail-start
+            else                                                    takeProfit = INT_MAX;
 
-         if (GE(real.takeProfit[i]-takeProfit, TrailExitStep*Pip)) {
-            stopLoss = Ask + StopLoss*Pip;
-            if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Orange, NULL, oe)) return(false);
-         }
-         break;
+            if (GE(real.takeProfit[i]-takeProfit, TrailExitStep*Pip)) {
+               stopLoss = Ask + StopLoss*Pip;
+               if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Orange, NULL, oe)) return(false);
+            }
+            break;
 
-      default:
-         return(!catch("ManageOpenPosition(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+         default:
+            return(!catch("ManageRealPosition(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+      }
+   }
+
+   // virtual-copier
+   else if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) {
+      iV = ArraySize(virt.ticket)-1;
+
+      if (real.takeProfit[iR]!=virt.takeProfit[iV] || real.stopLoss[iR]!=virt.stopLoss[iV]) {
+         takeProfit = virt.takeProfit[iV];
+         stopLoss   = virt.stopLoss[iV];
+         if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Lime, NULL, oe)) return(false);
+      }
+   }
+
+   // virtual-mirror
+   else if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
+      return(!catch("ManageRealPosition(2)  managing of open positions in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
    }
 
    if (stopLoss > 0) {
@@ -1423,11 +1453,11 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
  *
  * @return bool - success status
  */
-bool Orders.RemoveTicket(int ticket) {
+bool Orders.RemoveRealTicket(int ticket) {
    int pos = SearchIntArray(real.ticket, ticket);
-   if (pos < 0)                            return(!catch("Orders.RemoveTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
-   if (real.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveTicket(2)  cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
-   if (!real.isOpenOrder)                  return(!catch("Orders.RemoveTicket(3)  real.isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
+   if (pos < 0)                            return(!catch("Orders.RemoveRealTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
+   if (real.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveRealTicket(2)  cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
+   if (!real.isOpenOrder)                  return(!catch("Orders.RemoveRealTicket(3)  real.isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
 
    real.isOpenOrder = false;
 
@@ -1447,7 +1477,7 @@ bool Orders.RemoveTicket(int ticket) {
    ArraySpliceDoubles(real.swap,         pos, 1);
    ArraySpliceDoubles(real.profit,       pos, 1);
 
-   return(!catch("Orders.RemoveTicket(4)"));
+   return(!catch("Orders.RemoveRealTicket(4)"));
 }
 
 
