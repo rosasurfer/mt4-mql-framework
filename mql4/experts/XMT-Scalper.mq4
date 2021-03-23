@@ -217,12 +217,9 @@ int onTick() {
    if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
-   if (tradingMode == TRADINGMODE_REGULAR) {
+   if (tradingMode == TRADINGMODE_REGULAR)
       return(onTick.RegularTrading());
-   }
-   else {
-      return(onTick.VirtualTrading());
-   }
+   return(onTick.VirtualTrading());
 }
 
 
@@ -278,7 +275,7 @@ int onTick.VirtualTrading() {
 
 
 /**
- * Main function for a running trade copier.
+ * Main function for the trade copier.
  *
  * @return int - error status
  */
@@ -296,7 +293,7 @@ int onTick.TradeCopier() {
 
 
 /**
- * Main function for a running trade mirror.
+ * Main function for the trade mirror.
  *
  * @return int - error status
  */
