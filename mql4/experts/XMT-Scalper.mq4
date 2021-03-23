@@ -908,9 +908,9 @@ bool ManageRealPosition() {
    else if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) {
       iV = ArraySize(virt.ticket)-1;
 
-      if (real.takeProfit[iR]!=virt.takeProfit[iV] || real.stopLoss[iR]!=virt.stopLoss[iV]) {
+      if (NE(real.takeProfit[iR], virt.takeProfit[iV]) || NE(real.stopLoss[iR], virt.stopLoss[iV])) {
          takeProfit = virt.takeProfit[iV];
-         stopLoss   = virt.stopLoss[iV];
+         stopLoss   = virt.stopLoss  [iV];
          if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Lime, NULL, oe)) return(false);
       }
    }
