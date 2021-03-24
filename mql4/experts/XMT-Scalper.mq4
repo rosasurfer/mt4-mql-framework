@@ -2,7 +2,7 @@
  * XMT-Scalper revisited
  *
  *
- * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
+ * This EA is originally based on the infamous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
  * reversal from a channel breakout. Over the years it has gone through multiple transformations. Today various versions with
  * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). None of them is suitable for real trading, mainly
  * due to lack of signal documentation and a significant amount of issues in the program logic.
@@ -307,8 +307,8 @@ bool SynchronizeTradeCopier() {
       return(true);
    }
 
-   int iV = ArraySize(virt.ticket)-1, oe[];
-   int iR = ArraySize(real.ticket)-1;
+   int iV = ArraySize(virt.ticket)-1;
+   int iR = ArraySize(real.ticket)-1, oe[];
 
    if (virt.isOpenPosition) {
       if (real.isOpenPosition) {
@@ -350,7 +350,45 @@ bool SynchronizeTradeCopier() {
 bool SynchronizeTradeMirror() {
    if (real.isSynchronized) return(true);
 
-   return(!catch("SynchronizeTradeMirror(1)", ERR_NOT_IMPLEMENTED));
+   if (!virt.isOpenOrder) {
+      if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(1)  virt.isOpenOrder=FALSE  real.isOpenOrder=TRUE", ERR_ILLEGAL_STATE));
+      real.isSynchronized = true;
+      return(true);
+   }
+
+   int iV = ArraySize(virt.ticket)-1;
+   int iR = ArraySize(real.ticket)-1, oe[];
+
+   if (virt.isOpenPosition) {
+      if (real.isOpenPosition) {
+         // an open position exists, check directions
+         if (virt.openType[iV] == real.openType[iR])                            return(!catch("SynchronizeTradeMirror(2)  trade direction mis-match: virt.openType="+ OperationTypeDescription(virt.openType[iV]) +", real.openType="+ OperationTypeDescription(real.openType[iR]), ERR_ILLEGAL_STATE));
+         // check tickets
+         if (virt.linkedTicket[iV] && virt.linkedTicket[iV] != real.ticket[iR]) return(!catch("SynchronizeTradeMirror(3)  ticket mis-match: virt.linkedTicket="+ virt.linkedTicket[iV] +", real.ticket="+ real.ticket[iR], ERR_ILLEGAL_STATE));
+         if (real.linkedTicket[iR] && real.linkedTicket[iR] != virt.ticket[iV]) return(!catch("SynchronizeTradeMirror(4)  ticket mis-match: real.linkedTicket="+ real.linkedTicket[iR] +", virt.ticket="+ virt.ticket[iV], ERR_ILLEGAL_STATE));
+         // update the link
+         virt.linkedTicket[iV] = real.ticket[iR];
+         real.linkedTicket[iR] = virt.ticket[iV];
+      }
+      else if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(5)  virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
+      else {
+         // an open position doesn't exist, open it
+         int type = ifInt(virt.openType[iV]==OP_BUY, OP_SELL, OP_BUY);          // opposite direction
+         double lots = CalculateLots(true); if (!lots) return(false);
+         color markerColor = ifInt(virt.openType[iV]==OP_LONG, Red, Blue);
+
+         OrderSendEx(Symbol(), type, lots, NULL, orderSlippage, virt.takeProfit[iV], virt.stopLoss[iV], orderComment, orderMagicNumber, NULL, markerColor, NULL, oe);
+         if (oe.IsError(oe)) return(false);
+
+         // update the link
+         Orders.AddRealTicket(oe.Ticket(oe), virt.ticket[iV], oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL);
+         virt.linkedTicket[iV] = oe.Ticket(oe);
+      }
+   }
+   else return(!catch("SynchronizeTradeMirror(6)  virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
+
+   real.isSynchronized = true;
+   return(true);
 }
 
 
