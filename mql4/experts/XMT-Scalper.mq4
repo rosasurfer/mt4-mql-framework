@@ -909,7 +909,7 @@ bool ManageVirtualOrder() {
 bool ManageRealPosition() {
    if (!real.isOpenPosition) return(true);
 
-   int i = ArraySize(real.ticket)-1, iR=i, iV, oe[];
+   int i=ArraySize(real.ticket)-1, iR=i, iV, oe[];
    double takeProfit, stopLoss;
 
    // regular trading
@@ -955,7 +955,13 @@ bool ManageRealPosition() {
 
    // virtual-mirror
    else if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
-      return(!catch("ManageRealPosition(2)  managing of open positions in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+      iV = ArraySize(virt.ticket)-1;
+
+      if (NE(real.takeProfit[iR], virt.stopLoss[iV]) || NE(real.stopLoss[iR], virt.takeProfit[iV])) {
+         takeProfit = virt.stopLoss  [iV];
+         stopLoss   = virt.takeProfit[iV];
+         if (!OrderModifyEx(real.ticket[i], NULL, stopLoss, takeProfit, NULL, Lime, NULL, oe)) return(false);
+      }
    }
 
    if (stopLoss > 0) {
