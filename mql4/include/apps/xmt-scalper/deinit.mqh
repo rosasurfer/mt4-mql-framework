@@ -9,9 +9,9 @@ int onDeinitUndefined() {
    if (IsTesting()) {
       if (IsLastError()) return(last_error);
 
-      switch (tradingMode) {
-         case TRADINGMODE_REGULAR: logInfo("onDeinitUndefined(1)  test stop: "+ real.closedPositions +" trade"+ Pluralize(real.closedPositions) +", pl="+ DoubleToStr(real.closedPl, 2) +", plNet="+ DoubleToStr(real.closedPlNet, 2)); break;
-         default:                  logInfo("onDeinitUndefined(2)  test stop: "+ virt.closedPositions +" trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2)); break;
+      if (IsLogInfo()) {
+         if (tradingMode != TRADINGMODE_REGULAR) logInfo("onDeinitUndefined(1)  test stop: "+ virt.closedPositions +" virtual trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2));
+         if (tradingMode != TRADINGMODE_VIRTUAL) logInfo("onDeinitUndefined(2)  test stop: "+ real.closedPositions +" real trade"+ Pluralize(real.closedPositions) +", pl="+ DoubleToStr(real.closedPl, 2) +", plNet="+ DoubleToStr(real.closedPlNet, 2));
       }
       return(catch("onDeinitUndefined(3)"));
    }

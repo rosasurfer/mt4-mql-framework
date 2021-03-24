@@ -35,7 +35,7 @@
  *  - replaced trade management
  *  - replaced status display
  *  - added monitoring of PositionOpen and PositionClose events
- *  - added virtual trading modes with optional trade-copier or trade-mirror
+ *  - added virtual trading modes with optional trade copier or trade mirror
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -771,15 +771,22 @@ bool OpenRealOrder(int signal) {
       iV = ArraySize(virt.ticket)-1;
       if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(2)  opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
 
-      virtualTicket = virt.ticket    [iV];
       takeProfit    = virt.takeProfit[iV];
       stopLoss      = virt.stopLoss  [iV];
+      virtualTicket = virt.ticket    [iV];
       virt.linkedTicket[iV] = OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
    }
 
    // virtual-mirror
    else if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
-      return(!catch("OpenRealOrder(3)  opening of positions in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+      iV = ArraySize(virt.ticket)-1;
+      if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(3)  opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+
+      int type      = ifInt(virt.openType[iV]==OP_BUY, OP_SELL, OP_BUY);
+      takeProfit    = virt.stopLoss  [iV];
+      stopLoss      = virt.takeProfit[iV];
+      virtualTicket = virt.ticket    [iV];
+      virt.linkedTicket[iV] = OrderSendEx(Symbol(), type, lots, NULL, orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
    }
 
    if (oe.IsError(oe)) return(false);
