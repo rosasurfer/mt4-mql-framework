@@ -146,11 +146,6 @@
    datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
-   // Empty stubs of event listeners/handlers. If needed the functions must be implemented in the using module.
-   bool     onBarOpen();
-   bool     onCommand(string data[]);
-
-
    // colors
    color    RGB(int red, int green, int blue);
    int      RGBToHSL(color rgb, double hsl[], bool human = false);
