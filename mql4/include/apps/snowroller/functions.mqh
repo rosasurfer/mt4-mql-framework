@@ -11,8 +11,7 @@
  * @return bool - success status of the executed command
  */
 bool onCommand(string commands[]) {
-   if (!ArraySize(commands))
-      return(!logWarn("onCommand(1)  "+ sequence.longName +" empty parameter commands: {}"));
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.longName +" empty parameter commands: {}"));
 
    string cmd = commands[0];
 
@@ -574,7 +573,7 @@ int CountPendingOrders() {
  * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
  */
 int CreateSequenceId() {
-   MathSrand(GetTickCount());
+   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
    int id;
    while (id < SID_MIN || id > SID_MAX) {
       id = MathRand();                                         // TODO: in tester generate consecutive ids

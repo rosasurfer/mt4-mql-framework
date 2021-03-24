@@ -25,8 +25,8 @@
 #define LOG_NOTICE                              4
 #define LOG_WARN                                8
 #define LOG_ERROR                              16
-#define LOG_FATAL                              32        // max. loglevel for built-in appenders (terminal, alert)
-#define LOG_OFF                           INT_MAX        // max. loglevel for custom appenders
+#define LOG_FATAL                              32        // used by catch() only, i.e. on unexpected errors
+#define LOG_OFF                           INT_MAX        // custom log appenders can be switched off, built-in appenders (terminal alerts and terminal log) can't
 
 
 // MQL module type flags
