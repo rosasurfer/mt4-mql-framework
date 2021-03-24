@@ -526,14 +526,15 @@ int ResetLastError() {
 
 
 /**
- * Check for and call handlers for incoming commands.
+ * Check for received commands and call the respective handlers.
  *
  * @return bool - success status
  */
 bool HandleCommands() {
    string commands[]; ArrayResize(commands, 0);
-   if (EventListener_ChartCommand(commands))
+   if (EventListener_ChartCommand(commands)) {
       return(onCommand(commands));
+   }
    return(true);
 }
 
@@ -1820,13 +1821,13 @@ string StrLeft(string value, int n) {
  * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
  * Teilstring nicht.
  *
- * @param  string value     - Ausgangsstring
- * @param  string substring - der das Ergebnis begrenzende Teilstring
- * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                            Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
- *                            zurückgegeben.
- *                            Wenn 0, wird ein Leerstring zurückgegeben.
- *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ * @param  string value            - Ausgangsstring
+ * @param  string substring        - der das Ergebnis begrenzende Teilstring
+ * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
+ *                                   Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
+ *                                   zurückgegeben.
+ *                                   Wenn 0, wird ein Leerstring zurückgegeben.
+ *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
  */
 string StrLeftTo(string value, string substring, int count = 1) {
@@ -3436,24 +3437,24 @@ bool Chart.DeleteValue(string key) {
 /**
  * Get the bar model currently selected in the tester.
  *
- * @return int - bar model id or EMPTY (-1) if not called from within the tester
+ * @return int - bar model id or EMPTY (-1) if not called in the tester
  */
 int Tester.GetBarModel() {
    if (!This.IsTesting())
-      return(_EMPTY(catch("Tester.GetBarModel(1)  Tester only function", ERR_FUNC_NOT_ALLOWED)));
+      return(_EMPTY(catch("Tester.GetBarModel(1)  tester only function", ERR_FUNC_NOT_ALLOWED)));
    return(Tester_GetBarModel());
 }
 
 
 /**
- * Pause the tester. Must be called from within the tester.
+ * Pause the tester. Can be used only in the tester.
  *
  * @param  string location [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
 int Tester.Pause(string location = "") {
-   if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
@@ -3471,14 +3472,14 @@ int Tester.Pause(string location = "") {
 
 
 /**
- * Stop the tester. Must be called from within the tester.
+ * Stop the tester. Can be used only in the tester.
  *
  * @param  string location [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
 int Tester.Stop(string location = "") {
-   if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!IsTesting()) return(catch("Tester.Stop(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
@@ -3494,12 +3495,12 @@ int Tester.Stop(string location = "") {
 
 
 /**
- * Whether the tester currently pauses. Must be called from within the tester.
+ * Whether the tester currently pauses. Can be used only in the tester.
  *
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
@@ -3512,12 +3513,12 @@ bool Tester.IsPaused() {
 
 
 /**
- * Whether the tester was stopped. Must be called from within the tester.
+ * Whether the tester is stopped. Can be used only in the tester.
  *
  * @return bool
  */
 bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
@@ -3808,7 +3809,7 @@ string LocalTimeFormat(datetime timestamp, string format) {
  */
 int GetRandomValue(int min, int max) {
    static bool seeded = false; if (!seeded) {
-      MathSrand(GetTickCount());
+      MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
       seeded = true;
    }
    int    value = MathRand();                   // pseudo-random value from 0 to 32767
