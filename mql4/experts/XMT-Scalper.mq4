@@ -35,7 +35,7 @@
  *  - replaced trade management
  *  - replaced status display
  *  - added monitoring of PositionOpen and PositionClose events
- *  - added virtual trading mode with optional trade-copier or trade-mirror
+ *  - added virtual trading modes with optional trade-copier or trade-mirror
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -44,7 +44,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Sequence.ID                     = "";         // instance id in the range of 1000-16383
-extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";     // also "R | V | VC | VM"
+extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";     // shortcuts: "R | V | VC | VM"
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
