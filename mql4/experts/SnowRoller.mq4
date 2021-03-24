@@ -1304,9 +1304,9 @@ string UpdateStatus.StopLossMsg(int i) {
 
 
 /**
- * Whether a chart command was sent to the expert. If so, the command is retrieved and stored.
+ * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
  *
- * @param  string commands[] - array to store received commands in
+ * @param  string commands[] - array to store received commands
  *
  * @return bool
  */
@@ -1318,14 +1318,14 @@ bool EventListener_ChartCommand(string &commands[]) {
       mutex = "mutex."+ label;
    }
 
-   // check non-synchronized (read-only) for a command to prevent aquiring the lock on each tick
+   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
    if (ObjectFind(label) == 0) {
-      // aquire the lock for write-access if there's indeed a command
-      if (!AquireLock(mutex, true)) return(false);
-
-      ArrayPushString(commands, ObjectDescription(label));
-      ObjectDelete(label);
-      return(ReleaseLock(mutex));
+      // now aquire the lock for read-write access
+      if (AquireLock(mutex, true)) {
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
    }
    return(false);
 }
@@ -2821,12 +2821,11 @@ int ShowStatus(int error = NO_ERROR) {
                            sRestartStats
    );
 
-   // 4 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, NL, msg);
-   if (__CoreFunction == CF_INIT)
-      WindowRedraw();
+   // 3 lines margin-top for potential indicator legends
+   Comment(NL, NL, NL, msg);
+   if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   // für Fernbedienung: versteckten Status im Chart speichern
+   // store status in chart to enable remote control by scripts
    string label = "SnowRoller.status";
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
@@ -2834,7 +2833,7 @@ int ShowStatus(int error = NO_ERROR) {
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
    if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
-   else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status), 1);
+   else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
 
    if (!catch("ShowStatus(3)"))
       return(error);

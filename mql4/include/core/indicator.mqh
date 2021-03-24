@@ -544,14 +544,14 @@ bool EventListener_ChartCommand(string &commands[]) {
       mutex = "mutex."+ label;
    }
 
-   // check non-synchronized (read-only) for a command to prevent aquiring the lock on each tick
+   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
    if (ObjectFind(label) == 0) {
-      // aquire the lock for write-access if there's indeed a command
-      if (!AquireLock(mutex, true)) return(false);
-
-      ArrayPushString(commands, ObjectDescription(label));
-      ObjectDelete(label);
-      return(ReleaseLock(mutex));
+      // now aquire the lock for read-write access
+      if (AquireLock(mutex, true)) {
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
    }
    return(false);
 }
