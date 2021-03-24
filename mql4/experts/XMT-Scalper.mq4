@@ -1562,33 +1562,61 @@ bool onCommand(string commands[]) {
 
 
 /**
- * Generate a new sequence id. Must be unique for all running instances of this expert (strategy).
+ * Generate a new sequence id. Must be unique for all instances of this strategy.
  *
- * @return int - sequence id in the range of 1000-16383
+ * @return int - sequence id in the range of 1000-16383 or NULL in case of errors
  */
 int CreateSequenceId() {
-   MathSrand(GetTickCount());                                  // TODO: also use window handle for the parameter
-   int id;
-   while (id < SID_MIN || id > SID_MAX) {
-      id = MathRand();                                         // TODO: generate consecutive ids in tester
-   }                                                           // TODO: test id for uniqueness
-   return(id);
+   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
+   int sequenceId, magicNumber;
+
+   while (!magicNumber) {
+      while (sequenceId < SID_MIN || sequenceId > SID_MAX) {
+         sequenceId = MathRand();                                 // TODO: generate consecutive ids in tester
+      }
+      magicNumber = GenerateMagicNumber(sequenceId); if (!magicNumber) return(NULL);
+
+      // test for uniqueness against open orders
+      int openOrders = OrdersTotal();
+      for (int i=0; i < openOrders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (OrderMagicNumber() == magicNumber) {
+            magicNumber = NULL;
+            break;
+         }
+      }
+      if (!magicNumber) continue;
+
+      // test for uniqueness against closed orders
+      int closedOrders = OrdersHistoryTotal();
+      for (i=0; i < closedOrders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (OrderMagicNumber() == magicNumber) {
+            magicNumber = NULL;
+            break;
+         }
+      }
+   }
+   return(sequenceId);
 }
 
 
 /**
- * Generate a unique magic order number for the sequence.
+ * Generate a magic order number for the strategy.
+ *
+ * @param  int sequenceId [optional] - sequence to generate the magic number for (default: the current sequence)
  *
  * @return int - magic number or NULL in case of errors
  */
-int GenerateMagicNumber() {
+int GenerateMagicNumber(int sequenceId = NULL) {
    if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("GenerateMagicNumber(1)  illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
-   if (sequence.id & (~0x3FFF) != 0) return(!catch("GenerateMagicNumber(2)  illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   int id = ifIntOr(sequenceId, sequence.id);
+   if (!id || id & (~0x3FFF))        return(!catch("GenerateMagicNumber(2)  illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                                 // 101-1023   (10 bits)
-   int sequence = sequence.id;                                 // 1000-16383 (14 bits)
-                                                               // the remaining 8 bits are not used in this strategy
-   return((strategy<<22) + (sequence<<8));
+   int sequence = id;                                          // 1000-16383 (14 bits)
+
+   return((strategy<<22) + (sequence<<8));                     // the remaining 8 bits are not used in this strategy
 }
 
 
