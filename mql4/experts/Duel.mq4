@@ -977,7 +977,7 @@ bool UpdatePendingOrders() {
  * @return int - sequence id between 1000 and 16383
  */
 int CreateSequenceId() {
-   MathSrand(GetTickCount());
+   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
    int id;
    while (id < SID_MIN || id > SID_MAX) {
       id = MathRand();                                         // TODO: in tester generate consecutive ids
