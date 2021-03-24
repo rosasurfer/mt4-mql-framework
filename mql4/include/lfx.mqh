@@ -197,7 +197,7 @@ int LFX.CreateInstanceId(/*LFX_ORDER*/int orders[][]) {
       ArrayPushInt(ids, LFX.InstanceId(los.Ticket(orders, i)));
    }
 
-   MathSrand(GetTickCount());
+   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
    while (!id) {
       id = MathRand();
       while (id > 1023) {

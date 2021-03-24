@@ -3809,7 +3809,7 @@ string LocalTimeFormat(datetime timestamp, string format) {
  */
 int GetRandomValue(int min, int max) {
    static bool seeded = false; if (!seeded) {
-      MathSrand(GetTickCount());
+      MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
       seeded = true;
    }
    int    value = MathRand();                   // pseudo-random value from 0 to 32767
