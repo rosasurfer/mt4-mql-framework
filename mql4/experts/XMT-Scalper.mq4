@@ -267,13 +267,13 @@ int onTick.VirtualTrading() {
    }
 
    // manage virtual orders
-   if (virt.isOpenOrder) {
+   if (!last_error && virt.isOpenOrder) {
       if (virt.isOpenPosition) ManageVirtualPosition();           // trail exit limits
       else                     ManageVirtualOrder();              // trail entry limits or delete order
    }
 
    // manage real orders (if any)
-   if (real.isOpenOrder) {
+   if (!last_error && real.isOpenOrder) {
       if (real.isOpenPosition) ManageRealPosition();              // trail exit limits
       else                     ManagePendingOrder();              // trail entry limits or delete order
    }
@@ -398,6 +398,8 @@ bool SynchronizeTradeMirror() {
  * @return bool - success status
  */
 bool UpdateRealOrderStatus() {
+   if (last_error != 0) return(false);
+
    // open PL statistics are fully recalculated
    real.isOpenOrder    = false;
    real.isOpenPosition = false;
@@ -472,6 +474,8 @@ bool UpdateRealOrderStatus() {
  * @return bool - success status
  */
 bool UpdateVirtualOrderStatus() {
+   if (last_error != 0) return(false);
+
    // open order statistics are fully recalculated
    virt.isOpenOrder    = false;
    virt.isOpenPosition = false;
