@@ -724,12 +724,12 @@ bool ObjectDeleteEx(string label, string location = "") {
 
 
 /**
- * Gibt den PipValue des aktuellen Symbols für die angegebene Lotsize zurück.
+ * Return the current symbol's pip value for the specified lot amount.
  *
- * @param  double lots           [optional] - Lotsize (default: 1 lot)
- * @param  bool   suppressErrors [optional] - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
+ * @param  double lots           [optional] - lot amount (default: 1 lot)
+ * @param  bool   suppressErrors [optional] - whether to suppress runtime errors (default: no)
  *
- * @return double - PipValue oder 0, falls ein Fehler auftrat
+ * @return double - pip value or NULL (0) in case of errors
  */
 double PipValue(double lots=1.0, bool suppressErrors=false) {
    suppressErrors = suppressErrors!=0;

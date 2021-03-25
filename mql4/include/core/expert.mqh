@@ -83,17 +83,17 @@ int init() {
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may "show up" later
+      if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may appear later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // synthetic symbol in offline chart
-            return(logDebug("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            return(logInfo("init(5)  MarketInfo("+ Symbol() +", ...) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(logDebug("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(logInfo("init(7)  MarketInfo("+ Symbol() +", MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
-      if (!tickValue) return(logDebug("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -204,9 +204,9 @@ bool initContext() {
    PipPriceFormat = StringConcatenate("R.", PipDigits);                   SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   N_INF = MathLog(0);                                                        // negative infinity
+   P_INF = -N_INF;                                                            // positive infinity
+   NaN   =  N_INF - N_INF;                                                    // not-a-number
 
    return(!catch("initContext(1)"));
 }
@@ -248,7 +248,7 @@ int start() {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);     // __STATUS_OFF is FALSE here, but an error may be set
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
-         logDebug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         logInfo("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          int error = init();                                                        // call init() again
@@ -273,10 +273,10 @@ int start() {
       return(_last_error(CheckErrors("start(3)")));
    }
 
-   // check a finished chart initialisation (may fail on terminal start)
-   if (!Bars) return(ShowStatus(SetLastError(logDebug("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
+   // check a finished chart initialization (may fail on terminal start)
+   if (!Bars) return(ShowStatus(SetLastError(logInfo("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
-   // in tester wait until the configured start time/price is reached
+   // tester: wait until the configured start time/price is reached
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
          static string startTime; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
@@ -307,16 +307,30 @@ int start() {
       }
    }
 
+   // online:
+   else {
+      // check tick value if INIT_PIPVALUE is configured
+      if (__ExecutionContext[EC.programInitFlags] & INIT_PIPVALUE && 1) {     // on "Market Watch" -> "Context menu" -> "Hide all" all symbols are unsubscribed
+         if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                         // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
+            error = GetLastError();
+            if (error != NO_ERROR) {
+               if (CheckErrors("start(5)", error)) return(last_error);
+            }
+            return(ShowStatus(SetLastError(logInfo("start(6)  MarketInfo("+ Symbol() +", MODE_TICKVALUE) = 0", ERS_TERMINAL_NOT_YET_READY))));
+         }
+      }
+   }
+
    ArrayCopyRates(__rates);
 
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(5)")) return(last_error);
+      if (CheckErrors("start(7)")) return(last_error);
    }
 
    // initialize test reporting if configured
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(6)")));
+         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(8)")));
          test.initialized = true;
       }
    }
@@ -326,13 +340,13 @@ int start() {
 
    // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(7)")));
+      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(9)")));
    }
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(8)", error)));
+      return(_last_error(CheckErrors("start(10)", error)));
 
    return(ShowStatus(NO_ERROR));
 }
