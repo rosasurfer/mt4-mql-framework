@@ -700,13 +700,13 @@ bool IsEntrySignal(int &signal) {
 
    double high = iHigh(NULL, IndicatorTimeframe, 0);
    double low  =  iLow(NULL, IndicatorTimeframe, 0);
-   if (!high) {
-      int error = GetLastError();
-      if (IsError(error)) {
-         if (error == ERS_HISTORY_UPDATE) SetLastError(error);
-         else                             catch("IsEntrySignal(1)", error);
-         return(false);
-      }
+
+   int error = GetLastError();
+   if (!high || error) {
+      if (error == ERS_HISTORY_UPDATE) SetLastError(error);
+      else if (!error)                 catch("IsEntrySignal(1)  invalid bar high: 0", ERR_INVALID_MARKET_DATA);
+      else                             catch("IsEntrySignal(2)", error);
+      return(false);
    }
    double barSize = high - low;
    if (__isChart) sCurrentBarSize = DoubleToStr(barSize/Pip, 1);
@@ -727,7 +727,7 @@ bool IsEntrySignal(int &signal) {
       if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits: dec(3) = bin(0011)
 
       if (signal != NULL) {
-         if (IsLogDebug()) logDebug("IsEntrySignal(2)  "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
+         if (IsLogDebug()) logDebug("IsEntrySignal(3)  "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
          return(true);
       }
    }
