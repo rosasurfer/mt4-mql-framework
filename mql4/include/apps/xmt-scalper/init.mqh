@@ -65,7 +65,7 @@ int onInitUser() {
    MaxSpread        = NormalizeDouble(MaxSpread, 1);
    sMaxSpread       = DoubleToStr(MaxSpread, 1);
    orderSlippage    = Round(MaxSlippage*Pip/Point);
-   orderComment     = "XMT"+ ifString(ChannelBug, "-ChBug", "") + ifString(TakeProfitBug, "-TpBug", "");
+   orderComment     = "XMT."+ sequence.id + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
    orderMagicNumber = MagicNumber;
    if (!MagicNumber) {
       orderMagicNumber = GenerateMagicNumber();
