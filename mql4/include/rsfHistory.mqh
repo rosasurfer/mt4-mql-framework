@@ -22,7 +22,7 @@
    // symbol management
    int  CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");
 
-   // history set management (1 set = 9 history files)
+   // history set management (1 set manages 9 history files)
    int  HistorySet.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet.Get    (string symbol, string server = "");
    bool HistorySet.Close  (int hSet);
