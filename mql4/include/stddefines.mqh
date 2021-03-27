@@ -507,9 +507,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define C_ZAR                      "ZAR"
 
 
-// min. and max. values for a program's sequence or instance id
-#define SID_MIN                     1000        // at least 4 digits
-#define SID_MAX                    16383        // largest 14 bit value
+// min/max values for a program's instance or sequence id
+#define SID_MIN                     1000        // min. 4 digits value:     1111101000 = 10 bit
+#define SID_MAX                     9999        // max. 4 digits value: 10011100001111 = 14 bit
 
 
 // FileOpen() modes (flags)
