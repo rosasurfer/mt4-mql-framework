@@ -35,7 +35,7 @@
  *  - replaced trade management
  *  - replaced status display
  *  - added monitoring of PositionOpen and PositionClose events
- *  - added virtual trading modes with optional trade copier or trade mirror
+ *  - added virtual trading mode with optional trade copier or trade mirror
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -43,7 +43,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID                     = "";         // instance id in the range of 1000-16383
+extern string Sequence.ID                     = "";         // instance id in the range of 1000-9999
 extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";     // shortcuts: "R | V | VC | VM"
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
@@ -93,7 +93,7 @@ extern bool   TakeProfitBug                   = true;       // enable erroneous 
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               106           // unique strategy id from 101-1023 (10 bits)
+#define STRATEGY_ID               107           // unique strategy id from 101-1023 (10 bit)
 
 #define TRADINGMODE_REGULAR         1
 #define TRADINGMODE_VIRTUAL         2
@@ -1619,7 +1619,7 @@ bool onCommand(string commands[]) {
 /**
  * Generate a new sequence id. Must be unique for all instances of this strategy.
  *
- * @return int - sequence id in the range of 1000-16383 or NULL in case of errors
+ * @return int - sequence id in the range of 1000-9999 or NULL in case of errors
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
@@ -1664,14 +1664,14 @@ int CreateSequenceId() {
  * @return int - magic number or NULL in case of errors
  */
 int GenerateMagicNumber(int sequenceId = NULL) {
-   if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("GenerateMagicNumber(1)  illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("GenerateMagicNumber(1)  illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = ifIntOr(sequenceId, sequence.id);
-   if (!id || id & (~0x3FFF))        return(!catch("GenerateMagicNumber(2)  illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < 1000 || id > 9999)                  return(!catch("GenerateMagicNumber(2)  illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
-   int strategy = STRATEGY_ID;                                 // 101-1023   (10 bits)
-   int sequence = id;                                          // 1000-16383 (14 bits)
+   int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
+   int sequence = id;                                          // 1000-9999 (14 bit)
 
-   return((strategy<<22) + (sequence<<8));                     // the remaining 8 bits are not used in this strategy
+   return((strategy<<22) + (sequence<<8));                     // the remaining 8 bit are not used in this strategy
 }
 
 
