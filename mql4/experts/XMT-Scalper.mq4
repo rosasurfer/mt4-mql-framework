@@ -63,7 +63,7 @@ extern double BreakoutReversal                = 0;          // required price re
 extern double MaxSpread                       = 2;          // max. acceptable current and average spread in {pip}
 extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
 
-extern string ___d___________________________ = "=== MoneyManagement ====================";
+extern string ___d___________________________ = "=== Money management ===================";
 extern bool   MoneyManagement                 = true;       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
 extern double Risk                            = 2;          // percent of equity to risk with each trade
 extern double ManualLotsize                   = 0.01;       // fix position to use if "MoneyManagement" is FALSE
@@ -77,13 +77,14 @@ extern double TrailExitStep                   = 2;          // trail exit limits
 extern int    MagicNumber                     = 0;          // predefined magic order id, if zero a new one is generated
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
-extern string ___f___________________________ = "=== Overall PL settings =====================";
+extern string ___f___________________________ = "=== Overall targets & Reporting ==============";
 extern double EA.StopOnProfit                 = 0;          // stop on overall profit in {money} (0: no stop on profits)
 extern double EA.StopOnLoss                   = 0;          // stop on overall loss in {money} (0: no stop on losses)
+extern bool   EA.RecordMetrics                = false;      // whether to enable recording of performance metrics
 
 extern string ___g___________________________ = "=== Bugs ================================";
-extern bool   ChannelBug                      = false;      // enable erroneous calculation of the breakout channel (for comparison only)
-extern bool   TakeProfitBug                   = true;       // enable erroneous calculation of TakeProfit targets (for comparison only)
+extern bool   ChannelBug                      = false;      // whether to enable erroneous calculation of the breakout channel (for comparison only)
+extern bool   TakeProfitBug                   = true;       // whether to enable erroneous calculation of TakeProfit targets (for comparison only)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -181,6 +182,9 @@ double   virt.closedPlNet;
 
 double   virt.totalPlNet;
 
+// metrics
+int      metrics.hSetEquity;                    // HistorySet
+
 // other
 double   currentSpread;                         // current spread in pip
 double   avgSpread;                             // average spread in pip
@@ -217,9 +221,16 @@ int onTick() {
    if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
-   if (tradingMode == TRADINGMODE_REGULAR)
-      return(onTick.RegularTrading());
-   return(onTick.VirtualTrading());
+   if (tradingMode == TRADINGMODE_REGULAR) onTick.RegularTrading();
+   else                                    onTick.VirtualTrading();
+
+   // record metrics if configured
+   if (EA.RecordMetrics) {
+      if (!IsTesting() || !IsOptimization()) {
+         RecordMetrics();
+      }
+   }
+   return(last_error);
 }
 
 
@@ -743,7 +754,7 @@ bool IsEntrySignal(int &signal) {
  * @return bool - success status
  */
 bool OpenRealOrder(int signal) {
-   if (last_error != 0)                             return(false);
+   if (IsLastError())                               return(false);
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("OpenRealOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    double lots   = CalculateLots(true); if (!lots) return(false);
@@ -810,7 +821,7 @@ bool OpenRealOrder(int signal) {
  * @return bool - success status
  */
 bool OpenVirtualOrder(int signal) {
-   if (last_error != 0) return(false);
+   if (IsLastError()) return(false);
 
    int ticket, orderType;
    double openPrice, stopLoss, takeProfit, spread=Ask-Bid;
@@ -1256,6 +1267,34 @@ bool ReadOrderLog() {
 
 
 /**
+ * Record performance metrics of the sequence.
+ *
+ * @return bool - success status
+ */
+bool RecordMetrics() {
+   // record and save multiple metrics
+
+   if (!metrics.hSetEquity) {
+      string symbol      = "XMT"+ sequence.id +"_EQ";                      // max. 11 chars
+      string description = ProgramName() +" #"+ sequence.id +" metric";    // max. 63 chars
+      int    digits      = 2;
+      int    format      = 400;
+      string server      = "XTrade-Testresults";
+
+      metrics.hSetEquity = HistorySet.Get(symbol, server);                 // open existing history or create a new one
+      if (metrics.hSetEquity == -1)
+         metrics.hSetEquity = HistorySet.Create(symbol, description, digits, format, server);
+      if (!metrics.hSetEquity) return(false);
+   }
+
+   double value = AccountEquity()-AccountCredit();
+   HistorySet.AddTick(metrics.hSetEquity, Tick.Time, value, HST_BUFFER_TICKS);
+
+   return(!catch("RecordMetrics(1)"));
+}
+
+
+/**
  * Start the virtual trade copier.
  *
  * @return bool - success status
@@ -1270,7 +1309,7 @@ bool StartTradeCopier() {
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_COPIER;
-      real.isSynchronized = false;                          // TODO: what else?
+      real.isSynchronized = false;
       return(!catch("StartTradeCopier(1)"));
    }
 
@@ -1293,7 +1332,7 @@ bool StartTradeMirror() {
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
-      real.isSynchronized = false;                          // TODO: what else?
+      real.isSynchronized = false;
       return(!catch("StartTradeMirror(1)"));
    }
 
@@ -1929,6 +1968,7 @@ string InputsToStr() {
 
          +"EA.StopOnProfit="         + DoubleToStr(EA.StopOnProfit, 2)              +";"+ NL
          +"EA.StopOnLoss="           + DoubleToStr(EA.StopOnLoss, 2)                +";"+ NL
+         +"EA.RecordMetrics="        + BoolToStr(EA.RecordMetrics)                  +";"+ NL
 
          +"ChannelBug="              + BoolToStr(ChannelBug)                        +";"+ NL
          +"TakeProfitBug="           + BoolToStr(TakeProfitBug)                     +";"

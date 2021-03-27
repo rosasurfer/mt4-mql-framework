@@ -129,10 +129,15 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-   if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
-   if (digits < 0)                            return(!catch("HistorySet.Create(4)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(5)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
+   if (!StringLen(copyright)) {
+      copyright = "";                                                            // NULL-Pointer => Leerstring
+   }
+   else if (StringLen(copyright) > 63) {                                         // ein zu langer String wird gekürzt
+      logNotice("HistorySet.Create(4)  truncating too long history description "+ DoubleQuoteStr(copyright) +" to 63 chars...");
+      copyright = StrLeft(copyright, 63);
+   }
+   if (digits < 0)                            return(!catch("HistorySet.Create(5)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
+   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(6)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
    if (!StringLen(server)) server = GetAccountServer();
 
@@ -188,12 +193,12 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
       if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
-         if (hFile <= 0) return(!catch("HistorySet.Create(6)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistorySet.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
 
          hh_SetPeriod(hh, periods[i]);
          FileWriteArray(hFile, hh, 0, ArraySize(hh));                   // neuen HISTORY_HEADER schreiben
          FileClose(hFile);
-         if (!catch("HistorySet.Create(7)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
+         if (!catch("HistorySet.Create(8)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
             continue;
          return(NULL);
       }
@@ -215,28 +220,6 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    hs.server     [iH] = server;
    hs.format     [iH] = format;
 
-
-   // (5) ist das Instrument synthetisch, Symboldatensatz aktualisieren
-   if (false) {
-      // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
-      string groupName, prefix=StrLeft(symbolUpper, 3), suffix=StrRight(symbolUpper, 3);
-      string accountStatSuffixes[] = {".EA", ".EX", ".LA", ".PL"};
-
-      // Gruppe bestimmen und deren Index ermitteln
-      bool isAccountStat = StringInArray(accountStatSuffixes, suffix);
-
-      if (This.IsTesting()) {
-         if (isAccountStat) groupName = "Tester Results";               // es können nur Testdaten sein
-         else               groupName = "Tester Other";
-      }
-      else {
-         if (isAccountStat) groupName = "Account Statistics";           // es können Accountdaten sein
-         else               groupName = "Other";                        // es kann etwas anderes sein
-      }
-
-      // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben
-   }
-
    return(hSet);
 }
 
@@ -255,11 +238,8 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
  * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet.Create() ein neues
  *                 Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
- *
- *
- * NOTE: evt. Timeframe-Flags für selektive Sets implementieren (z.B. alles außer W1 und MN1)
  */
-int HistorySet.Get(string symbol, string server="") {
+int HistorySet.Get(string symbol, string server = "") {
    if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet.Get(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));

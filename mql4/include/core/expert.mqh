@@ -3,8 +3,8 @@
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
-extern bool     EA.CreateReport                 = false;
 extern bool     EA.RecordEquity                 = false;
+extern bool     EA.CreateReport                 = false;
 extern datetime Tester.StartTime                = 0;                 // time to start a test
 extern double   Tester.StartPrice               = 0;                 // price to start a test
 
@@ -97,14 +97,14 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
-   // enable experts if disabled
+   // enable experts if they are disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                 // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
-   // we must explicitely reset the order context after the expert was reloaded
+   // explicitely reset the order context after the expert was reloaded
    int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
@@ -114,12 +114,10 @@ int init() {
 
    // if in tester
    if (IsTesting()) {
-      // reset the window title (might have been modified by the previous test)     // TODO: wait until done
-      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
-      // resolve the account number (optimistic: if called in deinit() it will deadlock the UI thread)
-      if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
+      // resolve the account number (here because if eventually called in deinit() it would deadlock the UI thread)
+      if (!GetAccountNumber()) return(_last_error(CheckErrors("init(12)")));
       // log MarketInfo() data
-      if (IsLogInfo()) logInfo("init(14)  MarketInfo: "+ Tester.GetMarketInfo());
+      if (IsLogInfo()) logInfo("init(13)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
 
@@ -128,11 +126,11 @@ int init() {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
-            ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
+            ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logInfo("init(15)  inputs: "+ sInputs);
+         logInfo("init(14)  inputs: "+ sInputs);
       }
    }
 
@@ -154,7 +152,7 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = ProgramInitReason();                                   //
-      if (!initReason) if (CheckErrors("init(16)")) return(last_error);       //
+      if (!initReason) if (CheckErrors("init(15)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInitUser();            break;    // init reasons
@@ -165,14 +163,14 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(16)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
-   if (CheckErrors("init(18)")) return(last_error);
+   if (CheckErrors("init(17)")) return(last_error);
 
    ShowStatus(last_error);
 
@@ -181,13 +179,13 @@ int init() {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
       tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("init(19)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!tickTimerId) return(catch("init(18)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
-   // immediately send a virtual tick (except on UR_CHARTCHANGE)
-   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the Windows message
-      Chart.SendTick();                                                       // queue may be processed before this function is
-   return(last_error);                                                        // left and the tick gets lost.
+   // immediately send a virtual tick, except on UR_CHARTCHANGE
+   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the window message
+      Chart.SendTick();                                                       // queue may be processed before this function
+   return(last_error);                                                        // is left and the tick might get lost.
 }
 
 
@@ -307,9 +305,8 @@ int start() {
       }
    }
 
-   // online:
+   // online: check tick value if INIT_PIPVALUE is configured
    else {
-      // check tick value if INIT_PIPVALUE is configured
       if (__ExecutionContext[EC.programInitFlags] & INIT_PIPVALUE && 1) {     // on "Market Watch" -> "Context menu" -> "Hide all" all symbols are unsubscribed
          if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                         // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
             error = GetLastError();
@@ -545,7 +542,7 @@ bool Tester.InitReporting() {
    if (!IsTesting())
       return(false);
 
-   // prepare environment to record the equity curve
+   // prepare the EA to record the equity curve
    if (EA.RecordEquity) /*&&*/ if (!IsOptimization()) {
       // create a new report symbol
       int    id             = 0;
@@ -603,7 +600,7 @@ bool Tester.InitReporting() {
       tester.reportDescription = description;
    }
 
-   // prepare environment to collect data for reporting
+   // prepare the Expander to collect data for external reporting
    if (EA.CreateReport) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
       Test_StartReporting(__ExecutionContext, time, Bars, tester.reportId, tester.reportSymbol);
@@ -669,10 +666,9 @@ bool Tester.RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   int flags = HST_BUFFER_TICKS;
 
-   // open HistorySet
    if (!tester.hEquitySet) {
+      // open HistorySet
       string symbol      = tester.reportSymbol;
       string description = tester.reportDescription;
       int    digits      = 2;
@@ -684,12 +680,10 @@ bool Tester.RecordEquity() {
       if (!tester.hEquitySet) return(false);
    }
 
-   // resolve current equity value and store it
    if (!tester.equityValue) double value = AccountEquity()-AccountCredit();
    else                            value = tester.equityValue;
-   if (!HistorySet.AddTick(tester.hEquitySet, Tick.Time, value, flags))
-      return(false);
-   return(true);
+
+   return(HistorySet.AddTick(tester.hEquitySet, Tick.Time, value, HST_BUFFER_TICKS));
 }
 
 
@@ -722,7 +716,6 @@ bool Tester.RecordEquity() {
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
-   bool SetWindowTextA(int hWnd, string lpString);
 #import
 
 

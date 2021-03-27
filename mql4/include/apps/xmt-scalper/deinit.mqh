@@ -1,4 +1,18 @@
 /**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   if (metrics.hSetEquity != 0) {
+      int tmp=metrics.hSetEquity; metrics.hSetEquity=NULL;
+      if (!HistorySet.Close(tmp)) return(__ExecutionContext[EC.mqlError]);    // that's a library error
+   }
+   return(NO_ERROR);
+}
+
+
+/**
  * Online: Never encountered. Tracked in MT4Expander::onDeinitUndefined().
  * Tester: Called if a test finished regularily, i.e. the test period ended.
  *         Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
@@ -15,6 +29,6 @@ int onDeinitUndefined() {
       }
       return(catch("onDeinitUndefined(3)"));
    }
-   return(catch("onDeinitUndefined(4)", ERR_UNDEFINED_STATE));       // do what the Expander would do
+   return(catch("onDeinitUndefined(4)", ERR_UNDEFINED_STATE));                // do what the Expander would do
 }
 
