@@ -4431,14 +4431,15 @@ string GetServerTimezone() {
    // - This function is stored in the library to make the cache survive an indicator init cyle.
 
    #define IDX_SERVER   0
-   #define IDX_TIMEZONE 1
+   #define IDX_COMPANY  1
+   #define IDX_TIMEZONE 2
 
    int Tick=__ExecutionContext[EC.ticks], UnchangedBars=__ExecutionContext[EC.unchangedBars];
    static int lastTick = -1;
-   static string lastResult[2]; // {lastServer, lastTimezone};
+   static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
 
    if (Tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) > 0 && !UnchangedBars) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) && !UnchangedBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";
@@ -4447,13 +4448,14 @@ string GetServerTimezone() {
    }
 
    if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER  ] = GetAccountServer(); if (!StringLen(lastResult[IDX_SERVER])) return("");
+      lastResult[IDX_SERVER  ] = GetAccountServer();  if (!StringLen(lastResult[IDX_SERVER] )) return("");
+      lastResult[IDX_COMPANY ] = GetAccountCompany(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
       lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_SERVER]);
       if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", StrLeftTo(lastResult[IDX_SERVER], "-"));
+         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_COMPANY]);
       }
       if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +", using default timezone \"FXT\"");
+         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +" (company "+ DoubleQuoteStr(lastResult[IDX_COMPANY]) +"), using default timezone \"FXT\"");
          lastResult[IDX_TIMEZONE] = "FXT";
       }
    }
