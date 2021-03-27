@@ -3945,9 +3945,9 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only.
  *
- * Among others the identifier is used for reading/writing company-wide configurations and for composing log messages. It is
- * derived from the name of the current trade server. If the trade server is not explicitely mapped to a different company
- * identifier (see below) the returned default identifier matches the first word of the current trade server name.
+ * Among others the identifier is used for reading/writing company-wide configurations and for log messages. It is derived
+ * from the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
+ * (see below) the returned default identifier matches the first word of the current trade server name.
  *
  * @return string - company identifier or an empty string in case of errors
  *
