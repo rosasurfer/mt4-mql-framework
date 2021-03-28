@@ -58,7 +58,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
    int error = GetLastError();
 
    if (bars < 0) {                                                               // never encountered
-      return(_EMPTY(catch("iChangedBars(2)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, ifInt(error, error, ERR_RUNTIME_ERROR))));
+      return(_EMPTY(catch("iChangedBars(2)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, ifIntOr(error, ERR_RUNTIME_ERROR))));
    }
    if (error && error!=ERS_HISTORY_UPDATE && error!=ERR_SERIES_NOT_AVAILABLE) {
       return(_EMPTY(catch("iChangedBars(3)->iBars("+ symbol +","+ PeriodDescription(timeframe) +") => "+ bars, error)));
