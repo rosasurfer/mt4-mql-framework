@@ -4,11 +4,17 @@
  * @return int - error status
  */
 int onDeinit() {
-   if (metrics.hSetEquity != 0) {
-      int tmp=metrics.hSetEquity; metrics.hSetEquity=NULL;
-      if (!HistorySet.Close(tmp)) return(__ExecutionContext[EC.mqlError]);    // that's a library error
+   int size = ArraySize(metrics.hSet);
+   bool success = true;
+
+   for (int i=0; i < size; i++) {
+      if (metrics.hSet[i] != 0) {
+         int tmp = metrics.hSet[i];
+         metrics.hSet[i] = NULL;
+         success = success && HistorySet.Close(tmp);
+      }
    }
-   return(NO_ERROR);
+   return(ifInt(success, NO_ERROR, __ExecutionContext[EC.mqlError]));   // an error is a library error
 }
 
 

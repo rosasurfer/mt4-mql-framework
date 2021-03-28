@@ -321,7 +321,7 @@ double GetBfxCoreVolume(int buffer, int bar) {
                              MODE_CVI_SIGNAL, 0);
       if (level == EMPTY_VALUE) {
          error = GetLastError();
-         return(!catch("GetBfxCoreVolume(1)  initialization of indicator "+ DoubleQuoteStr(bfxName) +" failed", ifInt(error, error, ERR_CUSTOM_INDICATOR_ERROR)));
+         return(!catch("GetBfxCoreVolume(1)  initialization of indicator "+ DoubleQuoteStr(bfxName) +" failed", ifIntOr(error, ERR_CUSTOM_INDICATOR_ERROR)));
       }
       initialized = true;
    }

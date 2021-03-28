@@ -55,7 +55,7 @@ int onInitUser() {
    // initialize sequence id
    if (!sequence.id) {
       sequence.id = CreateSequenceId();
-      logDebug("onInitUser(13)  sequence id "+ sequence.id +" created");
+      logInfo("onInitUser(13)  sequence id "+ sequence.id +" created");
    }
    SetLogfile(GetLogFilename());                            // needs the sequence.id
 

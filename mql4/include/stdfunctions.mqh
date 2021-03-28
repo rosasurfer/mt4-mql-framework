@@ -5841,7 +5841,7 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
    if (!lotstep) {
       int error = GetLastError();
-      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifInt(error, error, ERR_INVALID_MARKET_DATA))));
+      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifIntOr(error, ERR_INVALID_MARKET_DATA))));
    }
 
    switch (mode) {
