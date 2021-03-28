@@ -91,6 +91,7 @@ extern bool   TakeProfitBug                   = true;       // whether to enable
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <rsfHistory.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -193,7 +194,6 @@ double   virt.totalPlNet;
 
 // metrics
 int      metrics.hSet[8];                       // HistorySet handles
-int      metrics.openSets;
 
 // other
 double   currentSpread;                         // current spread in pip
@@ -1296,99 +1296,91 @@ bool RecordMetrics() {
    int digits, format=400;
 
    // initialize metrics
-   if (!metrics.hSet[METRIC_XMT_D0] && metrics.openSets < 7) {
-      symbol      = "XMT."+ sequence.id +"_D0";                         // max. 11 chars
-      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
-      digits      = 2;
-      metrics.hSet[METRIC_XMT_D0] = HistorySet.Get(symbol, server);     // open existing history or create a new one
-      if (metrics.hSet[METRIC_XMT_D0] == -1)
-         metrics.hSet[METRIC_XMT_D0] = HistorySet.Create(symbol, description, digits, format, server);
-      if (!metrics.hSet[METRIC_XMT_D0]) return(false);
-      metrics.openSets++;
-   }
-   if (!metrics.hSet[METRIC_XMT_D1] && metrics.openSets < 7) {
-      symbol      = "XMT."+ sequence.id +"_D1";                         // max. 11 chars
-      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
-      digits      = 2;
-      metrics.hSet[METRIC_XMT_D1] = HistorySet.Get(symbol, server);     // open existing history or create a new one
-      if (metrics.hSet[METRIC_XMT_D1] == -1)
-         metrics.hSet[METRIC_XMT_D1] = HistorySet.Create(symbol, description, digits, format, server);
-      if (!metrics.hSet[METRIC_XMT_D1]) return(false);
-      metrics.openSets++;
-   }
-   if (!metrics.hSet[METRIC_XMT_D2] && metrics.openSets < 7) {
-      symbol      = "XMT."+ sequence.id +"_D2";                         // max. 11 chars
-      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
-      digits      = 2;
-      metrics.hSet[METRIC_XMT_D2] = HistorySet.Get(symbol, server);     // open existing history or create a new one
-      if (metrics.hSet[METRIC_XMT_D2] == -1)
-         metrics.hSet[METRIC_XMT_D2] = HistorySet.Create(symbol, description, digits, format, server);
-      if (!metrics.hSet[METRIC_XMT_D2]) return(false);
-      metrics.openSets++;
-   }
-   if (!metrics.hSet[METRIC_XMT_D3] && metrics.openSets < 7) {
-      symbol      = "XMT."+ sequence.id +"_D3";                         // max. 11 chars
-      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
-      digits      = 2;
-      metrics.hSet[METRIC_XMT_D3] = HistorySet.Get(symbol, server);     // open existing history or create a new one
-      if (metrics.hSet[METRIC_XMT_D3] == -1)
-         metrics.hSet[METRIC_XMT_D3] = HistorySet.Create(symbol, description, digits, format, server);
-      if (!metrics.hSet[METRIC_XMT_D3]) return(false);
-      metrics.openSets++;
-   }
-
-   if (!metrics.hSet[METRIC_XMT_C2] && metrics.openSets < 7) {
-      symbol      = "XMT."+ sequence.id +"_C2";                         // max. 11 chars
-      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
-      digits      = 2;
-      metrics.hSet[METRIC_XMT_C2] = HistorySet.Get(symbol, server);     // open existing history or create a new one
-      if (metrics.hSet[METRIC_XMT_C2] == -1)
-         metrics.hSet[METRIC_XMT_C2] = HistorySet.Create(symbol, description, digits, format, server);
-      if (!metrics.hSet[METRIC_XMT_C2]) return(false);
-      metrics.openSets++;
-   }
-   if (!metrics.hSet[METRIC_XMT_C3] && metrics.openSets < 7) {
-      symbol      = "XMT."+ sequence.id +"_C3";                         // max. 11 chars
-      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
-      digits      = 2;
-      metrics.hSet[METRIC_XMT_C3] = HistorySet.Get(symbol, server);     // open existing history or create a new one
-      if (metrics.hSet[METRIC_XMT_C3] == -1)
-         metrics.hSet[METRIC_XMT_C3] = HistorySet.Create(symbol, description, digits, format, server);
-      if (!metrics.hSet[METRIC_XMT_C3]) return(false);
-      metrics.openSets++;
-   }
-   if (!metrics.hSet[METRIC_XMT_C0] && metrics.openSets < 7) {
+   if (!metrics.hSet[METRIC_XMT_C0]) {
       symbol      = "XMT."+ sequence.id +"_C0";                         // max. 11 chars
       description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
       digits      = 2;
-      metrics.hSet[METRIC_XMT_C0] = HistorySet.Get(symbol, server);     // open existing history or create a new one
+      metrics.hSet[METRIC_XMT_C0] = HistorySet1.Get(symbol, server);    // open existing history or create a new one
       if (metrics.hSet[METRIC_XMT_C0] == -1)
-         metrics.hSet[METRIC_XMT_C0] = HistorySet.Create(symbol, description, digits, format, server);
+         metrics.hSet[METRIC_XMT_C0] = HistorySet1.Create(symbol, description, digits, format, server);
       if (!metrics.hSet[METRIC_XMT_C0]) return(false);
-      metrics.openSets++;
    }
-   if (!metrics.hSet[METRIC_XMT_C1] && metrics.openSets < 7) {
+   if (!metrics.hSet[METRIC_XMT_C1]) {
       symbol      = "XMT."+ sequence.id +"_C1";                         // max. 11 chars
       description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
       digits      = 2;
-      metrics.hSet[METRIC_XMT_C1] = HistorySet.Get(symbol, server);     // open existing history or create a new one
+      metrics.hSet[METRIC_XMT_C1] = HistorySet1.Get(symbol, server);    // open existing history or create a new one
       if (metrics.hSet[METRIC_XMT_C1] == -1)
-         metrics.hSet[METRIC_XMT_C1] = HistorySet.Create(symbol, description, digits, format, server);
+         metrics.hSet[METRIC_XMT_C1] = HistorySet1.Create(symbol, description, digits, format, server);
       if (!metrics.hSet[METRIC_XMT_C1]) return(false);
-      metrics.openSets++;
+   }
+   if (!metrics.hSet[METRIC_XMT_C2]) {
+      symbol      = "XMT."+ sequence.id +"_C2";                         // max. 11 chars
+      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
+      digits      = 2;
+      metrics.hSet[METRIC_XMT_C2] = HistorySet1.Get(symbol, server);    // open existing history or create a new one
+      if (metrics.hSet[METRIC_XMT_C2] == -1)
+         metrics.hSet[METRIC_XMT_C2] = HistorySet1.Create(symbol, description, digits, format, server);
+      if (!metrics.hSet[METRIC_XMT_C2]) return(false);
+   }
+   if (!metrics.hSet[METRIC_XMT_C3]) {
+      symbol      = "XMT."+ sequence.id +"_C3";                         // max. 11 chars
+      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
+      digits      = 2;
+      metrics.hSet[METRIC_XMT_C3] = HistorySet1.Get(symbol, server);    // open existing history or create a new one
+      if (metrics.hSet[METRIC_XMT_C3] == -1)
+         metrics.hSet[METRIC_XMT_C3] = HistorySet1.Create(symbol, description, digits, format, server);
+      if (!metrics.hSet[METRIC_XMT_C3]) return(false);
+   }
+
+   if (!metrics.hSet[METRIC_XMT_D0]) {
+      symbol      = "XMT."+ sequence.id +"_D0";                         // max. 11 chars
+      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
+      digits      = 2;
+      metrics.hSet[METRIC_XMT_D0] = HistorySet2.Get(symbol, server);    // open existing history or create a new one
+      if (metrics.hSet[METRIC_XMT_D0] == -1)
+         metrics.hSet[METRIC_XMT_D0] = HistorySet2.Create(symbol, description, digits, format, server);
+      if (!metrics.hSet[METRIC_XMT_D0]) return(false);
+   }
+   if (!metrics.hSet[METRIC_XMT_D1]) {
+      symbol      = "XMT."+ sequence.id +"_D1";                         // max. 11 chars
+      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
+      digits      = 2;
+      metrics.hSet[METRIC_XMT_D1] = HistorySet2.Get(symbol, server);    // open existing history or create a new one
+      if (metrics.hSet[METRIC_XMT_D1] == -1)
+         metrics.hSet[METRIC_XMT_D1] = HistorySet2.Create(symbol, description, digits, format, server);
+      if (!metrics.hSet[METRIC_XMT_D1]) return(false);
+   }
+   if (!metrics.hSet[METRIC_XMT_D2]) {
+      symbol      = "XMT."+ sequence.id +"_D2";                         // max. 11 chars
+      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
+      digits      = 2;
+      metrics.hSet[METRIC_XMT_D2] = HistorySet2.Get(symbol, server);    // open existing history or create a new one
+      if (metrics.hSet[METRIC_XMT_D2] == -1)
+         metrics.hSet[METRIC_XMT_D2] = HistorySet2.Create(symbol, description, digits, format, server);
+      if (!metrics.hSet[METRIC_XMT_D2]) return(false);
+   }
+   if (!metrics.hSet[METRIC_XMT_D3]) {
+      symbol      = "XMT."+ sequence.id +"_D3";                         // max. 11 chars
+      description = ProgramName() +" #"+ sequence.id +" metric";        // max. 63 chars
+      digits      = 2;
+      metrics.hSet[METRIC_XMT_D3] = HistorySet2.Get(symbol, server);    // open existing history or create a new one
+      if (metrics.hSet[METRIC_XMT_D3] == -1)
+         metrics.hSet[METRIC_XMT_D3] = HistorySet2.Create(symbol, description, digits, format, server);
+      if (!metrics.hSet[METRIC_XMT_D3]) return(false);
    }
 
    // record metrics
    double value = AccountEquity()-AccountCredit();
 
-   if (metrics.hSet[METRIC_XMT_C0] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_C0], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_C1] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_C1], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_C2] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_C2], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_C3] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_C3], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_D0] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_D0], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_D1] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_D1], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_D2] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_D2], Tick.Time, value, HST_BUFFER_TICKS);
-   if (metrics.hSet[METRIC_XMT_D3] != 0) HistorySet.AddTick(metrics.hSet[METRIC_XMT_D3], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_C0] != 0) HistorySet1.AddTick(metrics.hSet[METRIC_XMT_C0], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_C1] != 0) HistorySet1.AddTick(metrics.hSet[METRIC_XMT_C1], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_C2] != 0) HistorySet1.AddTick(metrics.hSet[METRIC_XMT_C2], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_C3] != 0) HistorySet1.AddTick(metrics.hSet[METRIC_XMT_C3], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_D0] != 0) HistorySet2.AddTick(metrics.hSet[METRIC_XMT_D0], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_D1] != 0) HistorySet2.AddTick(metrics.hSet[METRIC_XMT_D1], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_D2] != 0) HistorySet2.AddTick(metrics.hSet[METRIC_XMT_D2], Tick.Time, value, HST_BUFFER_TICKS);
+   if (metrics.hSet[METRIC_XMT_D3] != 0) HistorySet2.AddTick(metrics.hSet[METRIC_XMT_D3], Tick.Time, value, HST_BUFFER_TICKS);
 
    return(!catch("RecordMetrics(1)"));
 }

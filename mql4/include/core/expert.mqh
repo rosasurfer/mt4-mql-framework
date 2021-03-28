@@ -377,7 +377,7 @@ int deinit() {
    if (IsTesting()) {
       if (tester.hEquitySet != 0) {
          int tmp=tester.hEquitySet; tester.hEquitySet=NULL;
-         if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
+         if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
       }
       if (EA.CreateReport) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
@@ -592,7 +592,7 @@ bool Tester.InitReporting() {
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
-      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reportServer) < 0)
+      if (CreateSymbol1(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reportServer) < 0)
          return(false);
 
       tester.reportId          = id;
@@ -676,14 +676,14 @@ bool Tester.RecordEquity() {
       string server      = tester.reportServer;
 
       // create HistorySet
-      tester.hEquitySet = HistorySet.Create(symbol, description, digits, format, server);
+      tester.hEquitySet = HistorySet1.Create(symbol, description, digits, format, server);
       if (!tester.hEquitySet) return(false);
    }
 
    if (!tester.equityValue) double value = AccountEquity()-AccountCredit();
    else                            value = tester.equityValue;
 
-   return(HistorySet.AddTick(tester.hEquitySet, Tick.Time, value, HST_BUFFER_TICKS));
+   return(HistorySet1.AddTick(tester.hEquitySet, Tick.Time, value, HST_BUFFER_TICKS));
 }
 
 
@@ -706,13 +706,13 @@ bool Tester.RecordEquity() {
    bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
 
 
-#import "rsfHistory.ex4"
-   int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
+#import "rsfHistory1.ex4"
+   int    CreateSymbol1(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
 
-   int    HistorySet.Get    (string symbol, string server);
-   int    HistorySet.Create (string symbol, string description, int digits, int format, string server);
-   bool   HistorySet.Close  (int hSet);
-   bool   HistorySet.AddTick(int hSet, datetime time, double value, int flags);
+   int    HistorySet1.Get    (string symbol, string server);
+   int    HistorySet1.Create (string symbol, string description, int digits, int format, string server);
+   bool   HistorySet1.Close  (int hSet);
+   bool   HistorySet1.AddTick(int hSet, datetime time, double value, int flags);
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);

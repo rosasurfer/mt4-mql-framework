@@ -224,7 +224,7 @@ int onDeinit() {
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
       if (hSet[i] != 0) {
-         if (!HistorySet.Close(hSet[i])) return(ERR_RUNTIME_ERROR);
+         if (!HistorySet1.Close(hSet[i])) return(ERR_RUNTIME_ERROR);
          hSet[i] = NULL;
       }
    }
@@ -803,14 +803,14 @@ bool RecordIndices() {
          }
 
          if (!hSet[i]) {
-            hSet[i] = HistorySet.Get(symbols[i], serverName);
+            hSet[i] = HistorySet1.Get(symbols[i], serverName);
             if (hSet[i] == -1)
-               hSet[i] = HistorySet.Create(symbols[i], longNames[i], digits[i], 400, serverName);     // format: 400
+               hSet[i] = HistorySet1.Create(symbols[i], longNames[i], digits[i], 400, serverName);     // format: 400
             if (!hSet[i]) return(false);
          }
 
          //debug("RecordIndices(2)  Tick="+ Tick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
-         if (!HistorySet.AddTick(hSet[i], now.fxt, value, NULL)) return(false);
+         if (!HistorySet1.AddTick(hSet[i], now.fxt, value, NULL)) return(false);
       }
    }
    return(true);

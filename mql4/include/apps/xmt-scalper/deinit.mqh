@@ -11,7 +11,8 @@ int onDeinit() {
       if (metrics.hSet[i] != 0) {
          int tmp = metrics.hSet[i];
          metrics.hSet[i] = NULL;
-         success = success && HistorySet.Close(tmp);
+         if (i < 4) success = success && HistorySet1.Close(tmp);
+         else       success = success && HistorySet2.Close(tmp);
       }
    }
    return(ifInt(success, NO_ERROR, __ExecutionContext[EC.mqlError]));   // an error is a library error
