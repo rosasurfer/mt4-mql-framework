@@ -497,23 +497,42 @@ string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 // include/structs/win32/
 
 
-// libraries/rsfHistory.ex4
-int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
+// libraries/rsfHistory1.ex4
+int      CreateSymbol1(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
 
-int      HistoryFile.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
-bool     HistoryFile.Close    (int hFile);;
-int      HistoryFile.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
-bool     HistoryFile.ReadBar  (int hFile, int offset, double bar[]);;
-bool     HistoryFile.WriteBar (int hFile, int offset, double bar[], int flags = NULL);;
-bool     HistoryFile.UpdateBar(int hFile, int offset, double value);;
-bool     HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags = NULL);;
-bool     HistoryFile.MoveBars (int hFile, int fromOffset, int destOffset);;
-bool     HistoryFile.AddTick  (int hFile, datetime time, double value, int flags = NULL);;
+int      HistoryFile1.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
+bool     HistoryFile1.Close    (int hFile);;
+int      HistoryFile1.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
+bool     HistoryFile1.ReadBar  (int hFile, int offset, double bar[]);;
+bool     HistoryFile1.WriteBar (int hFile, int offset, double bar[], int flags = NULL);;
+bool     HistoryFile1.UpdateBar(int hFile, int offset, double value);;
+bool     HistoryFile1.InsertBar(int hFile, int offset, double bar[], int flags = NULL);;
+bool     HistoryFile1.MoveBars (int hFile, int fromOffset, int destOffset);;
+bool     HistoryFile1.AddTick  (int hFile, datetime time, double value, int flags = NULL);;
 
-int      HistorySet.Create (string symbol, string description, int digits, int format, string server = "");;
-int      HistorySet.Get    (string symbol, string server = "");;
-bool     HistorySet.Close  (int hSet);;
-bool     HistorySet.AddTick(int hSet, datetime time, double value, int flags = NULL);;
+int      HistorySet1.Create (string symbol, string description, int digits, int format, string server = "");;
+int      HistorySet1.Get    (string symbol, string server = "");;
+bool     HistorySet1.Close  (int hSet);;
+bool     HistorySet1.AddTick(int hSet, datetime time, double value, int flags = NULL);;
+
+
+// libraries/rsfHistory2.ex4
+int      CreateSymbol2(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
+
+int      HistoryFile2.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
+bool     HistoryFile2.Close    (int hFile);;
+int      HistoryFile2.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
+bool     HistoryFile2.ReadBar  (int hFile, int offset, double bar[]);;
+bool     HistoryFile2.WriteBar (int hFile, int offset, double bar[], int flags = NULL);;
+bool     HistoryFile2.UpdateBar(int hFile, int offset, double value);;
+bool     HistoryFile2.InsertBar(int hFile, int offset, double bar[], int flags = NULL);;
+bool     HistoryFile2.MoveBars (int hFile, int fromOffset, int destOffset);;
+bool     HistoryFile2.AddTick  (int hFile, datetime time, double value, int flags = NULL);;
+
+int      HistorySet2.Create (string symbol, string description, int digits, int format, string server = "");;
+int      HistorySet2.Get    (string symbol, string server = "");;
+bool     HistorySet2.Close  (int hSet);;
+bool     HistorySet2.AddTick(int hSet, datetime time, double value, int flags = NULL);;
 
 
 // libraries/rsfLib1.ex4

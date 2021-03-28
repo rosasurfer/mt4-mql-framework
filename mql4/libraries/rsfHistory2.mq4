@@ -5,10 +5,10 @@
  * Usage examples
  * --------------
  *  - Open an existing history (all timeframes) with existing data (e.g. for appending data):
- *     int hSet = HistorySet.Get(symbol);
+ *     int hSet = HistorySet2.Get(symbol);
  *
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
- *     int hSet = HistorySet.Create(symbol, description, digits, format);
+ *     int hSet = HistorySet2.Create(symbol, description, digits, format);
  */
 #property library
 
@@ -82,7 +82,7 @@ datetime hf.full.to.nextCloseTime    [];              // CloseTime dre der letzt
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Cache der Bar, die in der Historydatei zuletzt gelesen oder geschrieben wurde (eine beliebige in der Datei existierende Bar).
 //
-// (1) Beim Aktualisieren dieser Bar mit neuen Ticks braucht die Bar nicht jedesmal neu eingelesen werden: siehe HistoryFile.UpdateBar().
+// (1) Beim Aktualisieren dieser Bar mit neuen Ticks braucht die Bar nicht jedesmal neu eingelesen werden: siehe HistoryFile2.UpdateBar().
 // (2) Bei funktionsübergreifenden Abläufen muß diese Bar nicht überall als Parameter durchgeschleift werden (durch unterschiedliche Arraydimensionen schwierig).
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int      hf.lastStoredBar.offset       [];            // Offset relativ zum Header: Offset 0 ist die älteste Bar, initialisiert mit -1
@@ -123,21 +123,21 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  */
-int HistorySet.Create(string symbol, string copyright, int digits, int format, string server="") {
+int HistorySet2.Create(string symbol, string copyright, int digits, int format, string server="") {
    // Parametervalidierung
-   if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
-   if (StrContains(symbol, " "))              return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(!catch("HistorySet2.Create(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet2.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("HistorySet2.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
    if (!StringLen(copyright)) {
       copyright = "";                                                            // NULL-Pointer => Leerstring
    }
    else if (StringLen(copyright) > 63) {                                         // ein zu langer String wird gekürzt
-      logNotice("HistorySet.Create(4)  truncating too long history description "+ DoubleQuoteStr(copyright) +" to 63 chars...");
+      logNotice("HistorySet2.Create(4)  truncating too long history description "+ DoubleQuoteStr(copyright) +" to 63 chars...");
       copyright = StrLeft(copyright, 63);
    }
-   if (digits < 0)                            return(!catch("HistorySet.Create(5)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(6)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
+   if (digits < 0)                            return(!catch("HistorySet2.Create(5)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
+   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet2.Create(6)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
    if (!StringLen(server)) server = GetAccountServer();
 
@@ -155,7 +155,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
          size = ArrayRange(hs.hFile, 1);
          for (int n=0; n < size; n++) {
             if (hs.hFile[i][n] > 0) {
-               if (!HistoryFile.Close(hs.hFile[i][n]))
+               if (!HistoryFile2.Close(hs.hFile[i][n]))
                   return(NULL);
                hs.hFile[i][n] = -1;
             }
@@ -168,7 +168,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
       if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)){
-         if (!HistoryFile.Close(hf.hFile[i]))
+         if (!HistoryFile2.Close(hf.hFile[i]))
             return(NULL);
       }
    }
@@ -193,12 +193,12 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
       if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
-         if (hFile <= 0) return(!catch("HistorySet.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistorySet2.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
          hh_SetPeriod(hh, periods[i]);
          FileWriteArray(hFile, hh, 0, ArraySize(hh));                   // neuen HISTORY_HEADER schreiben
          FileClose(hFile);
-         if (!catch("HistorySet.Create(8)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
+         if (!catch("HistorySet2.Create(8)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
             continue;
          return(NULL);
       }
@@ -225,7 +225,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
 
 /**
- * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create() erzeugt, muß
+ * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet2.Create() erzeugt, muß
  * mindestens ein HistoryFile des Symbols existieren. Noch nicht existierende HistoryFiles werden beim Speichern der ersten hinzugefügten
  * Daten automatisch im alten Datenformat (400) erstellt.
  *
@@ -235,14 +235,14 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
  * @param  _In_ string symbol - Symbol
  * @param  _In_ string server - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
- * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet.Create() ein neues
+ * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet2.Create() ein neues
  *                 Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
  */
-int HistorySet.Get(string symbol, string server = "") {
-   if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
-   if (StrContains(symbol, " "))              return(!catch("HistorySet.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+int HistorySet2.Get(string symbol, string server = "") {
+   if (!StringLen(symbol))                    return(!catch("HistorySet2.Get(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet2.Get(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("HistorySet2.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
    if (server == "0")      server = "";                                 // (string) NULL
    if (!StringLen(server)) server = GetAccountServer();
@@ -293,12 +293,12 @@ int HistorySet.Get(string symbol, string server = "") {
 
       if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, öffnen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
-         if (hFile <= 0) return(!catch("HistorySet.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistorySet2.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
          fileSize = FileSize(hFile);                                    // Datei geöffnet
          if (fileSize < HISTORY_HEADER.size) {
             FileClose(hFile);
-            logWarn("HistorySet.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
+            logWarn("HistorySet2.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
             continue;
          }
                                                                         // HISTORY_HEADER auslesen
@@ -325,7 +325,7 @@ int HistorySet.Get(string symbol, string server = "") {
    }
 
 
-   if (!catch("HistorySet.Get(6)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
+   if (!catch("HistorySet2.Get(6)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
       return(-1);
    return(NULL);
 }
@@ -338,12 +338,12 @@ int HistorySet.Get(string symbol, string server = "") {
  *
  * @return bool - Erfolgsstatus
  */
-bool HistorySet.Close(int hSet) {
+bool HistorySet2.Close(int hSet) {
    // Validierung
-   if (hSet <= 0)                     return(!catch("HistorySet.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
+   if (hSet <= 0)                     return(!catch("HistorySet2.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
-      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet.Close(3)  unknown set handle "+ hSet +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet2.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.Close(3)  unknown set handle "+ hSet +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
    }
    else {
       hs.hSet.lastValid = NULL;
@@ -354,7 +354,7 @@ bool HistorySet.Close(int hSet) {
 
    for (int i=0; i < sizeOfPeriods; i++) {
       if (hs.hFile[hSet][i] > 0) {                                   // alle offenen Dateihandles schließen
-         if (!HistoryFile.Close(hs.hFile[hSet][i])) return(false);
+         if (!HistoryFile2.Close(hs.hFile[hSet][i])) return(false);
          hs.hFile[hSet][i] = -1;
       }
    }
@@ -376,16 +376,16 @@ bool HistorySet.Close(int hSet) {
  *
  * @return bool - Erfolgsstatus
  */
-bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
+bool HistorySet2.AddTick(int hSet, datetime time, double value, int flags=NULL) {
    // Validierung
-   if (hSet <= 0)                     return(!catch("HistorySet.AddTick(1)  invalid parameter hSet = "+ hSet, ERR_INVALID_PARAMETER));
+   if (hSet <= 0)                     return(!catch("HistorySet2.AddTick(1)  invalid parameter hSet = "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
-      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet.AddTick(2)  invalid parameter hSet = "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet.AddTick(3)  invalid parameter hSet = "+ hSet +" (unknown handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet.AddTick(4)  invalid parameter hSet = "+ hSet +" (closed handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet2.AddTick(2)  invalid parameter hSet = "+ hSet, ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.AddTick(3)  invalid parameter hSet = "+ hSet +" (unknown handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet2.AddTick(4)  invalid parameter hSet = "+ hSet +" (closed handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
       hs.hSet.lastValid = hSet;
    }
-   if (time <= 0)                     return(!catch("HistorySet.AddTick(5)  invalid parameter time = "+ time +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+   if (time <= 0)                     return(!catch("HistorySet2.AddTick(5)  invalid parameter time = "+ time +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
 
    // Dateihandles holen und jeweils Tick hinzufügen
    int hFile, sizeOfPeriods=ArraySize(periods);
@@ -393,11 +393,11 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
       if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
-         hFile = HistoryFile.Open(hs.symbol[hSet], periods[i], hs.copyright[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
+         hFile = HistoryFile2.Open(hs.symbol[hSet], periods[i], hs.copyright[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
       }
-      if (!HistoryFile.AddTick(hFile, time, value, flags)) return(false);
+      if (!HistoryFile2.AddTick(hFile, time, value, flags)) return(false);
    }
    return(true);
 }
@@ -425,13 +425,13 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * NOTES: (1) Das Dateihandle kann nicht modul-übergreifend verwendet werden.
  *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 64 Dateien gleichzeitig offen gehalten werden.
  */
-int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits, int format, int mode, string server="") {
-   if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   if (StrContains(symbol, " "))              return(_NULL(catch("HistoryFile.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+int HistoryFile2.Open(string symbol, int timeframe, string copyright, int digits, int format, int mode, string server="") {
+   if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile2.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile2.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   if (StrContains(symbol, " "))              return(_NULL(catch("HistoryFile2.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
    string symbolUpper = StrToUpper(symbol);
-   if (timeframe <= 0)                        return(_NULL(catch("HistoryFile.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER)));
-   if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+   if (timeframe <= 0)                        return(_NULL(catch("HistoryFile2.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER)));
+   if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile2.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
    mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen
    bool read_only  = !(mode & FILE_WRITE);
    bool write_only = !(mode & FILE_READ);
@@ -447,7 +447,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
    // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
-   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir)) return(_NULL(catch("HistoryFile.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR)));
+   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir)) return(_NULL(catch("HistoryFile2.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR)));
 
    int hFile;
 
@@ -455,19 +455,19 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
       if (!MQL.IsFile(mqlFileName)) return(-1);                                     // file not found
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile2.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
 
    // (1.2) read-write
    else if (read_write) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile2.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
 
    // (1.3) write-only
    else if (write_only) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile2.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
 
 
@@ -481,8 +481,8 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
       // Parameter validieren
       if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
       if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
-      if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
-      if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+      if (digits < 0)                          return(_NULL(catch("HistoryFile2.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+      if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile2.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
 
       hh_SetBarFormat(hh, format   );
       hh_SetCopyright(hh, copyright);
@@ -497,7 +497,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    else if (read_only || fileSize > 0) {
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize) != HISTORY_HEADER.intSize) {
          FileClose(hFile);
-         return(_NULL(catch("HistoryFile.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+         return(_NULL(catch("HistoryFile2.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
       }
 
       // (3.2) ggf. Bar-Statistik auslesen
@@ -594,23 +594,23 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    int error = GetLastError();
    if (!error)
       return(hFile);
-   return(!catch("HistoryFile.Open(13)  "+ symbol +","+ PeriodDescription(timeframe), error));
+   return(!catch("HistoryFile2.Open(13)  "+ symbol +","+ PeriodDescription(timeframe), error));
 }
 
 
 /**
  * Schließt die Historydatei mit dem angegebenen Handle. Ungespeicherte Daten im Schreibpuffer werden geschrieben.
- * Die Datei muß vorher mit HistoryFile.Open() geöffnet worden sein.
+ * Die Datei muß vorher mit HistoryFile2.Open() geöffnet worden sein.
  *
  * @param  _In_ int hFile - Dateihandle
  *
  * @return bool - Erfolgsstatus
  */
-bool HistoryFile.Close(int hFile) {
-   if (hFile <= 0)                      return(!catch("HistoryFile.Close(1)  invalid file handle: "+ hFile, ERR_INVALID_PARAMETER));
+bool HistoryFile2.Close(int hFile) {
+   if (hFile <= 0)                      return(!catch("HistoryFile2.Close(1)  invalid file handle: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.Close(2)  unknown file handle: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.Close(3)  unknown file handle: "+ hFile +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile2.Close(2)  unknown file handle: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile2.Close(3)  unknown file handle: "+ hFile +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    }
    else hf.hFile.lastValid = NULL;
 
@@ -625,7 +625,7 @@ bool HistoryFile.Close(int hFile) {
 
    // (2) Datei schließen
    int error = GetLastError();                                       // vor FileClose() alle Fehler abfangen
-   if (IsError(error)) return(!catch("HistoryFile.Close(4)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
+   if (IsError(error)) return(!catch("HistoryFile2.Close(4)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 
    hf.hFile[hFile] = -1;                                             // Handle vorm Schließen zurücksetzen
    FileClose(hFile);
@@ -633,7 +633,7 @@ bool HistoryFile.Close(int hFile) {
    error = GetLastError();
    if (!error)                         return(true);
    if (error == ERR_INVALID_PARAMETER) return(true);                 // Datei wurde bereits geschlossen (kann ignoriert werden)
-   return(!catch("HistoryFile.Close(5)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
+   return(!catch("HistoryFile2.Close(5)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
 
@@ -646,25 +646,25 @@ bool HistoryFile.Close(int hFile) {
  * @param  _In_  datetime time           - Zeitpunkt
  * @param  _Out_ bool     lpBarExists[1] - Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
  *                                         (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
- *                                         • TRUE:  Bar existiert          @see  HistoryFile.UpdateBar() und HistoryFile.WriteBar()
- *                                         • FALSE: Bar existiert nicht    @see  HistoryFile.InsertBar()
+ *                                         • TRUE:  Bar existiert          @see  HistoryFile2.UpdateBar() und HistoryFile2.WriteBar()
+ *                                         • FALSE: Bar existiert nicht    @see  HistoryFile2.InsertBar()
  *
  * @return int - Bar-Offset relativ zum Dateiheader (Offset 0 ist die älteste Bar) oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
+int HistoryFile2.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    /**
     * NOTE: Der Parameter lpBarExists ist für den externen Gebrauch implementiert (Aufruf der Funktion von außerhalb der Library). Beim internen Gebrauch
     *       läßt sich über die Metadaten der Historydatei einfacher herausfinden, ob eine Bar an einem Offset existiert oder nicht.
     *       @see  int hf.full.bars[]
     */
-   if (hFile <= 0)                      return(_EMPTY(catch("HistoryFile.FindBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile <= 0)                      return(_EMPTY(catch("HistoryFile2.FindBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("HistoryFile.FindBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
-      if (hf.hFile[hFile] == 0)         return(_EMPTY(catch("HistoryFile.FindBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
-      if (hf.hFile[hFile] <  0)         return(_EMPTY(catch("HistoryFile.FindBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("HistoryFile2.FindBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hf.hFile[hFile] == 0)         return(_EMPTY(catch("HistoryFile2.FindBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
+      if (hf.hFile[hFile] <  0)         return(_EMPTY(catch("HistoryFile2.FindBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
       hf.hFile.lastValid = hFile;
    }
-   if (time <= 0)                       return(_EMPTY(catch("HistoryFile.FindBar(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
+   if (time <= 0)                       return(_EMPTY(catch("HistoryFile2.FindBar(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
    if (ArraySize(lpBarExists) == 0)
       ArrayResize(lpBarExists, 1);
 
@@ -726,7 +726,7 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
 
 
    // (4) binäre Suche in der Datei                            TODO: implementieren
-   return(_EMPTY(catch("HistoryFile.FindBar(6)  bars="+ hf.full.bars[hFile] +", from='"+ TimeToStr(hf.full.from.openTime[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.full.to.openTime[hFile], TIME_FULL) +"')  time look-up in a timeseries not yet implemented ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED)));
+   return(_EMPTY(catch("HistoryFile2.FindBar(6)  bars="+ hf.full.bars[hFile] +", from='"+ TimeToStr(hf.full.from.openTime[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.full.to.openTime[hFile], TIME_FULL) +"')  time look-up in a timeseries not yet implemented ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -741,16 +741,16 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
  *
  * NOTE: Time und Volume der gelesenen Bar werden validert, nicht jedoch die Barform.
  */
-bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
-   if (hFile <= 0)                      return(!catch("HistoryFile.ReadBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+bool HistoryFile2.ReadBar(int hFile, int offset, double &bar[]) {
+   if (hFile <= 0)                      return(!catch("HistoryFile2.ReadBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.ReadBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.ReadBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile.ReadBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile2.ReadBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile2.ReadBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile2.ReadBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (offset < 0)                      return(!catch("HistoryFile.ReadBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset >= hf.full.bars[hFile])   return(!catch("HistoryFile.ReadBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset < 0)                      return(!catch("HistoryFile2.ReadBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset >= hf.full.bars[hFile])   return(!catch("HistoryFile2.ReadBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6) ArrayResize(bar, 6);
 
 
@@ -777,7 +777,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
 
    // (2) FilePointer positionieren, Bar lesen, normalisieren und validieren
    int position = HISTORY_HEADER.size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
-   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.ReadBar(7)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
+   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile2.ReadBar(7)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
    if (hf.format[hFile] == 400) {
       bar[BAR_T] =                 FileReadInteger(hFile);
@@ -796,8 +796,8 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
       bar[BAR_C] = NormalizeDouble(FileReadDouble (hFile), digits);
       bar[BAR_V] =                 FileReadInteger(hFile);           // uint64: ticks
    }
-   datetime openTime = bar[BAR_T]; if (!openTime) return(!catch("HistoryFile.ReadBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
-   int      V        = bar[BAR_V]; if (!V)        return(!catch("HistoryFile.ReadBar(9)  invalid bar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
+   datetime openTime = bar[BAR_T]; if (!openTime) return(!catch("HistoryFile2.ReadBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
+   int      V        = bar[BAR_V]; if (!V)        return(!catch("HistoryFile2.ReadBar(9)  invalid bar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
 
 
    // (4) CloseTime/NextCloseTime ermitteln und hf.lastStoredBar aktualisieren
@@ -825,7 +825,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
    int error = GetLastError();
    if (!error)
       return(true);
-   return(!catch("HistoryFile.ReadBar(10)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
+   return(!catch("HistoryFile2.ReadBar(10)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
 
@@ -844,29 +844,29 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
  * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
-bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
-   if (hFile <= 0)                      return(!catch("HistoryFile.WriteBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
+   if (hFile <= 0)                      return(!catch("HistoryFile2.WriteBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.WriteBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.WriteBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile.WriteBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile2.WriteBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile2.WriteBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile2.WriteBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (offset < 0)                      return(!catch("HistoryFile.WriteBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset > hf.full.bars[hFile])    return(!catch("HistoryFile.WriteBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (ArraySize(bar) != 6)             return(!catch("HistoryFile.WriteBar(7)  invalid size of parameter bar[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset < 0)                      return(!catch("HistoryFile2.WriteBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset > hf.full.bars[hFile])    return(!catch("HistoryFile2.WriteBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.WriteBar(7)  invalid size of parameter bar[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
 
 
    // (1) Bar validieren
-   datetime openTime = Round(bar[BAR_T]); if (!openTime) return(!catch("HistoryFile.WriteBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   int      V        = Round(bar[BAR_V]); if (!V)        return(!catch("HistoryFile.WriteBar(9)  invalid bar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   datetime openTime = Round(bar[BAR_T]); if (!openTime) return(!catch("HistoryFile2.WriteBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   int      V        = Round(bar[BAR_V]); if (!V)        return(!catch("HistoryFile2.WriteBar(9)  invalid bar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
 
    // (2) Sicherstellen, daß bekannte Bars nicht mit einer anderen Bar überschrieben werden              // TODO: if-Tests reduzieren
-   if (offset==hf.stored.from.offset  [hFile]) /*&&*/ if (openTime!=hf.stored.from.openTime  [hFile]) return(!catch("HistoryFile.WriteBar(10)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.from.time="                                        + TimeToStr(hf.stored.from.openTime  [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
-   if (offset==hf.stored.to.offset    [hFile]) /*&&*/ if (openTime!=hf.stored.to.openTime    [hFile]) return(!catch("HistoryFile.WriteBar(11)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.to.time="                                          + TimeToStr(hf.stored.to.openTime    [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
-   if (offset==hf.full.to.offset      [hFile]) /*&&*/ if (openTime!=hf.full.to.openTime      [hFile]) return(!catch("HistoryFile.WriteBar(12)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.full.to.time="                                            + TimeToStr(hf.full.to.openTime      [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
-   if (offset==hf.lastStoredBar.offset[hFile]) /*&&*/ if (openTime!=hf.lastStoredBar.openTime[hFile]) return(!catch("HistoryFile.WriteBar(13)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.lastStoredBar["+ hf.lastStoredBar.offset[hFile] +"].time="+ TimeToStr(hf.lastStoredBar.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
+   if (offset==hf.stored.from.offset  [hFile]) /*&&*/ if (openTime!=hf.stored.from.openTime  [hFile]) return(!catch("HistoryFile2.WriteBar(10)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.from.time="                                        + TimeToStr(hf.stored.from.openTime  [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
+   if (offset==hf.stored.to.offset    [hFile]) /*&&*/ if (openTime!=hf.stored.to.openTime    [hFile]) return(!catch("HistoryFile2.WriteBar(11)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.to.time="                                          + TimeToStr(hf.stored.to.openTime    [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
+   if (offset==hf.full.to.offset      [hFile]) /*&&*/ if (openTime!=hf.full.to.openTime      [hFile]) return(!catch("HistoryFile2.WriteBar(12)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.full.to.time="                                            + TimeToStr(hf.full.to.openTime      [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
+   if (offset==hf.lastStoredBar.offset[hFile]) /*&&*/ if (openTime!=hf.lastStoredBar.openTime[hFile]) return(!catch("HistoryFile2.WriteBar(13)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.lastStoredBar["+ hf.lastStoredBar.offset[hFile] +"].time="+ TimeToStr(hf.lastStoredBar.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
    // hf.bufferedBar.offset: entspricht hf.full.to.offset (schon geprüft)
 
 
@@ -886,7 +886,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
 
    // (5) FilePointer positionieren, Bar normalisieren (Funktionsparameter nicht modifizieren) und schreiben
    int position = HISTORY_HEADER.size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
-   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.WriteBar(14)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
+   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile2.WriteBar(14)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
    double O = NormalizeDouble(bar[BAR_O], digits);
    double H = NormalizeDouble(bar[BAR_H], digits);
@@ -944,7 +944,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    // (7) Metadaten aktualisieren: • (7.1) Die Bar kann (a) erste Bar einer leeren History sein, (b) mittendrin liegen oder (c) neue Bar am Ende sein.
    //                              • (7.2) Die Bar kann auf einer ungespeicherten BufferedBar liegen, jedoch nicht jünger als diese sein: siehe (3).
    //                              • (7.3) Die Bar kann zwischen der letzten gespeicherten Bar und einer ungespeicherten BufferedBar liegen. Dazu muß sie
-   //                                      mit HistoryFile.InsertBar() eingefügt worden sein, das die entsprechende Lücke zwischen beiden Bars einrichtet.
+   //                                      mit HistoryFile2.InsertBar() eingefügt worden sein, das die entsprechende Lücke zwischen beiden Bars einrichtet.
    //                                      Ohne diese Lücke wurde in (2) abgebrochen [siehe oben].
    //
    // (7.1) Bar ist neue Bar: (a) erste Bar leerer History oder (c) neue Bar am Ende der gespeicherten Bars
@@ -984,7 +984,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    int error = GetLastError();
    if (!error)
       return(true);
-   return(!catch("HistoryFile.WriteBar(15)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
+   return(!catch("HistoryFile2.WriteBar(15)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
 
@@ -998,16 +998,16 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
  *
  * @return bool - Erfolgsstatus
  */
-bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
-   if (hFile <= 0)                      return(!catch("HistoryFile.UpdateBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+bool HistoryFile2.UpdateBar(int hFile, int offset, double value) {
+   if (hFile <= 0)                      return(!catch("HistoryFile2.UpdateBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.UpdateBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.UpdateBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile.UpdateBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile2.UpdateBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile2.UpdateBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile2.UpdateBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (offset < 0 )                     return(!catch("HistoryFile.UpdateBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset >= hf.full.bars[hFile])   return(!catch("HistoryFile.UpdateBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset < 0 )                     return(!catch("HistoryFile2.UpdateBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset >= hf.full.bars[hFile])   return(!catch("HistoryFile2.UpdateBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
 
    // (1) vorzugsweise bekannte Bars aktualisieren
@@ -1025,7 +1025,7 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
    // (2) ist die zu aktualisierende Bar nicht die LastStoredBar, gesuchte Bar einlesen und damit zur LastStoredBar machen
    if (offset != hf.lastStoredBar.offset[hFile]) {
       double bar[6];                                                             // bar[] wird in Folge nicht verwendet
-      if (!HistoryFile.ReadBar(hFile, offset, bar)) return(false);               // setzt LastStoredBar auf die gelesene Bar
+      if (!HistoryFile2.ReadBar(hFile, offset, bar)) return(false);               // setzt LastStoredBar auf die gelesene Bar
    }
 
 
@@ -1056,27 +1056,27 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
  * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
-bool HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags=NULL) {
-   if (hFile <= 0)                      return(!catch("HistoryFile.InsertBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+bool HistoryFile2.InsertBar(int hFile, int offset, double bar[], int flags=NULL) {
+   if (hFile <= 0)                      return(!catch("HistoryFile2.InsertBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.InsertBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.InsertBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile.InsertBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile2.InsertBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile2.InsertBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile2.InsertBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (offset < 0)                      return(!catch("HistoryFile.InsertBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset > hf.full.bars[hFile])    return(!catch("HistoryFile.InsertBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (ArraySize(bar) != 6)             return(!catch("HistoryFile.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset < 0)                      return(!catch("HistoryFile2.InsertBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset > hf.full.bars[hFile])    return(!catch("HistoryFile2.InsertBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
 
 
    // (1) ggf. Lücke für einzufügende Bar schaffen
    if (offset < hf.full.bars[hFile])
-      if (!HistoryFile.MoveBars(hFile, offset, offset+1)) return(false);
+      if (!HistoryFile2.MoveBars(hFile, offset, offset+1)) return(false);
 
-   // (2) Bar schreiben, HistoryFile.WriteBar() führt u.a. folgende Tasks aus: • validiert die Bar
+   // (2) Bar schreiben, HistoryFile2.WriteBar() führt u.a. folgende Tasks aus: • validiert die Bar
    //                                                                          • speichert eine durch die einzufügende Bar geschlossene BufferedBar
    //                                                                          • aktualisiert die Metadaten der Historydatei
-   return(HistoryFile.WriteBar(hFile, offset, bar, flags));
+   return(HistoryFile2.WriteBar(hFile, offset, bar, flags));
 }
 
 
@@ -1262,8 +1262,8 @@ bool HistoryFile._WriteBufferedBar(int hFile, int flags=NULL) {
  *
  * @return bool - Erfolgsstatus                                            TODO: Implementieren
  */
-bool HistoryFile.MoveBars(int hFile, int fromOffset, int destOffset) {
-   return(!catch("HistoryFile.MoveBars(1)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED));
+bool HistoryFile2.MoveBars(int hFile, int fromOffset, int destOffset) {
+   return(!catch("HistoryFile2.MoveBars(1)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1280,16 +1280,16 @@ bool HistoryFile.MoveBars(int hFile, int fromOffset, int destOffset) {
  *
  * @return bool - Erfolgsstatus
  */
-bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL) {
-   if (hFile <= 0)                        return(!catch("HistoryFile.AddTick(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags=NULL) {
+   if (hFile <= 0)                        return(!catch("HistoryFile2.AddTick(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile))   return(!catch("HistoryFile.AddTick(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)           return(!catch("HistoryFile.AddTick(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)           return(!catch("HistoryFile.AddTick(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile))   return(!catch("HistoryFile2.AddTick(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)           return(!catch("HistoryFile2.AddTick(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)           return(!catch("HistoryFile2.AddTick(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (time <= 0)                         return(!catch("HistoryFile.AddTick(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (time < hf.full.to.openTime[hFile]) return(!catch("HistoryFile.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar.time="+ TimeToStr(hf.full.to.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (time <= 0)                         return(!catch("HistoryFile2.AddTick(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (time < hf.full.to.openTime[hFile]) return(!catch("HistoryFile2.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar.time="+ TimeToStr(hf.full.to.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
    double bar[6];
    bool   barExists[1];
@@ -1315,7 +1315,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
          bufferedBarClose = true;                                                      // und löst für die BufferedBar ein BarClose-Event aus
       }
    }
-   // (1.2) Danach LastStoredBar benutzen (bevor diese ggf. von HistoryFile._WriteBufferedBar() überschrieben wird).
+   // (1.2) Danach LastStoredBar benutzen (bevor diese ggf. von HistoryFile2._WriteBufferedBar() überschrieben wird).
    if (tick.offset==-1) /*&&*/ if (hf.lastStoredBar.offset[hFile] >= 0) {              // LastStoredBar ist definiert
       if (time >= hf.lastStoredBar.openTime[hFile]) {
          if (tick.time < hf.lastStoredBar.closeTime[hFile]) {
@@ -1343,10 +1343,10 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
             if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
             else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;        // 00:00, Montag
             else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                // 00:00, 1. des Monats
-            tick.offset = HistoryFile.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
+            tick.offset = HistoryFile2.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
          }
          if (tick.offset < hf.full.bars[hFile]) {                                      // Tickbar existiert, laden
-            if (!HistoryFile.ReadBar(hFile, tick.offset, bar)) return(false);          // ReadBar() setzt LastStoredBar auf die Tickbar
+            if (!HistoryFile2.ReadBar(hFile, tick.offset, bar)) return(false);          // ReadBar() setzt LastStoredBar auf die Tickbar
             hf.bufferedBar.offset       [hFile]        = hf.lastStoredBar.offset       [hFile];
             hf.bufferedBar.openTime     [hFile]        = hf.lastStoredBar.openTime     [hFile];
             hf.bufferedBar.closeTime    [hFile]        = hf.lastStoredBar.closeTime    [hFile];
@@ -1430,10 +1430,10 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
       else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;          // 00:00, Montag
       else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                  // 00:00, 1. des Monats
-      tick.offset = HistoryFile.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
+      tick.offset = HistoryFile2.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
    }
    if (tick.offset < hf.full.bars[hFile]) {
-      if (!HistoryFile.UpdateBar(hFile, tick.offset, tick.value)) return(false);       // existierende Bar aktualisieren
+      if (!HistoryFile2.UpdateBar(hFile, tick.offset, tick.value)) return(false);       // existierende Bar aktualisieren
    }
    else {
       bar[BAR_T] = tick.openTime;                                                      // oder neue Bar einfügen
@@ -1442,7 +1442,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       bar[BAR_L] = tick.value;
       bar[BAR_C] = tick.value;
       bar[BAR_V] = 1;
-      if (!HistoryFile.InsertBar(hFile, tick.offset, bar, flags|HST_TIME_IS_OPENTIME)) return(false);
+      if (!HistoryFile2.InsertBar(hFile, tick.offset, bar, flags|HST_TIME_IS_OPENTIME)) return(false);
    }
 
    return(true);
@@ -1556,7 +1556,7 @@ bool __CheckFileHandles() {
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
          logWarn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
-         if (!HistoryFile.Close(hf.hFile[i]))
+         if (!HistoryFile2.Close(hf.hFile[i]))
             error = last_error;
       }
    }
@@ -1598,11 +1598,11 @@ int onDeinit() {
  *
  * @return int - created symbol id (the field SYMBOL.id) or EMPTY (-1) in case of errors (e.g. if the symbol already exists)
  */
-int CreateSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "") {
-   if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
-   if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
-   if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateSymbol(4)  invalid parameter group = "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
+int CreateSymbol2(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "") {
+   if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol2(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol2(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
+   if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateSymbol2(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+   if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateSymbol2(4)  invalid parameter group = "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
 
    int   groupIndex;
    color groupColor = CLR_NONE;
@@ -1628,13 +1628,13 @@ int CreateSymbol(string symbol, string description, string group, int digits, st
    // create symbol
    /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL.size);
    if (!SetSymbolTemplate                  (iSymbol, SYMBOL_TYPE_INDEX))             return(-1);
-   if (!StringLen(symbol_SetName           (iSymbol, symbol           )))            return(_EMPTY(catch("CreateSymbol(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetDescription    (iSymbol, description      )))            return(_EMPTY(catch("CreateSymbol(6)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
-   if (          !symbol_SetDigits         (iSymbol, digits           ))             return(_EMPTY(catch("CreateSymbol(7)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency     )))            return(_EMPTY(catch("CreateSymbol(8)->symbol_SetBaseCurrency() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency   )))            return(_EMPTY(catch("CreateSymbol(9)->symbol_SetMarginCurrency() => NULL", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetGroup          (iSymbol, groupIndex       ) < 0)         return(_EMPTY(catch("CreateSymbol(10)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetBackgroundColor(iSymbol, groupColor       ) == CLR_NONE) return(_EMPTY(catch("CreateSymbol(11)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetName           (iSymbol, symbol           )))            return(_EMPTY(catch("CreateSymbol2(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetDescription    (iSymbol, description      )))            return(_EMPTY(catch("CreateSymbol2(6)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
+   if (          !symbol_SetDigits         (iSymbol, digits           ))             return(_EMPTY(catch("CreateSymbol2(7)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency     )))            return(_EMPTY(catch("CreateSymbol2(8)->symbol_SetBaseCurrency() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency   )))            return(_EMPTY(catch("CreateSymbol2(9)->symbol_SetMarginCurrency() => NULL", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetGroup          (iSymbol, groupIndex       ) < 0)         return(_EMPTY(catch("CreateSymbol2(10)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetBackgroundColor(iSymbol, groupColor       ) == CLR_NONE) return(_EMPTY(catch("CreateSymbol2(11)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    if (!InsertSymbol(iSymbol, server)) return(-1);
    return(symbol_Id(iSymbol));
