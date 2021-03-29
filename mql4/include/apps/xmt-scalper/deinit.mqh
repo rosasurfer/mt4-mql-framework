@@ -11,11 +11,12 @@ int onDeinit() {
       if (metrics.hSet[i] != 0) {
          int tmp = metrics.hSet[i];
          metrics.hSet[i] = NULL;
-         if (i < 4) success = success && HistorySet1.Close(tmp);
-         else       success = success && HistorySet2.Close(tmp);
+         if      (i <  6) success = success && HistorySet1.Close(tmp);
+         else if (i < 12) success = success && HistorySet2.Close(tmp);
+         else             success = success && HistorySet3.Close(tmp);
       }
    }
-   return(ifInt(success, NO_ERROR, __ExecutionContext[EC.mqlError]));   // an error is a library error
+   return(ifInt(success, NO_ERROR, __ExecutionContext[EC.mqlError]));      // an error is a library error
 }
 
 
@@ -36,6 +37,6 @@ int onDeinitUndefined() {
       }
       return(catch("onDeinitUndefined(3)"));
    }
-   return(catch("onDeinitUndefined(4)", ERR_UNDEFINED_STATE));                // do what the Expander would do
+   return(catch("onDeinitUndefined(4)", ERR_UNDEFINED_STATE));             // do what the Expander would do
 }
 
