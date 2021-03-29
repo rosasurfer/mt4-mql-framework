@@ -36,6 +36,7 @@
  *  - replaced status display
  *  - added monitoring of PositionOpen and PositionClose events
  *  - added virtual trading mode with optional trade copier or trade mirror
+ *  - added recording of performance metrics for real and virtual trading
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -163,6 +164,7 @@ double   real.closedSwap;                       // total closed swap
 double   real.closedPl;                         // total closed gross profit
 double   real.closedPlNet;                      // total closed net profit
 
+double   real.totalPl;                          // openPl    + closedPl
 double   real.totalPlNet;                       // openPlNet + closedPlNet
 
 // virtual order log
@@ -199,10 +201,12 @@ double   virt.closedSwap;
 double   virt.closedPl;
 double   virt.closedPlNet;
 
-double   virt.totalPlNet;
+double   virt.totalPl;                          // openPl    + closedPl
+double   virt.totalPlNet;                       // openPlNet + closedPlNet
 
 // metrics
-bool     metrics.enabled[16];                   // status
+bool     metrics.enabled[16];                   // activation status
+double   metrics.vShift [16];                   // vertical shifting: to prevent negative values stored data is adjusted by this level
 int      metrics.hSet   [16];                   // HistorySets
 
 // other
@@ -493,6 +497,7 @@ bool UpdateRealOrderStatus() {
 
    real.openPlNet   = real.openSwap   + real.openCommission   + real.openPl;
    real.closedPlNet = real.closedSwap + real.closedCommission + real.closedPl;
+   real.totalPl     = real.openPl     + real.closedPl;
    real.totalPlNet  = real.openPlNet  + real.closedPlNet;
 
    return(!catch("UpdateRealOrderStatus(2)"));
@@ -570,6 +575,7 @@ bool UpdateVirtualOrderStatus() {
 
    virt.openPlNet   = virt.openSwap   + virt.openCommission   + virt.openPl;
    virt.closedPlNet = virt.closedSwap + virt.closedCommission + virt.closedPl;
+   virt.totalPl     = virt.openPl     + virt.closedPl;
    virt.totalPlNet  = virt.openPlNet  + virt.closedPlNet;
 
    return(!catch("UpdateVirtualOrderStatus(2)"));
@@ -1258,6 +1264,7 @@ bool ReadOrderLog() {
    real.closedCommission = 0;
    real.closedPl         = 0;
    real.closedPlNet      = 0;
+   real.totalPl          = 0;
    real.totalPlNet       = 0;
 
    // all closed positions
@@ -1292,35 +1299,25 @@ bool ReadOrderLog() {
  * @return bool - success status
  */
 bool InitMetrics() {
-   // C0: cumulative PL in pip w/o commission
-   // C1: cumulative PL in pip with commission
-   // C2: cumulative PL in money w/o commission
-   // C3: cumulative PL in money with commission
-   //
-   // D0: daily PL in pip w/o commission
-   // D1: daily PL in pip with commission
-   // D2: daily PL in money w/o commission
-   // D3: daily PL in money with commission
-
    string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
-
-   metrics.enabled[METRIC_RC0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC0", true));
-   metrics.enabled[METRIC_RC1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC1", true));
-   metrics.enabled[METRIC_RC2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC2", true));
-   metrics.enabled[METRIC_RC3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC3", true));
-   metrics.enabled[METRIC_RD0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD0", true));
-   metrics.enabled[METRIC_RD1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD1", true));
-   metrics.enabled[METRIC_RD2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD2", true));
-   metrics.enabled[METRIC_RD3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD3", true));
-
-   metrics.enabled[METRIC_VC0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC0", true));
-   metrics.enabled[METRIC_VC1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC1", true));
-   metrics.enabled[METRIC_VC2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC2", true));
-   metrics.enabled[METRIC_VC3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC3", true));
-   metrics.enabled[METRIC_VD0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD0", true));
-   metrics.enabled[METRIC_VD1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD1", true));
-   metrics.enabled[METRIC_VD2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD2", true));
-   metrics.enabled[METRIC_VD3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD3", true));
+   // real
+   metrics.enabled[METRIC_RC0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC0", true));    // C0: cumulative PL in pip w/o commission
+   metrics.enabled[METRIC_RC1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC1", true));    // C1: cumulative PL in pip with commission
+   metrics.enabled[METRIC_RC2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC2", true));    // C2: cumulative PL in money w/o commission
+   metrics.enabled[METRIC_RC3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RC3", true));    // C3: cumulative PL in money with commission
+   metrics.enabled[METRIC_RD0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD0", true));    // D0: daily PL in pip w/o commission
+   metrics.enabled[METRIC_RD1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD1", true));    // D1: daily PL in pip with commission
+   metrics.enabled[METRIC_RD2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD2", true));    // D2: daily PL in money w/o commission
+   metrics.enabled[METRIC_RD3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_RD3", true));    // D3: daily PL in money with commission
+   // virtual
+   metrics.enabled[METRIC_VC0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC0", true));    // ...
+   metrics.enabled[METRIC_VC1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC1", true));    //
+   metrics.enabled[METRIC_VC2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC2", true));    //
+   metrics.enabled[METRIC_VC3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VC3", true));    //
+   metrics.enabled[METRIC_VD0] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD0", true));    //
+   metrics.enabled[METRIC_VD1] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD1", true));    //
+   metrics.enabled[METRIC_VD2] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD2", true));    //
+   metrics.enabled[METRIC_VD3] = (EA.RecordMetrics && GetConfigBool(section, "Metric_VD3", true));    //
 
    string symbol, description, server="XTrade-Testresults";
    int digits, format=400;
@@ -1328,7 +1325,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_RC0] && !metrics.hSet[METRIC_RC0]) {
       symbol      = "XMT"+ sequence.id +"_RC0";
       description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip w/o commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_RC0] = HistorySet1.Get(symbol, server);
       if (metrics.hSet[METRIC_RC0] == -1)
          metrics.hSet[METRIC_RC0] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1337,7 +1334,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_RC1] && !metrics.hSet[METRIC_RC1]) {
       symbol      = "XMT"+ sequence.id +"_RC1";
       description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip with commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_RC1] = HistorySet1.Get(symbol, server);
       if (metrics.hSet[METRIC_RC1] == -1)
          metrics.hSet[METRIC_RC1] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1364,7 +1361,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_RD0] && !metrics.hSet[METRIC_RD0]) {
       symbol      = "XMT"+ sequence.id +"_RD0";
       description = ProgramName() +"."+ sequence.id +" real daily PL in pip w/o commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_RD0] = HistorySet1.Get(symbol, server);
       if (metrics.hSet[METRIC_RD0] == -1)
          metrics.hSet[METRIC_RD0] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1373,7 +1370,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_RD1] && !metrics.hSet[METRIC_RD1]) {
       symbol      = "XMT"+ sequence.id +"_RD1";
       description = ProgramName() +"."+ sequence.id +" real daily PL in pip with commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_RD1] = HistorySet1.Get(symbol, server);
       if (metrics.hSet[METRIC_RD1] == -1)
          metrics.hSet[METRIC_RD1] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1401,7 +1398,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_VC0] && !metrics.hSet[METRIC_VC0]) {
       symbol      = "XMT"+ sequence.id +"_VC0";
       description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip w/o commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_VC0] = HistorySet2.Get(symbol, server);
       if (metrics.hSet[METRIC_VC0] == -1)
          metrics.hSet[METRIC_VC0] = HistorySet2.Create(symbol, description, digits, format, server);
@@ -1410,7 +1407,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_VC1] && !metrics.hSet[METRIC_VC1]) {
       symbol      = "XMT"+ sequence.id +"_VC1";
       description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip with commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_VC1] = HistorySet2.Get(symbol, server);
       if (metrics.hSet[METRIC_VC1] == -1)
          metrics.hSet[METRIC_VC1] = HistorySet2.Create(symbol, description, digits, format, server);
@@ -1437,7 +1434,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_VD0] && !metrics.hSet[METRIC_VD0]) {
       symbol      = "XMT"+ sequence.id +"_VD0";
       description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip w/o commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_VD0] = HistorySet3.Get(symbol, server);
       if (metrics.hSet[METRIC_VD0] == -1)
          metrics.hSet[METRIC_VD0] = HistorySet3.Create(symbol, description, digits, format, server);
@@ -1446,7 +1443,7 @@ bool InitMetrics() {
    if (metrics.enabled[METRIC_VD1] && !metrics.hSet[METRIC_VD1]) {
       symbol      = "XMT"+ sequence.id +"_VD1";
       description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip with commission";
-      digits      = 2;
+      digits      = 1;
       metrics.hSet[METRIC_VD1] = HistorySet3.Get(symbol, server);
       if (metrics.hSet[METRIC_VD1] == -1)
          metrics.hSet[METRIC_VD1] = HistorySet3.Create(symbol, description, digits, format, server);
@@ -1485,72 +1482,72 @@ bool RecordMetrics() {
    bool success = true;
 
    // real metrics
-   if (metrics.enabled[METRIC_RC0] && success) {               // C0: cumulative PL in pip w/o commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_RC1] && success) {               // C1: cumulative PL in pip with commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, HST_BUFFER_TICKS);
-   }
+ //if (metrics.enabled[METRIC_RC0] && success) {               // C0: cumulative PL in pip w/o commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_RC1] && success) {               // C1: cumulative PL in pip with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
    if (metrics.enabled[METRIC_RC2] && success) {               // C2: cumulative PL in money w/o commission
-      value   = AccountEquity()-AccountCredit();
+      value   = real.totalPl + metrics.vShift[METRIC_RC2];
       success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.Time, value, HST_BUFFER_TICKS);
    }
    if (metrics.enabled[METRIC_RC3] && success) {               // C3: cumulative PL in money with commission
-      value   = AccountEquity()-AccountCredit();
+      value   = real.totalPlNet + metrics.vShift[METRIC_RC3];
       success = HistorySet1.AddTick(metrics.hSet[METRIC_RC3], Tick.Time, value, HST_BUFFER_TICKS);
    }
-   if (metrics.enabled[METRIC_RD0] && success) {               // D0: daily PL in pip w/o commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RD0], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_RD1] && success) {               // D1: daily PL in pip with commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_RD2] && success) {               // D2: daily PL in money w/o commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_RD3] && success) {               // D3: daily PL in money with commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.Time, value, HST_BUFFER_TICKS);
-   }
+ //if (metrics.enabled[METRIC_RD0] && success) {               // D0: daily PL in pip w/o commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD0], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_RD1] && success) {               // D1: daily PL in pip with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_RD2] && success) {               // D2: daily PL in money w/o commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_RD3] && success) {               // D3: daily PL in money with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
 
    // virtual metrics
-   if (metrics.enabled[METRIC_VC0] && success) {               // C0: cumulative PL in pip w/o commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_VC1] && success) {               // C1: cumulative PL in pip with commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, HST_BUFFER_TICKS);
-   }
+ //if (metrics.enabled[METRIC_VC0] && success) {               // C0: cumulative PL in pip w/o commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_VC1] && success) {               // C1: cumulative PL in pip with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
    if (metrics.enabled[METRIC_VC2] && success) {               // C2: cumulative PL in money w/o commission
-      value   = AccountEquity()-AccountCredit();
+      value   = virt.totalPl + metrics.vShift[METRIC_VC2];
       success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.Time, value, HST_BUFFER_TICKS);
    }
    if (metrics.enabled[METRIC_VC3] && success) {               // C3: cumulative PL in money with commission
-      value   = AccountEquity()-AccountCredit();
+      value   = virt.totalPlNet + metrics.vShift[METRIC_VC3];
       success = HistorySet2.AddTick(metrics.hSet[METRIC_VC3], Tick.Time, value, HST_BUFFER_TICKS);
    }
-   if (metrics.enabled[METRIC_VD0] && success) {               // D0: daily PL in pip w/o commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet3.AddTick(metrics.hSet[METRIC_VD0], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_VD1] && success) {               // D1: daily PL in pip with commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_VD2] && success) {               // D2: daily PL in money w/o commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.Time, value, HST_BUFFER_TICKS);
-   }
-   if (metrics.enabled[METRIC_VD3] && success) {               // D3: daily PL in money with commission
-      value   = AccountEquity()-AccountCredit();
-      success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.Time, value, HST_BUFFER_TICKS);
-   }
+ //if (metrics.enabled[METRIC_VD0] && success) {               // D0: daily PL in pip w/o commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD0], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_VD1] && success) {               // D1: daily PL in pip with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_VD2] && success) {               // D2: daily PL in money w/o commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
+ //if (metrics.enabled[METRIC_VD3] && success) {               // D3: daily PL in money with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.Time, value, HST_BUFFER_TICKS);
+ //}
    return(success);
 }
 
@@ -1675,16 +1672,16 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
    ArrayResize(real.swap,         newSize); real.swap        [size] = swap;
    ArrayResize(real.profit,       newSize); real.profit      [size] = profit;
 
-   bool _isOpenOrder      = (!closeTime);                                  // local vars
-   bool _isPosition       = (openType != OP_UNDEFINED);
-   bool _isOpenPosition   = (_isPosition && !closeTime);
-   bool _isClosedPosition = (_isPosition && closeTime);
+   bool isOpenOrder      = (!closeTime);
+   bool isPosition       = (openType != OP_UNDEFINED);
+   bool isOpenPosition   = (isPosition && !closeTime);
+   bool isClosedPosition = (isPosition && closeTime);
 
-   if (_isOpenOrder) {
+   if (isOpenOrder) {
       if (real.isOpenOrder)    return(!catch("Orders.AddRealTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
-      real.isOpenOrder = true;                                             // global vars
+      real.isOpenOrder = true;
    }
-   if (_isOpenPosition) {
+   if (isOpenPosition) {
       if (real.isOpenPosition) return(!catch("Orders.AddRealTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
       real.isOpenPosition = true;
       real.openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
@@ -1693,7 +1690,7 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
       real.openPl         += profit;
       real.openPlNet       = real.openSwap + real.openCommission + real.openPl;
    }
-   if (_isClosedPosition) {
+   if (isClosedPosition) {
       real.closedPositions++;
       real.closedLots       += lots;
       real.closedSwap       += swap;
@@ -1701,7 +1698,8 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
       real.closedPl         += profit;
       real.closedPlNet       = real.closedSwap + real.closedCommission + real.closedPl;
    }
-   if (_isPosition) {
+   if (isPosition) {
+      real.totalPl    = real.openPl    + real.closedPl;
       real.totalPlNet = real.openPlNet + real.closedPlNet;
    }
    return(!catch("Orders.AddRealTicket(4)"));
@@ -1768,16 +1766,16 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
    ArrayResize(virt.swap,         newSize); virt.swap        [size] = swap;
    ArrayResize(virt.profit,       newSize); virt.profit      [size] = profit;
 
-   bool _isOpenOrder      = (!closeTime);                                  // local vars
-   bool _isPosition       = (openType != OP_UNDEFINED);
-   bool _isOpenPosition   = (_isPosition && !closeTime);
-   bool _isClosedPosition = (_isPosition && closeTime);
+   bool isOpenOrder      = (!closeTime);
+   bool isPosition       = (openType != OP_UNDEFINED);
+   bool isOpenPosition   = (isPosition && !closeTime);
+   bool isClosedPosition = (isPosition && closeTime);
 
-   if (_isOpenOrder) {
+   if (isOpenOrder) {
       if (virt.isOpenOrder)    return(!catch("Orders.AddVirtualTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
-      virt.isOpenOrder = true;                                             // global vars
+      virt.isOpenOrder = true;
    }
-   if (_isOpenPosition) {
+   if (isOpenPosition) {
       if (virt.isOpenPosition) return(!catch("Orders.AddVirtualTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
       virt.isOpenPosition = true;
       virt.openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
@@ -1786,7 +1784,7 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
       virt.openPl         += profit;
       virt.openPlNet       = virt.openSwap + virt.openCommission + virt.openPl;
    }
-   if (_isClosedPosition) {
+   if (isClosedPosition) {
       virt.closedPositions++;
       virt.closedLots       += lots;
       virt.closedSwap       += swap;
@@ -1794,7 +1792,8 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
       virt.closedPl         += profit;
       virt.closedPlNet       = virt.closedSwap + virt.closedCommission + virt.closedPl;
    }
-   if (_isPosition) {
+   if (isPosition) {
+      virt.totalPl    = virt.openPl    + virt.closedPl;
       virt.totalPlNet = virt.openPlNet + virt.closedPlNet;
    }
    return(!catch("Orders.AddVirtualTicket(4)"));
