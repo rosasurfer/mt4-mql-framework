@@ -58,4 +58,25 @@
    bool HistoryFile2.InsertBar(int hFile, int offset, double bar[], int flags = NULL);
    bool HistoryFile2.MoveBars (int hFile, int fromOffset, int destOffset);
    bool HistoryFile2.AddTick  (int hFile, datetime time, double value, int flags = NULL);
+
+#import "rsfHistory3.ex4"
+   // symbol management
+   int  CreateSymbol3(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");
+
+   // history set management (1 set manages 9 history files)
+   int  HistorySet3.Create (string symbol, string description, int digits, int format, string server = "");
+   int  HistorySet3.Get    (string symbol, string server = "");
+   bool HistorySet3.Close  (int hSet);
+   bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL);
+
+   // history file management
+   int  HistoryFile3.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");
+   bool HistoryFile3.Close    (int hFile);
+   int  HistoryFile3.FindBar  (int hFile, datetime time, bool lpBarExists[]);
+   bool HistoryFile3.ReadBar  (int hFile, int offset, double bar[]);
+   bool HistoryFile3.WriteBar (int hFile, int offset, double bar[], int flags = NULL);
+   bool HistoryFile3.UpdateBar(int hFile, int offset, double value);
+   bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NULL);
+   bool HistoryFile3.MoveBars (int hFile, int fromOffset, int destOffset);
+   bool HistoryFile3.AddTick  (int hFile, datetime time, double value, int flags = NULL);
 #import
