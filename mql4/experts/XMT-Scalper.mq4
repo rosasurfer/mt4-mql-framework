@@ -1342,7 +1342,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_RC2] && !metrics.hSet[METRIC_RC2]) {
       symbol      = "XMT"+ sequence.id +"_RC2";
-      description = ProgramName() +"."+ sequence.id +" real cumulative PL in money w/o commission";
+      description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" w/o commission";
       digits      = 2;
       metrics.hSet[METRIC_RC2] = HistorySet1.Get(symbol, server);
       if (metrics.hSet[METRIC_RC2] == -1)
@@ -1351,7 +1351,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_RC3] && !metrics.hSet[METRIC_RC3]) {
       symbol      = "XMT"+ sequence.id +"_RC3";
-      description = ProgramName() +"."+ sequence.id +" real cumulative PL in money with commission";
+      description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" with commission";
       digits      = 2;
       metrics.hSet[METRIC_RC3] = HistorySet1.Get(symbol, server);
       if (metrics.hSet[METRIC_RC3] == -1)
@@ -1378,7 +1378,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_RD2] && !metrics.hSet[METRIC_RD2]) {
       symbol      = "XMT"+ sequence.id +"_RD2";
-      description = ProgramName() +"."+ sequence.id +" real daily PL in money w/o commission";
+      description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" w/o commission";
       digits      = 2;
       metrics.hSet[METRIC_RD2] = HistorySet2.Get(symbol, server);
       if (metrics.hSet[METRIC_RD2] == -1)
@@ -1387,7 +1387,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_RD3] && !metrics.hSet[METRIC_RD3]) {
       symbol      = "XMT"+ sequence.id +"_RD3";
-      description = ProgramName() +"."+ sequence.id +" real daily PL in money with commission";
+      description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" with commission";
       digits      = 2;
       metrics.hSet[METRIC_RD3] = HistorySet2.Get(symbol, server);
       if (metrics.hSet[METRIC_RD3] == -1)
@@ -1415,7 +1415,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_VC2] && !metrics.hSet[METRIC_VC2]) {
       symbol      = "XMT"+ sequence.id +"_VC2";
-      description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in money w/o commission";
+      description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" w/o commission";
       digits      = 2;
       metrics.hSet[METRIC_VC2] = HistorySet2.Get(symbol, server);
       if (metrics.hSet[METRIC_VC2] == -1)
@@ -1424,7 +1424,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_VC3] && !metrics.hSet[METRIC_VC3]) {
       symbol      = "XMT"+ sequence.id +"_VC3";
-      description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in money with commission";
+      description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" with commission";
       digits      = 2;
       metrics.hSet[METRIC_VC3] = HistorySet2.Get(symbol, server);
       if (metrics.hSet[METRIC_VC3] == -1)
@@ -1451,7 +1451,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_VD2] && !metrics.hSet[METRIC_VD2]) {
       symbol      = "XMT"+ sequence.id +"_VD2";
-      description = ProgramName() +"."+ sequence.id +" virt. daily PL in money w/o commission";
+      description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" w/o commission";
       digits      = 2;
       metrics.hSet[METRIC_VD2] = HistorySet3.Get(symbol, server);
       if (metrics.hSet[METRIC_VD2] == -1)
@@ -1460,7 +1460,7 @@ bool InitMetrics() {
    }
    if (metrics.enabled[METRIC_VD3] && !metrics.hSet[METRIC_VD3]) {
       symbol      = "XMT"+ sequence.id +"_VD3";
-      description = ProgramName() +"."+ sequence.id +" virt. daily PL in money with commission";
+      description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" with commission";
       digits      = 2;
       metrics.hSet[METRIC_VD3] = HistorySet3.Get(symbol, server);
       if (metrics.hSet[METRIC_VD3] == -1)
