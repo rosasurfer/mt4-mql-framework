@@ -9,11 +9,10 @@ int onDeinit() {
 
    for (int i=0; i < size; i++) {
       if (metrics.hSet[i] != 0) {
-         int tmp = metrics.hSet[i];
+         if      (i <  6) success = success && HistorySet1.Close(metrics.hSet[i]);
+         else if (i < 12) success = success && HistorySet2.Close(metrics.hSet[i]);
+         else             success = success && HistorySet3.Close(metrics.hSet[i]);
          metrics.hSet[i] = NULL;
-         if      (i <  6) success = success && HistorySet1.Close(tmp);
-         else if (i < 12) success = success && HistorySet2.Close(tmp);
-         else             success = success && HistorySet3.Close(tmp);
       }
    }
    return(ifInt(success, NO_ERROR, __ExecutionContext[EC.mqlError]));      // an error is a library error
