@@ -64,6 +64,7 @@ int onInitUser() {
    else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
    MaxSpread        = NormalizeDouble(MaxSpread, 1);
    sMaxSpread       = DoubleToStr(MaxSpread, 1);
+   commissionPip    = GetCommission(1, MODE_MARKUP)/Pip;
    orderSlippage    = Round(MaxSlippage*Pip/Point);
    orderComment     = "XMT."+ sequence.id + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
    orderMagicNumber = MagicNumber;

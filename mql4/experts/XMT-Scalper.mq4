@@ -154,18 +154,24 @@ bool     real.isOpenPosition;                   // whether an open position exis
 double   real.openLots;                         // total open lotsize: -n...+n
 double   real.openSwap;                         // total open swap
 double   real.openCommission;                   // total open commissions
-double   real.openPl;                           // total open gross profit
-double   real.openPlNet;                        // total open net profit
+double   real.openPl;                           // total open gross profit in money
+double   real.openPlNet;                        // total open net profit in money
+double   real.openPip;                          // total open gross profit in pip
+double   real.openPipNet;                       // total open net profit in pip
 
 int      real.closedPositions;                  // number of closed positions
 double   real.closedLots;                       // total closed lotsize: 0...+n
 double   real.closedCommission;                 // total closed commission
 double   real.closedSwap;                       // total closed swap
-double   real.closedPl;                         // total closed gross profit
-double   real.closedPlNet;                      // total closed net profit
+double   real.closedPl;                         // total closed gross profit in money
+double   real.closedPlNet;                      // total closed net profit in money
+double   real.closedPip;                        // total closed gross profit in pip
+double   real.closedPipNet;                     // total closed net profit in pip
 
-double   real.totalPl;                          // openPl    + closedPl
-double   real.totalPlNet;                       // openPlNet + closedPlNet
+double   real.totalPl;                          // openPl     + closedPl
+double   real.totalPlNet;                       // openPlNet  + closedPlNet
+double   real.totalPip;                         // openPip    + closedPip
+double   real.totalPipNet;                      // openPipNet + closedPipNet
 
 // virtual order log
 int      virt.ticket      [];
@@ -193,6 +199,8 @@ double   virt.openCommission;
 double   virt.openSwap;
 double   virt.openPl;
 double   virt.openPlNet;
+double   virt.openPip;
+double   virt.openPipNet;
 
 int      virt.closedPositions;
 double   virt.closedLots;
@@ -200,19 +208,24 @@ double   virt.closedCommission;
 double   virt.closedSwap;
 double   virt.closedPl;
 double   virt.closedPlNet;
+double   virt.closedPip;
+double   virt.closedPipNet;
 
-double   virt.totalPl;                          // openPl    + closedPl
-double   virt.totalPlNet;                       // openPlNet + closedPlNet
+double   virt.totalPl;                          // openPl     + closedPl
+double   virt.totalPlNet;                       // openPlNet  + closedPlNet
+double   virt.totalPip;                         // openPip    + closedPip
+double   virt.totalPipNet;                      // openPipNet + closedPipNet
 
 // metrics
 bool     metrics.enabled[16];                   // activation status
-double   metrics.vShift [16];                   // vertical shifting: to prevent negative values stored data is adjusted by this level
-int      metrics.hSet   [16];                   // HistorySets
+int      metrics.hSet   [16];                   // vertical shift to prevent negative bar values (data is adjusted by this level)
+double   metrics.vShift [16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
 
 // other
 double   currentSpread;                         // current spread in pip
 double   avgSpread;                             // average spread in pip
 double   minBarSize;                            // min. bar size in absolute terms
+double   commissionPip;                         // commission in pip (independant of lotsize)
 int      orderSlippage;                         // order slippage in point
 int      orderMagicNumber;
 string   orderComment = "";
@@ -443,6 +456,8 @@ bool UpdateRealOrderStatus() {
    real.openSwap       = 0;
    real.openPl         = 0;
    real.openPlNet      = 0;
+   real.openPip        = 0;
+   real.openPipNet     = 0;
 
    int orders = ArraySize(real.ticket);
 
@@ -483,6 +498,7 @@ bool UpdateRealOrderStatus() {
             real.openCommission += real.commission[i];
             real.openSwap       += real.swap      [i];
             real.openPl         += real.profit    [i];
+            real.openPip        += ifDouble(real.openType[i]==OP_BUY, Bid-real.openPrice[i], real.openPrice[i]-Ask)/Pip;
          }
          else /*isClosed*/ {                                      // the position was closed
             onRealPositionClose(i);                               // updates order record and logs
@@ -491,14 +507,19 @@ bool UpdateRealOrderStatus() {
             real.closedCommission += real.commission[i];
             real.closedSwap       += real.swap      [i];
             real.closedPl         += real.profit    [i];
+            real.closedPip        += ifDouble(real.openType[i]==OP_BUY, real.closePrice[i]-real.openPrice[i], real.openPrice[i]-real.closePrice[i])/Pip;
          }
       }
    }
 
-   real.openPlNet   = real.openSwap   + real.openCommission   + real.openPl;
-   real.closedPlNet = real.closedSwap + real.closedCommission + real.closedPl;
-   real.totalPl     = real.openPl     + real.closedPl;
-   real.totalPlNet  = real.openPlNet  + real.closedPlNet;
+   real.openPlNet    = real.openSwap   + real.openCommission   + real.openPl;
+   real.openPipNet   = real.openPip    - commissionPip;           // swap can be ignored
+   real.closedPlNet  = real.closedSwap + real.closedCommission + real.closedPl;
+   real.closedPipNet = real.closedPip  - commissionPip;           // swap can be ignored
+   real.totalPl      = real.openPl     + real.closedPl;
+   real.totalPlNet   = real.openPlNet  + real.closedPlNet;
+   real.totalPip     = real.openPip    + real.closedPip;
+   real.totalPipNet  = real.openPipNet + real.closedPipNet;
 
    return(!catch("UpdateRealOrderStatus(2)"));
 }
@@ -520,6 +541,8 @@ bool UpdateVirtualOrderStatus() {
    virt.openSwap       = 0;
    virt.openPl         = 0;
    virt.openPlNet      = 0;
+   virt.openPip        = 0;
+   virt.openPipNet     = 0;
 
    int orders = ArraySize(virt.ticket);
 
@@ -556,11 +579,13 @@ bool UpdateVirtualOrderStatus() {
          }
 
          if (isOpen) {
+            double openPip       = ifDouble(virt.openType[i]==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip;
             virt.isOpenPosition  = true;
-            virt.profit[i]       = ifDouble(virt.openType[i]==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip * PipValue(virt.lots[i]);
+            virt.profit[i]       = openPip * PipValue(virt.lots[i]);
             virt.openLots       += ifDouble(virt.openType[i]==OP_BUY, virt.lots[i], -virt.lots[i]);
             virt.openCommission += virt.commission[i];            // swap is ignored in virtual trading
             virt.openPl         += virt.profit    [i];
+            virt.openPip        += openPip;
          }
          else /*isClosed*/ {                                      // an exit limit was triggered
             virt.isOpenOrder = false;                             // mark order status
@@ -569,14 +594,19 @@ bool UpdateVirtualOrderStatus() {
             virt.closedLots       += virt.lots      [i];
             virt.closedCommission += virt.commission[i];
             virt.closedPl         += virt.profit    [i];
+            virt.closedPip        += ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
          }
       }
    }
 
-   virt.openPlNet   = virt.openSwap   + virt.openCommission   + virt.openPl;
-   virt.closedPlNet = virt.closedSwap + virt.closedCommission + virt.closedPl;
-   virt.totalPl     = virt.openPl     + virt.closedPl;
-   virt.totalPlNet  = virt.openPlNet  + virt.closedPlNet;
+   virt.openPlNet    = virt.openSwap   + virt.openCommission   + virt.openPl;
+   virt.openPipNet   = virt.openPip    - commissionPip;           // swap can be ignored
+   virt.closedPlNet  = virt.closedSwap + virt.closedCommission + virt.closedPl;
+   virt.closedPipNet = virt.closedPip  - commissionPip;           // swap can be ignored
+   virt.totalPl      = virt.openPl     + virt.closedPl;
+   virt.totalPlNet   = virt.openPlNet  + virt.closedPlNet;
+   virt.totalPip     = virt.openPip    + virt.closedPip;
+   virt.totalPipNet  = virt.openPipNet + virt.closedPipNet;
 
    return(!catch("UpdateVirtualOrderStatus(2)"));
 }
@@ -1258,14 +1288,20 @@ bool ReadOrderLog() {
    real.openCommission   = 0;
    real.openPl           = 0;
    real.openPlNet        = 0;
+   real.openPip          = 0;
+   real.openPipNet       = 0;
    real.closedPositions  = 0;
    real.closedLots       = 0;
    real.closedSwap       = 0;
    real.closedCommission = 0;
    real.closedPl         = 0;
    real.closedPlNet      = 0;
+   real.closedPip        = 0;
+   real.closedPipNet     = 0;
    real.totalPl          = 0;
    real.totalPlNet       = 0;
+   real.totalPip         = 0;
+   real.totalPipNet      = 0;
 
    // all closed positions
    int orders = OrdersHistoryTotal();
@@ -1564,14 +1600,14 @@ bool RecordMetrics() {
    bool success = true;
 
    // real metrics
- //if (metrics.enabled[METRIC_RC0] && success) {               // C0: cumulative PL in pip w/o commission
- //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, HST_BUFFER_TICKS);
- //}
- //if (metrics.enabled[METRIC_RC1] && success) {               // C1: cumulative PL in pip with commission
- //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, HST_BUFFER_TICKS);
- //}
+   if (metrics.enabled[METRIC_RC0] && success) {               // C0: cumulative PL in pip w/o commission
+      value   = real.totalPip + metrics.vShift[METRIC_RC0];
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, HST_BUFFER_TICKS);
+   }
+   if (metrics.enabled[METRIC_RC1] && success) {               // C1: cumulative PL in pip with commission
+      value   = real.totalPipNet + metrics.vShift[METRIC_RC1];
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, HST_BUFFER_TICKS);
+   }
    if (metrics.enabled[METRIC_RC2] && success) {               // C2: cumulative PL in money w/o commission
       value   = real.totalPl + metrics.vShift[METRIC_RC2];
       success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.Time, value, HST_BUFFER_TICKS);
@@ -1598,14 +1634,14 @@ bool RecordMetrics() {
  //}
 
    // virtual metrics
- //if (metrics.enabled[METRIC_VC0] && success) {               // C0: cumulative PL in pip w/o commission
- //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, HST_BUFFER_TICKS);
- //}
- //if (metrics.enabled[METRIC_VC1] && success) {               // C1: cumulative PL in pip with commission
- //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, HST_BUFFER_TICKS);
- //}
+   if (metrics.enabled[METRIC_VC0] && success) {               // C0: cumulative PL in pip w/o commission
+      value   = virt.totalPip + metrics.vShift[METRIC_VC0];
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, HST_BUFFER_TICKS);
+   }
+   if (metrics.enabled[METRIC_VC1] && success) {               // C1: cumulative PL in pip with commission
+      value   = virt.totalPipNet + metrics.vShift[METRIC_VC1];
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, HST_BUFFER_TICKS);
+   }
    if (metrics.enabled[METRIC_VC2] && success) {               // C2: cumulative PL in money w/o commission
       value   = virt.totalPl + metrics.vShift[METRIC_VC2];
       success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.Time, value, HST_BUFFER_TICKS);
@@ -1737,22 +1773,22 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
       openType     = type;
    }
 
-   int size=ArraySize(real.ticket), newSize=size+1;
-   ArrayResize(real.ticket,       newSize); real.ticket      [size] = ticket;
-   ArrayResize(real.linkedTicket, newSize); real.linkedTicket[size] = linkedTicket;
-   ArrayResize(real.lots,         newSize); real.lots        [size] = lots;
-   ArrayResize(real.pendingType,  newSize); real.pendingType [size] = pendingType;
-   ArrayResize(real.pendingPrice, newSize); real.pendingPrice[size] = NormalizeDouble(pendingPrice, Digits);
-   ArrayResize(real.openType,     newSize); real.openType    [size] = openType;
-   ArrayResize(real.openTime,     newSize); real.openTime    [size] = openTime;
-   ArrayResize(real.openPrice,    newSize); real.openPrice   [size] = NormalizeDouble(openPrice, Digits);
-   ArrayResize(real.closeTime,    newSize); real.closeTime   [size] = closeTime;
-   ArrayResize(real.closePrice,   newSize); real.closePrice  [size] = NormalizeDouble(closePrice, Digits);
-   ArrayResize(real.stopLoss,     newSize); real.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
-   ArrayResize(real.takeProfit,   newSize); real.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
-   ArrayResize(real.commission,   newSize); real.commission  [size] = commission;
-   ArrayResize(real.swap,         newSize); real.swap        [size] = swap;
-   ArrayResize(real.profit,       newSize); real.profit      [size] = profit;
+   int i=ArraySize(real.ticket), newSize=i+1;
+   ArrayResize(real.ticket,       newSize); real.ticket      [i] = ticket;
+   ArrayResize(real.linkedTicket, newSize); real.linkedTicket[i] = linkedTicket;
+   ArrayResize(real.lots,         newSize); real.lots        [i] = lots;
+   ArrayResize(real.pendingType,  newSize); real.pendingType [i] = pendingType;
+   ArrayResize(real.pendingPrice, newSize); real.pendingPrice[i] = NormalizeDouble(pendingPrice, Digits);
+   ArrayResize(real.openType,     newSize); real.openType    [i] = openType;
+   ArrayResize(real.openTime,     newSize); real.openTime    [i] = openTime;
+   ArrayResize(real.openPrice,    newSize); real.openPrice   [i] = NormalizeDouble(openPrice, Digits);
+   ArrayResize(real.closeTime,    newSize); real.closeTime   [i] = closeTime;
+   ArrayResize(real.closePrice,   newSize); real.closePrice  [i] = NormalizeDouble(closePrice, Digits);
+   ArrayResize(real.stopLoss,     newSize); real.stopLoss    [i] = NormalizeDouble(stopLoss, Digits);
+   ArrayResize(real.takeProfit,   newSize); real.takeProfit  [i] = NormalizeDouble(takeProfit, Digits);
+   ArrayResize(real.commission,   newSize); real.commission  [i] = commission;
+   ArrayResize(real.swap,         newSize); real.swap        [i] = swap;
+   ArrayResize(real.profit,       newSize); real.profit      [i] = profit;
 
    bool isOpenOrder      = (!closeTime);
    bool isPosition       = (openType != OP_UNDEFINED);
@@ -1771,6 +1807,8 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
       real.openCommission += commission;
       real.openPl         += profit;
       real.openPlNet       = real.openSwap + real.openCommission + real.openPl;
+      real.openPip        += ifDouble(IsLongOrderType(type), Bid-real.openPrice[i], real.openPrice[i]-Ask)/Pip;
+    //real.openPipNet      = ...
    }
    if (isClosedPosition) {
       real.closedPositions++;
@@ -1779,10 +1817,14 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
       real.closedCommission += commission;
       real.closedPl         += profit;
       real.closedPlNet       = real.closedSwap + real.closedCommission + real.closedPl;
+      real.closedPip        += ifDouble(IsLongOrderType(type), real.closePrice[i]-real.openPrice[i], real.openPrice[i]-real.closePrice[i])/Pip;
+    //real.closedPipNet      = ...
    }
    if (isPosition) {
-      real.totalPl    = real.openPl    + real.closedPl;
-      real.totalPlNet = real.openPlNet + real.closedPlNet;
+      real.totalPl     = real.openPl     + real.closedPl;
+      real.totalPlNet  = real.openPlNet  + real.closedPlNet;
+      real.totalPip    = real.openPip    + real.closedPip;
+      real.totalPipNet = real.openPipNet + real.closedPipNet;
    }
    return(!catch("Orders.AddRealTicket(4)"));
 }
@@ -1827,26 +1869,26 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
       openType     = type;
    }
 
-   int size=ArraySize(virt.ticket), newSize=size+1;
+   int size=ArraySize(virt.ticket), newSize=size+1, i=size;
    if (!ticket) {
       if (!size) ticket = 1;
       else       ticket = virt.ticket[size-1] + 1;
    }
-   ArrayResize(virt.ticket,       newSize); virt.ticket      [size] = ticket;
-   ArrayResize(virt.linkedTicket, newSize); virt.linkedTicket[size] = linkedTicket;
-   ArrayResize(virt.lots,         newSize); virt.lots        [size] = lots;
-   ArrayResize(virt.pendingType,  newSize); virt.pendingType [size] = pendingType;
-   ArrayResize(virt.pendingPrice, newSize); virt.pendingPrice[size] = NormalizeDouble(pendingPrice, Digits);
-   ArrayResize(virt.openType,     newSize); virt.openType    [size] = openType;
-   ArrayResize(virt.openTime,     newSize); virt.openTime    [size] = openTime;
-   ArrayResize(virt.openPrice,    newSize); virt.openPrice   [size] = NormalizeDouble(openPrice, Digits);
-   ArrayResize(virt.closeTime,    newSize); virt.closeTime   [size] = closeTime;
-   ArrayResize(virt.closePrice,   newSize); virt.closePrice  [size] = NormalizeDouble(closePrice, Digits);
-   ArrayResize(virt.stopLoss,     newSize); virt.stopLoss    [size] = NormalizeDouble(stopLoss, Digits);
-   ArrayResize(virt.takeProfit,   newSize); virt.takeProfit  [size] = NormalizeDouble(takeProfit, Digits);
-   ArrayResize(virt.commission,   newSize); virt.commission  [size] = commission;
-   ArrayResize(virt.swap,         newSize); virt.swap        [size] = swap;
-   ArrayResize(virt.profit,       newSize); virt.profit      [size] = profit;
+   ArrayResize(virt.ticket,       newSize); virt.ticket      [i] = ticket;
+   ArrayResize(virt.linkedTicket, newSize); virt.linkedTicket[i] = linkedTicket;
+   ArrayResize(virt.lots,         newSize); virt.lots        [i] = lots;
+   ArrayResize(virt.pendingType,  newSize); virt.pendingType [i] = pendingType;
+   ArrayResize(virt.pendingPrice, newSize); virt.pendingPrice[i] = NormalizeDouble(pendingPrice, Digits);
+   ArrayResize(virt.openType,     newSize); virt.openType    [i] = openType;
+   ArrayResize(virt.openTime,     newSize); virt.openTime    [i] = openTime;
+   ArrayResize(virt.openPrice,    newSize); virt.openPrice   [i] = NormalizeDouble(openPrice, Digits);
+   ArrayResize(virt.closeTime,    newSize); virt.closeTime   [i] = closeTime;
+   ArrayResize(virt.closePrice,   newSize); virt.closePrice  [i] = NormalizeDouble(closePrice, Digits);
+   ArrayResize(virt.stopLoss,     newSize); virt.stopLoss    [i] = NormalizeDouble(stopLoss, Digits);
+   ArrayResize(virt.takeProfit,   newSize); virt.takeProfit  [i] = NormalizeDouble(takeProfit, Digits);
+   ArrayResize(virt.commission,   newSize); virt.commission  [i] = commission;
+   ArrayResize(virt.swap,         newSize); virt.swap        [i] = swap;
+   ArrayResize(virt.profit,       newSize); virt.profit      [i] = profit;
 
    bool isOpenOrder      = (!closeTime);
    bool isPosition       = (openType != OP_UNDEFINED);
@@ -1865,6 +1907,8 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
       virt.openCommission += commission;
       virt.openPl         += profit;
       virt.openPlNet       = virt.openSwap + virt.openCommission + virt.openPl;
+      virt.openPip        += ifDouble(IsLongOrderType(type), Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip;
+    //virt.openPipNet      = ...
    }
    if (isClosedPosition) {
       virt.closedPositions++;
@@ -1873,10 +1917,14 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
       virt.closedCommission += commission;
       virt.closedPl         += profit;
       virt.closedPlNet       = virt.closedSwap + virt.closedCommission + virt.closedPl;
+      virt.closedPip        += ifDouble(IsLongOrderType(type), virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
+    //virt.closedPipNet      = ...
    }
    if (isPosition) {
-      virt.totalPl    = virt.openPl    + virt.closedPl;
-      virt.totalPlNet = virt.openPlNet + virt.closedPlNet;
+      virt.totalPl     = virt.openPl     + virt.closedPl;
+      virt.totalPlNet  = virt.openPlNet  + virt.closedPlNet;
+      virt.totalPip    = virt.openPip    + virt.closedPip;
+      virt.totalPipNet = virt.openPipNet + virt.closedPipNet;
    }
    return(!catch("Orders.AddVirtualTicket(4)"));
 }
