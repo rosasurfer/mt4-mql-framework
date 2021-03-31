@@ -974,7 +974,7 @@ bool UpdatePendingOrders() {
 /**
  * Generate a new sequence id. Must be unique for all instances of this expert (strategy).
  *
- * @return int - sequence id between 1000 and 16383
+ * @return int - sequence id in the range from 1000-9999
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
@@ -992,12 +992,12 @@ int CreateSequenceId() {
  * @return int - magic number or NULL in case of errors
  */
 int CreateMagicNumber() {
-   if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
-   if (sequence.id & (~0x3FFF) != 0) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)  return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (sequence.id < 1000 || sequence.id > 9999) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   int strategy = STRATEGY_ID;                                 // 101-1023   (max. 10 bit)
-   int sequence = sequence.id;                                 // 1000-16383 (max. 14 bit)
-   int level    = 0;                                           // 0          (not needed for this strategy)
+   int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
+   int sequence = sequence.id;                                 // 1000-9999 (14 bit)
+   int level    = 0;                                           //         0 (not used in this strategy)
 
    return((strategy<<22) + (sequence<<8) + (level<<0));
 }
