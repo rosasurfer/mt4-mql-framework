@@ -2687,75 +2687,71 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
 
 /**
- * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
+ * Read a file into an array. Each element of the array will hold a line of the file, with the end-of-line separator removed.
  *
- * @param  string filename       - Dateiname mit zu ".\files\" relativer Pfadangabe
- * @param  string result[]       - Array zur Aufnahme der einzelnen Zeilen
- * @param  bool   skipEmptyLines - ob leere Zeilen übersprungen werden sollen (default: nein)
+ * @param  string filename                  - name relative to "{data-directory}\mql4\files" with "\" or "/" separators
+ * @param  string result[]                  - array receiving the read lines
+ * @param  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
  *
- * @return int - Anzahl der eingelesenen Zeilen oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - number of lines returned in result[] or -1 (EMPTY) in case of errors
  */
-int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
+int FileReadLines(string filename, string result[], bool skipEmptyLines = false) {
    skipEmptyLines = skipEmptyLines!=0;
+   ArrayResize(result, 0);
 
    int hFile, hFileBin, fieldSeparator='\t';
 
-   // Datei öffnen
-   hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);         // erwartet Pfadangabe relativ zu ".\files\"
-   if (hFile < 0)
-      return(_EMPTY(catch("FileReadLines(1)->FileOpen(\""+ filename +"\")")));
+   // open the file
+   hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);
+   if (hFile < 0) return(_EMPTY(catch("FileReadLines(1)->FileOpen(\""+ filename +"\")")));
 
-
-   // Schnelle Rückkehr bei leerer Datei
-   if (FileSize(hFile) == 0) {
+   // quick return on an empty file
+   if (!FileSize(hFile)) {
       FileClose(hFile);
-      ArrayResize(result, 0);
       return(ifInt(!catch("FileReadLines(2)"), 0, -1));
    }
 
-
-   // Datei zeilenweise einlesen
+   // read file line by line
    bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
-   string line, value, lines[]; ArrayResize(lines, 0);                     // Zwischenspeicher für gelesene Zeilen
-   int i, len, fPointer;                                                   // Zeilenzähler und Länge des gelesenen Strings
+   string line, value, lines[]; ArrayResize(lines, 0);                     // cache for read lines
+   int i, len, fPointer;                                                   // line counter and length of the read string
 
    while (!FileIsEnding(hFile)) {
       newLine = false;
-      if (lineEnd) {                                                       // Wenn beim letzten Durchlauf das Zeilenende erreicht wurde,
-         newLine   = true;                                                 // Flags auf Zeilenbeginn setzen.
+      if (lineEnd) {                                                       // if the last loop reached EOF
+         newLine   = true;                                                 // mark start of a new line = BOL
          blankLine = false;
          lineEnd   = false;
-         fPointer  = FileTell(hFile);                                      // zeigt immer auf den aktuellen Zeilenbeginn
+         fPointer  = FileTell(hFile);                                      // points to the start of the current line
       }
 
-      // Zeile auslesen
-      value = FileReadString(hFile);
+      // read line
+      value = FileReadString(hFile);                                       // MQL4 bug: FileReadString() stops reading after 4095 chars
 
-      // auf Zeilen- und Dateiende prüfen
+      // check for EOL and EOF
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd  = true;
          if (newLine) {
             if (!StringLen(value)) {
-               if (FileIsEnding(hFile))                                    // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
+               if (FileIsEnding(hFile))                                    // BOL + EOF => not a line => break
                   break;
-               blankLine = true;                                           // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
+               blankLine = true;                                           // BOL + EOL => empty line
             }
          }
       }
 
-      // Leerzeilen ggf. überspringen
+      // skip empty lines if configured
       if (blankLine) /*&&*/ if (skipEmptyLines)
          continue;
 
-      // Wert in neuer Zeile speichern oder vorherige Zeile aktualisieren
+      // store the read string in a new line or append it to the previously read line
       if (newLine) {
          i++;
          ArrayResize(lines, i);
          lines[i-1] = value;
-         //debug("FileReadLines()  new line "+ i +",   "+ StringLen(value) +" chars,   fPointer="+ FileTell(hFile));
       }
       else {
-         // FileReadString() liest max. 4095 Zeichen: bei langen Zeilen prüfen, ob das letzte Zeichen ein Separator war
+         // FileReadString() reads max. 4095 chars: check longer lines for a separator
          len = StringLen(lines[i-1]);
          if (len < 4095) {
             wasSeparator = true;
@@ -2778,11 +2774,10 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
 
          if (wasSeparator) lines[i-1] = StringConcatenate(lines[i-1], CharToStr(fieldSeparator), value);
          else              lines[i-1] = StringConcatenate(lines[i-1],                            value);
-         //debug("FileReadLines()  extend line "+ i +",   adding "+ StringLen(value) +" chars to existing "+ StringLen(lines[i-1]) +" chars,   fPointer="+ FileTell(hFile));
       }
    }
 
-   // Dateiende hat ERR_END_OF_FILE ausgelöst
+   // check whether the end of file triggered ERR_END_OF_FILE
    int error = GetLastError();
    if (error!=ERR_END_OF_FILE) /*&&*/ if (IsError(error)) {
       FileClose(hFile);
@@ -2791,15 +2786,13 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
       return(_EMPTY(catch("FileReadLines(5)", error)));
    }
 
-   // Dateien schließen
+   // close file
    FileClose(hFile);
-   if (hFileBin != 0)
-      FileClose(hFileBin);
+   if (hFileBin != 0) FileClose(hFileBin);
 
-   // Zeilen in Ergebnisarray kopieren
+   // copy read lines into result[] array
    ArrayResize(result, i);
-   if (i > 0)
-      ArrayCopy(result, lines);
+   if (i > 0) ArrayCopy(result, lines);
 
    if (ArraySize(lines) > 0)
       ArrayResize(lines, 0);
@@ -4431,14 +4424,15 @@ string GetServerTimezone() {
    // - This function is stored in the library to make the cache survive an indicator init cyle.
 
    #define IDX_SERVER   0
-   #define IDX_TIMEZONE 1
+   #define IDX_COMPANY  1
+   #define IDX_TIMEZONE 2
 
    int Tick=__ExecutionContext[EC.ticks], UnchangedBars=__ExecutionContext[EC.unchangedBars];
    static int lastTick = -1;
-   static string lastResult[2]; // {lastServer, lastTimezone};
+   static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
 
    if (Tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) > 0 && !UnchangedBars) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) && !UnchangedBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";
@@ -4447,13 +4441,14 @@ string GetServerTimezone() {
    }
 
    if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER  ] = GetAccountServer(); if (!StringLen(lastResult[IDX_SERVER])) return("");
+      lastResult[IDX_SERVER  ] = GetAccountServer();  if (!StringLen(lastResult[IDX_SERVER] )) return("");
+      lastResult[IDX_COMPANY ] = GetAccountCompany(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
       lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_SERVER]);
       if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", StrLeftTo(lastResult[IDX_SERVER], "-"));
+         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_COMPANY]);
       }
       if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +", using default timezone \"FXT\"");
+         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +" (company "+ DoubleQuoteStr(lastResult[IDX_COMPANY]) +"), using default timezone \"FXT\"");
          lastResult[IDX_TIMEZONE] = "FXT";
       }
    }

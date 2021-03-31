@@ -724,12 +724,12 @@ bool ObjectDeleteEx(string label, string location = "") {
 
 
 /**
- * Gibt den PipValue des aktuellen Symbols für die angegebene Lotsize zurück.
+ * Return the current symbol's pip value for the specified lot amount.
  *
- * @param  double lots           [optional] - Lotsize (default: 1 lot)
- * @param  bool   suppressErrors [optional] - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
+ * @param  double lots           [optional] - lot amount (default: 1 lot)
+ * @param  bool   suppressErrors [optional] - whether to suppress runtime errors (default: no)
  *
- * @return double - PipValue oder 0, falls ein Fehler auftrat
+ * @return double - pip value or NULL (0) in case of errors
  */
 double PipValue(double lots=1.0, bool suppressErrors=false) {
    suppressErrors = suppressErrors!=0;
@@ -3945,9 +3945,9 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only.
  *
- * Among others the identifier is used for reading/writing company-wide configurations and for composing log messages. It is
- * derived from the name of the current trade server. If the trade server is not explicitely mapped to a different company
- * identifier (see below) the returned default identifier matches the first word of the current trade server name.
+ * Among others the identifier is used for reading/writing company-wide configurations and for log messages. It is derived
+ * from the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
+ * (see below) the returned default identifier matches the first word of the current trade server name.
  *
  * @return string - company identifier or an empty string in case of errors
  *
@@ -5841,7 +5841,7 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
    if (!lotstep) {
       int error = GetLastError();
-      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifInt(error, error, ERR_INVALID_MARKET_DATA))));
+      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifIntOr(error, ERR_INVALID_MARKET_DATA))));
    }
 
    switch (mode) {

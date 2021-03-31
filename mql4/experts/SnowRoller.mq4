@@ -2771,13 +2771,13 @@ bool UpdateStatus.ExecuteStopLoss(int ticket) {
  * @return int - magic number or NULL in case of errors
  */
 int CreateMagicNumber(int level) {
-   if (STRATEGY_ID & ( ~0x3FF) != 0) return(!catch("CreateMagicNumber(1)  "+ sequence.longName +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
-   if (sequence.id & (~0x3FFF) != 0) return(!catch("CreateMagicNumber(2)  "+ sequence.longName +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (!level || Abs(level) > 255)   return(!catch("CreateMagicNumber(3)  "+ sequence.longName +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)  return(!catch("CreateMagicNumber(1)  "+ sequence.longName +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (sequence.id < 1000 || sequence.id > 9999) return(!catch("CreateMagicNumber(2)  "+ sequence.longName +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (!level || Abs(level) > 255)               return(!catch("CreateMagicNumber(3)  "+ sequence.longName +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
 
-   int strategy = STRATEGY_ID;                              // 101-1023   (max. 10 bit)
-   int sequence = sequence.id;                              // 1000-16383 (max. 14 bit)
-   level        = Abs(level);                               // 1-255      (max. 8 bit, in magic number always positive)
+   int strategy = STRATEGY_ID;                              //  101-1023 (10 bit)
+   int sequence = sequence.id;                              // 1000-9999 (14 bit)
+   level        = Abs(level);                               //     1-255 (8 bit, in magic number always positive)
 
    return((strategy<<22) + (sequence<<8) + (level<<0));
 }
