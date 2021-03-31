@@ -81,7 +81,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
 
    if (bars < 0) {
       if (error!=ERR_ARRAY_ERROR && error!=ERR_SERIES_NOT_AVAILABLE)
-         return(_EMPTY(catch("iCopyRates(4)->ArrayCopyRates("+ symbol +", "+ PeriodDescription(timeframe) +") => "+ bars, ifInt(error, error, ERR_RUNTIME_ERROR))));
+         return(_EMPTY(catch("iCopyRates(4)->ArrayCopyRates("+ symbol +", "+ PeriodDescription(timeframe) +") => "+ bars, ifIntOr(error, ERR_RUNTIME_ERROR))));
       error = NO_ERROR;
       bars = 0;
    }

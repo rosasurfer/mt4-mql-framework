@@ -7,7 +7,7 @@
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
  *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // wird in MagicNumber nicht mehr verwendet
  */
-#define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
+#define STRATEGY_ID   102                                            // unique strategy id from 101-1023 (10 bit)
 
 
 bool   mode.intern = true;          // Default                       // Orderdaten und Trading im aktuellen Account
