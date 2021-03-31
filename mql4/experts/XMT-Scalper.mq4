@@ -230,19 +230,21 @@ double   commissionPip;                         // commission in pip (independan
 int      orderSlippage;                         // order slippage in point
 int      orderMagicNumber;
 string   orderComment = "";
+string   tradingModeDescriptions[] = {"", "Regular", "Virtual", "Virtual-Copier", "Virtual-Mirror"};
 
-// cache vars to speed-up status messages
-string   sTradingModeDescriptions[] = {"", "", ": Virtual Trading", ": Virtual Trading + Trade Copier", ": Virtual Trading + Trade Mirror"};
-string   sCurrentSpread             = "-";
-string   sAvgSpread                 = "-";
-string   sMaxSpread                 = "-";
-string   sCurrentBarSize            = "-";
-string   sMinBarSize                = "-";
-string   sIndicator                 = "-";
-string   sUnitSize                  = "-";
+// vars to speed-up status messages
+string   sTradingModeStatus[] = {"", "", ": Virtual Trading", ": Virtual Trading + Copier", ": Virtual Trading + Mirror"};
+string   sCurrentSpread       = "-";
+string   sAvgSpread           = "-";
+string   sMaxSpread           = "-";
+string   sCurrentBarSize      = "-";
+string   sMinBarSize          = "-";
+string   sIndicator           = "-";
+string   sUnitSize            = "-";
 
-// debug settings                               // configurable via framework config, @see ::afterInit()
+// debug settings                               // configurable via framework config, see ::afterInit()
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
+bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
 
 
 #include <apps/xmt-scalper/init.mqh>
@@ -866,7 +868,10 @@ bool OpenRealOrder(int signal) {
    if (IsTesting()) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenRealOrder(4)");
    }
-   return(Orders.AddRealTicket(oe.Ticket(oe), virtualTicket, oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL));
+
+   if (!Orders.AddRealTicket(oe.Ticket(oe), virtualTicket, oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL)) return(false);
+   if (!SaveStatus()) return(false);
+   return(true);
 }
 
 
@@ -2183,6 +2188,131 @@ string TradingModeToStr(int mode) {
 
 
 /**
+ * Write the current sequence status to the status file.
+ *
+ * @return bool - success status
+ */
+bool SaveStatus() {
+   if (IsLastError()) return(false);
+   if (!sequence.id)  return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
+
+   // In tester skip updating the status file except at the first call and at test end.
+   if (IsTesting() && test.reduceStatusWrites) {
+      static bool saved = false;
+      if (saved && __CoreFunction!=CF_DEINIT) return(true);
+      saved = true;
+   }
+
+   string section, file=GetStatusFilename();
+
+   section = "General";
+   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Symbol",  Symbol());
+
+   section = "Inputs";
+   WriteIniString(file, section, "Sequence.ID",              sequence.id);
+   WriteIniString(file, section, "TradingMode",              TradingMode);
+
+   WriteIniString(file, section, "EntryIndicator",           EntryIndicator);
+   WriteIniString(file, section, "IndicatorTimeframe",       IndicatorTimeframe);
+   WriteIniString(file, section, "IndicatorPeriods",         IndicatorPeriods);
+   WriteIniString(file, section, "BollingerBands.Deviation", NumberToStr(BollingerBands.Deviation, ".1+"));
+   WriteIniString(file, section, "Envelopes.Deviation",      NumberToStr(Envelopes.Deviation, ".1+"));
+
+   WriteIniString(file, section, "UseSpreadMultiplier",      UseSpreadMultiplier);
+   WriteIniString(file, section, "SpreadMultiplier",         NumberToStr(SpreadMultiplier, ".1+"));
+   WriteIniString(file, section, "MinBarSize",               DoubleToStr(MinBarSize, 1));
+
+   WriteIniString(file, section, "BreakoutReversal",         DoubleToStr(BreakoutReversal, 1));
+   WriteIniString(file, section, "MaxSpread",                DoubleToStr(MaxSpread, 1));
+   WriteIniString(file, section, "ReverseSignals",           ReverseSignals);
+
+   WriteIniString(file, section, "MoneyManagement",          MoneyManagement);
+   WriteIniString(file, section, "Risk",                     NumberToStr(Risk, ".1+"));
+   WriteIniString(file, section, "ManualLotsize",            NumberToStr(ManualLotsize, ".1+"));
+
+   WriteIniString(file, section, "TakeProfit",               DoubleToStr(TakeProfit, 1));
+   WriteIniString(file, section, "StopLoss",                 DoubleToStr(StopLoss, 1));
+   WriteIniString(file, section, "TrailEntryStep",           DoubleToStr(TrailEntryStep, 1));
+   WriteIniString(file, section, "TrailExitStart",           DoubleToStr(TrailExitStart, 1));
+   WriteIniString(file, section, "TrailExitStep",            DoubleToStr(TrailExitStep, 1));
+   WriteIniString(file, section, "MagicNumber",              MagicNumber);
+   WriteIniString(file, section, "MaxSlippage",              DoubleToStr(MaxSlippage, 1));
+
+   WriteIniString(file, section, "EA.StopOnProfit",          DoubleToStr(EA.StopOnProfit, 2));
+   WriteIniString(file, section, "EA.StopOnLoss",            DoubleToStr(EA.StopOnLoss, 2));
+   WriteIniString(file, section, "EA.RecordMetrics",         EA.RecordMetrics);
+
+   WriteIniString(file, section, "ChannelBug",               ChannelBug);
+   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug);
+
+   section = "Runtime status";
+   int size = ArraySize(real.ticket);
+   for (int i=0; i < size; i++) {
+      WriteIniString(file, section, "real.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, TRADINGMODE_REGULAR));
+   }
+   size = ArraySize(virt.ticket);
+   for (i=0; i < size; i++) {
+      WriteIniString(file, section, "virt.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, TRADINGMODE_VIRTUAL));
+   }
+
+   return(!catch("SaveStatus(2)"));
+}
+
+
+/**
+ * Return a string representation of an order record as stored by SaveStatus().
+ *
+ * @param  int index - index of the order record
+ * @param  int mode  - one of MODE_REAL or MODE_VIRTUAL
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.OrderToStr(int index, int mode) {
+   /*
+   real.order.i=ticket,linkedTicket,lots,pendingType,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,stopLoss,takeProfit,commission,swap,profit
+   */
+   if (mode == TRADINGMODE_REGULAR) {
+      int      ticket       = real.ticket      [index];
+      int      linkedTicket = real.linkedTicket[index];
+      double   lots         = real.lots        [index];
+      int      pendingType  = real.pendingType [index];
+      double   pendingPrice = real.pendingPrice[index];
+      int      openType     = real.openType    [index];
+      datetime openTime     = real.openTime    [index];
+      double   openPrice    = real.openPrice   [index];
+      datetime closeTime    = real.closeTime   [index];
+      double   closePrice   = real.closePrice  [index];
+      double   stopLoss     = real.stopLoss    [index];
+      double   takeProfit   = real.takeProfit  [index];
+      double   commission   = real.commission  [index];
+      double   swap         = real.swap        [index];
+      double   profit       = real.profit      [index];
+   }
+   else if (mode == TRADINGMODE_VIRTUAL) {
+               ticket       = virt.ticket      [index];
+               linkedTicket = virt.linkedTicket[index];
+               lots         = virt.lots        [index];
+               pendingType  = virt.pendingType [index];
+               pendingPrice = virt.pendingPrice[index];
+               openType     = virt.openType    [index];
+               openTime     = virt.openTime    [index];
+               openPrice    = virt.openPrice   [index];
+               closeTime    = virt.closeTime   [index];
+               closePrice   = virt.closePrice  [index];
+               stopLoss     = virt.stopLoss    [index];
+               takeProfit   = virt.takeProfit  [index];
+               commission   = virt.commission  [index];
+               swap         = virt.swap        [index];
+               profit       = virt.profit      [index];
+   }
+   else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+
+   return(StringConcatenate(ticket, ",", linkedTicket, ",", DoubleToStr(lots, 2), ",", pendingType, ",", DoubleToStr(pendingPrice, Digits), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(stopLoss, Digits), ",", DoubleToStr(takeProfit, Digits), ",", DoubleToStr(commission, 2), ",", DoubleToStr(swap, 2), ",", DoubleToStr(profit, 2)));
+}
+
+
+/**
  * Display the current runtime status.
  *
  * @param  int error [optional] - error to display (default: none)
@@ -2200,7 +2330,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), sTradingModeDescriptions[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                    NL,
+   string msg = StringConcatenate(ProgramName(), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                          NL,
                                                                                                                                                                 NL,
                                     "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                       NL,
                                     "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                           NL,

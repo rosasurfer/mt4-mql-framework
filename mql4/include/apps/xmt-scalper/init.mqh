@@ -21,11 +21,12 @@ int onInitUser() {
       sValue = values[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (sValue=="r"  || sValue=="regular"       ) { tradingMode = TRADINGMODE_REGULAR;        TradingMode = "Regular";        }
-   else if (sValue=="v"  || sValue=="virtual"       ) { tradingMode = TRADINGMODE_VIRTUAL;        TradingMode = "Virtual";        }
-   else if (sValue=="vc" || sValue=="virtual-copier") { tradingMode = TRADINGMODE_VIRTUAL_COPIER; TradingMode = "Virtual-Copier"; }
-   else if (sValue=="vm" || sValue=="virtual-mirror") { tradingMode = TRADINGMODE_VIRTUAL_MIRROR; TradingMode = "Virtual-Mirror"; }
+   if      (sValue=="r"  || sValue=="regular"       ) tradingMode = TRADINGMODE_REGULAR;
+   else if (sValue=="v"  || sValue=="virtual"       ) tradingMode = TRADINGMODE_VIRTUAL;
+   else if (sValue=="vc" || sValue=="virtual-copier") tradingMode = TRADINGMODE_VIRTUAL_COPIER;
+   else if (sValue=="vm" || sValue=="virtual-mirror") tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
    else                                                      return(catch("onInitUser(3)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), ERR_INVALID_INPUT_PARAMETER));
+   TradingMode = tradingModeDescriptions[tradingMode];
    // EntryIndicator
    if (EntryIndicator < 1 || EntryIndicator > 3)             return(catch("onInitUser(4)  "+ sequence.name +" invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
    // IndicatorTimeframe
@@ -50,14 +51,13 @@ int onInitUser() {
    if (EA.StopOnProfit && EA.StopOnLoss) {
       if (EA.StopOnProfit <= EA.StopOnLoss)                  return(catch("onInitUser(12)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", ERR_INVALID_INPUT_PARAMETER));
    }
-   // end of input validation
 
    // initialize sequence id
    if (!sequence.id) {
       sequence.id = CreateSequenceId(); SS.SequenceName();
       logInfo("onInitUser(13)  sequence id "+ sequence.id +" created");
    }
-   SetLogfile(GetLogFilename());                            // needs the sequence.id
+   SetLogfile(GetLogFilename());                            // needs sequence.id
 
    // initialize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
@@ -113,6 +113,7 @@ int afterInit() {
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
+      test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
    return(catch("afterInit(1)"));
 }
