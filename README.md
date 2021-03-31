@@ -166,7 +166,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> first build supporting MQL4 and a subset of MQL5 </td>
+    <td nowrap> first build using MQL4 and a subset of MQL5 </td>
 </tr>
 
 <tr>
@@ -180,7 +180,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> last build supporting MQL4 only </td>
+    <td nowrap> last build using MQL4 only </td>
 </tr>
 
 <tr>
