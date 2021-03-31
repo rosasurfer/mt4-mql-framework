@@ -128,6 +128,7 @@ extern bool   TakeProfitBug                   = true;       // whether to enable
 // general
 int      tradingMode;
 int      sequence.id;
+string   sequence.name = "";                    // "R.1234" | "V.5678" | "VC.1234" | "VM.5678"
 
 // real order log
 int      real.ticket      [];
@@ -350,7 +351,7 @@ bool SynchronizeTradeCopier() {
    if (real.isSynchronized) return(true);
 
    if (!virt.isOpenOrder) {
-      if (real.isOpenOrder) return(!catch("SynchronizeTradeCopier(1)  virt.isOpenOrder=FALSE  real.isOpenOrder=TRUE", ERR_ILLEGAL_STATE));
+      if (real.isOpenOrder) return(!catch("SynchronizeTradeCopier(1)  "+ sequence.name +" virt.isOpenOrder=FALSE  real.isOpenOrder=TRUE", ERR_ILLEGAL_STATE));
       real.isSynchronized = true;
       return(true);
    }
@@ -361,15 +362,15 @@ bool SynchronizeTradeCopier() {
    if (virt.isOpenPosition) {
       if (real.isOpenPosition) {
          // an open position exists, check directions
-         if (virt.openType[iV] != real.openType[iR])                            return(!catch("SynchronizeTradeCopier(2)  trade direction mis-match: virt.openType="+ OperationTypeDescription(virt.openType[iV]) +", real.openType="+ OperationTypeDescription(real.openType[iR]), ERR_ILLEGAL_STATE));
+         if (virt.openType[iV] != real.openType[iR])                            return(!catch("SynchronizeTradeCopier(2)  "+ sequence.name +" trade direction mis-match: virt.openType="+ OperationTypeDescription(virt.openType[iV]) +", real.openType="+ OperationTypeDescription(real.openType[iR]), ERR_ILLEGAL_STATE));
          // check tickets
-         if (virt.linkedTicket[iV] && virt.linkedTicket[iV] != real.ticket[iR]) return(!catch("SynchronizeTradeCopier(3)  ticket mis-match: virt.linkedTicket="+ virt.linkedTicket[iV] +", real.ticket="+ real.ticket[iR], ERR_ILLEGAL_STATE));
-         if (real.linkedTicket[iR] && real.linkedTicket[iR] != virt.ticket[iV]) return(!catch("SynchronizeTradeCopier(4)  ticket mis-match: real.linkedTicket="+ real.linkedTicket[iR] +", virt.ticket="+ virt.ticket[iV], ERR_ILLEGAL_STATE));
+         if (virt.linkedTicket[iV] && virt.linkedTicket[iV] != real.ticket[iR]) return(!catch("SynchronizeTradeCopier(3)  "+ sequence.name +" ticket mis-match: virt.linkedTicket="+ virt.linkedTicket[iV] +", real.ticket="+ real.ticket[iR], ERR_ILLEGAL_STATE));
+         if (real.linkedTicket[iR] && real.linkedTicket[iR] != virt.ticket[iV]) return(!catch("SynchronizeTradeCopier(4)  "+ sequence.name +" ticket mis-match: real.linkedTicket="+ real.linkedTicket[iR] +", virt.ticket="+ virt.ticket[iV], ERR_ILLEGAL_STATE));
          // update the link
          virt.linkedTicket[iV] = real.ticket[iR];
          real.linkedTicket[iR] = virt.ticket[iV];
       }
-      else if (real.isOpenOrder) return(!catch("SynchronizeTradeCopier(5)  virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
+      else if (real.isOpenOrder) return(!catch("SynchronizeTradeCopier(5)  "+ sequence.name +" virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
       else {
          // an open position doesn't exist, open it
          double lots = CalculateLots(true); if (!lots) return(false);
@@ -383,7 +384,7 @@ bool SynchronizeTradeCopier() {
          virt.linkedTicket[iV] = oe.Ticket(oe);
       }
    }
-   else return(!catch("SynchronizeTradeCopier(6)  virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
+   else return(!catch("SynchronizeTradeCopier(6)  "+ sequence.name +" virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
 
    real.isSynchronized = true;
    return(true);
@@ -399,7 +400,7 @@ bool SynchronizeTradeMirror() {
    if (real.isSynchronized) return(true);
 
    if (!virt.isOpenOrder) {
-      if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(1)  virt.isOpenOrder=FALSE  real.isOpenOrder=TRUE", ERR_ILLEGAL_STATE));
+      if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(1)  "+ sequence.name +" virt.isOpenOrder=FALSE  real.isOpenOrder=TRUE", ERR_ILLEGAL_STATE));
       real.isSynchronized = true;
       return(true);
    }
@@ -410,15 +411,15 @@ bool SynchronizeTradeMirror() {
    if (virt.isOpenPosition) {
       if (real.isOpenPosition) {
          // an open position exists, check directions
-         if (virt.openType[iV] == real.openType[iR])                            return(!catch("SynchronizeTradeMirror(2)  trade direction mis-match: virt.openType="+ OperationTypeDescription(virt.openType[iV]) +", real.openType="+ OperationTypeDescription(real.openType[iR]), ERR_ILLEGAL_STATE));
+         if (virt.openType[iV] == real.openType[iR])                            return(!catch("SynchronizeTradeMirror(2)  "+ sequence.name +" trade direction mis-match: virt.openType="+ OperationTypeDescription(virt.openType[iV]) +", real.openType="+ OperationTypeDescription(real.openType[iR]), ERR_ILLEGAL_STATE));
          // check tickets
-         if (virt.linkedTicket[iV] && virt.linkedTicket[iV] != real.ticket[iR]) return(!catch("SynchronizeTradeMirror(3)  ticket mis-match: virt.linkedTicket="+ virt.linkedTicket[iV] +", real.ticket="+ real.ticket[iR], ERR_ILLEGAL_STATE));
-         if (real.linkedTicket[iR] && real.linkedTicket[iR] != virt.ticket[iV]) return(!catch("SynchronizeTradeMirror(4)  ticket mis-match: real.linkedTicket="+ real.linkedTicket[iR] +", virt.ticket="+ virt.ticket[iV], ERR_ILLEGAL_STATE));
+         if (virt.linkedTicket[iV] && virt.linkedTicket[iV] != real.ticket[iR]) return(!catch("SynchronizeTradeMirror(3)  "+ sequence.name +" ticket mis-match: virt.linkedTicket="+ virt.linkedTicket[iV] +", real.ticket="+ real.ticket[iR], ERR_ILLEGAL_STATE));
+         if (real.linkedTicket[iR] && real.linkedTicket[iR] != virt.ticket[iV]) return(!catch("SynchronizeTradeMirror(4)  "+ sequence.name +" ticket mis-match: real.linkedTicket="+ real.linkedTicket[iR] +", virt.ticket="+ virt.ticket[iV], ERR_ILLEGAL_STATE));
          // update the link
          virt.linkedTicket[iV] = real.ticket[iR];
          real.linkedTicket[iR] = virt.ticket[iV];
       }
-      else if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(5)  virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
+      else if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(5)  "+ sequence.name +" virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
       else {
          // an open position doesn't exist, open it
          int type = ifInt(virt.openType[iV]==OP_BUY, OP_SELL, OP_BUY);          // opposite direction
@@ -433,7 +434,7 @@ bool SynchronizeTradeMirror() {
          virt.linkedTicket[iV] = oe.Ticket(oe);
       }
    }
-   else return(!catch("SynchronizeTradeMirror(6)  virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
+   else return(!catch("SynchronizeTradeMirror(6)  "+ sequence.name +" virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
 
    real.isSynchronized = true;
    return(true);
@@ -645,7 +646,7 @@ bool onRealPositionOpen(int i) {
             else              sSlippage = ", "+ DoubleToStr(-slippage, Digits & 1) +" pip slippage";
          message = message +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat);
       }
-      logDebug("onRealPositionOpen(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
+      logDebug("onRealPositionOpen(1)  "+ sequence.name +" "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
    }
 
    if (IsTesting()) {
@@ -667,7 +668,7 @@ bool onRealPositionOpen(int i) {
  * @return bool - success status
  */
 bool onVirtualPositionOpen(int i) {
-   return(!catch("onVirtualPositionOpen(1)", ERR_NOT_IMPLEMENTED));
+   return(!catch("onVirtualPositionOpen(1)  "+ sequence.name, ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -693,7 +694,7 @@ bool onRealPositionClose(int i) {
       string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
       string sComment    = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message     = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() + sComment +" at "+ sOpenPrice +" was closed at "+ sClosePrice;
-      logDebug("onRealPositionClose(1)  "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logDebug("onRealPositionClose(1)  "+ sequence.name +" "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
    if (IsTesting() && __ExecutionContext[EC.extReporting]) {
@@ -723,7 +724,7 @@ bool onVirtualPositionClose(int i) {
       string sCloseType  = "";
          if      (EQ(virt.closePrice[i], virt.takeProfit[i])) sCloseType = " [tp]";
          else if (EQ(virt.closePrice[i], virt.stopLoss  [i])) sCloseType = " [sl]";
-      logDebug("onVirtualPositionClose(1)  virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logDebug("onVirtualPositionClose(1)  "+ sequence.name +" virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
    return(!catch("onVirtualPositionClose(2)"));
 }
@@ -737,7 +738,7 @@ bool onVirtualPositionClose(int i) {
  * @return bool - success status
  */
 bool onRealOrderDelete(int i) {
-   if (tradingMode != TRADINGMODE_REGULAR) return(!catch("onRealOrderDelete(1)  deletion of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+   if (tradingMode != TRADINGMODE_REGULAR) return(!catch("onRealOrderDelete(1)  "+ sequence.name +" deletion of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
 
    if (IsLogDebug()) {
       // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was deleted
@@ -748,7 +749,7 @@ bool onRealOrderDelete(int i) {
       string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
       string sComment      = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message       = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sPendingPrice + sComment +" was deleted";
-      logDebug("onRealOrderDelete(2)  "+ message);
+      logDebug("onRealOrderDelete(2)  "+ sequence.name +" "+ message);
    }
    return(Orders.RemoveRealTicket(real.ticket[i]));
 }
@@ -771,8 +772,8 @@ bool IsEntrySignal(int &signal) {
    int error = GetLastError();
    if (!high || error) {
       if (error == ERS_HISTORY_UPDATE) SetLastError(error);
-      else if (!error)                 catch("IsEntrySignal(1)  invalid bar high: 0", ERR_INVALID_MARKET_DATA);
-      else                             catch("IsEntrySignal(2)", error);
+      else if (!error)                 catch("IsEntrySignal(1)  "+ sequence.name +" invalid bar high: 0", ERR_INVALID_MARKET_DATA);
+      else                             catch("IsEntrySignal(2)  "+ sequence.name, error);
       return(false);
    }
    double barSize = high - low;
@@ -794,7 +795,7 @@ bool IsEntrySignal(int &signal) {
       if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits: dec(3) = bin(0011)
 
       if (signal != NULL) {
-         if (IsLogDebug()) logDebug("IsEntrySignal(3)  "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
+         if (IsLogDebug()) logDebug("IsEntrySignal(3)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
          return(true);
       }
    }
@@ -811,7 +812,7 @@ bool IsEntrySignal(int &signal) {
  */
 bool OpenRealOrder(int signal) {
    if (IsLastError())                               return(false);
-   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("OpenRealOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("OpenRealOrder(1)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    double lots   = CalculateLots(true); if (!lots) return(false);
    double spread = Ask-Bid, price, takeProfit, stopLoss;
@@ -840,7 +841,7 @@ bool OpenRealOrder(int signal) {
    // virtual-copier
    else if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) {
       iV = ArraySize(virt.ticket)-1;
-      if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(2)  opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+      if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(2)  "+ sequence.name +" opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
 
       takeProfit    = virt.takeProfit[iV];
       stopLoss      = virt.stopLoss  [iV];
@@ -851,7 +852,7 @@ bool OpenRealOrder(int signal) {
    // virtual-mirror
    else if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
       iV = ArraySize(virt.ticket)-1;
-      if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(3)  opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+      if (virt.openType[iV] == OP_UNDEFINED) return(!catch("OpenRealOrder(3)  "+ sequence.name +" opening of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
 
       int type      = ifInt(virt.openType[iV]==OP_BUY, OP_SELL, OP_BUY);
       takeProfit    = virt.stopLoss  [iV];
@@ -894,14 +895,14 @@ bool OpenVirtualOrder(int signal) {
       takeProfit = openPrice - TakeProfit*Pip;
       stopLoss   = openPrice + spread + StopLoss*Pip;
    }
-   else return(!catch("OpenVirtualOrder(1)  invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   else return(!catch("OpenVirtualOrder(1)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    double lots       = CalculateLots();      if (!lots)               return(false);
    double commission = GetCommission(-lots); if (IsEmpty(commission)) return(false);
    if (!Orders.AddVirtualTicket(ticket, NULL, lots, orderType, Tick.Time, openPrice, NULL, NULL, stopLoss, takeProfit, NULL, commission, NULL)) return(false);
 
    // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
-   if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ "opened virtual #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ sequence.name +" opened virtual #"+ ticket +" "+ OperationTypeDescription(orderType) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ NumberToStr(openPrice, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 
    if (IsTesting()) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenVirtualOrder(3)");
@@ -916,11 +917,11 @@ bool OpenVirtualOrder(int signal) {
  * @return bool - success status
  */
 bool ManagePendingOrder() {
-   if (tradingMode != TRADINGMODE_REGULAR)       return(!catch("ManagePendingOrder(1)  managing of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
+   if (tradingMode != TRADINGMODE_REGULAR)       return(!catch("ManagePendingOrder(1)  "+ sequence.name +" managing of pending orders in "+ TradingModeToStr(tradingMode) +" not implemented", ERR_NOT_IMPLEMENTED));
    if (!real.isOpenOrder || real.isOpenPosition) return(true);
 
    int i = ArraySize(real.ticket)-1, oe[];
-   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrder(2)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+   if (real.openType[i] != OP_UNDEFINED) return(!catch("ManagePendingOrder(2)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
 
    double openprice, stoploss, takeprofit, spread=Ask-Bid, channelMean, dNull;
    if (!GetIndicatorValues(dNull, dNull, channelMean)) return(false);
@@ -957,7 +958,7 @@ bool ManagePendingOrder() {
          break;
 
       default:
-         return(!catch("ManagePendingOrder(3)  illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManagePendingOrder(3)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(real.pendingType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stoploss > 0) {
@@ -975,7 +976,7 @@ bool ManagePendingOrder() {
  * @return bool - success status
  */
 bool ManageVirtualOrder() {
-   return(!catch("ManageVirtualOrder(1)", ERR_NOT_IMPLEMENTED));
+   return(!catch("ManageVirtualOrder(1)  "+ sequence.name, ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1016,7 +1017,7 @@ bool ManageRealPosition() {
             break;
 
          default:
-            return(!catch("ManageRealPosition(1)  illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+            return(!catch("ManageRealPosition(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
       }
    }
 
@@ -1077,7 +1078,7 @@ bool ManageVirtualPosition() {
          break;
 
       default:
-         return(!catch("ManageVirtualPosition(1)  illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected virtual position #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
+         return(!catch("ManageVirtualPosition(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected virtual position #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
    }
 
    if (stopLoss > 0) {
@@ -1113,7 +1114,7 @@ bool CheckTotalTargets() {
  * @return bool - success status
  */
 bool CloseOpenOrders() {
-   return(!catch("CloseOpenOrders(1)", ERR_NOT_IMPLEMENTED));
+   return(!catch("CloseOpenOrders(1)  "+ sequence.name, ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1193,7 +1194,7 @@ bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channel
       channelLow  = iEnvelopes(Symbol(), IndicatorTimeframe, IndicatorPeriods, MODE_LWMA, 0, PRICE_OPEN, Envelopes.Deviation, MODE_LOWER, 0);
       channelMean = (channelHigh + channelLow)/2;
    }
-   else return(!catch("GetIndicatorValues(1)  illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
+   else return(!catch("GetIndicatorValues(1)  "+ sequence.name +" illegal variable EntryIndicator: "+ EntryIndicator, ERR_ILLEGAL_STATE));
 
    if (ChannelBug) {                            // reproduce Capella's channel calculation bug (for comparison only)
       if (lastHigh && Bid < channelMean) {      // if enabled the function is called every tick
@@ -1230,7 +1231,7 @@ double CalculateLots(bool checkLimits = false) {
 
    if (MoneyManagement) {
       double equity = AccountEquity() - AccountCredit();
-      if (LE(equity, 0)) return(!catch("CalculateLots(1)  equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
+      if (LE(equity, 0)) return(!catch("CalculateLots(1)  "+ sequence.name +" equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
 
       double riskPerTrade = Risk/100 * equity;                          // risked equity amount per trade
       double riskPerPip   = riskPerTrade/StopLoss;                      // risked equity amount per pip
@@ -1240,11 +1241,11 @@ double CalculateLots(bool checkLimits = false) {
 
       if (checkLimits) {
          double minLots = MarketInfo(Symbol(), MODE_MINLOT);
-         if (LT(lots, minLots)) return(!catch("CalculateLots(2)  equity: "+ DoubleToStr(equity, 2) +" (resulting position size smaller than MODE_MINLOT of "+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
+         if (LT(lots, minLots)) return(!catch("CalculateLots(2)  "+ sequence.name +" equity: "+ DoubleToStr(equity, 2) +" (resulting position size smaller than MODE_MINLOT of "+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
 
          double maxLots = MarketInfo(Symbol(), MODE_MAXLOT);
          if (GT(lots, maxLots)) {
-            if (LT(lastLots, maxLots)) logNotice("CalculateLots(3)  limiting position size to MODE_MAXLOT: "+ NumberToStr(maxLots, ".+") +" lot");
+            if (LT(lastLots, maxLots)) logNotice("CalculateLots(3)  "+ sequence.name +" limiting position size to MODE_MAXLOT: "+ NumberToStr(maxLots, ".+") +" lot");
             lots = maxLots;
          }
       }
@@ -1689,7 +1690,7 @@ bool StartTradeCopier() {
       return(!catch("StartTradeCopier(1)"));
    }
 
-   return(!catch("StartTradeCopier(2)  cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+   return(!catch("StartTradeCopier(2)  "+ sequence.name +" cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
 }
 
 
@@ -1712,7 +1713,7 @@ bool StartTradeMirror() {
       return(!catch("StartTradeMirror(1)"));
    }
 
-   return(!catch("StartTradeMirror(2)  cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+   return(!catch("StartTradeMirror(2)  "+ sequence.name +" cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
 }
 
 
@@ -1730,7 +1731,7 @@ bool StopVirtualTrading() {
       return(!catch("StopVirtualTrading(1)"));
    }
 
-   return(!catch("StopVirtualTrading(2)  cannot stop virtual trading in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+   return(!catch("StopVirtualTrading(2)  "+ sequence.name +" cannot stop virtual trading in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
 }
 
 
@@ -1755,7 +1756,7 @@ bool StopVirtualTrading() {
  */
 bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double stopLoss, double takeProfit, double swap, double commission, double profit) {
    int pos = SearchIntArray(real.ticket, ticket);
-   if (pos >= 0) return(!catch("Orders.AddRealTicket(1)  invalid parameter ticket: #"+ ticket +" (exists)", ERR_INVALID_PARAMETER));
+   if (pos >= 0) return(!catch("Orders.AddRealTicket(1)  "+ sequence.name +" invalid parameter ticket: #"+ ticket +" (exists)", ERR_INVALID_PARAMETER));
 
    int pendingType, openType;
    double pendingPrice;
@@ -1796,11 +1797,11 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
    bool isClosedPosition = (isPosition && closeTime);
 
    if (isOpenOrder) {
-      if (real.isOpenOrder)    return(!catch("Orders.AddRealTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
+      if (real.isOpenOrder)    return(!catch("Orders.AddRealTicket(2)  "+ sequence.name +" cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
       real.isOpenOrder = true;
    }
    if (isOpenPosition) {
-      if (real.isOpenPosition) return(!catch("Orders.AddRealTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
+      if (real.isOpenPosition) return(!catch("Orders.AddRealTicket(3)  "+ sequence.name +" cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
       real.isOpenPosition = true;
       real.openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
       real.openSwap       += swap;
@@ -1851,7 +1852,7 @@ bool Orders.AddRealTicket(int ticket, int linkedTicket, double lots, int type, d
  */
 bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double stopLoss, double takeProfit, double swap, double commission, double profit) {
    int pos = SearchIntArray(virt.ticket, ticket);
-   if (pos >= 0) return(!catch("Orders.AddVirtualTicket(1)  invalid parameter ticket: #"+ ticket +" (exists)", ERR_INVALID_PARAMETER));
+   if (pos >= 0) return(!catch("Orders.AddVirtualTicket(1)  "+ sequence.name +" invalid parameter ticket: #"+ ticket +" (exists)", ERR_INVALID_PARAMETER));
 
    int pendingType, openType;
    double pendingPrice;
@@ -1896,11 +1897,11 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
    bool isClosedPosition = (isPosition && closeTime);
 
    if (isOpenOrder) {
-      if (virt.isOpenOrder)    return(!catch("Orders.AddVirtualTicket(2)  cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
+      if (virt.isOpenOrder)    return(!catch("Orders.AddVirtualTicket(2)  "+ sequence.name +" cannot add open order #"+ ticket +" (another open order exists)", ERR_ILLEGAL_STATE));
       virt.isOpenOrder = true;
    }
    if (isOpenPosition) {
-      if (virt.isOpenPosition) return(!catch("Orders.AddVirtualTicket(3)  cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
+      if (virt.isOpenPosition) return(!catch("Orders.AddVirtualTicket(3)  "+ sequence.name +" cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
       virt.isOpenPosition = true;
       virt.openLots       += ifDouble(IsLongOrderType(type), lots, -lots);
       virt.openSwap       += swap;
@@ -1939,9 +1940,9 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int typ
  */
 bool Orders.RemoveRealTicket(int ticket) {
    int pos = SearchIntArray(real.ticket, ticket);
-   if (pos < 0)                            return(!catch("Orders.RemoveRealTicket(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
-   if (real.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveRealTicket(2)  cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
-   if (!real.isOpenOrder)                  return(!catch("Orders.RemoveRealTicket(3)  real.isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
+   if (pos < 0)                            return(!catch("Orders.RemoveRealTicket(1)  "+ sequence.name +" invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER));
+   if (real.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveRealTicket(2)  "+ sequence.name +" cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
+   if (!real.isOpenOrder)                  return(!catch("Orders.RemoveRealTicket(3)  "+ sequence.name +" real.isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
 
    real.isOpenOrder = false;
 
@@ -2001,7 +2002,7 @@ bool EventListener_ChartCommand(string &commands[]) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
    string cmd = commands[0];
    debug("onCommand(0.1)  "+ cmd);
 
@@ -2012,7 +2013,7 @@ bool onCommand(string commands[]) {
          case TRADINGMODE_VIRTUAL_MIRROR:
             return(StopVirtualTrading());
 
-         default: logWarn("onCommand(2)  cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
+         default: logWarn("onCommand(2)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
       return(true);
    }
@@ -2024,7 +2025,7 @@ bool onCommand(string commands[]) {
          case TRADINGMODE_VIRTUAL_MIRROR:
             return(StartTradeCopier());
 
-         default: logWarn("onCommand(3)  cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
+         default: logWarn("onCommand(3)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
       return(true);
    }
@@ -2036,12 +2037,12 @@ bool onCommand(string commands[]) {
          case TRADINGMODE_VIRTUAL_COPIER:
             return(StartTradeMirror());
 
-         default: logWarn("onCommand(4)  cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
+         default: logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
       return(true);
    }
 
-   return(!logWarn("onCommand(5)  unsupported command: "+ DoubleQuoteStr(cmd)));
+   return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 }
 
 
@@ -2063,7 +2064,7 @@ int CreateSequenceId() {
       // test for uniqueness against open orders
       int openOrders = OrdersTotal();
       for (int i=0; i < openOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)  "+ sequence.name, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
          if (OrderMagicNumber() == magicNumber) {
             magicNumber = NULL;
             break;
@@ -2074,7 +2075,7 @@ int CreateSequenceId() {
       // test for uniqueness against closed orders
       int closedOrders = OrdersHistoryTotal();
       for (i=0; i < closedOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)  "+ sequence.name, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
          if (OrderMagicNumber() == magicNumber) {
             magicNumber = NULL;
             break;
@@ -2093,9 +2094,9 @@ int CreateSequenceId() {
  * @return int - magic number or NULL in case of errors
  */
 int GenerateMagicNumber(int sequenceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("GenerateMagicNumber(1)  illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("GenerateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = ifIntOr(sequenceId, sequence.id);
-   if (id < 1000 || id > 9999)                  return(!catch("GenerateMagicNumber(2)  illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < 1000 || id > 9999)                  return(!catch("GenerateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
    int sequence = id;                                          // 1000-9999 (14 bit)
@@ -2122,7 +2123,7 @@ string GetLogFilename() {
  * @return string - filename or an empty string in case of errors
  */
 string GetStatusFilename() {
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
    static string sAccountCompany="", symbol=""; if (!StringLen(symbol)) {
       sAccountCompany = GetAccountCompany();
       symbol = Symbol();                                       // lock-in the original symbol in case of INITREASON_SYMBOLCHANGE
@@ -2143,7 +2144,7 @@ string GetStatusFilename() {
  */
 string DumpVirtualOrder(int ticket) {
    int i = SearchIntArray(virt.ticket, ticket);
-   if (i < 0) return(_EMPTY_STR(catch("DumpVirtualOrder(1)  invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER)));
+   if (i < 0) return(_EMPTY_STR(catch("DumpVirtualOrder(1)  "+ sequence.name +" invalid parameter ticket: #"+ ticket +" (not found)", ERR_INVALID_PARAMETER)));
 
    string sLots         = NumberToStr(virt.lots[i], ".1+");
    string sPendingType  = ifString(virt.pendingType[i]==OP_UNDEFINED, "-", OrderTypeDescription(virt.pendingType[i]));
@@ -2177,7 +2178,7 @@ string TradingModeToStr(int mode) {
       case TRADINGMODE_VIRTUAL_COPIER: return("TRADINGMODE_VIRTUAL_COPIER");
       case TRADINGMODE_VIRTUAL_MIRROR: return("TRADINGMODE_VIRTUAL_MIRROR");
    }
-   return(_EMPTY_STR(catch("TradingModeToStr(1)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("TradingModeToStr(1)  "+ sequence.name +" invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -2271,6 +2272,8 @@ int ShowStatus(int error = NO_ERROR) {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
+   SS.SequenceName();
+
    if (__isChart) {
       SS.MinBarSize();
       SS.Spreads();
@@ -2286,6 +2289,20 @@ void SS.MinBarSize() {
    if (__isChart) {
       sMinBarSize = DoubleToStr(RoundCeil(minBarSize/Pip, 1), 1);
    }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the sequence name.
+ */
+void SS.SequenceName() {
+   switch (tradingMode) {
+      case TRADINGMODE_REGULAR       : sequence.name = "R";  break;
+      case TRADINGMODE_VIRTUAL       : sequence.name = "V";  break;
+      case TRADINGMODE_VIRTUAL_COPIER: sequence.name = "VC"; break;
+      case TRADINGMODE_VIRTUAL_MIRROR: sequence.name = "VM"; break;
+   }
+   sequence.name = sequence.name +"."+ sequence.id;
 }
 
 
