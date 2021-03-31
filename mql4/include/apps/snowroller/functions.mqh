@@ -570,7 +570,7 @@ int CountPendingOrders() {
 /**
  * Generate a new sequence id. As strategy ids differ multiple strategies may use the same sequence id at the same time.
  *
- * @return int - sequence id between SID_MAX and SID_MAX (1000-16383)
+ * @return int - sequence id between SID_MAX and SID_MAX (1000-9999)
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);

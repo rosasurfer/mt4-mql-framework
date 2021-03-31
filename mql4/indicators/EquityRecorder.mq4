@@ -43,7 +43,7 @@ int onDeinit() {
       if (hHstSet[i] != 0) {
          int tmp = hHstSet[i];
          hHstSet[i] = NULL;
-         if (!HistorySet.Close(tmp)) return(ERR_RUNTIME_ERROR);
+         if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
       }
    }
    return(catch("onDeinit(1)"));
@@ -328,13 +328,13 @@ bool RecordAccountData() {
          int    format      = 400;
          string server      = "XTrade-Synthetic";
 
-         hHstSet[i] = HistorySet.Get(symbol, server);
+         hHstSet[i] = HistorySet1.Get(symbol, server);
          if (hHstSet[i] == -1)
-            hHstSet[i] = HistorySet.Create(symbol, description, digits, format, server);
+            hHstSet[i] = HistorySet1.Create(symbol, description, digits, format, server);
          if (!hHstSet[i]) return(false);
       }
 
-      if (!HistorySet.AddTick(hHstSet[i], now.fxt, tickValue, NULL)) return(false);
+      if (!HistorySet1.AddTick(hHstSet[i], now.fxt, tickValue, NULL)) return(false);
 
       prevEquity[i] = tickValue;
    }
