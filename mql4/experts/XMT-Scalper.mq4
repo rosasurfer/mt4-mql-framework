@@ -2129,14 +2129,13 @@ string GetLogFilename() {
  */
 string GetStatusFilename() {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
-   static string sAccountCompany="", symbol=""; if (!StringLen(symbol)) {
-      sAccountCompany = GetAccountCompany();
-      symbol = Symbol();                                       // lock-in the original symbol in case of INITREASON_SYMBOLCHANGE
-   }
-   string directory = "\\presets\\" + ifString(IsTesting(), "Tester", sAccountCompany) +"\\";
-   string baseName  = StrToLower(symbol) +".XMT-Scalper."+ sequence.id +".set";
 
-   return(GetMqlFilesPath() + directory + baseName);
+   static string result = ""; if (!StringLen(result)) {
+      string directory = "\\presets\\" + ifString(IsTesting(), "Tester", GetAccountCompany()) +"\\";
+      string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ sequence.id +".set";
+      result = GetMqlFilesPath() + directory + baseName;
+   }
+   return(result);
 }
 
 
@@ -2193,8 +2192,8 @@ string TradingModeToStr(int mode) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (IsLastError()) return(false);
-   if (!sequence.id)  return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (last_error != 0) return(false);
+   if (!sequence.id)    return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    // In tester skip updating the status file except at the first call and at test end.
    if (IsTesting() && test.reduceStatusWrites) {
