@@ -2202,11 +2202,12 @@ bool SaveStatus() {
       saved = true;
    }
 
-   string section, file=GetStatusFilename();
+   string section, file=GetStatusFilename(), newLine=CRLF;
+   if (IsFileA(file)) newLine = "";
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
-   WriteIniString(file, section, "Symbol",  Symbol());
+   WriteIniString(file, section, "Symbol",  Symbol() + newLine);                             // append a visual section separator
 
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",              sequence.id);
@@ -2243,7 +2244,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "EA.RecordMetrics",         EA.RecordMetrics);
 
    WriteIniString(file, section, "ChannelBug",               ChannelBug);
-   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug);
+   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + newLine);       // append a visual section separator
 
    section = "Runtime status";
    // On deletion of pending orders the number of order records to store decreases. To prevent orphaned order records in the
