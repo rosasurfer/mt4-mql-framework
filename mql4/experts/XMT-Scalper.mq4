@@ -2246,6 +2246,10 @@ bool SaveStatus() {
    WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug);
 
    section = "Runtime status";
+   // On deletion of pending orders the number of order records to store decreases. To prevent orphaned order records in the
+   // file the section is emptied before writing to it.
+   EmptyIniSectionA(file, section);
+
    int size = ArraySize(real.ticket);
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "real.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, TRADINGMODE_REGULAR));
