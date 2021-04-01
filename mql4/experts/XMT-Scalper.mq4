@@ -75,7 +75,6 @@ extern double StopLoss                        = 6;          // SL in {pip}
 extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
 extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
 extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
-extern int    MagicNumber                     = 0;          // predefined magic order id, if zero a new one is generated
 extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
 
 extern string ___f___________________________ = "=== Overall targets & Reporting ==============";
@@ -2236,7 +2235,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "TrailEntryStep",           DoubleToStr(TrailEntryStep, 1));
    WriteIniString(file, section, "TrailExitStart",           DoubleToStr(TrailExitStart, 1));
    WriteIniString(file, section, "TrailExitStep",            DoubleToStr(TrailExitStep, 1));
-   WriteIniString(file, section, "MagicNumber",              MagicNumber);
    WriteIniString(file, section, "MaxSlippage",              DoubleToStr(MaxSlippage, 1));
 
    WriteIniString(file, section, "EA.StopOnProfit",          DoubleToStr(EA.StopOnProfit, 2));
@@ -2504,7 +2502,6 @@ string InputsToStr() {
          +"TrailEntryStep="          + DoubleToStr(TrailEntryStep, 1)               +";"+ NL
          +"TrailExitStart="          + DoubleToStr(TrailExitStart, 1)               +";"+ NL
          +"TrailExitStep="           + DoubleToStr(TrailExitStep, 1)                +";"+ NL
-         +"MagicNumber="             + MagicNumber                                  +";"+ NL
          +"MaxSlippage="             + DoubleToStr(MaxSlippage, 1)                  +";"+ NL
 
          +"EA.StopOnProfit="         + DoubleToStr(EA.StopOnProfit, 2)              +";"+ NL

@@ -67,16 +67,12 @@ int onInitUser() {
    commissionPip    = GetCommission(1, MODE_MARKUP)/Pip;
    orderSlippage    = Round(MaxSlippage*Pip/Point);
    orderComment     = "XMT."+ sequence.id + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
-   orderMagicNumber = MagicNumber;
-   if (!MagicNumber) {
-      orderMagicNumber = GenerateMagicNumber();
-      logDebug("onInitUser(14)  "+ sequence.name +" magic number "+ orderMagicNumber +" generated");
-   }
+   orderMagicNumber = GenerateMagicNumber();
 
    // restore order log
    if (!ReadOrderLog()) return(last_error);
 
-   return(catch("onInitUser(15)"));
+   return(catch("onInitUser(14)"));
 }
 
 
