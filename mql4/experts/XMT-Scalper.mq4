@@ -388,7 +388,7 @@ bool SynchronizeTradeCopier() {
    else return(!catch("SynchronizeTradeCopier(6)  "+ sequence.name +" virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
 
    real.isSynchronized = true;
-   return(true);
+   return(SaveStatus());
 }
 
 
@@ -438,7 +438,7 @@ bool SynchronizeTradeMirror() {
    else return(!catch("SynchronizeTradeMirror(6)  "+ sequence.name +" virt.isPendingOrder=TRUE, synchronization not implemented", ERR_NOT_IMPLEMENTED));
 
    real.isSynchronized = true;
-   return(true);
+   return(SaveStatus());
 }
 
 
@@ -461,6 +461,7 @@ bool UpdateRealOrderStatus() {
    real.openPip        = 0;
    real.openPipNet     = 0;
 
+   bool saveStatus = false;
    int orders = ArraySize(real.ticket);
 
    // update ticket status
@@ -478,14 +479,16 @@ bool UpdateRealOrderStatus() {
 
       if (wasPending) {
          if (isClosed) {                                          // the pending order was cancelled (externally)
-            onRealOrderDelete(i);                                 // logs and removes order record
+            onRealOrderDelete(i);                                 // removes the order record
+            saveStatus = true;
             orders--;
             continue;
          }
          else {
             if (!isPending) {                                     // the pending order was filled
-               onRealPositionOpen(i);                             // updates order record and logs
+               onRealPositionOpen(i);                             // updates the order record
                wasPosition = true;                                // mark as a known open position
+               saveStatus = true;
             }
          }
       }
@@ -503,13 +506,14 @@ bool UpdateRealOrderStatus() {
             real.openPip        += ifDouble(real.openType[i]==OP_BUY, Bid-real.openPrice[i], real.openPrice[i]-Ask)/Pip;
          }
          else /*isClosed*/ {                                      // the position was closed
-            onRealPositionClose(i);                               // updates order record and logs
+            onRealPositionClose(i);                               // updates the order record
             real.closedPositions++;                               // update closed trade statistics
             real.closedLots       += real.lots      [i];
             real.closedCommission += real.commission[i];
             real.closedSwap       += real.swap      [i];
             real.closedPl         += real.profit    [i];
             real.closedPip        += ifDouble(real.openType[i]==OP_BUY, real.closePrice[i]-real.openPrice[i], real.openPrice[i]-real.closePrice[i])/Pip;
+            saveStatus = true;
          }
       }
    }
@@ -523,6 +527,7 @@ bool UpdateRealOrderStatus() {
    real.totalPip     = real.openPip    + real.closedPip;
    real.totalPipNet  = real.openPipNet + real.closedPipNet;
 
+   if (saveStatus) SaveStatus();
    return(!catch("UpdateRealOrderStatus(2)"));
 }
 
@@ -546,6 +551,7 @@ bool UpdateVirtualOrderStatus() {
    virt.openPip        = 0;
    virt.openPipNet     = 0;
 
+   bool saveStatus = false;
    int orders = ArraySize(virt.ticket);
 
    for (int i=orders-1; i >= 0; i--) {                            // iterate backwards and stop at the first closed ticket
@@ -591,12 +597,13 @@ bool UpdateVirtualOrderStatus() {
          }
          else /*isClosed*/ {                                      // an exit limit was triggered
             virt.isOpenOrder = false;                             // mark order status
-            onVirtualPositionClose(i);                            // updates order record, exit PL and logs
+            onVirtualPositionClose(i);                            // updates order record and PL
             virt.closedPositions++;                               // update closed trade statistics
             virt.closedLots       += virt.lots      [i];
             virt.closedCommission += virt.commission[i];
             virt.closedPl         += virt.profit    [i];
             virt.closedPip        += ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
+            saveStatus = true;
          }
       }
    }
@@ -610,6 +617,7 @@ bool UpdateVirtualOrderStatus() {
    virt.totalPip     = virt.openPip    + virt.closedPip;
    virt.totalPipNet  = virt.openPipNet + virt.closedPipNet;
 
+   if (saveStatus) SaveStatus();
    return(!catch("UpdateVirtualOrderStatus(2)"));
 }
 
@@ -869,8 +877,7 @@ bool OpenRealOrder(int signal) {
    }
 
    if (!Orders.AddRealTicket(oe.Ticket(oe), virtualTicket, oe.Lots(oe), oe.Type(oe), oe.OpenTime(oe), oe.OpenPrice(oe), NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL, NULL)) return(false);
-   if (!SaveStatus()) return(false);
-   return(true);
+   return(SaveStatus());
 }
 
 
@@ -911,7 +918,7 @@ bool OpenVirtualOrder(int signal) {
    if (IsTesting()) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenVirtualOrder(3)");
    }
-   return(true);
+   return(SaveStatus());
 }
 
 
@@ -935,7 +942,7 @@ bool ManagePendingOrder() {
          if (GE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
             if (!OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) return(false);
             Orders.RemoveRealTicket(real.ticket[i]);
-            return(true);
+            return(SaveStatus());
          }
          openprice = Ask + BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
@@ -950,7 +957,7 @@ bool ManagePendingOrder() {
          if (LE(Bid, channelMean)) {                                    // delete the order if price reached mid of channel
             if (!OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) return(false);
             Orders.RemoveRealTicket(real.ticket[i]);
-            return(true);
+            return(SaveStatus());
          }
          openprice = Bid - BreakoutReversal*Pip;                        // trail order entry in breakout direction
 
@@ -969,6 +976,7 @@ bool ManagePendingOrder() {
       real.pendingPrice[i] = NormalizeDouble(openprice, Digits);
       real.stopLoss    [i] = NormalizeDouble(stoploss, Digits);
       real.takeProfit  [i] = NormalizeDouble(takeprofit, Digits);
+      SaveStatus();
    }
    return(true);
 }
@@ -1050,6 +1058,7 @@ bool ManageRealPosition() {
    if (stopLoss > 0) {
       real.takeProfit[i] = NormalizeDouble(takeProfit, Digits);
       real.stopLoss  [i] = NormalizeDouble(stopLoss, Digits);
+      SaveStatus();
    }
    return(true);
 }
@@ -1088,6 +1097,7 @@ bool ManageVirtualPosition() {
    if (stopLoss > 0) {
       virt.takeProfit[i] = NormalizeDouble(takeProfit, Digits);
       virt.stopLoss  [i] = NormalizeDouble(stopLoss, Digits);
+      SaveStatus();
    }
    return(true);
 }
@@ -1104,9 +1114,10 @@ bool CheckTotalTargets() {
    if (EA.StopOnLoss   != 0) stopEA = stopEA || LE(real.totalPlNet, EA.StopOnProfit);
 
    if (stopEA) {
-      if (!CloseOpenOrders())
-         return(false);
-      return(!SetLastError(ERR_CANCELLED_BY_USER));
+      CloseOpenOrders();
+      SaveStatus();
+      SetLastError(ifIntOr(last_error, ERR_CANCELLED_BY_USER));
+      return(false);
    }
    return(true);
 }
@@ -2191,8 +2202,7 @@ string TradingModeToStr(int mode) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != 0) return(false);
-   if (!sequence.id)    return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (last_error || !sequence.id) return(false);
 
    // In tester skip updating the status file except at the first call and at test end.
    if (IsTesting() && test.reduceStatusWrites) {
@@ -2258,7 +2268,7 @@ bool SaveStatus() {
       WriteIniString(file, section, "virt.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, TRADINGMODE_VIRTUAL));
    }
 
-   return(!catch("SaveStatus(2)"));
+   return(!catch("SaveStatus(1)"));
 }
 
 
