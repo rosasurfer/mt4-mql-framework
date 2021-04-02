@@ -1,10 +1,21 @@
 /**
- * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
- * There was an input dialog.
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off". There was an input
+ * dialog.
  *
  * @return int - error status
  */
 int onInitUser() {
+   // check for and validate a specified sequence id
+   if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
+      RestoreSequence();
+      return(last_error);
+   }
+   else if (StringLen(StrTrim(Sequence.ID)) > 0) {
+      return(last_error);                                      // on error an invalid sequence id was specified
+   }
+
+
+   // TODO: move to separate function ValidateInputs()
    // validate inputs
    // Sequence.ID
    string values[], sValue = StrTrim(Sequence.ID);
@@ -13,6 +24,7 @@ int onInitUser() {
       int iValue = StrToInteger(sValue);
       if (iValue < SID_MIN || iValue > SID_MAX)              return(catch("onInitUser(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", ERR_INVALID_INPUT_PARAMETER));
       sequence.id = iValue;
+      Sequence.ID = sequence.id;
    }
    // TradingMode
    sValue = TradingMode;
@@ -57,7 +69,6 @@ int onInitUser() {
       sequence.id = CreateSequenceId(); SS.SequenceName();
       logInfo("onInitUser(13)  sequence id "+ sequence.id +" created");
    }
-   SetLogfile(GetLogFilename());                            // needs sequence.id
 
    // initialize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
@@ -103,8 +114,8 @@ int onInitSymbolChange() {
  */
 int afterInit() {
    SS.All();
-
-   if (!InitMetrics()) return(last_error);                  // initialize metrics
+   if (!SetLogfile(GetLogFilename())) return(last_error);
+   if (!InitMetrics())                return(last_error);   // initialize metrics
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";

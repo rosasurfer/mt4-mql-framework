@@ -34,6 +34,8 @@ int onDeinitUndefined() {
          if (tradingMode != TRADINGMODE_REGULAR) logInfo("onDeinitUndefined(1)  "+ sequence.name +" test stop: "+ virt.closedPositions +" virtual trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2));
          if (tradingMode != TRADINGMODE_VIRTUAL) logInfo("onDeinitUndefined(2)  "+ sequence.name +" test stop: "+ real.closedPositions +" real trade"+ Pluralize(real.closedPositions) +", pl="+ DoubleToStr(real.closedPl, 2) +", plNet="+ DoubleToStr(real.closedPlNet, 2));
       }
+      if (!SaveStatus()) return(last_error);
+
       return(catch("onDeinitUndefined(3)"));
    }
    return(catch("onDeinitUndefined(4)", ERR_UNDEFINED_STATE));             // do what the Expander would do

@@ -5,7 +5,7 @@
  * @return int - error status
  */
 int onInit() {
-   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");   // MQL4 doesn't allow constant bool definitions
+   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");   // MQL4 doesn't support bool constants
    SISYPHUS   = StrStartsWithI(ProgramName(), "Sisyphus");
    return(NO_ERROR);
 }
@@ -21,7 +21,7 @@ int onInitUser() {
    bool interactive = true;
 
    // check for a specified sequence id
-   if (ValidateInputs.ID()) {                                  // on success a valid sequence id was specified
+   if (ValidateInputs.ID()) {                                  // on success a sequence id was specified and restored
       SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;
@@ -29,7 +29,7 @@ int onInitUser() {
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                      // on error: invalid sequence id
+      return(last_error);                                      // on error an invalid sequence id was specified
    }
 
    if (ValidateInputs(interactive)) {

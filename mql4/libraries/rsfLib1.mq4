@@ -730,8 +730,8 @@ int InitializeDoubleBuffer(double buffer[], int size) {
  * @return int - Fehlerstatus
  */
 int InitializeStringBuffer(string &buffer[], int length) {
-   if (ArrayDimension(buffer) > 1) return(catch("InitializeStringBuffer(1)  too many dimensions of parameter buffer = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
-   if (length < 0)                 return(catch("InitializeStringBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER));
+   if (ArrayDimension(buffer) > 1) return(catch("InitializeStringBuffer(1)  too many dimensions of parameter buffer: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+   if (length < 0)                 return(catch("InitializeStringBuffer(2)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER));
 
    if (ArraySize(buffer) == 0)
       ArrayResize(buffer, 1);
@@ -750,7 +750,7 @@ int InitializeStringBuffer(string &buffer[], int length) {
  * @return bool - success status
  */
 bool SortStrings(string &values[]) {
-   if (ArrayDimension(values) > 1) return(catch("SortStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) > 1) return(catch("SortStrings(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(values) < 2)             // nothing to do
       return(true);
    return(SortMqlStringsA(values, ArraySize(values)));
