@@ -102,32 +102,36 @@ bool EditFile(string filename) {
  */
 bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
-   if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames: {}", ERR_INVALID_PARAMETER));
+   if (!size) return(!catch("EditFiles(1)  invalid parameter filenames: {}", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
       if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
-      if (IsLogDebug()) logDebug("EditFiles(3)  loading \""+ filenames[i] +"\"");
+      if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
 
       if (IsFileA(filenames[i])) {
-         // resolve existing symlinks
          while (IsSymlinkA(filenames[i])) {
-            string target = GetReparsePointTargetA(filenames[i]);
+            string target = GetReparsePointTargetA(filenames[i]);    // resolve symlink as some editors cannot write to it (e.g. TextPad)
             if (!StringLen(target))
                break;
             filenames[i] = target;
          }
       }
-      else if (!IsDirectoryA(filenames[i])) {
-         // create directory
+      else if (IsDirectoryA(filenames[i])) {
+         logWarn("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
+         ArraySpliceStrings(filenames, i, 1);
+         size--; i--;
+         continue;
+      }
+      else /*file doesn't exist*/ {
+         // make sure the parent directory exists                    // TODO: move to the EditFiles() call
          int pos = Max(StrFindR(filenames[i], "/"), StrFindR(filenames[i], "\\"));
-         if (pos == 0)          return(!catch("EditFiles(4)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+         if (pos == 0)          return(!catch("EditFiles(5)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
          if (pos > 0) {
             string dir = StrLeft(filenames[i], pos);
             int error = CreateDirectoryA(dir, MKDIR_PARENT);
-            if (IsError(error)) return(!catch("EditFiles(5)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
+            if (IsError(error)) return(!catch("EditFiles(6)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
          }
       }
-      else catch("EditFiles(6)  cannot open file "+ DoubleQuoteStr(filenames[i]) +" (is directory)", ERR_FILE_IS_DIRECTORY);
    }
 
    // check the editor configuration
