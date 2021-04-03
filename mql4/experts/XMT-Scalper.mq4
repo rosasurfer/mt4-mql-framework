@@ -2140,7 +2140,7 @@ int CreateSequenceId() {
       while (sequenceId < SID_MIN || sequenceId > SID_MAX) {
          sequenceId = MathRand();                                 // TODO: generate consecutive ids in tester
       }
-      magicNumber = GenerateMagicNumber(sequenceId); if (!magicNumber) return(NULL);
+      magicNumber = CalculateMagicNumber(sequenceId); if (!magicNumber) return(NULL);
 
       // test for uniqueness against open orders
       int openOrders = OrdersTotal();
@@ -2168,16 +2168,16 @@ int CreateSequenceId() {
 
 
 /**
- * Generate a magic order number for the strategy.
+ * Calculate a magic order number for the strategy.
  *
- * @param  int sequenceId [optional] - sequence to generate the magic number for (default: the current sequence)
+ * @param  int sequenceId [optional] - sequence to calculate the magic number for (default: the current sequence)
  *
  * @return int - magic number or NULL in case of errors
  */
-int GenerateMagicNumber(int sequenceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("GenerateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+int CalculateMagicNumber(int sequenceId = NULL) {
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = ifIntOr(sequenceId, sequence.id);
-   if (id < 1000 || id > 9999)                  return(!catch("GenerateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < 1000 || id > 9999)                  return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
    int sequence = id;                                          // 1000-9999 (14 bit)
@@ -2263,7 +2263,7 @@ string TradingModeToStr(int mode) {
 
 
 /**
- * Restore the internal state of the EA from a status file. Requires a valid sequence id to be set.
+ * Restore the internal state of the EA from a status file. Requires a valid sequence id.
  *
  * @return bool - success status
  */
@@ -2274,7 +2274,6 @@ bool RestoreSequence() {
  //if (!SynchronizeStatus()) return(false);                 // synchronize restored state with the trade server
 
    return(true);
-
    if (!ReadOrderLog()) return(false);                      // TODO: where does this go to?
 }
 

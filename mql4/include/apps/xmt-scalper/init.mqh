@@ -7,30 +7,18 @@
 int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
-      if (!RestoreSequence()) return(last_error);
+      RestoreSequence();
    }
-   else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                      // on error an invalid sequence id was specified
+   else if (!StringLen(StrTrim(Sequence.ID))) {                // otherwise an invalid sequence id was specified
+      if (ValidateInputs()) {
+         sequence.id = CreateSequenceId();
+         Sequence.ID = sequence.id;
+         SS.SequenceName();
+         logInfo("onInitUser(1)  sequence id "+ sequence.id +" created");
+         SaveStatus();
+      }
    }
-   else if (ValidateInputs()) {
-      sequence.id = CreateSequenceId();
-      Sequence.ID = sequence.id;
-      logInfo("onInitUser(1)  sequence id "+ sequence.id +" created");
-      SS.SequenceName();
-      SaveStatus();
-   }
-
-   // initialize global vars
-   if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
-   else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
-   MaxSpread        = NormalizeDouble(MaxSpread, 1);
-   sMaxSpread       = DoubleToStr(MaxSpread, 1);
-   commissionPip    = GetCommission(1, MODE_MARKUP)/Pip;
-   orderSlippage    = Round(MaxSlippage*Pip/Point);
-   orderComment     = "XMT."+ sequence.id + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
-   orderMagicNumber = GenerateMagicNumber();
-
-   return(catch("onInitUser(2)"));
+   return(last_error);
 }
 
 
@@ -60,7 +48,17 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int afterInit() {
+   // initialize global vars
+   if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
+   else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
+   MaxSpread        = NormalizeDouble(MaxSpread, 1);
+   sMaxSpread       = DoubleToStr(MaxSpread, 1);
+   commissionPip    = GetCommission(1, MODE_MARKUP)/Pip;
+   orderSlippage    = Round(MaxSlippage*Pip/Point);
+   orderComment     = "XMT."+ sequence.id + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
+   orderMagicNumber = CalculateMagicNumber();
    SS.All();
+
    if (!SetLogfile(GetLogFilename())) return(last_error);
    if (!InitMetrics())                return(last_error);
 
