@@ -4,6 +4,10 @@
  * @return int - error status
  */
 int onDeinit() {
+   if (IsTesting()) {
+      if (!ObjectDelete("XMT-Scalper.status")) GetLastError();             // always remove the chart status to block command scripts
+   }
+
    int size = ArraySize(metrics.hSet);
    bool success = true;
 

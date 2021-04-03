@@ -807,7 +807,7 @@ bool IsEntrySignal(int &signal) {
       if (signal && ReverseSignals) signal ^= 3;               // flip long and short bits: dec(3) = bin(0011)
 
       if (signal != NULL) {
-         if (IsLogDebug()) logDebug("IsEntrySignal(3)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", Bid="+ NumberToStr(Bid, PriceFormat) +")");
+         if (IsLogDebug()) logDebug("IsEntrySignal(3)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "LONG", "SHORT") +" signal (barSize="+ DoubleToStr(barSize/Pip, 1) +", minBarSize="+ sMinBarSize +", channel="+ NumberToStr(channelHigh, PriceFormat) +"/"+ NumberToStr(channelLow, PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          return(true);
       }
    }
@@ -1789,17 +1789,16 @@ bool StartTradeCopier() {
    if (IsLastError()) return(false);
 
    if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) {
-      if (!CloseOpenOrders()) return(false);
-      tradingMode = TRADINGMODE_VIRTUAL;
+      if (!StopTrading()) return(false);
    }
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_COPIER;
+      TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
       real.isSynchronized = false;
-      return(!catch("StartTradeCopier(1)"));
+      return(SaveStatus());
    }
-
-   return(!catch("StartTradeCopier(2)  "+ sequence.name +" cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+   return(!catch("StartTradeCopier(1)  "+ sequence.name +" cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
 }
 
 
@@ -1812,35 +1811,36 @@ bool StartTradeMirror() {
    if (IsLastError()) return(false);
 
    if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) {
-      if (!CloseOpenOrders()) return(false);
-      tradingMode = TRADINGMODE_VIRTUAL;
+      if (!StopTrading()) return(false);
    }
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
+      TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
       real.isSynchronized = false;
-      return(!catch("StartTradeMirror(1)"));
+      return(SaveStatus());
    }
-
-   return(!catch("StartTradeMirror(2)  "+ sequence.name +" cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+   return(!catch("StartTradeMirror(1)  "+ sequence.name +" cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
 }
 
 
 /**
- * Stop a running virtual trade copier/mirror.
+ * Stop a running trade copier or mirror.
  *
  * @return bool - success status
  */
-bool StopVirtualTrading() {
+bool StopTrading() {
    if (IsLastError()) return(false);
 
    if (tradingMode==TRADINGMODE_VIRTUAL_COPIER || tradingMode==TRADINGMODE_VIRTUAL_MIRROR) {
-      if (!CloseOpenOrders()) return(false);
-      tradingMode = TRADINGMODE_VIRTUAL;
-      return(!catch("StopVirtualTrading(1)"));
+      if (CloseOpenOrders()) {
+         tradingMode = TRADINGMODE_VIRTUAL;
+         TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
+         SaveStatus();
+      }
+      return(!last_error);
    }
-
-   return(!catch("StopVirtualTrading(2)  "+ sequence.name +" cannot stop virtual trading in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
+   return(!catch("StopTrading(1)  "+ sequence.name +" cannot stop trading in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
 }
 
 
@@ -2092,7 +2092,7 @@ bool onCommand(string commands[]) {
       switch (tradingMode) {
          case TRADINGMODE_VIRTUAL_COPIER:
          case TRADINGMODE_VIRTUAL_MIRROR:
-            return(StopVirtualTrading());
+            return(StopTrading());
 
          default: logWarn("onCommand(2)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
@@ -2122,7 +2122,6 @@ bool onCommand(string commands[]) {
       }
       return(true);
    }
-
    return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 }
 
