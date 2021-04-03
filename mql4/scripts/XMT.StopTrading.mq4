@@ -1,7 +1,7 @@
 /**
- * XMT-Copier.Start
+ * XMT.StopTrading
  *
- * Send a command to a virtual XMT-Scalper to start the trade copier.
+ * Send a command to a virtual XMT-Scalper to stop the trade copier or mirror.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -18,7 +18,7 @@ int __DeinitFlags[];
 int onStart() {
    // A running XMT-Scalper maintains a chart object holding the instance id and the trading mode.
    string sid="", mode="", label="XMT-Scalper.status";
-   bool isStartable = false;
+   bool isStoppable = false;
 
    // check chart for a matching XMT-Scalper instance
    if (ObjectFind(label) == 0) {
@@ -26,21 +26,28 @@ int onStart() {
       sid  = StrLeftTo(text, "|");
       mode = StrToLower(StrLeftTo(StrRightFrom(text, "|"), "|"));
 
-      if (mode == "virtual")        isStartable = true;
-      if (mode == "virtual-mirror") isStartable = true;
+      if (mode == "virtual-copier") isStoppable = true;
+      if (mode == "virtual-mirror") isStoppable = true;
    }
 
-   if (isStartable) {
+   if (isStoppable) {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the XMT Trade-Copier (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the XMT trade "+ ifString(mode=="virtual-copier", "copier", "mirror") +" (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
-      SendChartCommand("XMT-Scalper.command", "virtual-copier");
+      SendChartCommand("XMT-Scalper.command", "virtual");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No virtual XMT-Scalper to start found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No active XMT copier or mirror found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }
+
+
+
+
+
+
+

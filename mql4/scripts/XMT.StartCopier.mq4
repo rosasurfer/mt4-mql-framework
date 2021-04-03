@@ -1,7 +1,7 @@
 /**
- * XMT-Trading.Stop
+ * XMT.StartCopier
  *
- * Send a command to a virtual XMT-Scalper to stop the trade copier or mirror.
+ * Send a command to a virtual XMT-Scalper to start the trade copier.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -18,7 +18,7 @@ int __DeinitFlags[];
 int onStart() {
    // A running XMT-Scalper maintains a chart object holding the instance id and the trading mode.
    string sid="", mode="", label="XMT-Scalper.status";
-   bool isStoppable = false;
+   bool isStartable = false;
 
    // check chart for a matching XMT-Scalper instance
    if (ObjectFind(label) == 0) {
@@ -26,28 +26,21 @@ int onStart() {
       sid  = StrLeftTo(text, "|");
       mode = StrToLower(StrLeftTo(StrRightFrom(text, "|"), "|"));
 
-      if (mode == "virtual-copier") isStoppable = true;
-      if (mode == "virtual-mirror") isStoppable = true;
+      if (mode == "virtual")        isStartable = true;
+      if (mode == "virtual-mirror") isStartable = true;
    }
 
-   if (isStoppable) {
+   if (isStartable) {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the XMT Trade-"+ ifString(mode=="virtual-copier", "Copier", "Mirror") +" (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the XMT trade copier (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
-      SendChartCommand("XMT-Scalper.command", "virtual");
+      SendChartCommand("XMT-Scalper.command", "virtual-copier");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No running XMT-Copier or XMT-Mirror found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No virtual XMT-Scalper found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }
-
-
-
-
-
-
-
