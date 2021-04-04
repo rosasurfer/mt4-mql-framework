@@ -282,13 +282,13 @@ int onTick() {
  * @return int - error status
  */
 int onTick.RegularTrading() {
-   UpdateRealOrderStatus();                                       // update real order status and PL
+   if (!UpdateRealOrderStatus()) return(last_error);              // update real order status and PL
 
    if (EA.StopOnProfit || EA.StopOnLoss) {
-      if (!CheckTotalTargets()) return(last_error);               // i.e. ERR_CANCELLED_BY_USER
+      if (CheckTotalTargets()) return(SetLastError(ERR_CANCELLED_BY_USER));
    }
 
-   if (real.isOpenOrder) {
+   if (!last_error && real.isOpenOrder) {
       if (real.isOpenPosition) ManageRealPosition();              // trail exit limits
       else                     ManagePendingOrder();              // trail entry limits or delete order
    }
@@ -311,12 +311,21 @@ int onTick.VirtualTrading() {
 
    // update virtual and real order status (if any)
    UpdateVirtualOrderStatus();
+
    if (tradingMode > TRADINGMODE_VIRTUAL) {
       if (!real.isSynchronized) {
          if (tradingMode == TRADINGMODE_VIRTUAL_COPIER) SynchronizeTradeCopier();
          if (tradingMode == TRADINGMODE_VIRTUAL_MIRROR) SynchronizeTradeMirror();
       }
       UpdateRealOrderStatus();
+
+      if (EA.StopOnProfit || EA.StopOnLoss) {
+         if (CheckTotalTargets()) {
+            tradingMode = TRADINGMODE_VIRTUAL;
+            TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
+            SaveStatus();
+         }
+      }
    }
 
    // manage virtual orders
@@ -1115,22 +1124,17 @@ bool ManageVirtualPosition() {
 
 
 /**
- * Check total profit targets and stop the EA if targets have been reached.
+ * Check total profit targets and close all orders if targets have been reached.
  *
- * @return bool - whether the EA shall continue trading, i.e. FALSE on EA stop or in case of errors
+ * @return bool - whether targets have been reached
  */
 bool CheckTotalTargets() {
-   bool stopEA = false;
-   if (EA.StopOnProfit != 0) stopEA = stopEA || GE(real.totalPlNet, EA.StopOnProfit);
-   if (EA.StopOnLoss   != 0) stopEA = stopEA || LE(real.totalPlNet, EA.StopOnProfit);
+   bool reached = false;
+   if (EA.StopOnProfit != 0) reached = reached || GE(real.totalPlNet, EA.StopOnProfit);
+   if (EA.StopOnLoss   != 0) reached = reached || LE(real.totalPlNet, EA.StopOnProfit);
 
-   if (stopEA) {
-      CloseOpenOrders();
-      SaveStatus();
-      SetLastError(ifIntOr(last_error, ERR_CANCELLED_BY_USER));
-      return(false);
-   }
-   return(true);
+   if (reached) CloseOpenOrders();
+   return(reached);
 }
 
 
@@ -1140,7 +1144,25 @@ bool CheckTotalTargets() {
  * @return bool - success status
  */
 bool CloseOpenOrders() {
-   return(!catch("CloseOpenOrders(1)  "+ sequence.name, ERR_NOT_IMPLEMENTED));
+   if (IsLastError())     return(false);
+   if (!real.isOpenOrder) return(true);
+
+   int i = ArraySize(real.ticket)-1, oe[];
+
+   if (real.isOpenPosition) {
+      if (real.openType[i] == OP_UNDEFINED) return(!catch("CloseOpenOrders(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected open position #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+      // close open position
+      OrderCloseEx(real.ticket[i], NULL, NULL, CLR_NONE, NULL, oe);
+   }
+   else {
+      if (real.openType[i] != OP_UNDEFINED) return(!catch("CloseOpenOrders(2)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(real.openType[i]) +" of expected pending order #"+ real.ticket[i], ERR_ILLEGAL_STATE));
+      // delete pending order
+      if (OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) Orders.RemoveRealTicket(real.ticket[i]);
+   }
+   if (oe.IsError(oe))           return(false);
+   if (!UpdateRealOrderStatus()) return(false);
+
+   return(SaveStatus());
 }
 
 
@@ -2025,8 +2047,6 @@ bool Orders.RemoveRealTicket(int ticket) {
    if (real.openType[pos] != OP_UNDEFINED) return(!catch("Orders.RemoveRealTicket(2)  "+ sequence.name +" cannot remove an opened position: #"+ ticket, ERR_ILLEGAL_STATE));
    if (!real.isOpenOrder)                  return(!catch("Orders.RemoveRealTicket(3)  "+ sequence.name +" real.isOpenOrder is FALSE", ERR_ILLEGAL_STATE));
 
-   real.isOpenOrder = false;
-
    ArraySpliceInts   (real.ticket,       pos, 1);
    ArraySpliceInts   (real.linkedTicket, pos, 1);
    ArraySpliceDoubles(real.lots,         pos, 1);
@@ -2042,6 +2062,8 @@ bool Orders.RemoveRealTicket(int ticket) {
    ArraySpliceDoubles(real.commission,   pos, 1);
    ArraySpliceDoubles(real.swap,         pos, 1);
    ArraySpliceDoubles(real.profit,       pos, 1);
+
+   real.isOpenOrder = false;
 
    return(!catch("Orders.RemoveRealTicket(4)"));
 }
@@ -2784,6 +2806,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (ObjectFind(label) != 0) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      RegisterObject(label);
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
 
