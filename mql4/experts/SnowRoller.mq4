@@ -2898,9 +2898,9 @@ bool SaveStatus() {
    string sActiveStartConditions="", sActiveStopConditions="";
    SaveStatus.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
 
-   string file = GetStatusFilename();
+   string section, file=GetStatusFilename();
 
-   string section = "Common";
+   section = "Common";
    WriteIniString(file, section, "Account",                  GetAccountCompany() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",                   Symbol());
    WriteIniString(file, section, "Sequence.ID",              Sequence.ID);
@@ -3054,7 +3054,7 @@ string SaveStatus.GridBaseToStr() {
  */
 string SaveStatus.OrderToStr(int index) {
    /*
-   rt.order.{i}={ticket},{level},{gridbase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{closedBySL},{swap},{commission},{profit}
+   rt.order.i=ticket,level,gridbase,pendingType,pendingTime,pendingPrice,type,openEvent,openTime,openPrice,closeEvent,closeTime,closePrice,stopLoss,closedBySL,swap,commission,profit
    rt.order.0=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
    */
    int      ticket       = orders.ticket      [index];
@@ -3081,7 +3081,7 @@ string SaveStatus.OrderToStr(int index) {
 
 
 /**
- * Restore the internal state of the EA from the current sequence's status file.
+ * Restore the internal state of the EA from a status file.
  *
  * @param  bool interactive - whether input parameters have been entered through the input dialog
  *

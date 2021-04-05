@@ -706,6 +706,7 @@ int      SearchStringArray(string &haystack[], string needle);;
 int      SearchStringArrayI(string &haystack[], string needle);;
 datetime ServerToFxtTime(datetime serverTime);;
 datetime ServerToGmtTime(datetime serverTime);;
+bool     SortStrings(string &values[]);;
 int      SortTicketsChronological(int &tickets[]);;
 string   StdSymbol();;
 bool     StringInArray(string &haystack[], string needle);;
