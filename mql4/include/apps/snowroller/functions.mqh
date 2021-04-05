@@ -1632,8 +1632,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
    if (IsLogNotice()) logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY) __STATUS_RELAUNCH_INPUT = true;
+   MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);
    return(error);
 }
 

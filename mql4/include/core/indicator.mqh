@@ -349,20 +349,14 @@ int start() {
       if (CheckErrors("start(8)")) return(last_error);
    }
 
-   // bei Bedarf Input-Dialog aufrufen
-   if (__STATUS_RELAUNCH_INPUT) {
-      __STATUS_RELAUNCH_INPUT = false;
-      return(_last_error(start.RelaunchInputDialog(), CheckErrors("start(9)")));
-   }
-
-   // Main-Funktion aufrufen
+   // call the userland main function
    error = onTick();
    if (error && error!=last_error) SetLastError(error);
 
    // check errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(10)", error);
+      CheckErrors("start(9)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }

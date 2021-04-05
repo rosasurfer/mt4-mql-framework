@@ -16,7 +16,6 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 bool     __isChart;                                         // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
 
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
-bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu öffnen
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
 int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
