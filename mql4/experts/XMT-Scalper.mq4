@@ -2819,11 +2819,9 @@ int ShowStatus(int error = NO_ERROR) {
 
    if (StringLen(TradingMode) < 3) return(!catch("ShowStatus(0.1)  writing status label with TradingMode="+ TradingMode, ERR_ILLEGAL_STATE));
 
-   if (!catch("ShowStatus(1)"))
-      return(error);
-
+   error = ifIntOr(catch("ShowStatus(1)"), error);
    isRecursion = false;
-   return(last_error);
+   return(error);
 }
 
 

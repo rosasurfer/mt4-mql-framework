@@ -2841,10 +2841,9 @@ int ShowStatus(int error = NO_ERROR) {
    if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
    else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
 
-   if (!catch("ShowStatus(3)"))
-      return(error);
+   error = ifIntOr(catch("ShowStatus(3)"), error);
    isRecursion = false;
-   return(last_error);
+   return(error);
 }
 
 
