@@ -2746,9 +2746,8 @@ int ShowStatus(int error = NO_ERROR) {
       isRecursion = true;
    }
 
-   string realStats="", virtStats="", copierStats="", mirrorStats="", sError="";
-   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate(" [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) sError = StringConcatenate(" [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
+   string realStats, virtStats, sError;
+   if (__STATUS_OFF) sError = StringConcatenate(" [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    string sSpreadInfo = "";
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)

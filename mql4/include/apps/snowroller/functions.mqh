@@ -806,10 +806,9 @@ bool RestoreChartStatus() {
          sequence.status = STATUS_WAITING;
       }
       bool bValue;
-      Chart.RestoreInt (name +".runtime.startStopDisplayMode",   startStopDisplayMode  );
-      Chart.RestoreInt (name +".runtime.orderDisplayMode",       orderDisplayMode      );
-      Chart.RestoreBool(name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
-      Chart.RestoreBool(name +".runtime.CANCELLED_BY_USER",      bValue                ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
+      Chart.RestoreInt (name +".runtime.startStopDisplayMode", startStopDisplayMode);
+      Chart.RestoreInt (name +".runtime.orderDisplayMode",     orderDisplayMode    );
+      Chart.RestoreBool(name +".runtime.CANCELLED_BY_USER",    bValue              ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
       catch("RestoreChartStatus(1)");
       return(iValue != 0);
    }
@@ -1161,11 +1160,10 @@ string StatusToStr(int status) {
  */
 int StoreChartStatus() {
    string name = ProgramName();
-   Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
-   Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
-   Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
-   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT           );
-   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",      last_error==ERR_CANCELLED_BY_USER);
+   Chart.StoreString(name +".runtime.Sequence.ID",          Sequence.ID                      );
+   Chart.StoreInt   (name +".runtime.startStopDisplayMode", startStopDisplayMode             );
+   Chart.StoreInt   (name +".runtime.orderDisplayMode",     orderDisplayMode                 );
+   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",    last_error==ERR_CANCELLED_BY_USER);
    return(catch("StoreChartStatus(1)"));
 }
 
@@ -1573,10 +1571,6 @@ bool ValidateInputs(bool interactive) {
       sessionbreak.starttime = NULL;
       sessionbreak.endtime   = NULL;                              // real times are updated automatically on next use
    }
-
-   // reset __STATUS_INVALID_INPUT
-   if (interactive)
-      __STATUS_INVALID_INPUT = false;
    return(!catch("ValidateInputs(59)"));
 }
 
@@ -1626,9 +1620,7 @@ int ValidateInputs.OnError(string location, string message, bool interactive) {
    if (IsTesting() || !interactive)
       return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
 
-   int error = ERR_INVALID_INPUT_PARAMETER;
-   __STATUS_INVALID_INPUT = true;
-
+   int error = ERS_INVALID_INPUT_PARAMETER;
    if (IsLogNotice()) logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");

@@ -2800,9 +2800,7 @@ int ShowStatus(int error = NO_ERROR) {
    }
 
    string msg, sError;
-
-   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
+   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    switch (sequence.status) {
       case STATUS_UNDEFINED:   msg = "not initialized";                                                                                                                                            break;
