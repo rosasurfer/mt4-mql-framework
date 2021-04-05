@@ -1788,38 +1788,38 @@ bool ValidateInputs(bool interactive) {
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                                         return(_false(ValidateInputs.OnError("ValidateInputs(1)", "Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), interactive)));
+   if (iValue == -1)                                         return(_false(onInputError("ValidateInputs(1)", "Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), interactive)));
    if (isParameterChange && !StrCompareI(sValue, last.GridDirections)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(2)", "Cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(2)", "Cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    sequence.directions = iValue;
    GridDirections = TradeDirectionDescription(sequence.directions);
 
    // GridSize
    if (isParameterChange && GridSize!=last.GridSize) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(3)", "Cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(3)", "Cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (GridSize < 1)                                         return(_false(ValidateInputs.OnError("ValidateInputs(4)", "Invalid input parameter GridSize: "+ GridSize, interactive)));
+   if (GridSize < 1)                                         return(_false(onInputError("ValidateInputs(4)", "Invalid input parameter GridSize: "+ GridSize, interactive)));
 
    // UnitSize
    if (isParameterChange && NE(UnitSize, last.UnitSize)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(5)", "Cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(5)", "Cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (LT(UnitSize, 0.01))                                   return(_false(ValidateInputs.OnError("ValidateInputs(6)", "Invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+"), interactive)));
+   if (LT(UnitSize, 0.01))                                   return(_false(onInputError("ValidateInputs(6)", "Invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+"), interactive)));
    sequence.unitsize = UnitSize;
 
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, last.Pyramid.Multiplier)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (Pyramid.Multiplier < 0)                               return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
+   if (Pyramid.Multiplier < 0)                               return(_false(onInputError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, last.Martingale.Multiplier)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (Martingale.Multiplier < 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
+   if (Martingale.Multiplier < 0)                            return(_false(onInputError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -1828,7 +1828,7 @@ bool ValidateInputs(bool interactive) {
    if (StringLen(sValue) && sValue!="{amount}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
+      if (!StrIsNumeric(sValue))                             return(_false(onInputError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          tpPct.condition   = true;
@@ -1863,7 +1863,7 @@ bool ValidateInputs(bool interactive) {
    if (StringLen(sValue) && sValue!="{amount}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
+      if (!StrIsNumeric(sValue))                             return(_false(onInputError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          slPct.condition   = true;
@@ -1910,7 +1910,7 @@ bool ValidateInputs(bool interactive) {
  *
  * @return int - error status
  */
-int ValidateInputs.OnError(string location, string message, bool interactive) {
+int onInputError(string location, string message, bool interactive) {
    interactive = interactive!=0;
    if (IsTesting() || !interactive)
       return(catch(location +"  "+ message, ERR_INVALID_INPUT_PARAMETER));
