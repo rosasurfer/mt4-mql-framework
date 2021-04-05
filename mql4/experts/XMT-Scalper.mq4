@@ -2740,6 +2740,12 @@ string SaveStatus.OrderToStr(int index, int mode) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
 
+   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
+   if (error != 0) {
+      if (isRecursion) return(error);
+      isRecursion = true;
+   }
+
    string realStats="", virtStats="", copierStats="", mirrorStats="", sError="";
    if      (__STATUS_INVALID_INPUT) sError = StringConcatenate(" [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
    else if (__STATUS_OFF          ) sError = StringConcatenate(" [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
@@ -2815,6 +2821,8 @@ int ShowStatus(int error = NO_ERROR) {
 
    if (!catch("ShowStatus(1)"))
       return(error);
+
+   isRecursion = false;
    return(last_error);
 }
 
