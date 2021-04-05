@@ -1902,23 +1902,20 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Error handler for invalid input parameters. Either prompts for input correction or passes on execution to the standard
- * error handler.
+ * Error handler for invalid input parameters. Depending on the execution context a terminating or non-terminating error is set.
  *
  * @param  string location    - error location identifier
  * @param  string message     - error message
- * @param  bool   interactive - whether the error occurred in an interactive or programatic context
+ * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
  *
- * @return int - resulting error status
+ * @return int - error status
  */
 int ValidateInputs.OnError(string location, string message, bool interactive) {
    interactive = interactive!=0;
    if (IsTesting() || !interactive)
-      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
+      return(catch(location +"  "+ message, ERR_INVALID_INPUT_PARAMETER));
 
-   int error = ERR_INVALID_INPUT_PARAMETER;
-   __STATUS_INVALID_INPUT = true;
-
+   int error = ERS_INVALID_INPUT_PARAMETER;
    if (IsLogNotice()) logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
@@ -2210,8 +2207,7 @@ int ShowStatus(int error = NO_ERROR) {
       default:
          return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
+   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
                                                                                                               NL,
