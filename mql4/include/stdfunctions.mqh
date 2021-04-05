@@ -3043,29 +3043,6 @@ string StrToHexStr(string value) {
 
 
 /**
- * Open the input dialog of the current program.
- *
- * @return int - error status
- */
-int start.RelaunchInputDialog() {
-   int error;
-
-   if (IsExpert()) {
-      if (!IsTesting())
-         error = Chart.Expert.Properties();
-   }
-   else if (IsIndicator()) {
-      //if (!IsTesting())
-      //   error = Chart.Indicator.Properties();                     // TODO: implement
-   }
-
-   if (IsError(error))
-      SetLastError(error, NULL);
-   return(error);
-}
-
-
-/**
  * Konvertiert das erste Zeichen eines Strings in Groﬂschreibweise.
  *
  * @param  string value
@@ -6702,7 +6679,6 @@ void __DummyCalls() {
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
-   start.RelaunchInputDialog();
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
