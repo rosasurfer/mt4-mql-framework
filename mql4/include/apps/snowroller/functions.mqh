@@ -1582,7 +1582,7 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Syntactically validate and set a specified sequence id (format: /T?[0-9]{4,}/i). Called only from onInitUser().
+ * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4,}/i). Called only from onInitUser().
  *
  * @return bool - validation success status; existence of the status file is NOT checked
  */
