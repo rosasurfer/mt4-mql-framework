@@ -2616,6 +2616,7 @@ bool SaveStatus() {
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
+   if (StringLen(TradingMode) < 3) return(!catch("SaveStatus(0.1)  TradingMode="+ TradingMode, ERR_ILLEGAL_STATE));
 
    string section, file=GetStatusFilename(), separator="";
    if (!IsFileA(file)) separator = CRLF;                                                     // an empty line as section separator
@@ -2809,6 +2810,8 @@ int ShowStatus(int error = NO_ERROR) {
       RegisterObject(label);
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
+
+   if (StringLen(TradingMode) < 3) return(!catch("ShowStatus(0.1)  writing status label with TradingMode="+ TradingMode, ERR_ILLEGAL_STATE));
 
    if (!catch("ShowStatus(1)"))
       return(error);
