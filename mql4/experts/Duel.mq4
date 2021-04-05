@@ -2235,10 +2235,9 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   if (!catch("ShowStatus(2)"))
-      return(error);
+   error = ifIntOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
-   return(last_error);
+   return(error);
 }
 
 
