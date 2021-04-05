@@ -133,22 +133,16 @@ int start() {
          if (CheckErrors("start(3)", error)) return(last_error);              // nicht sicher detektiert werden kann
    }
 
-
-   // (1) init() war immer erfolgreich
-
-
-   // (2) Abschluß der Chart-Initialisierung überprüfen
+   // Abschluß der Chart-Initialisierung überprüfen
    if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
 
-
-   // (3) Main-Funktion aufrufen
+   // call the userland main function
    onStart();
 
-
-   // (4) check errors
+   // check errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       CheckErrors("start(5)", error);
