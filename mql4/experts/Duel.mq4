@@ -2188,6 +2188,13 @@ string StatusDescription(int status) {
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
+
+   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
+   if (error != 0) {
+      if (isRecursion) return(error);
+      isRecursion = true;
+   }
+
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.directions) {
@@ -2230,6 +2237,7 @@ int ShowStatus(int error = NO_ERROR) {
 
    if (!catch("ShowStatus(2)"))
       return(error);
+   isRecursion = false;
    return(last_error);
 }
 
