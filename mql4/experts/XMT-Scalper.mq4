@@ -2286,13 +2286,16 @@ string TradingModeToStr(int mode) {
 /**
  * Restore the internal state of the EA from a status file. Requires a valid sequence id.
  *
+ * @param  bool interactive - whether input parameters have been entered through the input dialog
+ *
  * @return bool - success status
  */
-bool RestoreSequence() {
-   if (IsLastError())        return(false);
-   if (!ReadStatus())        return(false);                 // read the status file
-   if (!ValidateInputs())    return(false);                 // validate restored input parameters
- //if (!SynchronizeStatus()) return(false);                 // synchronize restored state with the trade server
+bool RestoreSequence(bool interactive) {
+   interactive = interactive!=0;
+   if (IsLastError())                return(false);
+   if (!ReadStatus())                return(false);         // read the status file
+   if (!ValidateInputs(interactive)) return(false);         // validate restored input parameters
+ //if (!SynchronizeStatus())         return(false);         // synchronize restored state with the trade server
 
    return(true);
    if (!ReadOrderLog()) return(false);                      // TODO: where does this go to?
@@ -2895,6 +2898,170 @@ void SS.UnitSize(double size = NULL) {
 }
 
 
+string last.Sequence.ID = "";
+string last.TradingMode = "";
+
+int    last.EntryIndicator;
+int    last.IndicatorTimeframe;
+int    last.IndicatorPeriods;
+double last.BollingerBands.Deviation;
+double last.Envelopes.Deviation;
+
+bool   last.UseSpreadMultiplier;
+double last.SpreadMultiplier;
+double last.MinBarSize;
+
+double last.BreakoutReversal;
+double last.MaxSpread;
+bool   last.ReverseSignals;
+
+bool   last.MoneyManagement;
+double last.Risk;
+double last.ManualLotsize;
+
+double last.TakeProfit;
+double last.StopLoss;
+double last.TrailEntryStep;
+double last.TrailExitStart;
+double last.TrailExitStep;
+double last.MaxSlippage;
+
+double last.EA.StopOnProfit;
+double last.EA.StopOnLoss;
+bool   last.EA.RecordMetrics;
+
+bool   last.ChannelBug;
+bool   last.TakeProfitBug;
+
+
+/**
+ * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ */
+void BackupInputs() {
+   // backed-up inputs are also accessed from ValidateInputs()
+   last.Sequence.ID              = StringConcatenate(Sequence.ID, "");     // string inputs are references to internal C literals
+   last.TradingMode              = StringConcatenate(TradingMode, "");     // and must be copied to break the reference
+
+   last.EntryIndicator           = EntryIndicator;
+   last.IndicatorTimeframe       = IndicatorTimeframe;
+   last.IndicatorPeriods         = IndicatorPeriods;
+   last.BollingerBands.Deviation = BollingerBands.Deviation;
+   last.Envelopes.Deviation      = Envelopes.Deviation;
+
+   last.UseSpreadMultiplier      = UseSpreadMultiplier;
+   last.SpreadMultiplier         = SpreadMultiplier;
+   last.MinBarSize               = MinBarSize;
+
+   last.BreakoutReversal         = BreakoutReversal;
+   last.MaxSpread                = MaxSpread;
+   last.ReverseSignals           = ReverseSignals;
+
+   last.MoneyManagement          = MoneyManagement;
+   last.Risk                     = Risk;
+   last.ManualLotsize            = ManualLotsize;
+
+   last.TakeProfit               = TakeProfit;
+   last.StopLoss                 = StopLoss;
+   last.TrailEntryStep           = TrailEntryStep;
+   last.TrailExitStart           = TrailExitStart;
+   last.TrailExitStep            = TrailExitStep;
+   last.MaxSlippage              = MaxSlippage;
+
+   last.EA.StopOnProfit          = EA.StopOnProfit;
+   last.EA.StopOnLoss            = EA.StopOnLoss;
+   last.EA.RecordMetrics         = EA.RecordMetrics;
+
+   last.ChannelBug               = ChannelBug;
+   last.TakeProfitBug            = TakeProfitBug;
+}
+
+
+/**
+ * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
+ */
+void RestoreInputs() {
+   Sequence.ID              = last.Sequence.ID;
+   TradingMode              = last.TradingMode;
+
+   EntryIndicator           = last.EntryIndicator;
+   IndicatorTimeframe       = last.IndicatorTimeframe;
+   IndicatorPeriods         = last.IndicatorPeriods;
+   BollingerBands.Deviation = last.BollingerBands.Deviation;
+   Envelopes.Deviation      = last.Envelopes.Deviation;
+
+   UseSpreadMultiplier      = last.UseSpreadMultiplier;
+   SpreadMultiplier         = last.SpreadMultiplier;
+   MinBarSize               = last.MinBarSize;
+
+   BreakoutReversal         = last.BreakoutReversal;
+   MaxSpread                = last.MaxSpread;
+   ReverseSignals           = last.ReverseSignals;
+
+   MoneyManagement          = last.MoneyManagement;
+   Risk                     = last.Risk;
+   ManualLotsize            = last.ManualLotsize;
+
+   TakeProfit               = last.TakeProfit;
+   StopLoss                 = last.StopLoss;
+   TrailEntryStep           = last.TrailEntryStep;
+   TrailExitStart           = last.TrailExitStart;
+   TrailExitStep            = last.TrailExitStep;
+   MaxSlippage              = last.MaxSlippage;
+
+   EA.StopOnProfit          = last.EA.StopOnProfit;
+   EA.StopOnLoss            = last.EA.StopOnLoss;
+   EA.RecordMetrics         = last.EA.RecordMetrics;
+
+   ChannelBug               = last.ChannelBug;
+   TakeProfitBug            = last.TakeProfitBug;
+}
+
+
+/**
+ * Backup status variables which may change due to modified input parameters. This way status can be restored in case of input
+ * errors. Called only from onInitParameters().
+ */
+void BackupInputStatus() {
+   CopyInputStatus(true);
+}
+
+
+/**
+ * Restore status variables from the backup. Called only from onInitParameters().
+ */
+void RestoreInputStatus() {
+   CopyInputStatus(false);
+}
+
+
+/**
+ * Backup or restore status variables related to input parameter changes. Called only from BackupInputStatus() and
+ * RestoreInputStatus() in onInitParameters().
+ *
+ * @param  bool store - TRUE:  copy status to internal storage (backup)
+ *                      FALSE: copy internal storage to status (restore)
+ */
+void CopyInputStatus(bool store) {
+   store = store!=0;
+
+   static int    _tradingMode;
+   static int    _sequence.id;
+   static string _sequence.name = "";
+
+   if (store) {
+      _tradingMode   = tradingMode;
+      _sequence.id   = sequence.id;
+      _sequence.name = sequence.name;
+   }
+   else {
+      tradingMode   = _tradingMode;
+      sequence.id   = _sequence.id;
+      sequence.name = _sequence.name;
+   }
+}
+
+
 /**
  * Syntactically validate and restore a specified sequence id (format: /[1-9][0-9]{3}/). Called only from onInitUser().
  *
@@ -2919,9 +3086,12 @@ bool ValidateInputs.SID() {
  * Validate all input parameters. Parameters may have been entered through the input dialog or may have been read and applied
  * from a status file.
  *
+ * @param  bool interactive - whether parameters have been entered through the input dialog
+ *
  * @return bool - whether input parameters are valid
  */
-bool ValidateInputs() {
+bool ValidateInputs(bool interactive) {
+   interactive = interactive!=0;
    if (IsLastError()) return(false);
 
    // Sequence.ID

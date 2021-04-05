@@ -404,7 +404,7 @@ int deinit() {
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
-   if (!error && !last_error && !This.IsTesting()) DeleteRegisteredObjects();
+   if (!This.IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(3)");
    return(last_error|LeaveContext(__ExecutionContext));
@@ -464,15 +464,15 @@ int DeinitReason() {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location - location of the check
- * @param  int    setError - error to enforce
+ * @param  string location         - location of the check
+ * @param  int    error [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int setError = NULL) {
+bool CheckErrors(string location, int error = NULL) {
    // check DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
-   if (dll_error && 1) {
+   if (dll_error != NO_ERROR) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
@@ -483,6 +483,7 @@ bool CheckErrors(string location, int setError = NULL) {
       case NO_ERROR:
       case ERR_HISTORY_INSUFFICIENT:
       case ERS_HISTORY_UPDATE:
+      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;
@@ -496,6 +497,7 @@ bool CheckErrors(string location, int setError = NULL) {
       case NO_ERROR:
       case ERR_HISTORY_INSUFFICIENT:
       case ERS_HISTORY_UPDATE:
+      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;
@@ -505,17 +507,16 @@ bool CheckErrors(string location, int setError = NULL) {
    }
 
    // check uncatched errors
-   if (!setError) setError = GetLastError();
-   if (setError && 1) {
-      catch(location, setError);
+   if (!error) error = GetLastError();
+   if (error != NO_ERROR) {
+      catch(location, error);
       __STATUS_OFF        = true;
-      __STATUS_OFF.reason = setError;                                // all uncatched errors are terminating errors
+      __STATUS_OFF.reason = error;                                   // all uncatched errors are terminating errors
    }
 
    // update variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
-
    return(__STATUS_OFF);
 
    // suppress compiler warnings

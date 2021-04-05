@@ -408,7 +408,7 @@ int deinit() {
       }                                                                    //
    }                                                                       //
    if (!error) error = afterDeinit();                                      // postprocessing hook
-   if (!error && !last_error && !IsTesting()) DeleteRegisteredObjects();
+   if (!IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(5)");
    return(last_error|LeaveContext(__ExecutionContext));
@@ -466,8 +466,7 @@ bool IsLibrary() {
 
 
 /**
- * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
- * activated.
+ * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
  * @param  string location         - location of the check
  * @param  int    error [optional] - error to enforce (default: none)
@@ -477,7 +476,7 @@ bool IsLibrary() {
 bool CheckErrors(string location, int error = NULL) {
    // check and signal DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
-   if (dll_error && 1) {
+   if (dll_error != NO_ERROR) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
@@ -487,6 +486,7 @@ bool CheckErrors(string location, int error = NULL) {
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
+      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;
@@ -499,6 +499,7 @@ bool CheckErrors(string location, int error = NULL) {
    switch (last_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
+      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;
@@ -514,9 +515,7 @@ bool CheckErrors(string location, int error = NULL) {
                                                                      // which updates __STATUS_OFF accordingly
    // update the variable last_error
    if (__STATUS_OFF) {
-      if (!last_error) {
-         last_error = __STATUS_OFF.reason;
-      }
+      if (!last_error) last_error = __STATUS_OFF.reason;
       ShowStatus(last_error);                                        // show status once again if an error occurred
    }
    return(__STATUS_OFF);

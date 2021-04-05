@@ -5,12 +5,14 @@
  * @return int - error status
  */
 int onInitUser() {
+   bool interactive = true;
+
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
-      RestoreSequence();
+      RestoreSequence(interactive);
    }
    else if (!StringLen(StrTrim(Sequence.ID))) {                // otherwise an invalid sequence id was specified
-      if (ValidateInputs()) {
+      if (ValidateInputs(interactive)) {
          sequence.id = CreateSequenceId();
          Sequence.ID = sequence.id;
          SS.SequenceName();
@@ -23,12 +25,32 @@ int onInitUser() {
 
 
 /**
- * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ * Called after the input parameters were changed through the input dialog.
  *
  * @return int - error status
  */
-int onInitTemplate() {
-   return(SetLastError(ERR_NOT_IMPLEMENTED));
+int onInitParameters() {
+   BackupInputStatus();                                        // previous input has been backed-up in onDeinitParameters()
+
+   bool interactive = true;
+   if (!ValidateInputs(interactive)) {
+      RestoreInputs();
+      RestoreInputStatus();
+      return(last_error);
+   }
+   SaveStatus();                                               // parameter change of a valid sequence
+   return(last_error);
+}
+
+
+/**
+ * Called after the current chart period has changed. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTimeframeChange() {
+   RestoreInputs();
+   return(NO_ERROR);
 }
 
 
@@ -39,6 +61,16 @@ int onInitTemplate() {
  */
 int onInitSymbolChange() {
    return(SetLastError(ERR_ILLEGAL_STATE));
+}
+
+
+/**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   return(SetLastError(ERR_NOT_IMPLEMENTED));
 }
 
 
