@@ -219,19 +219,18 @@ string ErrorDescription(int error) {
       case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                               );    //  65545
       case ERR_INVALID_FILE_FORMAT        : return("invalid file format"                                       );    //  65546
       case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                   );    //  65547
-      case ERS_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                   );    //  65548   non-terminating status
-      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       );    //  65549
-      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 );    //  65550
-      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65551
-      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   );    //  65552
-      case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65553
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65554
-      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65555
-      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65556   non-terminating status
-      case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65557
-      case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65558
-      case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65559
-      case ERR_MARGIN_STOPOUT             : return("margin stopout"                                            );    //  65560
+      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       );    //  65548
+      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 );    //  65549
+      case ERR_MIXED_SYMBOLS              : return("mixed symbols encountered"                                 );    //  65550
+      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   );    //  65551
+      case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65552
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65553
+      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
+      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   non-terminating status
+      case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
+      case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
+      case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65558
+      case ERR_MARGIN_STOPOUT             : return("margin stopout"                                            );    //  65559
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }

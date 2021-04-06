@@ -486,7 +486,6 @@ bool CheckErrors(string location, int error = NULL) {
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
-      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;
@@ -499,7 +498,6 @@ bool CheckErrors(string location, int error = NULL) {
    switch (last_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
-      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;

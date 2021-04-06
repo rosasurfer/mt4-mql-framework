@@ -1902,7 +1902,7 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a terminating or non-terminating error is set.
+ * Error handler for invalid input parameters. Depending on the execution context a terminating error is set.
  *
  * @param  string location    - error location identifier
  * @param  string message     - error message
@@ -1912,11 +1912,12 @@ bool ValidateInputs(bool interactive) {
  */
 int onInputError(string location, string message, bool interactive) {
    interactive = interactive!=0;
-   if (IsTesting() || !interactive)
-      return(catch(location +"  "+ message, ERR_INVALID_INPUT_PARAMETER));
+   int error = ERR_INVALID_INPUT_PARAMETER;
 
-   int error = ERS_INVALID_INPUT_PARAMETER;
-   if (IsLogNotice()) logNotice(location +"  "+ message, error);
+   if (IsTesting() || !interactive)
+      return(catch(location +"  "+ message, error));
+
+   logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
    MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);
