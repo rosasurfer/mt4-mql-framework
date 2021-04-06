@@ -3065,15 +3065,18 @@ void CopyInputStatus(bool store) {
 /**
  * Syntactically validate and restore a specified sequence id (format: /[1-9][0-9]{3}/). Called only from onInitUser().
  *
- * @return bool - whether the specified sequence id was valid and restored (the status file is not checked)
+ * @param  bool interactive - whether parameters have been entered through the input dialog
+ *
+ * @return bool - whether the input sequence id is was valid and restored (the status file is not checked)
  */
-bool ValidateInputs.SID() {
+bool ValidateInputs.SID(bool interactive) {
+   interactive = interactive!=0;
    string sValue = StrTrim(Sequence.ID);
 
    if (!StringLen(sValue))                   return(false);
-   if (!StrIsDigit(sValue))                  return(!catch("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive));
    int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX) return(!catch("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", ERR_INVALID_INPUT_PARAMETER));
+   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive));
 
    sequence.id = iValue;
    Sequence.ID = sequence.id;
@@ -3097,9 +3100,9 @@ bool ValidateInputs(bool interactive) {
    // Sequence.ID
    string values[], sValue = StrTrim(Sequence.ID);
    if (StringLen(sValue) > 0) {
-      if (!StrIsDigit(sValue))                               return(!catch("ValidateInputs(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", ERR_INVALID_INPUT_PARAMETER));
+      if (!StrIsDigit(sValue))                               return(!onInputError("ValidateInputs(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive));
       int iValue = StrToInteger(sValue);
-      if (iValue < SID_MIN || iValue > SID_MAX)              return(!catch("ValidateInputs(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", ERR_INVALID_INPUT_PARAMETER));
+      if (iValue < SID_MIN || iValue > SID_MAX)              return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive));
       sequence.id = iValue;
       Sequence.ID = sequence.id; SS.SequenceName();
    }
@@ -3115,38 +3118,64 @@ bool ValidateInputs(bool interactive) {
    else if (sValue=="v"  || sValue=="virtual"       ) tradingMode = TRADINGMODE_VIRTUAL;
    else if (sValue=="vc" || sValue=="virtual-copier") tradingMode = TRADINGMODE_VIRTUAL_COPIER;
    else if (sValue=="vm" || sValue=="virtual-mirror") tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
-   else                                                      return(!catch("ValidateInputs(3)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), ERR_INVALID_INPUT_PARAMETER));
+   else                                                      return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), interactive));
    TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
 
    // EntryIndicator
-   if (EntryIndicator < 1 || EntryIndicator > 3)             return(!catch("ValidateInputs(4)  "+ sequence.name +" invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", ERR_INVALID_INPUT_PARAMETER));
+   if (EntryIndicator < 1 || EntryIndicator > 3)             return(!onInputError("ValidateInputs(4)  "+ sequence.name +" invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", interactive));
 
    // IndicatorTimeframe
-   if (IsTesting() && IndicatorTimeframe!=Period())          return(!catch("ValidateInputs(5)  "+ sequence.name +" illegal test on "+ PeriodDescription(Period()) +" for configured EA timeframe "+ PeriodDescription(IndicatorTimeframe), ERR_RUNTIME_ERROR));
+   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (test on "+ PeriodDescription(Period()) +")", interactive));
 
    // BreakoutReversal
    double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
-   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!catch("ValidateInputs(6)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", ERR_INVALID_INPUT_PARAMETER));
+   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", interactive));
    double minLots=MarketInfo(Symbol(), MODE_MINLOT), maxLots=MarketInfo(Symbol(), MODE_MAXLOT);
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                       return(!catch("ValidateInputs(7)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      if (LE(Risk, 0))                                       return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", interactive));
       double lots = CalculateLots(false); if (IsLastError()) return(false);
-      if (LT(lots, minLots))                                 return(!catch("ValidateInputs(8)  "+ sequence.name +" not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_NOT_ENOUGH_MONEY));
-      if (GT(lots, maxLots))                                 return(!catch("ValidateInputs(9)  "+ sequence.name +" too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(lots, minLots))                                 return(!onInputError("ValidateInputs(8)  "+ sequence.name +" not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
+      if (GT(lots, maxLots))                                 return(!onInputError("ValidateInputs(9)  "+ sequence.name +" too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", interactive));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, minLots))                        return(!catch("ValidateInputs(10)  "+ sequence.name +" too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
-      if (GT(ManualLotsize, maxLots))                        return(!catch("ValidateInputs(11)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", ERR_INVALID_INPUT_PARAMETER));
+      if (LT(ManualLotsize, minLots))                        return(!onInputError("ValidateInputs(10)  "+ sequence.name +" too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
+      if (GT(ManualLotsize, maxLots))                        return(!onInputError("ValidateInputs(11)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", interactive));
    }
 
    // EA.StopOnProfit / EA.StopOnLoss
    if (EA.StopOnProfit && EA.StopOnLoss) {
-      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!catch("ValidateInputs(12)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", ERR_INVALID_INPUT_PARAMETER));
+      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!onInputError("ValidateInputs(12)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", interactive));
    }
 
    return(!catch("ValidateInputs(13)"));
+}
+
+
+/**
+ * Error handler for invalid input parameters. Depending on the execution context the functions sets a terminating error.
+ *
+ * @param  string message     - error message
+ * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
+ *
+ * @return int - resulting error status
+ */
+int onInputError(string message, bool interactive) {
+   interactive = interactive!=0;
+   int error = ERR_INVALID_PARAMETER;
+
+   if (IsTesting() || !interactive)
+      return(catch(message, error));
+
+   logNotice(message, error);
+
+   string location = StrLeftTo(message, " ");
+   message = StrCapitalize(StrTrim(StrSubstr(message, StringLen(location))));
+
+   PlaySoundEx("Windows Chord.wav");
+   MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);
+   return(error);
 }
 
 

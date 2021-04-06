@@ -1236,6 +1236,37 @@ bool ToggleStartStopDisplayMode() {
 
 
 /**
+ * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4,}/i). Called only from onInitUser().
+ *
+ * @param  bool interactive - whether parameters have been entered through the input dialog
+ *
+ * @return bool - whether the input sequence id is was valid and restored (the status file is not checked)
+ */
+bool ValidateInputs.SID(bool interactive) {
+   interactive = interactive!=0;
+   string sValue = StrToUpper(StrTrim(Sequence.ID));
+
+   if (!StringLen(sValue))
+      return(false);
+
+   if (StrLeft(sValue, 1) == "T") {
+      sequence.isTest = true;
+      sValue = StrSubstr(sValue, 1);
+   }
+   if (!StrIsDigit(sValue))
+      return(_false(onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive)));
+
+   int iValue = StrToInteger(sValue);
+   if (iValue < SID_MIN || iValue > SID_MAX)
+      return(_false(onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive)));
+
+   sequence.id = iValue;
+   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
+   return(true);
+}
+
+
+/**
  * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
  * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
  *
@@ -1254,12 +1285,12 @@ bool ValidateInputs(bool interactive) {
    // Sequence.ID
    if (isParameterChange) {
       if (sequence.status == STATUS_UNDEFINED) {
-         if (Sequence.ID != last.Sequence.ID)                     return(_false(onInputError("ValidateInputs(1)", "Switching the sequence at runtime is not supported. Unload the EA first.", interactive)));
+         if (Sequence.ID != last.Sequence.ID)                     return(_false(onInputError("ValidateInputs(1)  switching the sequence at runtime is not supported. Unload the EA first.", interactive)));
       }
       else if (!StringLen(StrTrim(Sequence.ID))) {
          Sequence.ID = last.Sequence.ID;                          // apply the existing internal id
       }
-      else if (StrTrim(Sequence.ID) != StrTrim(last.Sequence.ID)) return(_false(onInputError("ValidateInputs(2)", "Switching the sequence at runtime is not supported. Unload the EA first.", interactive)));
+      else if (StrTrim(Sequence.ID) != StrTrim(last.Sequence.ID)) return(_false(onInputError("ValidateInputs(2)  switching the sequence at runtime is not supported. Unload the EA first.", interactive)));
    }
    else if (!StringLen(Sequence.ID)) {                            // status must be STATUS_UNDEFINED (sequence.id = 0)
       if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
@@ -1270,9 +1301,9 @@ bool ValidateInputs(bool interactive) {
    string sValues[], sValue=StrToLower(StrTrim(GridDirection));
    if      (StrStartsWith("long",  sValue)) sValue = "Long";
    else if (StrStartsWith("short", sValue)) sValue = "Short";
-   else                                                           return(_false(onInputError("ValidateInputs(4)", "Invalid GridDirection "+ DoubleQuoteStr(GridDirection), interactive)));
+   else                                                           return(_false(onInputError("ValidateInputs(4)  invalid GridDirection "+ DoubleQuoteStr(GridDirection), interactive)));
    if (isParameterChange && !StrCompareI(sValue, last.GridDirection)) {
-      if (ArraySize(sequence.start.event) > 0)                    return(_false(onInputError("ValidateInputs(5)", "Cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(sequence.start.event) > 0)                    return(_false(onInputError("ValidateInputs(5)  cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    sequence.direction = StrToTradeDirection(sValue);
    GridDirection      = sValue; SS.GridDirection();
@@ -1281,14 +1312,14 @@ bool ValidateInputs(bool interactive) {
    // GridSize
    if (isParameterChange) {
       if (GridSize != last.GridSize)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(onInputError("ValidateInputs(6)", "Cannot change GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)                 return(_false(onInputError("ValidateInputs(6)  cannot change GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (GridSize < 1)                                              return(_false(onInputError("ValidateInputs(7)", "Invalid GridSize: "+ GridSize, interactive)));
+   if (GridSize < 1)                                              return(_false(onInputError("ValidateInputs(7)  invalid GridSize: "+ GridSize, interactive)));
 
    // UnitSize
    if (isParameterChange) {
       if (UnitSize != last.UnitSize)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(onInputError("ValidateInputs(8)", "Cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)                 return(_false(onInputError("ValidateInputs(8)  cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    sValue = StrToLower(UnitSize);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -1303,21 +1334,21 @@ bool ValidateInputs(bool interactive) {
       bool fixedSize = true;
       if      (StrStartsWithI(sValue, "Leverage")) { sValue = StrTrim(StrSubstr(sValue, 8)); fixedSize = false; }
       else if (StrStartsWithI(sValue, "L"       )) { sValue = StrTrim(StrSubstr(sValue, 1)); fixedSize = false; }
-      if (!StrIsNumeric(sValue))                                  return(_false(onInputError("ValidateInputs(9)", "Invalid UnitSize: "+ DoubleQuoteStr(UnitSize), interactive)));
+      if (!StrIsNumeric(sValue))                                  return(_false(onInputError("ValidateInputs(9)  invalid UnitSize: "+ DoubleQuoteStr(UnitSize), interactive)));
       double dValue = StrToDouble(sValue);
       if (fixedSize) {
          double minLot  = MarketInfo(Symbol(), MODE_MINLOT );
          double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT );
          double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
          int    error   = GetLastError();
-         if (IsError(error))                                      return(_false(onInputError("ValidateInputs(10)", "", interactive)));
-         if (LE(dValue, 0))                                       return(_false(onInputError("ValidateInputs(11)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue), interactive)));
-         if (LT(dValue, minLot))                                  return(_false(onInputError("ValidateInputs(12)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
-         if (GT(dValue, maxLot))                                  return(_false(onInputError("ValidateInputs(13)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
-         if (MathModFix(dValue, lotStep) != 0)                    return(_false(onInputError("ValidateInputs(14)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
+         if (IsError(error))                                      return(_false(onInputError("ValidateInputs(10)", interactive)));
+         if (LE(dValue, 0))                                       return(_false(onInputError("ValidateInputs(11)  invalid UnitSize: "+ DoubleQuoteStr(sValue), interactive)));
+         if (LT(dValue, minLot))                                  return(_false(onInputError("ValidateInputs(12)  invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
+         if (GT(dValue, maxLot))                                  return(_false(onInputError("ValidateInputs(13)  invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
+         if (MathModFix(dValue, lotStep) != 0)                    return(_false(onInputError("ValidateInputs(14)  invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
       }
       else {
-         if (LE(dValue, 0))                                       return(_false(onInputError("ValidateInputs(15)", "Invalid UnitSize: "+ DoubleQuoteStr(sValue), interactive)));
+         if (LE(dValue, 0))                                       return(_false(onInputError("ValidateInputs(15)  invalid UnitSize: "+ DoubleQuoteStr(sValue), interactive)));
       }
       UnitSize = ifString(fixedSize, "", "L") + sValue;
    }
@@ -1343,34 +1374,34 @@ bool ValidateInputs(bool interactive) {
 
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                                  return(_false(onInputError("ValidateInputs(16)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (sizeOfExprs > 1)                                  return(_false(onInputError("ValidateInputs(16)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')                       return(_false(onInputError("ValidateInputs(17)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(_false(onInputError("ValidateInputs(18)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(_false(onInputError("ValidateInputs(19)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')                       return(_false(onInputError("ValidateInputs(17)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(_false(onInputError("ValidateInputs(18)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(_false(onInputError("ValidateInputs(19)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(_false(onInputError("ValidateInputs(20)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+         if (!StringLen(sValue))                                  return(_false(onInputError("ValidateInputs(20)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
 
          if (key == "@trend") {
-            if (start.trend.condition)                            return(_false(onInputError("ValidateInputs(21)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)", interactive)));
-            if (start.price.condition)                            return(_false(onInputError("ValidateInputs(22)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
-            if (start.time.condition)                             return(_false(onInputError("ValidateInputs(23)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
+            if (start.trend.condition)                            return(_false(onInputError("ValidateInputs(21)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)", interactive)));
+            if (start.price.condition)                            return(_false(onInputError("ValidateInputs(22)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)", interactive)));
+            if (start.time.condition)                             return(_false(onInputError("ValidateInputs(23)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)", interactive)));
             size = Explode(sValue, ":", sValues, NULL);
-            if (size < 2 || size > 3)                             return(_false(onInputError("ValidateInputs(24)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (size < 2 || size > 3)                             return(_false(onInputError("ValidateInputs(24)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
             sValue = StrTrim(sValues[0]);
             int idx = SearchStringArrayI(trendIndicators, sValue);
-            if (idx == -1)                                        return(_false(onInputError("ValidateInputs(25)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
+            if (idx == -1)                                        return(_false(onInputError("ValidateInputs(25)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
             start.trend.indicator = StrToLower(sValue);
             start.trend.timeframe = StrToPeriod(sValues[1], F_ERR_INVALID_PARAMETER);
-            if (start.trend.timeframe == -1)                      return(_false(onInputError("ValidateInputs(26)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
+            if (start.trend.timeframe == -1)                      return(_false(onInputError("ValidateInputs(26)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)", interactive)));
             if (size == 2) {
                start.trend.params = "";
             }
             else {
                start.trend.params = StrTrim(sValues[2]);
-               if (!StringLen(start.trend.params))                return(_false(onInputError("ValidateInputs(27)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
+               if (!StringLen(start.trend.params))                return(_false(onInputError("ValidateInputs(27)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)", interactive)));
             }
             exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
             start.trend.description = exprs[i];
@@ -1378,11 +1409,11 @@ bool ValidateInputs(bool interactive) {
          }
 
          else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (start.price.condition)                            return(_false(onInputError("ValidateInputs(28)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
+            if (start.price.condition)                            return(_false(onInputError("ValidateInputs(28)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(29)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(29)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(_false(onInputError("ValidateInputs(30)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (dValue <= 0)                                      return(_false(onInputError("ValidateInputs(30)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
             if      (key == "@bid") start.price.type = PRICE_BID;
@@ -1395,16 +1426,16 @@ bool ValidateInputs(bool interactive) {
          }
 
          else if (key == "@time") {
-            if (start.time.condition)                             return(_false(onInputError("ValidateInputs(31)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
+            if (start.time.condition)                             return(_false(onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(_false(onInputError("ValidateInputs(32)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+            if (IsError(GetLastError()))                          return(_false(onInputError("ValidateInputs(32)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
             // TODO: validation of @time is not sufficient
             start.time.value = time;
             exprs[i]         = "time("+ TimeToStr(time) +")";
             start.time.description = exprs[i];
             start.time.condition   = true;
          }
-         else                                                     return(_false(onInputError("ValidateInputs(33)", "Invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
+         else                                                     return(_false(onInputError("ValidateInputs(33)  invalid StartConditions "+ DoubleQuoteStr(StartConditions), interactive)));
 
          start.conditions = true;                                 // on success enable start.conditions
       }
@@ -1429,34 +1460,34 @@ bool ValidateInputs(bool interactive) {
       for (i=0; i < sizeOfExprs; i++) {
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                                  return(_false(onInputError("ValidateInputs(34)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfExprs > 1)                                  return(_false(onInputError("ValidateInputs(34)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')                       return(_false(onInputError("ValidateInputs(35)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(_false(onInputError("ValidateInputs(36)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(_false(onInputError("ValidateInputs(37)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (StringGetChar(expr, 0) != '@')                       return(_false(onInputError("ValidateInputs(35)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(_false(onInputError("ValidateInputs(36)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(_false(onInputError("ValidateInputs(37)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(_false(onInputError("ValidateInputs(38)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         if (!StringLen(sValue))                                  return(_false(onInputError("ValidateInputs(38)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
 
          if (key == "@trend") {
-            if (stop.trend.condition)                             return(_false(onInputError("ValidateInputs(39)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple trend conditions)", interactive)));
+            if (stop.trend.condition)                             return(_false(onInputError("ValidateInputs(39)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple trend conditions)", interactive)));
             size = Explode(sValue, ":", sValues, NULL);
-            if (size < 2 || size > 3)                             return(_false(onInputError("ValidateInputs(40)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (size < 2 || size > 3)                             return(_false(onInputError("ValidateInputs(40)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
 
 
             sValue = StrTrim(sValues[0]);
             idx = SearchStringArrayI(trendIndicators, sValue);
-            if (idx == -1)                                        return(_false(onInputError("ValidateInputs(41)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
+            if (idx == -1)                                        return(_false(onInputError("ValidateInputs(41)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")", interactive)));
             stop.trend.indicator = StrToLower(sValue);
             stop.trend.timeframe = StrToPeriod(sValues[1], F_ERR_INVALID_PARAMETER);
-            if (stop.trend.timeframe == -1)                       return(_false(onInputError("ValidateInputs(42)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)", interactive)));
+            if (stop.trend.timeframe == -1)                       return(_false(onInputError("ValidateInputs(42)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)", interactive)));
             if (size == 2) {
                stop.trend.params = "";
             }
             else {
                stop.trend.params = StrTrim(sValues[2]);
-               if (!StringLen(stop.trend.params))                 return(_false(onInputError("ValidateInputs(43)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)", interactive)));
+               if (!StringLen(stop.trend.params))                 return(_false(onInputError("ValidateInputs(43)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)", interactive)));
             }
             exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
             stop.trend.description = exprs[i];
@@ -1464,11 +1495,11 @@ bool ValidateInputs(bool interactive) {
          }
 
          else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
-            if (stop.price.condition)                             return(_false(onInputError("ValidateInputs(44)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
+            if (stop.price.condition)                             return(_false(onInputError("ValidateInputs(44)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(45)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(_false(onInputError("ValidateInputs(46)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (dValue <= 0)                                      return(_false(onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
             if      (key == "@bid") stop.price.type = PRICE_BID;
@@ -1481,9 +1512,9 @@ bool ValidateInputs(bool interactive) {
          }
 
          else if (key == "@time") {
-            if (stop.time.condition)                              return(_false(onInputError("ValidateInputs(47)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
+            if (stop.time.condition)                              return(_false(onInputError("ValidateInputs(47)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(_false(onInputError("ValidateInputs(48)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (IsError(GetLastError()))                          return(_false(onInputError("ValidateInputs(48)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             // TODO: validation of @time is not sufficient
             stop.time.value       = time;
             exprs[i]              = "time("+ TimeToStr(time) +")";
@@ -1493,11 +1524,11 @@ bool ValidateInputs(bool interactive) {
 
          else if (key=="@tp" || key=="@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                                  return(_false(onInputError("ValidateInputs(49)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple takeprofit conditions)", interactive)));
+                                                                  return(_false(onInputError("ValidateInputs(49)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple takeprofit conditions)", interactive)));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(_false(onInputError("ValidateInputs(50)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                                  return(_false(onInputError("ValidateInputs(50)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(51)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(51)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
@@ -1516,11 +1547,11 @@ bool ValidateInputs(bool interactive) {
 
          else if (key=="@sl" || key=="@loss") {
             if (stop.lossAbs.condition || stop.lossPct.condition)
-                                                                  return(_false(onInputError("ValidateInputs(52)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
+                                                                  return(_false(onInputError("ValidateInputs(52)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)", interactive)));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(_false(onInputError("ValidateInputs(53)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                                  return(_false(onInputError("ValidateInputs(53)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(54)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(sValue))                            return(_false(onInputError("ValidateInputs(54)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
@@ -1536,7 +1567,7 @@ bool ValidateInputs(bool interactive) {
                stop.lossPct.condition   = true;
             }
          }
-         else                                                     return(_false(onInputError("ValidateInputs(55)", "Invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                                     return(_false(onInputError("ValidateInputs(55)  invalid StopConditions "+ DoubleQuoteStr(StopConditions), interactive)));
       }
    }
 
@@ -1551,16 +1582,16 @@ bool ValidateInputs(bool interactive) {
    else if (StrStartsWith("off",      sValue)) sValue = "off";
    else if (StrStartsWith("continue", sValue)) sValue = "continue";
    else if (StrStartsWith("reset",    sValue)) sValue = "reset";
-   else                                                           return(_false(onInputError("ValidateInputs(56)", "Invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
+   else                                                           return(_false(onInputError("ValidateInputs(56)  invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart), interactive)));
    AutoRestart = StrCapitalize(sValue);
 
    // StartLevel
    if (isParameterChange) {
       if (StartLevel != last.StartLevel)
-         if (ArraySize(sequence.start.event) > 0)                 return(_false(onInputError("ValidateInputs(57)", "Cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+         if (ArraySize(sequence.start.event) > 0)                 return(_false(onInputError("ValidateInputs(57)  cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    if (sequence.direction == D_LONG) {
-      if (StartLevel < 0)                                         return(_false(onInputError("ValidateInputs(58)", "Invalid StartLevel: "+ StartLevel, interactive)));
+      if (StartLevel < 0)                                         return(_false(onInputError("ValidateInputs(58)  invalid StartLevel: "+ StartLevel, interactive)));
    }
    StartLevel = Abs(StartLevel);
 
@@ -1576,52 +1607,24 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4,}/i). Called only from onInitUser().
+ * Error handler for invalid input parameters. Depending on the execution context the functions sets a terminating error.
  *
- * @return bool - validation success status; existence of the status file is NOT checked
- */
-bool ValidateInputs.SID() {
-   bool interactive = true;
-
-   string sValue = StrToUpper(StrTrim(Sequence.ID));
-
-   if (!StringLen(sValue))
-      return(false);
-
-   if (StrLeft(sValue, 1) == "T") {
-      sequence.isTest = true;
-      sValue = StrSubstr(sValue, 1);
-   }
-   if (!StrIsDigit(sValue))
-      return(_false(onInputError("ValidateInputs.SID(1)", "Invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive)));
-
-   int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX)
-      return(_false(onInputError("ValidateInputs.SID(2)", "Invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive)));
-
-   sequence.id = iValue;
-   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-   return(true);
-}
-
-
-/**
- * Error handler for invalid input parameters. Either prompts for input correction or passes on execution to the standard
- * error handler.
- *
- * @param  string location    - error location identifier
  * @param  string message     - error message
- * @param  bool   interactive - whether the error occurred in an interactive or programatic context
+ * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
  *
  * @return int - resulting error status
  */
-int onInputError(string location, string message, bool interactive) {
+int onInputError(string message, bool interactive) {
    interactive = interactive!=0;
-   if (IsTesting() || !interactive)
-      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
+   int error = ERR_INVALID_PARAMETER;
 
-   int error = ERS_INVALID_INPUT_PARAMETER;
-   if (IsLogNotice()) logNotice(location +"  "+ message, error);
+   if (IsTesting() || !interactive)
+      return(catch(message, error));
+
+   logNotice(message, error);
+
+   string location = StrLeftTo(message, " ");
+   message = StrCapitalize(StrTrim(StrSubstr(message, StringLen(location))));
 
    PlaySoundEx("Windows Chord.wav");
    MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);

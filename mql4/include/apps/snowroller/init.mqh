@@ -21,7 +21,7 @@ int onInitUser() {
    bool interactive = true;
 
    // check for a specified sequence id
-   if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
+   if (ValidateInputs.SID(interactive)) {                      // on success a sequence id was specified and restored
       SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;

@@ -8,7 +8,7 @@ int onInitUser() {
    bool interactive = true;
 
    // check for and validate a specified sequence id
-   if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
+   if (ValidateInputs.SID(interactive)) {                      // on success a sequence id was specified and restored
       RestoreSequence(interactive);
    }
    else if (!StringLen(StrTrim(Sequence.ID))) {                // otherwise an invalid sequence id was specified
