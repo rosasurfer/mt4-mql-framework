@@ -8,10 +8,10 @@ int onInitUser() {
    bool interactive = true;
 
    // check for and validate a specified sequence id
-   if (ValidateInputs.SID(interactive)) {                      // on success a sequence id was specified and restored
-      RestoreSequence(interactive);
+   if (ValidateInputs.SID(interactive)) {
+      RestoreSequence(interactive);                            // a valid sequence id was specified
    }
-   else if (!StringLen(StrTrim(Sequence.ID))) {                // otherwise an invalid sequence id was specified
+   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs(interactive)) {
          sequence.id = CreateSequenceId();
          Sequence.ID = sequence.id;
@@ -20,6 +20,7 @@ int onInitUser() {
          SaveStatus();
       }
    }
+   //else {}                                                   // an invalid sequence id was specified
    return(last_error);
 }
 
@@ -30,15 +31,13 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                        // previous input has been backed-up in onDeinitParameters()
-
    bool interactive = true;
-   if (!ValidateInputs(interactive)) {
-      RestoreInputs();
-      RestoreInputStatus();
-      return(last_error);
+   if (ValidateInputs(interactive)) {
+      SaveStatus();                                            // successful parameter change
    }
-   SaveStatus();                                               // parameter change of a valid sequence
+   else {
+      RestoreInputs();                                         // failed parameter change
+   }
    return(last_error);
 }
 

@@ -1279,23 +1279,22 @@ bool ValidateInputs(bool interactive) {
    if (IsLastError()) return(false);
 
    bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
-   if (isParameterChange)
-      interactive = true;
+   if (isParameterChange) interactive = true;
 
    // Sequence.ID
    if (isParameterChange) {
       if (sequence.status == STATUS_UNDEFINED) {
-         if (Sequence.ID != last.Sequence.ID)                     return(_false(onInputError("ValidateInputs(1)  switching the sequence at runtime is not supported. Unload the EA first.", interactive)));
+         if (Sequence.ID != last.Sequence.ID)                     return(_false(onInputError("ValidateInputs(1)  switching to another sequence is not supported. Unload the EA first.", interactive)));
       }
       else if (!StringLen(StrTrim(Sequence.ID))) {
          Sequence.ID = last.Sequence.ID;                          // apply the existing internal id
       }
-      else if (StrTrim(Sequence.ID) != StrTrim(last.Sequence.ID)) return(_false(onInputError("ValidateInputs(2)  switching the sequence at runtime is not supported. Unload the EA first.", interactive)));
+      else if (StrTrim(Sequence.ID) != StrTrim(last.Sequence.ID)) return(_false(onInputError("ValidateInputs(2)  switching to another sequence is not supported. Unload the EA first.", interactive)));
    }
    else if (!StringLen(Sequence.ID)) {                            // status must be STATUS_UNDEFINED (sequence.id = 0)
       if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
    }
-   else {}                                                        // if sequence.id is set it's valid and the sequence is loaded (otherwise this is not reachable)
+   else {}                                                        // Sequence.ID was validated in ValidateInputs.SID()
 
    // GridDirection
    string sValues[], sValue=StrToLower(StrTrim(GridDirection));

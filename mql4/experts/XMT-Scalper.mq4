@@ -37,6 +37,7 @@
  *  - added monitoring of PositionOpen and PositionClose events
  *  - added virtual trading mode with optional trade copier or trade mirror
  *  - added recording of performance metrics for real and virtual trading
+ *  - full status is continuously stored to a file and can be restored from there
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -45,7 +46,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Sequence.ID                     = "";         // instance id in the range of 1000-9999
-extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";     // shortcuts: "R | V | VC | VM"
+extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";                       // shortcuts: "R | V | VC | VM"
 
 extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
 extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
@@ -2898,167 +2899,123 @@ void SS.UnitSize(double size = NULL) {
 }
 
 
-string last.Sequence.ID = "";
-string last.TradingMode = "";
+string prev.Sequence.ID = "";
+string prev.TradingMode = "";
 
-int    last.EntryIndicator;
-int    last.IndicatorTimeframe;
-int    last.IndicatorPeriods;
-double last.BollingerBands.Deviation;
-double last.Envelopes.Deviation;
+int    prev.EntryIndicator;
+int    prev.IndicatorTimeframe;
+int    prev.IndicatorPeriods;
+double prev.BollingerBands.Deviation;
+double prev.Envelopes.Deviation;
 
-bool   last.UseSpreadMultiplier;
-double last.SpreadMultiplier;
-double last.MinBarSize;
+bool   prev.UseSpreadMultiplier;
+double prev.SpreadMultiplier;
+double prev.MinBarSize;
 
-double last.BreakoutReversal;
-double last.MaxSpread;
-bool   last.ReverseSignals;
+double prev.BreakoutReversal;
+double prev.MaxSpread;
+bool   prev.ReverseSignals;
 
-bool   last.MoneyManagement;
-double last.Risk;
-double last.ManualLotsize;
+bool   prev.MoneyManagement;
+double prev.Risk;
+double prev.ManualLotsize;
 
-double last.TakeProfit;
-double last.StopLoss;
-double last.TrailEntryStep;
-double last.TrailExitStart;
-double last.TrailExitStep;
-double last.MaxSlippage;
+double prev.TakeProfit;
+double prev.StopLoss;
+double prev.TrailEntryStep;
+double prev.TrailExitStart;
+double prev.TrailExitStep;
+double prev.MaxSlippage;
 
-double last.EA.StopOnProfit;
-double last.EA.StopOnLoss;
-bool   last.EA.RecordMetrics;
+double prev.EA.StopOnProfit;
+double prev.EA.StopOnLoss;
+bool   prev.EA.RecordMetrics;
 
-bool   last.ChannelBug;
-bool   last.TakeProfitBug;
+bool   prev.ChannelBug;
+bool   prev.TakeProfitBug;
 
 
 /**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
- * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called from onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backed-up inputs are also accessed from ValidateInputs()
-   last.Sequence.ID              = StringConcatenate(Sequence.ID, "");     // string inputs are references to internal C literals
-   last.TradingMode              = StringConcatenate(TradingMode, "");     // and must be copied to break the reference
+   // backed-up values are also accessed in ValidateInputs()
+   prev.Sequence.ID              = StringConcatenate(Sequence.ID, "");     // string inputs are references to internal C literals
+   prev.TradingMode              = StringConcatenate(TradingMode, "");     // and must be copied to break the reference
 
-   last.EntryIndicator           = EntryIndicator;
-   last.IndicatorTimeframe       = IndicatorTimeframe;
-   last.IndicatorPeriods         = IndicatorPeriods;
-   last.BollingerBands.Deviation = BollingerBands.Deviation;
-   last.Envelopes.Deviation      = Envelopes.Deviation;
+   prev.EntryIndicator           = EntryIndicator;
+   prev.IndicatorTimeframe       = IndicatorTimeframe;
+   prev.IndicatorPeriods         = IndicatorPeriods;
+   prev.BollingerBands.Deviation = BollingerBands.Deviation;
+   prev.Envelopes.Deviation      = Envelopes.Deviation;
 
-   last.UseSpreadMultiplier      = UseSpreadMultiplier;
-   last.SpreadMultiplier         = SpreadMultiplier;
-   last.MinBarSize               = MinBarSize;
+   prev.UseSpreadMultiplier      = UseSpreadMultiplier;
+   prev.SpreadMultiplier         = SpreadMultiplier;
+   prev.MinBarSize               = MinBarSize;
 
-   last.BreakoutReversal         = BreakoutReversal;
-   last.MaxSpread                = MaxSpread;
-   last.ReverseSignals           = ReverseSignals;
+   prev.BreakoutReversal         = BreakoutReversal;
+   prev.MaxSpread                = MaxSpread;
+   prev.ReverseSignals           = ReverseSignals;
 
-   last.MoneyManagement          = MoneyManagement;
-   last.Risk                     = Risk;
-   last.ManualLotsize            = ManualLotsize;
+   prev.MoneyManagement          = MoneyManagement;
+   prev.Risk                     = Risk;
+   prev.ManualLotsize            = ManualLotsize;
 
-   last.TakeProfit               = TakeProfit;
-   last.StopLoss                 = StopLoss;
-   last.TrailEntryStep           = TrailEntryStep;
-   last.TrailExitStart           = TrailExitStart;
-   last.TrailExitStep            = TrailExitStep;
-   last.MaxSlippage              = MaxSlippage;
+   prev.TakeProfit               = TakeProfit;
+   prev.StopLoss                 = StopLoss;
+   prev.TrailEntryStep           = TrailEntryStep;
+   prev.TrailExitStart           = TrailExitStart;
+   prev.TrailExitStep            = TrailExitStep;
+   prev.MaxSlippage              = MaxSlippage;
 
-   last.EA.StopOnProfit          = EA.StopOnProfit;
-   last.EA.StopOnLoss            = EA.StopOnLoss;
-   last.EA.RecordMetrics         = EA.RecordMetrics;
+   prev.EA.StopOnProfit          = EA.StopOnProfit;
+   prev.EA.StopOnLoss            = EA.StopOnLoss;
+   prev.EA.RecordMetrics         = EA.RecordMetrics;
 
-   last.ChannelBug               = ChannelBug;
-   last.TakeProfitBug            = TakeProfitBug;
+   prev.ChannelBug               = ChannelBug;
+   prev.TakeProfitBug            = TakeProfitBug;
 }
 
 
 /**
- * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
+ * Restore backed-up input parameters. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
-   Sequence.ID              = last.Sequence.ID;
-   TradingMode              = last.TradingMode;
+   Sequence.ID              = prev.Sequence.ID;
+   TradingMode              = prev.TradingMode;
 
-   EntryIndicator           = last.EntryIndicator;
-   IndicatorTimeframe       = last.IndicatorTimeframe;
-   IndicatorPeriods         = last.IndicatorPeriods;
-   BollingerBands.Deviation = last.BollingerBands.Deviation;
-   Envelopes.Deviation      = last.Envelopes.Deviation;
+   EntryIndicator           = prev.EntryIndicator;
+   IndicatorTimeframe       = prev.IndicatorTimeframe;
+   IndicatorPeriods         = prev.IndicatorPeriods;
+   BollingerBands.Deviation = prev.BollingerBands.Deviation;
+   Envelopes.Deviation      = prev.Envelopes.Deviation;
 
-   UseSpreadMultiplier      = last.UseSpreadMultiplier;
-   SpreadMultiplier         = last.SpreadMultiplier;
-   MinBarSize               = last.MinBarSize;
+   UseSpreadMultiplier      = prev.UseSpreadMultiplier;
+   SpreadMultiplier         = prev.SpreadMultiplier;
+   MinBarSize               = prev.MinBarSize;
 
-   BreakoutReversal         = last.BreakoutReversal;
-   MaxSpread                = last.MaxSpread;
-   ReverseSignals           = last.ReverseSignals;
+   BreakoutReversal         = prev.BreakoutReversal;
+   MaxSpread                = prev.MaxSpread;
+   ReverseSignals           = prev.ReverseSignals;
 
-   MoneyManagement          = last.MoneyManagement;
-   Risk                     = last.Risk;
-   ManualLotsize            = last.ManualLotsize;
+   MoneyManagement          = prev.MoneyManagement;
+   Risk                     = prev.Risk;
+   ManualLotsize            = prev.ManualLotsize;
 
-   TakeProfit               = last.TakeProfit;
-   StopLoss                 = last.StopLoss;
-   TrailEntryStep           = last.TrailEntryStep;
-   TrailExitStart           = last.TrailExitStart;
-   TrailExitStep            = last.TrailExitStep;
-   MaxSlippage              = last.MaxSlippage;
+   TakeProfit               = prev.TakeProfit;
+   StopLoss                 = prev.StopLoss;
+   TrailEntryStep           = prev.TrailEntryStep;
+   TrailExitStart           = prev.TrailExitStart;
+   TrailExitStep            = prev.TrailExitStep;
+   MaxSlippage              = prev.MaxSlippage;
 
-   EA.StopOnProfit          = last.EA.StopOnProfit;
-   EA.StopOnLoss            = last.EA.StopOnLoss;
-   EA.RecordMetrics         = last.EA.RecordMetrics;
+   EA.StopOnProfit          = prev.EA.StopOnProfit;
+   EA.StopOnLoss            = prev.EA.StopOnLoss;
+   EA.RecordMetrics         = prev.EA.RecordMetrics;
 
-   ChannelBug               = last.ChannelBug;
-   TakeProfitBug            = last.TakeProfitBug;
-}
-
-
-/**
- * Backup status variables which may change due to modified input parameters. This way status can be restored in case of input
- * errors. Called only from onInitParameters().
- */
-void BackupInputStatus() {
-   CopyInputStatus(true);
-}
-
-
-/**
- * Restore status variables from the backup. Called only from onInitParameters().
- */
-void RestoreInputStatus() {
-   CopyInputStatus(false);
-}
-
-
-/**
- * Backup or restore status variables related to input parameter changes. Called only from BackupInputStatus() and
- * RestoreInputStatus() in onInitParameters().
- *
- * @param  bool store - TRUE:  copy status to internal storage (backup)
- *                      FALSE: copy internal storage to status (restore)
- */
-void CopyInputStatus(bool store) {
-   store = store!=0;
-
-   static int    _tradingMode;
-   static int    _sequence.id;
-   static string _sequence.name = "";
-
-   if (store) {
-      _tradingMode   = tradingMode;
-      _sequence.id   = sequence.id;
-      _sequence.name = sequence.name;
-   }
-   else {
-      tradingMode   = _tradingMode;
-      sequence.id   = _sequence.id;
-      sequence.name = _sequence.name;
-   }
+   ChannelBug               = prev.ChannelBug;
+   TakeProfitBug            = prev.TakeProfitBug;
 }
 
 
@@ -3074,9 +3031,9 @@ bool ValidateInputs.SID(bool interactive) {
    string sValue = StrTrim(Sequence.ID);
 
    if (!StringLen(sValue))                   return(false);
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive));
+   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive));
    int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive));
+   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive));
 
    sequence.id = iValue;
    Sequence.ID = sequence.id;
@@ -3097,59 +3054,93 @@ bool ValidateInputs(bool interactive) {
    interactive = interactive!=0;
    if (IsLastError()) return(false);
 
+   bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS);
+   if (isParameterChange) interactive = true;
+
    // Sequence.ID
-   string values[], sValue = StrTrim(Sequence.ID);
-   if (StringLen(sValue) > 0) {
-      if (!StrIsDigit(sValue))                               return(!onInputError("ValidateInputs(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive));
-      int iValue = StrToInteger(sValue);
-      if (iValue < SID_MIN || iValue > SID_MAX)              return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive));
-      sequence.id = iValue;
-      Sequence.ID = sequence.id; SS.SequenceName();
-   }
+   string _Sequence.ID = Sequence.ID, values[];
+   if (isParameterChange) {
+      string sValue = StrTrim(Sequence.ID);
+      if (sValue == "") {                                    // the id was deleted or not yet set, re-apply the internal id
+         _Sequence.ID = prev.Sequence.ID;
+      }
+      else if (sValue != prev.Sequence.ID)                   return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)", interactive));
+   } //else                                                  // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence was reloaded)
+   int _sequence.id = StrToInteger(_Sequence.ID);
 
    // TradingMode
-   sValue = TradingMode;
-   if (Explode(sValue, "*", values, 2) > 1) {
+   int _tradingMode;
+   if (Explode(TradingMode, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (sValue=="r"  || sValue=="regular"       ) tradingMode = TRADINGMODE_REGULAR;
-   else if (sValue=="v"  || sValue=="virtual"       ) tradingMode = TRADINGMODE_VIRTUAL;
-   else if (sValue=="vc" || sValue=="virtual-copier") tradingMode = TRADINGMODE_VIRTUAL_COPIER;
-   else if (sValue=="vm" || sValue=="virtual-mirror") tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
-   else                                                      return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), interactive));
-   TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
+   if      (sValue=="r"  || sValue=="regular"       ) _tradingMode = TRADINGMODE_REGULAR;
+   else if (sValue=="v"  || sValue=="virtual"       ) _tradingMode = TRADINGMODE_VIRTUAL;
+   else if (sValue=="vc" || sValue=="virtual-copier") _tradingMode = TRADINGMODE_VIRTUAL_COPIER;
+   else if (sValue=="vm" || sValue=="virtual-mirror") _tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
+   else                                                                          return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), interactive));
+   if (isParameterChange && _tradingMode!=tradingMode) {
+      if (_tradingMode==TRADINGMODE_REGULAR || tradingMode==TRADINGMODE_REGULAR) return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change trading mode from "+ DoubleQuoteStr(tradingModeDescriptions[tradingMode]) +" to "+ DoubleQuoteStr(tradingModeDescriptions[_tradingMode]), interactive));
+   }
+   string _TradingMode = tradingModeDescriptions[_tradingMode];
 
    // EntryIndicator
    if (EntryIndicator < 1 || EntryIndicator > 3)             return(!onInputError("ValidateInputs(4)  "+ sequence.name +" invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", interactive));
+   int _EntryIndicator = EntryIndicator;
 
    // IndicatorTimeframe
-   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (test on "+ PeriodDescription(Period()) +")", interactive));
+   if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe, interactive));
+   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")", interactive));
+   int _IndicatorTimeframe = IndicatorTimeframe;
+
+   // IndicatorPeriods
+   if (IndicatorPeriods < 1)                                 return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter IndicatorPeriods: "+ IndicatorPeriods +" (must be positive)", interactive));
+   int _IndicatorPeriods = IndicatorPeriods;
+
+   // BollingerBands.Deviation
+   if (_EntryIndicator==2 && BollingerBands.Deviation < 0)   return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter BollingerBands.Deviation: "+ NumberToStr(BollingerBands.Deviation, ".1+") +" (can't be negative)", interactive));
+   double _BollingerBands.Deviation = BollingerBands.Deviation;
+
+   // Envelopes.Deviation
+   if (_EntryIndicator==3 && Envelopes.Deviation < 0)        return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter Envelopes.Deviation: "+ NumberToStr(Envelopes.Deviation, ".1+") +" (can't be negative)", interactive));
+   double _Envelopes.Deviation = Envelopes.Deviation;
+   // --- OK ----------------------------------------------------------------------------------------------------------------
+
+   // apply validated inputs and status variables
+   Sequence.ID              = _Sequence.ID;     sequence.id = _sequence.id;
+   TradingMode              = _TradingMode;     tradingMode = _tradingMode; SS.SequenceName();
+   EntryIndicator           = _EntryIndicator;
+   IndicatorTimeframe       = _IndicatorTimeframe;
+   IndicatorPeriods         = _IndicatorPeriods;
+   BollingerBands.Deviation = _BollingerBands.Deviation;
+   Envelopes.Deviation      = _Envelopes.Deviation;
+   // -----------------------------------------------------------------------------------------------------------------------
+
 
    // BreakoutReversal
    double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
-   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", interactive));
+   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", interactive));
    double minLots=MarketInfo(Symbol(), MODE_MINLOT), maxLots=MarketInfo(Symbol(), MODE_MAXLOT);
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                       return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", interactive));
+      if (LE(Risk, 0))                                       return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", interactive));
       double lots = CalculateLots(false); if (IsLastError()) return(false);
-      if (LT(lots, minLots))                                 return(!onInputError("ValidateInputs(8)  "+ sequence.name +" not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
-      if (GT(lots, maxLots))                                 return(!onInputError("ValidateInputs(9)  "+ sequence.name +" too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", interactive));
+      if (LT(lots, minLots))                                 return(!onInputError("ValidateInputs(12)  "+ sequence.name +" not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
+      if (GT(lots, maxLots))                                 return(!onInputError("ValidateInputs(13)  "+ sequence.name +" too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", interactive));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, minLots))                        return(!onInputError("ValidateInputs(10)  "+ sequence.name +" too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
-      if (GT(ManualLotsize, maxLots))                        return(!onInputError("ValidateInputs(11)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", interactive));
+      if (LT(ManualLotsize, minLots))                        return(!onInputError("ValidateInputs(14)  "+ sequence.name +" too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
+      if (GT(ManualLotsize, maxLots))                        return(!onInputError("ValidateInputs(15)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", interactive));
    }
 
    // EA.StopOnProfit / EA.StopOnLoss
    if (EA.StopOnProfit && EA.StopOnLoss) {
-      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!onInputError("ValidateInputs(12)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", interactive));
+      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!onInputError("ValidateInputs(16)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", interactive));
    }
 
-   return(!catch("ValidateInputs(13)"));
+   return(!catch("ValidateInputs(17)"));
 }
 
 
