@@ -483,7 +483,6 @@ bool CheckErrors(string location, int error = NULL) {
       case NO_ERROR:
       case ERR_HISTORY_INSUFFICIENT:
       case ERS_HISTORY_UPDATE:
-      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;
@@ -497,7 +496,6 @@ bool CheckErrors(string location, int error = NULL) {
       case NO_ERROR:
       case ERR_HISTORY_INSUFFICIENT:
       case ERS_HISTORY_UPDATE:
-      case ERS_INVALID_INPUT_PARAMETER:
       case ERS_TERMINAL_NOT_YET_READY:
       case ERS_EXECUTION_STOPPING:
          break;

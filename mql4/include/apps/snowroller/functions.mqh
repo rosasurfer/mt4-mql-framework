@@ -1607,7 +1607,7 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context the functions sets a terminating error.
+ * Error handler for invalid input parameters. Depending on the execution context a terminating error is set.
  *
  * @param  string message     - error message
  * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
