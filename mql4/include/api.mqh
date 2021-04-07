@@ -254,7 +254,6 @@ bool     SendEmail(string sender, string receiver, string subject, string messag
 bool     SendSMS(string receiver, string message);;
 string   ShellExecuteErrorDescription(int error);;
 int      Sign(double value);;
-int      start.RelaunchInputDialog();;
 string   StrCapitalize(string value);;
 bool     StrCompareI(string string1, string string2);;
 bool     StrContains(string value, string substring);;
