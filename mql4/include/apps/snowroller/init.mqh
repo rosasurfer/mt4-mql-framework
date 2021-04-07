@@ -12,7 +12,7 @@ int onInit() {
 
 
 /**
- * Called after the expert was manually loaded by the user. Also in Strategy Tester with both "VisualMode=On|Off".
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
  * There was an input dialog.
  *
  * @return int - error status
@@ -21,7 +21,7 @@ int onInitUser() {
    bool interactive = true;
 
    // check for a specified sequence id
-   if (ValidateInputs.ID()) {                                  // on success a sequence id was specified and restored
+   if (ValidateInputs.SID(interactive)) {                      // on success a sequence id was specified and restored
       SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;

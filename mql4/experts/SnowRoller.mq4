@@ -2793,10 +2793,14 @@ int CreateMagicNumber(int level) {
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
 
-   string msg, sError;
+   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
+   if (error != 0) {
+      if (isRecursion) return(error);
+      isRecursion = true;
+   }
 
-   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason        ), "]");
+   string msg, sError;
+   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    switch (sequence.status) {
       case STATUS_UNDEFINED:   msg = "not initialized";                                                                                                                                            break;
@@ -2835,9 +2839,9 @@ int ShowStatus(int error = NO_ERROR) {
    if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
    else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
 
-   if (!catch("ShowStatus(3)"))
-      return(error);
-   return(last_error);
+   error = ifIntOr(catch("ShowStatus(3)"), error);
+   isRecursion = false;
+   return(error);
 }
 
 
