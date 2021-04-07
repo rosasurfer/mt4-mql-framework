@@ -1,13 +1,10 @@
 /**
- * Duel
+ * Duel. A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * Eye to eye stand winners and losers
  * Hurt by envy, cut by greed
  * Face to face with their own disillusions
  * The scars of old romances still on their cheeks
- *
- *
- * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
@@ -1788,38 +1785,38 @@ bool ValidateInputs(bool interactive) {
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                                         return(_false(ValidateInputs.OnError("ValidateInputs(1)", "Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), interactive)));
+   if (iValue == -1)                                         return(_false(onInputError("ValidateInputs(1)", "Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), interactive)));
    if (isParameterChange && !StrCompareI(sValue, last.GridDirections)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(2)", "Cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(2)", "Cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
    sequence.directions = iValue;
    GridDirections = TradeDirectionDescription(sequence.directions);
 
    // GridSize
    if (isParameterChange && GridSize!=last.GridSize) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(3)", "Cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(3)", "Cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (GridSize < 1)                                         return(_false(ValidateInputs.OnError("ValidateInputs(4)", "Invalid input parameter GridSize: "+ GridSize, interactive)));
+   if (GridSize < 1)                                         return(_false(onInputError("ValidateInputs(4)", "Invalid input parameter GridSize: "+ GridSize, interactive)));
 
    // UnitSize
    if (isParameterChange && NE(UnitSize, last.UnitSize)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(5)", "Cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(5)", "Cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (LT(UnitSize, 0.01))                                   return(_false(ValidateInputs.OnError("ValidateInputs(6)", "Invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+"), interactive)));
+   if (LT(UnitSize, 0.01))                                   return(_false(onInputError("ValidateInputs(6)", "Invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+"), interactive)));
    sequence.unitsize = UnitSize;
 
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, last.Pyramid.Multiplier)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (Pyramid.Multiplier < 0)                               return(_false(ValidateInputs.OnError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
+   if (Pyramid.Multiplier < 0)                               return(_false(onInputError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, last.Martingale.Multiplier)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(ValidateInputs.OnError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
    }
-   if (Martingale.Multiplier < 0)                            return(_false(ValidateInputs.OnError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
+   if (Martingale.Multiplier < 0)                            return(_false(onInputError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -1828,7 +1825,7 @@ bool ValidateInputs(bool interactive) {
    if (StringLen(sValue) && sValue!="{amount}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
+      if (!StrIsNumeric(sValue))                             return(_false(onInputError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          tpPct.condition   = true;
@@ -1863,7 +1860,7 @@ bool ValidateInputs(bool interactive) {
    if (StringLen(sValue) && sValue!="{amount}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                             return(_false(ValidateInputs.OnError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
+      if (!StrIsNumeric(sValue))                             return(_false(onInputError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          slPct.condition   = true;
@@ -1902,28 +1899,25 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Error handler for invalid input parameters. Either prompts for input correction or passes on execution to the standard
- * error handler.
+ * Error handler for invalid input parameters. Depending on the execution context a terminating error is set.
  *
  * @param  string location    - error location identifier
  * @param  string message     - error message
- * @param  bool   interactive - whether the error occurred in an interactive or programatic context
+ * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
  *
- * @return int - resulting error status
+ * @return int - error status
  */
-int ValidateInputs.OnError(string location, string message, bool interactive) {
+int onInputError(string location, string message, bool interactive) {
    interactive = interactive!=0;
-   if (IsTesting() || !interactive)
-      return(catch(location +"  "+ message, ERR_INVALID_CONFIG_VALUE));
-
    int error = ERR_INVALID_INPUT_PARAMETER;
-   __STATUS_INVALID_INPUT = true;
 
-   if (IsLogNotice()) logNotice(location +"  "+ message, error);
+   if (IsTesting() || !interactive)
+      return(catch(location +"  "+ message, error));
+
+   logNotice(location +"  "+ message, error);
 
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
-   if (button == IDRETRY) __STATUS_RELAUNCH_INPUT = true;
+   MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);
    return(error);
 }
 
@@ -2188,6 +2182,13 @@ string StatusDescription(int status) {
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
+
+   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
+   if (error != 0) {
+      if (isRecursion) return(error);
+      isRecursion = true;
+   }
+
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.directions) {
@@ -2204,8 +2205,7 @@ int ShowStatus(int error = NO_ERROR) {
       default:
          return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-   if      (__STATUS_INVALID_INPUT) sError = StringConcatenate("  [",                 ErrorDescription(ERR_INVALID_INPUT_PARAMETER), "]");
-   else if (__STATUS_OFF          ) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason),         "]");
+   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
                                                                                                               NL,
@@ -2228,9 +2228,9 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   if (!catch("ShowStatus(2)"))
-      return(error);
-   return(last_error);
+   error = ifIntOr(catch("ShowStatus(2)"), error);
+   isRecursion = false;
+   return(error);
 }
 
 

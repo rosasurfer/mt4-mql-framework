@@ -103,7 +103,7 @@
 #define ERR_INTEGER_PARAMETER_EXPECTED                             4063
 #define ERR_DOUBLE_PARAMETER_EXPECTED                              4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
-#define ERS_HISTORY_UPDATE                                         4066    // temporary state (not an error)
+#define ERS_HISTORY_UPDATE                                         4066    // history is updated (non-terminating status)
 #define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_RESOURCE_NOT_FOUND                                     4068    // resource not found
 #define ERR_RESOURCE_NOT_SUPPORTED                                 4069    // resource not supported
@@ -189,7 +189,7 @@
 #define ERR_USER_ERROR_FIRST                                      65536    // a MetaQuotes definition
 #define ERR_CANCELLED_BY_USER                                     65537    // execution cancelled by user
 #define ERR_CONCURRENT_MODIFICATION                               65538    // concurrent modification
-#define ERS_EXECUTION_STOPPING                                    65539    // IsStopped() returned TRUE (state, not an error)
+#define ERS_EXECUTION_STOPPING                                    65539    // IsStopped() returned TRUE (non-terminating status)
 #define ERR_FUNC_NOT_ALLOWED                                      65540    // function not allowed
 #define ERR_HISTORY_INSUFFICIENT                                  65541    // history insufficient for calculation
 #define ERR_ILLEGAL_STATE                                         65542    // illegal state
@@ -205,7 +205,7 @@
 #define ERR_ORDER_CHANGED                                         65552    // order status changed
 #define ERR_RUNTIME_ERROR                                         65553    // runtime error
 #define ERR_TERMINAL_INIT_FAILURE                                 65554    // multiple Expert::init() calls
-#define ERS_TERMINAL_NOT_YET_READY                                65555    // terminal not yet ready (temporary state; in scripts treated as error)
+#define ERS_TERMINAL_NOT_YET_READY                                65555    // terminal not yet ready (non-terminating status; in scripts a terminating error)
 #define ERR_TOTAL_POSITION_NOT_FLAT                               65556    // total position encountered when flat position was expected
 #define ERR_UNDEFINED_STATE                                       65557    // undefined state or behavior
 #define ERR_STOP_DISTANCE_VIOLATED                                65558    // stop or limit price violate the broker's stop distance

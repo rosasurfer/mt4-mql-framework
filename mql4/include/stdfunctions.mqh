@@ -124,7 +124,7 @@ string ErrorDescription(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                );    //   4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                 );    //   4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                  );    //   4065
-      case ERS_HISTORY_UPDATE             : return("requested history is updating"                             );    //   4066 requested history is updating      Status
+      case ERS_HISTORY_UPDATE             : return("requested history is updating"                             );    //   4066 non-terminating status
       case ERR_TRADE_ERROR                : return("trade function error"                                      );    //   4067 trade function error
       case ERR_RESOURCE_NOT_FOUND         : return("resource not found"                                        );    //   4068
       case ERR_RESOURCE_NOT_SUPPORTED     : return("resource not supported"                                    );    //   4069
@@ -210,7 +210,7 @@ string ErrorDescription(int error) {
       case ERR_USER_ERROR_FIRST           : return("first user error"                                          );    //  65536
       case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         );    //  65537
       case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   );    //  65538
-      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                );    //  65539   status
+      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                );    //  65539   non-terminating status
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      );    //  65540
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      );    //  65541
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     );    //  65542
@@ -226,7 +226,7 @@ string ErrorDescription(int error) {
       case ERR_ORDER_CHANGED              : return("order status changed"                                      );    //  65552
       case ERR_RUNTIME_ERROR              : return("runtime error"                                             );    //  65553
       case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                             );    //  65554
-      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   status
+      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    );    //  65555   non-terminating status
       case ERR_TOTAL_POSITION_NOT_FLAT    : return("total position encountered when flat position was expected");    //  65556
       case ERR_UNDEFINED_STATE            : return("undefined state or behavior"                               );    //  65557
       case ERR_STOP_DISTANCE_VIOLATED     : return("stop or limit price violate the broker's stop distance"    );    //  65558
@@ -3039,29 +3039,6 @@ string StrToHexStr(string value) {
    }
 
    return(result);
-}
-
-
-/**
- * Open the input dialog of the current program.
- *
- * @return int - error status
- */
-int start.RelaunchInputDialog() {
-   int error;
-
-   if (IsExpert()) {
-      if (!IsTesting())
-         error = Chart.Expert.Properties();
-   }
-   else if (IsIndicator()) {
-      //if (!IsTesting())
-      //   error = Chart.Indicator.Properties();                     // TODO: implement
-   }
-
-   if (IsError(error))
-      SetLastError(error, NULL);
-   return(error);
 }
 
 
@@ -6702,7 +6679,6 @@ void __DummyCalls() {
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
-   start.RelaunchInputDialog();
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
