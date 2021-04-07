@@ -235,6 +235,7 @@ string   tradingModeDescriptions[] = {"", "Regular", "Virtual", "Virtual-Copier"
 // sessionbreak management
 datetime sessionbreak.starttime;                // configurable via inputs and framework config
 datetime sessionbreak.endtime;
+bool     sessionbreak.active;
 
 // metrics
 bool     metrics.enabled[16];                   // activation status
@@ -270,6 +271,8 @@ int onTick() {
    if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
+   sessionbreak.active = IsSessionBreak();
+
    if (tradingMode == TRADINGMODE_REGULAR) onTick.RegularTrading();
    else                                    onTick.VirtualTrading();
 
@@ -296,11 +299,12 @@ int onTick.RegularTrading() {
    }
 
    if (!last_error && real.isOpenOrder) {
-      if (real.isOpenPosition) ManageRealPosition();              // trail exit limits
-      else                     ManagePendingOrder();              // trail entry limits or delete order
+      if (sessionbreak.active)      CloseRealOrders();
+      else if (real.isOpenPosition) ManageRealPosition();         // trail exit limits
+      else                          ManagePendingOrder();         // trail entry limits or delete order
    }
 
-   if (!last_error && !real.isOpenOrder) {
+   if (!last_error && !real.isOpenOrder && !sessionbreak.active) {
       int signal;
       if (IsEntrySignal(signal)) OpenRealOrder(signal);           // monitor and handle new entry signals
    }
@@ -337,25 +341,25 @@ int onTick.VirtualTrading() {
 
    // manage virtual orders
    if (!last_error && virt.isOpenOrder) {
-      if (virt.isOpenPosition) ManageVirtualPosition();           // trail exit limits
-      else                     ManageVirtualOrder();              // trail entry limits or delete order
+      if (sessionbreak.active)      CloseVirtualOrders();
+      else if (virt.isOpenPosition) ManageVirtualPosition();      // trail exit limits
+      else                          ManageVirtualOrder();         // trail entry limits or delete order
    }
 
    // manage real orders (if any)
    if (!last_error && real.isOpenOrder) {
-      if (real.isOpenPosition) ManageRealPosition();              // trail exit limits
-      else                     ManagePendingOrder();              // trail entry limits or delete order
+      if (sessionbreak.active)      CloseRealOrders();
+      else if (real.isOpenPosition) ManageRealPosition();         // trail exit limits
+      else                          ManagePendingOrder();         // trail entry limits or delete order
    }
 
    // handle new entry signals
-   if (!last_error && !virt.isOpenOrder) {
+   if (!last_error && !virt.isOpenOrder && !sessionbreak.active) {
       int signal;
       if (IsEntrySignal(signal)) {
          OpenVirtualOrder(signal);
 
-         if (tradingMode > TRADINGMODE_VIRTUAL) {
-            OpenRealOrder(signal);
-         }
+         if (tradingMode > TRADINGMODE_VIRTUAL) OpenRealOrder(signal);
       }
    }
    return(last_error);
@@ -792,7 +796,7 @@ bool onRealOrderDelete(int i) {
  */
 bool IsEntrySignal(int &signal) {
    signal = NULL;
-   if (last_error || real.isOpenOrder) return(false);
+   if (last_error || real.isOpenOrder || sessionbreak.active) return(false);
 
    double high = iHigh(NULL, IndicatorTimeframe, 0);
    double low  =  iLow(NULL, IndicatorTimeframe, 0);
@@ -828,6 +832,57 @@ bool IsEntrySignal(int &signal) {
       }
    }
    return(false);
+}
+
+
+/**
+ * Whether the current server time falls into a sessionbreak. On function return the global vars sessionbreak.starttime
+ * and sessionbreak.endtime are up-to-date.
+ *
+ * @return bool
+ */
+bool IsSessionBreak() {
+   if (last_error != NO_ERROR) return(false);
+
+   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
+
+   // check whether to recalculate sessionbreak times
+   if (serverTime >= sessionbreak.endtime) {
+      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
+      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
+      if (!startOffset && !endOffset)
+         return(false);                                           // skip session breaks if both values are set to Midnight
+
+      // calculate today's sessionbreak end time
+      datetime fxtNow  = ServerToFxtTime(serverTime);
+      datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
+      datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
+
+      // determine the next regular sessionbreak end time
+      int dow = TimeDayOfWeekEx(fxtTime);
+      while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime += 1*DAY;
+         dow = TimeDayOfWeekEx(fxtTime);
+      }
+      datetime fxtResumeTime = fxtTime;
+      sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
+
+      // determine the corresponding sessionbreak start time
+      datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
+      fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
+
+      dow = TimeDayOfWeekEx(fxtTime);
+      while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
+         fxtTime -= 1*DAY;
+         dow = TimeDayOfWeekEx(fxtTime);
+      }
+      sessionbreak.starttime = FxtToServerTime(fxtTime);
+
+      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+   }
+
+   // perform the actual check
+   return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
 }
 
 
@@ -1166,9 +1221,42 @@ bool CloseRealOrders() {
       // delete pending order
       if (OrderDeleteEx(real.ticket[i], CLR_NONE, NULL, oe)) Orders.RemoveRealTicket(real.ticket[i]);
    }
-   if (oe.IsError(oe))           return(false);
-   if (!UpdateRealOrderStatus()) return(false);
+   if (oe.IsError(oe)) return(false);
 
+   UpdateRealOrderStatus();
+   return(SaveStatus());
+}
+
+
+/**
+ * Close all virtual open orders.
+ *
+ * @return bool - success status
+ */
+bool CloseVirtualOrders() {
+   if (IsLastError())     return(false);
+   if (!virt.isOpenOrder) return(true);
+
+   int i = ArraySize(virt.ticket)-1;
+
+   if (virt.isOpenPosition) {
+      if (virt.openType[i] == OP_UNDEFINED) return(!catch("CloseVirtualOrders(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected open position #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
+      // close virtual open position
+      virt.closePrice[i] = ifDouble(virt.openType[i]==OP_BUY, Bid, Ask);
+      onVirtualPositionClose(i);                         // updates virt.closeTime[i] and virt.profit[i]
+      virt.closedPositions++;
+      virt.closedLots       += virt.lots      [i];
+      virt.closedCommission += virt.commission[i];
+      virt.closedPl         += virt.profit    [i];
+      virt.closedPip        += ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
+   }
+   else {
+      if (virt.openType[i] != OP_UNDEFINED) return(!catch("CloseVirtualOrders(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected pending order #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
+      // delete virtual pending order
+      return(!catch("CloseVirtualOrders(2)  "+ sequence.name +" deletion of virtual pending orders not implemented", ERR_NOT_IMPLEMENTED));
+
+   }
+   UpdateVirtualOrderStatus();
    return(SaveStatus());
 }
 
@@ -3159,6 +3247,7 @@ bool ValidateInputs(bool interactive) {
    if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
       sessionbreak.endtime   = NULL;                         // real times are updated automatically on next use
+      sessionbreak.active    = false;
    }
 
    // EA.StopOnProfit / EA.StopOnLoss
