@@ -1,13 +1,10 @@
 /**
- * Duel
+ * Duel. A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * Eye to eye stand winners and losers
  * Hurt by envy, cut by greed
  * Face to face with their own disillusions
  * The scars of old romances still on their cheeks
- *
- *
- * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.

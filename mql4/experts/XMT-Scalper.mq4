@@ -45,47 +45,49 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID                     = "";         // instance id in the range of 1000-9999
-extern string TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";                       // shortcuts: "R | V | VC | VM"
+extern string   Sequence.ID                     = "";                      // instance id in the range of 1000-9999
+extern string   TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";   // shortcuts: "R | V | VC | VM"
 
-extern string ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
-extern int    EntryIndicator                  = 1;          // entry signal indicator for price channel calculation
-extern int    IndicatorTimeframe              = PERIOD_M1;  // entry indicator timeframe
-extern int    IndicatorPeriods                = 3;          // entry indicator bar periods
-extern double BollingerBands.Deviation        = 2;          // standard deviations
-extern double Envelopes.Deviation             = 0.07;       // in percent
+extern string   ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
+extern int      EntryIndicator                  = 1;                       // entry signal indicator for price channel calculation
+extern int      IndicatorTimeframe              = PERIOD_M1;               // entry indicator timeframe
+extern int      IndicatorPeriods                = 3;                       // entry indicator bar periods
+extern double   BollingerBands.Deviation        = 2;                       // standard deviations
+extern double   Envelopes.Deviation             = 0.07;                    // in percent
 
-extern string ___b___________________________ = "=== Entry bar size conditions ================";
-extern bool   UseSpreadMultiplier             = true;       // use spread multiplier or fixed min. bar size
-extern double SpreadMultiplier                = 12.5;       // min. bar size = SpreadMultiplier * avgSpread
-extern double MinBarSize                      = 18;         // min. bar size in {pip}
+extern string   ___b___________________________ = "=== Entry bar size conditions ================";
+extern bool     UseSpreadMultiplier             = true;                    // use spread multiplier or fixed min. bar size
+extern double   SpreadMultiplier                = 12.5;                    // min. bar size = SpreadMultiplier * avgSpread
+extern double   MinBarSize                      = 18;                      // min. bar size in {pip}
 
-extern string ___c___________________________ = "=== Signal settings ========================";
-extern double BreakoutReversal                = 0;          // required price reversal in {pip} (0: counter-trend trading w/o reversal)
-extern double MaxSpread                       = 2;          // max. acceptable current and average spread in {pip}
-extern bool   ReverseSignals                  = false;      // Buy => Sell, Sell => Buy
+extern string   ___c___________________________ = "=== Signal settings ========================";
+extern double   BreakoutReversal                = 0;                       // required price reversal in {pip} (0: counter-trend trading w/o reversal)
+extern double   MaxSpread                       = 2;                       // max. acceptable current and average spread in {pip}
+extern bool     ReverseSignals                  = false;                   // Buy => Sell, Sell => Buy
 
-extern string ___d___________________________ = "=== Money management ===================";
-extern bool   MoneyManagement                 = true;       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
-extern double Risk                            = 2;          // percent of equity to risk with each trade
-extern double ManualLotsize                   = 0.01;       // fix position to use if "MoneyManagement" is FALSE
+extern string   ___d___________________________ = "=== Money management ===================";
+extern bool     MoneyManagement                 = true;                    // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
+extern double   Risk                            = 2;                       // percent of equity to risk with each trade
+extern double   ManualLotsize                   = 0.01;                    // fix position to use if "MoneyManagement" is FALSE
 
-extern string ___e___________________________ = "=== Trade settings ========================";
-extern double TakeProfit                      = 10;         // TP in {pip}
-extern double StopLoss                        = 6;          // SL in {pip}
-extern double TrailEntryStep                  = 1;          // trail entry limits every {pip}
-extern double TrailExitStart                  = 0;          // start trailing exit limits after {pip} in profit
-extern double TrailExitStep                   = 2;          // trail exit limits every {pip} in profit
-extern double MaxSlippage                     = 0.3;        // max. acceptable slippage in {pip}
+extern string   ___e___________________________ = "=== Trade settings ========================";
+extern double   TakeProfit                      = 10;                      // TP in {pip}
+extern double   StopLoss                        = 6;                       // SL in {pip}
+extern double   TrailEntryStep                  = 1;                       // trail entry limits every {pip}
+extern double   TrailExitStart                  = 0;                       // start trailing exit limits after {pip} in profit
+extern double   TrailExitStep                   = 2;                       // trail exit limits every {pip} in profit
+extern double   MaxSlippage                     = 0.3;                     // max. acceptable slippage in {pip}
+extern datetime Sessionbreak.StartTime          = D'1970.01.01 23:56:00';  // server time, the date part is ignored
+extern datetime Sessionbreak.EndTime            = D'1970.01.01 00:02:10';  // server time, the date part is ignored
 
-extern string ___f___________________________ = "=== Overall targets & Reporting ==============";
-extern double EA.StopOnProfit                 = 0;          // stop on overall profit in {money} (0: no stop on profits)
-extern double EA.StopOnLoss                   = 0;          // stop on overall loss in {money} (0: no stop on losses)
-extern bool   EA.RecordMetrics                = false;      // whether to enable recording of performance metrics
+extern string   ___f___________________________ = "=== Overall targets & Reporting ==============";
+extern double   EA.StopOnProfit                 = 0;                       // stop on overall profit in {money} (0: no stop on profits)
+extern double   EA.StopOnLoss                   = 0;                       // stop on overall loss in {money} (0: no stop on losses)
+extern bool     EA.RecordMetrics                = false;                   // whether to enable recording of performance metrics
 
-extern string ___g___________________________ = "=== Bugs ================================";
-extern bool   ChannelBug                      = false;      // whether to enable erroneous calculation of the breakout channel (for comparison only)
-extern bool   TakeProfitBug                   = true;       // whether to enable erroneous calculation of TakeProfit targets (for comparison only)
+extern string   ___g___________________________ = "=== Bugs ================================";
+extern bool     ChannelBug                      = false;                   // whether to enable the erroneous "Capella" calculation of the breakout channel (for comparison only)
+extern bool     TakeProfitBug                   = true;                    // whether to enable the erroneous "Capella" calculation of TakeProfit targets (for comparison only)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -220,11 +222,6 @@ double   virt.totalPlNet;                       // openPlNet  + closedPlNet
 double   virt.totalPip;                         // openPip    + closedPip
 double   virt.totalPipNet;                      // openPipNet + closedPipNet
 
-// metrics
-bool     metrics.enabled[16];                   // activation status
-int      metrics.hSet   [16];                   // vertical shift to prevent negative bar values (data is adjusted by this level)
-double   metrics.vShift [16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
-
 // other
 double   currentSpread;                         // current spread in pip
 double   avgSpread;                             // average spread in pip
@@ -234,6 +231,15 @@ int      orderSlippage;                         // order slippage in point
 int      orderMagicNumber;
 string   orderComment = "";
 string   tradingModeDescriptions[] = {"", "Regular", "Virtual", "Virtual-Copier", "Virtual-Mirror"};
+
+// sessionbreak management
+datetime sessionbreak.starttime;                // configurable via inputs and framework config
+datetime sessionbreak.endtime;
+
+// metrics
+bool     metrics.enabled[16];                   // activation status
+int      metrics.hSet   [16];                   // vertical shift to prevent negative bar values (data is adjusted by this level)
+double   metrics.vShift [16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
 
 // vars to speed-up status messages
 string   sTradingModeStatus[] = {"", "", ": Virtual Trading", ": Virtual Trading + Copier", ": Virtual Trading + Mirror"};
@@ -2325,40 +2331,42 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sSequenceId              = GetIniStringA(file, section, "Sequence.ID",              "");    // string Sequence.ID              = 1234
-   string sTradingMode             = GetIniStringA(file, section, "TradingMode",              "");    // string TradingMode              = Regular
+   string sSequenceId              = GetIniStringA(file, section, "Sequence.ID",              "");    // string   Sequence.ID              = 1234
+   string sTradingMode             = GetIniStringA(file, section, "TradingMode",              "");    // string   TradingMode              = Regular
 
-   string sEntryIndicator          = GetIniStringA(file, section, "EntryIndicator",           "");    // int    EntryIndicator           = 1
-   string sIndicatorTimeframe      = GetIniStringA(file, section, "IndicatorTimeframe",       "");    // int    IndicatorTimeframe       = 1
-   string sIndicatorPeriods        = GetIniStringA(file, section, "IndicatorPeriods",         "");    // int    IndicatorPeriods         = 3
-   string sBollingerBandsDeviation = GetIniStringA(file, section, "BollingerBands.Deviation", "");    // double BollingerBands.Deviation = 2.0
-   string sEnvelopesDeviation      = GetIniStringA(file, section, "Envelopes.Deviation",      "");    // double Envelopes.Deviation      = 0.07
+   string sEntryIndicator          = GetIniStringA(file, section, "EntryIndicator",           "");    // int      EntryIndicator           = 1
+   string sIndicatorTimeframe      = GetIniStringA(file, section, "IndicatorTimeframe",       "");    // int      IndicatorTimeframe       = 1
+   string sIndicatorPeriods        = GetIniStringA(file, section, "IndicatorPeriods",         "");    // int      IndicatorPeriods         = 3
+   string sBollingerBandsDeviation = GetIniStringA(file, section, "BollingerBands.Deviation", "");    // double   BollingerBands.Deviation = 2.0
+   string sEnvelopesDeviation      = GetIniStringA(file, section, "Envelopes.Deviation",      "");    // double   Envelopes.Deviation      = 0.07
 
-   string sUseSpreadMultiplier     = GetIniStringA(file, section, "UseSpreadMultiplier",      "");    // bool   UseSpreadMultiplier      = 1
-   string sSpreadMultiplier        = GetIniStringA(file, section, "SpreadMultiplier",         "");    // double SpreadMultiplier         = 12.5
-   string sMinBarSize              = GetIniStringA(file, section, "MinBarSize",               "");    // double MinBarSize               = 18.0
+   string sUseSpreadMultiplier     = GetIniStringA(file, section, "UseSpreadMultiplier",      "");    // bool     UseSpreadMultiplier      = 1
+   string sSpreadMultiplier        = GetIniStringA(file, section, "SpreadMultiplier",         "");    // double   SpreadMultiplier         = 12.5
+   string sMinBarSize              = GetIniStringA(file, section, "MinBarSize",               "");    // double   MinBarSize               = 18.0
 
-   string sBreakoutReversal        = GetIniStringA(file, section, "BreakoutReversal",         "");    // double BreakoutReversal         = 0.0
-   string sMaxSpread               = GetIniStringA(file, section, "MaxSpread",                "");    // double MaxSpread                = 2.0
-   string sReverseSignals          = GetIniStringA(file, section, "ReverseSignals",           "");    // bool   ReverseSignals           = 0
+   string sBreakoutReversal        = GetIniStringA(file, section, "BreakoutReversal",         "");    // double   BreakoutReversal         = 0.0
+   string sMaxSpread               = GetIniStringA(file, section, "MaxSpread",                "");    // double   MaxSpread                = 2.0
+   string sReverseSignals          = GetIniStringA(file, section, "ReverseSignals",           "");    // bool     ReverseSignals           = 0
 
-   string sMoneyManagement         = GetIniStringA(file, section, "MoneyManagement",          "");    // bool   MoneyManagement          = 1
-   string sRisk                    = GetIniStringA(file, section, "Risk",                     "");    // double Risk                     = 2.0
-   string sManualLotsize           = GetIniStringA(file, section, "ManualLotsize",            "");    // double ManualLotsize            = 0.01
+   string sMoneyManagement         = GetIniStringA(file, section, "MoneyManagement",          "");    // bool     MoneyManagement          = 1
+   string sRisk                    = GetIniStringA(file, section, "Risk",                     "");    // double   Risk                     = 2.0
+   string sManualLotsize           = GetIniStringA(file, section, "ManualLotsize",            "");    // double   ManualLotsize            = 0.01
 
-   string sTakeProfit              = GetIniStringA(file, section, "TakeProfit",               "");    // double TakeProfit               = 10.0
-   string sStopLoss                = GetIniStringA(file, section, "StopLoss",                 "");    // double StopLoss                 = 6.0
-   string sTrailEntryStep          = GetIniStringA(file, section, "TrailEntryStep",           "");    // double TrailEntryStep           = 1.0
-   string sTrailExitStart          = GetIniStringA(file, section, "TrailExitStart",           "");    // double TrailExitStart           = 0.0
-   string sTrailExitStep           = GetIniStringA(file, section, "TrailExitStep",            "");    // double TrailExitStep            = 2.0
-   string sMaxSlippage             = GetIniStringA(file, section, "MaxSlippage",              "");    // double MaxSlippage              = 0.3
+   string sTakeProfit              = GetIniStringA(file, section, "TakeProfit",               "");    // double   TakeProfit               = 10.0
+   string sStopLoss                = GetIniStringA(file, section, "StopLoss",                 "");    // double   StopLoss                 = 6.0
+   string sTrailEntryStep          = GetIniStringA(file, section, "TrailEntryStep",           "");    // double   TrailEntryStep           = 1.0
+   string sTrailExitStart          = GetIniStringA(file, section, "TrailExitStart",           "");    // double   TrailExitStart           = 0.0
+   string sTrailExitStep           = GetIniStringA(file, section, "TrailExitStep",            "");    // double   TrailExitStep            = 2.0
+   string sMaxSlippage             = GetIniStringA(file, section, "MaxSlippage",              "");    // double   MaxSlippage              = 0.3
+   string sSessionbreakStartTime   = GetIniStringA(file, section, "Sessionbreak.StartTime",   "");    // datetime Sessionbreak.StartTime   = 86160
+   string sSessionbreakEndTime     = GetIniStringA(file, section, "Sessionbreak.EndTime",     "");    // datetime Sessionbreak.EndTime     = 3730
 
-   string sEAStopOnProfit          = GetIniStringA(file, section, "EA.StopOnProfit",          "");    // double EA.StopOnProfit          = 0.0
-   string sEAStopOnLoss            = GetIniStringA(file, section, "EA.StopOnLoss",            "");    // double EA.StopOnLoss            = 0.0
-   string sEARecordMetrics         = GetIniStringA(file, section, "EA.RecordMetrics",         "");    // bool   EA.RecordMetrics         = 0
+   string sEAStopOnProfit          = GetIniStringA(file, section, "EA.StopOnProfit",          "");    // double   EA.StopOnProfit          = 0.0
+   string sEAStopOnLoss            = GetIniStringA(file, section, "EA.StopOnLoss",            "");    // double   EA.StopOnLoss            = 0.0
+   string sEARecordMetrics         = GetIniStringA(file, section, "EA.RecordMetrics",         "");    // bool     EA.RecordMetrics         = 0
 
-   string sChannelBug              = GetIniStringA(file, section, "ChannelBug",               "");    // bool   ChannelBug               = 0
-   string sTakeProfitBug           = GetIniStringA(file, section, "TakeProfitBug",            "");    // bool   TakeProfitBug            = 1
+   string sChannelBug              = GetIniStringA(file, section, "ChannelBug",               "");    // bool     ChannelBug               = 0
+   string sTakeProfitBug           = GetIniStringA(file, section, "TakeProfitBug",            "");    // bool     TakeProfitBug            = 1
 
    if (sSequenceId != ""+ sequence.id)          return(!catch("ReadStatus(5)  "+ sequence.name +" invalid Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sequence.ID = sSequenceId;
@@ -2401,9 +2409,13 @@ bool ReadStatus() {
    TrailExitStep = StrToDouble(sTrailExitStep);
    if (!StrIsNumeric(sMaxSlippage))             return(!catch("ReadStatus(23)  "+ sequence.name +" invalid MaxSlippage "+ DoubleQuoteStr(sMaxSlippage) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    MaxSlippage = StrToDouble(sMaxSlippage);
-   if (!StrIsNumeric(sEAStopOnProfit))          return(!catch("ReadStatus(24)  "+ sequence.name +" invalid EA.StopOnProfit "+ DoubleQuoteStr(sEAStopOnProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sSessionbreakStartTime))     return(!catch("ReadStatus(24)  "+ sequence.name +" invalid Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
+   if (!StrIsDigit(sSessionbreakEndTime))       return(!catch("ReadStatus(25)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
+   if (!StrIsNumeric(sEAStopOnProfit))          return(!catch("ReadStatus(26)  "+ sequence.name +" invalid EA.StopOnProfit "+ DoubleQuoteStr(sEAStopOnProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    EA.StopOnProfit = StrToDouble(sEAStopOnProfit);
-   if (!StrIsNumeric(sEAStopOnLoss))            return(!catch("ReadStatus(25)  "+ sequence.name +" invalid EA.StopOnLoss "+ DoubleQuoteStr(sEAStopOnLoss) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sEAStopOnLoss))            return(!catch("ReadStatus(27)  "+ sequence.name +" invalid EA.StopOnLoss "+ DoubleQuoteStr(sEAStopOnLoss) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    EA.StopOnLoss = StrToDouble(sEAStopOnLoss);
    EA.RecordMetrics = StrToBool(sEARecordMetrics);
    ChannelBug = StrToBool(sChannelBug);
@@ -2415,16 +2427,16 @@ bool ReadStatus() {
    int size = ReadStatus.OrderKeys(file, section, sKeys, MODE_REAL); if (size < 0) return(false);
    ResetOrderLog(MODE_REAL);
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");    // real.order.{i}={data}
-      if (!ReadStatus.ParseOrder(sOrder, MODE_REAL))    return(!catch("ReadStatus(26)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      sOrder = GetIniStringA(file, section, sKeys[i], "");           // real.order.{i}={data}
+      if (!ReadStatus.ParseOrder(sOrder, MODE_REAL))    return(!catch("ReadStatus(28)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    size = ReadStatus.OrderKeys(file, section, sKeys, MODE_VIRTUAL); if (size < 0) return(false);
    ResetOrderLog(MODE_VIRTUAL);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");    // virt.order.{i}={data}
-      if (!ReadStatus.ParseOrder(sOrder, MODE_VIRTUAL)) return(!catch("ReadStatus(27)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      sOrder = GetIniStringA(file, section, sKeys[i], "");           // virt.order.{i}={data}
+      if (!ReadStatus.ParseOrder(sOrder, MODE_VIRTUAL)) return(!catch("ReadStatus(29)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
-   return(!catch("ReadStatus(28)"));
+   return(!catch("ReadStatus(30)"));
 }
 
 
@@ -2657,6 +2669,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "TrailExitStart",           DoubleToStr(TrailExitStart, 1));
    WriteIniString(file, section, "TrailExitStep",            DoubleToStr(TrailExitStep, 1));
    WriteIniString(file, section, "MaxSlippage",              DoubleToStr(MaxSlippage, 1));
+   WriteIniString(file, section, "Sessionbreak.StartTime",   Sessionbreak.StartTime);
+   WriteIniString(file, section, "Sessionbreak.EndTime",     Sessionbreak.EndTime);
 
    WriteIniString(file, section, "EA.StopOnProfit",          DoubleToStr(EA.StopOnProfit, 2));
    WriteIniString(file, section, "EA.StopOnLoss",            DoubleToStr(EA.StopOnLoss, 2));
@@ -2899,40 +2913,42 @@ void SS.UnitSize(double size = NULL) {
 }
 
 
-string prev.Sequence.ID = "";
-string prev.TradingMode = "";
+string   prev.Sequence.ID = "";
+string   prev.TradingMode = "";
 
-int    prev.EntryIndicator;
-int    prev.IndicatorTimeframe;
-int    prev.IndicatorPeriods;
-double prev.BollingerBands.Deviation;
-double prev.Envelopes.Deviation;
+int      prev.EntryIndicator;
+int      prev.IndicatorTimeframe;
+int      prev.IndicatorPeriods;
+double   prev.BollingerBands.Deviation;
+double   prev.Envelopes.Deviation;
 
-bool   prev.UseSpreadMultiplier;
-double prev.SpreadMultiplier;
-double prev.MinBarSize;
+bool     prev.UseSpreadMultiplier;
+double   prev.SpreadMultiplier;
+double   prev.MinBarSize;
 
-double prev.BreakoutReversal;
-double prev.MaxSpread;
-bool   prev.ReverseSignals;
+double   prev.BreakoutReversal;
+double   prev.MaxSpread;
+bool     prev.ReverseSignals;
 
-bool   prev.MoneyManagement;
-double prev.Risk;
-double prev.ManualLotsize;
+bool     prev.MoneyManagement;
+double   prev.Risk;
+double   prev.ManualLotsize;
 
-double prev.TakeProfit;
-double prev.StopLoss;
-double prev.TrailEntryStep;
-double prev.TrailExitStart;
-double prev.TrailExitStep;
-double prev.MaxSlippage;
+double   prev.TakeProfit;
+double   prev.StopLoss;
+double   prev.TrailEntryStep;
+double   prev.TrailExitStart;
+double   prev.TrailExitStep;
+double   prev.MaxSlippage;
+datetime prev.Sessionbreak.StartTime;
+datetime prev.Sessionbreak.EndTime;
 
-double prev.EA.StopOnProfit;
-double prev.EA.StopOnLoss;
-bool   prev.EA.RecordMetrics;
+double   prev.EA.StopOnProfit;
+double   prev.EA.StopOnLoss;
+bool     prev.EA.RecordMetrics;
 
-bool   prev.ChannelBug;
-bool   prev.TakeProfitBug;
+bool     prev.ChannelBug;
+bool     prev.TakeProfitBug;
 
 
 /**
@@ -2968,6 +2984,8 @@ void BackupInputs() {
    prev.TrailExitStart           = TrailExitStart;
    prev.TrailExitStep            = TrailExitStep;
    prev.MaxSlippage              = MaxSlippage;
+   prev.Sessionbreak.StartTime   = Sessionbreak.StartTime;
+   prev.Sessionbreak.EndTime     = Sessionbreak.EndTime;
 
    prev.EA.StopOnProfit          = EA.StopOnProfit;
    prev.EA.StopOnLoss            = EA.StopOnLoss;
@@ -3009,6 +3027,8 @@ void RestoreInputs() {
    TrailExitStart           = prev.TrailExitStart;
    TrailExitStep            = prev.TrailExitStep;
    MaxSlippage              = prev.MaxSlippage;
+   Sessionbreak.StartTime   = prev.Sessionbreak.StartTime;
+   Sessionbreak.EndTime     = prev.Sessionbreak.EndTime;
 
    EA.StopOnProfit          = prev.EA.StopOnProfit;
    EA.StopOnLoss            = prev.EA.StopOnLoss;
@@ -3135,6 +3155,12 @@ bool ValidateInputs(bool interactive) {
       if (GT(ManualLotsize, maxLots))                        return(!onInputError("ValidateInputs(15)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", interactive));
    }
 
+   // Sessionbreak.StartTime/EndTime
+   if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
+      sessionbreak.starttime = NULL;
+      sessionbreak.endtime   = NULL;                         // real times are updated automatically on next use
+   }
+
    // EA.StopOnProfit / EA.StopOnLoss
    if (EA.StopOnProfit && EA.StopOnLoss) {
       if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!onInputError("ValidateInputs(16)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", interactive));
@@ -3203,6 +3229,8 @@ string InputsToStr() {
          +"TrailExitStart="          + DoubleToStr(TrailExitStart, 1)               +";"+ NL
          +"TrailExitStep="           + DoubleToStr(TrailExitStep, 1)                +";"+ NL
          +"MaxSlippage="             + DoubleToStr(MaxSlippage, 1)                  +";"+ NL
+         +"Sessionbreak.StartTime="  + TimeToStr(Sessionbreak.StartTime, TIME_FULL) +";"+ NL
+         +"Sessionbreak.EndTime="    + TimeToStr(Sessionbreak.EndTime, TIME_FULL)   +";"+ NL
 
          +"EA.StopOnProfit="         + DoubleToStr(EA.StopOnProfit, 2)              +";"+ NL
          +"EA.StopOnLoss="           + DoubleToStr(EA.StopOnLoss, 2)                +";"+ NL
