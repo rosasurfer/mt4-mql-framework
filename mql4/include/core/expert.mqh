@@ -264,15 +264,8 @@ int start() {
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
-   // relaunch input dialog if requested
-   if (__STATUS_RELAUNCH_INPUT) {
-      __STATUS_RELAUNCH_INPUT = false;
-      start.RelaunchInputDialog();
-      return(_last_error(CheckErrors("start(3)")));
-   }
-
    // check a finished chart initialization (may fail on terminal start)
-   if (!Bars) return(ShowStatus(SetLastError(logInfo("start(4)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
+   if (!Bars) return(ShowStatus(SetLastError(logInfo("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
    // tester: wait until the configured start time/price is reached
    if (IsTesting()) {
@@ -311,9 +304,9 @@ int start() {
          if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                         // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
             error = GetLastError();
             if (error != NO_ERROR) {
-               if (CheckErrors("start(5)", error)) return(last_error);
+               if (CheckErrors("start(4)", error)) return(last_error);
             }
-            return(ShowStatus(SetLastError(logInfo("start(6)  MarketInfo("+ Symbol() +", MODE_TICKVALUE) = 0", ERS_TERMINAL_NOT_YET_READY))));
+            return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo("+ Symbol() +", MODE_TICKVALUE) = 0", ERS_TERMINAL_NOT_YET_READY))));
          }
       }
    }
@@ -321,13 +314,13 @@ int start() {
    ArrayCopyRates(__rates);
 
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(7)")) return(last_error);
+      if (CheckErrors("start(6)")) return(last_error);
    }
 
    // initialize test reporting if configured
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(8)")));
+         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(7)")));
          test.initialized = true;
       }
    }
@@ -337,13 +330,13 @@ int start() {
 
    // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(9)")));
+      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(8)")));
    }
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(10)", error)));
+      return(_last_error(CheckErrors("start(9)", error)));
 
    return(ShowStatus(NO_ERROR));
 }
@@ -415,7 +408,7 @@ int deinit() {
       }                                                                    //
    }                                                                       //
    if (!error) error = afterDeinit();                                      // postprocessing hook
-   if (!error && !last_error && !IsTesting()) DeleteRegisteredObjects();
+   if (!IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(5)");
    return(last_error|LeaveContext(__ExecutionContext));
@@ -473,8 +466,7 @@ bool IsLibrary() {
 
 
 /**
- * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
- * activated.
+ * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
  * @param  string location         - location of the check
  * @param  int    error [optional] - error to enforce (default: none)
@@ -484,7 +476,7 @@ bool IsLibrary() {
 bool CheckErrors(string location, int error = NULL) {
    // check and signal DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
-   if (dll_error && 1) {
+   if (dll_error != NO_ERROR) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
@@ -521,9 +513,7 @@ bool CheckErrors(string location, int error = NULL) {
                                                                      // which updates __STATUS_OFF accordingly
    // update the variable last_error
    if (__STATUS_OFF) {
-      if (!last_error) {
-         last_error = __STATUS_OFF.reason;
-      }
+      if (!last_error) last_error = __STATUS_OFF.reason;
       ShowStatus(last_error);                                        // show status once again if an error occurred
    }
    return(__STATUS_OFF);
