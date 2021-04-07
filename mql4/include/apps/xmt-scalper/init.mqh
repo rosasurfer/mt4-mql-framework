@@ -5,14 +5,12 @@
  * @return int - error status
  */
 int onInitUser() {
-   bool interactive = true;
-
    // check for and validate a specified sequence id
-   if (ValidateInputs.SID(interactive)) {
-      RestoreSequence(interactive);                            // a valid sequence id was specified
+   if (ValidateInputs.SID()) {
+      RestoreSequence();                                       // a valid sequence id was specified
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
-      if (ValidateInputs(interactive)) {
+      if (ValidateInputs()) {
          sequence.id = CreateSequenceId();
          Sequence.ID = sequence.id;
          SS.SequenceName();
@@ -31,8 +29,7 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   bool interactive = true;
-   if (ValidateInputs(interactive)) {
+   if (ValidateInputs()) {
       SaveStatus();                                            // successful parameter change
    }
    else {

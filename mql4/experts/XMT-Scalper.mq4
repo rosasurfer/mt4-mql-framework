@@ -2381,16 +2381,13 @@ string TradingModeToStr(int mode) {
 /**
  * Restore the internal state of the EA from a status file. Requires a valid sequence id.
  *
- * @param  bool interactive - whether input parameters have been entered through the input dialog
- *
  * @return bool - success status
  */
-bool RestoreSequence(bool interactive) {
-   interactive = interactive!=0;
-   if (IsLastError())                return(false);
-   if (!ReadStatus())                return(false);         // read the status file
-   if (!ValidateInputs(interactive)) return(false);         // validate restored input parameters
- //if (!SynchronizeStatus())         return(false);         // synchronize restored state with the trade server
+bool RestoreSequence() {
+   if (IsLastError())        return(false);
+   if (!ReadStatus())        return(false);                 // read the status file
+   if (!ValidateInputs())    return(false);                 // validate restored input parameters
+ //if (!SynchronizeStatus()) return(false);                 // synchronize restored state with the trade server
 
    return(true);
    if (!ReadOrderLog()) return(false);                      // TODO: where does this go to?
@@ -3130,18 +3127,15 @@ void RestoreInputs() {
 /**
  * Syntactically validate and restore a specified sequence id (format: /[1-9][0-9]{3}/). Called only from onInitUser().
  *
- * @param  bool interactive - whether parameters have been entered through the input dialog
- *
  * @return bool - whether the input sequence id is was valid and restored (the status file is not checked)
  */
-bool ValidateInputs.SID(bool interactive) {
-   interactive = interactive!=0;
+bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
 
    if (!StringLen(sValue))                   return(false);
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)", interactive));
+   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
    int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)", interactive));
+   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
 
    sequence.id = iValue;
    Sequence.ID = sequence.id;
@@ -3154,16 +3148,11 @@ bool ValidateInputs.SID(bool interactive) {
  * Validate all input parameters. Parameters may have been entered through the input dialog or may have been read and applied
  * from a status file.
  *
- * @param  bool interactive - whether parameters have been entered through the input dialog
- *
  * @return bool - whether input parameters are valid
  */
-bool ValidateInputs(bool interactive) {
-   interactive = interactive!=0;
+bool ValidateInputs() {
    if (IsLastError()) return(false);
-
    bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS);
-   if (isParameterChange) interactive = true;
 
    // Sequence.ID
    string _Sequence.ID = Sequence.ID, values[];
@@ -3172,46 +3161,47 @@ bool ValidateInputs(bool interactive) {
       if (sValue == "") {                                    // the id was deleted or not yet set, re-apply the internal id
          _Sequence.ID = prev.Sequence.ID;
       }
-      else if (sValue != prev.Sequence.ID)                   return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)", interactive));
+      else if (sValue != prev.Sequence.ID)                   return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
    } //else                                                  // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence was reloaded)
    int _sequence.id = StrToInteger(_Sequence.ID);
 
    // TradingMode
-   int _tradingMode;
+   sValue = TradingMode;
    if (Explode(TradingMode, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
+   int _tradingMode;
    if      (sValue=="r"  || sValue=="regular"       ) _tradingMode = TRADINGMODE_REGULAR;
    else if (sValue=="v"  || sValue=="virtual"       ) _tradingMode = TRADINGMODE_VIRTUAL;
    else if (sValue=="vc" || sValue=="virtual-copier") _tradingMode = TRADINGMODE_VIRTUAL_COPIER;
    else if (sValue=="vm" || sValue=="virtual-mirror") _tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
-   else                                                                          return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode), interactive));
+   else                                                                          return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode)));
    if (isParameterChange && _tradingMode!=tradingMode) {
-      if (_tradingMode==TRADINGMODE_REGULAR || tradingMode==TRADINGMODE_REGULAR) return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change trading mode from "+ DoubleQuoteStr(tradingModeDescriptions[tradingMode]) +" to "+ DoubleQuoteStr(tradingModeDescriptions[_tradingMode]), interactive));
+      if (_tradingMode==TRADINGMODE_REGULAR || tradingMode==TRADINGMODE_REGULAR) return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change trading mode from "+ DoubleQuoteStr(tradingModeDescriptions[tradingMode]) +" to "+ DoubleQuoteStr(tradingModeDescriptions[_tradingMode])));
    }
    string _TradingMode = tradingModeDescriptions[_tradingMode];
 
    // EntryIndicator
-   if (EntryIndicator < 1 || EntryIndicator > 3)             return(!onInputError("ValidateInputs(4)  "+ sequence.name +" invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)", interactive));
+   if (EntryIndicator < 1 || EntryIndicator > 3)             return(!onInputError("ValidateInputs(4)  "+ sequence.name +" invalid input parameter EntryIndicator: "+ EntryIndicator +" (must be from 1-3)"));
    int _EntryIndicator = EntryIndicator;
 
    // IndicatorTimeframe
-   if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe, interactive));
-   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")", interactive));
+   if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
+   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
    int _IndicatorTimeframe = IndicatorTimeframe;
 
    // IndicatorPeriods
-   if (IndicatorPeriods < 1)                                 return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter IndicatorPeriods: "+ IndicatorPeriods +" (must be positive)", interactive));
+   if (IndicatorPeriods < 1)                                 return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter IndicatorPeriods: "+ IndicatorPeriods +" (must be positive)"));
    int _IndicatorPeriods = IndicatorPeriods;
 
    // BollingerBands.Deviation
-   if (_EntryIndicator==2 && BollingerBands.Deviation < 0)   return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter BollingerBands.Deviation: "+ NumberToStr(BollingerBands.Deviation, ".1+") +" (can't be negative)", interactive));
+   if (_EntryIndicator==2 && BollingerBands.Deviation < 0)   return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter BollingerBands.Deviation: "+ NumberToStr(BollingerBands.Deviation, ".1+") +" (can't be negative)"));
    double _BollingerBands.Deviation = BollingerBands.Deviation;
 
    // Envelopes.Deviation
-   if (_EntryIndicator==3 && Envelopes.Deviation < 0)        return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter Envelopes.Deviation: "+ NumberToStr(Envelopes.Deviation, ".1+") +" (can't be negative)", interactive));
+   if (_EntryIndicator==3 && Envelopes.Deviation < 0)        return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter Envelopes.Deviation: "+ NumberToStr(Envelopes.Deviation, ".1+") +" (can't be negative)"));
    double _Envelopes.Deviation = Envelopes.Deviation;
    // --- OK ----------------------------------------------------------------------------------------------------------------
 
@@ -3228,19 +3218,19 @@ bool ValidateInputs(bool interactive) {
 
    // BreakoutReversal
    double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
-   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)", interactive));
+   if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)"));
    double minLots=MarketInfo(Symbol(), MODE_MINLOT), maxLots=MarketInfo(Symbol(), MODE_MAXLOT);
    if (MoneyManagement) {
       // Risk
-      if (LE(Risk, 0))                                       return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)", interactive));
+      if (LE(Risk, 0))                                       return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)"));
       double lots = CalculateLots(false); if (IsLastError()) return(false);
-      if (LT(lots, minLots))                                 return(!onInputError("ValidateInputs(12)  "+ sequence.name +" not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
-      if (GT(lots, maxLots))                                 return(!onInputError("ValidateInputs(13)  "+ sequence.name +" too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")", interactive));
+      if (LT(lots, minLots))                                 return(!onInputError("ValidateInputs(12)  "+ sequence.name +" not enough money ("+ DoubleToStr(AccountEquity()-AccountCredit(), 2) +") for input parameter Risk="+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")"));
+      if (GT(lots, maxLots))                                 return(!onInputError("ValidateInputs(13)  "+ sequence.name +" too large input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (resulting position size "+ NumberToStr(lots, ".1+") +" larger than MODE_MAXLOT="+  NumberToStr(maxLots, ".1+") +")"));
    }
    else {
       // ManualLotsize
-      if (LT(ManualLotsize, minLots))                        return(!onInputError("ValidateInputs(14)  "+ sequence.name +" too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")", interactive));
-      if (GT(ManualLotsize, maxLots))                        return(!onInputError("ValidateInputs(15)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")", interactive));
+      if (LT(ManualLotsize, minLots))                        return(!onInputError("ValidateInputs(14)  "+ sequence.name +" too small input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (smaller than MODE_MINLOT="+ NumberToStr(minLots, ".1+") +")"));
+      if (GT(ManualLotsize, maxLots))                        return(!onInputError("ValidateInputs(15)  "+ sequence.name +" too large input parameter ManualLotsize: "+ NumberToStr(ManualLotsize, ".1+") +" (larger than MODE_MAXLOT="+ NumberToStr(maxLots, ".1+") +")"));
    }
 
    // Sessionbreak.StartTime/EndTime
@@ -3252,7 +3242,7 @@ bool ValidateInputs(bool interactive) {
 
    // EA.StopOnProfit / EA.StopOnLoss
    if (EA.StopOnProfit && EA.StopOnLoss) {
-      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!onInputError("ValidateInputs(16)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)", interactive));
+      if (EA.StopOnProfit <= EA.StopOnLoss)                  return(!onInputError("ValidateInputs(16)  "+ sequence.name +" input parameter mis-match EA.StopOnProfit="+ DoubleToStr(EA.StopOnProfit, 2) +" / EA.StopOnLoss="+ DoubleToStr(EA.StopOnLoss, 2) +" (profit must be larger than loss)"));
    }
 
    return(!catch("ValidateInputs(17)"));
@@ -3260,28 +3250,18 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a terminating error is set.
+ * Error handler for invalid input parameters. Depending on the execution context a terminating or non-terminating error is set.
  *
- * @param  string message     - error message
- * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
+ * @param  string message - error message
  *
- * @return int - resulting error status
+ * @return int - error status
  */
-int onInputError(string message, bool interactive) {
-   interactive = interactive!=0;
+int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
-   if (IsTesting() || !interactive)
-      return(catch(message, error));
-
-   logNotice(message, error);
-
-   string location = StrLeftTo(message, " ");
-   message = StrCapitalize(StrTrim(StrSubstr(message, StringLen(location))));
-
-   PlaySoundEx("Windows Chord.wav");
-   MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);
-   return(error);
+   if (ProgramInitReason() == IR_PARAMETERS)
+      return(logError(message, error));            // a non-terminating error
+   return(catch(message, error));
 }
 
 
@@ -3292,7 +3272,7 @@ int onInputError(string message, bool interactive) {
  */
 string InputsToStr() {
    return("Sequence.ID="             + DoubleQuoteStr(Sequence.ID)                  +";"+ NL
-         +"TradingMode="             + TradingMode                                  +";"+ NL
+         +"TradingMode="             + DoubleQuoteStr(TradingMode)                  +";"+ NL
 
          +"EntryIndicator="          + EntryIndicator                               +";"+ NL
          +"IndicatorTimeframe="      + IndicatorTimeframe                           +";"+ NL
