@@ -34,9 +34,9 @@ string GetAccountConfigPath(string company="", int account=NULL) {
  * @return bool
  */
 bool IsConfigKey(string section, string key) {
-   if (IsGlobalConfigKeyA(section, key)) return(true);
-   if (IsLocalConfigKeyA (section, key)) return(true);
-   if (IsAccountConfigKey(section, key)) return(true);
+   if (IsGlobalConfigKeyA  (section, key)) return(true);
+   if (IsTerminalConfigKeyA(section, key)) return(true);
+   if (IsAccountConfigKey  (section, key)) return(true);
    return(false);
 }
 
@@ -76,9 +76,9 @@ bool IsAccountConfigKey(string section, string key) {
 bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   bool value = GetGlobalConfigBool (section, key, defaultValue);
-        value = GetLocalConfigBool  (section, key, value);
-        value = GetAccountConfigBool(section, key, value);
+   bool value = GetGlobalConfigBool  (section, key, defaultValue);
+        value = GetTerminalConfigBool(section, key, value);
+        value = GetAccountConfigBool (section, key, value);
    return(value);
 }
 
@@ -110,7 +110,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
 
 
 /**
- * Return a local configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
+ * Return a terminal configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
  * values evaluate to (FALSE).
  *
@@ -125,13 +125,13 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
  *
  * @return bool - configuration value or the default value in case of errors
  */
-bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
+bool GetTerminalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
+   string terminalConfig = GetTerminalConfigPathA();
+   if (!StringLen(terminalConfig))
       return(defaultValue);
-   return(GetIniBool(localConfig, section, key, defaultValue));
+   return(GetIniBool(terminalConfig, section, key, defaultValue));
 }
 
 
@@ -178,9 +178,9 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
  * @return color - configuration value or the default value in case of errors
  */
 color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) {
-   color value = GetGlobalConfigColor (section, key, defaultValue);
-         value = GetLocalConfigColor  (section, key, value);
-         value = GetAccountConfigColor(section, key, value);
+   color value = GetGlobalConfigColor  (section, key, defaultValue);
+         value = GetTerminalConfigColor(section, key, value);
+         value = GetAccountConfigColor (section, key, value);
    return(value);
 }
 
@@ -210,7 +210,7 @@ color GetGlobalConfigColor(string section, string key, color defaultValue = CLR_
 
 
 /**
- * Return a local configuration value as a color.
+ * Return a terminal configuration value as a color.
  *
  * Supported color representations are:
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
@@ -225,11 +225,11 @@ color GetGlobalConfigColor(string section, string key, color defaultValue = CLR_
  *
  * @return color - configuration value or the default value in case of errors
  */
-color GetLocalConfigColor(string section, string key, color defaultValue = CLR_NONE) {
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
+color GetTerminalConfigColor(string section, string key, color defaultValue = CLR_NONE) {
+   string terminalConfig = GetTerminalConfigPathA();
+   if (!StringLen(terminalConfig))
       return(defaultValue);
-   return(GetIniColor(localConfig, section, key, defaultValue));
+   return(GetIniColor(terminalConfig, section, key, defaultValue));
 }
 
 
@@ -269,9 +269,9 @@ color GetAccountConfigColor(string section, string key, color defaultValue = CLR
  * @return int - configuration value or the default value in case of errors
  */
 int GetConfigInt(string section, string key, int defaultValue = 0) {
-   int value = GetGlobalConfigInt (section, key, defaultValue);
-       value = GetLocalConfigInt  (section, key, value);
-       value = GetAccountConfigInt(section, key, value);
+   int value = GetGlobalConfigInt  (section, key, defaultValue);
+       value = GetTerminalConfigInt(section, key, value);
+       value = GetAccountConfigInt (section, key, value);
    return(value);
 }
 
@@ -295,7 +295,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return a local configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
+ * Return a terminal configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
  * comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
@@ -304,11 +304,11 @@ int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
  *
  * @return int - configuration value or the default value in case of errors
  */
-int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
+int GetTerminalConfigInt(string section, string key, int defaultValue = 0) {
+   string terminalConfig = GetTerminalConfigPathA();
+   if (!StringLen(terminalConfig))
       return(defaultValue);
-   return(GetIniInt(localConfig, section, key, defaultValue));
+   return(GetIniInt(terminalConfig, section, key, defaultValue));
 }
 
 
@@ -342,9 +342,9 @@ int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
  * @return double - configuration value or the default value in case of errors
  */
 double GetConfigDouble(string section, string key, double defaultValue = 0) {
-   double value = GetGlobalConfigDouble (section, key, defaultValue);
-          value = GetLocalConfigDouble  (section, key, value);
-          value = GetAccountConfigDouble(section, key, value);
+   double value = GetGlobalConfigDouble  (section, key, defaultValue);
+          value = GetTerminalConfigDouble(section, key, value);
+          value = GetAccountConfigDouble (section, key, value);
    return(value);
 }
 
@@ -369,7 +369,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue = 0
 
 
 /**
- * Return a local configuration value as a double. An empty value evaluates to 0 (zero).
+ * Return a terminal configuration value as a double. An empty value evaluates to 0 (zero).
  *
  * Trailing non-numeric characters and configuration comments are ignored.
  *
@@ -379,11 +379,11 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue = 0
  *
  * @return double - configuration value or the default value in case of errors
  */
-double GetLocalConfigDouble(string section, string key, double defaultValue = 0) {
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
+double GetTerminalConfigDouble(string section, string key, double defaultValue = 0) {
+   string terminalConfig = GetTerminalConfigPathA();
+   if (!StringLen(terminalConfig))
       return(defaultValue);
-   return(GetIniDouble(localConfig, section, key, defaultValue));
+   return(GetIniDouble(terminalConfig, section, key, defaultValue));
 }
 
 
@@ -418,9 +418,9 @@ double GetAccountConfigDouble(string section, string key, double defaultValue = 
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
 string GetConfigString(string section, string key, string defaultValue = "") {
-   string value = GetGlobalConfigString (section, key, defaultValue);
-          value = GetLocalConfigString  (section, key, value);
-          value = GetAccountConfigString(section, key, value);
+   string value = GetGlobalConfigString  (section, key, defaultValue);
+          value = GetTerminalConfigString(section, key, value);
+          value = GetAccountConfigString (section, key, value);
    return(value);
 }
 
@@ -445,7 +445,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
 
 
 /**
- * Return a local configuration value as a string.
+ * Return a terminal configuration value as a string.
  *
  * Trailing configuration comments are ignored.
  *
@@ -455,11 +455,11 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
  *
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
-string GetLocalConfigString(string section, string key, string defaultValue = "") {
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
+string GetTerminalConfigString(string section, string key, string defaultValue = "") {
+   string terminalConfig = GetTerminalConfigPathA();
+   if (!StringLen(terminalConfig))
       return(defaultValue);
-   return(GetIniStringA(localConfig, section, key, defaultValue));
+   return(GetIniStringA(terminalConfig, section, key, defaultValue));
 }
 
 
@@ -494,9 +494,9 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
 string GetConfigStringRaw(string section, string key, string defaultValue = "") {
-   string value = GetGlobalConfigStringRaw (section, key, defaultValue);
-          value = GetLocalConfigStringRaw  (section, key, value);
-          value = GetAccountConfigStringRaw(section, key, value);
+   string value = GetGlobalConfigStringRaw  (section, key, defaultValue);
+          value = GetTerminalConfigStringRaw(section, key, value);
+          value = GetAccountConfigStringRaw (section, key, value);
    return(value);
 }
 
@@ -521,7 +521,7 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
 
 
 /**
- * Return a local configuration value as a string.
+ * Return a terminal configuration value as a string.
  *
  * Trailing configuration comments are not removed.
  *
@@ -531,11 +531,11 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
  *
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
-string GetLocalConfigStringRaw(string section, string key, string defaultValue = "") {
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
+string GetTerminalConfigStringRaw(string section, string key, string defaultValue = "") {
+   string terminalConfig = GetTerminalConfigPathA();
+   if (!StringLen(terminalConfig))
       return(defaultValue);
-   return(GetIniStringRawA(localConfig, section, key, defaultValue));
+   return(GetIniStringRawA(terminalConfig, section, key, defaultValue));
 }
 
 

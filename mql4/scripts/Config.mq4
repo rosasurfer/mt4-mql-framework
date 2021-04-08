@@ -26,7 +26,7 @@ int onStart() {
    ArrayPushString(files, globalConfig);
 
    // get the current MT4 terminal configuration
-   string terminalConfig = GetLocalConfigPathA();
+   string terminalConfig = GetTerminalConfigPathA();
    ArrayPushString(files, terminalConfig);
 
    // get the current account config file
