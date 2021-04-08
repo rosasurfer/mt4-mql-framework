@@ -26,13 +26,8 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                        // input itself has been backed-up in onDeinitParameters()
-
-   if (!ValidateInputs()) {
+   if (!ValidateInputs())
       RestoreInputs();
-      RestoreInputStatus();
-      return(last_error);
-   }
    return(last_error);
 }
 

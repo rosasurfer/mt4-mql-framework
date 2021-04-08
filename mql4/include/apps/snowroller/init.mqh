@@ -78,11 +78,8 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                        // input itself has been backed-up in onDeinitParameters()
-
    if (!ValidateInputs()) {
       RestoreInputs();
-      RestoreInputStatus();
       return(last_error);
    }
    if (sequence.status == STATUS_STOPPED) {
