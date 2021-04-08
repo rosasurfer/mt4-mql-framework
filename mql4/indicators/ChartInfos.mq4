@@ -2116,11 +2116,11 @@ bool CustomPositions.ReadConfig() {
 /**
  * Parst einen Open-Konfigurations-Term (Open Position).
  *
- * @param  _In_     string   term         - Konfigurations-Term
- * @param  _In_Out_ string   openComments - vorhandene OpenPositions-Kommentare (werden ggf. erweitert)
- * @param  _Out_    bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur das aktuelle Symbol (FALSE) umfassen
- * @param  _Out_    datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
- * @param  _Out_    datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
+ * @param  _In_    string   term         - Konfigurations-Term
+ * @param  _InOut_ string   openComments - vorhandene OpenPositions-Kommentare (werden ggf. erweitert)
+ * @param  _Out_   bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur das aktuelle Symbol (FALSE) umfassen
+ * @param  _Out_   datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
+ * @param  _Out_   datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
  *
  * @return bool - Erfolgsstatus
  *
@@ -2296,14 +2296,14 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
 /**
  * Parst einen History-Konfigurations-Term (Closed Position).
  *
- * @param  _In_     string   term              - Konfigurations-Term
- * @param  _In_Out_ string   positionComment   - Kommentar der Position (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
- * @param  _In_Out_ string   hstComments       - dynamisch generierte History-Kommentare (werden ggf. erweitert)
- * @param  _In_Out_ bool     isEmptyPosition   - ob die aktuelle Position noch leer ist
- * @param  _In_Out_ bool     isGroupedPosition - ob die aktuelle Position eine Gruppierung enthält
- * @param  _Out_    bool     isTotalHistory    - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
- * @param  _Out_    datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
- * @param  _Out_    datetime to                - Endzeitpunkt der zu berücksichtigenden History
+ * @param  _In_    string   term              - Konfigurations-Term
+ * @param  _InOut_ string   positionComment   - Kommentar der Position (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
+ * @param  _InOut_ string   hstComments       - dynamisch generierte History-Kommentare (werden ggf. erweitert)
+ * @param  _InOut_ bool     isEmptyPosition   - ob die aktuelle Position noch leer ist
+ * @param  _InOut_ bool     isGroupedPosition - ob die aktuelle Position eine Gruppierung enthält
+ * @param  _Out_   bool     isTotalHistory    - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
+ * @param  _Out_   datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
+ * @param  _Out_   datetime to                - Endzeitpunkt der zu berücksichtigenden History
  *
  * @return bool - Erfolgsstatus
  *
@@ -2762,16 +2762,16 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * {customVars} hinzu.
  *
  *                                                                     -+    struct POSITION_CONFIG_TERM {
- * @param  _In_     int     type           - zu extrahierender Typ      |       double type;
- * @param  _In_     double  value1         - zu extrahierende Lotsize   |       double confValue1;
- * @param  _In_     double  value2         - Preis/Betrag/Equity        +->     double confValue2;
- * @param  _In_Out_ double &cache1         - Zwischenspeicher 1         |       double cacheValue1;
- * @param  _In_Out_ double &cache2         - Zwischenspeicher 2         |       double cacheValue2;
+ * @param  _In_    int     type           - zu extrahierender Typ      |       double type;
+ * @param  _In_    double  value1         - zu extrahierende Lotsize   |       double confValue1;
+ * @param  _In_    double  value2         - Preis/Betrag/Equity        +->     double confValue2;
+ * @param  _InOut_ double &cache1         - Zwischenspeicher 1         |       double cacheValue1;
+ * @param  _InOut_ double &cache2         - Zwischenspeicher 2         |       double cacheValue2;
  *                                                                     -+    };
  *
- * @param  _In_Out_ mixed &fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
- * @param  _In_Out_ mixed &customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
- * @param  _In_Out_ bool  &isCustomVirtual - ob die resultierende CustomPosition virtuell ist
+ * @param  _InOut_ mixed &fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
+ * @param  _InOut_ mixed &customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
+ * @param  _InOut_ bool  &isCustomVirtual - ob die resultierende CustomPosition virtuell ist
  *
  * @return bool - Erfolgsstatus
  */
