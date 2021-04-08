@@ -12,38 +12,38 @@
 string   GetAccountConfigPath(string company="", int account=NULL);;
 
 
-bool     IsConfigKey              (string section, string key);;
-bool     IsAccountConfigKey       (string section, string key);;
+bool     IsConfigKey               (string section, string key);;
+bool     IsAccountConfigKey        (string section, string key);;
 
-bool     GetConfigBool            (string section, string key, bool defaultValue = false);;
-bool     GetGlobalConfigBool      (string section, string key, bool defaultValue = false);;
-bool     GetLocalConfigBool       (string section, string key, bool defaultValue = false);;
-bool     GetAccountConfigBool     (string section, string key, bool defaultValue = false);;
+bool     GetConfigBool             (string section, string key, bool defaultValue = false);;
+bool     GetGlobalConfigBool       (string section, string key, bool defaultValue = false);;
+bool     GetTerminalConfigBool     (string section, string key, bool defaultValue = false);;
+bool     GetAccountConfigBool      (string section, string key, bool defaultValue = false);;
 
-color    GetConfigColor           (string section, string key, color defaultValue = CLR_NONE);;
-color    GetGlobalConfigColor     (string section, string key, color defaultValue = CLR_NONE);;
-color    GetLocalConfigColor      (string section, string key, color defaultValue = CLR_NONE);;
-color    GetAccountConfigColor    (string section, string key, color defaultValue = CLR_NONE);;
+color    GetConfigColor            (string section, string key, color defaultValue = CLR_NONE);;
+color    GetGlobalConfigColor      (string section, string key, color defaultValue = CLR_NONE);;
+color    GetTerminalConfigColor    (string section, string key, color defaultValue = CLR_NONE);;
+color    GetAccountConfigColor     (string section, string key, color defaultValue = CLR_NONE);;
 
-int      GetConfigInt             (string section, string key, int defaultValue = 0);;
-int      GetGlobalConfigInt       (string section, string key, int defaultValue = 0);;
-int      GetLocalConfigInt        (string section, string key, int defaultValue = 0);;
-int      GetAccountConfigInt      (string section, string key, int defaultValue = 0);;
+int      GetConfigInt              (string section, string key, int defaultValue = 0);;
+int      GetGlobalConfigInt        (string section, string key, int defaultValue = 0);;
+int      GetTerminalConfigInt      (string section, string key, int defaultValue = 0);;
+int      GetAccountConfigInt       (string section, string key, int defaultValue = 0);;
 
-double   GetConfigDouble          (string section, string key, double defaultValue = 0);;
-double   GetGlobalConfigDouble    (string section, string key, double defaultValue = 0);;
-double   GetLocalConfigDouble     (string section, string key, double defaultValue = 0);;
-double   GetAccountConfigDouble   (string section, string key, double defaultValue = 0);;
+double   GetConfigDouble           (string section, string key, double defaultValue = 0);;
+double   GetGlobalConfigDouble     (string section, string key, double defaultValue = 0);;
+double   GetTerminalConfigDouble   (string section, string key, double defaultValue = 0);;
+double   GetAccountConfigDouble    (string section, string key, double defaultValue = 0);;
 
-string   GetConfigString          (string section, string key, string defaultValue = "");;
-string   GetGlobalConfigString    (string section, string key, string defaultValue = "");;
-string   GetLocalConfigString     (string section, string key, string defaultValue = "");;
-string   GetAccountConfigString   (string section, string key, string defaultValue = "");;
+string   GetConfigString           (string section, string key, string defaultValue = "");;
+string   GetGlobalConfigString     (string section, string key, string defaultValue = "");;
+string   GetTerminalConfigString   (string section, string key, string defaultValue = "");;
+string   GetAccountConfigString    (string section, string key, string defaultValue = "");;
 
-string   GetConfigStringRaw       (string section, string key, string defaultValue = "");;
-string   GetGlobalConfigStringRaw (string section, string key, string defaultValue = "");;
-string   GetLocalConfigStringRaw  (string section, string key, string defaultValue = "");;
-string   GetAccountConfigStringRaw(string section, string key, string defaultValue = "");;
+string   GetConfigStringRaw        (string section, string key, string defaultValue = "");;
+string   GetGlobalConfigStringRaw  (string section, string key, string defaultValue = "");;
+string   GetTerminalConfigStringRaw(string section, string key, string defaultValue = "");;
+string   GetAccountConfigStringRaw (string section, string key, string defaultValue = "");;
 
 bool     GetIniBool  (string fileName, string section, string key, bool   defaultValue = false);;
 color    GetIniColor (string fileName, string section, string key, color  defaultValue = CLR_NONE);;
@@ -839,7 +839,6 @@ string   GetIniStringA(string fileName, string section, string key, string defau
 string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);;
 int      GetIntsAddress(int &array[]);;
 int      GetLastWin32Error();;
-string   GetLocalConfigPathA();;
 datetime GetLocalTime();;
 string   GetMqlDirectoryA();;
 string   GetReparsePointTargetA(string name);;
@@ -848,6 +847,7 @@ string   GetStringW(int address);;
 int      GetStringAddress(string value);;
 int      GetStringsAddress(string &values[]);;
 int      GetTerminalBuild();;
+string   GetTerminalConfigPathA();;
 int      GetTerminalMainWindow();;
 string   GetTerminalCommonDataPathA();;
 string   GetTerminalDataPathA();;
@@ -872,9 +872,9 @@ bool     IsGlobalConfigKeyA(string section, string key);;
 bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSectionA(string fileName, string section);;
 bool     IsJunctionA(string name);;
-bool     IsLocalConfigKeyA(string section, string key);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlinkA(string name);;
+bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUIThread(int threadId = NULL);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;

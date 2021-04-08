@@ -50,19 +50,20 @@
    bool     RemoveTickTimer(int timerId);
 
    // configuration
+   string   GetGlobalConfigPathA();
+   string   GetTerminalConfigPathA();
+
    bool     DeleteIniKeyA(string fileName, string section, string key);
    bool     DeleteIniSectionA(string fileName, string section);
    bool     EmptyIniSectionA(string fileName, string section);
-   string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
    string   GetIniStringA(string fileName, string section, string key, string defaultValue);
    string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);
-   string   GetLocalConfigPathA();
    bool     IsGlobalConfigKeyA(string section, string key);
    bool     IsIniKeyA(string fileName, string section, string key);
    bool     IsIniSectionA(string fileName, string section);
-   bool     IsLocalConfigKeyA(string section, string key);
+   bool     IsTerminalConfigKeyA(string section, string key);
 
    // date/time
    datetime GetGmtTime();

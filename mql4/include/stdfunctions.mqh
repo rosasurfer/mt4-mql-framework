@@ -5640,8 +5640,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       string section = "Mail";
       string key     = "Sender";
       _sender = GetConfigString(section, key);
-      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/terminal configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
@@ -5652,8 +5652,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/terminal configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
@@ -5687,7 +5687,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    if (!StringLen(sendmail)) {
       // TODO: - kein Mailclient angegeben: Umgebungsvariable $SENDMAIL auswerten
       //       - sendmail suchen
-      return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
+      return(!catch("SendEmail(11)  missing global/terminal configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
 
    // Notes:
