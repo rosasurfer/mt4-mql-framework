@@ -3103,7 +3103,7 @@ int Chart.SendTick(bool sound = false) {
 
 
 /**
- * Ruft den Hauptmenü-Befehl Charts->Objects-Unselect All auf.
+ * Ruft den Hauptmenü-Befehl Charts->Objects->Unselect All auf.
  *
  * @return int - Fehlerstatus
  */
