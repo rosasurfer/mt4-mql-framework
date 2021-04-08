@@ -5,9 +5,7 @@
  * @return int - error status
  */
 int onInitUser() {
-   bool interactive = true;
-
-   if (ValidateInputs(interactive)) {                          // on success create a new sequence
+   if (ValidateInputs()) {                                     // on success create a new sequence
       sequence.id      = CreateSequenceId();
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
@@ -30,8 +28,7 @@ int onInitUser() {
 int onInitParameters() {
    BackupInputStatus();                                        // input itself has been backed-up in onDeinitParameters()
 
-   bool interactive = true;
-   if (!ValidateInputs(interactive)) {
+   if (!ValidateInputs()) {
       RestoreInputs();
       RestoreInputStatus();
       return(last_error);

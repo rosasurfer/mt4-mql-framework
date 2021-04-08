@@ -3087,16 +3087,13 @@ string SaveStatus.OrderToStr(int index) {
 /**
  * Restore the internal state of the EA from a status file.
  *
- * @param  bool interactive - whether input parameters have been entered through the input dialog
- *
  * @return bool - success status
  */
-bool RestoreSequence(bool interactive) {
-   interactive = interactive!=0;
-   if (IsLastError())                return(false);
-   if (!ReadStatus())                return(false);      // read the status file
-   if (!ValidateInputs(interactive)) return(false);      // validate restored input parameters
-   if (!SynchronizeStatus())         return(false);      // synchronize restored state with the trade server
+bool RestoreSequence() {
+   if (IsLastError())        return(false);
+   if (!ReadStatus())        return(false);              // read the status file
+   if (!ValidateInputs())    return(false);              // validate restored input parameters
+   if (!SynchronizeStatus()) return(false);              // synchronize restored state with the trade server
    return(true);
 }
 

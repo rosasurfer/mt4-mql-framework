@@ -1765,17 +1765,12 @@ void CopyInputStatus(bool store) {
  * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
  * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
  *
- * @param  bool interactive - whether parameters have been entered through the input dialog
- *
  * @return bool - whether input parameters are valid
  */
-bool ValidateInputs(bool interactive) {
-   interactive = interactive!=0;
+bool ValidateInputs() {
    if (IsLastError()) return(false);
 
    bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
-   if (isParameterChange)
-      interactive = true;
 
    // GridDirections
    string sValues[], sValue = GridDirections;
@@ -1785,38 +1780,38 @@ bool ValidateInputs(bool interactive) {
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                                         return(_false(onInputError("ValidateInputs(1)", "Invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections), interactive)));
+   if (iValue == -1)                                         return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections)));
    if (isParameterChange && !StrCompareI(sValue, last.GridDirections)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(2)", "Cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence"));
    }
    sequence.directions = iValue;
    GridDirections = TradeDirectionDescription(sequence.directions);
 
    // GridSize
    if (isParameterChange && GridSize!=last.GridSize) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(3)", "Cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(3)  cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (GridSize < 1)                                         return(_false(onInputError("ValidateInputs(4)", "Invalid input parameter GridSize: "+ GridSize, interactive)));
+   if (GridSize < 1)                                         return(!onInputError("ValidateInputs(4)  invalid input parameter GridSize: "+ GridSize));
 
    // UnitSize
    if (isParameterChange && NE(UnitSize, last.UnitSize)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(5)", "Cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(5)  cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (LT(UnitSize, 0.01))                                   return(_false(onInputError("ValidateInputs(6)", "Invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+"), interactive)));
+   if (LT(UnitSize, 0.01))                                   return(!onInputError("ValidateInputs(6)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+")));
    sequence.unitsize = UnitSize;
 
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, last.Pyramid.Multiplier)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(7)", "Cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(7)  cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (Pyramid.Multiplier < 0)                               return(_false(onInputError("ValidateInputs(8)", "Invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+"), interactive)));
+   if (Pyramid.Multiplier < 0)                               return(!onInputError("ValidateInputs(8)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, last.Martingale.Multiplier)) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(_false(onInputError("ValidateInputs(9)", "Cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence", interactive)));
+      if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(9)  cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (Martingale.Multiplier < 0)                            return(_false(onInputError("ValidateInputs(10)", "Invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+"), interactive)));
+   if (Martingale.Multiplier < 0)                            return(!onInputError("ValidateInputs(10)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -1825,7 +1820,7 @@ bool ValidateInputs(bool interactive) {
    if (StringLen(sValue) && sValue!="{amount}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                             return(_false(onInputError("ValidateInputs(11)", "Invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit), interactive)));
+      if (!StrIsNumeric(sValue))                             return(!onInputError("ValidateInputs(11)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit)));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          tpPct.condition   = true;
@@ -1860,7 +1855,7 @@ bool ValidateInputs(bool interactive) {
    if (StringLen(sValue) && sValue!="{amount}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                             return(_false(onInputError("ValidateInputs(12)", "Invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss), interactive)));
+      if (!StrIsNumeric(sValue))                             return(!onInputError("ValidateInputs(12)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss)));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          slPct.condition   = true;
@@ -1899,26 +1894,18 @@ bool ValidateInputs(bool interactive) {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a terminating error is set.
+ * Error handler for invalid input parameters. Depending on the execution context a (non-)terminating error is set.
  *
- * @param  string location    - error location identifier
- * @param  string message     - error message
- * @param  bool   interactive - whether the error occurred in an interactive or non-interactive context
+ * @param  string message - error message
  *
  * @return int - error status
  */
-int onInputError(string location, string message, bool interactive) {
-   interactive = interactive!=0;
-   int error = ERR_INVALID_INPUT_PARAMETER;
+int onInputError(string message) {
+   int error = ERR_INVALID_PARAMETER;
 
-   if (IsTesting() || !interactive)
-      return(catch(location +"  "+ message, error));
-
-   logNotice(location +"  "+ message, error);
-
-   PlaySoundEx("Windows Chord.wav");
-   MessageBoxEx(ProgramName() +" - "+ location, message, MB_ICONERROR|MB_OK);
-   return(error);
+   if (ProgramInitReason() == IR_PARAMETERS)
+      return(logError(message, error));                           // a non-terminating error
+   return(catch(message, error));
 }
 
 
