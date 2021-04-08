@@ -1594,170 +1594,143 @@ bool IsTestSequence() {
 }
 
 
-string   last.GridDirections = "";
-int      last.GridSize;
-double   last.UnitSize;
-double   last.Pyramid.Multiplier;
-double   last.Martingale.Multiplier;
-string   last.TakeProfit = "";
-string   last.StopLoss = "";
-bool     last.ShowProfitInPercent;
-datetime last.Sessionbreak.StartTime;
-datetime last.Sessionbreak.EndTime;
+// backed-up input parameters
+string   prev.GridDirections = "";
+int      prev.GridSize;
+double   prev.UnitSize;
+double   prev.Pyramid.Multiplier;
+double   prev.Martingale.Multiplier;
+string   prev.TakeProfit = "";
+string   prev.StopLoss = "";
+bool     prev.ShowProfitInPercent;
+datetime prev.Sessionbreak.StartTime;
+datetime prev.Sessionbreak.EndTime;
+
+// backed-up status variables
+int      prev.sequence.id;
+datetime prev.sequence.created;
+bool     prev.sequence.isTest;
+string   prev.sequence.name = "";
+int      prev.sequence.status;
+int      prev.sequence.directions;
+bool     prev.sequence.pyramidEnabled;
+bool     prev.sequence.martingaleEnabled;
+double   prev.sequence.unitsize;
+
+bool     prev.tpAbs.condition;
+double   prev.tpAbs.value;
+string   prev.tpAbs.description = "";
+bool     prev.tpPct.condition;
+double   prev.tpPct.value;
+double   prev.tpPct.absValue;
+string   prev.tpPct.description = "";
+
+bool     prev.slAbs.condition;
+double   prev.slAbs.value;
+string   prev.slAbs.description = "";
+bool     prev.slPct.condition;
+double   prev.slPct.value;
+double   prev.slPct.absValue;
+string   prev.slPct.description = "";
+
+datetime prev.sessionbreak.starttime;
+datetime prev.sessionbreak.endtime;
 
 
 /**
- * Input parameters changed by the code don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
- * restored in init(). Called only from onDeinitParameters() and onDeinitChartChange().
+ * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
+ * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backed-up inputs are also accessed from ValidateInputs()
-   last.GridDirections         = StringConcatenate(GridDirections, ""); // string inputs are references to internal C literals
-   last.GridSize               = GridSize;                              // and must be copied to break the reference
-   last.UnitSize               = UnitSize;
-   last.Pyramid.Multiplier     = Pyramid.Multiplier;
-   last.Martingale.Multiplier  = Martingale.Multiplier;
-   last.TakeProfit             = StringConcatenate(TakeProfit, "");
-   last.StopLoss               = StringConcatenate(StopLoss, "");
-   last.ShowProfitInPercent    = ShowProfitInPercent;
-   last.Sessionbreak.StartTime = Sessionbreak.StartTime;
-   last.Sessionbreak.EndTime   = Sessionbreak.EndTime;
+   // backed-up input parameters are also accessed in ValidateInputs()
+   prev.GridDirections         = StringConcatenate(GridDirections, ""); // string inputs are references to internal C literals
+   prev.GridSize               = GridSize;                              // and must be copied to break the reference
+   prev.UnitSize               = UnitSize;
+   prev.Pyramid.Multiplier     = Pyramid.Multiplier;
+   prev.Martingale.Multiplier  = Martingale.Multiplier;
+   prev.TakeProfit             = StringConcatenate(TakeProfit, "");
+   prev.StopLoss               = StringConcatenate(StopLoss, "");
+   prev.ShowProfitInPercent    = ShowProfitInPercent;
+   prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
+   prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
+
+   // backup status variables which may change by modifying input parameters
+   prev.sequence.id                = sequence.id;
+   prev.sequence.created           = sequence.created;
+   prev.sequence.isTest            = sequence.isTest;
+   prev.sequence.name              = sequence.name;
+   prev.sequence.status            = sequence.status;
+   prev.sequence.directions        = sequence.directions;
+   prev.sequence.pyramidEnabled    = sequence.pyramidEnabled;
+   prev.sequence.martingaleEnabled = sequence.martingaleEnabled;
+   prev.sequence.unitsize          = sequence.unitsize;
+
+   prev.tpAbs.condition            = tpAbs.condition;
+   prev.tpAbs.value                = tpAbs.value;
+   prev.tpAbs.description          = tpAbs.description;
+   prev.tpPct.condition            = tpPct.condition;
+   prev.tpPct.value                = tpPct.value;
+   prev.tpPct.absValue             = tpPct.absValue;
+   prev.tpPct.description          = tpPct.description;
+
+   prev.slAbs.condition            = slAbs.condition;
+   prev.slAbs.value                = slAbs.value;
+   prev.slAbs.description          = slAbs.description;
+   prev.slPct.condition            = slPct.condition;
+   prev.slPct.value                = slPct.value;
+   prev.slPct.absValue             = slPct.absValue;
+   prev.slPct.description          = slPct.description;
+
+   prev.sessionbreak.starttime     = sessionbreak.starttime;
+   prev.sessionbreak.endtime       = sessionbreak.endtime;
 }
 
 
 /**
- * Restore backed-up input parameters. Called only from onInitParameters() and onInitTimeframeChange().
+ * Restore backed-up input parameters and status variables. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
-   GridDirections         = last.GridDirections;
-   GridSize               = last.GridSize;
-   UnitSize               = last.UnitSize;
-   Pyramid.Multiplier     = last.Pyramid.Multiplier;
-   Martingale.Multiplier  = last.Martingale.Multiplier;
-   TakeProfit             = last.TakeProfit;
-   StopLoss               = last.StopLoss;
-   ShowProfitInPercent    = last.ShowProfitInPercent;
-   Sessionbreak.StartTime = last.Sessionbreak.StartTime;
-   Sessionbreak.EndTime   = last.Sessionbreak.EndTime;
-}
+   // restore input parameters
+   GridDirections         = prev.GridDirections;
+   GridSize               = prev.GridSize;
+   UnitSize               = prev.UnitSize;
+   Pyramid.Multiplier     = prev.Pyramid.Multiplier;
+   Martingale.Multiplier  = prev.Martingale.Multiplier;
+   TakeProfit             = prev.TakeProfit;
+   StopLoss               = prev.StopLoss;
+   ShowProfitInPercent    = prev.ShowProfitInPercent;
+   Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
+   Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
 
+   // restore status variables
+   sequence.id                = prev.sequence.id;
+   sequence.created           = prev.sequence.created;
+   sequence.isTest            = prev.sequence.isTest;
+   sequence.name              = prev.sequence.name;
+   sequence.status            = prev.sequence.status;
+   sequence.directions        = prev.sequence.directions;
+   sequence.pyramidEnabled    = prev.sequence.pyramidEnabled;
+   sequence.martingaleEnabled = prev.sequence.martingaleEnabled;
+   sequence.unitsize          = prev.sequence.unitsize;
 
-/**
- * Backup status variables which may change by modifying input parameters. This way status can be restored in case of input
- * errors. Called only from onInitParameters().
- */
-void BackupInputStatus() {
-   CopyInputStatus(true);
-}
+   tpAbs.condition            = prev.tpAbs.condition;
+   tpAbs.value                = prev.tpAbs.value;
+   tpAbs.description          = prev.tpAbs.description;
+   tpPct.condition            = prev.tpPct.condition;
+   tpPct.value                = prev.tpPct.value;
+   tpPct.absValue             = prev.tpPct.absValue;
+   tpPct.description          = prev.tpPct.description;
 
+   slAbs.condition            = prev.slAbs.condition;
+   slAbs.value                = prev.slAbs.value;
+   slAbs.description          = prev.slAbs.description;
+   slPct.condition            = prev.slPct.condition;
+   slPct.value                = prev.slPct.value;
+   slPct.absValue             = prev.slPct.absValue;
+   slPct.description          = prev.slPct.description;
 
-/**
- * Restore status variables from the backup. Called only from onInitParameters().
- */
-void RestoreInputStatus() {
-   CopyInputStatus(false);
-}
-
-
-/**
- * Backup or restore status variables related to input parameter changes. Called only from BackupInputStatus() and
- * RestoreInputStatus() in onInitParameters().
- *
- * @param  bool store - TRUE:  copy status to internal storage (backup)
- *                      FALSE: copy internal storage to status (restore)
- */
-void CopyInputStatus(bool store) {
-   store = store!=0;
-
-   static int      _sequence.id;
-   static datetime _sequence.created;
-   static bool     _sequence.isTest;
-   static string   _sequence.name = "";
-   static int      _sequence.status;
-   static int      _sequence.directions;
-   static bool     _sequence.pyramidEnabled;
-   static bool     _sequence.martingaleEnabled;
-   static double   _sequence.unitsize;
-
-   static bool     _tpAbs.condition;
-   static double   _tpAbs.value;
-   static string   _tpAbs.description = "";
-   static bool     _tpPct.condition;
-   static double   _tpPct.value;
-   static double   _tpPct.absValue;
-   static string   _tpPct.description = "";
-
-   static bool     _slAbs.condition;
-   static double   _slAbs.value;
-   static string   _slAbs.description = "";
-   static bool     _slPct.condition;
-   static double   _slPct.value;
-   static double   _slPct.absValue;
-   static string   _slPct.description = "";
-
-   static datetime _sessionbreak.starttime;
-   static datetime _sessionbreak.endtime;
-
-   if (store) {
-      _sequence.id                = sequence.id;
-      _sequence.created           = sequence.created;
-      _sequence.isTest            = sequence.isTest;
-      _sequence.name              = sequence.name;
-      _sequence.status            = sequence.status;
-      _sequence.directions        = sequence.directions;
-      _sequence.pyramidEnabled    = sequence.pyramidEnabled;
-      _sequence.martingaleEnabled = sequence.martingaleEnabled;
-      _sequence.unitsize          = sequence.unitsize;
-
-      _tpAbs.condition            = tpAbs.condition;
-      _tpAbs.value                = tpAbs.value;
-      _tpAbs.description          = tpAbs.description;
-      _tpPct.condition            = tpPct.condition;
-      _tpPct.value                = tpPct.value;
-      _tpPct.absValue             = tpPct.absValue;
-      _tpPct.description          = tpPct.description;
-
-      _slAbs.condition            = slAbs.condition;
-      _slAbs.value                = slAbs.value;
-      _slAbs.description          = slAbs.description;
-      _slPct.condition            = slPct.condition;
-      _slPct.value                = slPct.value;
-      _slPct.absValue             = slPct.absValue;
-      _slPct.description          = slPct.description;
-
-      _sessionbreak.starttime     = sessionbreak.starttime;
-      _sessionbreak.endtime       = sessionbreak.endtime;
-   }
-   else {
-      sequence.id                = _sequence.id;
-      sequence.created           = _sequence.created;
-      sequence.isTest            = _sequence.isTest;
-      sequence.name              = _sequence.name;
-      sequence.status            = _sequence.status;
-      sequence.directions        = _sequence.directions;
-      sequence.pyramidEnabled    = _sequence.pyramidEnabled;
-      sequence.martingaleEnabled = _sequence.martingaleEnabled;
-      sequence.unitsize          = _sequence.unitsize;
-
-      tpAbs.condition            = _tpAbs.condition;
-      tpAbs.value                = _tpAbs.value;
-      tpAbs.description          = _tpAbs.description;
-      tpPct.condition            = _tpPct.condition;
-      tpPct.value                = _tpPct.value;
-      tpPct.absValue             = _tpPct.absValue;
-      tpPct.description          = _tpPct.description;
-
-      slAbs.condition            = _slAbs.condition;
-      slAbs.value                = _slAbs.value;
-      slAbs.description          = _slAbs.description;
-      slPct.condition            = _slPct.condition;
-      slPct.value                = _slPct.value;
-      slPct.absValue             = _slPct.absValue;
-      slPct.description          = _slPct.description;
-
-      sessionbreak.starttime     = _sessionbreak.starttime;
-      sessionbreak.endtime       = _sessionbreak.endtime;
-   }
+   sessionbreak.starttime     = prev.sessionbreak.starttime;
+   sessionbreak.endtime       = prev.sessionbreak.endtime;
 }
 
 
@@ -1781,34 +1754,34 @@ bool ValidateInputs() {
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (iValue == -1)                                         return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections)));
-   if (isParameterChange && !StrCompareI(sValue, last.GridDirections)) {
+   if (isParameterChange && !StrCompareI(sValue, prev.GridDirections)) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirections of "+ StatusDescription(sequence.status) +" sequence"));
    }
    sequence.directions = iValue;
    GridDirections = TradeDirectionDescription(sequence.directions);
 
    // GridSize
-   if (isParameterChange && GridSize!=last.GridSize) {
+   if (isParameterChange && GridSize!=prev.GridSize) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(3)  cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
    if (GridSize < 1)                                         return(!onInputError("ValidateInputs(4)  invalid input parameter GridSize: "+ GridSize));
 
    // UnitSize
-   if (isParameterChange && NE(UnitSize, last.UnitSize)) {
+   if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(5)  cannot change input parameter UnitSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
    if (LT(UnitSize, 0.01))                                   return(!onInputError("ValidateInputs(6)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+")));
    sequence.unitsize = UnitSize;
 
    // Pyramid.Multiplier
-   if (isParameterChange && NE(Pyramid.Multiplier, last.Pyramid.Multiplier)) {
+   if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(7)  cannot change input parameter Pyramid.Multiplier of "+ StatusDescription(sequence.status) +" sequence"));
    }
    if (Pyramid.Multiplier < 0)                               return(!onInputError("ValidateInputs(8)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
-   if (isParameterChange && NE(Martingale.Multiplier, last.Martingale.Multiplier)) {
+   if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(9)  cannot change input parameter Martingale.Multiplier of "+ StatusDescription(sequence.status) +" sequence"));
    }
    if (Martingale.Multiplier < 0)                            return(!onInputError("ValidateInputs(10)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
@@ -1885,7 +1858,7 @@ bool ValidateInputs() {
    }
 
    // Sessionbreak.StartTime/EndTime
-   if (Sessionbreak.StartTime!=last.Sessionbreak.StartTime || Sessionbreak.EndTime!=last.Sessionbreak.EndTime) {
+   if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
       sessionbreak.endtime   = NULL;                              // real times are updated automatically on next use
    }
