@@ -2,40 +2,36 @@
  *  Format der LFX-MagicNumber:
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
- *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15               entspricht rsfLib1::GetCurrencyId()
- *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // wird in MagicNumber nicht mehr verwendet
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfLib1::GetCurrencyId()
+ *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10           // wird in MagicNumber nicht mehr verwendet
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
- *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // wird in MagicNumber nicht mehr verwendet
+ *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // wird in MagicNumber nicht mehr verwendet
  */
-#define STRATEGY_ID   102                                            // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID               102                          // unique strategy id from 101-1023 (10 bit)
 
-
-bool   mode.intern = true;          // Default                       // Orderdaten und Trading im aktuellen Account
-bool   mode.extern = false;                                          // Orderdaten und Trading in externem Account
-
-string tradeAccount.company = "";
-int    tradeAccount.number;
-string tradeAccount.currency = "";
-int    tradeAccount.type;                                            // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
-string tradeAccount.name = "";                                       // Inhaber
-
-string lfxCurrency = "";
-int    lfxCurrencyId;
-int    lfxOrders[][LFX_ORDER.intSize];                               // Array von LFX_ORDERs
-
-
-#define NO_LIMIT_TRIGGERED         -1                                // Limitkontrolle
+#define NO_LIMIT_TRIGGERED         -1                          // Limitkontrolle
 #define OPEN_LIMIT_TRIGGERED        1
 #define STOPLOSS_LIMIT_TRIGGERED    2
 #define TAKEPROFIT_LIMIT_TRIGGERED  3
 
+bool   mode.intern = true;                                     // default: Orderdaten und Trading im aktuellen Account
+bool   mode.extern = false;                                    // Orderdaten und Trading in externem Account
+
+string tradeAccount.company = "";
+int    tradeAccount.number;
+string tradeAccount.currency = "";
+int    tradeAccount.type;                                      // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
+string tradeAccount.name = "";                                 // Inhaber
+
+string lfxCurrency = "";
+int    lfxCurrencyId;
+int    lfxOrders[][LFX_ORDER.intSize];                         // Array von LFX_ORDERs
 
 // Trade-Terminal -> LFX-Terminal: P/L-Messages
-string  qc.TradeToLfxChannels[9];                                    // ein Channel je LFX-Währung bzw. LFX-Chart
-int    hQC.TradeToLfxSenders [9];                                    // jeweils ein Sender
-string  qc.TradeToLfxChannel;                                        // Channel des aktuellen LFX-Charts (einer)
-int    hQC.TradeToLfxReceiver;                                       // Receiver des aktuellen LFX-Charts (einer)
-
+string  qc.TradeToLfxChannels[9];                              // ein Channel je LFX-Währung bzw. LFX-Chart
+int    hQC.TradeToLfxSenders [9];                              // jeweils ein Sender
+string  qc.TradeToLfxChannel;                                  // Channel des aktuellen LFX-Charts (einer)
+int    hQC.TradeToLfxReceiver;                                 // Receiver des aktuellen LFX-Charts (einer)
 
 // LFX-Terminal -> Trade-Terminal: TradeCommands
 string  qc.TradeCmdChannel;
@@ -44,7 +40,7 @@ int    hQC.TradeCmdReceiver;
 
 
 /**
- * Initialize global vars holding data of the current trade account.
+ * Initialize global vars describing the current trade account.
  *
  * @param  string accountId [optional] - account identifier in format "{account-company}:{account-number}"
  *                                       (default: the current account)
@@ -52,20 +48,12 @@ int    hQC.TradeCmdReceiver;
  * @return bool - success status i.e. whether the new account data was successfully applied
  */
 bool InitTradeAccount(string accountId = "") {
-   if (accountId == "0") accountId = "";              // (string) NULL
+   if (accountId == "0") accountId = "";                       // (string) NULL
 
    string currAccountCompany = GetAccountCompany(); if (!StringLen(currAccountCompany)) return(false);
    int    currAccountNumber  = GetAccountNumber();  if (!currAccountNumber)             return(false);
 
-   //string tradeAccount.company;      // global vars: modified only if account initialization succeeds
-   //int    tradeAccount.number;
-   //string tradeAccount.currency;
-   //int    tradeAccount.type;
-   //string tradeAccount.name;
-   //bool   mode.intern;
-   //bool   mode.extern;
-
-   string _accountCompany;             // local vars
+   string _accountCompany;                                     // global vars are modified on success only
    int    _accountNumber;
    string _accountCurrency;
    int    _accountType;
@@ -128,7 +116,7 @@ bool InitTradeAccount(string accountId = "") {
       _accountName = sValue;
    }
 
-   // at the end: overwrite global vars after
+   // success: modify global vars
    mode.intern = (_accountCompany==currAccountCompany && _accountNumber==currAccountNumber);
    mode.extern = !mode.intern;
 
@@ -137,6 +125,15 @@ bool InitTradeAccount(string accountId = "") {
    tradeAccount.currency = _accountCurrency;
    tradeAccount.type     = _accountType;
    tradeAccount.name     = _accountName;
+
+   // store account identifier in the chart to enable remote access by scripts
+   string label = "TradeAccount";
+   if (ObjectFind(label) != 0) {
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      RegisterObject(label);
+   }                                                                 // format "{account-company}:{account-number}"
+   ObjectSetText(label, StringConcatenate(tradeAccount.company, ":", tradeAccount.number));
 
    if (mode.extern) {
       if (StrEndsWith(Symbol(), "LFX")) {

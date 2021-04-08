@@ -1,5 +1,5 @@
 /**
- * Load global and current terminal configurations into the editor.
+ * Load global and current MT4 terminal configurations into the editor.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

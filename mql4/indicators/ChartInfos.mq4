@@ -276,19 +276,12 @@ bool CheckLastError(string location) {
  *                "cmd=ToggleOpenOrders"                - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"              - Schaltet die Anzeige der Trade-History ein/aus.
  *                "cmd=ToggleAuM"                       - Schaltet die Assets-under-Management-Anzeige ein/aus.
- *                "cmd=EditAccountConfig"               - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
- *                                                        da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
    if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
 
    for (int i=0; i < size; i++) {
-      if (commands[i] == "cmd=EditAccountConfig") {
-         if (!EditAccountConfig())
-            return(false);
-         continue;
-      }
       if (commands[i] == "cmd=LogPositionTickets") {
          if (!Positions.LogTickets())
             return(false);
@@ -4083,25 +4076,6 @@ bool onPositionClose(int tickets[][]) {
    if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
 
    return(!error);
-}
-
-
-/**
- * Load the current account configuration into the editor.
- *
- * @return bool - success status
- */
-bool EditAccountConfig() {
-   string file, files[];
-
-   if (mode.extern) {
-      file = GetAccountConfigPath(); if (!StringLen(file)) return(false);
-      ArrayPushString(files, file);
-   }
-   file = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
-   ArrayPushString(files, file);
-
-   return(EditFiles(files));
 }
 
 

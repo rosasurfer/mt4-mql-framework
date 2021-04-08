@@ -2687,7 +2687,6 @@ bool SaveStatus() {
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
-   if (StringLen(TradingMode) < 3) return(!catch("SaveStatus(0.1)  TradingMode="+ TradingMode, ERR_ILLEGAL_STATE));
 
    string section, file=GetStatusFilename(), separator="";
    if (!IsFileA(file)) separator = CRLF;                                                     // an empty line as section separator
@@ -2878,7 +2877,7 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   // store status in chart to enable remote control by scripts
+   // store status in the chart to enable remote access by scripts
    string label = "XMT-Scalper.status";
    if (ObjectFind(label) != 0) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
@@ -2886,8 +2885,6 @@ int ShowStatus(int error = NO_ERROR) {
       RegisterObject(label);
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
-
-   if (StringLen(TradingMode) < 3) return(!catch("ShowStatus(0.1)  writing status label with TradingMode="+ TradingMode, ERR_ILLEGAL_STATE));
 
    error = ifIntOr(catch("ShowStatus(1)"), error);
    isRecursion = false;
