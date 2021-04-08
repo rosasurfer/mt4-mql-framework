@@ -224,7 +224,6 @@ double   minBarSize;                            // min. bar size in absolute ter
 double   commissionPip;                         // commission in pip (independant of lotsize)
 int      orderSlippage;                         // order slippage in point
 int      orderMagicNumber;
-string   orderComment = "";
 string   tradingModeDescriptions[] = {"", "Regular", "Virtual", "Virtual-Copier", "Virtual-Mirror"};
 
 // sessionbreak management
@@ -392,10 +391,11 @@ bool SynchronizeTradeCopier() {
       else if (real.isOpenOrder) return(!catch("SynchronizeTradeCopier(5)  "+ sequence.name +" virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
       else {
          // an open position doesn't exist, open it
-         double lots = CalculateLots(true); if (!lots) return(false);
-         color markerColor = ifInt(virt.openType[iV]==OP_LONG, Blue, Red);
+         double lots    = CalculateLots(true); if (!lots) return(false);
+         string comment = "XMT."+ sequence.name + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
+         color  marker  = ifInt(virt.openType[iV]==OP_LONG, Blue, Red);
 
-         OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, virt.stopLoss[iV], virt.takeProfit[iV], orderComment, orderMagicNumber, NULL, markerColor, NULL, oe);
+         OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, virt.stopLoss[iV], virt.takeProfit[iV], comment, orderMagicNumber, NULL, marker, NULL, oe);
          if (oe.IsError(oe)) return(false);
 
          // update the link
@@ -441,11 +441,12 @@ bool SynchronizeTradeMirror() {
       else if (real.isOpenOrder) return(!catch("SynchronizeTradeMirror(5)  "+ sequence.name +" virt.isOpenPosition=TRUE  real.isPendingOrder=TRUE", ERR_NOT_IMPLEMENTED));
       else {
          // an open position doesn't exist, open it
-         int type = ifInt(virt.openType[iV]==OP_BUY, OP_SELL, OP_BUY);          // opposite direction
-         double lots = CalculateLots(true); if (!lots) return(false);
-         color markerColor = ifInt(virt.openType[iV]==OP_LONG, Red, Blue);
+         int    type    = ifInt(virt.openType[iV]==OP_BUY, OP_SELL, OP_BUY);     // opposite direction
+         double lots    = CalculateLots(true); if (!lots) return(false);
+         string comment = "XMT."+ sequence.name + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
+         color  marker  = ifInt(virt.openType[iV]==OP_LONG, Red, Blue);
 
-         OrderSendEx(Symbol(), type, lots, NULL, orderSlippage, virt.takeProfit[iV], virt.stopLoss[iV], orderComment, orderMagicNumber, NULL, markerColor, NULL, oe);
+         OrderSendEx(Symbol(), type, lots, NULL, orderSlippage, virt.takeProfit[iV], virt.stopLoss[iV], comment, orderMagicNumber, NULL, marker, NULL, oe);
          if (oe.IsError(oe)) return(false);
 
          // update the link
@@ -744,7 +745,9 @@ bool onVirtualPositionClose(int i) {
       string sCloseType  = "";
          if      (EQ(virt.closePrice[i], virt.takeProfit[i])) sCloseType = " [tp]";
          else if (EQ(virt.closePrice[i], virt.stopLoss  [i])) sCloseType = " [sl]";
-      logDebug("onVirtualPositionClose(1)  "+ sequence.name +" virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      string comment = "XMT."+ sequence.name;
+
+      logDebug("onVirtualPositionClose(1)  "+ sequence.name +" virtual #"+ virt.ticket[i] +" "+ sType +" "+ NumberToStr(virt.lots[i], ".+") +" "+ Symbol() +" \""+ comment +"\" at "+ sOpenPrice +" was closed at "+ sClosePrice + sCloseType +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
    return(!catch("onVirtualPositionClose(2)"));
 }
@@ -885,8 +888,9 @@ bool OpenRealOrder(int signal) {
    if (IsLastError())                               return(false);
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("OpenRealOrder(1)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
-   double lots   = CalculateLots(true); if (!lots) return(false);
-   double spread = Ask-Bid, price, takeProfit, stopLoss;
+   double lots    = CalculateLots(true); if (!lots) return(false);
+   double spread  = Ask-Bid, price, takeProfit, stopLoss;
+   string comment = "XMT."+ sequence.name + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
    int iV, virtualTicket, oe[];
 
    // regular trading
@@ -896,16 +900,16 @@ bool OpenRealOrder(int signal) {
          takeProfit = price + TakeProfit*Pip;
          stopLoss   = price - spread - StopLoss*Pip;
 
-         if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
-         else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Blue, NULL, oe);
+         if (!BreakoutReversal) OrderSendEx(Symbol(), OP_BUY,     lots, NULL,  orderSlippage, stopLoss, takeProfit, comment, orderMagicNumber, NULL, Blue, NULL, oe);
+         else                   OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL,          stopLoss, takeProfit, comment, orderMagicNumber, NULL, Blue, NULL, oe);
       }
       else /*signal == SIGNAL_SHORT*/ {
          price      = Bid - BreakoutReversal*Pip;
          takeProfit = price - TakeProfit*Pip;
          stopLoss   = price + spread + StopLoss*Pip;
 
-         if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
-         else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+         if (!BreakoutReversal) OrderSendEx(Symbol(), OP_SELL,     lots, NULL,  orderSlippage, stopLoss, takeProfit, comment, orderMagicNumber, NULL, Red, NULL, oe);
+         else                   OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL,          stopLoss, takeProfit, comment, orderMagicNumber, NULL, Red, NULL, oe);
       }
    }
 
@@ -917,7 +921,7 @@ bool OpenRealOrder(int signal) {
       takeProfit    = virt.takeProfit[iV];
       stopLoss      = virt.stopLoss  [iV];
       virtualTicket = virt.ticket    [iV];
-      virt.linkedTicket[iV] = OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+      virt.linkedTicket[iV] = OrderSendEx(Symbol(), virt.openType[iV], lots, NULL, orderSlippage, stopLoss, takeProfit, comment, orderMagicNumber, NULL, Red, NULL, oe);
    }
 
    // virtual-mirror
@@ -929,7 +933,7 @@ bool OpenRealOrder(int signal) {
       takeProfit    = virt.stopLoss  [iV];
       stopLoss      = virt.takeProfit[iV];
       virtualTicket = virt.ticket    [iV];
-      virt.linkedTicket[iV] = OrderSendEx(Symbol(), type, lots, NULL, orderSlippage, stopLoss, takeProfit, orderComment, orderMagicNumber, NULL, Red, NULL, oe);
+      virt.linkedTicket[iV] = OrderSendEx(Symbol(), type, lots, NULL, orderSlippage, stopLoss, takeProfit, comment, orderMagicNumber, NULL, Red, NULL, oe);
    }
 
    if (oe.IsError(oe)) return(false);
@@ -977,13 +981,14 @@ bool OpenVirtualOrder(int signal) {
 
    double lots       = CalculateLots();      if (!lots)               return(false);
    double commission = GetCommission(-lots); if (IsEmpty(commission)) return(false);
+   string comment    = "XMT."+ sequence.name;
 
    if (IsPendingOrderType(type)) { pendingType = type; pendingPrice = price;                       }
    else                          { openType    = type; openPrice    = price; openTime = Tick.Time; }
    if (!Orders.AddVirtualTicket(ticket, NULL, lots, pendingType, pendingPrice, openType, openTime, openPrice, NULL, NULL, stopLoss, takeProfit, commission, NULL)) return(false);
 
    // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
-   if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ sequence.name +" opened virtual #"+ ticket +" "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ orderComment +"\" at "+ NumberToStr(price, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ sequence.name +" opened virtual #"+ ticket +" "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ comment +"\" at "+ NumberToStr(price, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 
    if (IsTesting()) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenVirtualOrder(3)");

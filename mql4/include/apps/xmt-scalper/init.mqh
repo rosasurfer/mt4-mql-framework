@@ -83,7 +83,6 @@ int afterInit() {
    sMaxSpread       = DoubleToStr(MaxSpread, 1);
    commissionPip    = GetCommission(1, MODE_MARKUP)/Pip;
    orderSlippage    = Round(MaxSlippage*Pip/Point);
-   orderComment     = "XMT."+ sequence.id + ifString(ChannelBug, ".ChBug", "") + ifString(TakeProfitBug, ".TpBug", "");
    orderMagicNumber = CalculateMagicNumber();
    SS.All();
 
