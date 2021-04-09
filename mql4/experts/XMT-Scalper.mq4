@@ -68,7 +68,7 @@ extern double   MaxSpread                       = 2;                          //
 extern bool     ReverseSignals                  = false;                      // Buy => Sell, Sell => Buy
 
 extern string   ___d___________________________ = "=== Money management ===================";
-extern bool     MoneyManagement                 = true;                       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
+extern bool     UseMoneyManagement              = true;                       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
 extern double   Risk                            = 2;                          // percent of equity to risk with each trade
 extern double   ManualLotsize                   = 0.01;                       // fix position to use if "MoneyManagement" is FALSE
 
@@ -84,7 +84,7 @@ extern double   MaxSlippage                     = 0.3;                        //
 extern datetime Sessionbreak.StartTime          = D'1970.01.01 23:56:00';     // server time (the date part is ignored)
 extern datetime Sessionbreak.EndTime            = D'1970.01.01 00:02:10';     // server time (the date part is ignored)
 
-extern string   ___f___________________________ = "=== Reporting ================================";
+extern string   ___f___________________________ = "=== Reporting ============================";
 extern bool     RecordPerformanceMetrics        = false;                      // whether to enable recording of performance metrics
 extern string   MetricsServerDirectory          = "{name} | {path} | auto*";  // history server directory to store performance metrics
 
@@ -1367,7 +1367,7 @@ double CalculateLots(bool checkLimits = false) {
    checkLimits = checkLimits!=0;
    static double lots, lastLots;
 
-   if (MoneyManagement) {
+   if (UseMoneyManagement) {
       double equity = AccountEquity() - AccountCredit();
       if (LE(equity, 0)) return(!catch("CalculateLots(1)  "+ sequence.name +" equity: "+ DoubleToStr(equity, 2), ERR_NOT_ENOUGH_MONEY));
 
@@ -2418,7 +2418,7 @@ bool ReadStatus() {
    string sMaxSpread                = GetIniStringA(file, section, "MaxSpread",                "");    // double   MaxSpread                = 2.0
    string sReverseSignals           = GetIniStringA(file, section, "ReverseSignals",           "");    // bool     ReverseSignals           = 0
 
-   string sMoneyManagement          = GetIniStringA(file, section, "MoneyManagement",          "");    // bool     MoneyManagement          = 1
+   string sUseMoneyManagement       = GetIniStringA(file, section, "UseMoneyManagement",       "");    // bool     UseMoneyManagement       = 1
    string sRisk                     = GetIniStringA(file, section, "Risk",                     "");    // double   Risk                     = 2.0
    string sManualLotsize            = GetIniStringA(file, section, "ManualLotsize",            "");    // double   ManualLotsize            = 0.01
 
@@ -2463,7 +2463,7 @@ bool ReadStatus() {
    if (!StrIsNumeric(sMaxSpread))               return(!catch("ReadStatus(15)  "+ sequence.name +" invalid MaxSpread "+ DoubleQuoteStr(sMaxSpread) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    MaxSpread = StrToDouble(sMaxSpread);
    ReverseSignals = StrToBool(sReverseSignals);
-   MoneyManagement = StrToBool(sMoneyManagement);
+   UseMoneyManagement = StrToBool(sUseMoneyManagement);
    if (!StrIsNumeric(sRisk))                    return(!catch("ReadStatus(16)  "+ sequence.name +" invalid Risk "+ DoubleQuoteStr(sRisk) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Risk = StrToDouble(sRisk);
    if (!StrIsNumeric(sManualLotsize))           return(!catch("ReadStatus(17)  "+ sequence.name +" invalid ManualLotsize "+ DoubleQuoteStr(sManualLotsize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -2723,7 +2723,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "MaxSpread",                DoubleToStr(MaxSpread, 1));
    WriteIniString(file, section, "ReverseSignals",           ReverseSignals);
 
-   WriteIniString(file, section, "MoneyManagement",          MoneyManagement);
+   WriteIniString(file, section, "UseMoneyManagement",       UseMoneyManagement);
    WriteIniString(file, section, "Risk",                     NumberToStr(Risk, ".1+"));
    WriteIniString(file, section, "ManualLotsize",            NumberToStr(ManualLotsize, ".1+"));
 
@@ -2991,7 +2991,7 @@ double   prev.BreakoutReversal;
 double   prev.MaxSpread;
 bool     prev.ReverseSignals;
 
-bool     prev.MoneyManagement;
+bool     prev.UseMoneyManagement;
 double   prev.Risk;
 double   prev.ManualLotsize;
 
@@ -3036,7 +3036,7 @@ void BackupInputs() {
    prev.MaxSpread                = MaxSpread;
    prev.ReverseSignals           = ReverseSignals;
 
-   prev.MoneyManagement          = MoneyManagement;
+   prev.UseMoneyManagement       = UseMoneyManagement;
    prev.Risk                     = Risk;
    prev.ManualLotsize            = ManualLotsize;
 
@@ -3080,7 +3080,7 @@ void RestoreInputs() {
    MaxSpread                = prev.MaxSpread;
    ReverseSignals           = prev.ReverseSignals;
 
-   MoneyManagement          = prev.MoneyManagement;
+   UseMoneyManagement       = prev.UseMoneyManagement;
    Risk                     = prev.Risk;
    ManualLotsize            = prev.ManualLotsize;
 
@@ -3199,7 +3199,7 @@ bool ValidateInputs() {
    double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
    if (LT(BreakoutReversal*Pip, stopLevel*Point))            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter BreakoutReversal: "+ NumberToStr(BreakoutReversal, ".1+") +" (must be larger than MODE_STOPLEVEL)"));
    double minLots=MarketInfo(Symbol(), MODE_MINLOT), maxLots=MarketInfo(Symbol(), MODE_MAXLOT);
-   if (MoneyManagement) {
+   if (UseMoneyManagement) {
       // Risk
       if (LE(Risk, 0))                                       return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter Risk: "+ NumberToStr(Risk, ".1+") +" (must be positive)"));
       double lots = CalculateLots(false); if (IsLastError()) return(false);
@@ -3267,7 +3267,7 @@ string InputsToStr() {
          +"MaxSpread="               + DoubleToStr(MaxSpread, 1)                    +";"+ NL
          +"ReverseSignals="          + BoolToStr(ReverseSignals)                    +";"+ NL
 
-         +"MoneyManagement="         + BoolToStr(MoneyManagement)                   +";"+ NL
+         +"UseMoneyManagement="      + BoolToStr(UseMoneyManagement)                +";"+ NL
          +"Risk="                    + NumberToStr(Risk, ".1+")                     +";"+ NL
          +"ManualLotsize="           + NumberToStr(ManualLotsize, ".1+")            +";"+ NL
 
