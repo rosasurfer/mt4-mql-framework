@@ -656,7 +656,6 @@ bool Tester.RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-
    if (!tester.hEquitySet) {
       // open HistorySet
       string symbol      = tester.reportSymbol;
