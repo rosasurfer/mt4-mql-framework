@@ -1813,72 +1813,78 @@ bool RecordMetrics() {
    double value;
    bool success = true;
 
+   static int flags;
+   static bool flagsInitialized = false; if (!flagsInitialized) {
+      flags = ifInt(IsTesting(), HST_BUFFER_TICKS, NULL);      // buffer ticks in tester
+      flagsInitialized = true;
+   }
+
    // real metrics
    if (metrics.enabled[METRIC_RC0] && success) {               // C0: cumulative PL in pip w/o commission
       value   = real.totalPip + metrics.vShift[METRIC_RC0];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, flags);
    }
    if (metrics.enabled[METRIC_RC1] && success) {               // C1: cumulative PL in pip with commission
       value   = real.totalPipNet + metrics.vShift[METRIC_RC1];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, flags);
    }
    if (metrics.enabled[METRIC_RC2] && success) {               // C2: cumulative PL in money w/o commission
       value   = real.totalPl + metrics.vShift[METRIC_RC2];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.Time, value, flags);
    }
    if (metrics.enabled[METRIC_RC3] && success) {               // C3: cumulative PL in money with commission
       value   = real.totalPlNet + metrics.vShift[METRIC_RC3];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC3], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC3], Tick.Time, value, flags);
    }
  //if (metrics.enabled[METRIC_RD0] && success) {               // D0: daily PL in pip w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD0], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD0], Tick.Time, value, flags);
  //}
  //if (metrics.enabled[METRIC_RD1] && success) {               // D1: daily PL in pip with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.Time, value, flags);
  //}
  //if (metrics.enabled[METRIC_RD2] && success) {               // D2: daily PL in money w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, flags);
  //}
  //if (metrics.enabled[METRIC_RD3] && success) {               // D3: daily PL in money with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.Time, value, flags);
  //}
 
    // virtual metrics
    if (metrics.enabled[METRIC_VC0] && success) {               // C0: cumulative PL in pip w/o commission
       value   = virt.totalPip + metrics.vShift[METRIC_VC0];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, flags);
    }
    if (metrics.enabled[METRIC_VC1] && success) {               // C1: cumulative PL in pip with commission
       value   = virt.totalPipNet + metrics.vShift[METRIC_VC1];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, flags);
    }
    if (metrics.enabled[METRIC_VC2] && success) {               // C2: cumulative PL in money w/o commission
       value   = virt.totalPl + metrics.vShift[METRIC_VC2];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.Time, value, flags);
    }
    if (metrics.enabled[METRIC_VC3] && success) {               // C3: cumulative PL in money with commission
       value   = virt.totalPlNet + metrics.vShift[METRIC_VC3];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC3], Tick.Time, value, HST_BUFFER_TICKS);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC3], Tick.Time, value, flags);
    }
  //if (metrics.enabled[METRIC_VD0] && success) {               // D0: daily PL in pip w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD0], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD0], Tick.Time, value, flags);
  //}
  //if (metrics.enabled[METRIC_VD1] && success) {               // D1: daily PL in pip with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.Time, value, flags);
  //}
  //if (metrics.enabled[METRIC_VD2] && success) {               // D2: daily PL in money w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.Time, value, flags);
  //}
  //if (metrics.enabled[METRIC_VD3] && success) {               // D3: daily PL in money with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.Time, value, HST_BUFFER_TICKS);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.Time, value, flags);
  //}
    return(success);
 }
