@@ -2421,211 +2421,208 @@ int SumInts(int values[]) {
 }
 
 /**
- * Gibt alle verfügbaren MarketInfo()-Daten des aktuellen Instruments aus.
+ * Dump major global vars and available MarketInfo() data to the system debugger.
  *
- * @param  string location - Aufruf-Bezeichner
+ * @param  string location - location identifier
  *
- * @return int - Fehlerstatus
- *
- *
- * NOTE: Erläuterungen zu den MODEs in include/stddefines.mqh
+ * @return int - error status
  */
 int DebugMarketInfo(string location) {
    string symbol = Symbol();
    double value;
    int    error;
 
-   debug(location +"   "+ StrRepeat("-", 23 + StringLen(symbol)));         //  -------------------------
-   debug(location +"   Global variables for \""+ symbol +"\"");            //  Global variables "EURUSD"
-   debug(location +"   "+ StrRepeat("-", 23 + StringLen(symbol)));         //  -------------------------
+   debug(location +"  "+ StrRepeat("-", 23 + StringLen(symbol)));          //  -------------------------
+   debug(location +"  Global variables for \""+ symbol +"\"");             //  Global variables "EURUSD"
+   debug(location +"  "+ StrRepeat("-", 23 + StringLen(symbol)));          //  -------------------------
 
-   debug(location +"   1 Pip       = "+ NumberToStr(Pip, PriceFormat));
-   debug(location +"   PipDigits   = "+ PipDigits);
-   debug(location +"   Digits  (b) = "+ Digits);
-   debug(location +"   1 Point (b) = "+ NumberToStr(Point, PriceFormat));
-   debug(location +"   PipPoints   = "+ PipPoints);
-   debug(location +"   Bid/Ask (b) = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
-   debug(location +"   Bars    (b) = "+ Bars);
-   debug(location +"   PriceFormat = \""+ PriceFormat +"\"");
+   debug(location +"  built-in: Digits      = "+ Digits);
+   debug(location +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
+   debug(location +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(location +"  derived:  PipDigits   = "+ PipDigits);
+   debug(location +"  derived:  PipPoints   = "+ PipPoints);
+   debug(location +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
+   debug(location +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
+   debug(location +"  built-in: Bars        = "+ Bars);
 
-   debug(location +"   "+ StrRepeat("-", 19 + StringLen(symbol)));         //  -------------------------
-   debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "EURUSD"
-   debug(location +"   "+ StrRepeat("-", 19 + StringLen(symbol)));         //  -------------------------
+   debug(location +"  "+ StrRepeat("-", 19 + StringLen(symbol)));          //  -------------------------
+   debug(location +"  MarketInfo() for \""+ symbol +"\"");                 //  MarketInfo() for "EURUSD"
+   debug(location +"  "+ StrRepeat("-", 19 + StringLen(symbol)));          //  -------------------------
 
-   // Erläuterungen zu den Werten in include/stddefines.mqh
-   value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(location +"   MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))          , error);
-   value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(location +"   MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))          , error);
-   value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(location +"   3                      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, 4                     ); error = GetLastError(); if (value != 0) debug(location +"   4                      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_TIME             ); error = GetLastError();                 debug(location +"   MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), "'"+ TimeToStr(value, TIME_FULL) +"'"), error);
-   value = MarketInfo(symbol, 6                     ); error = GetLastError(); if (value != 0) debug(location +"   6                      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, 7                     ); error = GetLastError(); if (value != 0) debug(location +"   7                      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, 8                     ); error = GetLastError(); if (value != 0) debug(location +"   8                      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_BID              ); error = GetLastError();                 debug(location +"   MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))          , error);
-   value = MarketInfo(symbol, MODE_ASK              ); error = GetLastError();                 debug(location +"   MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))          , error);
-   value = MarketInfo(symbol, MODE_POINT            ); error = GetLastError();                 debug(location +"   MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))          , error);
-   value = MarketInfo(symbol, MODE_DIGITS           ); error = GetLastError();                 debug(location +"   MODE_DIGITS            = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_SPREAD           ); error = GetLastError();                 debug(location +"   MODE_SPREAD            = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_STOPLEVEL        ); error = GetLastError();                 debug(location +"   MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_LOTSIZE          ); error = GetLastError();                 debug(location +"   MODE_LOTSIZE           = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_TICKVALUE        ); error = GetLastError();                 debug(location +"   MODE_TICKVALUE         = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_TICKSIZE         ); error = GetLastError();                 debug(location +"   MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))          , error);
-   value = MarketInfo(symbol, MODE_SWAPLONG         ); error = GetLastError();                 debug(location +"   MODE_SWAPLONG          = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_SWAPSHORT        ); error = GetLastError();                 debug(location +"   MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_STARTING         ); error = GetLastError();                 debug(location +"   MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), "'"+ TimeToStr(value, TIME_FULL) +"'"), error);
-   value = MarketInfo(symbol, MODE_EXPIRATION       ); error = GetLastError();                 debug(location +"   MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), "'"+ TimeToStr(value, TIME_FULL) +"'"), error);
-   value = MarketInfo(symbol, MODE_TRADEALLOWED     ); error = GetLastError();                 debug(location +"   MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MINLOT           ); error = GetLastError();                 debug(location +"   MODE_MINLOT            = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_LOTSTEP          ); error = GetLastError();                 debug(location +"   MODE_LOTSTEP           = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MAXLOT           ); error = GetLastError();                 debug(location +"   MODE_MAXLOT            = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_SWAPTYPE         ); error = GetLastError();                 debug(location +"   MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_PROFITCALCMODE   ); error = GetLastError();                 debug(location +"   MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MARGINCALCMODE   ); error = GetLastError();                 debug(location +"   MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MARGININIT       ); error = GetLastError();                 debug(location +"   MODE_MARGININIT        = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MARGINMAINTENANCE); error = GetLastError();                 debug(location +"   MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MARGINHEDGED     ); error = GetLastError();                 debug(location +"   MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_MARGINREQUIRED   ); error = GetLastError();                 debug(location +"   MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+")                                        , error);
-   value = MarketInfo(symbol, MODE_FREEZELEVEL      ); error = GetLastError();                 debug(location +"   MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+")                                        , error);
+   // see MODE explanations in "include/stddefines.mqh"
+   value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(location +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(location +"  MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(location +"  3                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 4                     ); error = GetLastError(); if (value != 0) debug(location +"  4                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TIME             ); error = GetLastError();                 debug(location +"  MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, 6                     ); error = GetLastError(); if (value != 0) debug(location +"  6                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 7                     ); error = GetLastError(); if (value != 0) debug(location +"  7                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 8                     ); error = GetLastError(); if (value != 0) debug(location +"  8                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_BID              ); error = GetLastError();                 debug(location +"  MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_ASK              ); error = GetLastError();                 debug(location +"  MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_POINT            ); error = GetLastError();                 debug(location +"  MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_DIGITS           ); error = GetLastError();                 debug(location +"  MODE_DIGITS            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SPREAD           ); error = GetLastError();                 debug(location +"  MODE_SPREAD            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_STOPLEVEL        ); error = GetLastError();                 debug(location +"  MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOTSIZE          ); error = GetLastError();                 debug(location +"  MODE_LOTSIZE           = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TICKVALUE        ); error = GetLastError();                 debug(location +"  MODE_TICKVALUE         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TICKSIZE         ); error = GetLastError();                 debug(location +"  MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_SWAPLONG         ); error = GetLastError();                 debug(location +"  MODE_SWAPLONG          = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SWAPSHORT        ); error = GetLastError();                 debug(location +"  MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_STARTING         ); error = GetLastError();                 debug(location +"  MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, MODE_EXPIRATION       ); error = GetLastError();                 debug(location +"  MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, MODE_TRADEALLOWED     ); error = GetLastError();                 debug(location +"  MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MINLOT           ); error = GetLastError();                 debug(location +"  MODE_MINLOT            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOTSTEP          ); error = GetLastError();                 debug(location +"  MODE_LOTSTEP           = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MAXLOT           ); error = GetLastError();                 debug(location +"  MODE_MAXLOT            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SWAPTYPE         ); error = GetLastError();                 debug(location +"  MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_PROFITCALCMODE   ); error = GetLastError();                 debug(location +"  MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINCALCMODE   ); error = GetLastError();                 debug(location +"  MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGININIT       ); error = GetLastError();                 debug(location +"  MODE_MARGININIT        = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINMAINTENANCE); error = GetLastError();                 debug(location +"  MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINHEDGED     ); error = GetLastError();                 debug(location +"  MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINREQUIRED   ); error = GetLastError();                 debug(location +"  MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_FREEZELEVEL      ); error = GetLastError();                 debug(location +"  MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+")                              , error);
 
    return(catch("DebugMarketInfo(1)"));
 }
 
 
 /*
-MarketInfo()-Fehler im Tester
-=============================
+Invalid MarketInfo() data in tester
+===================================
 
-// EA im Tester
-M15::TestExpert::onTick()      ---------------------------------
-M15::TestExpert::onTick()      Predefined variables for "EURUSD"
-M15::TestExpert::onTick()      ---------------------------------
-M15::TestExpert::onTick()      Pip         = 0.0001'0
-M15::TestExpert::onTick()      PipDigits   = 4
-M15::TestExpert::onTick()      Digits  (b) = 5
-M15::TestExpert::onTick()      Point   (b) = 0.0000'1
-M15::TestExpert::onTick()      PipPoints   = 10
-M15::TestExpert::onTick()      Bid/Ask (b) = 1.2711'2/1.2713'1
-M15::TestExpert::onTick()      Bars    (b) = 1001
-M15::TestExpert::onTick()      PriceFormat = ".4'"
-M15::TestExpert::onTick()      ---------------------------------
-M15::TestExpert::onTick()      MarketInfo() for "EURUSD"
-M15::TestExpert::onTick()      ---------------------------------
-M15::TestExpert::onTick()      MODE_LOW               = 0.0000'0                 // falsch: nicht modelliert
-M15::TestExpert::onTick()      MODE_HIGH              = 0.0000'0                 // falsch: nicht modelliert
-M15::TestExpert::onTick()      MODE_TIME              = '2012.11.12 00:00:00'
-M15::TestExpert::onTick()      MODE_BID               = 1.2711'2
-M15::TestExpert::onTick()      MODE_ASK               = 1.2713'1
-M15::TestExpert::onTick()      MODE_POINT             = 0.0000'1
-M15::TestExpert::onTick()      MODE_DIGITS            = 5
-M15::TestExpert::onTick()      MODE_SPREAD            = 19
-M15::TestExpert::onTick()      MODE_STOPLEVEL         = 20
-M15::TestExpert::onTick()      MODE_LOTSIZE           = 100000
-M15::TestExpert::onTick()      MODE_TICKVALUE         = 1                        // falsch: online
-M15::TestExpert::onTick()      MODE_TICKSIZE          = 0.0000'1
-M15::TestExpert::onTick()      MODE_SWAPLONG          = -1.3
-M15::TestExpert::onTick()      MODE_SWAPSHORT         = 0.5
-M15::TestExpert::onTick()      MODE_STARTING          = 0
-M15::TestExpert::onTick()      MODE_EXPIRATION        = 0
-M15::TestExpert::onTick()      MODE_TRADEALLOWED      = 0                        // falsch modelliert
-M15::TestExpert::onTick()      MODE_MINLOT            = 0.01
-M15::TestExpert::onTick()      MODE_LOTSTEP           = 0.01
-M15::TestExpert::onTick()      MODE_MAXLOT            = 2
-M15::TestExpert::onTick()      MODE_SWAPTYPE          = 0
-M15::TestExpert::onTick()      MODE_PROFITCALCMODE    = 0
-M15::TestExpert::onTick()      MODE_MARGINCALCMODE    = 0
-M15::TestExpert::onTick()      MODE_MARGININIT        = 0
-M15::TestExpert::onTick()      MODE_MARGINMAINTENANCE = 0
-M15::TestExpert::onTick()      MODE_MARGINHEDGED      = 50000
-M15::TestExpert::onTick()      MODE_MARGINREQUIRED    = 254.25
-M15::TestExpert::onTick()      MODE_FREEZELEVEL       = 0
+// EA in tester
+TestExpert::onTick()      -----------------------------
+TestExpert::onTick()      Global variables for "EURUSD"
+TestExpert::onTick()      -----------------------------
+TestExpert::onTick()      built-in: Digits      = 5
+TestExpert::onTick()      built-in: Point       = 0.0000'1
+TestExpert::onTick()      derived:  Pip         = 0.0001'0
+TestExpert::onTick()      derived:  PipDigits   = 4
+TestExpert::onTick()      derived:  PipPoints   = 10
+TestExpert::onTick()      derived:  PriceFormat = "R.4'"
+TestExpert::onTick()      built-in: Bid/Ask     = 1.2711'2/1.2713'1
+TestExpert::onTick()      built-in: Bars        = 60007
+TestExpert::onTick()      -------------------------
+TestExpert::onTick()      MarketInfo() for "EURUSD"
+TestExpert::onTick()      -------------------------
+TestExpert::onTick()      MODE_LOW               = 0.0000'0                   // wrong (empty)
+TestExpert::onTick()      MODE_HIGH              = 0.0000'0                   // wrong (empty)
+TestExpert::onTick()      MODE_TIME              = 2012.11.12 00:00:00
+TestExpert::onTick()      MODE_BID               = 1.2711'2
+TestExpert::onTick()      MODE_ASK               = 1.2713'1
+TestExpert::onTick()      MODE_POINT             = 0.0000'1
+TestExpert::onTick()      MODE_DIGITS            = 5
+TestExpert::onTick()      MODE_SPREAD            = 19
+TestExpert::onTick()      MODE_STOPLEVEL         = 20
+TestExpert::onTick()      MODE_LOTSIZE           = 100000
+TestExpert::onTick()      MODE_TICKVALUE         = 1                          // wrong (online)
+TestExpert::onTick()      MODE_TICKSIZE          = 0.0000'1
+TestExpert::onTick()      MODE_SWAPLONG          = -1.3
+TestExpert::onTick()      MODE_SWAPSHORT         = 0.5
+TestExpert::onTick()      MODE_STARTING          = 0
+TestExpert::onTick()      MODE_EXPIRATION        = 0
+TestExpert::onTick()      MODE_TRADEALLOWED      = 0                          // wrong (empty)
+TestExpert::onTick()      MODE_MINLOT            = 0.01
+TestExpert::onTick()      MODE_LOTSTEP           = 0.01
+TestExpert::onTick()      MODE_MAXLOT            = 2
+TestExpert::onTick()      MODE_SWAPTYPE          = 0
+TestExpert::onTick()      MODE_PROFITCALCMODE    = 0
+TestExpert::onTick()      MODE_MARGINCALCMODE    = 0
+TestExpert::onTick()      MODE_MARGININIT        = 0
+TestExpert::onTick()      MODE_MARGINMAINTENANCE = 0
+TestExpert::onTick()      MODE_MARGINHEDGED      = 50000
+TestExpert::onTick()      MODE_MARGINREQUIRED    = 254.25
+TestExpert::onTick()      MODE_FREEZELEVEL       = 0
 
-// Indikator im Tester, via iCustom()
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   Predefined variables for "EURUSD"
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   Pip         = 0.0001'0
-M15::TestIndicator::onTick()   PipDigits   = 4
-M15::TestIndicator::onTick()   Digits  (b) = 5
-M15::TestIndicator::onTick()   Point   (b) = 0.0000'1
-M15::TestIndicator::onTick()   PipPoints   = 10
-M15::TestIndicator::onTick()   Bid/Ask (b) = 1.2711'2/1.2713'1
-M15::TestIndicator::onTick()   Bars    (b) = 1001
-M15::TestIndicator::onTick()   PriceFormat = ".4'"
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   MarketInfo() for "EURUSD"
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   MODE_LOW               = 0.0000'0                 // falsch übernommen
-M15::TestIndicator::onTick()   MODE_HIGH              = 0.0000'0                 // falsch übernommen
-M15::TestIndicator::onTick()   MODE_TIME              = '2012.11.12 00:00:00'
-M15::TestIndicator::onTick()   MODE_BID               = 1.2711'2
-M15::TestIndicator::onTick()   MODE_ASK               = 1.2713'1
-M15::TestIndicator::onTick()   MODE_POINT             = 0.0000'1
-M15::TestIndicator::onTick()   MODE_DIGITS            = 5
-M15::TestIndicator::onTick()   MODE_SPREAD            = 0                        // völlig falsch
-M15::TestIndicator::onTick()   MODE_STOPLEVEL         = 20
-M15::TestIndicator::onTick()   MODE_LOTSIZE           = 100000
-M15::TestIndicator::onTick()   MODE_TICKVALUE         = 1                        // falsch übernommen
-M15::TestIndicator::onTick()   MODE_TICKSIZE          = 0.0000'1
-M15::TestIndicator::onTick()   MODE_SWAPLONG          = -1.3
-M15::TestIndicator::onTick()   MODE_SWAPSHORT         = 0.5
-M15::TestIndicator::onTick()   MODE_STARTING          = 0
-M15::TestIndicator::onTick()   MODE_EXPIRATION        = 0
-M15::TestIndicator::onTick()   MODE_TRADEALLOWED      = 1
-M15::TestIndicator::onTick()   MODE_MINLOT            = 0.01
-M15::TestIndicator::onTick()   MODE_LOTSTEP           = 0.01
-M15::TestIndicator::onTick()   MODE_MAXLOT            = 2
-M15::TestIndicator::onTick()   MODE_SWAPTYPE          = 0
-M15::TestIndicator::onTick()   MODE_PROFITCALCMODE    = 0
-M15::TestIndicator::onTick()   MODE_MARGINCALCMODE    = 0
-M15::TestIndicator::onTick()   MODE_MARGININIT        = 0
-M15::TestIndicator::onTick()   MODE_MARGINMAINTENANCE = 0
-M15::TestIndicator::onTick()   MODE_MARGINHEDGED      = 50000
-M15::TestIndicator::onTick()   MODE_MARGINREQUIRED    = 259.73                   // falsch: online
-M15::TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
+// Indicator in tester via iCustom()
+TestIndicator::onTick()   -----------------------------
+TestIndicator::onTick()   Global variables for "EURUSD"
+TestIndicator::onTick()   -----------------------------
+TestIndicator::onTick()   built-in: Digits      = 5
+TestIndicator::onTick()   built-in: Point       = 0.0000'1
+TestIndicator::onTick()   derived:  Pip         = 0.0001'0
+TestIndicator::onTick()   derived:  PipDigits   = 4
+TestIndicator::onTick()   derived:  PipPoints   = 10
+TestIndicator::onTick()   derived:  PriceFormat = "R.4'"
+TestIndicator::onTick()   built-in: Bid/Ask     = 1.2711'2/1.2713'1
+TestIndicator::onTick()   built-in: Bars        = 60007
+TestIndicator::onTick()   -------------------------
+TestIndicator::onTick()   MarketInfo() for "EURUSD"
+TestIndicator::onTick()   -------------------------
+TestIndicator::onTick()   MODE_LOW               = 0.0000'0                   // wrong (empty)
+TestIndicator::onTick()   MODE_HIGH              = 0.0000'0                   // wrong (empty)
+TestIndicator::onTick()   MODE_TIME              = 2012.11.12 00:00:00
+TestIndicator::onTick()   MODE_BID               = 1.2711'2
+TestIndicator::onTick()   MODE_ASK               = 1.2713'1
+TestIndicator::onTick()   MODE_POINT             = 0.0000'1
+TestIndicator::onTick()   MODE_DIGITS            = 5
+TestIndicator::onTick()   MODE_SPREAD            = 0                          // wrong (empty)
+TestIndicator::onTick()   MODE_STOPLEVEL         = 20
+TestIndicator::onTick()   MODE_LOTSIZE           = 100000
+TestIndicator::onTick()   MODE_TICKVALUE         = 1                          // wrong (online)
+TestIndicator::onTick()   MODE_TICKSIZE          = 0.0000'1
+TestIndicator::onTick()   MODE_SWAPLONG          = -1.3
+TestIndicator::onTick()   MODE_SWAPSHORT         = 0.5
+TestIndicator::onTick()   MODE_STARTING          = 0
+TestIndicator::onTick()   MODE_EXPIRATION        = 0
+TestIndicator::onTick()   MODE_TRADEALLOWED      = 1
+TestIndicator::onTick()   MODE_MINLOT            = 0.01
+TestIndicator::onTick()   MODE_LOTSTEP           = 0.01
+TestIndicator::onTick()   MODE_MAXLOT            = 2
+TestIndicator::onTick()   MODE_SWAPTYPE          = 0
+TestIndicator::onTick()   MODE_PROFITCALCMODE    = 0
+TestIndicator::onTick()   MODE_MARGINCALCMODE    = 0
+TestIndicator::onTick()   MODE_MARGININIT        = 0
+TestIndicator::onTick()   MODE_MARGINMAINTENANCE = 0
+TestIndicator::onTick()   MODE_MARGINHEDGED      = 50000
+TestIndicator::onTick()   MODE_MARGINREQUIRED    = 259.73                     // wrong (online)
+TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 
-// Indikator im Tester, standalone
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   Predefined variables for "EURUSD"
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   Pip         = 0.0001'0
-M15::TestIndicator::onTick()   PipDigits   = 4
-M15::TestIndicator::onTick()   Digits  (b) = 5
-M15::TestIndicator::onTick()   Point   (b) = 0.0000'1
-M15::TestIndicator::onTick()   PipPoints   = 10
-M15::TestIndicator::onTick()   Bid/Ask (b) = 1.2983'9/1.2986'7                   // falsch: online
-M15::TestIndicator::onTick()   Bars    (b) = 1001
-M15::TestIndicator::onTick()   PriceFormat = ".4'"
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   MarketInfo() for "EURUSD"
-M15::TestIndicator::onTick()   ---------------------------------
-M15::TestIndicator::onTick()   MODE_LOW               = 1.2967'6                 // falsch: online
-M15::TestIndicator::onTick()   MODE_HIGH              = 1.3027'3                 // falsch: online
-M15::TestIndicator::onTick()   MODE_TIME              = '2012.11.30 23:59:52'    // falsch: online
-M15::TestIndicator::onTick()   MODE_BID               = 1.2983'9                 // falsch: online
-M15::TestIndicator::onTick()   MODE_ASK               = 1.2986'7                 // falsch: online
-M15::TestIndicator::onTick()   MODE_POINT             = 0.0000'1
-M15::TestIndicator::onTick()   MODE_DIGITS            = 5
-M15::TestIndicator::onTick()   MODE_SPREAD            = 28                       // falsch: online
-M15::TestIndicator::onTick()   MODE_STOPLEVEL         = 20
-M15::TestIndicator::onTick()   MODE_LOTSIZE           = 100000
-M15::TestIndicator::onTick()   MODE_TICKVALUE         = 1
-M15::TestIndicator::onTick()   MODE_TICKSIZE          = 0.0000'1
-M15::TestIndicator::onTick()   MODE_SWAPLONG          = -1.3
-M15::TestIndicator::onTick()   MODE_SWAPSHORT         = 0.5
-M15::TestIndicator::onTick()   MODE_STARTING          = 0
-M15::TestIndicator::onTick()   MODE_EXPIRATION        = 0
-M15::TestIndicator::onTick()   MODE_TRADEALLOWED      = 1
-M15::TestIndicator::onTick()   MODE_MINLOT            = 0.01
-M15::TestIndicator::onTick()   MODE_LOTSTEP           = 0.01
-M15::TestIndicator::onTick()   MODE_MAXLOT            = 2
-M15::TestIndicator::onTick()   MODE_SWAPTYPE          = 0
-M15::TestIndicator::onTick()   MODE_PROFITCALCMODE    = 0
-M15::TestIndicator::onTick()   MODE_MARGINCALCMODE    = 0
-M15::TestIndicator::onTick()   MODE_MARGININIT        = 0
-M15::TestIndicator::onTick()   MODE_MARGINMAINTENANCE = 0
-M15::TestIndicator::onTick()   MODE_MARGINHEDGED      = 50000
-M15::TestIndicator::onTick()   MODE_MARGINREQUIRED    = 259.73                   // falsch: online
-M15::TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
+// Indicator in tester standalone
+TestIndicator::onTick()   -----------------------------
+TestIndicator::onTick()   Global variables for "EURUSD"
+TestIndicator::onTick()   -----------------------------
+TestIndicator::onTick()   built-in: Digits      = 5
+TestIndicator::onTick()   built-in: Point       = 0.0000'1
+TestIndicator::onTick()   derived:  Pip         = 0.0001'0
+TestIndicator::onTick()   derived:  PipDigits   = 4
+TestIndicator::onTick()   derived:  PipPoints   = 10
+TestIndicator::onTick()   derived:  PriceFormat = "R.4'"
+TestIndicator::onTick()   built-in: Bid/Ask     = 1.2983'9/1.2986'7           // wrong (online)
+TestIndicator::onTick()   built-in: Bars        = 60007
+TestIndicator::onTick()   -------------------------
+TestIndicator::onTick()   MarketInfo() for "EURUSD"
+TestIndicator::onTick()   -------------------------
+TestIndicator::onTick()   MODE_LOW               = 1.2967'6                   // wrong (online)
+TestIndicator::onTick()   MODE_HIGH              = 1.3027'3                   // wrong (online)
+TestIndicator::onTick()   MODE_TIME              = 2012.11.30 23:59:52        // wrong (online)
+TestIndicator::onTick()   MODE_BID               = 1.2983'9                   // wrong (online)
+TestIndicator::onTick()   MODE_ASK               = 1.2986'7                   // wrong (online)
+TestIndicator::onTick()   MODE_POINT             = 0.0000'1
+TestIndicator::onTick()   MODE_DIGITS            = 5
+TestIndicator::onTick()   MODE_SPREAD            = 28                         // wrong (online)
+TestIndicator::onTick()   MODE_STOPLEVEL         = 20
+TestIndicator::onTick()   MODE_LOTSIZE           = 100000
+TestIndicator::onTick()   MODE_TICKVALUE         = 1
+TestIndicator::onTick()   MODE_TICKSIZE          = 0.0000'1
+TestIndicator::onTick()   MODE_SWAPLONG          = -1.3
+TestIndicator::onTick()   MODE_SWAPSHORT         = 0.5
+TestIndicator::onTick()   MODE_STARTING          = 0
+TestIndicator::onTick()   MODE_EXPIRATION        = 0
+TestIndicator::onTick()   MODE_TRADEALLOWED      = 1
+TestIndicator::onTick()   MODE_MINLOT            = 0.01
+TestIndicator::onTick()   MODE_LOTSTEP           = 0.01
+TestIndicator::onTick()   MODE_MAXLOT            = 2
+TestIndicator::onTick()   MODE_SWAPTYPE          = 0
+TestIndicator::onTick()   MODE_PROFITCALCMODE    = 0
+TestIndicator::onTick()   MODE_MARGINCALCMODE    = 0
+TestIndicator::onTick()   MODE_MARGININIT        = 0
+TestIndicator::onTick()   MODE_MARGINMAINTENANCE = 0
+TestIndicator::onTick()   MODE_MARGINHEDGED      = 50000
+TestIndicator::onTick()   MODE_MARGINREQUIRED    = 259.73                     // wrong (online)
+TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 */
 
 
