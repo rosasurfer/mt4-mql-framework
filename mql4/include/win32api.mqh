@@ -12,6 +12,7 @@
    int  _lread(int hFile, int lpBuffer[], int bytes);
    int  _lwrite(int hFile, int lpBuffer[], int bytes);
    bool CloseHandle(int hObject);
+   int  CreateFileA(string lpFileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
    bool CreateProcessA(string lpApplicationName, string lpCmdLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int creationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    bool DeleteFileA(string lpFileName);
    bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
