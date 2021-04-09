@@ -4103,7 +4103,6 @@ string InputsToStr() {
    int      ArraySpliceInts   (int    array[], int offset, int length);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      DeleteRegisteredObjects();
-   bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);

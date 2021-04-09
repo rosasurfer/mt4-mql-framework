@@ -160,7 +160,7 @@
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
-   bool     EditFile (string filename   );
+   bool     EditFile(string filename);
    bool     EditFiles(string filenames[]);
 
 

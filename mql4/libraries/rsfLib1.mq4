@@ -110,28 +110,19 @@ bool EditFiles(string &filenames[]) {
 
       if (IsFileA(filenames[i])) {
          while (IsSymlinkA(filenames[i])) {
-            string target = GetReparsePointTargetA(filenames[i]);    // resolve symlink as some editors cannot write to it (e.g. TextPad)
+            string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
             if (!StringLen(target))
                break;
             filenames[i] = target;
          }
       }
       else if (IsDirectoryA(filenames[i])) {
-         logWarn("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
+         logError("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
          size--; i--;
          continue;
       }
-      else /*file doesn't exist*/ {
-         // make sure the parent directory exists                    // TODO: move to the EditFiles() call
-         int pos = Max(StrFindR(filenames[i], "/"), StrFindR(filenames[i], "\\"));
-         if (pos == 0)          return(!catch("EditFiles(5)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
-         if (pos > 0) {
-            string dir = StrLeft(filenames[i], pos);
-            int error = CreateDirectoryA(dir, MKDIR_PARENT);
-            if (IsError(error)) return(!catch("EditFiles(6)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
-         }
-      }
+      else {}                                                        // file doesn't exist, behavior is up to the editor
    }
 
    // check the editor configuration
@@ -141,17 +132,17 @@ bool EditFiles(string &filenames[]) {
       // use configured editor
       string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
-      if (result < 32) return(!catch("EditFiles(7)->kernel32::WinExec(cmd="+ DoubleQuoteStr(editor) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      if (result < 32) return(!catch("EditFiles(5)->kernel32::WinExec(cmd="+ DoubleQuoteStr(editor) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
    else {
       // use ShellExecute() and the OS default "open" handler
       string sNull;
       for (i=0; i < size; i++) {
          result = ShellExecuteA(NULL, "open", filenames[i], sNull, sNull, SW_SHOWNORMAL);
-         if (result <= 32) return(!catch("EditFiles(8)->shell32::ShellExecuteA(file="+ DoubleQuoteStr(filenames[i]) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+         if (result <= 32) return(!catch("EditFiles(6)->shell32::ShellExecuteA(file="+ DoubleQuoteStr(filenames[i]) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
       }
    }
-   return(!catch("EditFiles(9)"));
+   return(!catch("EditFiles(7)"));
 }
 
 
