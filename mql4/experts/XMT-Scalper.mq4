@@ -54,7 +54,7 @@ extern string   ___a___________________________ = "=== Entry indicator: 1=Moving
 extern int      EntryIndicator                  = 1;                          // entry signal indicator for price channel calculation
 extern int      IndicatorTimeframe              = PERIOD_M1;                  // entry indicator timeframe
 extern int      IndicatorPeriods                = 3;                          // entry indicator bar periods
-extern double   BollingerBands.Deviation        = 2;                          // standard deviations
+extern double   BollingerBands.Deviation        = 2.0;                        // standard deviations
 extern double   Envelopes.Deviation             = 0.07;                       // in percent
 
 extern string   ___b___________________________ = "=== Entry bar size conditions ================";
@@ -63,8 +63,8 @@ extern double   SpreadMultiplier                = 12.5;                       //
 extern double   MinBarSize                      = 18;                         // min. bar size in {pip}
 
 extern string   ___c___________________________ = "=== Signal settings ========================";
-extern double   BreakoutReversal                = 0;                          // required price reversal in {pip} (0: counter-trend trading w/o reversal)
-extern double   MaxSpread                       = 2;                          // max. acceptable current and average spread in {pip}
+extern double   BreakoutReversal                = 0.0;                        // required price reversal in {pip} (0: counter-trend trading w/o reversal)
+extern double   MaxSpread                       = 2.0;                        // max. acceptable current and average spread in {pip}
 extern bool     ReverseSignals                  = false;                      // Buy => Sell, Sell => Buy
 
 extern string   ___d___________________________ = "=== Money management ===================";
@@ -78,15 +78,15 @@ extern double   StopLoss                        = 6;                          //
 extern double   TrailEntryStep                  = 1;                          // trail entry limits every {pip}
 extern double   TrailExitStart                  = 0;                          // start trailing exit limits after {pip} in profit
 extern double   TrailExitStep                   = 2;                          // trail exit limits every {pip} in profit
-extern double   StopOnTotalProfit               = 0;                          // stop on overall profit in {money} (0: no stop on profits)
-extern double   StopOnTotalLoss                 = 0;                          // stop on overall loss in {money} (0: no stop on losses)
+extern double   StopOnTotalProfit               = 0.00;                       // stop on overall profit in {money} (0: no stop on any profits)
+extern double   StopOnTotalLoss                 = 0.00;                       // stop on overall loss in {money} (0: no stop on any losses)
 extern double   MaxSlippage                     = 0.3;                        // max. acceptable slippage in {pip}
 extern datetime Sessionbreak.StartTime          = D'1970.01.01 23:56:00';     // server time (the date part is ignored)
 extern datetime Sessionbreak.EndTime            = D'1970.01.01 00:02:10';     // server time (the date part is ignored)
 
 extern string   ___f___________________________ = "=== Reporting ============================";
 extern bool     RecordPerformanceMetrics        = false;                      // whether to enable recording of performance metrics
-extern string   MetricsServerDirectory          = "{name} | {path} | auto*";  // history server directory to store performance metrics
+extern string   MetricsServerDirectory          = "{name} | {path} | auto*";  // history server directory to store performance metrics (auto: apply an existing configuration)
 
 extern string   ___g___________________________ = "=== Bugs ================================";
 extern bool     ChannelBug                      = false;                      // whether to enable the erroneous "Capella" calculation of the breakout channel (for comparison only)
