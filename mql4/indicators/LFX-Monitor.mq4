@@ -779,7 +779,7 @@ bool UpdateIndexDisplay() {
  * @return bool - success status
  */
 bool RecordIndices() {
-   datetime now.fxt = GetFxtTime();
+   datetime nowFXT = GetFxtTime();
    int size = ArraySize(symbols);
 
    for (int i=0; i < size; i++) {
@@ -790,20 +790,17 @@ bool RecordIndices() {
          // Virtual ticks (about 120 each minute) are recorded only if the current price changed. Real ticks are always recorded.
          if (Tick.isVirtual) {
             if (EQ(value, lastValue, digits[i])) {       // The first tick (lastValue==NULL) can't be tested and is always recorded.
-               //debug("RecordIndices(1)  Tick="+ Tick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (tick == lastTick)");
+               //debug("RecordIndices(1)  Tick="+ Tick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (same value as last tick)");
                continue;
             }
          }
-
          if (!hSet[i]) {
             hSet[i] = HistorySet1.Get(symbols[i], serverName);
             if (hSet[i] == -1)
                hSet[i] = HistorySet1.Create(symbols[i], longNames[i], digits[i], 400, serverName);     // format: 400
             if (!hSet[i]) return(false);
          }
-
-         //debug("RecordIndices(2)  Tick="+ Tick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
-         if (!HistorySet1.AddTick(hSet[i], now.fxt, value, NULL)) return(false);
+         if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false);
       }
    }
    return(true);

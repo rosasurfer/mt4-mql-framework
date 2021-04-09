@@ -646,7 +646,7 @@ string Tester.GetMarketInfo() {
  */
 bool Tester.RecordEquity() {
    /*
-   Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+    Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
