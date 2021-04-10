@@ -497,8 +497,6 @@ string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 
 
 // libraries/rsfHistory1.ex4
-int      CreateSymbol1(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
-
 int      HistoryFile1.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
 bool     HistoryFile1.Close    (int hFile);;
 int      HistoryFile1.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
@@ -516,8 +514,6 @@ bool     HistorySet1.AddTick(int hSet, datetime time, double value, int flags = 
 
 
 // libraries/rsfHistory2.ex4
-int      CreateSymbol2(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
-
 int      HistoryFile2.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
 bool     HistoryFile2.Close    (int hFile);;
 int      HistoryFile2.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
@@ -535,8 +531,6 @@ bool     HistorySet2.AddTick(int hSet, datetime time, double value, int flags = 
 
 
 // libraries/rsfHistory3.ex4
-int      CreateSymbol3(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
-
 int      HistoryFile3.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
 bool     HistoryFile3.Close    (int hFile);;
 int      HistoryFile3.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
@@ -604,6 +598,7 @@ bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);;
 bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
+int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
 string   CreateTempFile(string path, string prefix = "");;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;

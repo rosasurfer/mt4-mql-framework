@@ -208,6 +208,8 @@
    bool     SortOpenTickets(int keys[][]);
 
 #import "rsfLib1.ex4"
+   int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");
+
    string   StdSymbol();                                                // alias of GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                           // alias of GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
