@@ -4,15 +4,8 @@
  * @return int - error status
  */
 int onDeinit() {
-   int size = ArraySize(metrics.hSet);
-
-   for (int i=0; i < size; i++) {
-      if (metrics.hSet[i] != 0) {
-         if      (i <  6) HistorySet1.Close(metrics.hSet[i]);
-         else if (i < 12) HistorySet2.Close(metrics.hSet[i]);
-         else             HistorySet3.Close(metrics.hSet[i]);
-         metrics.hSet[i] = NULL;
-      }
+   for (int i=ArraySize(metrics.hSet); i >= 0; i--) {
+      CloseHistorySet(i);
    }
 
    if (IsTesting()) {
