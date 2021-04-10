@@ -582,7 +582,7 @@ bool Tester.InitReporting() {
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
-      if (CreateSymbol1(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reportServer) < 0)
+      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reportServer) < 0)
          return(false);
 
       tester.reportId          = id;
@@ -677,6 +677,7 @@ bool Tester.RecordEquity() {
 
 
 #import "rsfLib1.ex4"
+   int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
@@ -696,8 +697,6 @@ bool Tester.RecordEquity() {
 
 
 #import "rsfHistory1.ex4"
-   int    CreateSymbol1(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
-
    int    HistorySet1.Get    (string symbol, string server);
    int    HistorySet1.Create (string symbol, string description, int digits, int format, string server);
    bool   HistorySet1.Close  (int hSet);
