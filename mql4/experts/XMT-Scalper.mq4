@@ -114,23 +114,23 @@ extern bool     TakeProfitBug                   = true;                       //
 #define SIGNAL_LONG                    1
 #define SIGNAL_SHORT                   2
 
-#define METRIC_RC0                     0        // real: cumulative PL in pip w/o commission
-#define METRIC_RC1                     1        // real: cumulative PL in pip with commission
-#define METRIC_RC2                     2        // real: cumulative PL in money w/o commission
-#define METRIC_RC3                     3        // real: cumulative PL in money with commission
-#define METRIC_RD0                     4        // real: daily PL in pip w/o commission
-#define METRIC_RD1                     5        // real: daily PL in pip with commission
-#define METRIC_RD2                     6        // real: daily PL in money w/o commission
-#define METRIC_RD3                     7        // real: daily PL in money with commission
+#define METRIC_RC1                     0        // real: cumulative PL in pip w/o commission
+#define METRIC_RC2                     1        // real: cumulative PL in pip with commission
+#define METRIC_RC3                     2        // real: cumulative PL in money w/o commission
+#define METRIC_RC4                     3        // real: cumulative PL in money with commission
+#define METRIC_RD1                     4        // real: daily PL in pip w/o commission
+#define METRIC_RD2                     5        // real: daily PL in pip with commission
+#define METRIC_RD3                     6        // real: daily PL in money w/o commission
+#define METRIC_RD4                     7        // real: daily PL in money with commission
 
-#define METRIC_VC0                     8        // virt: cumulative PL in pip w/o commission
-#define METRIC_VC1                     9        // virt: cumulative PL in pip with commission
-#define METRIC_VC2                    10        // virt: cumulative PL in money w/o commission
-#define METRIC_VC3                    11        // virt: cumulative PL in money with commission
-#define METRIC_VD0                    12        // virt: daily PL in pip w/o commission
-#define METRIC_VD1                    13        // virt: daily PL in pip with commission
-#define METRIC_VD2                    14        // virt: daily PL in money w/o commission
-#define METRIC_VD3                    15        // virt: daily PL in money with commission
+#define METRIC_VC1                     8        // virt: cumulative PL in pip w/o commission
+#define METRIC_VC2                     9        // virt: cumulative PL in pip with commission
+#define METRIC_VC3                    10        // virt: cumulative PL in money w/o commission
+#define METRIC_VC4                    11        // virt: cumulative PL in money with commission
+#define METRIC_VD1                    12        // virt: daily PL in pip w/o commission
+#define METRIC_VD2                    13        // virt: daily PL in pip with commission
+#define METRIC_VD3                    14        // virt: daily PL in money w/o commission
+#define METRIC_VD4                    15        // virt: daily PL in money with commission
 
 
 // general
@@ -1554,46 +1554,32 @@ bool InitMetrics() {
    string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
 
    // real
-   metrics.enabled[METRIC_RC0] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC0", true));    // cumulative PL in pip w/o commission
-   metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC1", true));    // cumulative PL in pip with commission
-   metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC2", true));    // cumulative PL in money w/o commission
-   metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC3", true));    // cumulative PL in money with commission
-   metrics.enabled[METRIC_RD0] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD0", true));    // daily PL in pip w/o commission
-   metrics.enabled[METRIC_RD1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD1", true));    // daily PL in pip with commission
-   metrics.enabled[METRIC_RD2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD2", true));    // daily PL in money w/o commission
-   metrics.enabled[METRIC_RD3] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD3", true));    // daily PL in money with commission
+   metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC1", true));    // cumulative PL in pip w/o commission
+   metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC2", true));    // cumulative PL in pip with commission
+   metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC3", true));    // cumulative PL in money w/o commission
+   metrics.enabled[METRIC_RC4] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RC4", true));    // cumulative PL in money with commission
+   metrics.enabled[METRIC_RD1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD1", true));    // daily PL in pip w/o commission
+   metrics.enabled[METRIC_RD2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD2", true));    // daily PL in pip with commission
+   metrics.enabled[METRIC_RD3] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD3", true));    // daily PL in money w/o commission
+   metrics.enabled[METRIC_RD4] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric_RD4", true));    // daily PL in money with commission
 
    // virtual
-   metrics.enabled[METRIC_VC0] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VC0", true));    // ...
-   metrics.enabled[METRIC_VC1] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VC1", true));    //
+   metrics.enabled[METRIC_VC1] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VC1", true));    // ...
    metrics.enabled[METRIC_VC2] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VC2", true));    //
    metrics.enabled[METRIC_VC3] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VC3", true));    //
-   metrics.enabled[METRIC_VD0] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VD0", true));    //
+   metrics.enabled[METRIC_VC4] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VC4", true));    //
    metrics.enabled[METRIC_VD1] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VD1", true));    //
    metrics.enabled[METRIC_VD2] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VD2", true));    //
    metrics.enabled[METRIC_VD3] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VD3", true));    //
+   metrics.enabled[METRIC_VD4] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric_VD4", true));    //
 
    string symbol, description, server="XTrade-Testresults";
    int digits, format=400;
 
-   if (!metrics.hSet[METRIC_RC0]) {
-      if (metrics.enabled[METRIC_RC0]) {
-         symbol      = "XMT"+ sequence.id +".RC0";
-         description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip w/o commission";
-         digits      = 1;
-         metrics.hSet[METRIC_RC0] = HistorySet1.Get(symbol, server);
-         if (metrics.hSet[METRIC_RC0] == -1) metrics.hSet[METRIC_RC0] = HistorySet1.Create(symbol, description, digits, format, server);
-         if (!metrics.hSet[METRIC_RC0]) return(false);
-      }
-   }
-   else if (!metrics.enabled[METRIC_RC0]) {
-      if (!HistorySet1.Close(metrics.hSet[METRIC_RC0])) return(false);
-      metrics.hSet[METRIC_RC0] = NULL;
-   }
    if (!metrics.hSet[METRIC_RC1]) {
       if (metrics.enabled[METRIC_RC1]) {
          symbol      = "XMT"+ sequence.id +".RC1";
-         description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip with commission";
+         description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_RC1] = HistorySet1.Get(symbol, server);
          if (metrics.hSet[METRIC_RC1] == -1) metrics.hSet[METRIC_RC1] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1607,8 +1593,8 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_RC2]) {
       if (metrics.enabled[METRIC_RC2]) {
          symbol      = "XMT"+ sequence.id +".RC2";
-         description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" w/o commission";
-         digits      = 2;
+         description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip with commission";
+         digits      = 1;
          metrics.hSet[METRIC_RC2] = HistorySet1.Get(symbol, server);
          if (metrics.hSet[METRIC_RC2] == -1) metrics.hSet[METRIC_RC2] = HistorySet1.Create(symbol, description, digits, format, server);
          if (!metrics.hSet[METRIC_RC2]) return(false);
@@ -1621,7 +1607,7 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_RC3]) {
       if (metrics.enabled[METRIC_RC3]) {
          symbol      = "XMT"+ sequence.id +".RC3";
-         description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" with commission";
+         description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_RC3] = HistorySet1.Get(symbol, server);
          if (metrics.hSet[METRIC_RC3] == -1) metrics.hSet[METRIC_RC3] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1632,24 +1618,24 @@ bool InitMetrics() {
       if (!HistorySet1.Close(metrics.hSet[METRIC_RC3])) return(false);
       metrics.hSet[METRIC_RC3] = NULL;
    }
-   if (!metrics.hSet[METRIC_RD0]) {
-      if (metrics.enabled[METRIC_RD0]) {
-         symbol      = "XMT"+ sequence.id +".RD0";
-         description = ProgramName() +"."+ sequence.id +" real daily PL in pip w/o commission";
-         digits      = 1;
-         metrics.hSet[METRIC_RD0] = HistorySet1.Get(symbol, server);
-         if (metrics.hSet[METRIC_RD0] == -1) metrics.hSet[METRIC_RD0] = HistorySet1.Create(symbol, description, digits, format, server);
-         if (!metrics.hSet[METRIC_RD0]) return(false);
+   if (!metrics.hSet[METRIC_RC4]) {
+      if (metrics.enabled[METRIC_RC4]) {
+         symbol      = "XMT"+ sequence.id +".RC4";
+         description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" with commission";
+         digits      = 2;
+         metrics.hSet[METRIC_RC4] = HistorySet1.Get(symbol, server);
+         if (metrics.hSet[METRIC_RC4] == -1) metrics.hSet[METRIC_RC4] = HistorySet1.Create(symbol, description, digits, format, server);
+         if (!metrics.hSet[METRIC_RC4]) return(false);
       }
    }
-   else if (!metrics.enabled[METRIC_RD0]) {
-      if (!HistorySet1.Close(metrics.hSet[METRIC_RD0])) return(false);
-      metrics.hSet[METRIC_RD0] = NULL;
+   else if (!metrics.enabled[METRIC_RC4]) {
+      if (!HistorySet1.Close(metrics.hSet[METRIC_RC4])) return(false);
+      metrics.hSet[METRIC_RC4] = NULL;
    }
    if (!metrics.hSet[METRIC_RD1]) {
       if (metrics.enabled[METRIC_RD1]) {
          symbol      = "XMT"+ sequence.id +".RD1";
-         description = ProgramName() +"."+ sequence.id +" real daily PL in pip with commission";
+         description = ProgramName() +"."+ sequence.id +" real daily PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_RD1] = HistorySet1.Get(symbol, server);
          if (metrics.hSet[METRIC_RD1] == -1) metrics.hSet[METRIC_RD1] = HistorySet1.Create(symbol, description, digits, format, server);
@@ -1663,21 +1649,21 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_RD2]) {
       if (metrics.enabled[METRIC_RD2]) {
          symbol      = "XMT"+ sequence.id +".RD2";
-         description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" w/o commission";
-         digits      = 2;
-         metrics.hSet[METRIC_RD2] = HistorySet2.Get(symbol, server);
-         if (metrics.hSet[METRIC_RD2] == -1) metrics.hSet[METRIC_RD2] = HistorySet2.Create(symbol, description, digits, format, server);
+         description = ProgramName() +"."+ sequence.id +" real daily PL in pip with commission";
+         digits      = 1;
+         metrics.hSet[METRIC_RD2] = HistorySet1.Get(symbol, server);
+         if (metrics.hSet[METRIC_RD2] == -1) metrics.hSet[METRIC_RD2] = HistorySet1.Create(symbol, description, digits, format, server);
          if (!metrics.hSet[METRIC_RD2]) return(false);
       }
    }
    else if (!metrics.enabled[METRIC_RD2]) {
-      if (!HistorySet2.Close(metrics.hSet[METRIC_RD2])) return(false);
+      if (!HistorySet1.Close(metrics.hSet[METRIC_RD2])) return(false);
       metrics.hSet[METRIC_RD2] = NULL;
    }
    if (!metrics.hSet[METRIC_RD3]) {
       if (metrics.enabled[METRIC_RD3]) {
          symbol      = "XMT"+ sequence.id +".RD3";
-         description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" with commission";
+         description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_RD3] = HistorySet2.Get(symbol, server);
          if (metrics.hSet[METRIC_RD3] == -1) metrics.hSet[METRIC_RD3] = HistorySet2.Create(symbol, description, digits, format, server);
@@ -1688,25 +1674,25 @@ bool InitMetrics() {
       if (!HistorySet2.Close(metrics.hSet[METRIC_RD3])) return(false);
       metrics.hSet[METRIC_RD3] = NULL;
    }
-
-   if (!metrics.hSet[METRIC_VC0]) {
-      if (metrics.enabled[METRIC_VC0]) {
-         symbol      = "XMT"+ sequence.id +".VC0";
-         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip w/o commission";
-         digits      = 1;
-         metrics.hSet[METRIC_VC0] = HistorySet2.Get(symbol, server);
-         if (metrics.hSet[METRIC_VC0] == -1) metrics.hSet[METRIC_VC0] = HistorySet2.Create(symbol, description, digits, format, server);
-         if (!metrics.hSet[METRIC_VC0]) return(false);
+   if (!metrics.hSet[METRIC_RD4]) {
+      if (metrics.enabled[METRIC_RD4]) {
+         symbol      = "XMT"+ sequence.id +".RD4";
+         description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" with commission";
+         digits      = 2;
+         metrics.hSet[METRIC_RD4] = HistorySet2.Get(symbol, server);
+         if (metrics.hSet[METRIC_RD4] == -1) metrics.hSet[METRIC_RD4] = HistorySet2.Create(symbol, description, digits, format, server);
+         if (!metrics.hSet[METRIC_RD4]) return(false);
       }
    }
-   else if (!metrics.enabled[METRIC_VC0]) {
-      if (!HistorySet2.Close(metrics.hSet[METRIC_VC0])) return(false);
-      metrics.hSet[METRIC_VC0] = NULL;
+   else if (!metrics.enabled[METRIC_RD4]) {
+      if (!HistorySet2.Close(metrics.hSet[METRIC_RD4])) return(false);
+      metrics.hSet[METRIC_RD4] = NULL;
    }
+
    if (!metrics.hSet[METRIC_VC1]) {
       if (metrics.enabled[METRIC_VC1]) {
          symbol      = "XMT"+ sequence.id +".VC1";
-         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip with commission";
+         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_VC1] = HistorySet2.Get(symbol, server);
          if (metrics.hSet[METRIC_VC1] == -1) metrics.hSet[METRIC_VC1] = HistorySet2.Create(symbol, description, digits, format, server);
@@ -1720,8 +1706,8 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_VC2]) {
       if (metrics.enabled[METRIC_VC2]) {
          symbol      = "XMT"+ sequence.id +".VC2";
-         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" w/o commission";
-         digits      = 2;
+         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip with commission";
+         digits      = 1;
          metrics.hSet[METRIC_VC2] = HistorySet2.Get(symbol, server);
          if (metrics.hSet[METRIC_VC2] == -1) metrics.hSet[METRIC_VC2] = HistorySet2.Create(symbol, description, digits, format, server);
          if (!metrics.hSet[METRIC_VC2]) return(false);
@@ -1734,7 +1720,7 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_VC3]) {
       if (metrics.enabled[METRIC_VC3]) {
          symbol      = "XMT"+ sequence.id +".VC3";
-         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" with commission";
+         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_VC3] = HistorySet2.Get(symbol, server);
          if (metrics.hSet[METRIC_VC3] == -1) metrics.hSet[METRIC_VC3] = HistorySet2.Create(symbol, description, digits, format, server);
@@ -1745,24 +1731,24 @@ bool InitMetrics() {
       if (!HistorySet2.Close(metrics.hSet[METRIC_VC3])) return(false);
       metrics.hSet[METRIC_VC3] = NULL;
    }
-   if (!metrics.hSet[METRIC_VD0]) {
-      if (metrics.enabled[METRIC_VD0]) {
-         symbol      = "XMT"+ sequence.id +".VD0";
-         description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip w/o commission";
-         digits      = 1;
-         metrics.hSet[METRIC_VD0] = HistorySet3.Get(symbol, server);
-         if (metrics.hSet[METRIC_VD0] == -1) metrics.hSet[METRIC_VD0] = HistorySet3.Create(symbol, description, digits, format, server);
-         if (!metrics.hSet[METRIC_VD0]) return(false);
+   if (!metrics.hSet[METRIC_VC4]) {
+      if (metrics.enabled[METRIC_VC4]) {
+         symbol      = "XMT"+ sequence.id +".VC4";
+         description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" with commission";
+         digits      = 2;
+         metrics.hSet[METRIC_VC4] = HistorySet2.Get(symbol, server);
+         if (metrics.hSet[METRIC_VC4] == -1) metrics.hSet[METRIC_VC4] = HistorySet2.Create(symbol, description, digits, format, server);
+         if (!metrics.hSet[METRIC_VC4]) return(false);
       }
    }
-   else if (!metrics.enabled[METRIC_VD0]) {
-      if (!HistorySet3.Close(metrics.hSet[METRIC_VD0])) return(false);
-      metrics.hSet[METRIC_VD0] = NULL;
+   else if (!metrics.enabled[METRIC_VC4]) {
+      if (!HistorySet2.Close(metrics.hSet[METRIC_VC4])) return(false);
+      metrics.hSet[METRIC_VC4] = NULL;
    }
    if (!metrics.hSet[METRIC_VD1]) {
       if (metrics.enabled[METRIC_VD1]) {
          symbol      = "XMT"+ sequence.id +".VD1";
-         description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip with commission";
+         description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_VD1] = HistorySet3.Get(symbol, server);
          if (metrics.hSet[METRIC_VD1] == -1) metrics.hSet[METRIC_VD1] = HistorySet3.Create(symbol, description, digits, format, server);
@@ -1776,8 +1762,8 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_VD2]) {
       if (metrics.enabled[METRIC_VD2]) {
          symbol      = "XMT"+ sequence.id +".VD2";
-         description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" w/o commission";
-         digits      = 2;
+         description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip with commission";
+         digits      = 1;
          metrics.hSet[METRIC_VD2] = HistorySet3.Get(symbol, server);
          if (metrics.hSet[METRIC_VD2] == -1) metrics.hSet[METRIC_VD2] = HistorySet3.Create(symbol, description, digits, format, server);
          if (!metrics.hSet[METRIC_VD2]) return(false);
@@ -1790,7 +1776,7 @@ bool InitMetrics() {
    if (!metrics.hSet[METRIC_VD3]) {
       if (metrics.enabled[METRIC_VD3]) {
          symbol      = "XMT"+ sequence.id +".VD3";
-         description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" with commission";
+         description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_VD3] = HistorySet3.Get(symbol, server);
          if (metrics.hSet[METRIC_VD3] == -1) metrics.hSet[METRIC_VD3] = HistorySet3.Create(symbol, description, digits, format, server);
@@ -1800,6 +1786,20 @@ bool InitMetrics() {
    else if (!metrics.enabled[METRIC_VD3]) {
       if (!HistorySet3.Close(metrics.hSet[METRIC_VD3])) return(false);
       metrics.hSet[METRIC_VD3] = NULL;
+   }
+   if (!metrics.hSet[METRIC_VD4]) {
+      if (metrics.enabled[METRIC_VD4]) {
+         symbol      = "XMT"+ sequence.id +".VD4";
+         description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" with commission";
+         digits      = 2;
+         metrics.hSet[METRIC_VD4] = HistorySet3.Get(symbol, server);
+         if (metrics.hSet[METRIC_VD4] == -1) metrics.hSet[METRIC_VD4] = HistorySet3.Create(symbol, description, digits, format, server);
+         if (!metrics.hSet[METRIC_VD4]) return(false);
+      }
+   }
+   else if (!metrics.enabled[METRIC_VD4]) {
+      if (!HistorySet3.Close(metrics.hSet[METRIC_VD4])) return(false);
+      metrics.hSet[METRIC_VD4] = NULL;
    }
 
    return(!catch("InitMetrics(1)"));
@@ -1822,71 +1822,71 @@ bool RecordMetrics() {
    }
 
    // real metrics
-   if (metrics.enabled[METRIC_RC0] && success) {               // C0: cumulative PL in pip w/o commission
-      value   = real.totalPip + metrics.vShift[METRIC_RC0];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC0], Tick.Time, value, flags);
-   }
-   if (metrics.enabled[METRIC_RC1] && success) {               // C1: cumulative PL in pip with commission
-      value   = real.totalPipNet + metrics.vShift[METRIC_RC1];
+   if (metrics.enabled[METRIC_RC1] && success) {               // cumulative PL in pip w/o commission
+      value   = real.totalPip + metrics.vShift[METRIC_RC1];
       success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, flags);
    }
-   if (metrics.enabled[METRIC_RC2] && success) {               // C2: cumulative PL in money w/o commission
-      value   = real.totalPl + metrics.vShift[METRIC_RC2];
+   if (metrics.enabled[METRIC_RC2] && success) {               // cumulative PL in pip with commission
+      value   = real.totalPipNet + metrics.vShift[METRIC_RC2];
       success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.Time, value, flags);
    }
-   if (metrics.enabled[METRIC_RC3] && success) {               // C3: cumulative PL in money with commission
-      value   = real.totalPlNet + metrics.vShift[METRIC_RC3];
+   if (metrics.enabled[METRIC_RC3] && success) {               // cumulative PL in money w/o commission
+      value   = real.totalPl + metrics.vShift[METRIC_RC3];
       success = HistorySet1.AddTick(metrics.hSet[METRIC_RC3], Tick.Time, value, flags);
    }
- //if (metrics.enabled[METRIC_RD0] && success) {               // D0: daily PL in pip w/o commission
- //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD0], Tick.Time, value, flags);
- //}
- //if (metrics.enabled[METRIC_RD1] && success) {               // D1: daily PL in pip with commission
+   if (metrics.enabled[METRIC_RC4] && success) {               // cumulative PL in money with commission
+      value   = real.totalPlNet + metrics.vShift[METRIC_RC4];
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC4], Tick.Time, value, flags);
+   }
+ //if (metrics.enabled[METRIC_RD1] && success) {               // daily PL in pip w/o commission
  //   value   = AccountEquity()-AccountCredit();
  //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.Time, value, flags);
  //}
- //if (metrics.enabled[METRIC_RD2] && success) {               // D2: daily PL in money w/o commission
+ //if (metrics.enabled[METRIC_RD2] && success) {               // daily PL in pip with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, flags);
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, flags);
  //}
- //if (metrics.enabled[METRIC_RD3] && success) {               // D3: daily PL in money with commission
+ //if (metrics.enabled[METRIC_RD3] && success) {               // daily PL in money w/o commission
  //   value   = AccountEquity()-AccountCredit();
  //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.Time, value, flags);
  //}
+ //if (metrics.enabled[METRIC_RD4] && success) {               // daily PL in money with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD4], Tick.Time, value, flags);
+ //}
 
    // virtual metrics
-   if (metrics.enabled[METRIC_VC0] && success) {               // C0: cumulative PL in pip w/o commission
-      value   = virt.totalPip + metrics.vShift[METRIC_VC0];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC0], Tick.Time, value, flags);
-   }
-   if (metrics.enabled[METRIC_VC1] && success) {               // C1: cumulative PL in pip with commission
-      value   = virt.totalPipNet + metrics.vShift[METRIC_VC1];
+   if (metrics.enabled[METRIC_VC1] && success) {               // cumulative PL in pip w/o commission
+      value   = virt.totalPip + metrics.vShift[METRIC_VC1];
       success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, flags);
    }
-   if (metrics.enabled[METRIC_VC2] && success) {               // C2: cumulative PL in money w/o commission
-      value   = virt.totalPl + metrics.vShift[METRIC_VC2];
+   if (metrics.enabled[METRIC_VC2] && success) {               // cumulative PL in pip with commission
+      value   = virt.totalPipNet + metrics.vShift[METRIC_VC2];
       success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.Time, value, flags);
    }
-   if (metrics.enabled[METRIC_VC3] && success) {               // C3: cumulative PL in money with commission
-      value   = virt.totalPlNet + metrics.vShift[METRIC_VC3];
+   if (metrics.enabled[METRIC_VC3] && success) {               // cumulative PL in money w/o commission
+      value   = virt.totalPl + metrics.vShift[METRIC_VC3];
       success = HistorySet2.AddTick(metrics.hSet[METRIC_VC3], Tick.Time, value, flags);
    }
- //if (metrics.enabled[METRIC_VD0] && success) {               // D0: daily PL in pip w/o commission
- //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD0], Tick.Time, value, flags);
- //}
- //if (metrics.enabled[METRIC_VD1] && success) {               // D1: daily PL in pip with commission
+   if (metrics.enabled[METRIC_VC4] && success) {               // cumulative PL in money with commission
+      value   = virt.totalPlNet + metrics.vShift[METRIC_VC4];
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC4], Tick.Time, value, flags);
+   }
+ //if (metrics.enabled[METRIC_VD1] && success) {               // daily PL in pip w/o commission
  //   value   = AccountEquity()-AccountCredit();
  //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.Time, value, flags);
  //}
- //if (metrics.enabled[METRIC_VD2] && success) {               // D2: daily PL in money w/o commission
+ //if (metrics.enabled[METRIC_VD2] && success) {               // daily PL in pip with commission
  //   value   = AccountEquity()-AccountCredit();
  //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.Time, value, flags);
  //}
- //if (metrics.enabled[METRIC_VD3] && success) {               // D3: daily PL in money with commission
+ //if (metrics.enabled[METRIC_VD3] && success) {               // daily PL in money w/o commission
  //   value   = AccountEquity()-AccountCredit();
  //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.Time, value, flags);
+ //}
+ //if (metrics.enabled[METRIC_VD4] && success) {               // daily PL in money with commission
+ //   value   = AccountEquity()-AccountCredit();
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD4], Tick.Time, value, flags);
  //}
    return(success);
 }
