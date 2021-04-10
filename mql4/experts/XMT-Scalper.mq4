@@ -1578,7 +1578,7 @@ bool InitMetrics() {
 
    if (!metrics.hSet[METRIC_RC0]) {
       if (metrics.enabled[METRIC_RC0]) {
-         symbol      = "XMT"+ sequence.id +"_RC0";
+         symbol      = "XMT"+ sequence.id +".RC0";
          description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_RC0] = HistorySet1.Get(symbol, server);
@@ -1592,7 +1592,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RC1]) {
       if (metrics.enabled[METRIC_RC1]) {
-         symbol      = "XMT"+ sequence.id +"_RC1";
+         symbol      = "XMT"+ sequence.id +".RC1";
          description = ProgramName() +"."+ sequence.id +" real cumulative PL in pip with commission";
          digits      = 1;
          metrics.hSet[METRIC_RC1] = HistorySet1.Get(symbol, server);
@@ -1606,7 +1606,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RC2]) {
       if (metrics.enabled[METRIC_RC2]) {
-         symbol      = "XMT"+ sequence.id +"_RC2";
+         symbol      = "XMT"+ sequence.id +".RC2";
          description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_RC2] = HistorySet1.Get(symbol, server);
@@ -1620,7 +1620,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RC3]) {
       if (metrics.enabled[METRIC_RC3]) {
-         symbol      = "XMT"+ sequence.id +"_RC3";
+         symbol      = "XMT"+ sequence.id +".RC3";
          description = ProgramName() +"."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" with commission";
          digits      = 2;
          metrics.hSet[METRIC_RC3] = HistorySet1.Get(symbol, server);
@@ -1634,7 +1634,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RD0]) {
       if (metrics.enabled[METRIC_RD0]) {
-         symbol      = "XMT"+ sequence.id +"_RD0";
+         symbol      = "XMT"+ sequence.id +".RD0";
          description = ProgramName() +"."+ sequence.id +" real daily PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_RD0] = HistorySet1.Get(symbol, server);
@@ -1648,7 +1648,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RD1]) {
       if (metrics.enabled[METRIC_RD1]) {
-         symbol      = "XMT"+ sequence.id +"_RD1";
+         symbol      = "XMT"+ sequence.id +".RD1";
          description = ProgramName() +"."+ sequence.id +" real daily PL in pip with commission";
          digits      = 1;
          metrics.hSet[METRIC_RD1] = HistorySet1.Get(symbol, server);
@@ -1662,7 +1662,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RD2]) {
       if (metrics.enabled[METRIC_RD2]) {
-         symbol      = "XMT"+ sequence.id +"_RD2";
+         symbol      = "XMT"+ sequence.id +".RD2";
          description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_RD2] = HistorySet2.Get(symbol, server);
@@ -1676,7 +1676,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_RD3]) {
       if (metrics.enabled[METRIC_RD3]) {
-         symbol      = "XMT"+ sequence.id +"_RD3";
+         symbol      = "XMT"+ sequence.id +".RD3";
          description = ProgramName() +"."+ sequence.id +" real daily PL in "+ AccountCurrency() +" with commission";
          digits      = 2;
          metrics.hSet[METRIC_RD3] = HistorySet2.Get(symbol, server);
@@ -1691,7 +1691,7 @@ bool InitMetrics() {
 
    if (!metrics.hSet[METRIC_VC0]) {
       if (metrics.enabled[METRIC_VC0]) {
-         symbol      = "XMT"+ sequence.id +"_VC0";
+         symbol      = "XMT"+ sequence.id +".VC0";
          description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_VC0] = HistorySet2.Get(symbol, server);
@@ -1705,7 +1705,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VC1]) {
       if (metrics.enabled[METRIC_VC1]) {
-         symbol      = "XMT"+ sequence.id +"_VC1";
+         symbol      = "XMT"+ sequence.id +".VC1";
          description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in pip with commission";
          digits      = 1;
          metrics.hSet[METRIC_VC1] = HistorySet2.Get(symbol, server);
@@ -1719,7 +1719,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VC2]) {
       if (metrics.enabled[METRIC_VC2]) {
-         symbol      = "XMT"+ sequence.id +"_VC2";
+         symbol      = "XMT"+ sequence.id +".VC2";
          description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_VC2] = HistorySet2.Get(symbol, server);
@@ -1733,7 +1733,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VC3]) {
       if (metrics.enabled[METRIC_VC3]) {
-         symbol      = "XMT"+ sequence.id +"_VC3";
+         symbol      = "XMT"+ sequence.id +".VC3";
          description = ProgramName() +"."+ sequence.id +" virt. cumulative PL in "+ AccountCurrency() +" with commission";
          digits      = 2;
          metrics.hSet[METRIC_VC3] = HistorySet2.Get(symbol, server);
@@ -1747,7 +1747,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VD0]) {
       if (metrics.enabled[METRIC_VD0]) {
-         symbol      = "XMT"+ sequence.id +"_VD0";
+         symbol      = "XMT"+ sequence.id +".VD0";
          description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip w/o commission";
          digits      = 1;
          metrics.hSet[METRIC_VD0] = HistorySet3.Get(symbol, server);
@@ -1761,7 +1761,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VD1]) {
       if (metrics.enabled[METRIC_VD1]) {
-         symbol      = "XMT"+ sequence.id +"_VD1";
+         symbol      = "XMT"+ sequence.id +".VD1";
          description = ProgramName() +"."+ sequence.id +" virt. daily PL in pip with commission";
          digits      = 1;
          metrics.hSet[METRIC_VD1] = HistorySet3.Get(symbol, server);
@@ -1775,7 +1775,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VD2]) {
       if (metrics.enabled[METRIC_VD2]) {
-         symbol      = "XMT"+ sequence.id +"_VD2";
+         symbol      = "XMT"+ sequence.id +".VD2";
          description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" w/o commission";
          digits      = 2;
          metrics.hSet[METRIC_VD2] = HistorySet3.Get(symbol, server);
@@ -1789,7 +1789,7 @@ bool InitMetrics() {
    }
    if (!metrics.hSet[METRIC_VD3]) {
       if (metrics.enabled[METRIC_VD3]) {
-         symbol      = "XMT"+ sequence.id +"_VD3";
+         symbol      = "XMT"+ sequence.id +".VD3";
          description = ProgramName() +"."+ sequence.id +" virt. daily PL in "+ AccountCurrency() +" with commission";
          digits      = 2;
          metrics.hSet[METRIC_VD3] = HistorySet3.Get(symbol, server);
