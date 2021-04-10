@@ -330,6 +330,7 @@ int onTick.VirtualTrading() {
          if (CheckRealTargets()) {
             tradingMode = TRADINGMODE_VIRTUAL;
             TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
+            InitMetrics();
             SaveStatus();
          }
       }
@@ -1908,6 +1909,7 @@ bool StartTradeCopier() {
       tradingMode = TRADINGMODE_VIRTUAL_COPIER;
       TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
       real.isSynchronized = false;
+      InitMetrics();
       return(SaveStatus());
    }
    return(!catch("StartTradeCopier(1)  "+ sequence.name +" cannot start trade copier in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
@@ -1930,6 +1932,7 @@ bool StartTradeMirror() {
       tradingMode = TRADINGMODE_VIRTUAL_MIRROR;
       TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
       real.isSynchronized = false;
+      InitMetrics();
       return(SaveStatus());
    }
    return(!catch("StartTradeMirror(1)  "+ sequence.name +" cannot start trade mirror in "+ TradingModeToStr(tradingMode), ERR_ILLEGAL_STATE));
@@ -1948,6 +1951,7 @@ bool StopTrading() {
       if (CloseRealOrders()) {
          tradingMode = TRADINGMODE_VIRTUAL;
          TradingMode = tradingModeDescriptions[tradingMode]; SS.SequenceName();
+         InitMetrics();
          SaveStatus();
       }
       return(!last_error);
@@ -2188,44 +2192,32 @@ bool EventListener_ChartCommand(string &commands[]) {
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
    string cmd = commands[0];
-   debug("onCommand(0.1)  "+ cmd);
+   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
 
-   // virtual
    if (cmd == "virtual") {
       switch (tradingMode) {
          case TRADINGMODE_VIRTUAL_COPIER:
          case TRADINGMODE_VIRTUAL_MIRROR:
             return(StopTrading());
-
-         default: logWarn("onCommand(2)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
-      return(true);
    }
-
-   // virtual-copier
-   if (cmd == "virtual-copier") {
+   else if (cmd == "virtual-copier") {
       switch (tradingMode) {
          case TRADINGMODE_VIRTUAL:
          case TRADINGMODE_VIRTUAL_MIRROR:
             return(StartTradeCopier());
-
-         default: logWarn("onCommand(3)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
-      return(true);
    }
-
-   // virtual-mirror
-   if (cmd == "virtual-mirror") {
+   else if (cmd == "virtual-mirror") {
       switch (tradingMode) {
          case TRADINGMODE_VIRTUAL:
          case TRADINGMODE_VIRTUAL_COPIER:
             return(StartTradeMirror());
-
-         default: logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode));
       }
-      return(true);
    }
-   return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
+   else return(_true(logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd))));
+
+   return(_true(logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode))));
 }
 
 

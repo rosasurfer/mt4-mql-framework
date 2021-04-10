@@ -5,13 +5,12 @@
  */
 int onDeinit() {
    int size = ArraySize(metrics.hSet);
-   bool success = true;
 
    for (int i=0; i < size; i++) {
       if (metrics.hSet[i] != 0) {
-         if      (i <  6) success = success && HistorySet1.Close(metrics.hSet[i]);
-         else if (i < 12) success = success && HistorySet2.Close(metrics.hSet[i]);
-         else             success = success && HistorySet3.Close(metrics.hSet[i]);
+         if      (i <  6) HistorySet1.Close(metrics.hSet[i]);
+         else if (i < 12) HistorySet2.Close(metrics.hSet[i]);
+         else             HistorySet3.Close(metrics.hSet[i]);
          metrics.hSet[i] = NULL;
       }
    }
