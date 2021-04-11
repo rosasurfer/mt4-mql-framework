@@ -7503,7 +7503,56 @@ string CreateTempFile(string path, string prefix="") {
 
 
 /**
- * Create a new symbol for the specified trade server.
+ * Whether the specified symbol exists in "symbols.raw" of the specified trade server directory.
+ *
+ * @param  string symbol            - symbol
+ * @param  string server [optional] - name of the trade server directory (default: the current trade server)
+ *
+ * @return bool
+ */
+bool IsSymbol(string symbol, string server = "") {
+   if (!StringLen(symbol))                    return(!catch("IsSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("IsSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("IsSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+
+   if (server == "0") server = "";     // (string) NULL
+   if (server == "")  server = GetAccountServer(); if (server == "") return(false);
+
+   // open "symbols.raw"
+   string mqlFileName = "history\\"+ server +"\\symbols.raw";
+   int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
+   int error = GetLastError();
+   if (error || hFile <= 0) return(!catch("IsSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+
+   // validate the file size
+   int fileSize = FileSize(hFile);
+   if (!fileSize)                   { FileClose(hFile); return(false); }
+   if (fileSize % SYMBOL.size != 0) { FileClose(hFile); return(!catch("IsSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+
+   // read all symbols
+   int symbolsCount = fileSize/SYMBOL.size;
+   /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
+   int dwords = FileReadArray(hFile, symbols, 0, fileSize/4);
+   error = GetLastError();
+   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+
+   // check for the specified symbol
+   bool found = false;
+   for (int i=0; i < symbolsCount; i++) {
+      if (StrCompareI(symbols_Name(symbols, i), symbol)) {
+         found = true;
+         break;
+      }
+   }
+   FileClose(hFile);
+   ArrayResize(symbols, 0);            // release allocated memory
+
+   return(found);
+}
+
+
+/**
+ * Create a new symbol in "symbols.raw" of the specified trade server directory.
  *
  * @param  string symbol            - symbol
  * @param  string description       - symbol description
@@ -7511,15 +7560,15 @@ string CreateTempFile(string path, string prefix="") {
  * @param  int    digits            - digits
  * @param  string baseCurrency      - base currency
  * @param  string marginCurrency    - margin currency
- * @param  string server [optional] - name of the trade server to create/store the symbol (default: the current trade server)
+ * @param  string server [optional] - name of the trade server directory (default: the current trade server)
  *
  * @return int - created symbol id (the field SYMBOL.id) or EMPTY (-1) in case of errors (e.g. if the symbol already exists)
  */
 int CreateSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "") {
-   if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
-   if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
-   if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateSymbol(4)  invalid parameter group = "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+   if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateSymbol(4)  invalid parameter group: "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
 
    int   groupIndex;
    color groupColor = CLR_NONE;
@@ -7669,7 +7718,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string mqlFileName = "history\\"+ serverName +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0) return(!catch("InsertSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("InsertSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL.size != 0) {
       FileClose(hFile); return(!catch("InsertSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
@@ -7681,7 +7730,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
       // (1.2) vorhandene Symbole einlesen
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
 
       // (1.3) sicherstellen, daß das neue Symbol noch nicht existiert und größte Symbol-ID finden
       for (int i=0; i < symbolsSize; i++) {
@@ -7709,7 +7758,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=elements)                       return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
