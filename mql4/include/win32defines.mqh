@@ -99,6 +99,19 @@
 #define AT_SYSTEM                               0x04
 #define AT_ARCHIVE                              0x20
 
+
+// Generic access rights
+#define GENERIC_ALL                       0x10000000
+#define GENERIC_EXECUTE                   0x20000000
+#define GENERIC_WRITE                     0x40000000
+#define GENERIC_READ                      0x80000000
+
+// File sharing modes
+#define FILE_SHARE_READ                            1
+#define FILE_SHARE_WRITE                           2
+#define FILE_SHARE_DELETE                          4
+
+// File attribute flags
 #define FILE_ATTRIBUTE_READONLY                    1
 #define FILE_ATTRIBUTE_HIDDEN                      2
 #define FILE_ATTRIBUTE_SYSTEM                      4
@@ -111,7 +124,7 @@
 #define FILE_ATTRIBUTE_REPARSE_POINT            1024
 #define FILE_ATTRIBUTE_COMPRESSED               2048
 #define FILE_ATTRIBUTE_OFFLINE                  4096
-#define FILE_ATTRIBUTE_NOT_INDEXED              8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ist zu lang für MQL
+#define FILE_ATTRIBUTE_NOT_INDEXED              8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED is too long for MQL4
 #define FILE_ATTRIBUTE_ENCRYPTED               16384
 #define FILE_ATTRIBUTE_VIRTUAL                 65536
 
@@ -124,8 +137,21 @@
 #define OF_SHARE_DENY_READ                      0x30
 #define OF_SHARE_DENY_NONE                      0x40
 
-#define HFILE_ERROR                       0xFFFFFFFF     // -1
+// File open/creation options
+#define CREATE_NEW                                 1
+#define CREATE_ALWAYS                              2
+#define OPEN_EXISTING                              3
+#define OPEN_ALWAYS                                4
+#define TRUNCATE_EXISTING                          5
+
+
+// Invalid handle/value
 #define INVALID_FILE_SIZE                 0xFFFFFFFF     // -1
+#define INVALID_FILE_ATTRIBUTES           0xFFFFFFFF     // -1
+#define INVALID_SET_FILE_POINTER          0xFFFFFFFF     // -1
+#define INVALID_HANDLE_VALUE              0xFFFFFFFF     // -1
+#define INVALID_HWND                      0xFFFFFFFF     // -1
+#define HFILE_ERROR                       0xFFFFFFFF     // -1
 
 
 // GDI region codes, see GetClipBox()
@@ -257,11 +283,6 @@
 
 #define RDW_FRAME                             0x0400
 #define RDW_NOFRAME                           0x0800
-
-
-// Handles
-#define INVALID_HANDLE_VALUE              0xFFFFFFFF     // -1
-#define INVALID_HWND            INVALID_HANDLE_VALUE
 
 
 // Keyboard events

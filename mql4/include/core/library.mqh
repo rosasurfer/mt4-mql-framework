@@ -34,7 +34,7 @@ int init() {
 
       if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
-         Library.ResetGlobalVars();
+         onLibraryInit();
       }
    }
 

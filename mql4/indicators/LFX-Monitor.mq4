@@ -1,10 +1,10 @@
 /**
  * LFX Monitor
  *
- * Calculates various synthetic indexes, records index history and processes trade limits of synthetic positions.
- * Index descriptions:
+ * Calculate various synthetic indexes and optionally record the index history. If linked to an LFX charting terminal the
+ * indicator can process trade limits of synthetic positions. For index descriptions see the following link:
  *
- * @see  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
+ * @link  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -12,9 +12,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern bool   Recording.Enabled = false;                             // default: recording disabled
-extern string _1________________________;
-extern bool   AUDLFX.Enabled    = true;                              // default: all indexes enabled
+extern string ___a___________________________;
+extern bool   AUDLFX.Enabled    = true;                  // by default all indexes are enabled
 extern bool   CADLFX.Enabled    = true;
 extern bool   CHFLFX.Enabled    = true;
 extern bool   EURLFX.Enabled    = true;
@@ -22,69 +21,34 @@ extern bool   GBPLFX.Enabled    = true;
 extern bool   JPYLFX.Enabled    = true;
 extern bool   NZDLFX.Enabled    = true;
 extern bool   USDLFX.Enabled    = true;
-extern string _2________________________;
+extern string ___b___________________________;
 extern bool   NOKFX7.Enabled    = true;
 extern bool   SEKFX7.Enabled    = true;
 extern bool   SGDFX7.Enabled    = true;
 extern bool   ZARFX7.Enabled    = true;
-extern string _3________________________;
+extern string ___c___________________________;
 extern bool   EURX.Enabled      = true;
 extern bool   USDX.Enabled      = true;
-extern string _4________________________;
+extern string ___d___________________________;
 extern bool   XAUI.Enabled      = true;
+extern string ___e___________________________;
+extern bool   Recording.Enabled = false;                 // by default recording is disabled
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
 #include <rsfHistory.mqh>
-
+#include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <structs/rsf/LFXOrder.mqh>
 
 #property indicator_chart_window
 
-
-string   symbols     [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX", "XAUI" };
-string   longNames   [] = { "LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
-int      digits      [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3     , 3      };
-double   pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01  , 0.01   };
-string   priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'", "R.2'" };
-
-bool     isEnabled  [];                                        // whether calculation is enabled (equal to *.Enabled)
-bool     isAvailable[];                                        // whether all prices for calculation are available
-bool     isStale    [];                                        // whether some prices for calculation are stale (not current)
-double   curr.bid   [];                                        // current calculated Bid value
-double   curr.ask   [];                                        // current calculated Ask value
-double   curr.median[];                                        // current calculated Median value
-double   prev.median[];                                        // previous calculated Median value
-
-bool     isRecording[];                                        // default: FALSE
-int      hSet       [];                                        // HistorySet handles
-string   serverName = "XTrade-Synthetic";                      // default server name for storing recorded history
-datetime staleLimit;                                           // current time limit (server time) for stale quotes determination
-
-int AUDLFX.orders[][LFX_ORDER.intSize];                        // array of LFX orders
-int CADLFX.orders[][LFX_ORDER.intSize];
-int CHFLFX.orders[][LFX_ORDER.intSize];
-int EURLFX.orders[][LFX_ORDER.intSize];
-int GBPLFX.orders[][LFX_ORDER.intSize];
-int JPYLFX.orders[][LFX_ORDER.intSize];
-int NZDLFX.orders[][LFX_ORDER.intSize];
-int USDLFX.orders[][LFX_ORDER.intSize];
-int NOKFX7.orders[][LFX_ORDER.intSize];
-int SEKFX7.orders[][LFX_ORDER.intSize];
-int SGDFX7.orders[][LFX_ORDER.intSize];
-int ZARFX7.orders[][LFX_ORDER.intSize];
-int   EURX.orders[][LFX_ORDER.intSize];
-int   USDX.orders[][LFX_ORDER.intSize];
-int   XAUI.orders[][LFX_ORDER.intSize];
-
-#define I_AUDLFX     0                                         // array indexes
+#define I_AUDLFX     0                                   // array indexes
 #define I_CADLFX     1
 #define I_CHFLFX     2
 #define I_EURLFX     3
@@ -101,11 +65,46 @@ int   XAUI.orders[][LFX_ORDER.intSize];
 #define I_XAUI      14
 
 
+string   symbols     [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX", "XAUI" };
+string   longNames   [] = { "LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
+int      digits      [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3     , 3      };
+double   pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01  , 0.01   };
+string   priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'", "R.2'" };
+
+bool     isEnabled  [];                                  // whether calculation is enabled (equal to *.Enabled)
+bool     isAvailable[];                                  // whether all prices for calculation are available
+bool     isStale    [];                                  // whether some prices for calculation are stale (not current)
+double   currBid   [];                                   // current calculated Bid value
+double   currAsk   [];                                   // current calculated Ask value
+double   currMedian[];                                   // current calculated Median value
+double   prevMedian[];                                   // previous calculated Median value
+
+bool     isRecording[];                                  // default: FALSE
+int      hSet       [];                                  // HistorySet handles
+string   serverName = "XTrade-Synthetic";                // default server name for storing recorded history
+datetime staleLimit;                                     // current time limit (server time) for stale quotes determination
+
+int AUDLFX.orders[][LFX_ORDER.intSize];                  // array of LFX orders
+int CADLFX.orders[][LFX_ORDER.intSize];
+int CHFLFX.orders[][LFX_ORDER.intSize];
+int EURLFX.orders[][LFX_ORDER.intSize];
+int GBPLFX.orders[][LFX_ORDER.intSize];
+int JPYLFX.orders[][LFX_ORDER.intSize];
+int NZDLFX.orders[][LFX_ORDER.intSize];
+int USDLFX.orders[][LFX_ORDER.intSize];
+int NOKFX7.orders[][LFX_ORDER.intSize];
+int SEKFX7.orders[][LFX_ORDER.intSize];
+int SGDFX7.orders[][LFX_ORDER.intSize];
+int ZARFX7.orders[][LFX_ORDER.intSize];
+int   EURX.orders[][LFX_ORDER.intSize];
+int   USDX.orders[][LFX_ORDER.intSize];
+int   XAUI.orders[][LFX_ORDER.intSize];
+
 // text labels for various display elements
 string labels[];
-string label.tradeAccount;
-string label.animation;                                        // animated ticker
-string label.animation.chars[] = {"|", "/", "—", "\\"};
+string labelTradeAccount;
+string labelAnimation;                                  // animated ticker
+string animationChars[] = {"|", "/", "—", "\\"};
 
 color  bgColor                = C'212,208,200';
 color  fontColor.recordingOn  = Blue;
@@ -114,7 +113,7 @@ color  fontColor.notAvailable = Red;
 string fontName               = "Tahoma";
 int    fontSize               = 8;
 
-int    tickTimerId;                                            // id of the tick timer registered for the chart
+int    tickTimerId;                                      // id of the tick timer registered for the chart
 
 
 /**
@@ -125,16 +124,16 @@ int    tickTimerId;                                            // id of the tick
 int onInit() {
    // initialize array sizes
    int size = ArraySize(symbols);
-   ArrayResize(isEnabled  , size);
+   ArrayResize(isEnabled,   size);
    ArrayResize(isAvailable, size);
-   ArrayResize(isStale    , size); ArrayInitialize(isStale, true);
-   ArrayResize(curr.bid   , size);
-   ArrayResize(curr.ask   , size);
-   ArrayResize(curr.median, size);
-   ArrayResize(prev.median, size);
+   ArrayResize(isStale,     size); ArrayInitialize(isStale, true);
+   ArrayResize(currBid,     size);
+   ArrayResize(currAsk,     size);
+   ArrayResize(currMedian,  size);
+   ArrayResize(prevMedian,  size);
    ArrayResize(isRecording, size);
-   ArrayResize(hSet       , size);
-   ArrayResize(labels     , size);
+   ArrayResize(hSet,        size);
+   ArrayResize(labels,      size);
 
    // process input parameters
    isEnabled[I_AUDLFX] = AUDLFX.Enabled;
@@ -245,20 +244,18 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   HandleCommands();                                                 // process chart commands
+   HandleCommands();                                        // process chart commands
 
-   staleLimit = GetServerTime() - 10*MINUTES;                        // SGD|ZAR may need a few minutes for the first tick
+   staleLimit = GetServerTime() - 10*MINUTES;               // exotic instruments may need some time for the first tick
 
    if (!CalculateIndices())   return(last_error);
-   if (!ProcessAllLimits())   return(last_error);
+   if (!ProcessAllLimits())   return(last_error);           // TODO: detect when monitored limits have been changed
    if (!UpdateIndexDisplay()) return(last_error);
 
    if (Recording.Enabled) {
       if (!RecordIndices())   return(last_error);
    }
    return(last_error);
-
-   // TODO: check/detect if the limits to watch have been changed (but not on every tick)
 }
 
 
@@ -346,15 +343,15 @@ bool RefreshLfxOrders() {
  */
 int CreateLabels() {
    // trade account
-   label.tradeAccount = ProgramName() +".TradeAccount";
-   if (ObjectFind(label.tradeAccount) == 0)
-      ObjectDelete(label.tradeAccount);
-   if (ObjectCreate(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.tradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
-      ObjectSetText(label.tradeAccount, " ", 1);
-      RegisterObject(label.tradeAccount);
+   labelTradeAccount = ProgramName() +".TradeAccount";
+   if (ObjectFind(labelTradeAccount) == 0)
+      ObjectDelete(labelTradeAccount);
+   if (ObjectCreate(labelTradeAccount, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (labelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (labelTradeAccount, OBJPROP_XDISTANCE, 6);
+      ObjectSet    (labelTradeAccount, OBJPROP_YDISTANCE, 4);
+      ObjectSetText(labelTradeAccount, " ", 1);
+      RegisterObject(labelTradeAccount);
    }
    else GetLastError();
 
@@ -396,11 +393,11 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 165   );
+      ObjectSet    (label, OBJPROP_XDISTANCE, 190   );
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, label.animation.chars[0], fontSize, fontName, fontColor);
+      ObjectSetText(label, animationChars[0], fontSize, fontName, fontColor);
       RegisterObject(label);
-      label.animation = label;
+      labelAnimation = label;
    }
    else GetLastError();
 
@@ -493,145 +490,145 @@ bool CalculateIndices() {
    if (true) {                                                       // USDLFX = ((USDCAD * USDCHF * USDJPY) / (AUDUSD * EURUSD * GBPUSD)) ^ 1/7
       isAvailable[I_USDLFX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
       if (isAvailable[I_USDLFX]) {
-         prev.median [I_USDLFX] = curr.median[I_USDLFX];
-         curr.median [I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
-         curr.bid    [I_USDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
-         curr.ask    [I_USDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
-         isStale     [I_USDLFX] = usdcad_stale || usdchf_stale || usdjpy_stale || audusd_stale || eurusd_stale || gbpusd_stale;
+         prevMedian [I_USDLFX] = currMedian[I_USDLFX];
+         currMedian [I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
+         currBid    [I_USDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+         currAsk    [I_USDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+         isStale    [I_USDLFX] = usdcad_stale || usdchf_stale || usdjpy_stale || audusd_stale || eurusd_stale || gbpusd_stale;
       }
-      else isStale   [I_USDLFX] = true;
+      else isStale  [I_USDLFX] = true;
    }
 
    if (AUDLFX.Enabled) {                                             //     AUDLFX = ((AUDCAD * AUDCHF * AUDJPY * AUDUSD) / (EURAUD * GBPAUD)) ^ 1/7
       isAvailable[I_AUDLFX] = isAvailable[I_USDLFX];                 // or: AUDLFX = USDLFX * AUDUSD
       if (isAvailable[I_AUDLFX]) {
-         prev.median [I_AUDLFX] = curr.median[I_AUDLFX];
-         curr.median [I_AUDLFX] = curr.median[I_USDLFX] * audusd;
-         curr.bid    [I_AUDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
-         curr.ask    [I_AUDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
-         isStale     [I_AUDLFX] = isStale[I_USDLFX];
+         prevMedian [I_AUDLFX] = currMedian[I_AUDLFX];
+         currMedian [I_AUDLFX] = currMedian[I_USDLFX] * audusd;
+         currBid    [I_AUDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
+         currAsk    [I_AUDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
+         isStale    [I_AUDLFX] = isStale[I_USDLFX];
       }
-      else isStale   [I_AUDLFX] = true;
+      else isStale  [I_AUDLFX] = true;
    }
 
    if (CADLFX.Enabled) {                                             //     CADLFX = ((CADCHF * CADJPY) / (AUDCAD * EURCAD * GBPCAD * USDCAD)) ^ 1/7
       isAvailable[I_CADLFX] = isAvailable[I_USDLFX];                 // or: CADLFX = USDLFX / USDCAD
       if (isAvailable[I_CADLFX]) {
-         prev.median [I_CADLFX] = curr.median[I_CADLFX];
-         curr.median [I_CADLFX] = curr.median[I_USDLFX] / usdcad;
-         curr.bid    [I_CADLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
-         curr.ask    [I_CADLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
-         isStale     [I_CADLFX] = isStale[I_USDLFX];
+         prevMedian [I_CADLFX] = currMedian[I_CADLFX];
+         currMedian [I_CADLFX] = currMedian[I_USDLFX] / usdcad;
+         currBid    [I_CADLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
+         currAsk    [I_CADLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
+         isStale    [I_CADLFX] = isStale[I_USDLFX];
       }
-      else isStale   [I_CADLFX] = true;
+      else isStale  [I_CADLFX] = true;
    }
 
    if (CHFLFX.Enabled) {                                             //     CHFLFX = (CHFJPY / (AUDCHF * CADCHF * EURCHF * GBPCHF * USDCHF)) ^ 1/7
       isAvailable[I_CHFLFX] = isAvailable[I_USDLFX];                 // or: CHFLFX = UDLFX / USDCHF
       if (isAvailable[I_CHFLFX]) {
-         prev.median [I_CHFLFX] = curr.median[I_CHFLFX];
-         curr.median [I_CHFLFX] = curr.median[I_USDLFX] / usdchf;
-         curr.bid    [I_CHFLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
-         curr.ask    [I_CHFLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
-         isStale     [I_CHFLFX] = isStale[I_USDLFX];
+         prevMedian [I_CHFLFX] = currMedian[I_CHFLFX];
+         currMedian [I_CHFLFX] = currMedian[I_USDLFX] / usdchf;
+         currBid    [I_CHFLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
+         currAsk    [I_CHFLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
+         isStale    [I_CHFLFX] = isStale[I_USDLFX];
       }
-      else isStale   [I_CHFLFX] = true;
+      else isStale  [I_CHFLFX] = true;
    }
 
    if (EURLFX.Enabled) {                                             //     EURLFX = (EURAUD * EURCAD * EURCHF * EURGBP * EURJPY * EURUSD) ^ 1/7
       isAvailable[I_EURLFX] = isAvailable[I_USDLFX];                 // or: EURLFX = USDLFX * EURUSD
       if (isAvailable[I_EURLFX]) {
-         prev.median [I_EURLFX] = curr.median[I_EURLFX];
-         curr.median [I_EURLFX] = curr.median[I_USDLFX] * eurusd;
-         curr.bid    [I_EURLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
-         curr.ask    [I_EURLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
-         isStale     [I_EURLFX] = isStale[I_USDLFX];
+         prevMedian [I_EURLFX] = currMedian[I_EURLFX];
+         currMedian [I_EURLFX] = currMedian[I_USDLFX] * eurusd;
+         currBid    [I_EURLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
+         currAsk    [I_EURLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
+         isStale    [I_EURLFX] = isStale[I_USDLFX];
       }
-      else isStale   [I_EURLFX] = true;
+      else isStale  [I_EURLFX] = true;
    }
 
    if (GBPLFX.Enabled) {                                             //     GBPLFX = ((GBPAUD * GBPCAD * GBPCHF * GBPJPY * GBPUSD) / EURGBP) ^ 1/7
       isAvailable[I_GBPLFX] = isAvailable[I_USDLFX];                 // or: GBPLFX = USDLFX * GBPUSD
       if (isAvailable[I_GBPLFX]) {
-         prev.median [I_GBPLFX] = curr.median[I_GBPLFX];
-         curr.median [I_GBPLFX] = curr.median[I_USDLFX] * gbpusd;
-         curr.bid    [I_GBPLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
-         curr.ask    [I_GBPLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
-         isStale     [I_GBPLFX] = isStale[I_USDLFX];
+         prevMedian [I_GBPLFX] = currMedian[I_GBPLFX];
+         currMedian [I_GBPLFX] = currMedian[I_USDLFX] * gbpusd;
+         currBid    [I_GBPLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
+         currAsk    [I_GBPLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
+         isStale    [I_GBPLFX] = isStale[I_USDLFX];
       }
-      else isStale   [I_GBPLFX] = true;
+      else isStale  [I_GBPLFX] = true;
    }
 
    if (JPYLFX.Enabled) {                                             //     JPYLFX = 100 * (1 / (AUDJPY * CADJPY * CHFJPY * EURJPY * GBPJPY * USDJPY)) ^ 1/7
       isAvailable[I_JPYLFX] = isAvailable[I_USDLFX];                 // or: JPYLFX = 100 * USDLFX / USDJPY
       if (isAvailable[I_JPYLFX]) {
-         prev.median [I_JPYLFX] = curr.median[I_JPYLFX];
-         curr.median [I_JPYLFX] = 100 * curr.median[I_USDLFX] / usdjpy;
-         curr.bid    [I_JPYLFX] = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
-         curr.ask    [I_JPYLFX] = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
-         isStale     [I_JPYLFX] = isStale[I_USDLFX];
+         prevMedian [I_JPYLFX] = currMedian[I_JPYLFX];
+         currMedian [I_JPYLFX] = 100 * currMedian[I_USDLFX] / usdjpy;
+         currBid    [I_JPYLFX] = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
+         currAsk    [I_JPYLFX] = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
+         isStale    [I_JPYLFX] = isStale[I_USDLFX];
       }
-      else isStale   [I_JPYLFX] = true;
+      else isStale  [I_JPYLFX] = true;
    }
 
    if (NZDLFX.Enabled) {                                             //     NZDLFX = ((NZDCAD * NZDCHF * NZDJPY * NZDUSD) / (AUDNZD * EURNZD * GBPNZD)) ^ 1/7
       isAvailable[I_NZDLFX] = (isAvailable[I_USDLFX] && nzdusd_Bid); // or: NZDLFX = USDLFX * NZDUSD
       if (isAvailable[I_NZDLFX]) {
-         prev.median [I_NZDLFX] = curr.median[I_NZDLFX];
-         curr.median [I_NZDLFX] = curr.median[I_USDLFX] * nzdusd;
-         curr.bid    [I_NZDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
-         curr.ask    [I_NZDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
-         isStale     [I_NZDLFX] = isStale[I_USDLFX] || nzdusd_stale;
+         prevMedian [I_NZDLFX] = currMedian[I_NZDLFX];
+         currMedian [I_NZDLFX] = currMedian[I_USDLFX] * nzdusd;
+         currBid    [I_NZDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
+         currAsk    [I_NZDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
+         isStale    [I_NZDLFX] = isStale[I_USDLFX] || nzdusd_stale;
       }
-      else isStale   [I_NZDLFX] = true;
+      else isStale  [I_NZDLFX] = true;
    }
 
    if (NOKFX7.Enabled) {                                             //     NOKFX7 = 10 * (NOKJPY / (AUDNOK * CADNOK * CHFNOK * EURNOK * GBPNOK * USDNOK)) ^ 1/7
       isAvailable[I_NOKFX7] = (isAvailable[I_USDLFX] && usdnok_Bid); // or: NOKFX7 = 10 * USDLFX / USDNOK
       if (isAvailable[I_NOKFX7]) {
-         prev.median [I_NOKFX7] = curr.median[I_NOKFX7];
-         curr.median [I_NOKFX7] = 10 * curr.median[I_USDLFX] / usdnok;
-         curr.bid    [I_NOKFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdnok_Ask;
-         curr.ask    [I_NOKFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdnok_Bid;
-         isStale     [I_NOKFX7] = isStale[I_USDLFX] || usdnok_stale;
+         prevMedian [I_NOKFX7] = currMedian[I_NOKFX7];
+         currMedian [I_NOKFX7] = 10 * currMedian[I_USDLFX] / usdnok;
+         currBid    [I_NOKFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdnok_Ask;
+         currAsk    [I_NOKFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdnok_Bid;
+         isStale    [I_NOKFX7] = isStale[I_USDLFX] || usdnok_stale;
       }
-      else isStale   [I_NOKFX7] = true;
+      else isStale  [I_NOKFX7] = true;
    }
 
    if (SEKFX7.Enabled) {                                             //     SEKFX7 = 10 * (SEKJPY / (AUDSEK * CADSEK * CHFSEK * EURSEK * GBPSEK * USDSEK)) ^ 1/7
       isAvailable[I_SEKFX7] = (isAvailable[I_USDLFX] && usdsek_Bid); // or: SEKFX7 = 10 * USDLFX / USDSEK
       if (isAvailable[I_SEKFX7]) {
-         prev.median [I_SEKFX7] = curr.median[I_SEKFX7];
-         curr.median [I_SEKFX7] = 10 * curr.median[I_USDLFX] / usdsek;
-         curr.bid    [I_SEKFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdsek_Ask;
-         curr.ask    [I_SEKFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdsek_Bid;
-         isStale     [I_SEKFX7] = isStale[I_USDLFX] || usdsek_stale;
+         prevMedian [I_SEKFX7] = currMedian[I_SEKFX7];
+         currMedian [I_SEKFX7] = 10 * currMedian[I_USDLFX] / usdsek;
+         currBid    [I_SEKFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdsek_Ask;
+         currAsk    [I_SEKFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdsek_Bid;
+         isStale    [I_SEKFX7] = isStale[I_USDLFX] || usdsek_stale;
       }
-      else isStale   [I_SEKFX7] = true;
+      else isStale  [I_SEKFX7] = true;
    }
 
    if (SGDFX7.Enabled) {                                             //     SGDFX7 = (SGDJPY / (AUDSGD * CADSGD * CHFSGD * EURSGD * GBPSGD * USDSGD)) ^ 1/7
       isAvailable[I_SGDFX7] = (isAvailable[I_USDLFX] && usdsgd_Bid); // or: SGDFX7 = USDLFX / USDSGD
       if (isAvailable[I_SGDFX7]) {
-         prev.median [I_SGDFX7] = curr.median[I_SGDFX7];
-         curr.median [I_SGDFX7] = curr.median[I_USDLFX] / usdsgd;
-         curr.bid    [I_SGDFX7] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdsgd_Ask;
-         curr.ask    [I_SGDFX7] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdsgd_Bid;
-         isStale     [I_SGDFX7] = isStale[I_USDLFX] || usdsgd_stale;
+         prevMedian [I_SGDFX7] = currMedian[I_SGDFX7];
+         currMedian [I_SGDFX7] = currMedian[I_USDLFX] / usdsgd;
+         currBid    [I_SGDFX7] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdsgd_Ask;
+         currAsk    [I_SGDFX7] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdsgd_Bid;
+         isStale    [I_SGDFX7] = isStale[I_USDLFX] || usdsgd_stale;
       }
-      else isStale   [I_SGDFX7] = true;
+      else isStale  [I_SGDFX7] = true;
    }
 
    if (ZARFX7.Enabled) {                                             //     ZARFX7 = 10 * (ZARJPY / (AUDZAR * CADZAR * CHFZAR * EURZAR * GBPZAR * USDZAR)) ^ 1/7
       isAvailable[I_ZARFX7] = (isAvailable[I_USDLFX] && usdzar_Bid); // or: ZARFX7 = 10 * USDLFX / USDZAR
       if (isAvailable[I_ZARFX7]) {
-         prev.median [I_ZARFX7] = curr.median[I_ZARFX7];
-         curr.median [I_ZARFX7] = 10 * curr.median[I_USDLFX] / usdzar;
-         curr.bid    [I_ZARFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdzar_Ask;
-         curr.ask    [I_ZARFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdzar_Bid;
-         isStale     [I_ZARFX7] = isStale[I_USDLFX] || usdzar_stale;
+         prevMedian [I_ZARFX7] = currMedian[I_ZARFX7];
+         currMedian [I_ZARFX7] = 10 * currMedian[I_USDLFX] / usdzar;
+         currBid    [I_ZARFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdzar_Ask;
+         currAsk    [I_ZARFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdzar_Bid;
+         isStale    [I_ZARFX7] = isStale[I_USDLFX] || usdzar_stale;
       }
-      else isStale   [I_ZARFX7] = true;
+      else isStale  [I_ZARFX7] = true;
    }
 
    if (EURX.Enabled) {                                               // EURX = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
@@ -641,46 +638,42 @@ bool CalculateIndices() {
          double eurgbp = eurusd / gbpusd;
          double eurjpy = usdjpy * eurusd;
          double eursek = usdsek * eurusd;
-         prev.median [I_EURX] = curr.median[I_EURX];
-         curr.median [I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
-         curr.bid    [I_EURX] = 0;                  // TODO
-         curr.ask    [I_EURX] = 0;                  // TODO
-         isStale     [I_EURX] = usdchf_stale || usdjpy_stale || usdsek_stale || eurusd_stale || gbpusd_stale;
+         prevMedian [I_EURX] = currMedian[I_EURX];
+         currMedian [I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
+         currBid    [I_EURX] = 0;                  // TODO
+         currAsk    [I_EURX] = 0;                  // TODO
+         isStale    [I_EURX] = usdchf_stale || usdjpy_stale || usdsek_stale || eurusd_stale || gbpusd_stale;
       }
-      else isStale   [I_EURX] = true;
+      else isStale  [I_EURX] = true;
    }
 
    if (USDX.Enabled) {                                               // USDX = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
       isAvailable[I_USDX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
       if (isAvailable[I_USDX]) {
-         prev.median [I_USDX] = curr.median[I_USDX];
-         curr.median [I_USDX] = 50.14348112 * (MathPow(usdjpy    , 0.136) * MathPow(usdcad    , 0.091) * MathPow(usdsek    , 0.042) * MathPow(usdchf    , 0.036)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
-         curr.bid    [I_USDX] = 50.14348112 * (MathPow(usdjpy_Bid, 0.136) * MathPow(usdcad_Bid, 0.091) * MathPow(usdsek_Bid, 0.042) * MathPow(usdchf_Bid, 0.036)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
-         curr.ask    [I_USDX] = 50.14348112 * (MathPow(usdjpy_Ask, 0.136) * MathPow(usdcad_Ask, 0.091) * MathPow(usdsek_Ask, 0.042) * MathPow(usdchf_Ask, 0.036)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
-         isStale     [I_USDX] = usdcad_stale || usdchf_stale || usdjpy_stale || usdsek_stale || eurusd_stale || gbpusd_stale;
+         prevMedian [I_USDX] = currMedian[I_USDX];
+         currMedian [I_USDX] = 50.14348112 * (MathPow(usdjpy    , 0.136) * MathPow(usdcad    , 0.091) * MathPow(usdsek    , 0.042) * MathPow(usdchf    , 0.036)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
+         currBid    [I_USDX] = 50.14348112 * (MathPow(usdjpy_Bid, 0.136) * MathPow(usdcad_Bid, 0.091) * MathPow(usdsek_Bid, 0.042) * MathPow(usdchf_Bid, 0.036)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
+         currAsk    [I_USDX] = 50.14348112 * (MathPow(usdjpy_Ask, 0.136) * MathPow(usdcad_Ask, 0.091) * MathPow(usdsek_Ask, 0.042) * MathPow(usdchf_Ask, 0.036)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
+         isStale    [I_USDX] = usdcad_stale || usdchf_stale || usdjpy_stale || usdsek_stale || eurusd_stale || gbpusd_stale;
       }
-      else isStale   [I_USDX] = true;
+      else isStale  [I_USDX] = true;
    }
 
    if (XAUI.Enabled) {                                               //     XAUI = (XAUAUD * XAUCAD * XAUCHF * XAUEUR * XAUUSD * XAUGBP * XAUJPY) ^ 1/7
       isAvailable[I_XAUI] = (isAvailable[I_USDLFX] && xauusd_Bid);   // or: XAUI = USDLFX * XAUUSD
       if (isAvailable[I_XAUI]) {
-         prev.median [I_XAUI] = curr.median[I_XAUI];
-         curr.median [I_XAUI] = curr.median[I_USDLFX] * xauusd;
-         curr.bid    [I_XAUI] = 0;                  // TODO
-         curr.ask    [I_XAUI] = 0;                  // TODO
-         isStale     [I_XAUI] = isStale[I_USDLFX] || xauusd_stale;
+         prevMedian [I_XAUI] = currMedian[I_XAUI];
+         currMedian [I_XAUI] = currMedian[I_USDLFX] * xauusd;
+         currBid    [I_XAUI] = 0;                  // TODO
+         currAsk    [I_XAUI] = 0;                  // TODO
+         isStale    [I_XAUI] = isStale[I_USDLFX] || xauusd_stale;
       }
-      else isStale   [I_XAUI] = true;
+      else isStale  [I_XAUI] = true;
    }
 
    int error = GetLastError(); if (!error) return(true);
-
-   debug("CalculateIndices(1)", error);
-   if (error == ERR_SYMBOL_NOT_AVAILABLE)  return(true);
-   if (error == ERS_HISTORY_UPDATE      )  return(!SetLastError(error)); // = true
-
-   return(!catch("CalculateIndices(2)", error));
+   if (error == ERS_HISTORY_UPDATE) return(!SetLastError(error));
+   return(!catch("CalculateIndices(1)", error));
 }
 
 
@@ -692,24 +685,24 @@ bool CalculateIndices() {
 bool ProcessAllLimits() {
    // only check orders if the symbol's calculated price has changed
 
-   if (!isStale[I_AUDLFX]) if (!EQ(curr.median[I_AUDLFX], prev.median[I_AUDLFX], digits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, curr.median[I_AUDLFX])) return(false);
-   if (!isStale[I_CADLFX]) if (!EQ(curr.median[I_CADLFX], prev.median[I_CADLFX], digits[I_CADLFX])) if (!ProcessLimits(CADLFX.orders, curr.median[I_CADLFX])) return(false);
-   if (!isStale[I_CHFLFX]) if (!EQ(curr.median[I_CHFLFX], prev.median[I_CHFLFX], digits[I_CHFLFX])) if (!ProcessLimits(CHFLFX.orders, curr.median[I_CHFLFX])) return(false);
-   if (!isStale[I_EURLFX]) if (!EQ(curr.median[I_EURLFX], prev.median[I_EURLFX], digits[I_EURLFX])) if (!ProcessLimits(EURLFX.orders, curr.median[I_EURLFX])) return(false);
-   if (!isStale[I_GBPLFX]) if (!EQ(curr.median[I_GBPLFX], prev.median[I_GBPLFX], digits[I_GBPLFX])) if (!ProcessLimits(GBPLFX.orders, curr.median[I_GBPLFX])) return(false);
-   if (!isStale[I_JPYLFX]) if (!EQ(curr.median[I_JPYLFX], prev.median[I_JPYLFX], digits[I_JPYLFX])) if (!ProcessLimits(JPYLFX.orders, curr.median[I_JPYLFX])) return(false);
-   if (!isStale[I_NZDLFX]) if (!EQ(curr.median[I_NZDLFX], prev.median[I_NZDLFX], digits[I_NZDLFX])) if (!ProcessLimits(NZDLFX.orders, curr.median[I_NZDLFX])) return(false);
-   if (!isStale[I_USDLFX]) if (!EQ(curr.median[I_USDLFX], prev.median[I_USDLFX], digits[I_USDLFX])) if (!ProcessLimits(USDLFX.orders, curr.median[I_USDLFX])) return(false);
+   if (!isStale[I_AUDLFX]) if (!EQ(currMedian[I_AUDLFX], prevMedian[I_AUDLFX], digits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, currMedian[I_AUDLFX])) return(false);
+   if (!isStale[I_CADLFX]) if (!EQ(currMedian[I_CADLFX], prevMedian[I_CADLFX], digits[I_CADLFX])) if (!ProcessLimits(CADLFX.orders, currMedian[I_CADLFX])) return(false);
+   if (!isStale[I_CHFLFX]) if (!EQ(currMedian[I_CHFLFX], prevMedian[I_CHFLFX], digits[I_CHFLFX])) if (!ProcessLimits(CHFLFX.orders, currMedian[I_CHFLFX])) return(false);
+   if (!isStale[I_EURLFX]) if (!EQ(currMedian[I_EURLFX], prevMedian[I_EURLFX], digits[I_EURLFX])) if (!ProcessLimits(EURLFX.orders, currMedian[I_EURLFX])) return(false);
+   if (!isStale[I_GBPLFX]) if (!EQ(currMedian[I_GBPLFX], prevMedian[I_GBPLFX], digits[I_GBPLFX])) if (!ProcessLimits(GBPLFX.orders, currMedian[I_GBPLFX])) return(false);
+   if (!isStale[I_JPYLFX]) if (!EQ(currMedian[I_JPYLFX], prevMedian[I_JPYLFX], digits[I_JPYLFX])) if (!ProcessLimits(JPYLFX.orders, currMedian[I_JPYLFX])) return(false);
+   if (!isStale[I_NZDLFX]) if (!EQ(currMedian[I_NZDLFX], prevMedian[I_NZDLFX], digits[I_NZDLFX])) if (!ProcessLimits(NZDLFX.orders, currMedian[I_NZDLFX])) return(false);
+   if (!isStale[I_USDLFX]) if (!EQ(currMedian[I_USDLFX], prevMedian[I_USDLFX], digits[I_USDLFX])) if (!ProcessLimits(USDLFX.orders, currMedian[I_USDLFX])) return(false);
 
-   if (!isStale[I_NOKFX7]) if (!EQ(curr.median[I_NOKFX7], prev.median[I_NOKFX7], digits[I_NOKFX7])) if (!ProcessLimits(NOKFX7.orders, curr.median[I_NOKFX7])) return(false);
-   if (!isStale[I_SEKFX7]) if (!EQ(curr.median[I_SEKFX7], prev.median[I_SEKFX7], digits[I_SEKFX7])) if (!ProcessLimits(SEKFX7.orders, curr.median[I_SEKFX7])) return(false);
-   if (!isStale[I_SGDFX7]) if (!EQ(curr.median[I_SGDFX7], prev.median[I_SGDFX7], digits[I_SGDFX7])) if (!ProcessLimits(SGDFX7.orders, curr.median[I_SGDFX7])) return(false);
-   if (!isStale[I_ZARFX7]) if (!EQ(curr.median[I_ZARFX7], prev.median[I_ZARFX7], digits[I_ZARFX7])) if (!ProcessLimits(ZARFX7.orders, curr.median[I_ZARFX7])) return(false);
+   if (!isStale[I_NOKFX7]) if (!EQ(currMedian[I_NOKFX7], prevMedian[I_NOKFX7], digits[I_NOKFX7])) if (!ProcessLimits(NOKFX7.orders, currMedian[I_NOKFX7])) return(false);
+   if (!isStale[I_SEKFX7]) if (!EQ(currMedian[I_SEKFX7], prevMedian[I_SEKFX7], digits[I_SEKFX7])) if (!ProcessLimits(SEKFX7.orders, currMedian[I_SEKFX7])) return(false);
+   if (!isStale[I_SGDFX7]) if (!EQ(currMedian[I_SGDFX7], prevMedian[I_SGDFX7], digits[I_SGDFX7])) if (!ProcessLimits(SGDFX7.orders, currMedian[I_SGDFX7])) return(false);
+   if (!isStale[I_ZARFX7]) if (!EQ(currMedian[I_ZARFX7], prevMedian[I_ZARFX7], digits[I_ZARFX7])) if (!ProcessLimits(ZARFX7.orders, currMedian[I_ZARFX7])) return(false);
 
-   if (!isStale[I_EURX  ]) if (!EQ(curr.median[I_EURX  ], prev.median[I_EURX  ], digits[I_EURX  ])) if (!ProcessLimits(EURX.orders,   curr.median[I_EURX  ])) return(false);
-   if (!isStale[I_USDX  ]) if (!EQ(curr.median[I_USDX  ], prev.median[I_USDX  ], digits[I_USDX  ])) if (!ProcessLimits(USDX.orders,   curr.median[I_USDX  ])) return(false);
+   if (!isStale[I_EURX  ]) if (!EQ(currMedian[I_EURX  ], prevMedian[I_EURX  ], digits[I_EURX  ])) if (!ProcessLimits(EURX.orders,   currMedian[I_EURX  ])) return(false);
+   if (!isStale[I_USDX  ]) if (!EQ(currMedian[I_USDX  ], prevMedian[I_USDX  ], digits[I_USDX  ])) if (!ProcessLimits(USDX.orders,   currMedian[I_USDX  ])) return(false);
 
-   if (!isStale[I_XAUI  ]) if (!EQ(curr.median[I_XAUI  ], prev.median[I_XAUI  ], digits[I_XAUI  ])) if (!ProcessLimits(XAUI.orders,   curr.median[I_XAUI  ])) return(false);
+   if (!isStale[I_XAUI  ]) if (!EQ(currMedian[I_XAUI  ], prevMedian[I_XAUI  ], digits[I_XAUI  ])) if (!ProcessLimits(XAUI.orders,   currMedian[I_XAUI  ])) return(false);
 
    return(true);
 }
@@ -718,8 +711,8 @@ bool ProcessAllLimits() {
 /**
  * Check active limits of the passed orders and send trade commands accordingly.
  *
- * @param  _In_Out_ LFX_ORDER orders[] - array of LFX_ORDERs
- * @param  _In_     double    price    - current price to check against
+ * @param  _InOut_ LFX_ORDER orders[] - array of LFX_ORDERs
+ * @param  _In_    double    price    - current price to check against
  *
  * @return bool - success status
  */
@@ -751,9 +744,9 @@ bool UpdateIndexDisplay() {
    //if (!IsChartVisible()) return(true);          // TODO: update only if the chart is visible
 
    // animation
-   int   chars     = ArraySize(label.animation.chars);
+   int   chars     = ArraySize(animationChars);
    color fontColor = ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
-   ObjectSetText(label.animation, label.animation.chars[Tick % chars], fontSize, fontName, fontColor);
+   ObjectSetText(labelAnimation, animationChars[Tick % chars], fontSize, fontName, fontColor);
 
    // calculated values
    int    size = ArraySize(symbols);
@@ -763,8 +756,8 @@ bool UpdateIndexDisplay() {
       if (isEnabled[i]) {
          fontColor = fontColor.recordingOff;
          if (isAvailable[i]) {
-            sIndex  = NumberToStr(NormalizeDouble(curr.median[i], digits[i]), priceFormats[i]);
-            sSpread = "("+ DoubleToStr((curr.ask[i]-curr.bid[i])/pipSizes[i], 1) +")";
+            sIndex  = NumberToStr(NormalizeDouble(currMedian[i], digits[i]), priceFormats[i]);
+            sSpread = "("+ DoubleToStr((currAsk[i]-currBid[i])/pipSizes[i], 1) +")";
             if (isRecording[i]) /*&&*/ if (!isStale[i])
                fontColor = fontColor.recordingOn;
          }
@@ -786,31 +779,28 @@ bool UpdateIndexDisplay() {
  * @return bool - success status
  */
 bool RecordIndices() {
-   datetime now.fxt = GetFxtTime();
+   datetime nowFXT = GetFxtTime();
    int size = ArraySize(symbols);
 
    for (int i=0; i < size; i++) {
       if (isRecording[i] && !isStale[i]) {
-         double value     = NormalizeDouble(curr.median[i], digits[i]);
-         double lastValue = prev.median[i];
+         double value     = NormalizeDouble(currMedian[i], digits[i]);
+         double lastValue = prevMedian[i];
 
          // Virtual ticks (about 120 each minute) are recorded only if the current price changed. Real ticks are always recorded.
          if (Tick.isVirtual) {
             if (EQ(value, lastValue, digits[i])) {       // The first tick (lastValue==NULL) can't be tested and is always recorded.
-               //debug("RecordIndices(1)  Tick="+ Tick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (tick == lastTick)");
+               //debug("RecordIndices(1)  Tick="+ Tick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (same value as last tick)");
                continue;
             }
          }
-
          if (!hSet[i]) {
             hSet[i] = HistorySet1.Get(symbols[i], serverName);
             if (hSet[i] == -1)
                hSet[i] = HistorySet1.Create(symbols[i], longNames[i], digits[i], 400, serverName);     // format: 400
             if (!hSet[i]) return(false);
          }
-
-         //debug("RecordIndices(2)  Tick="+ Tick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
-         if (!HistorySet1.AddTick(hSet[i], now.fxt, value, NULL)) return(false);
+         if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false);
       }
    }
    return(true);
@@ -825,10 +815,10 @@ bool RecordIndices() {
 bool UpdateAccountDisplay() {
    if (mode.extern) {
       string text = "Limits:  "+ tradeAccount.name +", "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
-      ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
+      ObjectSetText(labelTradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
    else {
-      ObjectSetText(label.tradeAccount, " ", 1);
+      ObjectSetText(labelTradeAccount, " ", 1);
    }
 
    int error = GetLastError();
