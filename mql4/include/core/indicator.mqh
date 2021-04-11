@@ -1,7 +1,7 @@
 
 int __CoreFunction = NULL;                                           // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 
-extern string ___________________________;
+extern string _______________________________ = "";
 extern int    __lpSuperContext;
 
 // current price series

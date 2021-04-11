@@ -330,7 +330,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_DESCEND              MODE_DESC
 
 
-// Market info identifiers, siehe MarketInfo()
+// Market info identifiers, see MarketInfo()
 #define MODE_LOW                          1     // session low price (since midnight server time)
 #define MODE_HIGH                         2     // session high price (since midnight server time)
 //                                        3     // ?
