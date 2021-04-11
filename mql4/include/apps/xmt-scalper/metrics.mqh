@@ -1,11 +1,47 @@
 /**
- * Initialize processing of performance metrics.
+ * Management and processing of performance metrics
+ */
+
+#define METRIC_RC1      0              // real: cumulative PL in pip w/o commission
+#define METRIC_RC2      1              // real: cumulative PL in pip with commission
+#define METRIC_RC3      2              // real: cumulative PL in money w/o commission
+#define METRIC_RC4      3              // real: cumulative PL in money with commission
+#define METRIC_RD1      4              // real: daily PL in pip w/o commission
+#define METRIC_RD2      5              // real: daily PL in pip with commission
+#define METRIC_RD3      6              // real: daily PL in money w/o commission
+#define METRIC_RD4      7              // real: daily PL in money with commission
+
+#define METRIC_VC1      8              // virt: cumulative PL in pip w/o commission
+#define METRIC_VC2      9              // virt: cumulative PL in pip with commission
+#define METRIC_VC3     10              // virt: cumulative PL in money w/o commission
+#define METRIC_VC4     11              // virt: cumulative PL in money with commission
+#define METRIC_VD1     12              // virt: daily PL in pip w/o commission
+#define METRIC_VD2     13              // virt: daily PL in pip with commission
+#define METRIC_VD3     14              // virt: daily PL in money w/o commission
+#define METRIC_VD4     15              // virt: daily PL in money with commission
+
+
+bool   metrics.initialized;            // whether metrics metadata has been initialized
+string metrics.server = "XTrade-Testresults";
+int    metrics.format = 400;
+
+bool   metrics.enabled    [16];        // whether a specific metric is currently activated
+string metrics.symbol     [16];        // the symbol of a metric
+string metrics.description[16];        // the description of a metric
+int    metrics.digits     [16];        // the digits value of a metric
+bool   metrics.symbolOK   [16];        // whether the "symbols.raw" checkup of a metric was done
+int    metrics.hSet       [16];        // the HistorySet handle of a metric
+double metrics.hShift     [16];        // horizontal shift added to the history of a metric to prevent negative values
+
+
+/**
+ * Initialize/re-initialize metrics processing.
  *
  * @return bool - success status
  */
 bool InitMetrics() {
-   // metadata initialization is done only once
    if (!metrics.initialized) {
+      // metadata is initialized only once
       ArrayInitialize(metrics.enabled,   0);
       ArrayInitialize(metrics.symbolOK,  0);
       ArrayInitialize(metrics.hSet,      0);
@@ -32,7 +68,7 @@ bool InitMetrics() {
       metrics.initialized = true;
    }
 
-   // the metrics configuration is read and applied on each call
+   // the metrics configuration is read/applied on every call
    string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC2", true));
@@ -52,24 +88,10 @@ bool InitMetrics() {
    metrics.enabled[METRIC_VD3] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VD3", true));
    metrics.enabled[METRIC_VD4] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VD4", true));
 
-   InitHistory(METRIC_RC1);
-   InitHistory(METRIC_RC2);
-   InitHistory(METRIC_RC3);
-   InitHistory(METRIC_RC4);
-   InitHistory(METRIC_RD1);
-   InitHistory(METRIC_RD2);
-   InitHistory(METRIC_RD3);
-   InitHistory(METRIC_RD4);
-
-   InitHistory(METRIC_VC1);
-   InitHistory(METRIC_VC2);
-   InitHistory(METRIC_VC3);
-   InitHistory(METRIC_VC4);
-   InitHistory(METRIC_VD1);
-   InitHistory(METRIC_VD2);
-   InitHistory(METRIC_VD3);
-   InitHistory(METRIC_VD4);
-
+   int size = ArraySize(metrics.enabled);
+   for (int i=0; i < size; i++) {
+      InitMetricHistory(i);
+   }
    return(!catch("InitMetrics(1)"));
 }
 
@@ -77,45 +99,51 @@ bool InitMetrics() {
 /**
  * Open/close the history of the specified metric.
  *
- * @param  int metric - metric identifier
+ * @param  int mId - metric identifier
  *
  * @return bool - success status
  */
-bool InitHistory(int metric) {
-   if (!metrics.enabled[metric]) {
-      CloseHistorySet(metric);                                 // close the history
+bool InitMetricHistory(int mId) {
+   if (!metrics.enabled[mId]) {
+      CloseHistorySet(mId);                                       // close the history
       return(true);
    }
 
-   if (!metrics.symbolOK[metric]) {                            // create a new symbol if it doesn't exist
-      //CreateSymbol();
-      metrics.symbolOK[metric] = true;
+   if (!metrics.symbolOK[mId]) {
+      if (metrics.server != "") {
+         if (!IsSymbol(metrics.symbol[mId], metrics.server)) {    // create a new symbol if it doesn't yet exist
+            string group = "System metrics";
+            int sId = CreateSymbol(metrics.symbol[mId], metrics.description[mId], group, metrics.digits[mId], AccountCurrency(), AccountCurrency(), metrics.server);
+            if (sId < 0) return(false);
+         }
+      }
+      metrics.symbolOK[mId] = true;
    }
 
-   if (!metrics.hSet[metric])                                  // open the history
-      metrics.hSet[metric] = GetHistorySet(metric);
+   if (!metrics.hSet[mId])                                        // open the history
+      metrics.hSet[mId] = GetHistorySet(mId);
 
-   return(metrics.hSet[metric] != NULL);
+   return(metrics.hSet[mId] != NULL);
 }
 
 
 /**
  * Return a handle for the HistorySet of the specified metric.
  *
- * @param  int metric - metric identifier
+ * @param  int mId - metric identifier
  *
  * @return int - HistorySet handle or NULL in case of other errors
  */
-int GetHistorySet(int metric) {
+int GetHistorySet(int mId) {
    int hSet;
-   if      (metric <  6) hSet = HistorySet1.Get(metrics.symbol[metric], metrics.server);
-   else if (metric < 12) hSet = HistorySet2.Get(metrics.symbol[metric], metrics.server);
-   else                  hSet = HistorySet3.Get(metrics.symbol[metric], metrics.server);
+   if      (mId <  6) hSet = HistorySet1.Get(metrics.symbol[mId], metrics.server);
+   else if (mId < 12) hSet = HistorySet2.Get(metrics.symbol[mId], metrics.server);
+   else               hSet = HistorySet3.Get(metrics.symbol[mId], metrics.server);
 
    if (hSet == -1) {
-      if      (metric <  6) hSet = HistorySet1.Create(metrics.symbol[metric], metrics.description[metric], metrics.digits[metric], metrics.format, metrics.server);
-      else if (metric < 12) hSet = HistorySet2.Create(metrics.symbol[metric], metrics.description[metric], metrics.digits[metric], metrics.format, metrics.server);
-      else                  hSet = HistorySet3.Create(metrics.symbol[metric], metrics.description[metric], metrics.digits[metric], metrics.format, metrics.server);
+      if      (mId <  6) hSet = HistorySet1.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.format, metrics.server);
+      else if (mId < 12) hSet = HistorySet2.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.format, metrics.server);
+      else               hSet = HistorySet3.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.format, metrics.server);
    }
 
    if (hSet > 0)
@@ -127,19 +155,19 @@ int GetHistorySet(int metric) {
 /**
  * Close the HistorySet of the specified metric.
  *
- * @param  int metric - metric identifier
+ * @param  int mId - metric identifier
  *
  * @return bool - success status
  */
-bool CloseHistorySet(int metric) {
-   if (!metrics.hSet[metric]) return(true);
+bool CloseHistorySet(int mId) {
+   if (!metrics.hSet[mId]) return(true);
 
    bool success = false;
-   if      (metric <  6) success = HistorySet1.Close(metrics.hSet[metric]);
-   else if (metric < 12) success = HistorySet2.Close(metrics.hSet[metric]);
-   else                  success = HistorySet3.Close(metrics.hSet[metric]);
+   if      (mId <  6) success = HistorySet1.Close(metrics.hSet[mId]);
+   else if (mId < 12) success = HistorySet2.Close(metrics.hSet[mId]);
+   else               success = HistorySet3.Close(metrics.hSet[mId]);
 
-   metrics.hSet[metric] = NULL;
+   metrics.hSet[mId] = NULL;
    return(success);
 }
 

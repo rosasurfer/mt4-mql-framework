@@ -114,24 +114,6 @@ extern bool     TakeProfitBug                   = true;                       //
 #define SIGNAL_LONG                    1
 #define SIGNAL_SHORT                   2
 
-#define METRIC_RC1                     0        // real: cumulative PL in pip w/o commission
-#define METRIC_RC2                     1        // real: cumulative PL in pip with commission
-#define METRIC_RC3                     2        // real: cumulative PL in money w/o commission
-#define METRIC_RC4                     3        // real: cumulative PL in money with commission
-#define METRIC_RD1                     4        // real: daily PL in pip w/o commission
-#define METRIC_RD2                     5        // real: daily PL in pip with commission
-#define METRIC_RD3                     6        // real: daily PL in money w/o commission
-#define METRIC_RD4                     7        // real: daily PL in money with commission
-
-#define METRIC_VC1                     8        // virt: cumulative PL in pip w/o commission
-#define METRIC_VC2                     9        // virt: cumulative PL in pip with commission
-#define METRIC_VC3                    10        // virt: cumulative PL in money w/o commission
-#define METRIC_VC4                    11        // virt: cumulative PL in money with commission
-#define METRIC_VD1                    12        // virt: daily PL in pip w/o commission
-#define METRIC_VD2                    13        // virt: daily PL in pip with commission
-#define METRIC_VD3                    14        // virt: daily PL in money w/o commission
-#define METRIC_VD4                    15        // virt: daily PL in money with commission
-
 
 // general
 int      tradingMode;
@@ -233,19 +215,6 @@ datetime sessionbreak.starttime;                // configurable via inputs and f
 datetime sessionbreak.endtime;
 bool     sessionbreak.active;
 
-// performance metrics
-bool     metrics.initialized;                   // whether metrics metadata has been initialized
-string   metrics.server = "XTrade-Testresults";
-int      metrics.format = 400;
-
-bool     metrics.enabled    [16];               // whether a specific metric is currently activated
-string   metrics.symbol     [16];               // the symbol of a metric
-string   metrics.description[16];               // the description of a metric
-int      metrics.digits     [16];               // the digits value of a metric
-bool     metrics.symbolOK   [16];               // whether the "symbols.raw" checkup of a metric was done
-int      metrics.hSet       [16];               // the HistorySet handle of a metric
-double   metrics.hShift     [16];               // horizontal shift added to the history of a metric to prevent negative values
-
 // vars to speed-up status messages
 string   sTradingModeStatus[] = {"", "", ": Virtual Trading", ": Virtual Trading + Copier", ": Virtual Trading + Mirror"};
 string   sCurrentSpread       = "-";
@@ -260,10 +229,9 @@ string   sUnitSize            = "-";
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
 bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
 
-
+#include <apps/xmt-scalper/metrics.mqh>
 #include <apps/xmt-scalper/init.mqh>
 #include <apps/xmt-scalper/deinit.mqh>
-#include <apps/xmt-scalper/metrics.mqh>
 
 
 /**

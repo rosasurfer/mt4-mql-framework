@@ -4,7 +4,8 @@
  * @return int - error status
  */
 int onDeinit() {
-   for (int i=ArraySize(metrics.hSet); i >= 0; i--) {
+   int size = ArraySize(metrics.hSet);
+   for (int i=0; i < size; i++) {
       CloseHistorySet(i);
    }
 
