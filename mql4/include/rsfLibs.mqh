@@ -160,7 +160,7 @@
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
-   bool     EditFile (string filename   );
+   bool     EditFile(string filename);
    bool     EditFiles(string filenames[]);
 
 
@@ -208,6 +208,9 @@
    bool     SortOpenTickets(int keys[][]);
 
 #import "rsfLib1.ex4"
+   bool     IsSymbol(string symbol, string server = "");
+   int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");
+
    string   StdSymbol();                                                // alias of GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                           // alias of GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);

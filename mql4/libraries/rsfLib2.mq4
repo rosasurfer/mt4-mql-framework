@@ -1078,10 +1078,9 @@ int GetTerminalRuntime() {
 
 
 /**
- * Wird von Expert::Library::init() bei Reload der Library im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
- * zurückzusetzen.
+ * Custom handler called in tester from core/library::init() to reset global variables before the next test.
  */
-void Library.ResetGlobalVars() {
+void onLibraryInit() {
 }
 
 
