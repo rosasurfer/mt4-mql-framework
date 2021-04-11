@@ -18,21 +18,19 @@ int onInit() {
  * @return int - error status
  */
 int onInitUser() {
-   bool interactive = true;
-
    // check for a specified sequence id
-   if (ValidateInputs.SID(interactive)) {                      // on success a sequence id was specified and restored
+   if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
       SetLogfile(GetLogFilename());
 
       sequence.status = STATUS_WAITING;
-      if (!RestoreSequence(interactive)) SetLogfile("");
+      if (!RestoreSequence()) SetLogfile("");
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
       return(last_error);                                      // on error an invalid sequence id was specified
    }
 
-   if (ValidateInputs(interactive)) {
+   if (ValidateInputs()) {
       // create a new sequence
       if (!ConfirmFirstTickTrade("", "Do you really want to start a new sequence?"))   // TODO: this must be Confirm() only
          return(SetLastError(ERR_CANCELLED_BY_USER));
@@ -67,7 +65,7 @@ int onInitTemplate() {
    // restore sequence data from the chart
    if (RestoreChartStatus()) {
       SetLogfile(GetLogFilename());                            // on success a sequence id was restored
-      RestoreSequence(false);
+      RestoreSequence();
    }
    DeleteChartStatus();
    return(last_error);
@@ -80,12 +78,8 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitParameters() {
-   BackupInputStatus();                                        // input itself has been backed-up in onDeinitParameters()
-
-   bool interactive = true;
-   if (!ValidateInputs(interactive)) {
+   if (!ValidateInputs()) {
       RestoreInputs();
-      RestoreInputStatus();
       return(last_error);
    }
    if (sequence.status == STATUS_STOPPED) {

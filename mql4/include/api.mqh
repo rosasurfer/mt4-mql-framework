@@ -12,38 +12,38 @@
 string   GetAccountConfigPath(string company="", int account=NULL);;
 
 
-bool     IsConfigKey              (string section, string key);;
-bool     IsAccountConfigKey       (string section, string key);;
+bool     IsConfigKey               (string section, string key);;
+bool     IsAccountConfigKey        (string section, string key);;
 
-bool     GetConfigBool            (string section, string key, bool defaultValue = false);;
-bool     GetGlobalConfigBool      (string section, string key, bool defaultValue = false);;
-bool     GetLocalConfigBool       (string section, string key, bool defaultValue = false);;
-bool     GetAccountConfigBool     (string section, string key, bool defaultValue = false);;
+bool     GetConfigBool             (string section, string key, bool defaultValue = false);;
+bool     GetGlobalConfigBool       (string section, string key, bool defaultValue = false);;
+bool     GetTerminalConfigBool     (string section, string key, bool defaultValue = false);;
+bool     GetAccountConfigBool      (string section, string key, bool defaultValue = false);;
 
-color    GetConfigColor           (string section, string key, color defaultValue = CLR_NONE);;
-color    GetGlobalConfigColor     (string section, string key, color defaultValue = CLR_NONE);;
-color    GetLocalConfigColor      (string section, string key, color defaultValue = CLR_NONE);;
-color    GetAccountConfigColor    (string section, string key, color defaultValue = CLR_NONE);;
+color    GetConfigColor            (string section, string key, color defaultValue = CLR_NONE);;
+color    GetGlobalConfigColor      (string section, string key, color defaultValue = CLR_NONE);;
+color    GetTerminalConfigColor    (string section, string key, color defaultValue = CLR_NONE);;
+color    GetAccountConfigColor     (string section, string key, color defaultValue = CLR_NONE);;
 
-int      GetConfigInt             (string section, string key, int defaultValue = 0);;
-int      GetGlobalConfigInt       (string section, string key, int defaultValue = 0);;
-int      GetLocalConfigInt        (string section, string key, int defaultValue = 0);;
-int      GetAccountConfigInt      (string section, string key, int defaultValue = 0);;
+int      GetConfigInt              (string section, string key, int defaultValue = 0);;
+int      GetGlobalConfigInt        (string section, string key, int defaultValue = 0);;
+int      GetTerminalConfigInt      (string section, string key, int defaultValue = 0);;
+int      GetAccountConfigInt       (string section, string key, int defaultValue = 0);;
 
-double   GetConfigDouble          (string section, string key, double defaultValue = 0);;
-double   GetGlobalConfigDouble    (string section, string key, double defaultValue = 0);;
-double   GetLocalConfigDouble     (string section, string key, double defaultValue = 0);;
-double   GetAccountConfigDouble   (string section, string key, double defaultValue = 0);;
+double   GetConfigDouble           (string section, string key, double defaultValue = 0);;
+double   GetGlobalConfigDouble     (string section, string key, double defaultValue = 0);;
+double   GetTerminalConfigDouble   (string section, string key, double defaultValue = 0);;
+double   GetAccountConfigDouble    (string section, string key, double defaultValue = 0);;
 
-string   GetConfigString          (string section, string key, string defaultValue = "");;
-string   GetGlobalConfigString    (string section, string key, string defaultValue = "");;
-string   GetLocalConfigString     (string section, string key, string defaultValue = "");;
-string   GetAccountConfigString   (string section, string key, string defaultValue = "");;
+string   GetConfigString           (string section, string key, string defaultValue = "");;
+string   GetGlobalConfigString     (string section, string key, string defaultValue = "");;
+string   GetTerminalConfigString   (string section, string key, string defaultValue = "");;
+string   GetAccountConfigString    (string section, string key, string defaultValue = "");;
 
-string   GetConfigStringRaw       (string section, string key, string defaultValue = "");;
-string   GetGlobalConfigStringRaw (string section, string key, string defaultValue = "");;
-string   GetLocalConfigStringRaw  (string section, string key, string defaultValue = "");;
-string   GetAccountConfigStringRaw(string section, string key, string defaultValue = "");;
+string   GetConfigStringRaw        (string section, string key, string defaultValue = "");;
+string   GetGlobalConfigStringRaw  (string section, string key, string defaultValue = "");;
+string   GetTerminalConfigStringRaw(string section, string key, string defaultValue = "");;
+string   GetAccountConfigStringRaw (string section, string key, string defaultValue = "");;
 
 bool     GetIniBool  (string fileName, string section, string key, bool   defaultValue = false);;
 color    GetIniColor (string fileName, string section, string key, color  defaultValue = CLR_NONE);;
@@ -497,8 +497,6 @@ string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 
 
 // libraries/rsfHistory1.ex4
-int      CreateSymbol1(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
-
 int      HistoryFile1.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
 bool     HistoryFile1.Close    (int hFile);;
 int      HistoryFile1.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
@@ -516,8 +514,6 @@ bool     HistorySet1.AddTick(int hSet, datetime time, double value, int flags = 
 
 
 // libraries/rsfHistory2.ex4
-int      CreateSymbol2(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
-
 int      HistoryFile2.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
 bool     HistoryFile2.Close    (int hFile);;
 int      HistoryFile2.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
@@ -535,8 +531,6 @@ bool     HistorySet2.AddTick(int hSet, datetime time, double value, int flags = 
 
 
 // libraries/rsfHistory3.ex4
-int      CreateSymbol3(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");;
-
 int      HistoryFile3.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");;
 bool     HistoryFile3.Close    (int hFile);;
 int      HistoryFile3.FindBar  (int hFile, datetime time, bool lpBarExists[]);;
@@ -604,6 +598,7 @@ bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);;
 bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
+int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");;
 string   CreateTempFile(string path, string prefix = "");;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;
@@ -674,6 +669,7 @@ bool     IsReverseIndexedBoolArray(bool &array[]);;
 bool     IsReverseIndexedDoubleArray(double &array[]);;
 bool     IsReverseIndexedIntArray(int &array[]);;
 bool     IsReverseIndexedStringArray(string &array[]);;
+bool     IsSymbol(string symbol, string server = "");;
 bool     IsTemporaryTradeError(int error);;
 int      MergeBoolArrays(bool &array1[], bool &array2[], bool &merged[]);;
 int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[]);;
@@ -839,7 +835,6 @@ string   GetIniStringA(string fileName, string section, string key, string defau
 string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);;
 int      GetIntsAddress(int &array[]);;
 int      GetLastWin32Error();;
-string   GetLocalConfigPathA();;
 datetime GetLocalTime();;
 string   GetMqlDirectoryA();;
 string   GetReparsePointTargetA(string name);;
@@ -848,6 +843,7 @@ string   GetStringW(int address);;
 int      GetStringAddress(string value);;
 int      GetStringsAddress(string &values[]);;
 int      GetTerminalBuild();;
+string   GetTerminalConfigPathA();;
 int      GetTerminalMainWindow();;
 string   GetTerminalCommonDataPathA();;
 string   GetTerminalDataPathA();;
@@ -872,9 +868,9 @@ bool     IsGlobalConfigKeyA(string section, string key);;
 bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSectionA(string fileName, string section);;
 bool     IsJunctionA(string name);;
-bool     IsLocalConfigKeyA(string section, string key);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlinkA(string name);;
+bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUIThread(int threadId = NULL);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;

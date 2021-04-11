@@ -18,9 +18,6 @@
  * terminal will not convert those files.
  */
 #import "rsfHistory1.ex4"
-   // symbol management
-   int  CreateSymbol1(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");
-
    // history set management (1 set manages 9 history files)
    int  HistorySet1.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet1.Get    (string symbol, string server = "");
@@ -39,9 +36,6 @@
    bool HistoryFile1.AddTick  (int hFile, datetime time, double value, int flags = NULL);
 
 #import "rsfHistory2.ex4"
-   // symbol management
-   int  CreateSymbol2(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");
-
    // history set management (1 set manages 9 history files)
    int  HistorySet2.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet2.Get    (string symbol, string server = "");
@@ -60,9 +54,6 @@
    bool HistoryFile2.AddTick  (int hFile, datetime time, double value, int flags = NULL);
 
 #import "rsfHistory3.ex4"
-   // symbol management
-   int  CreateSymbol3(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName = "");
-
    // history set management (1 set manages 9 history files)
    int  HistorySet3.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet3.Get    (string symbol, string server = "");
