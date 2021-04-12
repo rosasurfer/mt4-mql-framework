@@ -7510,10 +7510,10 @@ string CreateTempFile(string path, string prefix="") {
  *
  * @return bool
  */
-bool IsSymbol(string symbol, string server = "") {
-   if (!StringLen(symbol))                    return(!catch("IsSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("IsSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
-   if (StrContains(symbol, " "))              return(!catch("IsSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+bool IsRawSymbol(string symbol, string server = "") {
+   if (!StringLen(symbol))                    return(!catch("IsRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("IsRawSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("IsRawSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
 
    if (server == "0") server = "";     // (string) NULL
    if (server == "")  server = GetAccountServer(); if (server == "") return(false);
@@ -7522,19 +7522,19 @@ bool IsSymbol(string symbol, string server = "") {
    string mqlFileName = "history\\"+ server +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("IsSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
 
    // validate the file size
    int fileSize = FileSize(hFile);
    if (!fileSize)                   { FileClose(hFile); return(false); }
-   if (fileSize % SYMBOL.size != 0) { FileClose(hFile); return(!catch("IsSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL.size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
 
    // read all symbols
    int symbolsCount = fileSize/SYMBOL.size;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
    int dwords = FileReadArray(hFile, symbols, 0, fileSize/4);
    error = GetLastError();
-   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
 
    // check for the specified symbol
    bool found = false;
