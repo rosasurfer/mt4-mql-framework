@@ -7593,7 +7593,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
 
    // create symbol
    /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL.size);
-   if (!SetSymbolTemplate                  (iSymbol, SYMBOL_TYPE_INDEX))             return(-1);
+   if (!SetRawSymbolTemplate               (iSymbol, SYMBOL_TYPE_INDEX))             return(-1);
    if (!StringLen(symbol_SetName           (iSymbol, symbol           )))            return(_EMPTY(catch("CreateRawSymbol(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
    if (!StringLen(symbol_SetDescription    (iSymbol, description      )))            return(_EMPTY(catch("CreateRawSymbol(6)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
    if (          !symbol_SetDigits         (iSymbol, digits           ))             return(_EMPTY(catch("CreateRawSymbol(7)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
@@ -7812,7 +7812,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  *
  * @return bool - Erfolgsstatus
  */
-bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
+bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Parameter validieren und Template-Datei bestimmen
    string fileName;
    switch (type) {
@@ -7821,7 +7821,7 @@ bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
       case SYMBOL_TYPE_INDEX  : fileName = "templates/SYMBOL_TYPE_INDEX.raw";   break;
       case SYMBOL_TYPE_FUTURES: fileName = "templates/SYMBOL_TYPE_FUTURES.raw"; break;
 
-      default: return(!catch("SetSymbolTemplate(1)  invalid parameter type = "+ type +" (not a symbol type)", ERR_INVALID_PARAMETER));
+      default: return(!catch("SetRawSymbolTemplate(1)  invalid parameter type = "+ type +" (not a symbol type)", ERR_INVALID_PARAMETER));
    }
 
    // Template-File auf Existenz prüfen                              // Extra-Prüfung, da bei Read-only-Zugriff FileOpen() bei nicht existierender
@@ -7831,10 +7831,10 @@ bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Datei öffnen und Größe validieren
    int hFile = FileOpen(fileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)       return(!catch("SetSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || hFile <= 0)       return(!catch("SetRawSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize != SYMBOL.size) {
-      FileClose(hFile);                    return(!catch("SetSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile);                    return(!catch("SetRawSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // Datei in das übergebene Symbol einlesen
@@ -7842,7 +7842,7 @@ bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    int ints = FileReadArray(hFile, symbol, 0, fileSize/4);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=fileSize/4) return(!catch("SetSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=fileSize/4) return(!catch("SetRawSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
