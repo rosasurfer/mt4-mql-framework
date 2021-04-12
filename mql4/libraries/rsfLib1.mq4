@@ -7602,7 +7602,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    if (           symbol_SetGroup          (iSymbol, groupIndex       ) < 0)         return(_EMPTY(catch("CreateRawSymbol(10)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
    if (           symbol_SetBackgroundColor(iSymbol, groupColor       ) == CLR_NONE) return(_EMPTY(catch("CreateRawSymbol(11)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
-   if (!InsertSymbol(iSymbol, server)) return(-1);
+   if (!InsertRawSymbol(iSymbol, server)) return(-1);
    return(symbol_Id(iSymbol));
 }
 
@@ -7706,10 +7706,10 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  *
  * @return bool - Erfolgsstatus
  */
-bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
-   if (ArraySize(symbol) != SYMBOL.intSize)                                        return(!catch("InsertSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL.intSize)", ERR_RUNTIME_ERROR));
+bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
+   if (ArraySize(symbol) != SYMBOL.intSize)                                        return(!catch("InsertRawSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL.intSize)", ERR_RUNTIME_ERROR));
    string name, newName=symbol_Name(symbol);
-   if (!StringLen(newName))                                                        return(!catch("InsertSymbol(2)  invalid parameter symbol[], SYMBOL.name = "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
+   if (!StringLen(newName))                                                        return(!catch("InsertRawSymbol(2)  invalid parameter symbol[], SYMBOL.name = "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
    if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
 
@@ -7718,10 +7718,10 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string mqlFileName = "history\\"+ serverName +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("InsertSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL.size != 0) {
-      FileClose(hFile); return(!catch("InsertSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
    int symbolsSize=fileSize/SYMBOL.size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -7730,17 +7730,17 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
       // (1.2) vorhandene Symbole einlesen
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
 
       // (1.3) sicherstellen, daß das neue Symbol noch nicht existiert und größte Symbol-ID finden
       for (int i=0; i < symbolsSize; i++) {
-         if (symbols_Name(symbols, i) == newName) { FileClose(hFile); return(!catch("InsertSymbol(6)   a symbol named "+ DoubleQuoteStr(newName) +" already exists", ERR_RUNTIME_ERROR)); }
+         if (symbols_Name(symbols, i) == newName) { FileClose(hFile); return(!catch("InsertRawSymbol(6)   a symbol named "+ DoubleQuoteStr(newName) +" already exists", ERR_RUNTIME_ERROR)); }
          maxId = Max(maxId, symbols_Id(symbols, i));
       }
    }
 
    // (2) neue Symbol-ID setzen und Symbol am Ende anfügen
-   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertSymbol(7)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
+   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertRawSymbol(7)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
 
    ArrayResize(symbols, (symbolsSize+1)*SYMBOL.intSize);
    i = symbolsSize;
@@ -7751,14 +7751,14 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
 
 
    // (3) Array sortieren und Symbole speichern                      // TODO: "symbols.sel" synchronisieren oder löschen
-   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertSymbol(8)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertRawSymbol(8)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
 
-   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertRawSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
    int elements = symbolsSize * SYMBOL.size / 4;
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (error || ints!=elements)                                return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
