@@ -598,7 +598,7 @@ bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);;
 bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
-int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");;
+int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");;
 string   CreateTempFile(string path, string prefix = "");;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;

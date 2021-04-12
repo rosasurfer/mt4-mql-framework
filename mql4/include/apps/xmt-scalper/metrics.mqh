@@ -112,7 +112,7 @@ bool InitMetricHistory(int mId) {
       if (metrics.server != "") {
          if (!IsRawSymbol(metrics.symbol[mId], metrics.server)) {    // create a new symbol if it doesn't yet exist
             string group = "System metrics";
-            int sId = CreateSymbol(metrics.symbol[mId], metrics.description[mId], group, metrics.digits[mId], AccountCurrency(), AccountCurrency(), metrics.server);
+            int sId = CreateRawSymbol(metrics.symbol[mId], metrics.description[mId], group, metrics.digits[mId], AccountCurrency(), AccountCurrency(), metrics.server);
             if (sId < 0) return(false);
          }
       }
