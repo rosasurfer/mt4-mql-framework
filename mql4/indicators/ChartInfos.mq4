@@ -373,7 +373,7 @@ bool ToggleOpenOrders() {
 /**
  * Display the currently open orders.
  *
- * @return int - amount of displayed orders or -1 (EMPTY) in case of an error
+ * @return int - amount of displayed orders or EMPTY (-1) in case of an error
  */
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
@@ -660,7 +660,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 /**
  * Display the currently available trade history.
  *
- * @return int - amount of displayed closed positions or -1 (EMPTY) in case of an error
+ * @return int - amount of displayed closed positions or EMPTY (-1) in case of an error
  */
 int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};

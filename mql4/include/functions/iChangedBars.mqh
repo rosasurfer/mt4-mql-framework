@@ -11,7 +11,7 @@
  * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
  * @param  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
  *
- * @return int - number of changed bars or -1 (EMPTY) in case of errors
+ * @return int - number of changed bars or EMPTY (-1) in case of errors
  */
 int iChangedBars(string symbol="0", int timeframe=NULL) {
    if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(_EMPTY(catch("iChangedBars(1)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE)));

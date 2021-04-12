@@ -647,7 +647,7 @@ bool HistoryFile2.Close(int hFile) {
  *                                         • TRUE:  Bar existiert          @see  HistoryFile2.UpdateBar() und HistoryFile2.WriteBar()
  *                                         • FALSE: Bar existiert nicht    @see  HistoryFile2.InsertBar()
  *
- * @return int - Bar-Offset relativ zum Dateiheader (Offset 0 ist die älteste Bar) oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Bar-Offset relativ zum Dateiheader (Offset 0 ist die älteste Bar) oder EMPTY (-1), falls ein Fehler auftrat
  */
 int HistoryFile2.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    /**
