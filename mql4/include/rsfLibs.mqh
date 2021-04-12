@@ -209,7 +209,7 @@
 
 #import "rsfLib1.ex4"
    bool     IsRawSymbol(string symbol, string server = "");
-   int      CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");
+   int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");
 
    string   StdSymbol();                                                // alias of GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                           // alias of GetStandardSymbolOrAlt(symbol, symbol)
