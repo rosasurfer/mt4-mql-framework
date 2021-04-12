@@ -2182,7 +2182,7 @@ bool StrIsPhoneNumber(string value) {
  * @param  string array[] - String-Array
  * @param  string value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
  *
  * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
@@ -2246,7 +2246,7 @@ int StrToLogLevel(string value, int flags = NULL) {
  * @param  string value            - string representation of a Moving-Average type
  * @param  int    flags [optional] - execution control: errors to set silently (default: none)
  *
- * @return int - Moving-Average type constant oder -1 (EMPTY) in case of errors
+ * @return int - Moving-Average type constant oder EMPTY (-1) in case of errors
  */
 int StrToMaMethod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -4788,7 +4788,7 @@ int StrToOperationType(string value) {
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "L" = "Long"
  *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
- * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
+ * @return int - trade direction constant or EMPTY (-1) if the value is not recognized
  */
 int StrToTradeDirection(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -5289,7 +5289,7 @@ string HistoryFlagsToStr(int flags) {
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
  *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
- * @return int - price type constant or -1 (EMPTY) if the value is not recognized
+ * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
 int StrToPriceType(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -5460,7 +5460,7 @@ string PriceTypeDescription(int type) {
  *                                   F_CUSTOM_TIMEFRAME:      enable support of custom timeframes
  *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
  *
- * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
+ * @return int - timeframe constant or EMPTY (-1) if the value is not recognized
  */
 int StrToPeriod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));

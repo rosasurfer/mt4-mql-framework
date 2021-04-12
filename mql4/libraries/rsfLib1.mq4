@@ -932,7 +932,7 @@ int ArraySetInts(int array[][], int offset, int values[]) {
  * @param  bool array[] - Boolean-Array
  * @param  bool value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushBool(bool &array[], bool value) {
    value = value!=0;
@@ -953,7 +953,7 @@ int ArrayPushBool(bool &array[], bool value) {
  * @param  int array[] - Integer-Array
  * @param  int value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushInt(int &array[], int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayPushInt()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -972,7 +972,7 @@ int ArrayPushInt(int &array[], int value) {
  * @param  int array[][] - zu erweiterndes Array ein-dimensionaler Arrays
  * @param  int value[]   - hinzuzufügendes Array (Größe muß zum zu erweiternden Array passen)
  *
- * @return int - neue Größe der ersten Dimension des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe der ersten Dimension des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushInts(int array[][], int value[]) {
    if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushInts(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -995,7 +995,7 @@ int ArrayPushInts(int array[][], int value[]) {
  * @param  double array[] - Double-Array
  * @param  double value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushDouble(double &array[], double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayPushDouble()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1014,7 +1014,7 @@ int ArrayPushDouble(double &array[], double value) {
  * @param  string array[] - String-Array
  * @param  string value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushString(string &array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayPushString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1116,7 +1116,7 @@ string ArrayPopString(string array[]) {
  * @param  bool array[] - Boolean-Array
  * @param  bool value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayUnshiftBool(bool array[], bool value) {
    value = value!=0;
@@ -1136,7 +1136,7 @@ int ArrayUnshiftBool(bool array[], bool value) {
  * @param  int array[] - Integer-Array
  * @param  int value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayUnshiftInt(int array[], int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftInt()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1154,7 +1154,7 @@ int ArrayUnshiftInt(int array[], int value) {
  * @param  double array[] - Double-Array
  * @param  double value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayUnshiftDouble(double array[], double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftDouble()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1267,7 +1267,7 @@ string ArrayShiftString(string array[]) {
  * @param  bool array[] - Boolean-Array
  * @param  bool value   - zu entfernendes Element
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayDropBool(bool array[], bool value) {
    value = value!=0;
@@ -1296,7 +1296,7 @@ int ArrayDropBool(bool array[], bool value) {
  * @param  int array[] - Integer-Array
  * @param  int value   - zu entfernendes Element
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayDropInt(int array[], int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropInt()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1323,7 +1323,7 @@ int ArrayDropInt(int array[], int value) {
  * @param  double array[] - Double-Array
  * @param  double value   - zu entfernendes Element
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayDropDouble(double array[], double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropDouble()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1350,7 +1350,7 @@ int ArrayDropDouble(double array[], double value) {
  * @param  string array[] - String-Array
  * @param  string value   - zu entfernendes Element
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayDropString(string array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1391,7 +1391,7 @@ int ArrayDropString(string array[], string value) {
  * @param  int  offset  - Startindex zu entfernender Elemente
  * @param  int  length  - Anzahl der zu entfernenden Elemente
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArraySpliceBools(bool array[], int offset, int length) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArraySpliceBools(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1422,7 +1422,7 @@ int ArraySpliceBools(bool array[], int offset, int length) {
  * @param  int offset    - Startindex der zu entfernenden Elemente
  * @param  int length    - Anzahl der zu entfernenden Elemente
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArraySpliceInts(int array[], int offset, int length) {
    int dims = ArrayDimension(array);
@@ -1458,7 +1458,7 @@ int ArraySpliceInts(int array[], int offset, int length) {
  * @param  int    offset  - Startindex zu entfernender Elemente
  * @param  int    length  - Anzahl der zu entfernenden Elemente
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArraySpliceDoubles(double array[], int offset, int length) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArraySpliceDoubles(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1489,7 +1489,7 @@ int ArraySpliceDoubles(double array[], int offset, int length) {
  * @param  int    offset  - Startindex zu entfernender Elemente
  * @param  int    length  - Anzahl der zu entfernenden Elemente
  *
- * @return int - Anzahl der entfernten Elemente oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArraySpliceStrings(string array[], int offset, int length) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArraySpliceStrings(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1520,7 +1520,7 @@ int ArraySpliceStrings(string array[], int offset, int length) {
  * @param  int  offset  - Position, an dem das Element eingefügt werden soll
  * @param  bool value   - einzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertBool(bool &array[], int offset, bool value) {
    value = value!=0;
@@ -1553,7 +1553,7 @@ int ArrayInsertBool(bool &array[], int offset, bool value) {
  * @param  int offset  - Position, an dem das Element eingefügt werden soll
  * @param  int value   - einzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertInt(int &array[], int offset, int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertInt(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1584,7 +1584,7 @@ int ArrayInsertInt(int &array[], int offset, int value) {
  * @param  int    offset  - Position, an dem das Element eingefügt werden soll
  * @param  double value   - einzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDouble(double &array[], int offset, double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertDouble(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1615,7 +1615,7 @@ int ArrayInsertDouble(double &array[], int offset, double value) {
  * @param  int  offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  bool values[] - einzufügende Elemente
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertBools(bool array[], int offset, bool values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertBools(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1652,7 +1652,7 @@ int ArrayInsertBools(bool array[], int offset, bool values[]) {
  * @param  int offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  int values[] - einzufügende Elemente
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertInts(int array[], int offset, int values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertInts(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1689,7 +1689,7 @@ int ArrayInsertInts(int array[], int offset, int values[]) {
  * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  double values[] - einzufügende Elemente
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDoubles(double array[], int offset, double values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertDoubles(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1797,7 +1797,7 @@ bool StringInArrayI(string haystack[], string needle) {
  * @param  bool haystack[] - zu durchsuchendes Array
  * @param  bool needle     - zu suchender Wert
  *
- * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
+ * @return int - Index des ersten Vorkommen des Wertes oder EMPTY (-1), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchBoolArray(bool haystack[], bool needle) {
    needle = needle!=0;
@@ -1819,7 +1819,7 @@ int SearchBoolArray(bool haystack[], bool needle) {
  * @param  int haystack[] - zu durchsuchendes Array
  * @param  int needle     - zu suchender Wert
  *
- * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
+ * @return int - Index des ersten Vorkommen des Wertes oder EMPTY (-1), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchIntArray(int haystack[], int needle) {
    if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchIntArray(1)  too many dimensions of parameter haystack: "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1839,7 +1839,7 @@ int SearchIntArray(int haystack[], int needle) {
  * @param  double haystack[] - zu durchsuchendes Array
  * @param  double needle     - zu suchender Wert
  *
- * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
+ * @return int - Index des ersten Vorkommen des Wertes oder EMPTY (-1), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchDoubleArray(double haystack[], double needle) {
    if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchDoubleArray()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1859,7 +1859,7 @@ int SearchDoubleArray(double haystack[], double needle) {
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
  *
- * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
+ * @return int - Index des ersten Vorkommen des Wertes oder EMPTY (-1), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchStringArray(string haystack[], string needle) {
    if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchStringArray()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1879,7 +1879,7 @@ int SearchStringArray(string haystack[], string needle) {
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
  *
- * @return int - Index des ersten Vorkommen des Wertes oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
+ * @return int - Index des ersten Vorkommen des Wertes oder EMPTY (-1), wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchStringArrayI(string haystack[], string needle) {
    if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchStringArrayI()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2026,7 +2026,7 @@ bool IsReverseIndexedStringArray(string array[]) {
  * @param  bool array2[] - Boolean-Array
  * @param  bool merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeBoolArrays(1)  too many dimensions of parameter array1 = "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2061,7 +2061,7 @@ int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
  * @param  int array2[] - Integer-Array
  * @param  int merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeIntArrays(int array1[], int array2[], int merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeIntArrays(1)  too many dimensions of parameter array1 = "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2096,7 +2096,7 @@ int MergeIntArrays(int array1[], int array2[], int merged[]) {
  * @param  double array2[] - Double-Array
  * @param  double merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeDoubleArrays(1)  too many dimensions of parameter array1 = "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2131,7 +2131,7 @@ int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
  * @param  string array2[] - String-Array
  * @param  string merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeStringArrays(string array1[], string array2[], string merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeStringArrays(1)  too many dimensions of parameter array1 = "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2356,7 +2356,7 @@ string __BuffersToHexStr(int buffer[][]) {
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int pos      - Zeichen-Position
  *
- * @return int - Zeichen-Code oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Zeichen-Code oder EMPTY (-1), falls ein Fehler auftrat
  */
 int BufferGetChar(int buffer[], int pos) {
    int chars = ArraySize(buffer) << 2;
@@ -2688,7 +2688,7 @@ int WinExecWait(string cmdLine, int cmdShow) {
  * @param  string result[]                  - array receiving the read lines
  * @param  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
  *
- * @return int - number of lines returned in result[] or -1 (EMPTY) in case of errors
+ * @return int - number of lines returned in result[] or EMPTY (-1) in case of errors
  */
 int FileReadLines(string filename, string result[], bool skipEmptyLines = false) {
    skipEmptyLines = skipEmptyLines!=0;
@@ -4128,7 +4128,7 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  * @param  _Out_ string results[]        - Zielarray für die Teilstrings
  * @param  _In_  int    limit [optional] - maximale Anzahl von Teilstrings (default: kein Limit)
  *
- * @return int - Anzahl der Teilstrings oder -1 (EMPTY), wennn ein Fehler auftrat
+ * @return int - Anzahl der Teilstrings oder EMPTY (-1), wennn ein Fehler auftrat
  */
 int Explode(string input, string separator, string &results[], int limit = NULL) {
    // Der Parameter input *könnte* eine Referenz auf ein Element des Ergebnisarrays results[] sein, daher erstellen wir
@@ -4613,7 +4613,7 @@ datetime ServerToGmtTime(datetime serverTime) {
  *                              FF_FILESONLY: return only file entries which match the pattern      (default: all entries)
  *                              FF_SORT:      sort returned entries                                 (default: NTFS: sorting, FAT: no sorting)
  *
- * @return int - Anzahl der gefundenen Einträge oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der gefundenen Einträge oder EMPTY (-1), falls ein Fehler auftrat
  */
 int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
    if (!StringLen(pattern)) return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
@@ -4659,7 +4659,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
  * @param  int green - Grünanteil (0-255)
  * @param  int blue  - Blauanteil (0-255)
  *
- * @return color - Farbe oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return color - Farbe oder EMPTY (-1), falls ein Fehler auftrat
  *
  * Beispiel: RGB(255, 255, 255) => 0x00FFFFFF (weiß)
  */
@@ -4735,7 +4735,7 @@ int RGBToHSL(color rgb, double &hsl[], bool human = false) {
  *
  * @param  double hsl[] - array holding HSL color components (hue, saturation, lightness) in the range 0...1
  *
- * @return color - RGB color or -1 (EMPTY) in case of errors
+ * @return color - RGB color or EMPTY (-1) in case of errors
  */
 color HSLToRGB(double hsl[3]) {
    if (ArrayDimension(hsl) != 1) return(_EMPTY(catch("HSLToRGB(1)  illegal parameter hsl (dimensions = "+ ArrayDimension(hsl) +")", ERR_INCOMPATIBLE_ARRAYS)));
@@ -4792,7 +4792,7 @@ color HSLToRGB(double hsl[3]) {
  * @param  double saturation - adjustment from -100% to positive infinite (NULL for no change)
  * @param  double lightness  - adjustment from -100% to positive infinite (NULL for no change)
  *
- * @return color - adjusted color or -1 (EMPTY) in case of errors
+ * @return color - adjusted color or EMPTY (-1) in case of errors
  *
  * Example:
  * --------
@@ -7615,7 +7615,7 @@ int CreateSymbol(string symbol, string description, string group, int digits, st
  * @param  string description - Gruppenbeschreibung
  * @param  color  bgColor     - Hintergrundfarbe der Symbolgruppe im "Market Watch"-Window
  *
- * @return int - Index der Gruppe innerhalb der Liste oder -1 (EMPTY), falls ein Fehler auftrat (z.B. wenn die angegebene Gruppe bereits existiert)
+ * @return int - Index der Gruppe innerhalb der Liste oder EMPTY (-1), falls ein Fehler auftrat (z.B. wenn die angegebene Gruppe bereits existiert)
  */
 int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, color bgColor) {
    int byteSize = ArraySize(sgs) * 4;
@@ -7664,7 +7664,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
  * @param  SYMBOL_GROUP sgs[]      - Array zur Aufnahme der eingelesenen Symbolgruppen
  * @param  string       serverName - Name des AccountServers (default: der aktuelle AccountServer)
  *
- * @return int - Anzahl der gelesenen Gruppen oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der gelesenen Gruppen oder EMPTY (-1), falls ein Fehler auftrat
  */
 int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (serverName == "0")      serverName = "";                      // (string) NULL

@@ -1,7 +1,6 @@
 /**
- * Management and processing of performance metrics
+ * Management and processing of system performance metrics
  */
-
 #define METRIC_RC1      0              // real: cumulative PL in pip w/o commission
 #define METRIC_RC2      1              // real: cumulative PL in pip with commission
 #define METRIC_RC3      2              // real: cumulative PL in money w/o commission
