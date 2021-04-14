@@ -1,6 +1,9 @@
 /**
  * TMA Channel
  *
+ * @see  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html
+ * @see  https://www.mql5.com/en/forum/181241
+ * @see  https://forex-station.com/viewtopic.php?f=579496&t=8423458
  * @see  https://www.forexfactory.com/thread/922947-lazytma-trading
  */
 #include <stddefines.mqh>
@@ -27,7 +30,7 @@ extern bool   alertsOn        = false;
 #property indicator_color3  PowderBlue
 #property indicator_color4  Magenta
 #property indicator_color5  Magenta
-#property indicator_style1  STYLE_SOLID
+#property indicator_style1  STYLE_DOT
 #property indicator_width1  1
 #property indicator_width2  3
 #property indicator_width3  3
@@ -85,8 +88,8 @@ int onTick() {
    }
 
    if (alertsOn) {
-      if (Close[0] > upBuffer[0] && Close[1] < upBuffer[1]) doAlert("price crossed upper channel band");
-      if (Close[0] < dnBuffer[0] && Close[1] > dnBuffer[1]) doAlert("price crossed lower channel band");
+      if (Close[0] >= upBuffer[0] && Close[1] < upBuffer[1]) doAlert("upper channel band crossed");
+      if (Close[0] <= dnBuffer[0] && Close[1] > dnBuffer[1]) doAlert("lower channel band crossed");
    }
    return(0);
 }
@@ -97,49 +100,48 @@ int onTick() {
  */
 void calculateTma(int limit) {
    int j, k;
-   double FullLength = 2.0*HalfLength + 1;
+   double FullLength = 2*HalfLength + 1;
 
    for (int i=limit; i >= 0; i--) {
-      double sum  = (HalfLength+1) * iMA(NULL, 0, 1, 0, MODE_SMA, Price, i);
+      double sum  = (HalfLength+1) * iMA(NULL, NULL, 1, 0, MODE_SMA, Price, i);
       double sumw = (HalfLength+1);
 
       for (j=1, k=HalfLength; j<=HalfLength; j++, k--) {
-         sum  += k * iMA(NULL, 0, 1, 0, MODE_SMA, Price, i+j);
+         sum  += k * iMA(NULL, NULL, 1, 0, MODE_SMA, Price, i+j);
          sumw += k;
          if (j <= i) {
-            sum  += k * iMA(NULL, 0, 1, 0, MODE_SMA, Price, i-j);
+            sum  += k * iMA(NULL, NULL, 1, 0, MODE_SMA, Price, i-j);
             sumw += k;
          }
       }
       tmBuffer[i] = sum/sumw;
-      double diff = iMA(NULL, 0, 1, 0, MODE_SMA, Price, i) - tmBuffer[i];
 
-      if (i > (Bars-HalfLength-1)) continue;
+      double diff = iMA(NULL, NULL, 1, 0, MODE_SMA, Price, i) - tmBuffer[i];
 
-      if (i == (Bars-HalfLength-1)) {
+      if (i == Bars-HalfLength-1) {
          upBuffer[i] = tmBuffer[i];
          dnBuffer[i] = tmBuffer[i];
          if (diff >= 0) {
-            wuBuffer[i] = MathPow(diff,2);
+            wuBuffer[i] = MathPow(diff, 2);
             wdBuffer[i] = 0;
          }
          else {
-            wdBuffer[i] = MathPow(diff,2);
             wuBuffer[i] = 0;
+            wdBuffer[i] = MathPow(diff, 2);
          }
-         continue;
       }
-
-      if (diff >= 0) {
-         wuBuffer[i] = (wuBuffer[i+1]*(FullLength-1)+MathPow(diff,2))/FullLength;
-         wdBuffer[i] =  wdBuffer[i+1]*(FullLength-1)/FullLength;
+      else if (i < Bars-HalfLength-1) {
+         if (diff >= 0) {
+            wuBuffer[i] = (wuBuffer[i+1] * (FullLength-1) + MathPow(diff, 2)) /FullLength;
+            wdBuffer[i] =  wdBuffer[i+1] * (FullLength-1)                     /FullLength;
+         }
+         else {
+            wuBuffer[i] =  wuBuffer[i+1] * (FullLength-1)                     /FullLength;
+            wdBuffer[i] = (wdBuffer[i+1] * (FullLength-1) + MathPow(diff, 2)) /FullLength;
+         }
+         upBuffer[i] = tmBuffer[i] + BandsDeviations * MathSqrt(wuBuffer[i]);
+         dnBuffer[i] = tmBuffer[i] - BandsDeviations * MathSqrt(wdBuffer[i]);
       }
-      else {
-         wdBuffer[i] = (wdBuffer[i+1]*(FullLength-1)+MathPow(diff,2))/FullLength;
-         wuBuffer[i] =  wuBuffer[i+1]*(FullLength-1)/FullLength;
-      }
-      upBuffer[i] = tmBuffer[i] + BandsDeviations*MathSqrt(wuBuffer[i]);
-      dnBuffer[i] = tmBuffer[i] - BandsDeviations*MathSqrt(wdBuffer[i]);
    }
 }
 
