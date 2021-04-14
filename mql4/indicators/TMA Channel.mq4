@@ -154,6 +154,6 @@ void doAlert(string msg) {
    if (Time[0]!=lastTime || msg!=lastMsg) {
       lastTime = Time[0];
       lastMsg  = msg;
-      Alert(Symbol() +" at "+ TimeToStr(TimeLocal(), TIME_SECONDS) +": "+ msg);
+      logNotice("doAlert(1)  "+ msg);
    }
 }
