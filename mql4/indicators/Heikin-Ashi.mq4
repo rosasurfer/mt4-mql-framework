@@ -146,7 +146,6 @@ int onInit() {
    if (Max.Bars < -1)            return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-
    // buffer management
    SetIndexBuffer(MODE_OUT_OPEN,    outOpen   );
    SetIndexBuffer(MODE_OUT_CLOSE,   outClose  );
