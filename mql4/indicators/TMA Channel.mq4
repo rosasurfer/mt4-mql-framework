@@ -38,13 +38,15 @@ extern bool   alertsOn        = false;
 #property indicator_width5  6
 
 
-double tmBuffer[];
-double upBuffer[];
-double dnBuffer[];
-double wuBuffer[];
-double wdBuffer[];
-double upArrow[];
-double dnArrow[];
+double tma      [];
+double upperBand[];
+double lowerBand[];
+
+double upperVariance[];
+double lowerVariance[];
+
+double upperSignal[];
+double lowerSignal[];
 
 
 /**
@@ -55,13 +57,14 @@ double dnArrow[];
 int onInit() {
    HalfLength = MathMax(HalfLength, 1);
    IndicatorBuffers(7);
-   SetIndexBuffer(0, tmBuffer); SetIndexDrawBegin(0, HalfLength);
-   SetIndexBuffer(1, upBuffer); SetIndexDrawBegin(1, HalfLength);
-   SetIndexBuffer(2, dnBuffer); SetIndexDrawBegin(2, HalfLength);
-   SetIndexBuffer(3, dnArrow ); SetIndexStyle(3, DRAW_ARROW); SetIndexArrow(3, 82);
-   SetIndexBuffer(4, upArrow ); SetIndexStyle(4, DRAW_ARROW); SetIndexArrow(4, 82);
-   SetIndexBuffer(5, wuBuffer);
-   SetIndexBuffer(6, wdBuffer);
+   SetIndexBuffer(0, tma          ); SetIndexDrawBegin(0, HalfLength);
+   SetIndexBuffer(1, upperBand    ); SetIndexDrawBegin(1, HalfLength);
+   SetIndexBuffer(2, lowerBand    ); SetIndexDrawBegin(2, HalfLength);
+   SetIndexBuffer(3, upperSignal  ); SetIndexStyle(3, DRAW_ARROW); SetIndexArrow(3, 82);
+   SetIndexBuffer(4, lowerSignal  ); SetIndexStyle(4, DRAW_ARROW); SetIndexArrow(4, 82);
+   SetIndexBuffer(5, upperVariance);
+   SetIndexBuffer(6, lowerVariance);
+   IndicatorDigits(Digits);
    return(0);
 }
 
@@ -77,19 +80,19 @@ int onTick() {
    if (counted_bars > 0) counted_bars--;
    int limit = MathMin(Bars-1, Bars-counted_bars+HalfLength);
 
-   calculateTma(limit);
+   CalculateTMA(limit);
 
  	for (int i=limit; i >= 0; i--) {
-      upArrow[i] = EMPTY_VALUE;
-      dnArrow[i] = EMPTY_VALUE;
+      upperSignal[i] = EMPTY_VALUE;
+      lowerSignal[i] = EMPTY_VALUE;
 
-      if (High[i+1] > upBuffer[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) upArrow[i] = High[i];
-      if (Low [i+1] < dnBuffer[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) dnArrow[i] = Low [i];
+      if (High[i+1] > upperBand[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) upperSignal[i] = High[i];
+      if (Low [i+1] < lowerBand[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) lowerSignal[i] = Low [i];
    }
 
    if (alertsOn) {
-      if (Close[0] >= upBuffer[0] && Close[1] < upBuffer[1]) doAlert("upper channel band crossed");
-      if (Close[0] <= dnBuffer[0] && Close[1] > dnBuffer[1]) doAlert("lower channel band crossed");
+      if (Close[0] >= upperBand[0] && Close[1] < upperBand[1]) onSignal("upper channel band crossed");
+      if (Close[0] <= lowerBand[0] && Close[1] > lowerBand[1]) onSignal("lower channel band crossed");
    }
    return(0);
 }
@@ -98,7 +101,7 @@ int onTick() {
 /**
  *
  */
-void calculateTma(int limit) {
+void CalculateTMA(int limit) {
    int j, k;
    double FullLength = 2*HalfLength + 1;
 
@@ -114,34 +117,35 @@ void calculateTma(int limit) {
             sumw += k;
          }
       }
-      tmBuffer[i] = sum/sumw;
+      tma[i] = sum/sumw;
 
-      double diff = iMA(NULL, NULL, 1, 0, MODE_SMA, Price, i) - tmBuffer[i];
+      double diff = iMA(NULL, NULL, 1, 0, MODE_SMA, Price, i) - tma[i];
+
+      if (i > Bars-HalfLength-1)
+         continue;
 
       if (i == Bars-HalfLength-1) {
-         upBuffer[i] = tmBuffer[i];
-         dnBuffer[i] = tmBuffer[i];
          if (diff >= 0) {
-            wuBuffer[i] = MathPow(diff, 2);
-            wdBuffer[i] = 0;
+            upperVariance[i] = MathPow(diff, 2);
+            lowerVariance[i] = 0;
          }
          else {
-            wuBuffer[i] = 0;
-            wdBuffer[i] = MathPow(diff, 2);
+            upperVariance[i] = 0;
+            lowerVariance[i] = MathPow(diff, 2);
          }
       }
-      else if (i < Bars-HalfLength-1) {
+      else {
          if (diff >= 0) {
-            wuBuffer[i] = (wuBuffer[i+1] * (FullLength-1) + MathPow(diff, 2)) /FullLength;
-            wdBuffer[i] =  wdBuffer[i+1] * (FullLength-1)                     /FullLength;
+            upperVariance[i] = (upperVariance[i+1] * (FullLength-1) + MathPow(diff, 2)) /FullLength;
+            lowerVariance[i] = (lowerVariance[i+1] * (FullLength-1) + 0)                /FullLength;
          }
          else {
-            wuBuffer[i] =  wuBuffer[i+1] * (FullLength-1)                     /FullLength;
-            wdBuffer[i] = (wdBuffer[i+1] * (FullLength-1) + MathPow(diff, 2)) /FullLength;
+            upperVariance[i] = (upperVariance[i+1] * (FullLength-1) + 0)                /FullLength;
+            lowerVariance[i] = (lowerVariance[i+1] * (FullLength-1) + MathPow(diff, 2)) /FullLength;
          }
-         upBuffer[i] = tmBuffer[i] + BandsDeviations * MathSqrt(wuBuffer[i]);
-         dnBuffer[i] = tmBuffer[i] - BandsDeviations * MathSqrt(wdBuffer[i]);
       }
+      upperBand[i] = tma[i] + BandsDeviations * MathSqrt(upperVariance[i]);
+      lowerBand[i] = tma[i] - BandsDeviations * MathSqrt(lowerVariance[i]);
    }
 }
 
@@ -149,7 +153,7 @@ void calculateTma(int limit) {
 /**
  *
  */
-void doAlert(string msg) {
+void onSignal(string msg) {
    static datetime lastTime;
    static string lastMsg = "";
 
