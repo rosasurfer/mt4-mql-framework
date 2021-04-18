@@ -1164,12 +1164,26 @@ bool ManageVirtualPosition() {
  * @return bool - whether targets have been reached
  */
 bool CheckRealTargets() {
-   bool reached = false;
-   if (StopOnTotalProfit != 0) reached = reached || GE(real.totalPlNet, StopOnTotalProfit);
-   if (StopOnTotalLoss   != 0) reached = reached || LE(real.totalPlNet, StopOnTotalProfit);
+   bool targetReached = false;
+   string sCondition = "";
 
-   if (reached) CloseRealOrders();
-   return(reached);
+   if (StopOnTotalProfit != 0) {
+      if (GE(real.totalPlNet, StopOnTotalProfit)) {
+         targetReached = true;
+         sCondition = "@totalProfit = "+ DoubleToStr(StopOnTotalProfit, 2);
+      }
+   }
+   if (StopOnTotalLoss != 0) {
+      if (LE(real.totalPlNet, StopOnTotalLoss)) {
+         targetReached = true;
+         sCondition = "@totalLoss = "+ DoubleToStr(StopOnTotalLoss, 2);
+      }
+   }
+   if (targetReached) {
+      if (IsLogNotice()) logNotice("CheckRealTargets(1)  "+ sequence.name +" stop condition "+ DoubleQuoteStr(sCondition) +" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      CloseRealOrders();
+   }
+   return(targetReached);
 }
 
 
