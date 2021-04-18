@@ -48,9 +48,9 @@ extern int    Max.Bars        = 5000;        // max. values to calculate (-1: al
 int       framework_buffers = 4;             // buffers managed by the framework
 
 #property indicator_color1    Magenta        // TMA
-#property indicator_color2    LightPink      // upper repainting channel band
-#property indicator_color3    LightPink      // lower repainting channel band (PowderBlue)
-#property indicator_color4    Blue           // CLR_NONE Blue                    // LWMA
+#property indicator_color2    LightSkyBlue   // upper repainting channel band
+#property indicator_color3    LightSkyBlue   // lower repainting channel band (PowderBlue)
+#property indicator_color4    CLR_NONE       // CLR_NONE Blue                    // LWMA
 #property indicator_color5    Blue           // CLR_NONE Blue                    // upper non-repainting channel band
 #property indicator_color6    Blue           // CLR_NONE Blue                    // lower non-repainting channel band
 #property indicator_color7    Magenta        // long signals
