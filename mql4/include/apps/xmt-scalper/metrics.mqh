@@ -34,7 +34,7 @@ double metrics.hShift     [16];        // horizontal shift added to the history 
 
 
 /**
- * Initialize/re-initialize metrics processing.
+ * (Re-)initialize metrics processing.
  *
  * @return bool - success status
  */
@@ -46,6 +46,7 @@ bool InitMetrics() {
       ArrayInitialize(metrics.hSet,      0);
       ArrayInitialize(metrics.hShift, 1000);
 
+      // populate symbol metadata
       metrics.symbol[METRIC_RC1] = "XMT"+ sequence.id +".RC1"; metrics.digits[METRIC_RC1] = 1; metrics.description[METRIC_RC1] = "XMT."+ sequence.id +" real cumulative PL in pip w/o commission";
       metrics.symbol[METRIC_RC2] = "XMT"+ sequence.id +".RC2"; metrics.digits[METRIC_RC2] = 1; metrics.description[METRIC_RC2] = "XMT."+ sequence.id +" real cumulative PL in pip with commission";
       metrics.symbol[METRIC_RC3] = "XMT"+ sequence.id +".RC3"; metrics.digits[METRIC_RC3] = 2; metrics.description[METRIC_RC3] = "XMT."+ sequence.id +" real cumulative PL in "+ AccountCurrency() +" w/o commission";
@@ -67,7 +68,7 @@ bool InitMetrics() {
       metrics.initialized = true;
    }
 
-   // the metrics configuration is read/applied on every call
+   // read the metrics configuration (on every call)
    string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC2", true));
@@ -96,33 +97,34 @@ bool InitMetrics() {
 
 
 /**
- * Open/close the history of the specified metric.
+ * Open/close the history of the specified metric according to the configuration.
  *
- * @param  int mId - metric identifier
+ * @param  int metric - metric identifier
  *
  * @return bool - success status
  */
-bool InitMetricHistory(int mId) {
-   if (!metrics.enabled[mId]) {
-      CloseHistorySet(mId);                                       // close the history
+bool InitMetricHistory(int metric) {
+   if (!metrics.enabled[metric]) {
+      CloseHistorySet(metric);                                       // make sure the history is closed
       return(true);
    }
 
-   if (!metrics.symbolOK[mId]) {
+   if (!metrics.symbolOK[metric]) {
       if (metrics.server != "") {
-         if (!IsRawSymbol(metrics.symbol[mId], metrics.server)) {    // create a new symbol if it doesn't yet exist
+         if (!IsRawSymbol(metrics.symbol[metric], metrics.server)) { // create a new symbol if it doesn't yet exist
             string group = "System metrics";
-            int sId = CreateRawSymbol(metrics.symbol[mId], metrics.description[mId], group, metrics.digits[mId], AccountCurrency(), AccountCurrency(), metrics.server);
+            int sId = CreateRawSymbol(metrics.symbol[metric], metrics.description[metric], group, metrics.digits[metric], AccountCurrency(), AccountCurrency(), metrics.server);
             if (sId < 0) return(false);
          }
       }
-      metrics.symbolOK[mId] = true;
+      metrics.symbolOK[metric] = true;
    }
 
-   if (!metrics.hSet[mId])                                        // open the history
-      metrics.hSet[mId] = GetHistorySet(mId);
+   if (!metrics.hSet[metric]) {
+      metrics.hSet[metric] = GetHistorySet(metric);                  // open the history
+   }
 
-   return(metrics.hSet[mId] != NULL);
+   return(metrics.hSet[metric] != NULL);
 }
 
 
