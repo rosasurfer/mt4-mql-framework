@@ -208,23 +208,23 @@ int onTick() {
 
 
    // signal calculation
-   if (!MarkSignals) return(0);
- 	for (i=startBar; i >= 0; i--) {
-      longSignal [i] = 0;
-      shortSignal[i] = 0;
-
-      // new
-      //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) longSignal [i] =  Low[i];
-      //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) shortSignal[i] = High[i];
-
-      // original
-      if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) longSignal [i] = Low [i];
-      if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) shortSignal[i] = High[i];
+   if (MarkSignals) {
+    	for (i=startBar; i >= 0; i--) {
+         longSignal [i] = 0;
+         shortSignal[i] = 0;
+         // original
+         if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) longSignal [i] = Low [i];
+         if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) shortSignal[i] = High[i];
+         // new
+         //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) longSignal [i] =  Low[i];
+         //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) shortSignal[i] = High[i];
+      }
    }
 
+   // alerts
    if (AlertsOn) {
-      if (Close[0] >= upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper channel band crossed");
-      if (Close[0] <= lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower channel band crossed");
+      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper channel band crossed");
+      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower channel band crossed");
    }
    return(0);
 }
