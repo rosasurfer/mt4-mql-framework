@@ -1,6 +1,7 @@
 /**
- * JMA - Jurik Moving Average (based on sources of Nikolay Kositsin)
+ * JMA - Jurik Moving Average
  *
+ * A non-repainting version with sources based on the original Jurik algorythm published by Nikolay Kositsin.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -9,7 +10,6 @@
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
  * @see  http://www.jurikres.com/catalog1/ms_ama.htm
- * @see  "/etc/doc/jurik/Jurik Research Product Guide [2015.09].pdf"
  * @see  https://www.mql5.com/en/articles/1450
  */
 #include <stddefines.mqh>
