@@ -1,26 +1,24 @@
-/**                                                                                                                              OK
- * Calculate the JMA (Jurik Moving Average) of one or more timeseries.                                                           OK
- *                                                                                                                               OK
- * This function is a rewritten and improved version of JJMASeries() - the JMA algorithm published by Nikolay Kositsin (see      OK
- * link below). Most significant differences for the user are a simplified signature, the removal of manual initialization       OK
- * with JJMASeriesResize() and improved error handling.                                                                          OK
- *                                                                                                                               OK
- * @param  int    h          - handle (an array index >= 0) to separately address multiple simultaneous JMA calculations         OK
+/**
+ * Calculate the JMA (Jurik Moving Average) of a timeseries.
  *
- * @param  int    iMaxBar    - The maximum value parameter 'bar' can take. Usually equals Bars-1-periods
- *                             where "period" is the number of bars on which the dJMA.series is not calculated.
- * @param  int    iStartBar  - The number of bars not yet counted plus one or the number of the last uncounted bar. Must be
- *                             equal to Bars-IndicatorCounted()-1. Must be non-zero.
+ * A corrected (non-repainting) and improved version of Nikolay Kositsin's function JJMASeries(). Most important differences
+ * are simplified usage, the removal of manual array initialization and improved error handling.
  *
- * @param  int    length     - smoothing period in bars; may be variable for adaptive indicators                                 OK
- * @param  int    phase      - indicator overshooting: -100 (none)...+100 (max); may be variable for adaptive indicators         OK
- * @param  double series     - value of the timeseries to calculate the JMA value for                                            OK
- * @param  int    bar        - bar index to calculate the JMA for starting at 'iMaxBar' counting downwards to zero               OK
- *                                                                                                                               OK
+ * @param  int    h         - handle (an array index >= 0) to separately address multiple simultaneous JMA calculations         OK
+ *
+ * @param  int    iMaxBar   - The maximum value parameter "bar" can take. Usually equals "Bars-1-periods" where "period" is
+ *                            the number of bars on which the dJMA.series is not calculated.
+ * @param  int    iStartBar - The number of bars not yet counted plus one or the number of the last uncounted bar. Must be
+ *                            equal to "Bars-IndicatorCounted()-1" and non-zero.
+ *
+ * @param  int    length    - smoothing period in bars, may be variable for adaptive indicators                                 OK
+ * @param  int    phase     - indicator overshooting: -100 (none)...+100 (max); may be variable for adaptive indicators         OK
+ * @param  double series    - value of the timeseries to calculate the JMA value for                                            OK
+ * @param  int    bar       - bar index to calculate the JMA for starting at "iMaxBar" counting downwards to 0 (zero)           OK
+ *
  * @return double - JMA value or NULL in case of errors (see var last_error)  TODO: or if bar is greater than iMaxBar-30
- *                                                                                                                               OK
- *                                                             OK
- * @see  NK-Library, Nikolay Kositsin: https://www.mql5.com/en/articles/1450                                                     OK
+ *
+ * @links  https://www.mql5.com/en/articles/1450                                               [NK-Library, Nikolay Kositsin]
  */
 double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, double series, int bar) {
 
