@@ -223,8 +223,8 @@ int onTick() {
 
    // alerts
    if (AlertsOn) {
-      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper channel band crossed");
-      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower channel band crossed");
+      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper band touched");
+      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower band touched");
    }
    return(0);
 }

@@ -182,7 +182,7 @@ int UpdateInstrumentInfos() {
    double swapLong         = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort        = MarketInfo(symbol, MODE_SWAPSHORT);
       double swapLongDaily, swapShortDaily, swapLongYearly, swapShortYearly;
-      string strSwapLong, strSwapShort;
+      string sSwapLong, sSwapShort;
 
       if (swapMode == SCM_POINTS) {                                  // in points of quote currency
          swapLongDaily  = swapLong *Point/Pip; swapLongYearly  = MathDiv(swapLongDaily *Pip*365, Close[0]) * 100;
@@ -197,23 +197,15 @@ int UpdateInstrumentInfos() {
          else if (swapMode == SCM_BASE_CURRENCY  ) {}                // as amount of base currency   (see "symbols.raw")
          else if (swapMode == SCM_MARGIN_CURRENCY) {}                // as amount of margin currency (see "symbols.raw")
          */
-         strSwapLong  = ifString(!swapLong,  "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapLong,  ".+"));
-         strSwapShort = ifString(!swapShort, "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapShort, ".+"));
-         swapMode     = -1;
+         sSwapLong  = ifString(!swapLong,  "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapLong,  ".+"));
+         sSwapShort = ifString(!swapShort, "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapShort, ".+"));
+         swapMode = -1;
       }
       if (swapMode != -1) {
-         if (!swapLong)  strSwapLong  = "none";
-         else {
-            if (MathAbs(swapLongDaily ) <= 0.05) swapLongDaily = Sign(swapLongDaily) * 0.1;
-            strSwapLong  = NumberToStr(swapLongDaily, "+.1R") +" pip = "+ NumberToStr(swapLongYearly, "+.1R") +"% p.a.";
-         }
-         if (!swapShort) strSwapShort = "none";
-         else {
-            if (MathAbs(swapShortDaily) <= 0.05) swapShortDaily = Sign(swapShortDaily) * 0.1;
-            strSwapShort = NumberToStr(swapShortDaily, "+.1R") +" pip = "+ NumberToStr(swapShortYearly, "+.1R") +"% p.a.";
-         }
-      }                                            ObjectSetText(labels[I_SWAPLONG        ], "Swap long:   "+ strSwapLong,  fg.fontSize, fg.fontName, fg.fontColor);
-                                                   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+  strSwapShort, fg.fontSize, fg.fontName, fg.fontColor);
+         sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLongDaily,  "+.1R") +" pip = "+ NumberToStr(swapLongYearly,  "+.1R") +"% p.a.");
+         sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortDaily, "+.1R") +" pip = "+ NumberToStr(swapShortYearly, "+.1R") +"% p.a.");
+      }                                            ObjectSetText(labels[I_SWAPLONG        ], "Swap long:   "+ sSwapLong,  fg.fontSize, fg.fontName, fg.fontColor);
+                                                   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+  sSwapShort, fg.fontSize, fg.fontName, fg.fontColor);
 
    int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:      "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
    int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: "+ ifString(!accountLeverage, "", ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", stopoutLevel +".00 "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
