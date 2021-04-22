@@ -12,7 +12,6 @@
  *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  * @see  "/etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures [Ehlers, 2004].pdf"
- * @see  "/etc/doc/ehlers/Using The Fisher Transform [Stocks & Commodities].pdf"
  *
  *
  * TODO:

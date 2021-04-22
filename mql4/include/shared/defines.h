@@ -82,7 +82,7 @@
 #define INITREASON_TIMEFRAMECHANGE              6        // | chart period changed                          | no input dialog |   I, E      |
 #define INITREASON_SYMBOLCHANGE                 7        // | chart symbol changed                          | no input dialog |   I, E      |
 #define INITREASON_RECOMPILE                    8        // | reloaded after recompilation                  | no input dialog |   I, E      |
-#define INITREASON_TERMINAL_FAILURE             9        // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+#define INITREASON_TERMINAL_FAILURE             9        // | terminal failure                              |    input dialog |      E      |   @see  https://github.com/rosasurfer/mt4-mql/issues/1
                                                          // +-----------------------------------------------+-----------------+-------------+
 
 // UninitializeReason codes (matching the MetaQuotes REASON_* codes)
@@ -363,7 +363,7 @@
  * MT4 command ids (menu, toolbar and hotkey ids). ID naming and numbering conventions for resources, commands, strings,
  * controls and child windows as defined by MFC 2.0:
  *
- *  @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
+ *  @link  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
  */
 #define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
 

@@ -643,7 +643,7 @@
 
 // Win32 error codes (for error descriptions see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
 //
-// @see  https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes
+// @link  https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes
 //
 #define ERROR_SUCCESS                              0     // The operation completed successfully.
 #define ERROR_INVALID_FUNCTION                     1     // Incorrect function.

@@ -11,11 +11,11 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  v4.0: http://www.forexfactory.com/showthread.php?t=571026
- * @see  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
- * @see  v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
- * @see  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
- * @see  v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
+ * @link  v4.0: http://www.forexfactory.com/showthread.php?t=571026
+ * @link  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
+ * @link  v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
+ * @link  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
+ * @link  v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

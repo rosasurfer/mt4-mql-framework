@@ -88,7 +88,7 @@ string orders.accountAlias;                                          // Verwendu
 
 // Price-Events
 bool   track.signals;
-int    signal.config[][7];                                           // Konfiguration: Indizes @see SIGNAL_CONFIG_*
+int    signal.config[][7];                                           // Konfiguration: Indizes (see SIGNAL_CONFIG_*)
 double signal.data  [][8];                                           // Laufzeitdaten: je nach Signal-Typ unterschiedlich, Indizes siehe *Signal.Init()
 string signal.status[];                                              // Signalstatus:  aktuelle Textbeschreibung für Statusanzeige des Indikators
 

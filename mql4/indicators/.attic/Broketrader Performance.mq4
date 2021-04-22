@@ -3,8 +3,8 @@
  *
  * Visualizes the PL performance of the Broketrader system.
  *
- * @see  mql4/indicators/systems/Broketrader.mq4
- * @see  https://www.forexfactory.com/showthread.php?t=970975
+ * @see   mql4/indicators/systems/Broketrader.mq4
+ * @link  https://www.forexfactory.com/showthread.php?t=970975
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

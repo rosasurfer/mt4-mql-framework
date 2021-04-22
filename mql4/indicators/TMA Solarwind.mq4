@@ -1,13 +1,16 @@
 /**
- * TMA Solarwind
+ * TMA Solarwind Channel
  *
- * TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
+ * A standard deviation based channel around a centered - thus repainting - Triangular Moving Average (TMA). The TMA is a
+ * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle (see 1st link).
+ *
+ * It holds: TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
  *
  *
- * @see  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html
- * @see  https://www.mql5.com/en/forum/181241
- * @see  https://forex-station.com/viewtopic.php?f=579496&t=8423458
- * @see  https://www.forexfactory.com/thread/922947-lazytma-trading
+ * @link  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html
+ * @link  https://www.mql5.com/en/forum/181241
+ * @link  https://forex-station.com/viewtopic.php?f=579496&t=8423458
+ * @link  https://www.forexfactory.com/thread/922947-lazytma-trading
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

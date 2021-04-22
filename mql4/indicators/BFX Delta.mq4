@@ -11,7 +11,7 @@
  *                 negative values represent a delta below the positive signal level (-1...-n)
  *    - length:    the absolute value is the period in bars since the last crossing of the opposite signal level
  *
- * @see  https://github.com/rosasurfer/bfx-core-volume
+ * @link  https://github.com/rosasurfer/bfx-core-volume
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

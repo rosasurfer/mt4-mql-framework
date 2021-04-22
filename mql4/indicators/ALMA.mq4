@@ -10,8 +10,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
- * @see  "/etc/doc/arnaud-legoux-ma/ALMA Weighted Distribution.xls"
+ * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ * @link  "/etc/doc/alma/ALMA Weighted Distribution.xls"
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
