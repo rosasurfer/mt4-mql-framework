@@ -48,9 +48,9 @@ extern int    Max.Bars        = 5000;        // max. values to calculate (-1: al
 int       framework_buffers = 4;             // buffers managed by the framework
 
 #property indicator_color1    Magenta        // TMA
-#property indicator_color2    LightPink      // upper repainting channel band
-#property indicator_color3    LightPink      // lower repainting channel band (PowderBlue)
-#property indicator_color4    Blue           // CLR_NONE Blue                    // LWMA
+#property indicator_color2    LightSkyBlue   // upper repainting channel band
+#property indicator_color3    LightSkyBlue   // lower repainting channel band (PowderBlue)
+#property indicator_color4    CLR_NONE       // CLR_NONE Blue                    // LWMA
 #property indicator_color5    Blue           // CLR_NONE Blue                    // upper non-repainting channel band
 #property indicator_color6    Blue           // CLR_NONE Blue                    // lower non-repainting channel band
 #property indicator_color7    Magenta        // long signals
@@ -208,23 +208,23 @@ int onTick() {
 
 
    // signal calculation
-   if (!MarkSignals) return(0);
- 	for (i=startBar; i >= 0; i--) {
-      longSignal [i] = 0;
-      shortSignal[i] = 0;
-
-      // new
-      //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) longSignal [i] =  Low[i];
-      //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) shortSignal[i] = High[i];
-
-      // original
-      if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) longSignal [i] = Low [i];
-      if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) shortSignal[i] = High[i];
+   if (MarkSignals) {
+    	for (i=startBar; i >= 0; i--) {
+         longSignal [i] = 0;
+         shortSignal[i] = 0;
+         // original
+         if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) longSignal [i] = Low [i];
+         if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) shortSignal[i] = High[i];
+         // new
+         //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) longSignal [i] =  Low[i];
+         //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) shortSignal[i] = High[i];
+      }
    }
 
+   // alerts
    if (AlertsOn) {
-      if (Close[0] >= upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper channel band crossed");
-      if (Close[0] <= lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower channel band crossed");
+      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper channel band crossed");
+      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower channel band crossed");
    }
    return(0);
 }
