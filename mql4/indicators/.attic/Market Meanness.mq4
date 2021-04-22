@@ -2,7 +2,7 @@
  * Market Meanness Index
  *
  *
- * @see  http://www.financial-hacker.com/the-market-meanness-index/
+ * @link  http://www.financial-hacker.com/the-market-meanness-index/
  *
  * TODO: add a moving average as signal line
  */

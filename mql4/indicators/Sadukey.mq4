@@ -4,8 +4,8 @@
  *
  * Coefficients are more than 10 years old, so the indicator should be taken with a grain of salt.
  *
- * @see  http://www.finware.com/generator.html
- * @see  http://fx.qrz.ru/
+ * @link  http://www.finware.com/generator.html
+ * @link  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

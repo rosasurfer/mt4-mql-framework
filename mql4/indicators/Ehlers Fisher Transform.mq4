@@ -14,7 +14,6 @@
  *
  *
  *
- *
  * TODO:
  *    - implement customizable moving averages for Stochastic and Fisher Transform
  *    - implement Max.Bars

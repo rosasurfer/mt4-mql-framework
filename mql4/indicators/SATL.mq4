@@ -10,8 +10,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://www.finware.com/generator.html
- * @see  http://fx.qrz.ru/
+ * @link  http://www.finware.com/generator.html
+ * @link  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

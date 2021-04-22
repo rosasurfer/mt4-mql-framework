@@ -10,7 +10,7 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  */
 #include <stddefines.mqh>

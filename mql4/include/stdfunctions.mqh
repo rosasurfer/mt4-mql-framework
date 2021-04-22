@@ -3749,8 +3749,8 @@ datetime TimeCurrentEx(string location="") {
  *
  * @return string - GMT time string or an empty string in case of errors
  *
- * @see  http://www.cplusplus.com/reference/ctime/strftime/
- * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
  */
 string GmtTimeFormat(datetime timestamp, string format) {
    return(GmtTimeFormatA(timestamp, format));
@@ -3765,8 +3765,8 @@ string GmtTimeFormat(datetime timestamp, string format) {
  *
  * @return string - local time string or an empty string in case of errors
  *
- * @see  http://www.cplusplus.com/reference/ctime/strftime/
- * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
  */
 string LocalTimeFormat(datetime timestamp, string format) {
    return(LocalTimeFormatA(timestamp, format));

@@ -2471,7 +2471,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    //  |               ... | 0x00                                                          |
    //  +-------------------+---------------------------------------------------------------+
    //
-   // @see  http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
+   // @link  http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StrRight(lnkFilename, 4)!=".lnk")
@@ -2664,7 +2664,7 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
    int result = WaitForSingleObject(pi_hProcess(pi), INFINITE);
 
-   // @see  http://stackoverflow.com/questions/9369823/how-to-get-a-sub-process-return-code
+   // @link  http://stackoverflow.com/questions/9369823/how-to-get-a-sub-process-return-code
    //
    // GetExitCodeProcess(pi.hProcess, &exit_code);
    // printf("execution of: \"%s\"\nexit code: %d", cmdLine, exit_code);
@@ -4408,7 +4408,7 @@ int GetLocalToGmtTimeOffset() {
  *
  * @return string - timezone identifier or an empty string in case of errors
  *
- * @see    http://en.wikipedia.org/wiki/Tz_database   [Olson Timezone Database]
+ * @link  http://en.wikipedia.org/wiki/Tz_database   [Olson Timezone Database]
  */
 string GetServerTimezone() {
    // - The resolved timezone can only change when the trade account changes.
@@ -4920,7 +4920,7 @@ string DoubleToStrEx(double value, int digits) {
  * Handler for order related errors which occurred in one of the library's order functions.
  *
  * The error is always set in the passed struct ORDER_EXECUTION. After the passed execution flags determine how the error is
- * handled. All errors not matched by an execution flag (@see F_ERR_* constants) cause a fatal runtime error.
+ * handled. All errors not matched by an execution flag (see F_ERR_* constants) cause a fatal runtime error.
  *
  * @param  _In_    string message                  - error message
  * @param  _In_    int    error                    - the occurred error

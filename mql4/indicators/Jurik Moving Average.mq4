@@ -9,8 +9,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://www.jurikres.com/catalog1/ms_ama.htm
- * @see  https://www.mql5.com/en/articles/1450
+ * @link  http://www.jurikres.com/catalog1/ms_ama.htm
+ * @link  https://www.mql5.com/en/articles/1450
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
