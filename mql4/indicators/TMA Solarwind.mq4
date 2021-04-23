@@ -4,8 +4,7 @@
  * A standard deviation based channel around a centered - thus repainting - Triangular Moving Average (TMA). The TMA is a
  * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle (see 1st link).
  *
- * It holds: TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
- *
+ *  It holds: TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
  *
  * @link  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html
  * @link  https://www.mql5.com/en/forum/181241
@@ -18,19 +17,20 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    HalfLength      = 55;
-extern string AppliedPrice    = "Open | High | Low | Close | Median | Typical | Weighted*";
-extern double BandsDeviations = 2.5;
-extern bool   AlertsOn        = false;
-extern bool   MarkSignals     = false;
-extern bool   SolarwindMode   = true;        // enable repainting mode
-extern int    Max.Bars        = 5000;        // max. values to calculate (-1: all available)
+extern int    MA.HalfLength    = 55;
+extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
+extern double Bands.Deviations = 2.5;
+extern bool   AlertsOn         = false;
+extern bool   MarkSignals      = false;
+extern bool   RepaintingMode   = true;       // enable repainting mode
+extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/@Bands.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
 
 #define MODE_TMA                 0           // indicator buffer ids
@@ -86,7 +86,12 @@ double lowerBandNRP    [];
 double longSignal [];
 double shortSignal[];
 
-int    appliedPrice;
+int    maPeriods;
+int    maAppliedPrice;
+int    maxValues;
+
+string indicatorName;
+string legendLabel;
 
 
 /**
@@ -96,19 +101,24 @@ int    appliedPrice;
  */
 int onInit() {
    // validate inputs
-   // HalfLength
-   HalfLength = MathMax(HalfLength, 1);
+   // MA.HalfLength
+   if (MA.HalfLength < 1)                                     return(catch("onInit(1)  invalid input parameter MA.HalfLength: "+ MA.HalfLength, ERR_INVALID_INPUT_PARAMETER));
+   maPeriods = 2 * MA.HalfLength + 1;
 
-   // AppliedPrice
-   string sValues[], sValue = StrToLower(AppliedPrice);
+   // MA.AppliedPrice
+   string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (appliedPrice==-1 || appliedPrice > PRICE_WEIGHTED) return(catch("onInit(1)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   AppliedPrice = PriceTypeDescription(appliedPrice);
+   maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
+
+   // Max.Bars
+   if (Max.Bars < -1)                                         return(catch("onInit(3)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
    SetIndexBuffer(MODE_TMA,            tma         );
@@ -117,23 +127,41 @@ int onInit() {
    SetIndexBuffer(MODE_LWMA,           lwma        );
    SetIndexBuffer(MODE_UPPER_BAND_NRP, upperBandNRP);
    SetIndexBuffer(MODE_LOWER_BAND_NRP, lowerBandNRP);
-   SetIndexBuffer(MODE_LONG_SIGNAL,    longSignal  ); SetIndexEmptyValue(MODE_LONG_SIGNAL,  0); SetIndexArrow(MODE_LONG_SIGNAL,  82);
-   SetIndexBuffer(MODE_SHORT_SIGNAL,   shortSignal ); SetIndexEmptyValue(MODE_SHORT_SIGNAL, 0); SetIndexArrow(MODE_SHORT_SIGNAL, 82);
+   SetIndexBuffer(MODE_LONG_SIGNAL,    longSignal  ); SetIndexEmptyValue(MODE_LONG_SIGNAL,  0);
+   SetIndexBuffer(MODE_SHORT_SIGNAL,   shortSignal ); SetIndexEmptyValue(MODE_SHORT_SIGNAL, 0);
+
+   // chart legend
+   if (!IsSuperContext()) {
+       legendLabel = CreateLegendLabel();
+       RegisterObject(legendLabel);
+   }
 
    // names, labels and display options
-   IndicatorShortName(WindowExpertName());                  // chart tooltips and context menu
+   indicatorName = "TMA Channel("+ MA.HalfLength +")";
+   IndicatorShortName(indicatorName);                       // chart tooltips and context menu
    SetIndexLabel(MODE_TMA,            "TMA");               // chart tooltips and "Data" window
-   SetIndexLabel(MODE_UPPER_BAND_RP,  "TMA band RP");
-   SetIndexLabel(MODE_LOWER_BAND_RP,  "TMA band RP");
+   SetIndexLabel(MODE_UPPER_BAND_RP,  "TMA upper band");
+   SetIndexLabel(MODE_LOWER_BAND_RP,  "TMA lower band");
    SetIndexLabel(MODE_LWMA,           "LWMA");
-   SetIndexLabel(MODE_UPPER_BAND_NRP, "LWMA band NRP");
-   SetIndexLabel(MODE_LOWER_BAND_NRP, "LWMA band NRP");
+   SetIndexLabel(MODE_UPPER_BAND_NRP, "LWMA upper band");
+   SetIndexLabel(MODE_LOWER_BAND_NRP, "LWMA lower band");
    SetIndexLabel(MODE_LONG_SIGNAL,    NULL);
    SetIndexLabel(MODE_SHORT_SIGNAL,   NULL);
-   IndicatorDigits(Digits + 1);
+   IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(1)"));
+   return(catch("onInit(4)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   RepositionLegend();
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -184,6 +212,8 @@ int onTick() {
       ShiftIndicatorBuffer(shortSignal,      Bars, ShiftedBars, 0);
    }
 
+   int FullLength = maPeriods;
+   int HalfLength = MA.HalfLength;
 
    // recalculate changed LWMA bars
    int bars = Min(ChangedBars, Max.Bars);
@@ -191,16 +221,9 @@ int onTick() {
    if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    for (int i=startBar; i >= 0; i--) {
-      lwma[i] = iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, appliedPrice, i);
+      lwma[i] = iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, maAppliedPrice, i);
    }
    //if (!UnchangedBars) debug("onTick()  lwma[44] = "+ NumberToStr(lwma[44], PriceFormat) +" (startBar="+ startBar +", "+ TimeToStr(Time[44], TIME_DATE|TIME_MINUTES) +")");
-
-
-   // new TMA calculation at offset 0
-   double values[];
-   int offset = 0;
-   CalculateTMAValues(values, offset);
-
 
 
    // original repainting TMA calculation
@@ -208,6 +231,12 @@ int onTick() {
    startBar = ChangedBars + HalfLength + 1;
    if (startBar >= bars) startBar = bars-1;
    CalculateTMA(bars, startBar);
+
+
+   // new non-repainting TMA calculation
+   double values[];
+   int offset = 0;
+   CalculateTMAValues(values, offset);
 
 
    // signal calculation
@@ -226,8 +255,8 @@ int onTick() {
 
    // alerts
    if (AlertsOn) {
-      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper band touched");
-      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower band touched");
+      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" touched");
+      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" touched");
    }
    return(0);
 }
@@ -237,9 +266,7 @@ int onTick() {
  *
  */
 void CalculateTMAValues(double &values[], int offset) {
-   int halfLength = HalfLength;
-   int fullLength = 2*halfLength + 1;
-   ArrayResize(values, fullLength);
+   ArrayResize(values, maPeriods);
 
 }
 
@@ -248,7 +275,7 @@ void CalculateTMAValues(double &values[], int offset) {
  *
  */
 void CalculateTMA(int bars, int startBar) {
-   int j, w, FullLength=2*HalfLength + 1;
+   int j, w, HalfLength=MA.HalfLength, FullLength=maPeriods;
 
    for (int i=startBar; i >= 0; i--) {
       double price = GetPrice(i);            // TMA calculation
@@ -300,10 +327,14 @@ void CalculateTMA(int bars, int startBar) {
       }
 
       // deviation
-      upperBandRP[i] = tma[i] + BandsDeviations * MathSqrt(upperVarianceRP[i]);
-      lowerBandRP[i] = tma[i] - BandsDeviations * MathSqrt(lowerVarianceRP[i]);
+      upperBandRP[i] = tma[i] + Bands.Deviations * MathSqrt(upperVarianceRP[i]);
+      lowerBandRP[i] = tma[i] - Bands.Deviations * MathSqrt(lowerVarianceRP[i]);
    }
-   return;
+
+   if (!IsSuperContext()) {
+      @Bands.UpdateLegend(legendLabel, indicatorName, "", indicator_color2, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
+   }
+
    //upperBandNRP[0] = upperBandRP[0];
    //lowerBandNRP[0] = lowerBandRP[0];
 }
@@ -315,7 +346,7 @@ void CalculateTMA(int bars, int startBar) {
  * @return double
  */
 double GetPrice(int bar) {
-   return(iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar));
+   return(iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar));
 }
 
 
@@ -325,8 +356,8 @@ double GetPrice(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
-   SetIndexStyle(MODE_LONG_SIGNAL,  DRAW_ARROW);
-   SetIndexStyle(MODE_SHORT_SIGNAL, DRAW_ARROW);
+   SetIndexStyle(MODE_LONG_SIGNAL,  DRAW_ARROW); SetIndexArrow(MODE_LONG_SIGNAL,  82);
+   SetIndexStyle(MODE_SHORT_SIGNAL, DRAW_ARROW); SetIndexArrow(MODE_SHORT_SIGNAL, 82);
 }
 
 
