@@ -36,8 +36,11 @@ void @Bands.UpdateLegend(string label, string name, string status, color bandsCo
       }
       string text = StringConcatenate(name, "    ", sUpperValue, " : ", sLowerValue, "    ", status);
       color  textColor = bandsColor;
-      if      (textColor == Yellow) textColor = Orange;
-      else if (textColor == Gold  ) textColor = Orange;
+      if      (textColor == Aqua        ) textColor = DeepSkyBlue;
+      else if (textColor == Gold        ) textColor = Orange;
+      else if (textColor == LightSkyBlue) textColor = DeepSkyBlue;
+      else if (textColor == Lime        ) textColor = LimeGreen;
+      else if (textColor == Yellow      ) textColor = Orange;
       ObjectSetText(label, text, 9, "Arial Fett", textColor);
 
       int error = GetLastError();
