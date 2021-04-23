@@ -5287,7 +5287,7 @@ string HistoryFlagsToStr(int flags) {
  * @param  string value
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
- *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
+ *                                   F_ERR_INVALID_PARAMETER: don't trigger an internal error on unsupported parameters
  *
  * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
@@ -5355,8 +5355,8 @@ int StrToPriceType(string value, int flags = NULL) {
       }
    }
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
-   else                                      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   if (!(flags & F_ERR_INVALID_PARAMETER))
+      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
    return(-1);
 }
 

@@ -51,8 +51,8 @@ string label.description = "PeriodDescription";
  * @return int - error status
  */
 int onInit() {
-   // (1) validate inputs
-   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // validate inputs
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.BarUp        == 0xFF000000) Color.BarUp        = CLR_NONE;
    if (Color.BarDown      == 0xFF000000) Color.BarDown      = CLR_NONE;
    if (Color.BarUnchanged == 0xFF000000) Color.BarUnchanged = CLR_NONE;
@@ -77,13 +77,11 @@ int onInit() {
       eth.enabled = StringInArray(sValues, StrToLower(StdSymbol()));
    }
 
-
-   // (2) display configuration, names, labels
+   // display configuration, names, labels
    SetIndexLabel(0, NULL);                                     // disable "Data" window display
    CreateDescriptionLabel();                                   // create label for superbar period description
 
-
-   // (3) restore and validate stored runtime values
+   // restore and validate stored runtime values
    if (!RestoreRuntimeStatus()) return(last_error);
    CheckSuperTimeframeAvailability();
    return(catch("onInit(1)"));
@@ -613,7 +611,7 @@ int CreateDescriptionLabel() {
 
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 280);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 300);
       ObjectSet    (label, OBJPROP_YDISTANCE,   4);
       ObjectSetText(label, " ", 1);
       RegisterObject(label);

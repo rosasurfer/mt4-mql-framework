@@ -62,13 +62,12 @@ double bufferMa   [];                                 // MA values:         visi
 double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
 double bufferLower[];                                 // lower band values: visible, displayed in "Data" window
 
-int    ma.method;
-int    ma.appliedPrice;
-double alma.weights[];
+int    maMethod;
+int    maAppliedPrice;
+double almaWeights[];
 
-string ind.longName;                                  // name for chart legend
-string ind.shortName;                                 // name for "Data" window and context menues
-string ind.legendLabel;
+string indicatorName;                                 // name for chart legend
+string legendLabel;
 
 bool   signals;
 string signal.info = "";                              // info text in chart legend
@@ -93,7 +92,7 @@ int onInit() {
 
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)      return(catch("onInit(1)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)        return(catch("onInit(1)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.Method
    string values[], sValue = MA.Method;
@@ -102,10 +101,10 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StrTrim(sValue);
-   ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)        return(catch("onInit(2)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (ma.method == MODE_SMMA) return(catch("onInit(3)  Unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   MA.Method = MaMethodDescription(ma.method);
+   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (maMethod == -1)        return(catch("onInit(2)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == MODE_SMMA) return(catch("onInit(3)  Unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA.Method = MaMethodDescription(maMethod);
 
    // MA.AppliedPrice
    sValue = MA.AppliedPrice;
@@ -115,10 +114,10 @@ int onInit() {
    }
    sValue = StrToLower(StrTrim(sValue));
    if (sValue == "") sValue = "close";                                  // default price type
-   ma.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                            return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
+   maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
+                              return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
@@ -158,15 +157,14 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
    if (!IsSuperContext()) {
-       ind.legendLabel = CreateLegendLabel();                   // no chart legend if called by iCustom()
-       RegisterObject(ind.legendLabel);
+       legendLabel = CreateLegendLabel();
+       RegisterObject(legendLabel);
    }
 
    // data display configuration, names and labels
-   string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
-   ind.shortName = ProgramName() +"("+ MA.Periods +")";
-   ind.longName  = ProgramName() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
-   IndicatorShortName(ind.shortName);                          // chart tooltips and context menu
+   string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = ProgramName() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
+   IndicatorShortName(ProgramName() +"("+ MA.Periods +")");    // chart tooltips and context menu
    if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
    SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
@@ -183,8 +181,8 @@ int onInit() {
    SetIndicatorOptions();
 
    // initialize indicator calculation
-   if (ma.method==MODE_ALMA && MA.Periods > 1) {
-      @ALMA.CalculateWeights(alma.weights, MA.Periods);
+   if (maMethod==MODE_ALMA && MA.Periods > 1) {
+      @ALMA.CalculateWeights(almaWeights, MA.Periods);
    }
    return(catch("onInit(11)"));
 }
@@ -249,23 +247,23 @@ int onTick() {
    double deviation, price, sum;
 
    for (int bar=startBar; bar >= 0; bar--) {
-      if (ma.method == MODE_ALMA) {
+      if (maMethod == MODE_ALMA) {
          bufferMa[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {
-            bufferMa[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
+            bufferMa[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
          }
          // calculate deviation manually (for some reason iStdDevOnArray() fails)
          //deviation = iStdDevOnArray(bufferMa, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * StdDev.Multiplier;
          sum = 0;
          for (int j=0; j < MA.Periods; j++) {
-            price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+j);
+            price = iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+j);
             sum  += (price-bufferMa[bar]) * (price-bufferMa[bar]);
          }
          deviation = MathSqrt(sum/MA.Periods) * Bands.StdDevs;
       }
       else {
-         bufferMa[bar] = iMA    (NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar);
-         deviation     = iStdDev(NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar) * Bands.StdDevs;
+         bufferMa[bar] = iMA    (NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
+         deviation     = iStdDev(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar) * Bands.StdDevs;
       }
       bufferUpper[bar] = bufferMa[bar] + deviation;
       bufferLower[bar] = bufferMa[bar] - deviation;
@@ -274,7 +272,7 @@ int onTick() {
 
    // update chart legend
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(ind.legendLabel, ind.longName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
+      @Bands.UpdateLegend(legendLabel, indicatorName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);
 }

@@ -219,8 +219,9 @@ int onTick() {
          lowerBand[bar] = ma[bar] - atr;
       }
    }
-   @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
-
+   if (!IsSuperContext()) {
+      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
+   }
    return(last_error);
 }
 

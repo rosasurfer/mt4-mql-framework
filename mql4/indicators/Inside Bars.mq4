@@ -865,7 +865,6 @@ bool GetRates() {
       changed = iCopyRates(ratesH1, NULL, PERIOD_H1);
       if (changed < 0) return(false);
       changedBarsH1 = changed;
-      //debug("GetRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
    }
    return(true);
 }
@@ -884,7 +883,7 @@ string CreateStatusLabel() {
 
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 280);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 300);
       ObjectSet    (label, OBJPROP_YDISTANCE,  26);         // below/aligned to the SuperBars label
       ObjectSetText(label, " ", 1);
       RegisterObject(label);
