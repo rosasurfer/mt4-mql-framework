@@ -92,7 +92,7 @@ bool     currentReversal;                                   // trend reversal st
 bool     reversalInitialized;                               // whether the reversal states are initialized
 
 string   indicatorName;
-string   chartLegendLabel;
+string   legendLabel;
 
 bool     signals;
 bool     signal.sound;
@@ -167,8 +167,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel();
-       RegisterObject(chartLegendLabel);
+       legendLabel = CreateLegendLabel();
+       RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -341,7 +341,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
       color legendColor = ifInt(trend[0] > 0, Green, DodgerBlue);
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
       // monitor trend reversals
       if (signals) /*&&*/ if (IsBarOpenEvent()) {

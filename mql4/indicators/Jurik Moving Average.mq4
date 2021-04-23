@@ -183,7 +183,7 @@ int    maxValues;
 int    drawType;
 
 string indicatorName;
-string chartLegendLabel;
+string legendLabel;
 
 bool   signals;                                          // whether any signal is enabled
 bool   signal.sound;
@@ -272,8 +272,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-      chartLegendLabel = CreateLegendLabel();
-      RegisterObject(chartLegendLabel);
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -360,7 +360,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
