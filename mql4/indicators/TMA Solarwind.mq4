@@ -1,10 +1,11 @@
 /**
  * TMA Solarwind Channel
  *
- * A standard deviation based channel around a centered - thus repainting - Triangular Moving Average (TMA). The TMA is a
- * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle (see 1st link).
+ * A standard deviation derived channel around a centered - thus repainting - Triangular Moving Average (TMA). The TMA is a
+ * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle (see first link).
+ * It holds:
  *
- *  It holds: TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
+ *  TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
  *
  * @link  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html
  * @link  https://www.mql5.com/en/forum/181241
@@ -20,9 +21,9 @@ int __DeinitFlags[];
 extern int    MA.HalfLength    = 55;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
 extern double Bands.Deviations = 2.5;
-extern bool   AlertsOn         = false;
-extern bool   MarkSignals      = false;
 extern bool   RepaintingMode   = true;       // enable repainting mode
+extern bool   MarkSignals      = false;
+extern bool   AlertsOn         = false;
 extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,15 +40,14 @@ extern int    Max.Bars         = 10000;      // max. values to calculate (-1: al
 #define MODE_LWMA                3           //
 #define MODE_UPPER_BAND_NRP      4           //
 #define MODE_LOWER_BAND_NRP      5           //
-#define MODE_LONG_SIGNAL         6           //
-#define MODE_SHORT_SIGNAL        7           //
-#define MODE_UPPER_VARIANCE_RP   8           // managed by the framework
-#define MODE_LOWER_VARIANCE_RP   9           // ...
-#define MODE_UPPER_VARIANCE_NRP 10           // ...
-#define MODE_LOWER_VARIANCE_NRP 11           // ...
+#define MODE_SIGNALS             6           //
+#define MODE_UPPER_VARIANCE_RP   7           // managed by the framework
+#define MODE_LOWER_VARIANCE_RP   8           // ...
+#define MODE_UPPER_VARIANCE_NRP  9           // ...
+#define MODE_LOWER_VARIANCE_NRP 10           // ...
 
 #property indicator_chart_window
-#property indicator_buffers   8              // buffers managed by the terminal
+#property indicator_buffers   7              // buffers managed by the terminal
 int       framework_buffers = 4;             // buffers managed by the framework
 
 #property indicator_color1    Magenta        // TMA
@@ -56,8 +56,7 @@ int       framework_buffers = 4;             // buffers managed by the framework
 #property indicator_color4    CLR_NONE       // CLR_NONE Blue                    // LWMA
 #property indicator_color5    Blue           // CLR_NONE Blue                    // upper non-repainting channel band
 #property indicator_color6    Blue           // CLR_NONE Blue                    // lower non-repainting channel band
-#property indicator_color7    Magenta        // long signals
-#property indicator_color8    Magenta        // short signals
+#property indicator_color7    Magenta        // signals
 
 #property indicator_width1    1
 #property indicator_width2    3
@@ -66,7 +65,6 @@ int       framework_buffers = 4;             // buffers managed by the framework
 #property indicator_width5    1
 #property indicator_width6    1
 #property indicator_width7    6
-#property indicator_width8    6
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style4    STYLE_DOT
@@ -83,8 +81,7 @@ double lowerVarianceNRP[];
 double upperBandNRP    [];
 double lowerBandNRP    [];
 
-double longSignal [];
-double shortSignal[];
+double signal[];
 
 int    maPeriods;
 int    maAppliedPrice;
@@ -127,8 +124,7 @@ int onInit() {
    SetIndexBuffer(MODE_LWMA,           lwma        );
    SetIndexBuffer(MODE_UPPER_BAND_NRP, upperBandNRP);
    SetIndexBuffer(MODE_LOWER_BAND_NRP, lowerBandNRP);
-   SetIndexBuffer(MODE_LONG_SIGNAL,    longSignal  ); SetIndexEmptyValue(MODE_LONG_SIGNAL,  0);
-   SetIndexBuffer(MODE_SHORT_SIGNAL,   shortSignal ); SetIndexEmptyValue(MODE_SHORT_SIGNAL, 0);
+   SetIndexBuffer(MODE_SIGNALS,        signal      ); SetIndexEmptyValue(MODE_SIGNALS, 0);
 
    // chart legend
    if (!IsSuperContext()) {
@@ -145,8 +141,7 @@ int onInit() {
    SetIndexLabel(MODE_LWMA,           "LWMA");
    SetIndexLabel(MODE_UPPER_BAND_NRP, "LWMA upper band");
    SetIndexLabel(MODE_LOWER_BAND_NRP, "LWMA lower band");
-   SetIndexLabel(MODE_LONG_SIGNAL,    NULL);
-   SetIndexLabel(MODE_SHORT_SIGNAL,   NULL);
+   SetIndexLabel(MODE_SIGNALS,        NULL);
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -191,8 +186,7 @@ int onTick() {
       ArrayInitialize(lowerVarianceNRP, EMPTY_VALUE);
       ArrayInitialize(upperBandNRP,     EMPTY_VALUE);
       ArrayInitialize(lowerBandNRP,     EMPTY_VALUE);
-      ArrayInitialize(longSignal,       0);
-      ArrayInitialize(shortSignal,      0);
+      ArrayInitialize(signal,           0);
       SetIndicatorOptions();
    }
 
@@ -208,8 +202,7 @@ int onTick() {
       ShiftIndicatorBuffer(lowerVarianceNRP, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(upperBandNRP,     Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(lowerBandNRP,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(longSignal,       Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(shortSignal,      Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(signal,           Bars, ShiftedBars, 0);
    }
 
    int FullLength = maPeriods;
@@ -242,14 +235,13 @@ int onTick() {
    // signal calculation
    if (MarkSignals) {
     	for (i=startBar; i >= 0; i--) {
-         longSignal [i] = 0;
-         shortSignal[i] = 0;
+         signal[i] = 0;
          // original
-         if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) longSignal [i] = Low [i];
-         if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) shortSignal[i] = High[i];
+         if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) signal[i] =  Low[i];
+         if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) signal[i] = High[i];
          // new
-         //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) longSignal [i] =  Low[i];
-         //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) shortSignal[i] = High[i];
+         //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) signal[i] =  Low[i];
+         //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) signal[i] = High[i];
       }
    }
 
@@ -267,7 +259,6 @@ int onTick() {
  */
 void CalculateTMAValues(double &values[], int offset) {
    ArrayResize(values, maPeriods);
-
 }
 
 
@@ -356,8 +347,8 @@ double GetPrice(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
-   SetIndexStyle(MODE_LONG_SIGNAL,  DRAW_ARROW); SetIndexArrow(MODE_LONG_SIGNAL,  82);
-   SetIndexStyle(MODE_SHORT_SIGNAL, DRAW_ARROW); SetIndexArrow(MODE_SHORT_SIGNAL, 82);
+   SetIndexStyle(MODE_SIGNALS, DRAW_ARROW);
+   SetIndexArrow(MODE_SIGNALS, 82);
 }
 
 
