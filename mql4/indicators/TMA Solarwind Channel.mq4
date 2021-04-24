@@ -64,7 +64,7 @@ int       framework_buffers = 4;             // buffers managed by the framework
 #property indicator_width4    1
 #property indicator_width5    1
 #property indicator_width6    1
-#property indicator_width7    6
+#property indicator_width7    4
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style4    STYLE_DOT
