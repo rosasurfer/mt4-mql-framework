@@ -8785,7 +8785,6 @@ Bands.Deviations=2.5
 RepaintingMode=1
 MarkSignals=1
 AlertsOn=0
-Max.Bars=10000
 </inputs>
 </expert>
 

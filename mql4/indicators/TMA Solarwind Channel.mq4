@@ -40,14 +40,15 @@ extern int    Max.Bars         = 10000;      // max. values to calculate (-1: al
 #define MODE_LWMA                3           //
 #define MODE_UPPER_BAND_NRP      4           //
 #define MODE_LOWER_BAND_NRP      5           //
-#define MODE_SIGNALS             6           //
-#define MODE_UPPER_VARIANCE_RP   7           // managed by the framework
-#define MODE_LOWER_VARIANCE_RP   8           // ...
-#define MODE_UPPER_VARIANCE_NRP  9           // ...
-#define MODE_LOWER_VARIANCE_NRP 10           // ...
+#define MODE_SIGNAL_MARKER       6           //
+#define MODE_SIGNAL_AGE          7           //
+#define MODE_UPPER_VARIANCE_RP   8           // managed by the framework
+#define MODE_LOWER_VARIANCE_RP   9           // ...
+#define MODE_UPPER_VARIANCE_NRP 10           // ...
+#define MODE_LOWER_VARIANCE_NRP 11           // ...
 
 #property indicator_chart_window
-#property indicator_buffers   7              // buffers managed by the terminal
+#property indicator_buffers   8              // buffers managed by the terminal and visible in the input dialog
 int       framework_buffers = 4;             // buffers managed by the framework
 
 #property indicator_color1    Magenta        // TMA
@@ -57,6 +58,7 @@ int       framework_buffers = 4;             // buffers managed by the framework
 #property indicator_color5    Blue           // CLR_NONE Blue                    // upper channel band (non-repainting)
 #property indicator_color6    Blue           // CLR_NONE Blue                    // lower channel band (non-repainting)
 #property indicator_color7    Magenta        // signals
+#property indicator_color8    CLR_NONE       // signal duration
 
 #property indicator_width1    1
 #property indicator_width2    3
@@ -81,7 +83,8 @@ double lowerVarianceNRP[];
 double upperBandNRP    [];
 double lowerBandNRP    [];
 
-double signal[];
+double signalMarker[];
+double signalAge   [];
 
 int    maPeriods;
 int    maAppliedPrice;
@@ -119,12 +122,13 @@ int onInit() {
 
    // buffer management
    SetIndexBuffer(MODE_TMA,            tma         );
-   SetIndexBuffer(MODE_UPPER_BAND_RP,  upperBandRP );
-   SetIndexBuffer(MODE_LOWER_BAND_RP,  lowerBandRP );
+   SetIndexBuffer(MODE_UPPER_BAND_RP,  upperBandRP ); SetIndexEmptyValue(MODE_UPPER_BAND_RP,  0);
+   SetIndexBuffer(MODE_LOWER_BAND_RP,  lowerBandRP ); SetIndexEmptyValue(MODE_LOWER_BAND_RP,  0);
    SetIndexBuffer(MODE_LWMA,           lwma        );
-   SetIndexBuffer(MODE_UPPER_BAND_NRP, upperBandNRP);
-   SetIndexBuffer(MODE_LOWER_BAND_NRP, lowerBandNRP);
-   SetIndexBuffer(MODE_SIGNALS,        signal      ); SetIndexEmptyValue(MODE_SIGNALS, 0);
+   SetIndexBuffer(MODE_UPPER_BAND_NRP, upperBandNRP); SetIndexEmptyValue(MODE_UPPER_BAND_NRP, 0);
+   SetIndexBuffer(MODE_LOWER_BAND_NRP, lowerBandNRP); SetIndexEmptyValue(MODE_LOWER_BAND_NRP, 0);
+   SetIndexBuffer(MODE_SIGNAL_MARKER,  signalMarker); SetIndexEmptyValue(MODE_SIGNAL_MARKER,  0);
+   SetIndexBuffer(MODE_SIGNAL_AGE,     signalAge   ); SetIndexEmptyValue(MODE_SIGNAL_AGE,     0);
 
    // chart legend
    if (!IsSuperContext()) {
@@ -133,15 +137,16 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = "TMA Channel("+ MA.HalfLength +")";
+   indicatorName = WindowExpertName() +"("+ MA.HalfLength +")";
    IndicatorShortName(indicatorName);                       // chart tooltips and context menu
-   SetIndexLabel(MODE_TMA,            "TMA");               // chart tooltips and "Data" window
-   SetIndexLabel(MODE_UPPER_BAND_RP,  "TMA upper band");
-   SetIndexLabel(MODE_LOWER_BAND_RP,  "TMA lower band");
-   SetIndexLabel(MODE_LWMA,           "LWMA");
-   SetIndexLabel(MODE_UPPER_BAND_NRP, "LWMA upper band");
-   SetIndexLabel(MODE_LOWER_BAND_NRP, "LWMA lower band");
-   SetIndexLabel(MODE_SIGNALS,        NULL);
+   SetIndexLabel(MODE_TMA,             "TMA");              // chart tooltips and "Data" window
+   SetIndexLabel(MODE_UPPER_BAND_RP,   "TMA upper band");
+   SetIndexLabel(MODE_LOWER_BAND_RP,   "TMA lower band");
+   SetIndexLabel(MODE_LWMA,            NULL);               // "LWMA");
+   SetIndexLabel(MODE_UPPER_BAND_NRP,  NULL);               // "LWMA upper band");
+   SetIndexLabel(MODE_LOWER_BAND_NRP,  NULL);               // "LWMA lower band");
+   SetIndexLabel(MODE_SIGNAL_MARKER,   NULL);
+   SetIndexLabel(MODE_SIGNAL_AGE,      "Signal age");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -179,14 +184,15 @@ int onTick() {
       ArrayInitialize(tma,              EMPTY_VALUE);
       ArrayInitialize(upperVarianceRP,  EMPTY_VALUE);
       ArrayInitialize(lowerVarianceRP,  EMPTY_VALUE);
-      ArrayInitialize(upperBandRP,      EMPTY_VALUE);
-      ArrayInitialize(lowerBandRP,      EMPTY_VALUE);
+      ArrayInitialize(upperBandRP,      0);
+      ArrayInitialize(lowerBandRP,      0);
       ArrayInitialize(lwma,             EMPTY_VALUE);
       ArrayInitialize(upperVarianceNRP, EMPTY_VALUE);
       ArrayInitialize(lowerVarianceNRP, EMPTY_VALUE);
-      ArrayInitialize(upperBandNRP,     EMPTY_VALUE);
-      ArrayInitialize(lowerBandNRP,     EMPTY_VALUE);
-      ArrayInitialize(signal,           0);
+      ArrayInitialize(upperBandNRP,     0);
+      ArrayInitialize(lowerBandNRP,     0);
+      ArrayInitialize(signalMarker,     0);
+      ArrayInitialize(signalAge,        0);
       SetIndicatorOptions();
    }
 
@@ -195,53 +201,91 @@ int onTick() {
       ShiftIndicatorBuffer(tma,              Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(upperVarianceRP,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(lowerVarianceRP,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(upperBandRP,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(lowerBandRP,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(upperBandRP,      Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(lowerBandRP,      Bars, ShiftedBars, 0);
       ShiftIndicatorBuffer(lwma,             Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(upperVarianceNRP, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(lowerVarianceNRP, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(upperBandNRP,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(lowerBandNRP,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(signal,           Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(upperBandNRP,     Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(lowerBandNRP,     Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(signalMarker,     Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(signalAge,        Bars, ShiftedBars, 0);
    }
 
    int FullLength = maPeriods;
    int HalfLength = MA.HalfLength;
 
-   // recalculate changed LWMA bars
-   int bars = Min(ChangedBars, Max.Bars);
-   int startBar = Min(bars-1, Bars-(HalfLength+1));
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
-
-   for (int i=startBar; i >= 0; i--) {
-      lwma[i] = iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, maAppliedPrice, i);
-   }
-   //if (!UnchangedBars) debug("onTick()  lwma[44] = "+ NumberToStr(lwma[44], PriceFormat) +" (startBar="+ startBar +", "+ TimeToStr(Time[44], TIME_DATE|TIME_MINUTES) +")");
-
 
    // original repainting TMA calculation
-   bars = Min(Bars, Max.Bars);
-   startBar = ChangedBars + HalfLength + 1;
+   int bars = Min(Bars, maxValues);
+   int startBar = ChangedBars + HalfLength + 1;
    if (startBar >= bars) startBar = bars-1;
    CalculateTMA(bars, startBar);
 
+   if (!UnchangedBars) {
+      debug("onTick(0.1)  Bars="+ Bars +"  maxValues="+ maxValues +"  tmaBars="+ bars +"  tmaStartBar="+ startBar);
+   }
 
-   // new non-repainting TMA calculation
-   double values[];
-   int offset = 0;
-   CalculateTMAValues(values, offset);
-
+   // non-repainting TMA calculation
+   // recalculate changed LWMA bars
+   //int bars = Min(ChangedBars, Max.Bars);
+   //int startBar = Min(bars-1, Bars-(HalfLength+1));
+   //if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   //
+   //for (int i=startBar; i >= 0; i--) {
+   //   lwma[i] = iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, maAppliedPrice, i);
+   //}
+   ////if (!UnchangedBars) debug("onTick()  lwma[44] = "+ NumberToStr(lwma[44], PriceFormat) +" (startBar="+ startBar +", "+ TimeToStr(Time[44], TIME_DATE|TIME_MINUTES) +")");
+   //double values[];
+   //int offset = 0;
+   //CalculateTMAValues(values, offset);
+   //static bool done = false; if (!done) done = _true(debug("onTick(0.2)  signalStartBar="+ i));
 
    // signal calculation
    if (MarkSignals) {
-    	for (i=startBar; i >= 0; i--) {
-         signal[i] = 0;
-         // original
-         if (Low [i+1] < lowerBandRP[i+1] && Close[i+1] < Open[i+1] && Close[i] > Open[i]) signal[i] =  Low[i];
-         if (High[i+1] > upperBandRP[i+1] && Close[i+1] > Open[i+1] && Close[i] < Open[i]) signal[i] = High[i];
-         // new
-         //if (( Low[i+1] < lowerBandRP[i+1] ||  Low[i] < lowerBandRP[i]) && Close[i] > Open[i] && !longSignal [i+1]) signal[i] =  Low[i];
-         //if ((High[i+1] > upperBandRP[i+1] || High[i] > upperBandRP[i]) && Close[i] < Open[i] && !shortSignal[i+1]) signal[i] = High[i];
+    	for (int iCurr, iPrev, i=startBar; i >= 0; i--) {
+    	   if (!lowerBandRP[i+1]) continue;
+
+         bool longSignal=false, shortSignal=false, bullPattern=false, bearPattern=IsBearishPattern(i);
+         if (!bearPattern) bullPattern = IsBullishPattern(i);
+
+         // evaluate new signals
+         if (signalAge[i+1] < 0) {                             // prev short signal
+            // check for another short or new long signal
+            if (bearPattern) {
+               iCurr = iHighest(NULL, NULL, MODE_HIGH, -signalAge[i+1], i);
+               iPrev = iHighest(NULL, NULL, MODE_HIGH, MathAbs(signalAge[_int(i-signalAge[i+1]+1)]), i-signalAge[i+1]);
+               shortSignal = (High[iCurr] > upperBandRP[iCurr] && High[iCurr] > High[iPrev]);
+            }
+            else if (bullPattern) longSignal = HasPriceCrossedLowerBand(lowerBandRP, i, i-signalAge[i+1]-1);
+         }
+         else if (signalAge[i+1] > 0) {                        // prev long signal
+            // check for another long or new short signal
+            if (bullPattern) {
+               iCurr = iLowest(NULL, NULL, MODE_LOW, signalAge[i+1], i);
+               iPrev = iLowest(NULL, NULL, MODE_LOW, MathAbs(signalAge[_int(i+signalAge[i+1]+1)]), i+signalAge[i+1]);
+               longSignal = (Low[iCurr] < lowerBandRP[iCurr] && Low[iCurr] < Low[iPrev]);
+            }
+            else if (bearPattern) shortSignal = HasPriceCrossedUpperBand(upperBandRP, i, i+signalAge[i+1]-1);
+         }
+         else {                                                // no prev signal
+            if      (bullPattern) longSignal  = HasPriceCrossedLowerBand(lowerBandRP, i, i+1);
+            else if (bearPattern) shortSignal = HasPriceCrossedUpperBand(upperBandRP, i, i+1);
+         }
+
+         // set marker and update signal age
+         if (longSignal) {
+            signalMarker[i] = Low[i];
+            signalAge   [i] = 1;
+         }
+         else if (shortSignal) {
+            signalMarker[i] = High[i];
+            signalAge   [i] = -1;
+         }
+         else {
+            signalMarker[i] = 0;
+            signalAge   [i] = signalAge[i+1] + Sign(signalAge[i+1]);
+         }
       }
    }
 
@@ -255,10 +299,64 @@ int onTick() {
 
 
 /**
+ * Whether the bar at the specified offset forms a bullish candle pattern.
  *
+ * @param  int bar - bar offset
+ *
+ * @return bool
  */
-void CalculateTMAValues(double &values[], int offset) {
-   ArrayResize(values, maPeriods);
+bool IsBullishPattern(int bar) {
+   return(Open[bar] < Close[bar] || (Open[bar]==Close[bar] && Close[bar+1] < Close[bar]));
+}
+
+
+/**
+ * Whether the bar at the specified offset forms a bearish candle pattern.
+ *
+ * @param  int bar - bar offset
+ *
+ * @return bool
+ */
+bool IsBearishPattern(int bar) {
+   return(Open[bar] > Close[bar] || (Open[bar]==Close[bar] && Close[bar+1] > Close[bar]));
+}
+
+
+/**
+ * Whether the High price has crossed the channel band in the specified bar range upwards.
+ *
+ * @param  double band[] - channel band
+ * @param  int    from   - start offset of the bar range to check
+ * @param  int    to     - end offset of the bar range to check
+ *
+ * @return bool
+ */
+bool HasPriceCrossedUpperBand(double band[], int from, int to) {
+   for (int i=from; i <= to; i++) {
+      if (High[i] >= band[i]) {
+         return(true);
+      }
+   }
+   return(false);
+}
+
+
+/**
+ * Whether the Low price has crossed the channel band in the specified bar range downwards.
+ *
+ * @param  double band[] - channel band
+ * @param  int    from   - start offset of the bar range to check
+ * @param  int    to     - end offset of the bar range to check
+ *
+ * @return bool
+ */
+bool HasPriceCrossedLowerBand(double band[], int from, int to) {
+   for (int i=from; i <= to; i++) {
+      if (Low[i] <= band[i]) {
+         return(true);
+      }
+   }
+   return(false);
 }
 
 
@@ -283,13 +381,6 @@ void CalculateTMA(int bars, int startBar) {
       }
       tma[i] = sum/sumw;
 
-      if (!UnchangedBars && !i) {
-         //double values[]; ArrayResize(values, FullLength);
-         //for (int n=0; n < FullLength; n++) values[n] = tma[n];
-         //debug("CalcTMA()  last "+ FullLength +" tma[]: "+ DoublesToStrEx(values, NULL, Digits+1));
-      }
-
-
       // diff between price and TMA
       double diffRP = price - tma[i];
 
@@ -304,7 +395,7 @@ void CalculateTMA(int bars, int startBar) {
             upperVarianceRP[i] = (upperVarianceRP[i+1] * (FullLength-1) + 0)                  /FullLength;
             lowerVarianceRP[i] = (lowerVarianceRP[i+1] * (FullLength-1) + MathPow(diffRP, 2)) /FullLength;
          }
-         //if (ChangedBars == 1) debug("CalcTMA()  i="+ i +"  added diff "+ diffRP + ifString(EQ(tma[i], iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, appliedPrice, i)), " (TMA = LWMA)", " (TMA != LWMA)"));
+         //if (ChangedBars == 1) debug("CalculateTMA()  i="+ i +"  added diff "+ diffRP + ifString(EQ(tma[i], iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, appliedPrice, i)), " (TMA = LWMA)", " (TMA != LWMA)"));
       }
       else /*i == bars-HalfLength-1*/{
          if (diffRP >= 0) {
@@ -325,9 +416,18 @@ void CalculateTMA(int bars, int startBar) {
    if (!IsSuperContext()) {
       @Bands.UpdateLegend(legendLabel, indicatorName, "", indicator_color2, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
    }
+   return(0);
 
-   //upperBandNRP[0] = upperBandRP[0];
-   //lowerBandNRP[0] = lowerBandRP[0];
+   double dNulls[];
+   CalculateTMAValues(dNulls, NULL);
+}
+
+
+/**
+ *
+ */
+void CalculateTMAValues(double &values[], int offset) {
+   ArrayResize(values, maPeriods);
 }
 
 
@@ -346,9 +446,10 @@ double GetPrice(int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   //SetIndexStyle( int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(indicator_buffers);
-   SetIndexStyle(MODE_SIGNALS, DRAW_ARROW);
-   SetIndexArrow(MODE_SIGNALS, 82);
+   SetIndexStyle(MODE_SIGNAL_MARKER, DRAW_ARROW); SetIndexArrow(MODE_SIGNAL_MARKER, 82);
+   SetIndexStyle(MODE_SIGNAL_AGE,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 
 

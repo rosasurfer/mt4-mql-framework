@@ -4965,11 +4965,11 @@ Indicator values left of the specified index will not appear in the chart. By de
       caption=SetIndexEmptyValue()
       type=void
       <content>
-        Set the indicator buffer value interpreted as "empty" value. Empty values are not drawn on the chart or shown in the "Data" window.
+        Set the indicator buffer value interpreted as "no value" (empty). Empty values are neither drawn on the chart nor shown in the "Data" window.
         The default empty value is <span class="const">EMPTY_VALUE</span>.<br/>
         <br/>
         <b>Note:</b><br/>
-        Arrays bound to indicator buffers are always initialized with <span class="number">0.0</span> (zero), independent of a set "empty" value.
+        Indicator buffer arrays are automatically initialized with <span class="number">0.0</span> (zero) - like regular arrays - independent of the defined "empty" value.
       </content>
       <example>
 <span class="type code">int</span> <span class="core code">init</span>() {
@@ -4992,7 +4992,7 @@ Indicator values left of the specified index will not appear in the chart. By de
       <parameter>
         type=double
         name=value
-        description=value to be interpreted as "empty" value
+        description=value to be interpreted as "no value"
       </parameter>
     </function>
 
