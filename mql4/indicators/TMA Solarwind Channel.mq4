@@ -30,7 +30,6 @@ extern int    Bands.LineWidth  = 3;
 extern bool   MarkReversals    = true;
 extern bool   RepaintingMode   = true;       // enable repainting mode
 extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
-extern string __________________________;
 
 extern bool   AlertsOn         = false;
 
@@ -492,4 +491,25 @@ void onSignal(string msg) {
       lastTime = Time[0];
       logNotice(" "+ msg);
    }
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("MA.HalfLength=",    MA.HalfLength,                        ";", NL,
+                            "MA.AppliedPrice=",  DoubleQuoteStr(MA.AppliedPrice),      ";", NL,
+                            "MA.Color=",         ColorToStr(MA.Color),                 ";", NL,
+                            "MA.LineWidth=",     MA.LineWidth,                         ";", NL,
+                            "Bands.Deviations=", NumberToStr(Bands.Deviations, ".1+"), ";", NL,
+                            "Bands.Color=",      ColorToStr(Bands.Color),              ";", NL,
+                            "Bands.LineWidth=",  Bands.LineWidth,                      ";", NL,
+                            "MarkReversals=",    BoolToStr(MarkReversals),             ";", NL,
+                            "RepaintingMode=",   BoolToStr(RepaintingMode),            ";", NL,
+                            "Max.Bars=",         Max.Bars,                             ";", NL,
+                            "AlertsOn=",         BoolToStr(AlertsOn),                  ";")
+   );
 }
