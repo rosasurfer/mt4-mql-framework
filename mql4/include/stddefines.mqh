@@ -375,7 +375,7 @@ double  N_INF;                                              // -1.#INF: negative
 /*
  The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
 
- @see  https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode
+ @link  https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode
 +------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
 | SYMBOL_CALC_MODE_FOREX       | Forex mode                                                   | Margin: Lots*ContractSize/Leverage                          |
 |                              | calculation of profit and margin for Forex                   | Profit: (Close-Open)*ContractSize*Lots                      |

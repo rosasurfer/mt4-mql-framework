@@ -186,7 +186,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(ma,        EMPTY_VALUE);
       ArrayInitialize(upperBand, EMPTY_VALUE);
@@ -219,8 +219,9 @@ int onTick() {
          lowerBand[bar] = ma[bar] - atr;
       }
    }
-   @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
-
+   if (!IsSuperContext()) {
+      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
+   }
    return(last_error);
 }
 

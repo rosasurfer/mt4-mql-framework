@@ -7,7 +7,7 @@
  * @param  int    periods
  * @param  int    offset
  * @param  int    fIgnoreErrors [optional] - flags of errors to ignore (default: none)
- *                                           supported values: F_ERS_HISTORY_UPDATE (@see notes)
+ *                                           supported values: F_ERS_HISTORY_UPDATE (see notes)
  *
  * @return double - ATR value or NULL in case of an error not covered by the passed fIgnoreErrors flags
  *

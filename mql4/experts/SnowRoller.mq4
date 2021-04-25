@@ -2732,7 +2732,7 @@ int ModifyStopLoss(int i, double gridbase, double stoploss) {
  *
  * @return bool - whether the position was successfully closed was already closed by the broker
  *
- * @see    https://github.com/rosasurfer/mt4-mql/issues/10
+ * @link   https://github.com/rosasurfer/mt4-mql/issues/10
  */
 bool UpdateStatus.ExecuteStopLoss(int ticket) {
    if (IsLastError())                         return(!last_error);

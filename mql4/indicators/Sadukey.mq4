@@ -4,8 +4,8 @@
  *
  * Coefficients are more than 10 years old, so the indicator should be taken with a grain of salt.
  *
- * @see  http://www.finware.com/generator.html
- * @see  http://fx.qrz.ru/
+ * @link  http://www.finware.com/generator.html
+ * @link  http://fx.qrz.ru/
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -129,7 +129,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(buffer1)) return(logDebug("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(buffer1, EMPTY_VALUE);
       ArrayInitialize(buffer2, EMPTY_VALUE);
