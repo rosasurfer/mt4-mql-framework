@@ -24,7 +24,7 @@ extern int    SignalLine.MA.Periods = 1;                 // %D line (MA of resul
 extern color  MainLine.Color        = DodgerBlue;
 extern color  SignalLine.Color      = Red;
 extern int    MaxBars               = 10000;             // max. number of values to calculate (-1: all available)
-extern string __________________________;
+extern string __a____________________________;
 
 extern int    SignalLevel.Long      = 73;                // signal level to cross upwards to trigger a long signal         //         73        70
 extern int    SignalLevel.Short     = 27;                // signal level to cross downwards to trigger a short signal      //         27        30
