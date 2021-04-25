@@ -3749,8 +3749,8 @@ datetime TimeCurrentEx(string location="") {
  *
  * @return string - GMT time string or an empty string in case of errors
  *
- * @see  http://www.cplusplus.com/reference/ctime/strftime/
- * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
  */
 string GmtTimeFormat(datetime timestamp, string format) {
    return(GmtTimeFormatA(timestamp, format));
@@ -3765,8 +3765,8 @@ string GmtTimeFormat(datetime timestamp, string format) {
  *
  * @return string - local time string or an empty string in case of errors
  *
- * @see  http://www.cplusplus.com/reference/ctime/strftime/
- * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
  */
 string LocalTimeFormat(datetime timestamp, string format) {
    return(LocalTimeFormatA(timestamp, format));
@@ -5287,7 +5287,7 @@ string HistoryFlagsToStr(int flags) {
  * @param  string value
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
- *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
+ *                                   F_ERR_INVALID_PARAMETER: don't trigger an internal error on unsupported parameters
  *
  * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
@@ -5355,8 +5355,8 @@ int StrToPriceType(string value, int flags = NULL) {
       }
    }
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
-   else                                      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   if (!(flags & F_ERR_INVALID_PARAMETER))
+      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
    return(-1);
 }
 

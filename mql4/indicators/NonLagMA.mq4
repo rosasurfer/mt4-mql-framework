@@ -11,11 +11,11 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  v4.0: http://www.forexfactory.com/showthread.php?t=571026
- * @see  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
- * @see  v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
- * @see  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
- * @see  v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
+ * @link  v4.0: http://www.forexfactory.com/showthread.php?t=571026
+ * @link  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
+ * @link  v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
+ * @link  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
+ * @link  v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -83,7 +83,7 @@ int    maxValues;
 int    drawType;
 
 string indicatorName;
-string chartLegendLabel;
+string legendLabel;
 
 bool   signals;
 bool   signal.sound;
@@ -166,8 +166,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-       chartLegendLabel = CreateLegendLabel();
-       RegisterObject(chartLegendLabel);
+       legendLabel = CreateLegendLabel();
+       RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -210,7 +210,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
@@ -244,7 +244,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
