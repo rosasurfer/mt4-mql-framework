@@ -611,8 +611,8 @@ int CreateDescriptionLabel() {
 
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 300);
-      ObjectSet    (label, OBJPROP_YDISTANCE,   4);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 300);                              // the InsideBars label starts at xDist=450
+      ObjectSet    (label, OBJPROP_YDISTANCE,   3);
       ObjectSetText(label, " ", 1);
       RegisterObject(label);
    }
