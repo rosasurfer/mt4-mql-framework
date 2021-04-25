@@ -12,7 +12,6 @@
  *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  * @see  "/etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures [Ehlers, 2004].pdf"
- * @see  "/etc/doc/ehlers/Using The Fisher Transform [Stocks & Commodities].pdf"
  *
  *
  * TODO:
@@ -134,7 +133,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(fisherMain)) return(logDebug("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(fisherMain,       EMPTY_VALUE);
       ArrayInitialize(fisherSection,               0);

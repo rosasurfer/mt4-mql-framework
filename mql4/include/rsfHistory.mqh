@@ -6,7 +6,7 @@
  * With terminal builds > 509 the history file format changed. This is reflected by the format id in the history file headers.
  * Up to builds 509 the field HISTORY_HEADER.barFormat is 400, since builds > 509 the field HISTORY_HEADER.barFormat is 401.
  *
- *  @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
+ *  @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  *
  * A terminal supporting only the old format (up to build 509) will delete history files in the new format on shutdown "if it
  * tries to access them". This means history for a symbol may exist in mixed formats. As long as the user doesn't switch to

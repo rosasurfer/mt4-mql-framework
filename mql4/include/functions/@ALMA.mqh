@@ -6,8 +6,8 @@
  * @param  double offset [optional] - Offset der Gauﬂ'schen Normalverteilung (default: 0.85)
  * @param  double sigma  [optional] - Steilheit der Gauﬂ'schen Normalverteilung (default: 6.0)
  *
- * @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
- * @see  "/etc/doc/arnaud-legoux-ma/ALMA Weighted Distribution.xls"
+ * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ * @see   "/etc/doc/alma/ALMA Weighted Distribution.xls"
  */
 void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0) {
    if (periods <= 0) {

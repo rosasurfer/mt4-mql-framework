@@ -1490,7 +1490,7 @@ string GetStatusFilename() {
  * @param  int direction - trade direction: D_LONG | D_SHORT
  * @param  int level     - grid level of the position to open: -n...-1 | +1...+n
  *
- * @return int - array index the order record was stored at or -1 (EMPTY) in case of errors
+ * @return int - array index the order record was stored at or EMPTY (-1) in case of errors
  */
 int Grid.AddPosition(int direction, int level) {
    if (IsLastError())                         return(EMPTY);

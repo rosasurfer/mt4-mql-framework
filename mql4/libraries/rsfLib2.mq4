@@ -658,7 +658,7 @@ string TicketsToStr.Position(int tickets[]) {
  * @param  _InOut_ bool   bData [] - Boolean-Daten
  * @param  _InOut_ double dData [] - Double-Daten
  *
- * @return int - Anzahl der kopierten Orders oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der kopierten Orders oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]) {
    store = store!=0;
@@ -708,7 +708,7 @@ int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[
  * @param  int    offset    - Position im Ausgangs-Array, an dem das andere Array eingefügt werden soll
  * @param  double values[]  - einzufügendes Array (muß in seiner ersten Dimension der zweiten Dimension des Ausgangsarrays entsprechen)
  *
- * @return int - neue Größe des Ausgangsarrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
    if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
@@ -779,7 +779,7 @@ int ArrayInsertString(string &array[], int offset, string value) {
  * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  string values[] - einzufügende Elemente
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertStrings(string array[], int offset, string values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
