@@ -2182,7 +2182,7 @@ bool StrIsPhoneNumber(string value) {
  * @param  string array[] - String-Array
  * @param  string value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
  *
  * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
@@ -2246,7 +2246,7 @@ int StrToLogLevel(string value, int flags = NULL) {
  * @param  string value            - string representation of a Moving-Average type
  * @param  int    flags [optional] - execution control: errors to set silently (default: none)
  *
- * @return int - Moving-Average type constant oder -1 (EMPTY) in case of errors
+ * @return int - Moving-Average type constant oder EMPTY (-1) in case of errors
  */
 int StrToMaMethod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -3749,8 +3749,8 @@ datetime TimeCurrentEx(string location="") {
  *
  * @return string - GMT time string or an empty string in case of errors
  *
- * @see  http://www.cplusplus.com/reference/ctime/strftime/
- * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
  */
 string GmtTimeFormat(datetime timestamp, string format) {
    return(GmtTimeFormatA(timestamp, format));
@@ -3765,8 +3765,8 @@ string GmtTimeFormat(datetime timestamp, string format) {
  *
  * @return string - local time string or an empty string in case of errors
  *
- * @see  http://www.cplusplus.com/reference/ctime/strftime/
- * @see  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
  */
 string LocalTimeFormat(datetime timestamp, string format) {
    return(LocalTimeFormatA(timestamp, format));
@@ -4788,7 +4788,7 @@ int StrToOperationType(string value) {
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "L" = "Long"
  *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
  *
- * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
+ * @return int - trade direction constant or EMPTY (-1) if the value is not recognized
  */
 int StrToTradeDirection(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -5287,9 +5287,9 @@ string HistoryFlagsToStr(int flags) {
  * @param  string value
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
- *                                   F_ERR_INVALID_PARAMETER: set ERR_INVALID_PARAMETER silently
+ *                                   F_ERR_INVALID_PARAMETER: don't trigger an internal error on unsupported parameters
  *
- * @return int - price type constant or -1 (EMPTY) if the value is not recognized
+ * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
 int StrToPriceType(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
@@ -5355,8 +5355,8 @@ int StrToPriceType(string value, int flags = NULL) {
       }
    }
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
-   else                                      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   if (!(flags & F_ERR_INVALID_PARAMETER))
+      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
    return(-1);
 }
 
@@ -5460,7 +5460,7 @@ string PriceTypeDescription(int type) {
  *                                   F_CUSTOM_TIMEFRAME:      enable support of custom timeframes
  *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
  *
- * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
+ * @return int - timeframe constant or EMPTY (-1) if the value is not recognized
  */
 int StrToPeriod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));

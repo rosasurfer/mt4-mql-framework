@@ -78,7 +78,7 @@ int    maxValues;
 int    drawType;
 
 string indicatorName;
-string chartLegendLabel;
+string legendLabel;
 
 bool   signals;
 bool   signal.sound;
@@ -170,8 +170,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-      chartLegendLabel = CreateLegendLabel();
-      RegisterObject(chartLegendLabel);
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -224,7 +224,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(firstEma)) return(logDebug("onTick(1)  size(firstEma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(firstEma,  EMPTY_VALUE);
       ArrayInitialize(secondEma, EMPTY_VALUE);
@@ -260,7 +260,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, thirdEma[0], Digits, trend[0], Time[0]);
+       @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, thirdEma[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {

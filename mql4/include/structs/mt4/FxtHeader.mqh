@@ -1,8 +1,8 @@
 /**
  * FxtHeader.mqh
  *
- * @origin  MetaQuotes
- * @see     https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/FxtHeader.h
+ * @author  MetaQuotes
+ * @link    https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/FxtHeader.h
  */
 
 #define FXT_VERSION     405

@@ -166,13 +166,14 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       }
 
       string text = StringConcatenate(name, "    ", sValue, sTrend, status, sOnTrendChange);
-      color  cColor = ifInt(trend > 0, uptrendColor, downtrendColor);
-      if      (cColor == Aqua  ) cColor = DeepSkyBlue;
-      else if (cColor == Gold  ) cColor = Orange;
-      else if (cColor == Lime  ) cColor = LimeGreen;
-      else if (cColor == Yellow) cColor = Orange;
+      color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
+      if      (textColor == Aqua        ) textColor = DeepSkyBlue;
+      else if (textColor == Gold        ) textColor = Orange;
+      else if (textColor == LightSkyBlue) textColor = DeepSkyBlue;
+      else if (textColor == Lime        ) textColor = LimeGreen;
+      else if (textColor == Yellow      ) textColor = Orange;
 
-      ObjectSetText(label, text, 9, "Arial Fett", cColor);
+      ObjectSetText(label, text, 9, "Arial Fett", textColor);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or opened "Properties" dialog
          return(catch("@Trend.UpdateLegend(1)", error));
