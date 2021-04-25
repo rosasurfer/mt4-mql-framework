@@ -22,7 +22,7 @@ extern int    MA.HalfLength    = 55;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
 extern double Bands.Deviations = 2.5;
 extern bool   RepaintingMode   = true;       // enable repainting mode
-extern bool   MarkSignals      = false;
+extern bool   MarkSignals      = true;
 extern bool   AlertsOn         = false;
 extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
 
@@ -251,7 +251,7 @@ int onTick() {
 
          // evaluate new signals
          if (signalAge[i+1] < 0) {                             // prev short signal
-            // check for another short or new long signal
+            // check for another short or a new long signal
             if (bearPattern) {
                iCurr = iHighest(NULL, NULL, MODE_HIGH, -signalAge[i+1], i);
                iPrev = iHighest(NULL, NULL, MODE_HIGH, MathAbs(signalAge[_int(i-signalAge[i+1]+1)]), i-signalAge[i+1]);
@@ -260,7 +260,7 @@ int onTick() {
             else if (bullPattern) longSignal = HasPriceCrossedLowerBand(lowerBandRP, i, i-signalAge[i+1]-1);
          }
          else if (signalAge[i+1] > 0) {                        // prev long signal
-            // check for another long or new short signal
+            // check for another long or a new short signal
             if (bullPattern) {
                iCurr = iLowest(NULL, NULL, MODE_LOW, signalAge[i+1], i);
                iPrev = iLowest(NULL, NULL, MODE_LOW, MathAbs(signalAge[_int(i+signalAge[i+1]+1)]), i+signalAge[i+1]);
