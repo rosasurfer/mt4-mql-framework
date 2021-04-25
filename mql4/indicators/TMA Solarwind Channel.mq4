@@ -303,10 +303,12 @@ int onTick() {
    }
 
    // alerts
-   if (AlertsOn) {
-      if (Close[0] > upperBandRP[0] && Close[1] < upperBandRP[1]) onSignal("upper band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" touched");
-      if (Close[0] < lowerBandRP[0] && Close[1] > lowerBandRP[1]) onSignal("lower band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" touched");
+   static double lastBid; if (AlertsOn && lastBid) {
+      if (lastBid < upperBandRP[1] && Bid > upperBandRP[0]) onSignal("upper band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" crossed");
+      if (lastBid > lowerBandRP[1] && Bid < lowerBandRP[0]) onSignal("lower band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" crossed");
    }
+   lastBid = Bid;
+
    return(0);
 }
 
@@ -380,7 +382,8 @@ void CalculateTMA(int bars, int startBar) {
    int j, w, HalfLength=MA.HalfLength, FullLength=maPeriods;
 
    for (int i=startBar; i >= 0; i--) {
-      double price = GetPrice(i);            // TMA calculation
+      // TMA calculation
+      double price = GetPrice(i);
       double sum = (HalfLength+1) * price;
       int   sumw = (HalfLength+1);
 
@@ -445,12 +448,29 @@ void CalculateTMAValues(double &values[], int offset) {
 
 
 /**
+ * Get the price of the configured type at the given bar offset.
+ *
  * @param  int bar - bar offset
  *
  * @return double
  */
 double GetPrice(int bar) {
    return(iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar));
+}
+
+
+/**
+ *
+ */
+void onSignal(string msg) {
+   static string lastMsg = "";
+   static datetime lastTime;
+
+   if (msg!=lastMsg || Time[0]!=lastTime) {
+      lastMsg = msg;
+      lastTime = Time[0];
+      logNotice(" "+ msg);
+   }
 }
 
 
@@ -476,21 +496,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_LOWER_BAND_NRP,  DRAW_NONE,     EMPTY, EMPTY,      indicator_color6);
    SetIndexStyle(MODE_REVERSAL_MARKER, DRAW_ARROW);                                         SetIndexArrow(MODE_REVERSAL_MARKER, 82);
    SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE,     EMPTY, EMPTY,      indicator_color8);
-}
-
-
-/**
- *
- */
-void onSignal(string msg) {
-   static string lastMsg = "";
-   static datetime lastTime;
-
-   if (msg!=lastMsg || Time[0]!=lastTime) {
-      lastMsg = msg;
-      lastTime = Time[0];
-      logNotice(" "+ msg);
-   }
 }
 
 

@@ -8786,8 +8786,10 @@ AlertsOn=0
 </inputs>
 </expert>
 
-color_6=16711935
+style_0=2
+style_3=2
 weight_6=4
+color_6=16711935
 
 period_flags=0
 show_data=1
