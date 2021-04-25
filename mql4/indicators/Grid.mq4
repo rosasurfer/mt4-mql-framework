@@ -209,7 +209,7 @@ int DrawGrid() {
  * @param  int year  - Jahr (1970 bis 2037)
  * @param  int month - Monat
  *
- * @return datetime - erster Wochentag des Monats oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - erster Wochentag des Monats oder EMPTY (-1), falls ein Fehler auftrat
  */
 datetime GetFirstWeekdayOfMonth(int year, int month) {
    if (year  < 1970 || 2037 < year ) return(_EMPTY(catch("GetFirstWeekdayOfMonth(1)  illegal parameter year = "+ year +" (not between 1970 and 2037)", ERR_INVALID_PARAMETER)));

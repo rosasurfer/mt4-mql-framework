@@ -1,6 +1,7 @@
 /**
- * JMA - Jurik Moving Average (based on sources of Nikolay Kositsin)
+ * JMA - Jurik Moving Average
  *
+ * A non-repainting version with sources based on the original Jurik algorythm published by Nikolay Kositsin.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -8,21 +9,19 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @see  http://www.jurikres.com/catalog1/ms_ama.htm
- *
- * @see  https://www.mql5.com/en/articles/1450
+ * @link  http://www.jurikres.com/catalog1/ms_ama.htm
+ * @link  https://www.mql5.com/en/articles/1450
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
-
-
 /*
-www.tradingview.com
--------------------
+-----------------------------------------------------------------------------------------------------------------------------
 
-//@version=1
+// @author  everget
+// @version 1                                                                                      http://www.tradingview.com
+//
 // Copyright (c) 2007-present Jurik Research and Consulting. All rights reserved.
 // Copyright (c) 2018-present, Alex Orekhov (everget)
 // Jurik Moving Average script may be freely distributed under the MIT license.
@@ -48,9 +47,12 @@ jma(src, length, power, rMult) =>
     jma := nz(jma[1]) + e2
 
 plot(jma(src, length, power, rMult), title="JMA", linewidth=2, color=#6d1e7f, transp=0)
+
 -----------------------------------------------------------------------------------------------------------------------------
 
-//@version=2
+// @author  everget
+// @version 2
+//
 // Copyright (c) 2007-present Jurik Research and Consulting. All rights reserved.
 // Copyright (c) 2018-present, Alex Orekhov (everget)
 // Jurik Moving Average script may be freely distributed under the MIT license.
@@ -82,21 +84,46 @@ jma := e2 + nz(jma[1])
 
 jmaColor = highlightMovements ? (jma > jma[1] ? green : red) : #6d1e7f
 plot(jma, title="JMA", linewidth=2, color=jmaColor, transp=0)
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+// @author  everget
+// @version 3                                               https://www.tradingview.com/script/nZuBWW9j-Jurik-Moving-Average/
+//
+// Copyright (c) 2007-present Jurik Research and Consulting. All rights reserved.
+// Copyright (c) 2018-present, Alex Orekhov (everget)
+// Jurik Moving Average script may be freely distributed under the MIT license.
+study("Jurik Moving Average", shorttitle="JMA", overlay=true)
+
+length = input(title="Length", type=integer, defval=7)
+phase = input(title="Phase", type=integer, defval=50)
+power = input(title="Power", type=integer, defval=2)
+src = input(title="Source", type=source, defval=close)
+highlightMovements = input(title="Highlight Movements ?", type=bool, defval=true)
+
+phaseRatio = phase < -100 ? 0.5 : phase > 100 ? 2.5 : phase / 100 + 1.5
+
+beta = 0.45 * (length - 1) / (0.45 * (length - 1) + 2)
+alpha = pow(beta, power)
+
+jma = 0.0
+
+e0 = 0.0
+e0 := (1 - alpha) * src + alpha * nz(e0[1])
+
+e1 = 0.0
+e1 := (src - e0) * (1 - beta) + beta * nz(e1[1])
+
+e2 = 0.0
+e2 := (e0 + phaseRatio * e1 - nz(jma[1])) * pow(1 - alpha, 2) + pow(alpha, 2) * nz(e2[1])
+
+jma := e2 + nz(jma[1])
+
+jmaColor = highlightMovements ? (jma > jma[1] ? green : red) : #6d1e7f
+plot(jma, title="JMA", linewidth=2, color=jmaColor, transp=0)
+
 -----------------------------------------------------------------------------------------------------------------------------
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -156,7 +183,7 @@ int    maxValues;
 int    drawType;
 
 string indicatorName;
-string chartLegendLabel;
+string legendLabel;
 
 bool   signals;                                          // whether any signal is enabled
 bool   signal.sound;
@@ -245,8 +272,8 @@ int onInit() {
 
    // chart legend
    if (!IsSuperContext()) {
-      chartLegendLabel = CreateLegendLabel();
-      RegisterObject(chartLegendLabel);
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
    }
 
    // names, labels and display options
@@ -298,7 +325,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
@@ -333,7 +360,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(chartLegendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpenEvent()) {
