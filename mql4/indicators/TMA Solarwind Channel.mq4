@@ -20,11 +20,19 @@ int __DeinitFlags[];
 
 extern int    MA.HalfLength    = 55;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
+extern color  MA.Color         = Magenta;
+extern int    MA.LineWidth     = 1;
+
 extern double Bands.Deviations = 2.5;
+extern color  Bands.Color      = LightSkyBlue;
+extern int    Bands.LineWidth  = 3;
+
+extern bool   MarkReversals    = true;
 extern bool   RepaintingMode   = true;       // enable repainting mode
-extern bool   MarkSignals      = true;
-extern bool   AlertsOn         = false;
 extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
+extern string __________________________;
+
+extern bool   AlertsOn         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,36 +48,30 @@ extern int    Max.Bars         = 10000;      // max. values to calculate (-1: al
 #define MODE_LWMA                3           //
 #define MODE_UPPER_BAND_NRP      4           //
 #define MODE_LOWER_BAND_NRP      5           //
-#define MODE_SIGNAL_MARKER       6           //
-#define MODE_SIGNAL_AGE          7           //
+#define MODE_REVERSAL_MARKER     6           //
+#define MODE_REVERSAL_AGE        7           //
 #define MODE_UPPER_VARIANCE_RP   8           // managed by the framework
 #define MODE_LOWER_VARIANCE_RP   9           // ...
 #define MODE_UPPER_VARIANCE_NRP 10           // ...
 #define MODE_LOWER_VARIANCE_NRP 11           // ...
 
 #property indicator_chart_window
-#property indicator_buffers   8              // buffers managed by the terminal and visible in the input dialog
+#property indicator_buffers   8              // buffers managed by the terminal (visible in input dialog)
 int       framework_buffers = 4;             // buffers managed by the framework
 
-#property indicator_color1    Magenta        // TMA
-#property indicator_color2    LightSkyBlue   // upper channel band (repainting)
-#property indicator_color3    LightSkyBlue   // lower channel band (repainting)
+#property indicator_color1    CLR_NONE       // TMA
+#property indicator_color2    CLR_NONE       // upper channel band (repainting)
+#property indicator_color3    CLR_NONE       // lower channel band (repainting)
 #property indicator_color4    CLR_NONE       // CLR_NONE Blue                    // LWMA
-#property indicator_color5    Blue           // CLR_NONE Blue                    // upper channel band (non-repainting)
-#property indicator_color6    Blue           // CLR_NONE Blue                    // lower channel band (non-repainting)
-#property indicator_color7    Magenta        // signals
-#property indicator_color8    CLR_NONE       // signal duration
-
-#property indicator_width1    1
-#property indicator_width2    3
-#property indicator_width3    3
-#property indicator_width4    1
-#property indicator_width5    1
-#property indicator_width6    1
-#property indicator_width7    4
+#property indicator_color5    CLR_NONE       // CLR_NONE Blue                    // upper channel band (non-repainting)
+#property indicator_color6    CLR_NONE       // CLR_NONE Blue                    // lower channel band (non-repainting)
+#property indicator_color7    Magenta        // reversal markers
+#property indicator_color8    CLR_NONE       // reversal age
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style4    STYLE_DOT
+
+#property indicator_width7    4              // reversal markers
 
 double tma            [];
 double upperVarianceRP[];
@@ -83,8 +85,8 @@ double lowerVarianceNRP[];
 double upperBandNRP    [];
 double lowerBandNRP    [];
 
-double signalMarker[];
-double signalAge   [];
+double reversalMarker[];
+double reversalAge   [];
 
 int    maPeriods;
 int    maAppliedPrice;
@@ -104,7 +106,6 @@ int onInit() {
    // MA.HalfLength
    if (MA.HalfLength < 1)                                     return(catch("onInit(1)  invalid input parameter MA.HalfLength: "+ MA.HalfLength, ERR_INVALID_INPUT_PARAMETER));
    maPeriods = 2 * MA.HalfLength + 1;
-
    // MA.AppliedPrice
    string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -115,20 +116,33 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
+   // MA.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
+   // MA.LineWidth
+   if (MA.LineWidth < 0)                                      return(catch("onInit(3)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth > 5)                                      return(catch("onInit(4)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+
+   // Bands.Deviations
+   if (Bands.Deviations < 0)                                  return(catch("onInit(5)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
+   // Bands.LineWidth
+   if (Bands.LineWidth < 0)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5)                                   return(catch("onInit(7)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(3)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                         return(catch("onInit(8)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
-   SetIndexBuffer(MODE_TMA,            tma         );
-   SetIndexBuffer(MODE_UPPER_BAND_RP,  upperBandRP ); SetIndexEmptyValue(MODE_UPPER_BAND_RP,  0);
-   SetIndexBuffer(MODE_LOWER_BAND_RP,  lowerBandRP ); SetIndexEmptyValue(MODE_LOWER_BAND_RP,  0);
-   SetIndexBuffer(MODE_LWMA,           lwma        );
-   SetIndexBuffer(MODE_UPPER_BAND_NRP, upperBandNRP); SetIndexEmptyValue(MODE_UPPER_BAND_NRP, 0);
-   SetIndexBuffer(MODE_LOWER_BAND_NRP, lowerBandNRP); SetIndexEmptyValue(MODE_LOWER_BAND_NRP, 0);
-   SetIndexBuffer(MODE_SIGNAL_MARKER,  signalMarker); SetIndexEmptyValue(MODE_SIGNAL_MARKER,  0);
-   SetIndexBuffer(MODE_SIGNAL_AGE,     signalAge   ); SetIndexEmptyValue(MODE_SIGNAL_AGE,     0);
+   SetIndexBuffer(MODE_TMA,             tma           );
+   SetIndexBuffer(MODE_UPPER_BAND_RP,   upperBandRP   ); SetIndexEmptyValue(MODE_UPPER_BAND_RP,   0);
+   SetIndexBuffer(MODE_LOWER_BAND_RP,   lowerBandRP   ); SetIndexEmptyValue(MODE_LOWER_BAND_RP,   0);
+   SetIndexBuffer(MODE_LWMA,            lwma          );
+   SetIndexBuffer(MODE_UPPER_BAND_NRP,  upperBandNRP  ); SetIndexEmptyValue(MODE_UPPER_BAND_NRP,  0);
+   SetIndexBuffer(MODE_LOWER_BAND_NRP,  lowerBandNRP  ); SetIndexEmptyValue(MODE_LOWER_BAND_NRP,  0);
+   SetIndexBuffer(MODE_REVERSAL_MARKER, reversalMarker); SetIndexEmptyValue(MODE_REVERSAL_MARKER, 0);
+   SetIndexBuffer(MODE_REVERSAL_AGE,    reversalAge   ); SetIndexEmptyValue(MODE_REVERSAL_AGE,    0);
 
    // chart legend
    if (!IsSuperContext()) {
@@ -145,12 +159,12 @@ int onInit() {
    SetIndexLabel(MODE_LWMA,            NULL);               // "LWMA");
    SetIndexLabel(MODE_UPPER_BAND_NRP,  NULL);               // "LWMA upper band");
    SetIndexLabel(MODE_LOWER_BAND_NRP,  NULL);               // "LWMA lower band");
-   SetIndexLabel(MODE_SIGNAL_MARKER,   NULL);
-   SetIndexLabel(MODE_SIGNAL_AGE,      "Signal age");
+   SetIndexLabel(MODE_REVERSAL_MARKER, NULL);
+   SetIndexLabel(MODE_REVERSAL_AGE,    "Reversal age");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(4)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -191,8 +205,8 @@ int onTick() {
       ArrayInitialize(lowerVarianceNRP, EMPTY_VALUE);
       ArrayInitialize(upperBandNRP,     0);
       ArrayInitialize(lowerBandNRP,     0);
-      ArrayInitialize(signalMarker,     0);
-      ArrayInitialize(signalAge,        0);
+      ArrayInitialize(reversalMarker,   0);
+      ArrayInitialize(reversalAge,      0);
       SetIndicatorOptions();
    }
 
@@ -208,8 +222,8 @@ int onTick() {
       ShiftIndicatorBuffer(lowerVarianceNRP, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(upperBandNRP,     Bars, ShiftedBars, 0);
       ShiftIndicatorBuffer(lowerBandNRP,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(signalMarker,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(signalAge,        Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(reversalMarker,   Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(reversalAge,      Bars, ShiftedBars, 0);
    }
 
    int FullLength = maPeriods;
@@ -241,50 +255,50 @@ int onTick() {
    //CalculateTMAValues(values, offset);
    //static bool done = false; if (!done) done = _true(debug("onTick(0.2)  signalStartBar="+ i));
 
-   // signal calculation
-   if (MarkSignals) {
+   // reversal calculation
+   if (MarkReversals) {
     	for (int iCurr, iPrev, i=startBar; i >= 0; i--) {
     	   if (!lowerBandRP[i+1]) continue;
 
-         bool longSignal=false, shortSignal=false, bullPattern=false, bearPattern=IsBearishPattern(i);
+         bool longReversal=false, shortReversal=false, bullPattern=false, bearPattern=IsBearishPattern(i);
          if (!bearPattern) bullPattern = IsBullishPattern(i);
 
-         // evaluate new signals
-         if (signalAge[i+1] < 0) {                             // prev short signal
-            // check for another short or a new long signal
+         // evaluate new reversals
+         if (reversalAge[i+1] < 0) {                           // prev short reversal
+            // check for another short or a new long reversal
             if (bearPattern) {
-               iCurr = iHighest(NULL, NULL, MODE_HIGH, -signalAge[i+1], i);
-               iPrev = iHighest(NULL, NULL, MODE_HIGH, MathAbs(signalAge[_int(i-signalAge[i+1]+1)]), i-signalAge[i+1]);
-               shortSignal = (High[iCurr] > upperBandRP[iCurr] && High[iCurr] > High[iPrev]);
+               iCurr = iHighest(NULL, NULL, MODE_HIGH, -reversalAge[i+1], i);
+               iPrev = iHighest(NULL, NULL, MODE_HIGH, MathAbs(reversalAge[_int(i-reversalAge[i+1]+1)]), i-reversalAge[i+1]);
+               shortReversal = (High[iCurr] > upperBandRP[iCurr] && High[iCurr] > High[iPrev]);
             }
-            else if (bullPattern) longSignal = HasPriceCrossedLowerBand(lowerBandRP, i, i-signalAge[i+1]-1);
+            else if (bullPattern) longReversal = HasPriceCrossedLowerBand(lowerBandRP, i, i-reversalAge[i+1]-1);
          }
-         else if (signalAge[i+1] > 0) {                        // prev long signal
-            // check for another long or a new short signal
+         else if (reversalAge[i+1] > 0) {                      // prev long reversal
+            // check for another long or a new short reversal
             if (bullPattern) {
-               iCurr = iLowest(NULL, NULL, MODE_LOW, signalAge[i+1], i);
-               iPrev = iLowest(NULL, NULL, MODE_LOW, MathAbs(signalAge[_int(i+signalAge[i+1]+1)]), i+signalAge[i+1]);
-               longSignal = (Low[iCurr] < lowerBandRP[iCurr] && Low[iCurr] < Low[iPrev]);
+               iCurr = iLowest(NULL, NULL, MODE_LOW, reversalAge[i+1], i);
+               iPrev = iLowest(NULL, NULL, MODE_LOW, MathAbs(reversalAge[_int(i+reversalAge[i+1]+1)]), i+reversalAge[i+1]);
+               longReversal = (Low[iCurr] < lowerBandRP[iCurr] && Low[iCurr] < Low[iPrev]);
             }
-            else if (bearPattern) shortSignal = HasPriceCrossedUpperBand(upperBandRP, i, i+signalAge[i+1]-1);
+            else if (bearPattern) shortReversal = HasPriceCrossedUpperBand(upperBandRP, i, i+reversalAge[i+1]-1);
          }
          else {                                                // no prev signal
-            if      (bullPattern) longSignal  = HasPriceCrossedLowerBand(lowerBandRP, i, i+1);
-            else if (bearPattern) shortSignal = HasPriceCrossedUpperBand(upperBandRP, i, i+1);
+            if      (bullPattern) longReversal  = HasPriceCrossedLowerBand(lowerBandRP, i, i+1);
+            else if (bearPattern) shortReversal = HasPriceCrossedUpperBand(upperBandRP, i, i+1);
          }
 
-         // set marker and update signal age
-         if (longSignal) {
-            signalMarker[i] = Low[i];
-            signalAge   [i] = 1;
+         // set marker and update reversal age
+         if (longReversal) {
+            reversalMarker[i] = Low[i];
+            reversalAge   [i] = 1;
          }
-         else if (shortSignal) {
-            signalMarker[i] = High[i];
-            signalAge   [i] = -1;
+         else if (shortReversal) {
+            reversalMarker[i] = High[i];
+            reversalAge   [i] = -1;
          }
          else {
-            signalMarker[i] = 0;
-            signalAge   [i] = signalAge[i+1] + Sign(signalAge[i+1]);
+            reversalMarker[i] = 0;
+            reversalAge   [i] = reversalAge[i+1] + Sign(reversalAge[i+1]);
          }
       }
    }
@@ -414,9 +428,9 @@ void CalculateTMA(int bars, int startBar) {
    }
 
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, "", indicator_color2, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
+      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
    }
-   return(0);
+   return(last_error);
 
    double dNulls[];
    CalculateTMAValues(dNulls, NULL);
@@ -448,8 +462,21 @@ double GetPrice(int bar) {
 void SetIndicatorOptions() {
    //SetIndexStyle( int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(indicator_buffers);
-   SetIndexStyle(MODE_SIGNAL_MARKER, DRAW_ARROW); SetIndexArrow(MODE_SIGNAL_MARKER, 82);
-   SetIndexStyle(MODE_SIGNAL_AGE,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+
+   if (!MA.LineWidth)    { int maDrawType    = DRAW_NONE, maWidth    = EMPTY;           }
+   else                  {     maDrawType    = DRAW_LINE; maWidth    = MA.LineWidth;    }
+
+   if (!Bands.LineWidth) { int bandsDrawType = DRAW_NONE, bandsWidth = EMPTY;           }
+   else                  {     bandsDrawType = DRAW_LINE; bandsWidth = Bands.LineWidth; }
+
+   SetIndexStyle(MODE_TMA,             maDrawType,    EMPTY, maWidth,    MA.Color        );
+   SetIndexStyle(MODE_UPPER_BAND_RP,   bandsDrawType, EMPTY, bandsWidth, Bands.Color     );
+   SetIndexStyle(MODE_LOWER_BAND_RP,   bandsDrawType, EMPTY, bandsWidth, Bands.Color     );
+   SetIndexStyle(MODE_LWMA,            DRAW_NONE,     EMPTY, EMPTY,      indicator_color4);
+   SetIndexStyle(MODE_UPPER_BAND_NRP,  DRAW_NONE,     EMPTY, EMPTY,      indicator_color5);
+   SetIndexStyle(MODE_LOWER_BAND_NRP,  DRAW_NONE,     EMPTY, EMPTY,      indicator_color6);
+   SetIndexStyle(MODE_REVERSAL_MARKER, DRAW_ARROW);                                         SetIndexArrow(MODE_REVERSAL_MARKER, 82);
+   SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE,     EMPTY, EMPTY,      indicator_color8);
 }
 
 
