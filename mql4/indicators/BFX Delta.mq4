@@ -11,7 +11,7 @@
  *                 negative values represent a delta below the positive signal level (-1...-n)
  *    - length:    the absolute value is the period in bars since the last crossing of the opposite signal level
  *
- * @see  https://github.com/rosasurfer/bfx-core-volume
+ * @link  https://github.com/rosasurfer/bfx-core-volume
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -181,7 +181,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(bufferMain)) return(logDebug("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(bufferMain,   EMPTY_VALUE);
       ArrayInitialize(bufferSignal,           0);

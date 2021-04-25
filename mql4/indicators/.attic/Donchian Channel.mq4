@@ -87,7 +87,7 @@ int onTick() {
    if (!ArraySize(iUpperLevel))                                      // kann bei Terminal-Start auftreten
       return(logDebug("onTick(1)  size(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers and delete garbage behind Max.Bars before doing a full recalculation
+   // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);

@@ -1,7 +1,7 @@
 /**
  * MQL error codes
  *
- * @see  https://docs.mql4.com/constants/errorswarnings/errorcodes
+ * @link  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
 //define NO_ERROR                                          ERR_NO_ERROR    // separately defined in <mqldefines.mqh>

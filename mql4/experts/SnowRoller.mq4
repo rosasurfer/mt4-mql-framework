@@ -29,9 +29,9 @@
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
  * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not 0 (zero).
  *
- *  @link  https://sites.google.com/site/prof7bit/snowball       ["Snowballs and the anti-grid"]
- *  @link  https://www.forexfactory.com/showthread.php?t=226059  ["Snowballs and the anti-grid"]
- *  @link  https://www.forexfactory.com/showthread.php?t=239717  ["Trading the anti-grid with the Snowball EA"]
+ *  @link  https://sites.google.com/site/prof7bit/snowball                                    ["Snowballs and the anti-grid"]
+ *  @link  https://www.forexfactory.com/showthread.php?t=226059                               ["Snowballs and the anti-grid"]
+ *  @link  https://www.forexfactory.com/showthread.php?t=239717                ["Trading the anti-grid with the Snowball EA"]
  *
  *
  * Risk warning: The market can range longer without reaching the profit target than a trading account may be able to survive.
@@ -2732,7 +2732,7 @@ int ModifyStopLoss(int i, double gridbase, double stoploss) {
  *
  * @return bool - whether the position was successfully closed was already closed by the broker
  *
- * @see    https://github.com/rosasurfer/mt4-mql/issues/10
+ * @link   https://github.com/rosasurfer/mt4-mql/issues/10
  */
 bool UpdateStatus.ExecuteStopLoss(int ticket) {
    if (IsLastError())                         return(!last_error);

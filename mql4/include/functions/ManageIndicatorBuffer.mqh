@@ -23,9 +23,10 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
    #define IB.LastBarTime     3                                // last opentime of the oldest bar
 
    int data[][4];                                              // TODO: reset data on account change
-   if (ArraySize(data) <= id) {
+   if (ArrayRange(data, 0) <= id) {
       ArrayResize(data, id+1);                                 // {id} is used as array key
    }
+
    int      prevTick         = data[id][IB.Tick        ];
    int      prevBars         = data[id][IB.Bars        ];
    datetime prevFirstBarTime = data[id][IB.FirstBarTime];

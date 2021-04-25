@@ -766,7 +766,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
  *                              OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurück: StopLoss, TakeProfit
  * @param  LFX_ORDER orders[] - LFX_ORDER-Array zur Aufnahme der gelesenen Daten
  *
- * @return int - Anzahl der zurückgegebenen Orders oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der zurückgegebenen Orders oder EMPTY (-1), falls ein Fehler auftrat
  */
 int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) {
    // (1) Parametervaliderung

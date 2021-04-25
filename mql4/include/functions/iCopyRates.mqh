@@ -18,7 +18,7 @@
  * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
  * @param  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
  *
- * @return int - number of bars changed since the last tick or -1 (EMPTY) in case of errors
+ * @return int - number of bars changed since the last tick or EMPTY (-1) in case of errors
  *
  * Notes: (1) No real copying is performed and no additional memory is allocated. Instead a delegating instance to the
  *            internal rates array is assigned and access is redirected.
