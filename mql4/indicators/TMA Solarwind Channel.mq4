@@ -22,14 +22,17 @@ extern int    MA.HalfLength    = 55;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
 extern color  MA.Color         = Magenta;
 extern int    MA.LineWidth     = 1;
+extern string __a____________________________;
 
 extern double Bands.Deviations = 2.5;
 extern color  Bands.Color      = LightSkyBlue;
 extern int    Bands.LineWidth  = 3;
+extern string __b____________________________;
 
-extern bool   MarkReversals    = true;
 extern bool   RepaintingMode   = true;       // enable repainting mode
+extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
+extern string __c____________________________;
 
 extern bool   AlertsOn         = false;
 
@@ -512,8 +515,8 @@ string InputsToStr() {
                             "Bands.Deviations=", NumberToStr(Bands.Deviations, ".1+"), ";", NL,
                             "Bands.Color=",      ColorToStr(Bands.Color),              ";", NL,
                             "Bands.LineWidth=",  Bands.LineWidth,                      ";", NL,
-                            "MarkReversals=",    BoolToStr(MarkReversals),             ";", NL,
                             "RepaintingMode=",   BoolToStr(RepaintingMode),            ";", NL,
+                            "MarkReversals=",    BoolToStr(MarkReversals),             ";", NL,
                             "Max.Bars=",         Max.Bars,                             ";", NL,
                             "AlertsOn=",         BoolToStr(AlertsOn),                  ";")
    );

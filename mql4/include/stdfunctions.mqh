@@ -1906,7 +1906,7 @@ string StrRight(string value, int n) {
  * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
  *                                   Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
  *                                   zurückgegeben.
- *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ *                                   Wenn negativ, wird mit dem Zählen anstatt von links von rechts begonnen.
  *                                   Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings,
  *                                   wird der gesamte String zurückgegeben.
  * @return string
@@ -4052,7 +4052,7 @@ bool StrCompareI(string string1, string string2) {
  */
 bool StrContains(string value, string substring) {
    if (!StringLen(substring))
-      return(!catch("StrContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContains(1)  illegal parameter substring: "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(value, substring) != -1);
 }
 
@@ -4067,7 +4067,7 @@ bool StrContains(string value, string substring) {
  */
 bool StrContainsI(string value, string substring) {
    if (!StringLen(substring))
-      return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContainsI(1)  illegal parameter substring: "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(StrToUpper(value), StrToUpper(substring)) != -1);
 }
 

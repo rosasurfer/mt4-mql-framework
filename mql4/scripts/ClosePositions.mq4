@@ -1,5 +1,5 @@
 /**
- * Schließt die angegebenen Positionen. Ohne zusätzliche Parameter werden alle offenen Positionen geschlossen.
+ * Schließt die angegebenen Positionen. Ohne Werte werden alle offenen Positionen geschlossen.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -9,11 +9,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Close.Symbols      = "";                               // Symbole:      kommagetrennt
-extern string Close.Direction    = "";                               // (B)uy|(L)ong|(S)ell|(S)hort
-extern string Close.Tickets      = "";                               // Tickets:      kommagetrennt, mit oder ohne führendem "#"
-extern string Close.MagicNumbers = "";                               // MagicNumbers: kommagetrennt
-extern string Close.Comments     = "";                               // Kommentare:   kommagetrennt, Prüfung per OrderComment().StrStartsWithI(value)
+extern string Close.Symbols      = "";          // Symbole:      kommagetrennt
+extern string Close.Direction    = "";          // (B)uy|(L)ong|(S)ell|(S)hort
+extern string Close.Tickets      = "";          // Tickets:      kommagetrennt, mit/ohne führendem "#" or full LogTickets() logmessage
+extern string Close.MagicNumbers = "";          // MagicNumbers: kommagetrennt
+extern string Close.Comments     = "";          // Kommentare:   kommagetrennt, Prüfung per StrStartsWithI(OrderComment(), value)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -21,12 +21,12 @@ extern string Close.Comments     = "";                               // Kommenta
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-
 string orderSymbols [];
-int    orderType = OP_UNDEFINED;
 int    orderTickets [];
 int    orderMagics  [];
 string orderComments[];
+
+int orderType = OP_UNDEFINED;
 
 
 /**
@@ -46,29 +46,31 @@ int onInit() {
    }
 
    // Close.Direction
-   string direction = StrToUpper(StrTrim(Close.Direction));
-   if (StringLen(direction) > 0) {
-      switch (StringGetChar(direction, 0)) {
+   string sDirection = StrToUpper(StrTrim(Close.Direction));
+   if (StringLen(sDirection) > 0) {
+      switch (StringGetChar(sDirection, 0)) {
          case 'B':
          case 'L': orderType = OP_BUY;  Close.Direction = "long";  break;
          case 'S': orderType = OP_SELL; Close.Direction = "short"; break;
-         default:
-            return(HandleScriptError("onInit(1)", "Invalid parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
+
+         default:                 return(HandleScriptError("onInit(1)", "invalid input parameter Close.Direction: "+ DoubleQuoteStr(Close.Direction), ERR_INVALID_INPUT_PARAMETER));
       }
    }
 
    // Close.Tickets
-   size = Explode(Close.Tickets, ",", values, NULL);
+   sValue = Close.Tickets;
+   if (StrContains(sValue, "{") && StrEndsWith(sValue, "}")) {    // extract the ticket substring from a "Chart.Positions.LogTickets" message: "log-message {#ticket1, ..., #ticketN}"
+      sValue = StrRightFrom(StrLeft(sValue, -1), "{", -1);
+   }
+   size = Explode(sValue, ",", values, NULL);
    for (i=0; i < size; i++) {
       sValue = StrTrim(values[i]);
       if (StringLen(sValue) > 0) {
          if (StrStartsWith(sValue, "#"))
             sValue = StrTrim(StrSubstr(sValue, 1));
-         if (!StrIsDigit(sValue))
-            return(HandleScriptError("onInit(2)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
+         if (!StrIsDigit(sValue)) return(HandleScriptError("onInit(2)", "invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(values[i]), ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
-         if (iValue <= 0)
-            return(HandleScriptError("onInit(3)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
+         if (iValue <= 0)         return(HandleScriptError("onInit(3)", "invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(values[i]), ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(orderTickets, iValue);
       }
    }
@@ -78,11 +80,9 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValue = StrTrim(values[i]);
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue))
-            return(HandleScriptError("onInit(4)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMETER));
+         if (!StrIsDigit(sValue)) return(HandleScriptError("onInit(4)", "invalid value in input parameter Close.MagicNumbers: "+ DoubleQuoteStr(Close.MagicNumbers), ERR_INVALID_INPUT_PARAMETER));
          iValue = StrToInteger(sValue);
-         if (iValue <= 0)
-            return(HandleScriptError("onInit(5)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMETER));
+         if (iValue <= 0)         return(HandleScriptError("onInit(5)", "invalid value in input parameter Close.MagicNumbers: "+ DoubleQuoteStr(Close.MagicNumbers), ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(orderMagics, iValue);
       }
    }
