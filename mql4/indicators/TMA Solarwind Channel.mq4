@@ -318,8 +318,8 @@ int onTick() {
 
    // alerts
    static double lastBid; if (AlertsOn && lastBid) {
-      if (lastBid < upperBandRP[1] && Bid > upperBandRP[0]) onSignal("upper band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" crossed");
-      if (lastBid > lowerBandRP[1] && Bid < lowerBandRP[0]) onSignal("lower band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" crossed");
+      if (lastBid < upperBandRP[0] && Bid > upperBandRP[0]) onSignal("upper band at "+ NumberToStr(upperBandRP[0], PriceFormat) +" crossed");
+      if (lastBid > lowerBandRP[0] && Bid < lowerBandRP[0]) onSignal("lower band at "+ NumberToStr(lowerBandRP[0], PriceFormat) +" crossed");
    }
    lastBid = Bid;
 
