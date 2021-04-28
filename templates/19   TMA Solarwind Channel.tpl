@@ -8788,7 +8788,7 @@ AlertsOn=0
 
 style_0=2
 style_3=2
-weight_6=4
+weight_6=2
 color_6=16711935
 
 period_flags=0

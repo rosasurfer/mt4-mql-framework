@@ -73,7 +73,7 @@ int       framework_buffers = 4;             // buffers managed by the framework
 #property indicator_style1    STYLE_DOT
 #property indicator_style4    STYLE_DOT
 
-#property indicator_width7    4              // reversal markers
+#property indicator_width7    2              // reversal markers
 
 double tma            [];
 double upperVarianceRP[];
@@ -238,9 +238,7 @@ int onTick() {
    if (startBar >= bars) startBar = bars-1;
    CalculateTMA(bars, startBar);
 
-   if (!UnchangedBars) {
-      debug("onTick(0.1)  Bars="+ Bars +"  maxValues="+ maxValues +"  tmaBars="+ bars +"  tmaStartBar="+ startBar);
-   }
+   //if (!UnchangedBars) debug("onTick(0.1)  Bars="+ Bars +"  maxValues="+ maxValues +"  tmaBars="+ bars +"  tmaStartBar="+ startBar);
 
    // non-repainting TMA calculation
    // recalculate changed LWMA bars
@@ -259,34 +257,49 @@ int onTick() {
 
    // reversal calculation
    if (MarkReversals) {
-    	for (int iCurr, iPrev, i=startBar; i >= 0; i--) {
+    	for (int i=startBar; i >= 0; i--) {
     	   if (!lowerBandRP[i+1]) continue;
 
-         bool longReversal=false, shortReversal=false, bullPattern=false, bearPattern=IsBearishPattern(i);
-         if (!bearPattern) bullPattern = IsBullishPattern(i);
+         bool longReversal=false, shortReversal=false, bullishPattern=false, bearishPattern=IsBearishPattern(i);
+         if (!bearishPattern) bullishPattern = IsBullishPattern(i);
+    	   int iMaCross, iCurrMax, iCurrMin, iPrevMax, iPrevMin;                // bar index of TMA cross and swing extrems
 
-         // evaluate new reversals
-         if (reversalAge[i+1] < 0) {                           // prev short reversal
+         // check new reversals
+         if (reversalAge[i+1] < 0) {                                          // previous short reversal
             // check for another short or a new long reversal
-            if (bearPattern) {
-               iCurr = iHighest(NULL, NULL, MODE_HIGH, -reversalAge[i+1], i);
-               iPrev = iHighest(NULL, NULL, MODE_HIGH, MathAbs(reversalAge[_int(i-reversalAge[i+1]+1)]), i-reversalAge[i+1]);
-               shortReversal = (High[iCurr] > upperBandRP[iCurr] && High[iCurr] > High[iPrev]);
+            if (bearishPattern) {
+               iMaCross = iMedianCross(tma, i+1, i-reversalAge[i+1]-1);
+
+               if (HasPriceCrossedUpperBand(upperBandRP, i, ifInt(iMaCross, iMaCross-1, i-reversalAge[i+1]-1))) {
+                  if (!iMaCross) {
+                     iCurrMax = iHighest(NULL, NULL, MODE_HIGH, -reversalAge[i+1], i);
+                     iPrevMax = iHighest(NULL, NULL, MODE_HIGH, MathAbs(reversalAge[_int(i-reversalAge[i+1]+1)]), i-reversalAge[i+1]);
+                     shortReversal = (High[iCurrMax] > High[iPrevMax]);       // the current swing exceeds the previous one
+                  }
+                  else shortReversal = true;
+               }
             }
-            else if (bullPattern) longReversal = HasPriceCrossedLowerBand(lowerBandRP, i, i-reversalAge[i+1]-1);
+            else if (bullishPattern) longReversal = HasPriceCrossedLowerBand(lowerBandRP, i, i-reversalAge[i+1]-1);
          }
-         else if (reversalAge[i+1] > 0) {                      // prev long reversal
+         else if (reversalAge[i+1] > 0) {                                     // previous long reversal
             // check for another long or a new short reversal
-            if (bullPattern) {
-               iCurr = iLowest(NULL, NULL, MODE_LOW, reversalAge[i+1], i);
-               iPrev = iLowest(NULL, NULL, MODE_LOW, MathAbs(reversalAge[_int(i+reversalAge[i+1]+1)]), i+reversalAge[i+1]);
-               longReversal = (Low[iCurr] < lowerBandRP[iCurr] && Low[iCurr] < Low[iPrev]);
+            if (bullishPattern) {
+               iMaCross = iMedianCross(tma, i+1, i+reversalAge[i+1]-1);
+
+               if (HasPriceCrossedLowerBand(lowerBandRP, i, ifInt(iMaCross, iMaCross-1, i+reversalAge[i+1]-1))) {
+                  if (!iMaCross) {
+                     iCurrMin = iLowest(NULL, NULL, MODE_LOW, reversalAge[i+1], i);
+                     iPrevMin = iLowest(NULL, NULL, MODE_LOW, MathAbs(reversalAge[_int(i+reversalAge[i+1]+1)]), i+reversalAge[i+1]);
+                     longReversal = (Low[iCurrMin] < Low[iPrevMin]);          // the current swing exceeds the previous one
+                  }
+                  else longReversal = true;
+               }
             }
-            else if (bearPattern) shortReversal = HasPriceCrossedUpperBand(upperBandRP, i, i+reversalAge[i+1]-1);
+            else if (bearishPattern) shortReversal = HasPriceCrossedUpperBand(upperBandRP, i, i+reversalAge[i+1]-1);
          }
-         else {                                                // no prev signal
-            if      (bullPattern) longReversal  = HasPriceCrossedLowerBand(lowerBandRP, i, i+1);
-            else if (bearPattern) shortReversal = HasPriceCrossedUpperBand(upperBandRP, i, i+1);
+         else {                                                               // no previous signal
+            if      (bullishPattern) longReversal  = HasPriceCrossedLowerBand(lowerBandRP, i, i+1);
+            else if (bearishPattern) shortReversal = HasPriceCrossedUpperBand(upperBandRP, i, i+1);
          }
 
          // set marker and update reversal age
@@ -341,9 +354,9 @@ bool IsBearishPattern(int bar) {
 
 
 /**
- * Whether the High price has crossed the channel band in the specified bar range upwards.
+ * Whether the High price of the specified bar range has crossed the upper channel band.
  *
- * @param  double band[] - channel band
+ * @param  double band[] - upper channel band
  * @param  int    from   - start offset of the bar range to check
  * @param  int    to     - end offset of the bar range to check
  *
@@ -360,9 +373,9 @@ bool HasPriceCrossedUpperBand(double band[], int from, int to) {
 
 
 /**
- * Whether the Low price has crossed the channel band in the specified bar range downwards.
+ * Whether the Low price of the specified bar range has crossed the lower channel band.
  *
- * @param  double band[] - channel band
+ * @param  double band[] - lower channel band
  * @param  int    from   - start offset of the bar range to check
  * @param  int    to     - end offset of the bar range to check
  *
@@ -375,6 +388,25 @@ bool HasPriceCrossedLowerBand(double band[], int from, int to) {
       }
    }
    return(false);
+}
+
+
+/**
+ * Return the offset of the bar in the specified range which crossed the channel mean (i.e. the Moving Average).
+ *
+ * @param  double ma[] - moving average
+ * @param  int    from - start offset of the bar range to check
+ * @param  int    to   - end offset of the bar range to check
+ *
+ * @return int - positive bar offset or NULL (0) if no bar in the specified range crossed the MA
+ */
+int iMedianCross(double ma[], int from, int to) {
+   for (int i=from; i <= to; i++) {
+      if (High[i] > ma[i] && Low[i] < ma[i]) {        // in practice High==ma or Low==ma cannot happen
+         return(i);
+      }
+   }
+   return(NULL);
 }
 
 
