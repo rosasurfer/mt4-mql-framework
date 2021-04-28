@@ -228,17 +228,15 @@ int onTick() {
       ShiftIndicatorBuffer(reversalAge,      Bars, ShiftedBars, 0);
    }
 
-   int FullLength = maPeriods;
-   int HalfLength = MA.HalfLength;
-
 
    // original repainting TMA calculation
+   int FullLength = maPeriods;
+   int HalfLength = MA.HalfLength;
    int bars = Min(Bars, maxValues);
    int startBar = ChangedBars + HalfLength + 1;
    if (startBar >= bars) startBar = bars-1;
    CalculateTMA(bars, startBar);
 
-   //if (!UnchangedBars) debug("onTick(0.1)  Bars="+ Bars +"  maxValues="+ maxValues +"  tmaBars="+ bars +"  tmaStartBar="+ startBar);
 
    // non-repainting TMA calculation
    // recalculate changed LWMA bars
@@ -325,7 +323,7 @@ int onTick() {
    }
    lastBid = Bid;
 
-   return(0);
+   return(last_error);
 }
 
 
