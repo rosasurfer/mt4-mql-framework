@@ -8775,6 +8775,21 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Inside Bars
+flags=339
+window_num=0
+<inputs>
+Timeframes=H1
+Max.InsideBars=1
+</inputs>
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=TMA Solarwind Channel
 flags=339
 window_num=0
@@ -8786,6 +8801,7 @@ AlertsOn=0
 </inputs>
 </expert>
 
+color_0=16711935
 style_0=2
 style_3=2
 weight_6=2

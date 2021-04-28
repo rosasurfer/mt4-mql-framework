@@ -20,8 +20,6 @@ int __DeinitFlags[];
 
 extern int    MA.HalfLength    = 55;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
-extern color  MA.Color         = Magenta;
-extern int    MA.LineWidth     = 1;
 extern string __a____________________________;
 
 extern double Bands.Deviations = 2.5;
@@ -61,7 +59,7 @@ extern bool   AlertsOn         = false;
 #property indicator_buffers   8              // buffers managed by the terminal (visible in input dialog)
 int       framework_buffers = 4;             // buffers managed by the framework
 
-#property indicator_color1    CLR_NONE       // TMA
+#property indicator_color1    Magenta        // TMA
 #property indicator_color2    CLR_NONE       // upper channel band (repainting)
 #property indicator_color3    CLR_NONE       // lower channel band (repainting)
 #property indicator_color4    CLR_NONE       // CLR_NONE Blue                    // LWMA
@@ -118,22 +116,15 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-   // MA.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
-   // MA.LineWidth
-   if (MA.LineWidth < 0)                                      return(catch("onInit(3)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (MA.LineWidth > 5)                                      return(catch("onInit(4)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-
    // Bands.Deviations
-   if (Bands.Deviations < 0)                                  return(catch("onInit(5)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.Deviations < 0)                                  return(catch("onInit(3)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
    // Bands.LineWidth
-   if (Bands.LineWidth < 0)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5)                                   return(catch("onInit(7)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-
+   if (Bands.LineWidth < 0)                                   return(catch("onInit(4)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(8)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                         return(catch("onInit(6)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -166,7 +157,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -515,13 +506,10 @@ void SetIndicatorOptions() {
    //SetIndexStyle( int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(indicator_buffers);
 
-   if (!MA.LineWidth)    { int maDrawType    = DRAW_NONE, maWidth    = EMPTY;           }
-   else                  {     maDrawType    = DRAW_LINE; maWidth    = MA.LineWidth;    }
-
    if (!Bands.LineWidth) { int bandsDrawType = DRAW_NONE, bandsWidth = EMPTY;           }
    else                  {     bandsDrawType = DRAW_LINE; bandsWidth = Bands.LineWidth; }
 
-   SetIndexStyle(MODE_TMA,             maDrawType,    EMPTY, maWidth,    MA.Color        );
+   SetIndexStyle(MODE_TMA,             DRAW_LINE);
    SetIndexStyle(MODE_UPPER_BAND_RP,   bandsDrawType, EMPTY, bandsWidth, Bands.Color     );
    SetIndexStyle(MODE_LOWER_BAND_RP,   bandsDrawType, EMPTY, bandsWidth, Bands.Color     );
    SetIndexStyle(MODE_LWMA,            DRAW_NONE,     EMPTY, EMPTY,      indicator_color4);
@@ -540,8 +528,6 @@ void SetIndicatorOptions() {
 string InputsToStr() {
    return(StringConcatenate("MA.HalfLength=",    MA.HalfLength,                        ";", NL,
                             "MA.AppliedPrice=",  DoubleQuoteStr(MA.AppliedPrice),      ";", NL,
-                            "MA.Color=",         ColorToStr(MA.Color),                 ";", NL,
-                            "MA.LineWidth=",     MA.LineWidth,                         ";", NL,
                             "Bands.Deviations=", NumberToStr(Bands.Deviations, ".1+"), ";", NL,
                             "Bands.Color=",      ColorToStr(Bands.Color),              ";", NL,
                             "Bands.LineWidth=",  Bands.LineWidth,                      ";", NL,
