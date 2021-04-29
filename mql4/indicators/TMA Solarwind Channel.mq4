@@ -221,10 +221,8 @@ int onTick() {
 
 
    // original repainting TMA calculation
-   int FullLength = maPeriods;
-   int HalfLength = MA.HalfLength;
    int bars = Min(Bars, maxValues);
-   int startBar = ChangedBars + HalfLength + 1;
+   int startBar = ChangedBars + MA.HalfLength + 1;
    if (startBar >= bars) startBar = bars-1;
    CalculateTMA(bars, startBar);
 
@@ -423,9 +421,9 @@ void CalculateTMA(int bars, int startBar) {
 
       // diff between price and TMA
       double diffRP = price - tma[i];
-
       if (i > bars-HalfLength-1) continue;
 
+      // variance
       if (i < bars-HalfLength-1) {
          if (diffRP >= 0) {
             upperVarianceRP[i] = (upperVarianceRP[i+1] * (FullLength-1) + MathPow(diffRP, 2)) /FullLength;
@@ -435,7 +433,6 @@ void CalculateTMA(int bars, int startBar) {
             upperVarianceRP[i] = (upperVarianceRP[i+1] * (FullLength-1) + 0)                  /FullLength;
             lowerVarianceRP[i] = (lowerVarianceRP[i+1] * (FullLength-1) + MathPow(diffRP, 2)) /FullLength;
          }
-         //if (ChangedBars == 1) debug("CalculateTMA()  i="+ i +"  added diff "+ diffRP + ifString(EQ(tma[i], iMA(NULL, NULL, HalfLength+1, 0, MODE_LWMA, appliedPrice, i)), " (TMA = LWMA)", " (TMA != LWMA)"));
       }
       else /*i == bars-HalfLength-1*/{
          if (diffRP >= 0) {
