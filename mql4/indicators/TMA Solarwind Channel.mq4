@@ -1,16 +1,14 @@
 /**
- * TMA Solarwind Channel
+ * TMA Asymmetric Channel
  *
- * A standard deviation derived channel around a centered - thus repainting - Triangular Moving Average (TMA). The TMA is a
- * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle (see first link).
- * It holds:
+ * An asymmetric non-standard deviation channel around a centered - thus repainting - Triangular Moving Average (TMA).
+ * The TMA is a twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle. It holds:
  *
  *  TMA[n] = SMA[floor(n/2)+1] of SMA[ceil(n/2)]
  *
- * @link  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html
- * @link  https://www.mql5.com/en/forum/181241
- * @link  https://forex-station.com/viewtopic.php?f=579496&t=8423458
- * @link  https://www.forexfactory.com/thread/922947-lazytma-trading
+ * @link    https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html              [Triangular Moving Average]
+ * @link    https://forex-station.com/viewtopic.php?p=1295176455#p1295176455         [TriangularMA Centered Asymmetric Bands]
+ * @author  Mladen Rakic, Chris Brobeck
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -20,17 +18,16 @@ int __DeinitFlags[];
 
 extern int    MA.HalfLength    = 55;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
-extern string __a____________________________;
 
 extern double Bands.Deviations = 2.5;
 extern color  Bands.Color      = LightSkyBlue;
 extern int    Bands.LineWidth  = 3;
-extern string __b____________________________;
+extern string __a____________________________;
 
-extern bool   RepaintingMode   = true;       // enable repainting mode
+extern bool   RepaintingMode   = true;          // toggle repainting mode
 extern bool   MarkReversals    = true;
-extern int    Max.Bars         = 10000;      // max. values to calculate (-1: all available)
-extern string __c____________________________;
+extern int    Max.Bars         = 10000;         // max. values to calculate (-1: all available)
+extern string __b____________________________;
 
 extern bool   AlertsOn         = false;
 
@@ -42,36 +39,36 @@ extern bool   AlertsOn         = false;
 #include <functions/@Bands.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
 
-#define MODE_TMA                 0           // indicator buffer ids
-#define MODE_UPPER_BAND_RP       1           //
-#define MODE_LOWER_BAND_RP       2           //
-#define MODE_LWMA                3           //
-#define MODE_UPPER_BAND_NRP      4           //
-#define MODE_LOWER_BAND_NRP      5           //
-#define MODE_REVERSAL_MARKER     6           //
-#define MODE_REVERSAL_AGE        7           //
-#define MODE_UPPER_VARIANCE_RP   8           // managed by the framework
-#define MODE_LOWER_VARIANCE_RP   9           // ...
-#define MODE_UPPER_VARIANCE_NRP 10           // ...
-#define MODE_LOWER_VARIANCE_NRP 11           // ...
+#define MODE_TMA                 0              // indicator buffer ids
+#define MODE_UPPER_BAND_RP       1              //
+#define MODE_LOWER_BAND_RP       2              //
+#define MODE_LWMA                3              //
+#define MODE_UPPER_BAND_NRP      4              //
+#define MODE_LOWER_BAND_NRP      5              //
+#define MODE_REVERSAL_MARKER     6              //
+#define MODE_REVERSAL_AGE        7              //
+#define MODE_UPPER_VARIANCE_RP   8              // managed by the framework
+#define MODE_LOWER_VARIANCE_RP   9              // ...
+#define MODE_UPPER_VARIANCE_NRP 10              // ...
+#define MODE_LOWER_VARIANCE_NRP 11              // ...
 
 #property indicator_chart_window
-#property indicator_buffers   8              // buffers managed by the terminal (visible in input dialog)
-int       framework_buffers = 4;             // buffers managed by the framework
+#property indicator_buffers   8                 // buffers managed by the terminal (visible in input dialog)
+int       framework_buffers = 4;                // buffers managed by the framework
 
-#property indicator_color1    Magenta        // TMA
-#property indicator_color2    CLR_NONE       // upper channel band (repainting)
-#property indicator_color3    CLR_NONE       // lower channel band (repainting)
-#property indicator_color4    CLR_NONE       // CLR_NONE Blue                    // LWMA
-#property indicator_color5    CLR_NONE       // CLR_NONE Blue                    // upper channel band (non-repainting)
-#property indicator_color6    CLR_NONE       // CLR_NONE Blue                    // lower channel band (non-repainting)
-#property indicator_color7    Magenta        // reversal markers
-#property indicator_color8    CLR_NONE       // reversal age
+#property indicator_color1    Magenta           // TMA
+#property indicator_color2    CLR_NONE          // upper channel band (repainting)
+#property indicator_color3    CLR_NONE          // lower channel band (repainting)
+#property indicator_color4    CLR_NONE          // CLR_NONE Blue                    // LWMA
+#property indicator_color5    CLR_NONE          // CLR_NONE Blue                    // upper channel band (non-repainting)
+#property indicator_color6    CLR_NONE          // CLR_NONE Blue                    // lower channel band (non-repainting)
+#property indicator_color7    Magenta           // breakout reversals
+#property indicator_color8    CLR_NONE          // reversal age
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style4    STYLE_DOT
 
-#property indicator_width7    2              // reversal markers
+#property indicator_width7    2                 // breakout reversal markers
 
 double tma            [];
 double upperVarianceRP[];

@@ -8797,7 +8797,7 @@ window_num=0
 MA.HalfLength=55
 MA.AppliedPrice=Weighted
 Bands.Deviations=2.5
-AlertsOn=0
+AlertsOn=1
 </inputs>
 </expert>
 
