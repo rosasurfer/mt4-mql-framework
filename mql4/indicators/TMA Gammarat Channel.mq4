@@ -1,5 +1,5 @@
 /**
- * TMA Asymmetric Channel
+ * TMA Gammarat Channel
  *
  * An asymmetric non-standard deviation channel around a centered - thus repainting - Triangular Moving Average (TMA).
  * The TMA is a twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle. It holds:
@@ -8,7 +8,8 @@
  *
  * @link    https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html              [Triangular Moving Average]
  * @link    https://forex-station.com/viewtopic.php?p=1295176455#p1295176455         [TriangularMA Centered Asymmetric Bands]
- * @author  Mladen Rakic, Chris Brobeck
+ * @author  Mladen Rakic (mladen)
+ * @author  Chris Brobeck (gammarat)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
