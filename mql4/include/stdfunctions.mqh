@@ -3511,7 +3511,7 @@ string CreateLegendLabel() {
    if (IsSuperContext())
       return("");
 
-   string label = "Legend."+ __ExecutionContext[EC.pid];
+   string label = "rsf.Legend."+ __ExecutionContext[EC.pid];
    int xDistance =  5;
    int yDistance = 21;
 
@@ -3523,9 +3523,9 @@ string CreateLegendLabel() {
       int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
 
       for (int i=0; i < objects && labels; i++) {
-         string objName = ObjectName(i);
-         if (ObjectType(objName) == OBJ_LABEL) {
-            if (StrStartsWith(objName, "Legend."))
+         string name = ObjectName(i);
+         if (ObjectType(name) == OBJ_LABEL) {
+            if (StrStartsWith(name, "rsf.Legend."))
                yDistance += 19;
             labels--;
          }
