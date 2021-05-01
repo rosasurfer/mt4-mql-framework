@@ -17,6 +17,62 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <tr>
     <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1332/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1332
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1332/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td nowrap> most current build </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1330/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1330
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1330/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1326/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1326
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1326/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1324/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1324
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1324/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1322/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             Terminal build 1322
         </a>
@@ -26,7 +82,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> most current build </td>
+    <td> </td>
 </tr>
 
 <tr>
@@ -110,90 +166,6 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1264/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1264
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1264/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1262/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1262
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1262/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1260/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1260
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1260/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1248/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1248
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1248/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1242/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1242
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1242/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1220/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1220
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1220/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
     <td nowrap> oldest build supported by MetaQuotes </td>
 </tr>
 
@@ -208,7 +180,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> first build supporting MQL4 and a subset of MQL5 </td>
+    <td nowrap> first build using MQL4 and a subset of MQL5 </td>
 </tr>
 
 <tr>
@@ -222,7 +194,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> last build supporting MQL4 only </td>
+    <td nowrap> last build using MQL4 only </td>
 </tr>
 
 <tr>
@@ -257,6 +229,9 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 -----
 
 ### MetaTrader 4 News
+
+###### March 2021:
+- MetaQuotes stops supporting terminals older than build 1280.
 
 ###### November 2020:
 - MetaQuotes stops supporting terminals older than build 1220.
