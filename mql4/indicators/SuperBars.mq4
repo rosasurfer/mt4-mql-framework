@@ -3,22 +3,34 @@
  *
  * Draws bars of higher timeframes on the chart. The active timeframe can be changed with the scripts "SuperBars.TimeframeUp"
  * and "SuperBars.TimeframeDown".
+ *
+ * With input parameter "AutoConfiguration" enabled (default) inputs found in the external framework configuration have
+ * precedence over manual inputs. Additional external configuration settings (no manual inputs):
+ *
+ * [SuperBars]
+ *  Legend.Corner                = {int}              ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
+ *  Legend.xDistance             = {int}              ; offset in pixels
+ *  Legend.yDistance             = {int}              ; offset in pixels
+ *  Legend.FontName              = {string}           ; font family
+ *  Legend.FontSize              = {int}              ; font size
+ *  Legend.FontColor             = {color}            ; font color (web color name or integer triplet)
+ *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
+ *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max
+ *
+ * @see  https://www.forexfactory.com/forum/69-platform-tech
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE};
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_AUTOCONFIG};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color  BarUp.Color        = CLR_NONE;             // bullish bars
-extern color  BarDown.Color      = CLR_NONE;             // bearish bars
-extern color  BarUnchanged.Color = CLR_NONE;             // unchanged bars
-extern color  CloseMarker.Color  = CLR_NONE;             // bar close marker
-extern color  ETH.Color          = CLR_NONE;             // ETH session
-extern string ETH.Symbols        = "";                   // comma separated list of symbols with RTH/ETH sessions
-extern string ___a___________________________;
-
-extern string Configuration      = "manual | auto*";
+extern color  UpBars.Color        = PaleGreen;        // bullish bars
+extern color  DownBars.Color      = Pink;             // bearish bars
+extern color  UnchangedBars.Color = Lavender;         // unchanged bars
+extern color  CloseMarker.Color   = Gray;             // bar close marker
+extern color  ETH.Color           = LemonChiffon;     // ETH sessions
+extern string ETH.Symbols         = "";               // comma-separated list of symbols with RTH/ETH sessions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,12 +47,21 @@ extern string Configuration      = "manual | auto*";
 
 #define STF_UP             1
 #define STF_DOWN          -1
-#define PERIOD_D1_ETH   1439                             // that's PERIOD_D1 - 1
+#define PERIOD_D1_ETH   1439                          // that's PERIOD_D1 - 1
 
-int    superTimeframe;                                   // the currently active super bar period
-bool   ethEnabled;                                       // whether CME sessions are enabled
-string legendLabel = "";
-string errorSound  = "Plonk.wav";                        // sound played when cycle ends are hit
+int    superTimeframe;                                // the currently active super bar period
+double maxPriceChangeUnchangedBars = 0.05;            // max. price change in % for a superbar to be drawn as unchanged
+bool   ethEnabled;                                    // whether CME sessions are enabled
+
+string legendLabel      = "";
+int    legendCorner     = CORNER_TOP_LEFT;
+int    legend_xDistance = 300;
+int    legend_yDistance = 3;
+string legendFontName   = "";                         // default: empty = menu font ("MS Sans Serif")
+int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds with the menu font
+color  legendFontColor  = Black;
+
+string errorSound = "Plonk.wav";                      // sound played when timeframe cycling is at min/max
 
 
 /**
@@ -49,30 +70,54 @@ string errorSound  = "Plonk.wav";                        // sound played when cy
  * @return int - error status
  */
 int onInit() {
+   string indicator = WindowExpertName();
+
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (BarUp.Color        == 0xFF000000) BarUp.Color        = CLR_NONE;
-   if (BarDown.Color      == 0xFF000000) BarDown.Color      = CLR_NONE;
-   if (BarUnchanged.Color == 0xFF000000) BarUnchanged.Color = CLR_NONE;
-   if (CloseMarker.Color  == 0xFF000000) CloseMarker.Color  = CLR_NONE;
-   if (ETH.Color          == 0xFF000000) ETH.Color          = CLR_NONE;
-
-   if (BarUp.Color        == CLR_NONE) BarUp.Color        = GetConfigColor("SuperBars", "BarUp.Color");
-   if (BarDown.Color      == CLR_NONE) BarDown.Color      = GetConfigColor("SuperBars", "BarDown.Color");
-   if (BarUnchanged.Color == CLR_NONE) BarUnchanged.Color = GetConfigColor("SuperBars", "BarUnchanged.Color");
-   if (CloseMarker.Color  == CLR_NONE) CloseMarker.Color  = GetConfigColor("SuperBars", "CloseMarker.Color");
-   if (ETH.Color          == CLR_NONE) ETH.Color          = GetConfigColor("SuperBars", "ETH.Color");
-
-   // ETH.Symbols
-   string sValues[], symbols = StrTrim(ETH.Symbols);
-   if (!StringLen(symbols)) symbols = GetConfigString("SuperBars", "ETH.Symbols");
-   if (StringLen(symbols) > 0) {
-      int size = Explode(StrToLower(symbols), ",", sValues, NULL);
-      for (int i=0; i < size; i++) {
-         sValues[i] = StrTrim(sValues[i]);
-      }
-      ethEnabled = StringInArray(sValues, StrToLower(StdSymbol()));
+   if (UpBars.Color        == 0xFF000000) UpBars.Color        = CLR_NONE;
+   if (DownBars.Color      == 0xFF000000) DownBars.Color      = CLR_NONE;
+   if (UnchangedBars.Color == 0xFF000000) UnchangedBars.Color = CLR_NONE;
+   if (CloseMarker.Color   == 0xFF000000) CloseMarker.Color   = CLR_NONE;
+   if (ETH.Color           == 0xFF000000) ETH.Color           = CLR_NONE;
+   if (__isAutoConfig) {
+      UpBars.Color        = GetConfigColor(indicator, "UpBars.Color",        UpBars.Color);
+      DownBars.Color      = GetConfigColor(indicator, "DownBars.Color",      DownBars.Color);
+      UnchangedBars.Color = GetConfigColor(indicator, "UnchangedBars.Color", UnchangedBars.Color);
+      CloseMarker.Color   = GetConfigColor(indicator, "CloseMarker.Color",   CloseMarker.Color);
+      ETH.Color           = GetConfigColor(indicator, "ETH.Color",           ETH.Color);
    }
+   // ETH.Symbols
+   string values[], sValue = StrTrim(ETH.Symbols);
+   if (__isAutoConfig) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
+   if (StringLen(sValue) > 0) {
+      int size = Explode(StrToLower(sValue), ",", values, NULL);
+      for (int i=0; i < size; i++) {
+         values[i] = StrTrim(values[i]);
+      }
+      ethEnabled = StringInArray(values, StrToLower(StdSymbol()));
+   }
+
+   // read external configuration
+   double dValue = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");
+   maxPriceChangeUnchangedBars = MathAbs(ifDouble(!dValue, maxPriceChangeUnchangedBars, dValue));
+
+   int iValue = GetConfigInt(indicator, "Legend.Corner");
+   legendCorner = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
+
+   iValue = GetConfigInt(indicator, "Legend.xDistance");
+   legend_xDistance = ifInt(iValue >= 0, iValue, legend_xDistance);
+
+   iValue = GetConfigInt(indicator, "Legend.yDistance");
+   legend_yDistance = ifInt(iValue >= 0, iValue, legend_yDistance);
+
+   legendFontName = GetConfigString(indicator, "Legend.FontName", legendFontName);
+
+   iValue = GetConfigInt(indicator, "Legend.FontSize");
+   legendFontSize = ifInt(iValue > 0, iValue, legendFontSize);
+
+   legendFontColor = GetConfigColor(indicator, "Legend.FontColor", legendFontColor);
+
+   errorSound = GetConfigString(indicator, "ErrorSound", errorSound);
 
    // display configuration, names, labels
    SetIndexLabel(0, NULL);                               // no entries in "Data" window
@@ -370,13 +415,14 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
    int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
 
    // resolve bar color
-   color barColor = BarUnchanged.Color;
+   color barColor = UnchangedBars.Color;
    if (openBar < Bars-1) double openPrice = Close[openBar+1];                          // use previous Close as Open if available
    else                         openPrice = Open [openBar];
    double ratio = openPrice/Close[closeBar]; if (ratio < 1) ratio = 1/ratio;
-   if (ratio > 1.0005) {                                                               // a ratio smaller than 1.0005 is considered "unchanged"
-      if      (openPrice < Close[closeBar]) barColor = BarUp.Color;
-      else if (openPrice > Close[closeBar]) barColor = BarDown.Color;
+   ratio = 100 * (ratio-1);
+   if (ratio > maxPriceChangeUnchangedBars) {                                          // a change smaller is considered "unchanged"
+      if      (openPrice < Close[closeBar]) barColor = UpBars.Color;
+      else if (openPrice > Close[closeBar]) barColor = DownBars.Color;
    }
 
    // define object labels
@@ -573,9 +619,7 @@ bool UpdateDescription() {
 
       default:             description = "Superbars: n/a";                       // programmatically deactivated
    }
-   string fontName = "";
-   int fontSize = 8;                                                             // in all terminal builds font-family "MS Sans Serif", font-size 8 corresponds with the menu font
-   ObjectSetText(legendLabel, description, fontSize, fontName, Black);
+   ObjectSetText(legendLabel, description, legendFontSize, legendFontName, legendFontColor);
 
    int error = GetLastError();
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on Object::onDrag() or opened "Properties" dialog
@@ -598,9 +642,9 @@ string CreateDescriptionLabel() {
       ObjectDelete(label);
 
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 300);
-      ObjectSet    (label, OBJPROP_YDISTANCE,   3);
+      ObjectSet    (label, OBJPROP_CORNER,    legendCorner);
+      ObjectSet    (label, OBJPROP_XDISTANCE, legend_xDistance);
+      ObjectSet    (label, OBJPROP_YDISTANCE, legend_yDistance);
       ObjectSetText(label, " ", 1);
       RegisterObject(label);
    }
@@ -667,11 +711,11 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("BarUp.Color=",        ColorToStr(BarUp.Color),        ";", NL,
-                            "BarDown.Color=",      ColorToStr(BarDown.Color),      ";", NL,
-                            "BarUnchanged.Color=", ColorToStr(BarUnchanged.Color), ";", NL,
-                            "CloseMarker.Color=",  ColorToStr(CloseMarker.Color),  ";", NL,
-                            "ETH.Color=",          ColorToStr(ETH.Color),          ";", NL,
-                            "ETH.Symbols=",        DoubleQuoteStr(ETH.Symbols),    ";")
+   return(StringConcatenate("UpBars.Color=",        ColorToStr(UpBars.Color),        ";", NL,
+                            "DownBars.Color=",      ColorToStr(DownBars.Color),      ";", NL,
+                            "UnchangedBars.Color=", ColorToStr(UnchangedBars.Color), ";", NL,
+                            "CloseMarker.Color=",   ColorToStr(CloseMarker.Color),   ";", NL,
+                            "ETH.Color=",           ColorToStr(ETH.Color),           ";", NL,
+                            "ETH.Symbols=",         DoubleQuoteStr(ETH.Symbols),     ";")
    );
 }
