@@ -15,7 +15,8 @@
  *  Legend.FontSize              = {int}              ; font size
  *  Legend.FontColor             = {color}            ; font color (web color name or integer triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
- *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max
+ *  MaxH1Days                    = {int}              ; max. number of days with H1 superbars (performance; default: all)
+ *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
  *
  * @see  https://www.forexfactory.com/forum/69-platform-tech
  */
@@ -50,7 +51,8 @@ extern string ETH.Symbols         = "";               // comma-separated list of
 #define PERIOD_D1_ETH   1439                          // that's PERIOD_D1 - 1
 
 int    superTimeframe;                                // the currently active super bar period
-double maxPriceChangeUnchangedBars = 0.05;            // max. price change in % for a superbar to be drawn as unchanged
+double maxChangeUnchanged = 0.05;                     // max. price change in % for a superbar to be drawn as unchanged
+int    maxH1Days;                                     // max. number of days to draw H1 superbars (performance)
 bool   ethEnabled;                                    // whether CME sessions are enabled
 
 string legendLabel      = "";
@@ -61,7 +63,7 @@ string legendFontName   = "";                         // default: empty = menu f
 int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds with the menu font
 color  legendFontColor  = Black;
 
-string errorSound = "Plonk.wav";                      // sound played when timeframe cycling is at min/max
+string errorSound = "";                               // sound played when timeframe cycling is at min/max (default: none)
 
 
 /**
@@ -98,26 +100,16 @@ int onInit() {
    }
 
    // read external configuration
-   double dValue = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");
-   maxPriceChangeUnchangedBars = MathAbs(ifDouble(!dValue, maxPriceChangeUnchangedBars, dValue));
-
-   int iValue = GetConfigInt(indicator, "Legend.Corner");
-   legendCorner = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
-
-   iValue = GetConfigInt(indicator, "Legend.xDistance");
-   legend_xDistance = ifInt(iValue >= 0, iValue, legend_xDistance);
-
-   iValue = GetConfigInt(indicator, "Legend.yDistance");
-   legend_yDistance = ifInt(iValue >= 0, iValue, legend_yDistance);
-
-   legendFontName = GetConfigString(indicator, "Legend.FontName", legendFontName);
-
-   iValue = GetConfigInt(indicator, "Legend.FontSize");
-   legendFontSize = ifInt(iValue > 0, iValue, legendFontSize);
-
-   legendFontColor = GetConfigColor(indicator, "Legend.FontColor", legendFontColor);
-
-   errorSound = GetConfigString(indicator, "ErrorSound", errorSound);
+   double dValue; int iValue;
+   dValue          = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");    maxChangeUnchanged = MathAbs(ifDouble(!dValue, maxChangeUnchanged, dValue));
+   iValue          = GetConfigInt   (indicator, "MaxH1Days",        -1);            maxH1Days          = ifInt(iValue > 0, iValue, NULL);
+   iValue          = GetConfigInt   (indicator, "Legend.Corner",    -1);            legendCorner       = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
+   iValue          = GetConfigInt   (indicator, "Legend.xDistance", -1);            legend_xDistance   = ifInt(iValue >= 0, iValue, legend_xDistance);
+   iValue          = GetConfigInt   (indicator, "Legend.yDistance", -1);            legend_yDistance   = ifInt(iValue >= 0, iValue, legend_yDistance);
+   legendFontName  = GetConfigString(indicator, "Legend.FontName", legendFontName);
+   iValue          = GetConfigInt   (indicator, "Legend.FontSize");                 legendFontSize     = ifInt(iValue > 0, iValue, legendFontSize);
+   legendFontColor = GetConfigColor (indicator, "Legend.FontColor", legendFontColor);
+   errorSound      = GetConfigString(indicator, "ErrorSound", errorSound);
 
    // display configuration, names, labels
    SetIndexLabel(0, NULL);                               // no entries in "Data" window
@@ -165,7 +157,7 @@ int onTick() {
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
    string cmd = commands[0];
-   if (IsLogInfo()) logInfo("onCommand(2)  "+ DoubleQuoteStr(cmd));
+   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
 
    if (cmd == "Timeframe=Up")   return(SwitchSuperTimeframe(STF_UP));
    if (cmd == "Timeframe=Down") return(SwitchSuperTimeframe(STF_DOWN));
@@ -187,51 +179,53 @@ bool SwitchSuperTimeframe(int direction) {
 
    if (direction == STF_DOWN) {
       switch (superTimeframe) {
-         case  INT_MIN      : PlaySoundEx(errorSound);      break;   // we hit the wall downwards
+         case  INT_MIN:
+            if (errorSound != "") PlaySoundEx(errorSound);  break;   // we hit the wall downwards
 
-         case  PERIOD_H1    :
-         case -PERIOD_H1    : superTimeframe =  INT_MIN;    break;
+         case  PERIOD_H1:
+         case -PERIOD_H1:     superTimeframe =  INT_MIN;    break;
 
          case  PERIOD_D1_ETH: superTimeframe =  PERIOD_H1;  break;
          case -PERIOD_D1_ETH: superTimeframe = -PERIOD_H1;  break;
 
-         case  PERIOD_D1    : superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
-         case -PERIOD_D1    : superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
+         case  PERIOD_D1:     superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
+         case -PERIOD_D1:     superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
 
-         case  PERIOD_W1    : superTimeframe =  PERIOD_D1;  break;
-         case -PERIOD_W1    : superTimeframe = -PERIOD_D1;  break;
+         case  PERIOD_W1:     superTimeframe =  PERIOD_D1;  break;
+         case -PERIOD_W1:     superTimeframe = -PERIOD_D1;  break;
 
-         case  PERIOD_MN1   : superTimeframe =  PERIOD_W1;  break;
-         case -PERIOD_MN1   : superTimeframe = -PERIOD_W1;  break;
+         case  PERIOD_MN1:    superTimeframe =  PERIOD_W1;  break;
+         case -PERIOD_MN1:    superTimeframe = -PERIOD_W1;  break;
 
-         case  PERIOD_Q1    : superTimeframe =  PERIOD_MN1; break;
-         case -PERIOD_Q1    : superTimeframe = -PERIOD_MN1; break;
+         case  PERIOD_Q1:     superTimeframe =  PERIOD_MN1; break;
+         case -PERIOD_Q1:     superTimeframe = -PERIOD_MN1; break;
 
-         case  INT_MAX      : superTimeframe =  PERIOD_Q1;  break;
+         case  INT_MAX:       superTimeframe =  PERIOD_Q1;  break;
       }
    }
    else if (direction == STF_UP) {
       switch (superTimeframe) {
-         case  INT_MIN      : superTimeframe =  PERIOD_H1;  break;
+         case  INT_MIN:       superTimeframe =  PERIOD_H1;  break;
 
-         case  PERIOD_H1    : superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
-         case -PERIOD_H1    : superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
+         case  PERIOD_H1:     superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
+         case -PERIOD_H1:     superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
 
          case  PERIOD_D1_ETH: superTimeframe =  PERIOD_D1;  break;
          case -PERIOD_D1_ETH: superTimeframe = -PERIOD_D1;  break;
 
-         case  PERIOD_D1    : superTimeframe =  PERIOD_W1;  break;
-         case -PERIOD_D1    : superTimeframe = -PERIOD_W1;  break;
+         case  PERIOD_D1:     superTimeframe =  PERIOD_W1;  break;
+         case -PERIOD_D1:     superTimeframe = -PERIOD_W1;  break;
 
-         case  PERIOD_W1    : superTimeframe =  PERIOD_MN1; break;
-         case -PERIOD_W1    : superTimeframe = -PERIOD_MN1; break;
+         case  PERIOD_W1:     superTimeframe =  PERIOD_MN1; break;
+         case -PERIOD_W1:     superTimeframe = -PERIOD_MN1; break;
 
-         case  PERIOD_MN1   : superTimeframe =  PERIOD_Q1;  break;
-         case -PERIOD_MN1   : superTimeframe = -PERIOD_Q1;  break;
+         case  PERIOD_MN1:    superTimeframe =  PERIOD_Q1;  break;
+         case -PERIOD_MN1:    superTimeframe = -PERIOD_Q1;  break;
 
-         case  PERIOD_Q1    : superTimeframe =  INT_MAX;    break;
+         case  PERIOD_Q1:     superTimeframe =  INT_MAX;    break;
 
-         case  INT_MAX      : PlaySoundEx(errorSound);      break;   // we hit the wall upwards
+         case  INT_MAX:
+            if (errorSound != "") PlaySoundEx(errorSound);  break;   // we hit the wall upwards
       }
    }
    else return(!catch("SwitchSuperTimeframe(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
@@ -296,37 +290,41 @@ bool CheckTimeframeAvailability() {
 bool UpdateSuperBars() {
    // on a supertimeframe change delete the superbars of the previously active timeframe
    static int lastSuperTimeframe;
-   bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);        // for simplicity interpret the first comparison (lastSuperTimeframe==0) as a change, too
+   bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);  // for simplicity interpret the first comparison (lastSuperTimeframe==0) as a change, too
 
    if (isTimeframeChange) {
       if (PERIOD_M1 <= lastSuperTimeframe && lastSuperTimeframe <= PERIOD_Q1) {
-         DeleteRegisteredObjects();                                        // in all other cases previous suberbars have already been deleted
+         DeleteRegisteredObjects();                                  // in all other cases previous SuperBars have already been deleted
          legendLabel = CreateDescriptionLabel();
       }
       UpdateDescription();
    }
 
-   // limit the amount of superbars to draw (performance reasons)
+   // define the amount of superbars to draw
    int maxBars = INT_MAX;
    switch (superTimeframe) {
-      // immediate return if deactivated
-      case  INT_MIN      :                                                 // manually deactivated
-      case  INT_MAX      :
-      case -PERIOD_H1    :                                                 // automatically deactivated
-      case -PERIOD_D1_ETH:
-      case -PERIOD_D1    :
-      case -PERIOD_W1    :
-      case -PERIOD_MN1   :
-      case -PERIOD_Q1    : lastSuperTimeframe = superTimeframe;
-                           return(true);
+      case  INT_MIN:                                                 // manually deactivated
+      case  INT_MAX:                                                 // ...
+      case -PERIOD_H1:                                               // automatically deactivated
+      case -PERIOD_D1_ETH:                                           // ...
+      case -PERIOD_D1:                                               // ...
+      case -PERIOD_W1:                                               // ...
+      case -PERIOD_MN1:                                              // ...
+      case -PERIOD_Q1:                                               // ...
+         lastSuperTimeframe = superTimeframe;                        // nothing to do
+         return(true);
 
-      // limit amount of superbars to draw                                 // TODO: make this configurable
-      case  PERIOD_H1    : maxBars = 60 * DAYS/HOURS; break;               // maximum 60 days
-      case  PERIOD_D1_ETH:
-      case  PERIOD_D1    :
-      case  PERIOD_W1    :
-      case  PERIOD_MN1   :
-      case  PERIOD_Q1    : break;                                          // no limit for everything else
+      case PERIOD_H1:                                                // limit number of H1 superbars (performance)
+         if (maxH1Days > 0)
+            maxBars = maxH1Days * DAYS/HOURS;
+         break;
+
+      case PERIOD_D1_ETH:                                            // no limit for everything else
+      case PERIOD_D1:
+      case PERIOD_W1:
+      case PERIOD_MN1:
+      case PERIOD_Q1:
+         break;
    }
 
 
@@ -334,7 +332,7 @@ bool UpdateSuperBars() {
    int  changedBars=ChangedBars, timeframe=superTimeframe;
    bool drawETH;
    if (isTimeframeChange)
-      changedBars = Bars;                                                  // on isTimeframeChange mark all bars as changed
+      changedBars = Bars;                                            // on isTimeframeChange mark all bars as changed
 
    if (ethEnabled && superTimeframe==PERIOD_D1_ETH) {
       timeframe = PERIOD_D1;
@@ -348,7 +346,7 @@ bool UpdateSuperBars() {
 
          if (Time[changedBars-1] > lastBarTimeM15) {
             int bar = iBarShiftPrevious(NULL, NULL, lastBarTimeM15); if (bar == EMPTY_VALUE) return(false);
-            if (bar == -1) changedBars = Bars;                             // M15-Zeitpunkt ist zu alt für den aktuellen Chart
+            if (bar == -1) changedBars = Bars;                       // M15-Zeitpunkt ist zu alt für den aktuellen Chart
             else           changedBars = bar + 1;
          }
          drawETH = true;
@@ -416,11 +414,11 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
    // resolve bar color
    color barColor = UnchangedBars.Color;
-   if (openBar < Bars-1) double openPrice = Close[openBar+1];                          // use previous Close as Open if available
+   if (openBar < Bars-1) double openPrice = Close[openBar+1];                       // use previous Close as Open if available
    else                         openPrice = Open [openBar];
    double ratio = openPrice/Close[closeBar]; if (ratio < 1) ratio = 1/ratio;
    ratio = 100 * (ratio-1);
-   if (ratio > maxPriceChangeUnchangedBars) {                                          // a change smaller is considered "unchanged"
+   if (ratio > maxChangeUnchanged) {                                                // a change smaller is considered "unchanged"
       if      (openPrice < Close[closeBar]) barColor = UpBars.Color;
       else if (openPrice > Close[closeBar]) barColor = DownBars.Color;
    }
@@ -439,8 +437,8 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
    // draw Superbar
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
-      int closeBar_j = closeBar; /*_j as justified*/                                   // Widen rectangles by one bar to the right to make consecutives bars touch each other,
-      if (closeBar > 0) closeBar_j--;                                                  // but not for the youngest - still open - SuperBar.
+      int closeBar_j = closeBar; /*_j as justified*/                                // Widen rectangles by one bar to the right to make consecutives bars touch each other,
+      if (closeBar > 0) closeBar_j--;                                               // but not for the youngest - still open - SuperBar.
    if (ObjectCreate (label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet     (label, OBJPROP_COLOR, barColor);
       ObjectSet     (label, OBJPROP_BACK , true    );
@@ -449,15 +447,15 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
    else GetLastError();
 
    // draw close marker
-   if (closeBar > 0) {                                                                 // except for the youngest - still unfinished - SuperBar
-      int centerBar = (openBar+closeBar)/2;                                            // TODO: draw close marker for the youngest bar after market-close (weekend)
+   if (closeBar > 0) {                                                              // except for the youngest - still unfinished - SuperBar
+      int centerBar = (openBar+closeBar)/2;                                         // TODO: draw close marker for the youngest bar after market-close (weekend)
 
       if (centerBar > closeBar) {
          string labelWithPrice, labelWithoutPrice=label +" Close";
 
-         if (ObjectFind(labelWithoutPrice) == 0) {                                     // Every marker consists of two objects: an invisible label (1st object) with a fixed name
-            labelWithPrice = ObjectDescription(labelWithoutPrice);                     // holding in the description the dynamic and variable name of the visible marker (2nd object).
-            if (ObjectFind(labelWithPrice) == 0)                                       // This way an existing marker can be found and replaced, even if the dynamic name changes.
+         if (ObjectFind(labelWithoutPrice) == 0) {                                  // Every marker consists of two objects: an invisible label (1st object) with a fixed name
+            labelWithPrice = ObjectDescription(labelWithoutPrice);                  // holding in the description the dynamic and variable name of the visible marker (2nd object).
+            if (ObjectFind(labelWithPrice) == 0)                                    // This way an existing marker can be found and replaced, even if the dynamic name changes.
                ObjectDelete(labelWithPrice);
             ObjectDelete(labelWithoutPrice);
          }
@@ -481,24 +479,24 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
 
    // draw ETH session if enough M15 data is available
-   while (drawETH) {                                                                   // the loop declares just a block which can be more easily left via "break"
+   while (drawETH) {                                                                // the loop declares just a block which can be more easily left via "break"
       // resolve High and Low
-      datetime ethOpenTimeSrv  = openTimeSrv;                                          // as regular starttime of a 24h session (00:00 FXT)
-      datetime ethCloseTimeSrv = openTimeSrv + 16*HOURS + 30*MINUTES;                  // CME opening time                      (16:30 FXT)
+      datetime ethOpenTimeSrv  = openTimeSrv;                                       // as regular starttime of a 24h session (00:00 FXT)
+      datetime ethCloseTimeSrv = openTimeSrv + 16*HOURS + 30*MINUTES;               // CME opening time                      (16:30 FXT)
 
-      int ethOpenBar  = openBar;                                                       // regular open bar of a 24h session
-      int ethCloseBar = iBarShiftPrevious(NULL, NULL, ethCloseTimeSrv-1*SECOND);       // here openBar is always >= closeBar (checked above)
+      int ethOpenBar  = openBar;                                                    // regular open bar of a 24h session
+      int ethCloseBar = iBarShiftPrevious(NULL, NULL, ethCloseTimeSrv-1*SECOND);    // here openBar is always >= closeBar (checked above)
          if (ethCloseBar == EMPTY_VALUE) return(false);
-         if (ethOpenBar <= ethCloseBar) break;                                         // stop if openBar not greater as closeBar (no place for drawing)
+         if (ethOpenBar <= ethCloseBar) break;                                      // stop if openBar not greater as closeBar (no place for drawing)
 
       int ethM15openBar = iBarShiftNext(NULL, PERIOD_M15, ethOpenTimeSrv);
          if (ethM15openBar == EMPTY_VALUE) return(false);
-         if (ethM15openBar == -1)          break;                                      // HISTORY_UPDATE in progress
+         if (ethM15openBar == -1)          break;                                   // HISTORY_UPDATE in progress
 
       int ethM15closeBar = iBarShiftPrevious(NULL, PERIOD_M15, ethCloseTimeSrv-1*SECOND);
          if (ethM15closeBar == EMPTY_VALUE)    return(false);
-         if (ethM15closeBar == -1) { drawETH = false; break; }                         // available data is enough, stop drawing of further ETH sessions
-         if (ethM15openBar < ethM15closeBar) break;                                    // available data contains a gap
+         if (ethM15closeBar == -1) { drawETH = false; break; }                      // available data is enough, stop drawing of further ETH sessions
+         if (ethM15openBar < ethM15closeBar) break;                                 // available data contains a gap
 
       int ethM15highBar = iHighest(NULL, PERIOD_M15, MODE_HIGH, ethM15openBar-ethM15closeBar+1, ethM15closeBar);
       int ethM15lowBar  = iLowest (NULL, PERIOD_M15, MODE_LOW , ethM15openBar-ethM15closeBar+1, ethM15closeBar);
@@ -517,13 +515,13 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          ObjectDelete(ethBgLabel);
       if (ObjectCreate(ethBgLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow)) {
          ObjectSet     (ethBgLabel, OBJPROP_COLOR, barColor);
-         ObjectSet     (ethBgLabel, OBJPROP_BACK, true);                               // Colors of overlapping shapes are mixed with the chart background color according to
-         RegisterObject(ethBgLabel);                                                   // gdi32::SetROP2(HDC hdc, R2_NOTXORPEN); see example at function end.
-      }                                                                                // As MQL4 can't read the chart background color, we use a trick: A color mixed with itself
-                                                                                       // gives White. White mixed with another color gives again the original color.
-      // draw ETH bar (fills the whole with the ETH color)                             // With this we create an "optical whole" in the color of the chart background in the SuperBar.
-      if (ObjectFind(ethLabel) == 0)                                                   // Then we draw the ETH bar into this "whole". It's color doesn't get mixed with the "whole"'s color
-         ObjectDelete(ethLabel);                                                       // Presumably because the terminal uses a different drawing mode for this mixing.
+         ObjectSet     (ethBgLabel, OBJPROP_BACK, true);                            // Colors of overlapping shapes are mixed with the chart background color according to
+         RegisterObject(ethBgLabel);                                                // gdi32::SetROP2(HDC hdc, R2_NOTXORPEN); see example at function end.
+      }                                                                             // As MQL4 can't read the chart background color, we use a trick: A color mixed with itself
+                                                                                    // gives White. White mixed with another color gives again the original color.
+      // draw ETH bar (fills the whole with the ETH color)                          // With this we create an "optical whole" in the color of the chart background in the SuperBar.
+      if (ObjectFind(ethLabel) == 0)                                                // Then we draw the ETH bar into this "whole". It's color doesn't get mixed with the "whole"'s color
+         ObjectDelete(ethLabel);                                                    // Presumably because the terminal uses a different drawing mode for this mixing.
       if (ObjectCreate(ethLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow)) {
          ObjectSet     (ethLabel, OBJPROP_COLOR, ETH.Color);
          ObjectSet     (ethLabel, OBJPROP_BACK, true);
@@ -537,9 +535,9 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          if (ethCenterBar > ethCloseBar) {
             string ethLabelWithPrice, ethLabelWithoutPrice=ethLabel +" Close";
 
-            if (ObjectFind(ethLabelWithoutPrice) == 0) {                               // Every marker consists of two objects: an invisible label (1st object) with a fixed name
-               ethLabelWithPrice = ObjectDescription(ethLabelWithoutPrice);            // holding in the description the dynamic and variable name of the visible marker (2nd object).
-               if (ObjectFind(ethLabelWithPrice) == 0)                                 // This way an existing ETH marker can be found and replaced, even if the dynamic name changes.
+            if (ObjectFind(ethLabelWithoutPrice) == 0) {                            // Every marker consists of two objects: an invisible label (1st object) with a fixed name
+               ethLabelWithPrice = ObjectDescription(ethLabelWithoutPrice);         // holding in the description the dynamic and variable name of the visible marker (2nd object).
+               if (ObjectFind(ethLabelWithPrice) == 0)                              // This way an existing ETH marker can be found and replaced, even if the dynamic name changes.
                   ObjectDelete(ethLabelWithPrice);
                ObjectDelete(ethLabelWithoutPrice);
             }
