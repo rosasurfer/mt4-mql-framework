@@ -923,6 +923,28 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
 
 
 /**
+ * Return the current standard symbol. Alias of GetStandardSymbol(Symbol()).
+ *
+ * e.g.: Symbol() => "EURUSDm"; StdSymbol() => "EURUSD"
+ *
+ * @return string - standard symbol or the current symbol if standard symbol is unknown
+ */
+string StdSymbol() {
+   static string lastSymbol="", lastResult="";
+
+    if (lastResult != "") {
+      if (Symbol() == lastSymbol) {
+         return(lastResult);
+      }
+   }
+   lastSymbol = Symbol();
+   lastResult = GetStandardSymbol(Symbol());
+
+   return(lastResult);
+}
+
+
+/**
  * Find the standard symbol of a broker-specific symbol.
  *
  * e.g.: GetStandardSymbol("EURUSDm") => "EURUSD"
@@ -932,15 +954,226 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
  *
  * @return string - standard symbol or the specified alternative value; an empty string in case of errors
  */
-string GetStandardSymbol(string symbol, string altValue = "¨‡ ‡¨") {             // that's a protected space in the middle
+string GetStandardSymbol(string symbol, string altValue = "¨‡ ‡¨") {
    if (!StringLen(symbol)) return(_EMPTY_STR(catch("GetStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
 
-   string value = GetStandardSymbolStrict(symbol);
-   if (!StringLen(value)) {
-      if (altValue == "¨‡ ‡¨") value = symbol;       // a magic value
-      else                     value = altValue;
+   string _symbol = StrToUpper(symbol);
+   if      (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
+   else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
+
+   string result = "";
+
+   switch (StringGetChar(_symbol, 0)) {
+      case '_': if      (_symbol=="_BRENT" )   result = "BRENT";
+                else if (_symbol=="_DJI"   )   result = "DJIA";
+                else if (_symbol=="_DJT"   )   result = "DJTA";
+                else if (_symbol=="_N225"  )   result = "NIK225";
+                else if (_symbol=="_NQ100" )   result = "NAS100";
+                else if (_symbol=="_NQCOMP")   result = "NASCOMP";
+                else if (_symbol=="_SP500" )   result = "SP500";
+                else if (_symbol=="_WTI"   )   result = "WTI";
+                break;
+
+      case '#': if      (_symbol=="#DAX.XEI" ) result = "DAX";
+                else if (_symbol=="#DJI.XDJ" ) result = "DJIA";
+                else if (_symbol=="#DJT.XDJ" ) result = "DJTA";
+                else if (_symbol=="#SPX.X.XP") result = "SP500";
+                break;
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': break;
+
+      case 'A': if      (StrStartsWith(_symbol, "AUDCAD"))     result = "AUDCAD";
+                else if (StrStartsWith(_symbol, "AUDCHF"))     result = "AUDCHF";
+                else if (StrStartsWith(_symbol, "AUDDKK"))     result = "AUDDKK";
+                else if (StrStartsWith(_symbol, "AUDJPY"))     result = "AUDJPY";
+                else if (StrStartsWith(_symbol, "AUDLFX"))     result = "AUDLFX";
+                else if (StrStartsWith(_symbol, "AUDNZD"))     result = "AUDNZD";
+                else if (StrStartsWith(_symbol, "AUDPLN"))     result = "AUDPLN";
+                else if (StrStartsWith(_symbol, "AUDSGD"))     result = "AUDSGD";
+                else if (StrStartsWith(_symbol, "AUDUSD"))     result = "AUDUSD";
+                else if (              _symbol=="AUS200" )     result = "ASX200";
+                break;
+
+      case 'B': if      (StrStartsWith(_symbol, "BRENT_"))     result = "BRENT";
+                break;
+
+      case 'C': if      (StrStartsWith(_symbol, "CADCHF")  )   result = "CADCHF";
+                else if (StrStartsWith(_symbol, "CADJPY")  )   result = "CADJPY";
+                else if (StrStartsWith(_symbol, "CADLFX")  )   result = "CADLFX";
+                else if (StrStartsWith(_symbol, "CADSGD")  )   result = "CADSGD";
+                else if (StrStartsWith(_symbol, "CHFJPY")  )   result = "CHFJPY";
+                else if (StrStartsWith(_symbol, "CHFLFX")  )   result = "CHFLFX";
+                else if (StrStartsWith(_symbol, "CHFPLN")  )   result = "CHFPLN";
+                else if (StrStartsWith(_symbol, "CHFSGD")  )   result = "CHFSGD";
+                else if (StrStartsWith(_symbol, "CHFZAR")  )   result = "CHFZAR";
+                else if (              _symbol=="CLX5"     )   result = "WTI";
+                else if (              _symbol=="CRUDE_OIL")   result = "WTI";
+                break;
+
+      case 'D': if      (              _symbol=="DE30")        result = "DAX";
+                break;
+
+      case 'E': if      (              _symbol=="ECX"   )      result = "EURX";
+                else if (StrStartsWith(_symbol, "EURAUD"))     result = "EURAUD";
+                else if (StrStartsWith(_symbol, "EURCAD"))     result = "EURCAD";
+                else if (StrStartsWith(_symbol, "EURCCK"))     result = "EURCZK";
+                else if (StrStartsWith(_symbol, "EURCZK"))     result = "EURCZK";
+                else if (StrStartsWith(_symbol, "EURCHF"))     result = "EURCHF";
+                else if (StrStartsWith(_symbol, "EURDKK"))     result = "EURDKK";
+                else if (StrStartsWith(_symbol, "EURGBP"))     result = "EURGBP";
+                else if (StrStartsWith(_symbol, "EURHKD"))     result = "EURHKD";
+                else if (StrStartsWith(_symbol, "EURHUF"))     result = "EURHUF";
+                else if (StrStartsWith(_symbol, "EURJPY"))     result = "EURJPY";
+                else if (StrStartsWith(_symbol, "EURLFX"))     result = "EURLFX";
+                else if (StrStartsWith(_symbol, "EURLVL"))     result = "EURLVL";
+                else if (StrStartsWith(_symbol, "EURMXN"))     result = "EURMXN";
+                else if (StrStartsWith(_symbol, "EURNOK"))     result = "EURNOK";
+                else if (StrStartsWith(_symbol, "EURNZD"))     result = "EURNZD";
+                else if (StrStartsWith(_symbol, "EURPLN"))     result = "EURPLN";
+                else if (StrStartsWith(_symbol, "EURRUB"))     result = "EURRUB";
+                else if (StrStartsWith(_symbol, "EURRUR"))     result = "EURRUB";
+                else if (StrStartsWith(_symbol, "EURSEK"))     result = "EURSEK";
+                else if (StrStartsWith(_symbol, "EURSGD"))     result = "EURSGD";
+                else if (StrStartsWith(_symbol, "EURTRY"))     result = "EURTRY";
+                else if (StrStartsWith(_symbol, "EURUSD"))     result = "EURUSD";
+                else if (StrStartsWith(_symbol, "EURZAR"))     result = "EURZAR";
+                else if (              _symbol=="EURX"  )      result = "EURX";
+                break;
+
+      case 'F': break;
+
+      case 'G': if      (StrStartsWith(_symbol, "GBPAUD") )    result = "GBPAUD";
+                else if (StrStartsWith(_symbol, "GBPCAD") )    result = "GBPCAD";
+                else if (StrStartsWith(_symbol, "GBPCHF") )    result = "GBPCHF";
+                else if (StrStartsWith(_symbol, "GBPDKK") )    result = "GBPDKK";
+                else if (StrStartsWith(_symbol, "GBPJPY") )    result = "GBPJPY";
+                else if (StrStartsWith(_symbol, "GBPLFX") )    result = "GBPLFX";
+                else if (StrStartsWith(_symbol, "GBPNOK") )    result = "GBPNOK";
+                else if (StrStartsWith(_symbol, "GBPNZD") )    result = "GBPNZD";
+                else if (StrStartsWith(_symbol, "GBPPLN") )    result = "GBPPLN";
+                else if (StrStartsWith(_symbol, "GBPRUB") )    result = "GBPRUB";
+                else if (StrStartsWith(_symbol, "GBPRUR") )    result = "GBPRUB";
+                else if (StrStartsWith(_symbol, "GBPSEK") )    result = "GBPSEK";
+                else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
+                else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
+                else if (              _symbol=="GOLD"    )    result = "XAUUSD";
+                else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
+                break;
+
+      case 'H': if      (StrStartsWith(_symbol, "HKDJPY"))     result = "HKDJPY";
+                break;
+
+      case 'I': break;
+
+      case 'J': if      (StrStartsWith(_symbol, "JPYLFX"))     result = "JPYLFX";
+                break;
+
+      case 'K': break;
+
+      case 'L': if      (StrStartsWith(_symbol, "LFXJPY"))     result = "LFXJPY";
+                else if (              _symbol=="LCOX5"  )     result = "BRENT";
+                break;
+
+      case 'M': if      (StrStartsWith(_symbol, "MXNJPY"))     result = "MXNJPY";
+                break;
+
+      case 'N': if      (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
+                else if (StrStartsWith(_symbol, "NOKSEK"))     result = "NOKSEK";
+                else if (StrStartsWith(_symbol, "NZDCAD"))     result = "NZDCAD";
+                else if (StrStartsWith(_symbol, "NZDCHF"))     result = "NZDCHF";
+                else if (StrStartsWith(_symbol, "NZDJPY"))     result = "NZDJPY";
+                else if (StrStartsWith(_symbol, "NZDLFX"))     result = "NZDLFX";
+                else if (StrStartsWith(_symbol, "NZDSGD"))     result = "NZDSGD";
+                else if (StrStartsWith(_symbol, "NZDUSD"))     result = "NZDUSD";
+                break;
+
+      case 'O': break;
+
+      case 'P': if      (StrStartsWith(_symbol, "PLNJPY"))     result = "PLNJPY";
+                break;
+
+      case 'Q': break;
+
+      case 'R': if      (              _symbol=="RUSSEL_2000") result = "RUS2000";
+                break;
+
+      case 'S': if      (              _symbol=="S&P_500"   )  result = "SP500";
+                else if (StrStartsWith(_symbol, "SEKJPY")   )  result = "SEKJPY";
+                else if (StrStartsWith(_symbol, "SGDJPY")   )  result = "SGDJPY";
+                else if (              _symbol=="SILVER"    )  result = "XAGUSD";
+                else if (              _symbol=="SILVEREURO")  result = "XAGEUR";
+                break;
+
+      case 'T': if      (StrStartsWith(_symbol, "TRYJPY"))     result = "TRYJPY";
+                break;
+
+      case 'U':
+                if      (              _symbol=="US30"   )     result = "DJIA";
+                else if (              _symbol=="US500"  )     result = "SP500";
+                else if (              _symbol=="US2000" )     result = "RUS2000";
+                else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
+                else if (StrStartsWith(_symbol, "USDCHF"))     result = "USDCHF";
+                else if (StrStartsWith(_symbol, "USDCCK"))     result = "USDCZK";
+                else if (StrStartsWith(_symbol, "USDCNY"))     result = "USDCNY";
+                else if (StrStartsWith(_symbol, "USDCZK"))     result = "USDCZK";
+                else if (StrStartsWith(_symbol, "USDDKK"))     result = "USDDKK";
+                else if (StrStartsWith(_symbol, "USDHKD"))     result = "USDHKD";
+                else if (StrStartsWith(_symbol, "USDHRK"))     result = "USDHRK";
+                else if (StrStartsWith(_symbol, "USDHUF"))     result = "USDHUF";
+                else if (StrStartsWith(_symbol, "USDINR"))     result = "USDINR";
+                else if (StrStartsWith(_symbol, "USDJPY"))     result = "USDJPY";
+                else if (StrStartsWith(_symbol, "USDLFX"))     result = "USDLFX";
+                else if (StrStartsWith(_symbol, "USDLTL"))     result = "USDLTL";
+                else if (StrStartsWith(_symbol, "USDLVL"))     result = "USDLVL";
+                else if (StrStartsWith(_symbol, "USDMXN"))     result = "USDMXN";
+                else if (StrStartsWith(_symbol, "USDNOK"))     result = "USDNOK";
+                else if (StrStartsWith(_symbol, "USDPLN"))     result = "USDPLN";
+                else if (StrStartsWith(_symbol, "USDRUB"))     result = "USDRUB";
+                else if (StrStartsWith(_symbol, "USDRUR"))     result = "USDRUB";
+                else if (StrStartsWith(_symbol, "USDSEK"))     result = "USDSEK";
+                else if (StrStartsWith(_symbol, "USDSAR"))     result = "USDSAR";
+                else if (StrStartsWith(_symbol, "USDSGD"))     result = "USDSGD";
+                else if (StrStartsWith(_symbol, "USDTHB"))     result = "USDTHB";
+                else if (StrStartsWith(_symbol, "USDTRY"))     result = "USDTRY";
+                else if (StrStartsWith(_symbol, "USDTWD"))     result = "USDTWD";
+                else if (              _symbol=="USDX"   )     result = "USDX";
+                else if (StrStartsWith(_symbol, "USDZAR"))     result = "USDZAR";
+                else if (              _symbol=="USTEC"  )     result = "NAS100";
+                break;
+
+      case 'V': break;
+
+      case 'W': if      (StrStartsWith(_symbol, "WTI_"))       result = "WTI";
+                break;
+
+      case 'X': if      (StrStartsWith(_symbol, "XAGEUR"))     result = "XAGEUR";
+                else if (StrStartsWith(_symbol, "XAGJPY"))     result = "XAGJPY";
+                else if (StrStartsWith(_symbol, "XAGUSD"))     result = "XAGUSD";
+                else if (StrStartsWith(_symbol, "XAUEUR"))     result = "XAUEUR";
+                else if (StrStartsWith(_symbol, "XAUJPY"))     result = "XAUJPY";
+                else if (StrStartsWith(_symbol, "XAUUSD"))     result = "XAUUSD";
+                break;
+
+      case 'Y': break;
+
+      case 'Z': if      (StrStartsWith(_symbol, "ZARJPY"))     result = "ZARJPY";
+                break;
    }
-   return(value);
+
+   if (!StringLen(result)) {
+      if (altValue == "¨‡ ‡¨") result = symbol;       // magic value with a protected space in the middle
+      else                     result = altValue;
+   }
+   return(result);
 }
 
 
@@ -6678,6 +6911,7 @@ void __DummyCalls() {
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
+   StdSymbol();
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
@@ -6770,7 +7004,6 @@ void __DummyCalls() {
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
-   string   StdSymbol();
 
 #import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);
