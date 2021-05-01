@@ -5,7 +5,7 @@
  *
  * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    // Getter
    int      hh_BarFormat      (/*HISTORY_HEADER*/int hh[]);                         int      hhs_BarFormat      (/*HISTORY_HEADER*/int hhs[], int i);
    string   hh_Copyright      (/*HISTORY_HEADER*/int hh[]);                         string   hhs_Copyright      (/*HISTORY_HEADER*/int hhs[], int i);

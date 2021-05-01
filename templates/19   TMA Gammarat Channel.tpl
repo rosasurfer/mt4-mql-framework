@@ -8775,53 +8775,37 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=TMA Solarwind Channel
+name=Inside Bars
+flags=339
+window_num=0
+<inputs>
+Timeframes=H1
+Max.InsideBars=1
+</inputs>
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=TMA Gammarat Channel
 flags=339
 window_num=0
 <inputs>
 MA.HalfLength=55
-MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+MA.AppliedPrice=Weighted
 Bands.Deviations=2.5
-RepaintingMode=1
-MarkSignals=1
-AlertsOn=0
+AlertsOn=1
 </inputs>
 </expert>
 
-draw_0=0
 color_0=16711935
 style_0=2
-weight_0=1
-
-draw_1=0
-color_1=16436871
-style_1=0
-weight_1=3
-
-draw_2=0
-color_2=16436871
-style_2=0
-weight_2=3
-
-draw_3=0
-color_3=4294967295
 style_3=2
-weight_3=1
-
-draw_4=0
-color_4=16711680
-style_4=0
-weight_4=1
-
-draw_5=0
-color_5=16711680
-style_5=0
-weight_5=1
-
-draw_6=3
+weight_6=2
 color_6=16711935
-style_6=0
-weight_6=4
 
 period_flags=0
 show_data=1

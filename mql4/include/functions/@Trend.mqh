@@ -169,7 +169,7 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua        ) textColor = DeepSkyBlue;
       else if (textColor == Gold        ) textColor = Orange;
-      else if (textColor == LightSkyBlue) textColor = DeepSkyBlue;
+      else if (textColor == LightSkyBlue) textColor = C'94,174,255';
       else if (textColor == Lime        ) textColor = LimeGreen;
       else if (textColor == Yellow      ) textColor = Orange;
 

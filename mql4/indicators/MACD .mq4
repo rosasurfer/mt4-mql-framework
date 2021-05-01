@@ -38,8 +38,7 @@ extern color  MainLine.Color        = DodgerBlue;
 extern int    MainLine.Width        = 1;
 
 extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
-
-extern string __________________________;
+extern string __a____________________________;
 
 extern string Signal.onCross        = "on | off | auto*";
 extern string Signal.Sound          = "on | off | auto*";

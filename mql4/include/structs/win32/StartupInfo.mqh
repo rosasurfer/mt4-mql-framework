@@ -86,7 +86,7 @@ string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
 }
 
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int si_setSize      (/*STARTUPINFO*/int si[], int size   );
    //  ...
    int si_setFlags     (/*STARTUPINFO*/int si[], int flags  );

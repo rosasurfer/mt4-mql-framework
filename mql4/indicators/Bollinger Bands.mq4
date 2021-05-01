@@ -27,8 +27,7 @@ extern color  Bands.Color       = RoyalBlue;
 extern int    Bands.LineWidth   = 1;
 
 extern int    Max.Bars          = 10000;              // max. values to calculate (-1: all available)
-
-extern string __________________________;
+extern string __a____________________________;
 
 extern string Signal.onTouchBand   = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
@@ -86,13 +85,9 @@ string signal.sms.receiver = "";
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)        return(catch("onInit(1)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.Method
    string values[], sValue = MA.Method;
@@ -102,8 +97,8 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)        return(catch("onInit(2)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (maMethod == MODE_SMMA) return(catch("onInit(3)  Unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)        return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == MODE_SMMA) return(catch("onInit(3)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
 
    // MA.AppliedPrice
@@ -116,28 +111,28 @@ int onInit() {
    if (sValue == "") sValue = "close";                                  // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                              return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                              return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
-   // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // MA.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
 
    // MA.LineWidth
-   if (MA.LineWidth < 0)    return(catch("onInit(5)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (MA.LineWidth > 5)    return(catch("onInit(6)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth < 0)      return(catch("onInit(5)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth > 5)      return(catch("onInit(6)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.StdDevs
-   if (Bands.StdDevs < 0)   return(catch("onInit(7)  Invalid input parameter Bands.StdDevs = "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.StdDevs < 0)     return(catch("onInit(7)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // Bands.LineWidth
-   if (Bands.LineWidth < 0) return(catch("onInit(8)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5) return(catch("onInit(9)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0)   return(catch("onInit(8)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5)   return(catch("onInit(9)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)       return(catch("onInit(10)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)         return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (!ConfigureSignal("BollingerBand", Signal.onTouchBand, signals))                                        return(last_error);
@@ -196,17 +191,6 @@ int onInit() {
 int onDeinit() {
    RepositionLegend();
    return(catch("onDeinit(1)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -294,46 +278,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_MA,    ma.drawType,    EMPTY, ma.width,    MA.Color   );
    SetIndexStyle(MODE_UPPER, bands.drawType, EMPTY, bands.width, Bands.Color);
    SetIndexStyle(MODE_LOWER, bands.drawType, EMPTY, bands.width, Bands.Color);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.MA.Periods",      MA.Periods     );
-   Chart.StoreString(name +".input.MA.Method",       MA.Method      );
-   Chart.StoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.StoreColor (name +".input.MA.Color",        MA.Color       );
-   Chart.StoreInt   (name +".input.MA.LineWidth",    MA.LineWidth   );
-   Chart.StoreDouble(name +".input.Bands.StdDevs",   Bands.StdDevs  );
-   Chart.StoreColor (name +".input.Bands.Color",     Bands.Color    );
-   Chart.StoreInt   (name +".input.Bands.LineWidth", Bands.LineWidth);
-   Chart.StoreInt   (name +".input.Max.Bars",        Max.Bars       );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
-   Chart.RestoreString(name +".input.MA.Method",       MA.Method      );
-   Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
-   Chart.RestoreInt   (name +".input.MA.LineWidth",    MA.LineWidth   );
-   Chart.RestoreDouble(name +".input.Bands.StdDevs",   Bands.StdDevs  );
-   Chart.RestoreColor (name +".input.Bands.Color",     Bands.Color    );
-   Chart.RestoreInt   (name +".input.Bands.LineWidth", Bands.LineWidth);
-   Chart.RestoreInt   (name +".input.Max.Bars",        Max.Bars       );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

@@ -12,7 +12,7 @@
  *    WORD wMilliseconds;           //  2
  * };                               // 16 byte
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int st_Year        (/*SYSTEMTIME*/int st[]);
    int st_Month       (/*SYSTEMTIME*/int st[]);
    int st_DayOfWeek   (/*SYSTEMTIME*/int st[]);
