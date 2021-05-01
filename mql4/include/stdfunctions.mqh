@@ -923,6 +923,28 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
 
 
 /**
+ * Find the standard symbol of a broker-specific symbol.
+ *
+ * e.g.: GetStandardSymbol("EURUSDm") => "EURUSD"
+ *
+ * @param  string symbol              - broker-specific symbol
+ * @param  string altValue [optional] - value to return if no standard symbol was found (default: the same value)
+ *
+ * @return string - standard symbol or the specified alternative value; an empty string in case of errors
+ */
+string GetStandardSymbol(string symbol, string altValue = "¨‡ ‡¨") {             // that's a protected space in the middle
+   if (!StringLen(symbol)) return(_EMPTY_STR(catch("GetStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+
+   string value = GetStandardSymbolStrict(symbol);
+   if (!StringLen(value)) {
+      if (altValue == "¨‡ ‡¨") value = symbol;       // a magic value
+      else                     value = altValue;
+   }
+   return(value);
+}
+
+
+/**
  * Inlined conditional boolean statement.
  *
  * @param  bool condition
@@ -6550,6 +6572,7 @@ void __DummyCalls() {
    GetMqlFilesPath();
    GetRandomValue(NULL, NULL);
    GetServerTime();
+   GetStandardSymbol(NULL);
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HandleCommands();

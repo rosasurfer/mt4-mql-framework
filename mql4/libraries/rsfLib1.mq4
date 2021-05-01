@@ -2840,56 +2840,11 @@ string StdSymbol() {
 
 /**
  * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
- * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
- *
- * @param  string symbol - broker-spezifisches Symbol
- *
- * @return string - Standardsymbol oder der übergebene Ausgangswert, wenn das Brokersymbol unbekannt ist
- *
- *
- * NOTE: Alias für GetStandardSymbolOrAlt(symbol, symbol)
- */
-string GetStandardSymbol(string symbol) {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetStandardSymbol()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-   return(GetStandardSymbolOrAlt(symbol, symbol));
-}
-
-
-/**
- * Gibt für ein broker-spezifisches Symbol das Standardsymbol oder den angegebenen Alternativwert zurück.
- * (z.B. GetStandardSymbolOrAlt("EURUSDm") => "EURUSD")
- *
- * @param  string symbol   - broker-spezifisches Symbol
- * @param  string altValue - alternativer Rückgabewert, falls kein Standardsymbol gefunden wurde
- *
- * @return string - Ergebnis
- *
- *
- * NOTE: Im Unterschied zu GetStandardSymbolStrict() erlaubt diese Funktion die Angabe eines Alternativwertes,
- *       läßt jedoch nicht mehr so einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
- */
-string GetStandardSymbolOrAlt(string symbol, string altValue="") {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetStandardSymbolOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-
-   string value = GetStandardSymbolStrict(symbol);
-   if (!StringLen(value))
-      value = altValue;
-   return(value);
-}
-
-
-/**
- * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
  * (z.B. GetStandardSymbolStrict("EURUSDm") => "EURUSD")
  *
  * @param  string symbol - Broker-spezifisches Symbol
  *
  * @return string - Standardsymbol oder Leerstring, falls kein Standardsymbol gefunden wurde.
- *
- *
- * @see  GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
  */
 string GetStandardSymbolStrict(string symbol) {
    if (!StringLen(symbol))
