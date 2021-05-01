@@ -327,10 +327,10 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 
 
 /**
- * Dropin-replacement for the built-in function PlaySound().
+ * Dropin-replacement for the built-in MQL function PlaySound().
  *
- * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Strategy Tester).
+ * Plays a sound asynchronously, instead of synchronously and UI blocking as the terminal does. Also plays a sound if the
+ * terminal doesn't support it in the current context (e.g. in tester).
  *
  * @param  string soundfile
  *
@@ -343,35 +343,12 @@ bool PlaySoundEx(string soundfile) {
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName)) {
-         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
+         if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
    return(!catch("PlaySoundEx(2)"));
-}
-
-
-/**
- * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found an error is triggered.
- *
- * @param  string soundfile
- *
- * @return bool - success status
- */
-bool PlaySoundOrFail(string soundfile) {
-   string filename = StrReplace(soundfile, "/", "\\");
-   string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
-
-   if (!IsFileA(fullName)) {
-      fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
-      if (!IsFileA(fullName))
-         return(!catch("PlaySoundOrFail(1)  file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND));
-   }
-
-   PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-   return(!catch("PlaySoundOrFail(2)"));
 }
 
 
@@ -6653,7 +6630,6 @@ void __DummyCalls() {
    PipValue();
    PipValueEx(NULL);
    PlaySoundEx(NULL);
-   PlaySoundOrFail(NULL);
    Pluralize(NULL);
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);

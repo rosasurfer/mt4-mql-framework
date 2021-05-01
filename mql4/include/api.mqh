@@ -235,7 +235,6 @@ string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
 double   PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
 bool     PlaySoundEx(string soundfile);;
-bool     PlaySoundOrFail(string soundfile);;
 string   Pluralize(int count, string singular="", string plural="s");;
 string   PriceTypeDescription(int type);;
 string   PriceTypeToStr(int type);;
