@@ -901,7 +901,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
          else {
-            logDebug("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+            if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
          }
       }
       baseCommission = value;
