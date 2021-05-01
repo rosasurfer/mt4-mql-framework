@@ -15,7 +15,7 @@
  *  Legend.FontSize              = {int}              ; font size
  *  Legend.FontColor             = {color}            ; font color (web color name or integer triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
- *  MaxH1Days                    = {int}              ; max. number of days to draw H1 superbars (performance; default 60)
+ *  MaxH1Days                    = {int}              ; max. number of days to draw H1 superbars (performance; default: 60)
  *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max
  *
  * @see  https://www.forexfactory.com/forum/69-platform-tech
