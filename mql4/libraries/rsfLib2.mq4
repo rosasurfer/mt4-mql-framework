@@ -1084,7 +1084,7 @@ void onLibraryInit() {
 }
 
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int  st_Milliseconds(/*SYSTEMTIME*/int st[]);
 
 #import "kernel32.dll"

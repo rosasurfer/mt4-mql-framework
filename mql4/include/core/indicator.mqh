@@ -1,7 +1,8 @@
 
 int __CoreFunction = NULL;                                           // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 
-extern string _______________________________ = "";
+extern string _______________________________;
+extern bool   AutoConfiguration = true;
 extern int    __lpSuperContext;
 
 // current price series
@@ -35,8 +36,7 @@ int init() {
       return(last_error);
    }
 
-
-   // (1) initialize the execution context
+   // initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
@@ -55,12 +55,10 @@ int init() {
       return(last_error);
    }
 
-
-   // (2) finish initialization
+   // finish initialization
    if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
 
-
-   // (3) execute custom init tasks
+   // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
@@ -82,19 +80,23 @@ int init() {
          if (CheckErrors("init(9)", error)) return( last_error);
       if (!tickValue)                       return(_last_error(logDebug("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
+   if (initFlags & INIT_AUTOCONFIG && 1) {                           // initialize auto configuration
+      __isAutoConfig = AutoConfiguration;
+   }
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
+   }
 
-   // (4) before onInit(): if loaded by iCustom() log input parameters
+   // before onInit(): if loaded by iCustom() log input parameters
    if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
       string sInput = InputsToStr();
       if (StringLen(sInput) > 0) {
          sInput = sInput + NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
-         logDebug("init(11)  input: "+ sInput);
+         logDebug("init(13)  input: "+ sInput);
       }
    }
 
    /*
-   (5) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
+   User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
@@ -119,7 +121,7 @@ int init() {
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
       int initReason = ProgramInitReason();                                            //
-      if (!initReason) if (CheckErrors("init(12)")) return(last_error);                //
+      if (!initReason) if (CheckErrors("init(14)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
          case INITREASON_USER             : error = onInitUser();             break;   //
@@ -131,19 +133,19 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInitSymbolChange();     break;   //
          case INITREASON_RECOMPILE        : error = onInitRecompile();        break;   //
          default:                                                                      //
-            return(_last_error(CheckErrors("init(13)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(15)  unknown initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
    }                                                                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
    if (error != -1)                                                                    //
       error = afterInit();                                                             // Postprocessing-Hook
 
-   // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
 
-   CheckErrors("init(14)");
+   CheckErrors("init(16)");
    return(last_error);
 }
 
@@ -557,7 +559,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    bool   AquireLock(string mutexName, bool wait);
    bool   ReleaseLock(string mutexName);
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
 

@@ -732,7 +732,7 @@ string   TicketsToStr.Position(int &array[]);;
 string   TimesToStr(datetime &array[], string separator);;
 
 
-// libraries/rsfExpander.dll
+// libraries/rsfMT4Expander.dll
 int      AnsiToWCharStr(string ansi, int &wchar[], int wcharSize);;
 bool     AppendLogMessageA(int ec[], datetime time, string message, int error, int level);;
 string   BarModelDescription(int id);;

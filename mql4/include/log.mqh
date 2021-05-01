@@ -584,7 +584,7 @@ bool SetLogfile(string filename) {
 }
 
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int  ec_SetLoglevel        (int ec[], int level);
    int  ec_SetLoglevelAlert   (int ec[], int level);
    int  ec_SetLoglevelDebugger(int ec[], int level);
