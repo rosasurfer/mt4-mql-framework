@@ -193,10 +193,10 @@ int log(string message, int error, int level) {
       else {
          key = ProgramName();
          if (!IsConfigKey("Log", key)) key = "Online";
-         value = GetConfigString("Log", key, "debug");                                             // online default: debug
+         value = GetConfigString("Log", key, "all");                                               // online default: all
       }
       configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log(2)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
+      if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevel(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF)
@@ -206,14 +206,14 @@ int log(string message, int error, int level) {
    if (level >= configLevel) {
       if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level); // fast appenders first
       if (__ExecutionContext[EC.loglevelDebugger] != LOG_OFF) log2Debugger(message, error, level); // ...
-      if (__ExecutionContext[EC.loglevelFile    ] != LOG_OFF) log2File(message, error, level);     // ...
-      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert(message, error, level);    // after fast appenders as it may lock the UI thread in tester
-      if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail(message, error, level);     // slow appenders last (launches a new process)
-      if (__ExecutionContext[EC.loglevelSMS     ] != LOG_OFF) log2SMS(message, error, level);      // ...
+      if (__ExecutionContext[EC.loglevelFile    ] != LOG_OFF) log2File    (message, error, level); // ...
+      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert   (message, error, level); // after fast appenders as it may lock the UI thread in tester
+      if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail    (message, error, level); // slow appenders last (launches a new process)
+      if (__ExecutionContext[EC.loglevelSMS     ] != LOG_OFF) log2SMS     (message, error, level); // ...
    }
    else if (level >= LOG_FATAL) {
       if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level); // built-in log appenders always process LOG_FATAL
-      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert(message, error, level);
+      if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert   (message, error, level);
    }
    return(error);
 }
