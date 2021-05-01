@@ -5,7 +5,7 @@
  *
  * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/SymbolGroup.h
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    // Getter
    string sg_Name              (/*SYMBOL_GROUP*/int sg[]);                       string sgs_Name              (/*SYMBOL_GROUP*/int sg[], int i);
    string sg_Description       (/*SYMBOL_GROUP*/int sg[]);                       string sgs_Description       (/*SYMBOL_GROUP*/int sg[], int i);

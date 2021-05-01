@@ -680,7 +680,7 @@ bool Tester.RecordEquity() {
    int    CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
    bool   IntInArray(int haystack[], int needle);
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
 
