@@ -6,7 +6,7 @@
  *    DWORD dwHighDateTime;         //  4
  * };                               //  8 byte
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int ft_LowDateTime (/*FILETIME*/int ft[]);
    int ft_HighDateTime(/*FILETIME*/int ft[]);
 #import

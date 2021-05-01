@@ -8,7 +8,7 @@
  *    DWORD  dwThreadId;            //  4
  * };                               // 16 byte
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int pi_hProcess (/*PROCESS_INFORMATION*/int pi[]);
    int pi_hThread  (/*PROCESS_INFORMATION*/int pi[]);
    int pi_ProcessId(/*PROCESS_INFORMATION*/int pi[]);

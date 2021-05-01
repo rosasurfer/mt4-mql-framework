@@ -1,7 +1,7 @@
 /**
  * Load all configuration files of the current context into the editor. Non-existing files are created. That's:
  *
- *  - the global MetaTrader configuration (for all terminals)
+ *  - the global MT4 configuration (for all terminals)
  *  - the current MT4 terminal configuration (for a single terminal)
  *  - the current trade account configuration
  *  - the external trade account configuration (if used)
@@ -23,19 +23,19 @@ int __DeinitFlags[];
 int onStart() {
    string files[];
 
-   // get the global MetaTrader configuration file
+   // get the global MetaTrader configuration filename
    string globalConfig = GetGlobalConfigPathA();
    ArrayPushString(files, globalConfig);
 
-   // get the current terminal configuration file
+   // get the current terminal configuration filename
    string terminalConfig = GetTerminalConfigPathA();
    ArrayPushString(files, terminalConfig);
 
-   // get the current account config file
+   // get the current account configuration filename
    string currentAccountConfig = GetAccountConfigPath();
    ArrayPushString(files, currentAccountConfig);
 
-   // get the external trade account config file (if configured)
+   // get the external trade account configuration filename (if configured)
    string label = "TradeAccount";
    if (ObjectFind(label) == 0) {
       string account = StrTrim(ObjectDescription(label));            // format "{account-company}:{account-number}"
@@ -82,12 +82,12 @@ int onStart() {
          int hFile = CreateFileA(files[i],                                 // file name
                                  GENERIC_READ, FILE_SHARE_READ,            // open for shared reading
                                  NULL,                                     // default security
-                                 CREATE_NEW,                               // creates file only if it doesn't exist
+                                 CREATE_NEW,                               // create file only if it doesn't exist
                                  FILE_ATTRIBUTE_NORMAL,                    // normal file
                                  NULL);                                    // no attribute template
          if (hFile == INVALID_HANDLE_VALUE) {
             error = GetLastWin32Error();
-            if (error != ERROR_FILE_EXISTS) return(catch("onStart(6)->CreateFileA(\""+ files[i] +"\")", ERR_WIN32_ERROR+error));
+            if (error != ERROR_FILE_EXISTS) return(catch("onStart(6)->CreateFileA("+ DoubleQuoteStr(files[i]) +")", ERR_WIN32_ERROR+error));
          }
          else {
             CloseHandle(hFile);
