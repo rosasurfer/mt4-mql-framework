@@ -345,8 +345,9 @@ bool PlaySoundEx(string soundfile, int flags = NULL) {
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName)) {
-         if (!(flags & MB_DONT_LOG))
-            logWarn("PlaySoundEx(1)  sound file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND);
+         if (!(flags & MB_DONT_LOG)) {
+            if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
+         }
          return(false);
       }
    }

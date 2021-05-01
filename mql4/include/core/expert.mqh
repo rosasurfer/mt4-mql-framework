@@ -2,11 +2,11 @@
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
 
-extern string   _______________________________ = "";
-extern bool     EA.RecordEquity                 = false;
-extern bool     EA.CreateReport                 = false;
-extern datetime Tester.StartTime                = 0;                 // time to start a test
-extern double   Tester.StartPrice               = 0;                 // price to start a test
+extern string   _______________________________;
+extern bool     EA.RecordEquity   = false;
+extern bool     EA.CreateReport   = false;
+extern datetime Tester.StartTime  = 0;                               // time to start a test
+extern double   Tester.StartPrice = 0;                               // price to start a test
 
 #include <functions/InitializeByteBuffer.mqh>
 

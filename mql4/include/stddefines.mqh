@@ -14,6 +14,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                    // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
 bool     __isChart;                                         // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
+bool     __isAutoConfig;                                    // Whether auto-configuration is enabled (framework config values have precedence over manual inputs).
 
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
@@ -225,7 +226,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
 
 
-// OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
+// OrderSelect-IDs zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
 #define O_PUSH                            1
 #define O_POP                             2
 
@@ -435,14 +436,14 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_TYPE_FUTURES            4
 
 
-// ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
+// IDs for positioning objects, see ObjectSet(label, OBJPROP_CORNER, ...)
 #define CORNER_TOP_LEFT                0        // default
 #define CORNER_TOP_RIGHT               1
 #define CORNER_BOTTOM_LEFT             2
 #define CORNER_BOTTOM_RIGHT            3
 
 
-// Currency-ID's
+// Currency-IDs
 #define CID_AUD                        1
 #define CID_CAD                        2
 #define CID_CHF                        3
@@ -450,7 +451,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define CID_GBP                        5
 #define CID_JPY                        6
 #define CID_NZD                        7
-#define CID_USD                        8        // zuerst die ID's der LFX-Indizes, dadurch "passen" diese in 3 Bits (für LFX-Tickets)
+#define CID_USD                        8        // zuerst die IDs der LFX-Indizes, dadurch "passen" diese in 3 Bits (für LFX-Tickets)
 
 #define CID_CNY                        9
 #define CID_CZK                       10
@@ -619,7 +620,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define STR_PAD_BOTH                         3
 
 
-// Array ID's für von ArrayCopyRates() definierte Arrays
+// Array IDs für von ArrayCopyRates() definierte Arrays
 #define BAR.time                             0
 #define BAR.open                             1
 #define BAR.low                              2
@@ -628,7 +629,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define BAR.volume                           5
 
 
-// Price-Bar ID's (siehe Historyfunktionen)
+// Price-Bar IDs (siehe Historyfunktionen)
 #define BAR_T                                0  // (double) datetime
 #define BAR_O                                1
 #define BAR_H                                2
