@@ -590,8 +590,7 @@ bool UpdateDescription() {
  * @return string - label name
  */
 string CreateDescriptionLabel() {
-   if (IsSuperContext())
-      return("");
+   if (IsSuperContext()) return("");
 
    string label = "rsf."+ ProgramName() +".legend";
 
