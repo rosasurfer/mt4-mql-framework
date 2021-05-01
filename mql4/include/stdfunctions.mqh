@@ -4,7 +4,7 @@
 #include <configuration.mqh>
 #include <log.mqh>
 #include <metaquotes.mqh>
-#include <rsfExpander.mqh>
+#include <rsfMT4Expander.mqh>
 
 
 /**
@@ -345,8 +345,9 @@ bool PlaySoundEx(string soundfile, int flags = NULL) {
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName)) {
-         if (!(flags & MB_DONT_LOG))
-            logWarn("PlaySoundEx(1)  sound file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND);
+         if (!(flags & MB_DONT_LOG)) {
+            if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
+         }
          return(false);
       }
    }
@@ -1906,7 +1907,7 @@ string StrRight(string value, int n) {
  * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
  *                                   Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
  *                                   zurückgegeben.
- *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ *                                   Wenn negativ, wird mit dem Zählen anstatt von links von rechts begonnen.
  *                                   Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings,
  *                                   wird der gesamte String zurückgegeben.
  * @return string
@@ -3511,7 +3512,7 @@ string CreateLegendLabel() {
    if (IsSuperContext())
       return("");
 
-   string label = "Legend."+ __ExecutionContext[EC.pid];
+   string label = "rsf.Legend."+ __ExecutionContext[EC.pid];
    int xDistance =  5;
    int yDistance = 21;
 
@@ -3523,9 +3524,9 @@ string CreateLegendLabel() {
       int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
 
       for (int i=0; i < objects && labels; i++) {
-         string objName = ObjectName(i);
-         if (ObjectType(objName) == OBJ_LABEL) {
-            if (StrStartsWith(objName, "Legend."))
+         string name = ObjectName(i);
+         if (ObjectType(name) == OBJ_LABEL) {
+            if (StrStartsWith(name, "rsf.Legend."))
                yDistance += 19;
             labels--;
          }
@@ -4052,7 +4053,7 @@ bool StrCompareI(string string1, string string2) {
  */
 bool StrContains(string value, string substring) {
    if (!StringLen(substring))
-      return(!catch("StrContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContains(1)  illegal parameter substring: "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(value, substring) != -1);
 }
 
@@ -4067,7 +4068,7 @@ bool StrContains(string value, string substring) {
  */
 bool StrContainsI(string value, string substring) {
    if (!StringLen(substring))
-      return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContainsI(1)  illegal parameter substring: "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(StrToUpper(value), StrToUpper(substring)) != -1);
 }
 
@@ -6770,7 +6771,7 @@ void __DummyCalls() {
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[]);

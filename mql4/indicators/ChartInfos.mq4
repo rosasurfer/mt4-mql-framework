@@ -22,7 +22,7 @@ int __DeinitFlags[];
 
 extern string Track.Orders         = "on | off | auto*";
 extern bool   Offline.Ticker       = true;                        // whether to enable automatic ticking of offline charts
-extern string __________________________;
+extern string __a____________________________;
 
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";

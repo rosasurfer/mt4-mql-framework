@@ -17,7 +17,7 @@
  *       • __STATUS_OFF        integrieren
  *       • __STATUS_OFF.reason integrieren
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    // getters
    int      ec_Pid                (int ec[]);
    int      ec_PreviousPid        (int ec[]);

@@ -14,7 +14,7 @@
  *    CHAR     cAlternateFileName[14];    //  14
  * } WIN32_FIND_DATA;                     // 318 byte       Ende liegt nicht an einem Integer-Boundary
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int    wfd_FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]);
    bool   wfd_FileAttribute_ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]);
    bool   wfd_FileAttribute_Hidden      (/*WIN32_FIND_DATA*/int wfd[]);
