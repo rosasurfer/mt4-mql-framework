@@ -475,9 +475,7 @@ int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
    if (lTimezone == "america/new_york+0500") return(-2*HOURS);
    if (lTimezone == "america/new_york"     ) return(-7*HOURS);
 
-
    if (serverTime < 0) return(_EMPTY_VALUE(catch("GetServerToFxtTimeOffset(1)  invalid parameter serverTime = "+ serverTime, ERR_INVALID_PARAMETER)));
-
 
    // Offset Server zu GMT
    int offset1 = 0;
@@ -4408,7 +4406,7 @@ int GetLocalToGmtTimeOffset() {
  *
  * @return string - timezone identifier or an empty string in case of errors
  *
- * @link  http://en.wikipedia.org/wiki/Tz_database   [Olson Timezone Database]
+ * @see  http://en.wikipedia.org/wiki/Tz_database     [Olson Timezone Database]
  */
 string GetServerTimezone() {
    // - The resolved timezone can only change when the trade account changes.
@@ -4436,14 +4434,23 @@ string GetServerTimezone() {
    }
 
    if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER  ] = GetAccountServer();  if (!StringLen(lastResult[IDX_SERVER] )) return("");
-      lastResult[IDX_COMPANY ] = GetAccountCompany(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
-      lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_SERVER]);
-      if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_COMPANY]);
+      lastResult[IDX_SERVER ] = GetAccountServer();  if (!StringLen(lastResult[IDX_SERVER ])) return("");
+      lastResult[IDX_COMPANY] = GetAccountCompany(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
+
+      // prefer a custom company mapping of a full server name
+      string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);    // global only to prevent recursion
+
+      if (StringLen(customMapping) > 0) {
+         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", customMapping);
+      }
+      else {
+         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_SERVER]);
+         if (!StringLen(lastResult[IDX_TIMEZONE])) {
+            lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_COMPANY]);
+         }
       }
       if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +" (company "+ DoubleQuoteStr(lastResult[IDX_COMPANY]) +"), using default timezone \"FXT\"");
+         if (IsLogNotice()) logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +" (company id "+ DoubleQuoteStr(lastResult[IDX_COMPANY]) +"), using default timezone \"FXT\"");
          lastResult[IDX_TIMEZONE] = "FXT";
       }
    }

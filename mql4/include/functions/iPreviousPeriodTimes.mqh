@@ -1,18 +1,16 @@
 /**
- * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Periode und schreibt das Ergebnis in die
- * übergebenen Variablen. Ist der Parameter openTime.fxt NULL, werden Beginn und Ende der jüngsten Periode (also ggf. der
- * aktuellen) zurückgegeben.
+ * Resolve start and end times of the period preceding parameter 'openTimeFxt' and return the result in the passed variables.
+ * If 'openTimeFxt' is not specified (NULL) the returned times describe start and end of the first (current) period.
  *
- * @param  _In_    int       timeframe     - Timeframe der zu ermittelnden Periode (NULL: der aktuelle Timeframe)
- * @param  _InOut_ datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Periode in FXT-Zeit
- * @param  _Out_   datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Periode in FXT-Zeit
- * @param  _Out_   datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Periode in Serverzeit
- * @param  _Out_   datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
+ * @param  _In_    int      timeframe     - period timeframe (NULL: the current timeframe)
+ * @param  _InOut_ datetime &openTimeFxt  - variable receiving the starttime of the resulting period in FXT
+ * @param  _Out_   datetime &closeTimeFxt - variable receiving the endtime of the resulting period in FXT
+ * @param  _Out_   datetime &openTimeSrv  - variable receiving the starttime of the resulting period in server time
+ * @param  _Out_   datetime &closeTimeSrv - variable receiving the endtime of the resulting period in server time
  *
  * @return bool - success status
  *
- *
- * NOTE: Diese Funktion greift nicht auf Bars oder Datenserien zu, sondern verwendet nur die aktuelle Systemzeit.
+ * NOTE: The function doesn't access the underlying price timeseries. Results are purely calculated using the system time.
  */
 bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*/, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
    if (!timeframe)
