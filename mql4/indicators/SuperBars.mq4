@@ -15,8 +15,8 @@
  *  Legend.FontSize              = {int}              ; font size
  *  Legend.FontColor             = {color}            ; font color (web color name or integer triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
- *  MaxH1Days                    = {int}              ; max. number of days to draw H1 superbars (performance; default: 60)
- *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max
+ *  MaxH1Days                    = {int}              ; max. number of days with H1 superbars (performance; default: all)
+ *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
  *
  * @see  https://www.forexfactory.com/forum/69-platform-tech
  */
@@ -52,7 +52,7 @@ extern string ETH.Symbols         = "";               // comma-separated list of
 
 int    superTimeframe;                                // the currently active super bar period
 double maxChangeUnchanged = 0.05;                     // max. price change in % for a superbar to be drawn as unchanged
-int    maxH1Days          = 60;                       // max. number of days to draw H1 superbars (performance)
+int    maxH1Days;                                     // max. number of days to draw H1 superbars (performance)
 bool   ethEnabled;                                    // whether CME sessions are enabled
 
 string legendLabel      = "";
@@ -63,7 +63,7 @@ string legendFontName   = "";                         // default: empty = menu f
 int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds with the menu font
 color  legendFontColor  = Black;
 
-string errorSound = "Plonk.wav";                      // sound played when timeframe cycling is at min/max
+string errorSound = "";                               // sound played when timeframe cycling is at min/max (default: none)
 
 
 /**
@@ -102,7 +102,7 @@ int onInit() {
    // read external configuration
    double dValue; int iValue;
    dValue          = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");    maxChangeUnchanged = MathAbs(ifDouble(!dValue, maxChangeUnchanged, dValue));
-   iValue          = GetConfigInt   (indicator, "MaxH1Days");                       maxH1Days          = ifInt(iValue > 0, iValue, maxH1Days);
+   iValue          = GetConfigInt   (indicator, "MaxH1Days",        -1);            maxH1Days          = ifInt(iValue > 0, iValue, NULL);
    iValue          = GetConfigInt   (indicator, "Legend.Corner",    -1);            legendCorner       = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
    iValue          = GetConfigInt   (indicator, "Legend.xDistance", -1);            legend_xDistance   = ifInt(iValue >= 0, iValue, legend_xDistance);
    iValue          = GetConfigInt   (indicator, "Legend.yDistance", -1);            legend_yDistance   = ifInt(iValue >= 0, iValue, legend_yDistance);
@@ -179,51 +179,53 @@ bool SwitchSuperTimeframe(int direction) {
 
    if (direction == STF_DOWN) {
       switch (superTimeframe) {
-         case  INT_MIN      : PlaySoundEx(errorSound);      break;   // we hit the wall downwards
+         case  INT_MIN:
+            if (errorSound != "") PlaySoundEx(errorSound);  break;   // we hit the wall downwards
 
-         case  PERIOD_H1    :
-         case -PERIOD_H1    : superTimeframe =  INT_MIN;    break;
+         case  PERIOD_H1:
+         case -PERIOD_H1:     superTimeframe =  INT_MIN;    break;
 
          case  PERIOD_D1_ETH: superTimeframe =  PERIOD_H1;  break;
          case -PERIOD_D1_ETH: superTimeframe = -PERIOD_H1;  break;
 
-         case  PERIOD_D1    : superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
-         case -PERIOD_D1    : superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
+         case  PERIOD_D1:     superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
+         case -PERIOD_D1:     superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_H1); break;
 
-         case  PERIOD_W1    : superTimeframe =  PERIOD_D1;  break;
-         case -PERIOD_W1    : superTimeframe = -PERIOD_D1;  break;
+         case  PERIOD_W1:     superTimeframe =  PERIOD_D1;  break;
+         case -PERIOD_W1:     superTimeframe = -PERIOD_D1;  break;
 
-         case  PERIOD_MN1   : superTimeframe =  PERIOD_W1;  break;
-         case -PERIOD_MN1   : superTimeframe = -PERIOD_W1;  break;
+         case  PERIOD_MN1:    superTimeframe =  PERIOD_W1;  break;
+         case -PERIOD_MN1:    superTimeframe = -PERIOD_W1;  break;
 
-         case  PERIOD_Q1    : superTimeframe =  PERIOD_MN1; break;
-         case -PERIOD_Q1    : superTimeframe = -PERIOD_MN1; break;
+         case  PERIOD_Q1:     superTimeframe =  PERIOD_MN1; break;
+         case -PERIOD_Q1:     superTimeframe = -PERIOD_MN1; break;
 
-         case  INT_MAX      : superTimeframe =  PERIOD_Q1;  break;
+         case  INT_MAX:       superTimeframe =  PERIOD_Q1;  break;
       }
    }
    else if (direction == STF_UP) {
       switch (superTimeframe) {
-         case  INT_MIN      : superTimeframe =  PERIOD_H1;  break;
+         case  INT_MIN:       superTimeframe =  PERIOD_H1;  break;
 
-         case  PERIOD_H1    : superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
-         case -PERIOD_H1    : superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
+         case  PERIOD_H1:     superTimeframe =  ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
+         case -PERIOD_H1:     superTimeframe = -ifInt(ethEnabled, PERIOD_D1_ETH, PERIOD_D1); break;
 
          case  PERIOD_D1_ETH: superTimeframe =  PERIOD_D1;  break;
          case -PERIOD_D1_ETH: superTimeframe = -PERIOD_D1;  break;
 
-         case  PERIOD_D1    : superTimeframe =  PERIOD_W1;  break;
-         case -PERIOD_D1    : superTimeframe = -PERIOD_W1;  break;
+         case  PERIOD_D1:     superTimeframe =  PERIOD_W1;  break;
+         case -PERIOD_D1:     superTimeframe = -PERIOD_W1;  break;
 
-         case  PERIOD_W1    : superTimeframe =  PERIOD_MN1; break;
-         case -PERIOD_W1    : superTimeframe = -PERIOD_MN1; break;
+         case  PERIOD_W1:     superTimeframe =  PERIOD_MN1; break;
+         case -PERIOD_W1:     superTimeframe = -PERIOD_MN1; break;
 
-         case  PERIOD_MN1   : superTimeframe =  PERIOD_Q1;  break;
-         case -PERIOD_MN1   : superTimeframe = -PERIOD_Q1;  break;
+         case  PERIOD_MN1:    superTimeframe =  PERIOD_Q1;  break;
+         case -PERIOD_MN1:    superTimeframe = -PERIOD_Q1;  break;
 
-         case  PERIOD_Q1    : superTimeframe =  INT_MAX;    break;
+         case  PERIOD_Q1:     superTimeframe =  INT_MAX;    break;
 
-         case  INT_MAX      : PlaySoundEx(errorSound);      break;   // we hit the wall upwards
+         case  INT_MAX:
+            if (errorSound != "") PlaySoundEx(errorSound);  break;   // we hit the wall upwards
       }
    }
    else return(!catch("SwitchSuperTimeframe(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
@@ -312,8 +314,9 @@ bool UpdateSuperBars() {
          lastSuperTimeframe = superTimeframe;                        // nothing to do
          return(true);
 
-      case PERIOD_H1:                                                // limit number of H1 superbars (performance reasons)
-         maxBars = maxH1Days * DAYS/HOURS;
+      case PERIOD_H1:                                                // limit number of H1 superbars (performance)
+         if (maxH1Days > 0)
+            maxBars = maxH1Days * DAYS/HOURS;
          break;
 
       case PERIOD_D1_ETH:                                            // no limit for everything else

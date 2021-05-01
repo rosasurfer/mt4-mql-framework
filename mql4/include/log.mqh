@@ -344,7 +344,7 @@ int log2Alert(string message, int error, int level) {
 int log2Debugger(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelDebugger]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Debugger", "off");                                     // default: off
+      string sValue = GetConfigString("Log", "Log2Debugger", "all");                                     // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(2)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelDebugger(__ExecutionContext, configLevel);
