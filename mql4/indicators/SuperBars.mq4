@@ -101,13 +101,13 @@ int onInit() {
    double dValue = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");
    maxPriceChangeUnchangedBars = MathAbs(ifDouble(!dValue, maxPriceChangeUnchangedBars, dValue));
 
-   int iValue = GetConfigInt(indicator, "Legend.Corner");
+   int iValue = GetConfigInt(indicator, "Legend.Corner", -1);
    legendCorner = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
 
-   iValue = GetConfigInt(indicator, "Legend.xDistance");
+   iValue = GetConfigInt(indicator, "Legend.xDistance", -1);
    legend_xDistance = ifInt(iValue >= 0, iValue, legend_xDistance);
 
-   iValue = GetConfigInt(indicator, "Legend.yDistance");
+   iValue = GetConfigInt(indicator, "Legend.yDistance", -1);
    legend_yDistance = ifInt(iValue >= 0, iValue, legend_yDistance);
 
    legendFontName = GetConfigString(indicator, "Legend.FontName", legendFontName);
@@ -165,7 +165,7 @@ int onTick() {
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
    string cmd = commands[0];
-   if (IsLogInfo()) logInfo("onCommand(2)  "+ DoubleQuoteStr(cmd));
+   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
 
    if (cmd == "Timeframe=Up")   return(SwitchSuperTimeframe(STF_UP));
    if (cmd == "Timeframe=Down") return(SwitchSuperTimeframe(STF_DOWN));

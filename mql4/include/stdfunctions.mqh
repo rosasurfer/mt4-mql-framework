@@ -330,24 +330,20 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  * Dropin-replacement for the built-in function PlaySound().
  *
  * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found a message is logged but
- * execution continues.
+ * terminal doesn't support it (e.g. in Strategy Tester).
  *
  * @param  string soundfile
- * @param  int    flags
  *
  * @return bool - success status
  */
-bool PlaySoundEx(string soundfile, int flags = NULL) {
+bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName)) {
-         if (!(flags & MB_DONT_LOG)) {
-            if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
-         }
+         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
@@ -371,7 +367,7 @@ bool PlaySoundOrFail(string soundfile) {
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName))
-         return(!catch("PlaySoundOrFail(1)  file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND));
+         return(!catch("PlaySoundOrFail(1)  file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND));
    }
 
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
@@ -413,7 +409,7 @@ void ForceAlert(string message) {
       string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
       string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
-      PlaySoundEx("alert.wav", MB_DONT_LOG);
+      PlaySoundEx("alert.wav");
       MessageBoxEx(sCaption, sMessage, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
 }
