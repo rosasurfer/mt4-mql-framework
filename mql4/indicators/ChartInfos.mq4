@@ -4106,7 +4106,6 @@ string InputsToStr() {
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
    int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);

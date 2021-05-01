@@ -212,8 +212,6 @@
    int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");
 
    string   StdSymbol();                                                // alias of GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                           // alias of GetStandardSymbolOrAlt(symbol, symbol)
-   string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
    string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
