@@ -3891,43 +3891,49 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
 
 /**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
- * characters only.
+ * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
+ * different company identifier via section [AccountCompanies] of the framework configuration.
  *
- * Among others the identifier is used for reading/writing company-wide configurations and for log messages. It is derived
- * from the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
- * (see below) the returned default identifier matches the first word of the current trade server name.
- *
- * @return string - company identifier or an empty string in case of errors
+ * @return string - original or mapped company identifier or an empty string in case of errors
  *
  * Example:
- * +--------------------+----------------------------+
- * | Trade server name  | Default company identifier |
- * +--------------------+----------------------------+
- * | Alpari-Standard1   | Alpari                     |
- * +--------------------+----------------------------+
+ * +--------------------+--------------------+
+ * | Tradeserver        | Default identifier |
+ * +--------------------+--------------------+
+ * | Alpari-Standard1   | Alpari             | Without name mapping all servers have different company identifiers.
+ * | AlpariBroker-Demo  | AlpariBroker       |
+ * | AlpariUK-Classic-1 | AlpariUK           |
+ * | AlpariUK-Live2     | AlpariUK           |
+ * +--------------------+--------------------+
  *
- * Via the global framework configuration a default company indentifier can be mapped to a different one.
- *
- * Example:
- * +--------------------+----------------------------+---------------------------+
- * | Trade server name  | Default company identifier | Mapped company identifier |
- * +--------------------+----------------------------+---------------------------+
- * | Alpari-Standard1   | Alpari                     | -                         |
- * | AlpariUK-Classic-1 | AlpariUK                   | Alpari                    |
- * +--------------------+----------------------------+---------------------------+
- *
- * Note: For the long and elaborated company name use the built-in function AccountCompany().
+ * Mapping via framework configuration:
+ * [AccountCompanies]
+ *  alparibroker   = Alpari                  ; With name mapping different servers can be grouped together.
+ *  alpariuk       = Alpari
+ *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default identifier.
  */
 string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
-   //
-   string server = GetAccountServer(); if (!StringLen(server)) return("");
-   string name = StrLeftTo(server, "-");
+   static string lastServer="", lastId="";
 
-   return(GetGlobalConfigString("AccountCompanies", name, name));
+   string server = GetAccountServer(); if (!StringLen(server)) return("");
+   if (server == lastServer)
+      return(lastId);
+
+   string mapping = GetGlobalConfigString("AccountCompanies", server);     // global only to prevent recursion
+   if (StringLen(mapping) > 0) {
+      lastServer = server;
+      lastId = mapping;
+      return(lastId);
+   }
+
+   string word1 = StrLeftTo(server, "-");
+   lastId = GetGlobalConfigString("AccountCompanies", word1, word1);
+   lastServer = server;
+   return(lastId);
 }
 
 

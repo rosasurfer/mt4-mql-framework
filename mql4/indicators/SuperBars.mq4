@@ -294,7 +294,7 @@ bool UpdateSuperBars() {
 
    if (isTimeframeChange) {
       if (PERIOD_M1 <= lastSuperTimeframe && lastSuperTimeframe <= PERIOD_Q1) {
-         DeleteRegisteredObjects();                                  // in all other cases previous suberbars have already been deleted
+         DeleteRegisteredObjects();                                  // in all other cases previous SuperBars have already been deleted
          legendLabel = CreateDescriptionLabel();
       }
       UpdateDescription();
