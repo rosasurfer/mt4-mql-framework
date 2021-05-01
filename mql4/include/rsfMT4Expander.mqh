@@ -4,7 +4,7 @@
  * Note: MQL4 supports up to 512 arrays per MQL module (in MQL5 this limit was removed). In this file all functions with array
  *       parameters are commented out to prevent hitting that limit. Import needed functions manually to use them.
  */
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
 
    // terminal status, terminal interaction
    int      FindInputDialog(int programType, string programName);

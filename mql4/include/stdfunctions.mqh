@@ -4,7 +4,7 @@
 #include <configuration.mqh>
 #include <log.mqh>
 #include <metaquotes.mqh>
-#include <rsfExpander.mqh>
+#include <rsfMT4Expander.mqh>
 
 
 /**
@@ -6770,7 +6770,7 @@ void __DummyCalls() {
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[]);

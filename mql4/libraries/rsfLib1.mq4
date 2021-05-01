@@ -7862,7 +7862,7 @@ void onLibraryInit() {
    string DoublesToStr(double array[], string separator);
    string TicketsToStr.Lots(int array[], string separator);
 
-#import "rsfExpander.dll"
+#import "rsfMT4Expander.dll"
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
    bool   SortMqlStringsA(string values[], int size);
